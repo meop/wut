@@ -1,3 +1,4 @@
 # wut
 
-alias wut="bash $HOME/source/code/meop/wut/bin/wut.sh"
+export WUT_LOCATION="$HOME/.wut"
+alias wut="bash $WUT_LOCATION/bin/wut.sh"

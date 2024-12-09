@@ -1,3 +1,4 @@
 # wut
 
-Set-Alias -Name wut -Value "pwsh $HOME/source/code/meop/wut/bin/wut.ps1"
+$env:WUT_LOCATION = "$HOME/.wut"
+Set-Alias -Name wut -Value "pwsh $WUT_LOCATION/bin/wut.ps1"
