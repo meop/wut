@@ -34,9 +34,10 @@ if ($args.Length -gt 0 -and $args[0] -eq 'up') {
   if (((Get-Command bun).Source).StartsWith("$env:BUN_INSTALL")) {
     bun upgrade
   }
-  
-  git -C "$env:WUT_LOCATION" fetch --all --tags --prune --prune-tags
-  git -C "$env:WUT_LOCATION" pull
+
+  git -C "$env:WUT_LOCATION" pull --prune
+
+  exit
 }
 
 Push-Location "$env:WUT_LOCATION"

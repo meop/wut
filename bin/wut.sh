@@ -30,8 +30,9 @@ if [[ "$#" -gt 0 && "$1" == 'up' ]]; then
     bun upgrade
   fi
 
-  git -C "${WUT_LOCATION}" fetch --all --tags --prune --prune-tags
-  git -C "${WUT_LOCATION}" pull
+  git -C "${WUT_LOCATION}" pull --prune
+
+  exit
 fi
 
 owd=$(pwd -P)
