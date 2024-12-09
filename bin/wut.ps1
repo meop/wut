@@ -36,6 +36,7 @@ if ($args.Length -gt 0 -and $args[0] -eq 'up') {
     bun upgrade
   }
   
+  git -C "$env:WUT_LOCATION" fetch --all --tags --prune --prune-tags
   git -C "$env:WUT_LOCATION" pull
 }
 
