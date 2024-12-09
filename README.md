@@ -24,7 +24,7 @@ arm64 macos
 - link repo
 
 ```bash
-ln -s ~/source/code/meop/wut ~/.wut
+ln -s "$HOME/source/code/meop/wut" "$HOME/.wut"
 ```
 
 - add to profile
@@ -48,12 +48,12 @@ Windows
 - git
 - bun
 
-###  develop
+### develop
 
 - link repo
 
 ```pwsh
-New-Item -ItemType SymbolicLink -Value ~/source/code/meop/wut -Path ~/.wut
+New-Item -ItemType SymbolicLink -Value "$HOME/source/code/meop/wut" -Path "$HOME/.wut"
 ```
 
 - add to profile
