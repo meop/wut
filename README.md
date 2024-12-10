@@ -30,8 +30,10 @@ ln -s "$HOME/source/code/meop/wut" "$HOME/.wut"
 - add to profile
 
 ```bash
-export WUT_LOCATION="$HOME/.wut"
-alias wut="bash $WUT_LOCATION/bin/wut.sh"
+if [[ -d "$HOME/.wut" ]]; then
+  export WUT_LOCATION="$HOME/.wut"
+  alias wut="bash $WUT_LOCATION/bin/wut.sh"
+fi
 ```
 
 ### install
@@ -60,7 +62,9 @@ New-Item -ItemType SymbolicLink -Value "$HOME/source/code/meop/wut" -Path "$HOME
 
 ```pwsh
 $env:WUT_LOCATION = "$HOME/.wut"
-Set-Alias -Name wut -Value "pwsh $WUT_LOCATION/bin/wut.ps1"
+if (Test-Path $env:WUT_LOCATION) {
+  Set-Alias -Name wut -Value "pwsh $env:WUT_LOCATION/bin/wut.ps1"
+}
 ```
 
 ### install
