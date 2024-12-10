@@ -23,10 +23,10 @@ if (-not (Get-Command git -ErrorAction Ignore)) {
 }
 
 if (-not "$env:BUN_INSTALL") {
-  $env:BUN_INSTALL = "$HOME/.bun"
+  $env:BUN_INSTALL = "$env:HOME\.bun"
 }
 if (-not "$env:WUT_LOCATION") {
-  $env:WUT_LOCATION = "$HOME/.wut"
+  $env:WUT_LOCATION = "$env:HOME\.wut"
 }
 
 if ($args.Length -gt 0 -and $args[0] -eq 'up') {
