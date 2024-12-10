@@ -32,7 +32,7 @@ ln -s "$HOME/source/code/meop/wut" "$HOME/.wut"
 ```bash
 if [[ -d "$HOME/.wut" ]]; then
   export WUT_LOCATION="$HOME/.wut"
-  alias wut="bash $WUT_LOCATION/bin/wut.sh"
+  alias wut="$WUT_LOCATION/bin/wut.sh"
 fi
 ```
 
@@ -63,7 +63,7 @@ New-Item -ItemType SymbolicLink -Value "$HOME/source/code/meop/wut" -Path "$HOME
 ```pwsh
 $env:WUT_LOCATION = "$HOME/.wut"
 if (Test-Path $env:WUT_LOCATION) {
-  Set-Alias -Name wut -Value "pwsh $env:WUT_LOCATION/bin/wut.ps1"
+  Set-Alias -Name wut -Value "$env:WUT_LOCATION/bin/wut.ps1"
 }
 ```
 
