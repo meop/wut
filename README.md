@@ -61,8 +61,8 @@ New-Item -ItemType SymbolicLink -Value "$HOME/source/code/meop/wut" -Path "$HOME
 - add to profile
 
 ```pwsh
-$env:WUT_LOCATION = "$HOME/.wut"
-if (Test-Path $env:WUT_LOCATION) {
+if (Test-Path "$HOME/.wut") {
+  $env:WUT_LOCATION = "$HOME/.wut"
   Set-Alias -Name wut -Value "$env:WUT_LOCATION/bin/wut.ps1"
 }
 ```
