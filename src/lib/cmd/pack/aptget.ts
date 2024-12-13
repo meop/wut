@@ -22,22 +22,22 @@ export class AptGet implements Pack {
       `${this.program.replace('apt-get', 'apt-cache')} search` + filter,
     )
   }
-  async list(options: { name?: string }): Promise<void> {
-    await filterShell(`${this.program} list --installed`, options.name)
+  async list(options: { names: Array<string> | undefined }): Promise<void> {
+    await filterShell(`${this.program} list --installed`, options.names)
   }
-  async out(options: { name?: string }): Promise<void> {
+  async out(options: { names: Array<string> | undefined }): Promise<void> {
     await spawnShell(`${this.program} update`)
-    await filterShell(`${this.program} list --upgradeable`, options.name)
+    await filterShell(`${this.program} list --upgradeable`, options.names)
   }
-  async tidy(options: {}): Promise<void> {
+  async tidy(): Promise<void> {
     await spawnShell(`${this.program} autoclean`)
   }
   async up(
-    options: { names?: Array<string> },
+    options: { names: Array<string> | undefined },
     upgradeCmd: string = 'dist-upgrade',
   ): Promise<void> {
     await spawnShell(`${this.program} update`)
-    if (options.names?.length ?? 0 > 0) {
+    if ((options.names?.length ?? 0) > 0) {
       const filter = ` ${options.names!.join(' ')}`
       await spawnShell(`${this.program} install` + filter)
     } else {
@@ -49,7 +49,7 @@ export class AptGet implements Pack {
 export class Apt extends AptGet {
   program = 'sudo apt'
 
-  async up(options: { names?: Array<string> }): Promise<void> {
+  async up(options: { names: Array<string> | undefined }): Promise<void> {
     await super.up(options, 'full-upgrade')
   }
 }

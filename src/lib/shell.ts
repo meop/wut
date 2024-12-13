@@ -46,12 +46,19 @@ export async function spawnShell(command: string) {
   }
 }
 
-export async function filterShell(command: string, filter?: string) {
-  if (filter) {
-    const o = await execShell(command)
-    for (const line of o.stdout.split('\n')) {
-      if (line.includes(filter)) {
-        log(line)
+export async function filterShell(
+  command: string,
+  filter: Array<string> | undefined,
+) {
+  console.debug(typeof filter)
+
+  if ((filter?.length ?? 0) > 0) {
+    for (const f of filter!) {
+      const o = await execShell(command)
+      for (const line of o.stdout.split('\n')) {
+        if (line.includes(f)) {
+          log(line)
+        }
       }
     }
   } else {

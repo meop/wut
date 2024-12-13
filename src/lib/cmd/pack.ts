@@ -5,6 +5,7 @@ import { isInPath } from '../path.ts'
 
 import { Apt, AptGet } from './pack/aptget.ts'
 import { Brew } from './pack/brew.ts'
+import { WinGet } from './pack/winget.ts'
 
 const supportedPacks = [
   'apt',
@@ -26,7 +27,7 @@ export function buildCmdPack() {
     buildCmd('add', 'add from web')
       .aliases(['a', '+', 'in', 'install'])
       .argument('<names...>', 'list of names')
-      .action((names) => {
+      .action((names: Array<string>) => {
         runCmdPack('add', { names }, cmd.opts())
       }),
   )
@@ -35,7 +36,7 @@ export function buildCmdPack() {
     buildCmd('del', 'delete from local')
       .aliases(['d', '-', 'delete', 'rm', 'rem', 'remove', 'un', 'uninstall'])
       .argument('<names...>', 'list of names')
-      .action((names) => {
+      .action((names: Array<string>) => {
         runCmdPack('del', { names }, cmd.opts())
       }),
   )
@@ -44,7 +45,7 @@ export function buildCmdPack() {
     buildCmd('find', 'find from web')
       .aliases(['f', '?', 'se', 'search'])
       .argument('<name>', 'match name')
-      .action((name) => {
+      .action((name: string) => {
         runCmdPack('find', { name }, cmd.opts())
       }),
   )
@@ -52,18 +53,18 @@ export function buildCmdPack() {
   cmd.addCommand(
     buildCmd('list', 'list from local')
       .aliases(['l', '/', 'ls', 'qu', 'query'])
-      .argument('[name]', 'match name')
-      .action((name) => {
-        runCmdPack('list', { name }, cmd.opts())
+      .argument('[names...]', 'match name')
+      .action((names: Array<string> | undefined) => {
+        runCmdPack('list', { names }, cmd.opts())
       }),
   )
 
   cmd.addCommand(
     buildCmd('out', 'outdated from local')
       .aliases(['o', '!', 'outdated', 'old', 'ob', 'obsolete'])
-      .argument('[name]', 'match name')
-      .action((name) => {
-        runCmdPack('out', { name }, cmd.opts())
+      .argument('[names...]', 'match name')
+      .action((names: Array<string> | undefined) => {
+        runCmdPack('out', { names }, cmd.opts())
       }),
   )
 
@@ -79,7 +80,7 @@ export function buildCmdPack() {
     buildCmd('up', 'upgrade from web')
       .aliases(['u', '^', 'update', 'upgrade', 'sy', 'sync'])
       .argument('[names...]', 'list of names')
-      .action((names) => {
+      .action((names: Array<string> | undefined) => {
         runCmdPack('up', { names }, cmd.opts())
       }),
   )
@@ -134,7 +135,7 @@ async function runCmdPack(
       pack = new Brew()
       break
     case 'winget':
-      throw new Error(`not ready yet`)
+      pack = new WinGet()
       break
     case 'scoop':
       throw new Error(`not ready yet`)

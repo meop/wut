@@ -2,11 +2,10 @@ import type { Pack } from '../pack.i.ts'
 
 import { filterShell, spawnShell } from '../../shell.ts'
 
-export class Brew implements Pack {
-  program = 'brew'
+export class WinGet implements Pack {
+  program = 'winget'
 
   async add(options: { names: Array<string> }): Promise<void> {
-    await spawnShell(`${this.program} update`)
     const filter = ` ${options.names.join(' ')}`
     await spawnShell(`${this.program} install` + filter)
   }
@@ -18,20 +17,18 @@ export class Brew implements Pack {
     const filter = ` ${options.name}`
     await spawnShell(`${this.program} search` + filter)
   }
-  async list(options: { names: Array<string> | undefined }): Promise<void> {
+  async list(options: { names?: Array<string> | undefined }): Promise<void> {
     await filterShell(`${this.program} list`, options.names)
   }
   async out(options: { names: Array<string> | undefined }): Promise<void> {
-    await spawnShell(`${this.program} update`)
-    await filterShell(`${this.program} outdated`, options.names)
+    await filterShell(`${this.program} upgrade`, options.names)
   }
-  async tidy(): Promise<void> {
-    await spawnShell(`${this.program} cleanup --prune=all`)
-  }
+  async tidy(): Promise<void> {}
   async up(options: { names: Array<string> | undefined }): Promise<void> {
-    await spawnShell(`${this.program} update`)
     const filter =
-      (options.names?.length ?? 0) > 0 ? ` ${options.names!.join(' ')}` : ''
-    await spawnShell(`${this.program} upgrade --greedy` + filter)
+      (options.names?.length ?? 0) > 0
+        ? ` ${options.names!.join(' ')} `
+        : ' --all'
+    await spawnShell(`${this.program} upgrade` + filter)
   }
 }
