@@ -25,9 +25,13 @@ export NODE_NO_WARNINGS=1
 export NODE_OPTIONS='--experimental-strip-types --experimental-transform-types'
 
 if [[ "$#" -gt 0 && "$1" == 'up' ]]; then
+  echo "> git -C "${WUT_LOCATION}" pull --prune"
+  echo
   git -C "${WUT_LOCATION}" pull --prune
+  echo
 
   owd=$(pwd -P) && cd "${WUT_LOCATION}" || exit
+  echo '> npm install'
   npm install
   cd "${owd}" || exit
 

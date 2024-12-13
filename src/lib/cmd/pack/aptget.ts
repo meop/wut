@@ -32,13 +32,16 @@ export class AptGet implements Pack {
   async tidy(options: {}): Promise<void> {
     await spawnShell(`${this.program} autoclean`)
   }
-  async up(options: { names?: Array<string> }): Promise<void> {
+  async up(
+    options: { names?: Array<string> },
+    upgradeCmd: string = 'dist-upgrade',
+  ): Promise<void> {
     await spawnShell(`${this.program} update`)
-    const filter = options.names ? ` ${options.names.join(' ')}` : ''
-    if (filter) {
+    if (options.names?.length ?? 0 > 0) {
+      const filter = ` ${options.names!.join(' ')}`
       await spawnShell(`${this.program} install` + filter)
     } else {
-      await spawnShell(`${this.program} dist-upgrade`)
+      await spawnShell(`${this.program} ${upgradeCmd}`)
     }
   }
 }
@@ -47,12 +50,6 @@ export class Apt extends AptGet {
   program = 'sudo apt'
 
   async up(options: { names?: Array<string> }): Promise<void> {
-    await spawnShell(`${this.program} update`)
-    const filter = options.names ? ` ${options.names.join(' ')}` : ''
-    if (filter) {
-      await spawnShell(`${this.program} install` + filter)
-    } else {
-      await spawnShell(`${this.program} full-upgrade`)
-    }
+    await super.up(options, 'full-upgrade')
   }
 }

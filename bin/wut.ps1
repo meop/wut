@@ -30,7 +30,10 @@ $env:NODE_NO_WARNINGS = 1
 $env:NODE_OPTIONS = '--experimental-strip-types --experimental-transform-types'
 
 if ($args.Length -gt 0 -and $args[0] -eq 'up') {
+  Write-Output "git -C ${$env:WUT_LOCATION} pull --prune"
+  Write-Output ''
   git -C "$env:WUT_LOCATION" pull --prune
+  Write-Output ''
 
   Push-Location "$env:WUT_LOCATION"
   npm install
