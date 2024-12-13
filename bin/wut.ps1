@@ -13,8 +13,8 @@ if (-not $IsWindows) {
   exit 1
 }
 
-if (-not (Get-Command bun -ErrorAction Ignore)) {
-  Write-Error "bun not found .. aborting"
+if (-not (Get-Command node -ErrorAction Ignore)) {
+  Write-Error "node not found .. aborting"
   exit 1
 }
 if (-not (Get-Command git -ErrorAction Ignore)) {
@@ -22,26 +22,23 @@ if (-not (Get-Command git -ErrorAction Ignore)) {
   exit 1
 }
 
-if (-not "$env:BUN_INSTALL") {
-  $env:BUN_INSTALL = "$env:HOME\.bun"
-}
 if (-not "$env:WUT_LOCATION") {
   $env:WUT_LOCATION = "$env:HOME\.wut"
 }
 
-if ($args.Length -gt 0 -and $args[0] -eq 'up') {
-  # bun upgrade only if it was installed by its own script
-  if (((Get-Command bun).Source).StartsWith("$env:BUN_INSTALL")) {
-    bun upgrade
-  }
+$env:NODE_NO_WARNINGS = 1
+$env:NODE_OPTIONS = '--experimental-strip-types --experimental-transform-types'
 
+if ($args.Length -gt 0 -and $args[0] -eq 'up') {
   git -C "$env:WUT_LOCATION" pull --prune
+
+  Push-Location "$env:WUT_LOCATION"
+  npm install
+  Pop-Location
 
   exit
 }
 
 Push-Location "$env:WUT_LOCATION"
-
-bun run --install=force src/main.ts $args
-
+node src/cli.ts $args
 Pop-Location

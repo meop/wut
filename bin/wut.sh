@@ -8,36 +8,32 @@ if [[ ${BASH_VERSINFO[0]} -lt $verMajor ]] || [[ ${BASH_VERSINFO[1]} -lt $verMin
   exit 1
 fi
 
-if ! type bun > /dev/null; then
-  echo "bun not found .. aborting" >&2
+if ! type node > /dev/null; then
+  echo 'node not found .. aborting' >&2
   exit 1
 fi
 if ! type git > /dev/null; then
-  echo "git not found .. aborting" >&2
+  echo 'git not found .. aborting' >&2
   exit 1
 fi
 
-if ! [[ -n "${BUN_INSTALL}" ]]; then
-  BUN_INSTALL="${HOME}/.wut"
-fi
 if ! [[ -n "${WUT_LOCATION}" ]]; then
   WUT_LOCATION="${HOME}/.wut"
 fi
 
-if [[ "$#" -gt 0 && "$1" == 'up' ]]; then
-  # bun upgrade only if it was installed by its own script
-  if [[ $(which bun) == "${BUN_INSTALL}"* ]]; then
-    bun upgrade
-  fi
+export NODE_NO_WARNINGS=1
+export NODE_OPTIONS='--experimental-strip-types --experimental-transform-types'
 
+if [[ "$#" -gt 0 && "$1" == 'up' ]]; then
   git -C "${WUT_LOCATION}" pull --prune
+
+  owd=$(pwd -P) && cd "${WUT_LOCATION}" || exit
+  npm install
+  cd "${owd}" || exit
 
   exit
 fi
 
-owd=$(pwd -P)
-cd "${WUT_LOCATION}" || exit
-
-bun run --install=force src/main.ts "$@"
-
+owd=$(pwd -P) && cd "${WUT_LOCATION}" || exit
+node src/cli.ts "$@"
 cd "${owd}" || exit

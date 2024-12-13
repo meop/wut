@@ -1,11 +1,16 @@
 {
   "name": "wut",
+  "description": "web update tool",
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/node": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "yoctocolors": "^2.1.1"
   }
 }

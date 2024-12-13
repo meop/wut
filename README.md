@@ -10,14 +10,15 @@ amd64 windows
 
 arm64 linux
 arm64 macos
+arm64 windows
 
 ## unix
 
 ### prereqs
 
 - bash
+- node
 - git
-- bun
 
 ### develop
 
@@ -47,8 +48,8 @@ Windows
 ### prereqs
 
 - pwsh
+- node
 - git
-- bun
 
 ### develop
 
