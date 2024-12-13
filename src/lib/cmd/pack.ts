@@ -2,14 +2,14 @@ import type { Pack } from './pack.i.ts'
 
 import { buildCmd } from '../cmd.ts'
 import { isInPath } from '../path.ts'
+
+import { Apt, AptGet } from './pack/aptget.ts'
 import { Brew } from './pack/brew.ts'
 
 const supportedPacks = [
-  'pkg',
-  'apt-get',
   'apt',
+  'apt-get',
   'dnf',
-  'paru',
   'yay',
   'pacman',
   'brew',
@@ -115,23 +115,17 @@ async function runCmdPack(
   let pack: Pack
 
   switch (packName) {
-    case 'paru':
-      throw new Error(`not ready yet`)
-      break
     case 'yay':
       throw new Error(`not ready yet`)
       break
     case 'pacman':
       throw new Error(`not ready yet`)
       break
-    case 'pkg':
-      throw new Error(`not ready yet`)
+    case 'apt':
+      pack = new Apt()
       break
     case 'apt-get':
-      throw new Error(`not ready yet`)
-      break
-    case 'apt':
-      throw new Error(`not ready yet`)
+      pack = new AptGet()
       break
     case 'dnf':
       throw new Error(`not ready yet`)
