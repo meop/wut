@@ -4,7 +4,7 @@ import { filterShell, spawnShell } from '../../shell.ts'
 
 
 export class Brew implements Pack {
-  program: 'brew'
+  program = 'brew'
 
   async add(options: { names: Array<string> }): Promise<void> {
     await spawnShell(`${this.program} update`)
