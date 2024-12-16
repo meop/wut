@@ -32,16 +32,6 @@ export async function spawnShell(command: string) {
     logError(`could not run ${command}: ${err.message}\n`)
   })
 
-  // proc.stdout.setEncoding('utf8')
-  // proc.stdout.on('data', (data) => {
-  //   log(data, false)
-  // })
-
-  // proc.stderr.setEncoding('utf8')
-  // proc.stderr.on('data', (data) => {
-  //   logError(data, false)
-  // })
-
   while (!done) {
     await sleep(100)
   }
