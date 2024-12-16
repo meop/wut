@@ -5,7 +5,7 @@ import { filterShell, spawnShell } from '../../shell.ts'
 
 export class AptGet implements Pack {
   async getProgram(): Promise<string> {
-    return (await isInPath('sudo')) ? 'sudo apt-get' : 'apt-get'
+    return ((await isInPath('sudo')) ? 'sudo ' : '') + 'apt-get'
   }
 
   async add(options: { names: Array<string> }): Promise<void> {
