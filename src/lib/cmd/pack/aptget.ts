@@ -26,13 +26,13 @@ export class AptGet implements Pack {
         filter,
     )
   }
-  async list(options: { names: Array<string> | undefined }): Promise<void> {
+  async list(options: { names: Array<string> }): Promise<void> {
     await filterShell(
       `${await this.getProgram()} list --installed`,
       options.names,
     )
   }
-  async out(options: { names: Array<string> | undefined }): Promise<void> {
+  async out(options: { names: Array<string> }): Promise<void> {
     await spawnShell(`${await this.getProgram()} update`)
     await filterShell(
       `${await this.getProgram()} list --upgradeable`,
@@ -43,12 +43,12 @@ export class AptGet implements Pack {
     await spawnShell(`${await this.getProgram()} autoclean`)
   }
   async up(
-    options: { names: Array<string> | undefined },
+    options: { names: Array<string> },
     upgradeCmd: string = 'dist-upgrade',
   ): Promise<void> {
     await spawnShell(`${await this.getProgram()} update`)
-    if ((options.names?.length ?? 0) > 0) {
-      const filter = ` ${options.names!.join(' ')}`
+    if (options.names.length > 0) {
+      const filter = ` ${options.names.join(' ')}`
       await spawnShell(`${await this.getProgram()} install` + filter)
     } else {
       await spawnShell(`${await this.getProgram()} ${upgradeCmd}`)
@@ -58,10 +58,10 @@ export class AptGet implements Pack {
 
 export class Apt extends AptGet {
   async getProgram(): Promise<string> {
-    return (await isInPath('sudo')) ? 'sudo apt' : 'apt'
+    return ((await isInPath('sudo')) ? 'sudo ' : '') + 'apt'
   }
 
-  async up(options: { names: Array<string> | undefined }): Promise<void> {
+  async up(options: { names: Array<string> }): Promise<void> {
     await super.up(options, 'full-upgrade')
   }
 }

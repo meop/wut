@@ -19,17 +19,17 @@ export class WinGet implements Pack {
     const filter = ` ${options.name}`
     await spawnShell(`${await this.getProgram()} search` + filter)
   }
-  async list(options: { names?: Array<string> | undefined }): Promise<void> {
+  async list(options: { names: Array<string> }): Promise<void> {
     await filterShell(`${await this.getProgram()} list`, options.names)
   }
-  async out(options: { names: Array<string> | undefined }): Promise<void> {
+  async out(options: { names: Array<string> }): Promise<void> {
     await filterShell(`${await this.getProgram()} upgrade`, options.names)
   }
   async tidy(): Promise<void> {}
-  async up(options: { names: Array<string> | undefined }): Promise<void> {
+  async up(options: { names: Array<string> }): Promise<void> {
     const filter =
-      (options.names?.length ?? 0) > 0
-        ? ` ${options.names!.join(' ')} `
+      options.names.length > 0
+        ? ` ${options.names.join(' ')} `
         : ' --all'
     await spawnShell(`${await this.getProgram()} upgrade` + filter)
   }

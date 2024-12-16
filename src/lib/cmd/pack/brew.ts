@@ -20,20 +20,20 @@ export class Brew implements Pack {
     const filter = ` ${options.name}`
     await spawnShell(`${await this.getProgram()} search` + filter)
   }
-  async list(options: { names: Array<string> | undefined }): Promise<void> {
+  async list(options: { names: Array<string> }): Promise<void> {
     await filterShell(`${await this.getProgram()} list`, options.names)
   }
-  async out(options: { names: Array<string> | undefined }): Promise<void> {
+  async out(options: { names: Array<string> }): Promise<void> {
     await spawnShell(`${await this.getProgram()} update`)
     await filterShell(`${await this.getProgram()} outdated`, options.names)
   }
   async tidy(): Promise<void> {
     await spawnShell(`${await this.getProgram()} cleanup --prune=all`)
   }
-  async up(options: { names: Array<string> | undefined }): Promise<void> {
+  async up(options: { names: Array<string> }): Promise<void> {
     await spawnShell(`${await this.getProgram()} update`)
     const filter =
-      (options.names?.length ?? 0) > 0 ? ` ${options.names!.join(' ')}` : ''
+      options.names?.length > 0 ? ` ${options.names.join(' ')}` : ''
     await spawnShell(`${await this.getProgram()} upgrade --greedy` + filter)
   }
 }

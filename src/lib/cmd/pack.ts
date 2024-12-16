@@ -54,7 +54,7 @@ export function buildCmdPack() {
     buildCmd('list', 'list from local')
       .aliases(['l', '/', 'ls', 'qu', 'query'])
       .argument('[names...]', 'match name')
-      .action((names: Array<string> | undefined) => {
+      .action((names: Array<string>) => {
         runCmdPack('list', { names }, cmd.opts())
       }),
   )
@@ -63,7 +63,7 @@ export function buildCmdPack() {
     buildCmd('out', 'outdated from local')
       .aliases(['o', '!', 'outdated', 'old', 'ob', 'obsolete'])
       .argument('[names...]', 'match name')
-      .action((names: Array<string> | undefined) => {
+      .action((names: Array<string>) => {
         runCmdPack('out', { names }, cmd.opts())
       }),
   )
@@ -80,7 +80,7 @@ export function buildCmdPack() {
     buildCmd('up', 'upgrade from web')
       .aliases(['u', '^', 'update', 'upgrade', 'sy', 'sync'])
       .argument('[names...]', 'list of names')
-      .action((names: Array<string> | undefined) => {
+      .action((names: Array<string>) => {
         runCmdPack('up', { names }, cmd.opts())
       }),
   )
