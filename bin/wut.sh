@@ -1,10 +1,11 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 
 verMajor=5
-verMinor=2
+verMinor=9
 
-if [[ ${BASH_VERSINFO[0]} -lt $verMajor ]] || [[ ${BASH_VERSINFO[1]} -lt $verMinor ]]; then
-  echo "bash must be >= $verMajor.$verMinor .. found ${BASH_VERSION} .. aborting" >&2
+autoload is-at-least
+if ! is-at-least "$verMajor.$verMinor"; then
+  echo "zsh must be >= $verMajor.$verMinor .. found ${ZSH_VERSION} .. aborting" >&2
   exit 1
 fi
 
