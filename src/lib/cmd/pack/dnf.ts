@@ -22,7 +22,6 @@ export class Dnf implements Pack {
   }
   async del(options: { names: Array<string> }): Promise<void> {
     await this.shell(`${this.program} remove ${options.names.join(' ')}`)
-    await this.shell(`${this.program} autoremove`)
   }
   async find(options: { names: Array<string> }): Promise<void> {
     await this.shell(`${this.program} check-update`)
@@ -39,6 +38,7 @@ export class Dnf implements Pack {
   }
   async tidy(): Promise<void> {
     await this.shell(`${this.program} clean dbcache`)
+    await this.shell(`${this.program} autoremove`)
   }
   async up(options: { names: Array<string> }): Promise<void> {
     await this.shell(`${this.program} check-update`)

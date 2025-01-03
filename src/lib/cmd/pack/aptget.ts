@@ -22,7 +22,6 @@ export class AptGet implements Pack {
   }
   async del(options: { names: Array<string> }): Promise<void> {
     await this.shell(`${this.program} purge ${options.names.join(' ')}`)
-    await this.shell(`${this.program} autoremove`)
   }
   async find(options: { names: Array<string> }): Promise<void> {
     await this.shell(`${this.program} update`)
@@ -41,6 +40,7 @@ export class AptGet implements Pack {
   }
   async tidy(): Promise<void> {
     await this.shell(`${this.program} autoclean`)
+    await this.shell(`${this.program} autoremove`)
   }
   async up(
     options: { names: Array<string> },
