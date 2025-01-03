@@ -50,7 +50,7 @@ export function buildCmdPack(opts: OptionValues) {
 
   cmd.addCommand(
     buildCmd('find', 'find from web')
-      .aliases(['f', '?', 'se', 'search'])
+      .aliases(['f', '?', 'fi', 'se', 'search'])
       .argument('<names...>', 'names to match')
       .action((names: Array<string>) => {
         runCmdPack('find', { names }, cmdOpts)
@@ -59,7 +59,7 @@ export function buildCmdPack(opts: OptionValues) {
 
   cmd.addCommand(
     buildCmd('list', 'list from local')
-      .aliases(['l', '/', 'ls', 'qu', 'query'])
+      .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
       .argument('[names...]', 'names to match')
       .action((names: Array<string>) => {
         runCmdPack('list', { names }, cmdOpts)
@@ -68,7 +68,7 @@ export function buildCmdPack(opts: OptionValues) {
 
   cmd.addCommand(
     buildCmd('out', 'outdated from local')
-      .aliases(['o', '!', 'outdated', 'old', 'ob', 'obsolete'])
+      .aliases(['o', '!', 'ou', 'outdated', 'old', 'ob', 'obsolete'])
       .argument('[names...]', 'names to match')
       .action((names: Array<string>) => {
         runCmdPack('out', { names }, cmdOpts)
