@@ -2,8 +2,8 @@ import type { Pack } from '../pack.i.ts'
 
 import { runShell } from '../../shell.ts'
 
-export class WinGet implements Pack {
-  program = 'winget'
+export class Scoop implements Pack {
+  program = 'scoop'
   asRoot = false
   cmdOptions: Record<string, any>
 
@@ -17,12 +17,14 @@ export class WinGet implements Pack {
   }
 
   async add(options: { names: Array<string> }): Promise<void> {
+    await this.shell(`${this.program} update`)
     await this.shell(`${this.program} install ${options.names.join(' ')}`)
   }
   async del(options: { names: Array<string> }): Promise<void> {
     await this.shell(`${this.program} uninstall ${options.names.join(' ')}`)
   }
   async find(options: { names: Array<string> }): Promise<void> {
+    await this.shell(`${this.program} update`)
     for (const name of options.names) {
       await this.shell(`${this.program} search ${name}`)
     }
@@ -31,12 +33,16 @@ export class WinGet implements Pack {
     await this.shell(`${this.program} list`, options.names)
   }
   async out(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} upgrade`, options.names)
+    await this.shell(`${this.program} update`)
+    await this.shell(`${this.program} status`, options.names)
   }
-  async tidy(): Promise<void> {}
+  async tidy(): Promise<void> {
+    await this.shell(`${this.program} cleanup --all --cache`)
+  }
   async up(options: { names: Array<string> }): Promise<void> {
+    await this.shell(`${this.program} update`)
     await this.shell(
-      `${this.program} upgrade ` +
+      `${this.program} update ` +
         (options.names.length > 0 ? `${options.names.join(' ')}` : '--all'),
     )
   }

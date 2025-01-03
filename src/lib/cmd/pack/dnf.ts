@@ -2,9 +2,9 @@ import type { Pack } from '../pack.i.ts'
 
 import { runShell } from '../../shell.ts'
 
-export class WinGet implements Pack {
-  program = 'winget'
-  asRoot = false
+export class Dnf implements Pack {
+  program = 'dnf'
+  asRoot = true
   cmdOptions: Record<string, any>
 
   shell = (cmd: string, filter: Array<string> = []) => {
@@ -17,27 +17,36 @@ export class WinGet implements Pack {
   }
 
   async add(options: { names: Array<string> }): Promise<void> {
+    await this.shell(`${this.program} check-update`)
     await this.shell(`${this.program} install ${options.names.join(' ')}`)
   }
   async del(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} uninstall ${options.names.join(' ')}`)
+    await this.shell(`${this.program} remove ${options.names.join(' ')}`)
+    await this.shell(`${this.program} autoremove`)
   }
   async find(options: { names: Array<string> }): Promise<void> {
+    await this.shell(`${this.program} check-update`)
     for (const name of options.names) {
       await this.shell(`${this.program} search ${name}`)
     }
   }
   async list(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} list`, options.names)
+    await this.shell(`${this.program} list --installed`, options.names)
   }
   async out(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} upgrade`, options.names)
+    await this.shell(`${this.program} check-update`)
+    await this.shell(`${this.program} list --upgrades`, options.names)
   }
-  async tidy(): Promise<void> {}
+  async tidy(): Promise<void> {
+    await this.shell(`${this.program} clean dbcache`)
+  }
   async up(options: { names: Array<string> }): Promise<void> {
+    await this.shell(`${this.program} check-update`)
     await this.shell(
-      `${this.program} upgrade ` +
-        (options.names.length > 0 ? `${options.names.join(' ')}` : '--all'),
+      `${this.program} ` +
+        (options.names.length > 0
+          ? `upgrade ${options.names.join(' ')}`
+          : 'distro-sync'),
     )
   }
 

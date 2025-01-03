@@ -45,11 +45,12 @@ export class Pacman implements Pack {
   }
   async up(options: { names: Array<string> }): Promise<void> {
     await this.shell(`${this.program} --sync --refresh`)
-    if (options.names.length > 0) {
-      await this.shell(`${this.program} --sync ${options.names.join(' ')}`)
-    } else {
-      await this.shell(`${this.program} --sync --sysupgrade`)
-    }
+    await this.shell(
+      `${this.program} --sync ` +
+        (options.names.length > 0
+          ? `${options.names.join(' ')}`
+          : '--sysupgrade'),
+    )
   }
 
   constructor(cmdOptions?: Record<string, any>) {

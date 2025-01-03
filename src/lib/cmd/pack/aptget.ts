@@ -47,11 +47,12 @@ export class AptGet implements Pack {
     upgradeCmd: string = 'dist-upgrade',
   ): Promise<void> {
     await this.shell(`${this.program} update`)
-    if (options.names.length > 0) {
-      await this.shell(`${this.program} install ${options.names.join(' ')}`)
-    } else {
-      await this.shell(`${this.program} ${upgradeCmd}`)
-    }
+    await this.shell(
+      `${this.program}` +
+        (options.names.length > 0
+          ? ` install ${options.names.join(' ')}`
+          : ` ${upgradeCmd}`),
+    )
   }
 
   constructor(cmdOptions?: Record<string, any>) {

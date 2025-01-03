@@ -12,7 +12,6 @@ import { WinGet } from './pack/winget.ts'
 const packs = [
   'apt',
   'apt-get',
-  'dnf',
   'yay',
   'pacman',
   'brew',
@@ -130,9 +129,6 @@ async function runCmdPack(
         break
       case 'apt-get':
         pack = new AptGet(cmdOptions)
-        break
-      case 'dnf':
-        throw new Error(`not ready yet`)
         break
       case 'brew':
         pack = new Brew(cmdOptions)
