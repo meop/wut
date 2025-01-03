@@ -1,67 +1,72 @@
 import type { Pack } from '../pack.i.ts'
 
-import { isInPath } from '../../path.ts'
-import { filterShell, spawnShell } from '../../shell.ts'
+import { runShell } from '../../shell.ts'
 
 export class AptGet implements Pack {
-  async getProgram(): Promise<string> {
-    return ((await isInPath('sudo')) ? 'sudo ' : '') + 'apt-get'
+  program = 'apt-get'
+  asRoot = true
+  cmdOptions: Record<string, any>
+
+  shell = (cmd: string, filter: Array<string> = []) => {
+    return runShell(cmd, {
+      asRoot: this.asRoot,
+      dryRun: this.cmdOptions?.dryRun,
+      filter,
+      verbose: true,
+    })
   }
 
   async add(options: { names: Array<string> }): Promise<void> {
-    await spawnShell(`${await this.getProgram()} update`)
-    const filter = ` ${options.names.join(' ')}`
-    await spawnShell(`${await this.getProgram()} install` + filter)
+    await this.shell(`${this.program} update`)
+    await this.shell(`${this.program} install ${options.names.join(' ')}`)
   }
   async del(options: { names: Array<string> }): Promise<void> {
-    const filter = ` ${options.names.join(' ')}`
-    await spawnShell(`${await this.getProgram()} purge` + filter)
-    await spawnShell(`${await this.getProgram()} autoremove`)
+    await this.shell(`${this.program} purge ${options.names.join(' ')}`)
+    await this.shell(`${this.program} autoremove`)
   }
-  async find(options: { name: string }): Promise<void> {
-    await spawnShell(`${await this.getProgram()} update`)
-    const filter = ` ${options.name}`
-    await spawnShell(
-      `${(await this.getProgram()).replace('apt-get', 'apt-cache')} search` +
-        filter,
-    )
+  async find(options: { names: Array<string> }): Promise<void> {
+    await this.shell(`${this.program} update`)
+    for (const name of options.names) {
+      await this.shell(
+        `${this.program.replace('apt-get', 'apt-cache')} search ${name}`,
+      )
+    }
   }
   async list(options: { names: Array<string> }): Promise<void> {
-    await filterShell(
-      `${await this.getProgram()} list --installed`,
-      options.names,
-    )
+    await this.shell(`${this.program} list --installed`, options.names)
   }
   async out(options: { names: Array<string> }): Promise<void> {
-    await spawnShell(`${await this.getProgram()} update`)
-    await filterShell(
-      `${await this.getProgram()} list --upgradeable`,
-      options.names,
-    )
+    await this.shell(`${this.program} update`)
+    await this.shell(`${this.program} list --upgradeable`, options.names)
   }
   async tidy(): Promise<void> {
-    await spawnShell(`${await this.getProgram()} autoclean`)
+    await this.shell(`${this.program} autoclean`)
   }
   async up(
     options: { names: Array<string> },
     upgradeCmd: string = 'dist-upgrade',
   ): Promise<void> {
-    await spawnShell(`${await this.getProgram()} update`)
+    await this.shell(`${this.program} update`)
     if (options.names.length > 0) {
-      const filter = ` ${options.names.join(' ')}`
-      await spawnShell(`${await this.getProgram()} install` + filter)
+      await this.shell(`${this.program} install ${options.names.join(' ')}`)
     } else {
-      await spawnShell(`${await this.getProgram()} ${upgradeCmd}`)
+      await this.shell(`${this.program} ${upgradeCmd}`)
     }
+  }
+
+  constructor(cmdOptions?: Record<string, any>) {
+    this.cmdOptions = cmdOptions ?? {}
   }
 }
 
 export class Apt extends AptGet {
-  async getProgram(): Promise<string> {
-    return ((await isInPath('sudo')) ? 'sudo ' : '') + 'apt'
-  }
+  program = 'apt'
 
   async up(options: { names: Array<string> }): Promise<void> {
     await super.up(options, 'full-upgrade')
+  }
+
+  constructor(cmdOptions?: Record<string, any>) {
+    super(cmdOptions)
   }
 }

@@ -9,7 +9,7 @@ function colorLog(
   msg: string,
   newLine: boolean,
   color: string = 'white',
-  writeFunc: (str: string) => void = stdoutWrite
+  writeFunc: (str: string) => void = stdoutWrite,
 ) {
   writeFunc(colorStr(color, msg))
   if (newLine) {

@@ -1,5 +1,5 @@
 import { getPlatform } from './os.ts'
-import { execShell } from './shell.ts'
+import { runShell } from './shell.ts'
 
 const platformToFindCmd = {
   linux: 'which',
@@ -7,9 +7,14 @@ const platformToFindCmd = {
   windows: 'where',
 }
 
-export async function isInPath(program: string): Promise<boolean> {
+export async function isInPath(
+  program: string,
+  verbose?: boolean,
+): Promise<boolean> {
   try {
-    await execShell(`${platformToFindCmd[getPlatform()]} ${program}`)
+    await runShell(`${platformToFindCmd[getPlatform()]} ${program}`, {
+      verbose,
+    })
     return true
   } catch {
     return false

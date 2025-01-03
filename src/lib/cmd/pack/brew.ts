@@ -1,39 +1,52 @@
 import type { Pack } from '../pack.i.ts'
 
-import { filterShell, spawnShell } from '../../shell.ts'
+import { runShell } from '../../shell.ts'
 
 export class Brew implements Pack {
-  async getProgram(): Promise<string> {
-    return 'brew'
+  program = 'brew'
+  asRoot = false
+  cmdOptions: Record<string, any>
+
+  shell = (cmd: string, filter: Array<string> = []) => {
+    return runShell(cmd, {
+      asRoot: this.asRoot,
+      dryRun: this.cmdOptions?.dryRun,
+      filter,
+      verbose: true,
+    })
   }
 
   async add(options: { names: Array<string> }): Promise<void> {
-    await spawnShell(`${await this.getProgram()} update`)
-    const filter = ` ${options.names.join(' ')}`
-    await spawnShell(`${await this.getProgram()} install` + filter)
+    await this.shell(`${this.program} update`)
+    await this.shell(`${this.program} install ${options.names.join(' ')}`)
   }
   async del(options: { names: Array<string> }): Promise<void> {
-    const filter = ` ${options.names.join(' ')}`
-    await spawnShell(`${await this.getProgram()} uninstall` + filter)
+    await this.shell(`${this.program} uninstall ${options.names.join(' ')}`)
   }
-  async find(options: { name: string }): Promise<void> {
-    const filter = ` ${options.name}`
-    await spawnShell(`${await this.getProgram()} search` + filter)
+  async find(options: { names: Array<string> }): Promise<void> {
+    for (const name of options.names) {
+      await this.shell(`${this.program} search ${name}`)
+    }
   }
   async list(options: { names: Array<string> }): Promise<void> {
-    await filterShell(`${await this.getProgram()} list`, options.names)
+    await this.shell(`${this.program} list`, options.names)
   }
   async out(options: { names: Array<string> }): Promise<void> {
-    await spawnShell(`${await this.getProgram()} update`)
-    await filterShell(`${await this.getProgram()} outdated`, options.names)
+    await this.shell(`${this.program} update`)
+    await this.shell(`${this.program} outdated`, options.names)
   }
   async tidy(): Promise<void> {
-    await spawnShell(`${await this.getProgram()} cleanup --prune=all`)
+    await this.shell(`${this.program} cleanup --prune=all`)
   }
   async up(options: { names: Array<string> }): Promise<void> {
-    await spawnShell(`${await this.getProgram()} update`)
-    const filter =
-      options.names?.length > 0 ? ` ${options.names.join(' ')}` : ''
-    await spawnShell(`${await this.getProgram()} upgrade --greedy` + filter)
+    await this.shell(`${this.program} update`)
+    await this.shell(
+      `${this.program} upgrade --greedy` +
+        (options.names?.length > 0 ? ` ${options.names.join(' ')}` : ''),
+    )
+  }
+
+  constructor(cmdOptions?: Record<string, any>) {
+    this.cmdOptions = cmdOptions ?? {}
   }
 }

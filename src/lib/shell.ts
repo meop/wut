@@ -6,21 +6,68 @@ import { sleep } from './time.ts'
 
 const exec = util.promisify(cp.exec)
 
-export async function execShell(command: string) {
-  return await exec(command, {
+function getCmdAndCmdArgs(
+  command: string,
+  options?: {
+    asRoot?: boolean
+    dryRun?: boolean
+    verbose?: boolean
+  },
+) {
+  const fullCommand = (options?.asRoot ? 'sudo ' : '') + command
+  const cmdArgs = fullCommand.split(' ')
+  const cmd = cmdArgs.shift()
+
+  if (options?.verbose) {
+    logCmd(cmd! + ' ', false)
+    logArg(cmdArgs.join(' '))
+  }
+
+  return { cmd, cmdArgs }
+}
+
+export async function execShell(
+  command: string,
+  options?: {
+    asRoot?: boolean
+    dryRun?: boolean
+    verbose?: boolean
+  },
+) {
+  const { cmd, cmdArgs } = getCmdAndCmdArgs(command, options)
+  const fullCommand = cmd! + ' ' + cmdArgs.join(' ')
+
+  if (options?.dryRun) {
+    return {
+      stdout: '',
+      stderr: '',
+    }
+  }
+
+  return await exec(`${fullCommand}`, {
     encoding: 'utf8',
   })
 }
 
-export async function spawnShell(command: string) {
-  const cmdArgs = command.split(' ')
-  const cmd = cmdArgs.shift()
+export async function spawnShell(
+  command: string,
+  options?: {
+    asRoot?: boolean
+    dryRun?: boolean
+    verbose?: boolean
+  },
+) {
+  const { cmd, cmdArgs } = getCmdAndCmdArgs(command, options)
+  const fullCommand = cmd! + ' ' + cmdArgs.join(' ')
+  let exitCode = 0
 
-  logCmd(cmd! + ' ', false)
-  logArg(cmdArgs.join(' '))
+  if (options?.dryRun) {
+    return
+  }
+
   const proc = cp.spawn(cmd!, cmdArgs, {
     shell: true,
-    stdio: 'inherit',
+    stdio: options?.verbose ? 'inherit' : 'pipe',
   })
 
   let done = false
@@ -29,28 +76,43 @@ export async function spawnShell(command: string) {
   })
 
   proc.on('error', (err) => {
-    logError(`could not run ${command}: ${err.message}\n`)
+    logError(`running '${fullCommand}' produced error: ${err.message}\n`)
+  })
+
+  proc.on('exit', (code) => {
+    exitCode = code ?? 0
   })
 
   while (!done) {
     await sleep(100)
   }
+
+  if (exitCode !== 0) {
+    throw new Error(
+      `running '${fullCommand}' produced error code: ${exitCode}\n`,
+    )
+  }
 }
 
-export async function filterShell(
+export async function runShell(
   command: string,
-  filter: Array<string>,
+  options?: {
+    asRoot?: boolean
+    dryRun?: boolean
+    filter?: Array<string>
+    verbose?: boolean
+  },
 ) {
-  if (filter.length > 0) {
-    for (const f of filter!) {
-      const o = await execShell(command)
-      for (const line of o.stdout.split('\n')) {
+  if (options?.filter && options?.filter.length > 0) {
+    const o = await execShell(command, options)
+    for (const line of o.stdout.split('\n')) {
+      for (const f of options.filter) {
         if (line.includes(f)) {
           log(line)
         }
       }
     }
   } else {
-    await spawnShell(command)
+    await spawnShell(command, options)
   }
 }
