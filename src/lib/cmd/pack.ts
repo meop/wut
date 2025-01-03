@@ -121,7 +121,7 @@ async function runCmdPack(
   cmdOptions?: Record<string, any>,
 ): Promise<void> {
   let packNames = cmdOptions?.manager
-    ? [String(cmdOptions.manager)]
+    ? [String(cmdOptions.manager.toLowerCase())]
     : await getPacks(cmdOptions?.verbose)
 
   const redundantPacks: Array<string> = []

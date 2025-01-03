@@ -107,7 +107,7 @@ export async function runShell(
     const o = await execShell(command, options)
     for (const line of o.stdout.split('\n')) {
       for (const f of options.filter) {
-        if (line.includes(f)) {
+        if (line.toLowerCase().includes(f.toLowerCase())) {
           log(line)
         }
       }
