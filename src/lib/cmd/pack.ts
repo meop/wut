@@ -76,8 +76,8 @@ export function buildCmdPack(opts: OptionValues) {
   )
 
   cmd.addCommand(
-    buildCmd('old', 'old on local')
-      .aliases(['o', '!', 'ol', 'ou', 'out', 'outdated', 'ob', 'obsolete'])
+    buildCmd('out', 'out of sync on local')
+      .aliases(['o', '!', 'ou', 'outdated', 'ob', 'obsolete', 'ol', 'old'])
       .argument('[names...]', 'names to match')
       .action((names: Array<string>) => {
         runCmdPack('out', { names }, cmdOpts)
@@ -93,7 +93,7 @@ export function buildCmdPack(opts: OptionValues) {
   )
 
   cmd.addCommand(
-    buildCmd('up', 'upgrade from web')
+    buildCmd('up', 'sync up from web')
       .aliases(['u', '^', 'update', 'upgrade', 'sy', 'sync'])
       .argument('[names...]', 'names to match')
       .action((names: Array<string>) => {

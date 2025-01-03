@@ -32,7 +32,7 @@ export class Dnf implements Pack {
   async list(options: { names: Array<string> }): Promise<void> {
     await this.shell(`${this.program} list --installed`, options.names)
   }
-  async old(options: { names: Array<string> }): Promise<void> {
+  async out(options: { names: Array<string> }): Promise<void> {
     await this.shell(`${this.program} check-update`)
     await this.shell(`${this.program} list --upgrades`, options.names)
   }

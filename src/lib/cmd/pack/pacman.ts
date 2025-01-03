@@ -36,7 +36,7 @@ export class Pacman implements Pack {
   async list(options: { names: Array<string> }): Promise<void> {
     await this.shell(`${this.program} --query`, options.names)
   }
-  async old(options: { names: Array<string> }): Promise<void> {
+  async out(options: { names: Array<string> }): Promise<void> {
     await this.shell(`${this.program} --sync --refresh`)
     await this.shell(`${this.program} --query --upgrades`, options.names)
   }
