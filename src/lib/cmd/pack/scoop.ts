@@ -32,7 +32,7 @@ export class Scoop implements Pack {
   async list(options: { names: Array<string> }): Promise<void> {
     await this.shell(`${this.program} list`, options.names)
   }
-  async out(options: { names: Array<string> }): Promise<void> {
+  async old(options: { names: Array<string> }): Promise<void> {
     await this.shell(`${this.program} update`)
     await this.shell(`${this.program} status`, options.names)
   }

@@ -49,7 +49,7 @@ export function buildCmdPack(opts: OptionValues) {
   )
 
   cmd.addCommand(
-    buildCmd('del', 'delete from local')
+    buildCmd('del', 'delete on local')
       .aliases(['d', '-', 'delete', 'rm', 'rem', 'remove', 'un', 'uninstall'])
       .argument('<names...>', 'names to match')
       .action((names: Array<string>) => {
@@ -67,7 +67,7 @@ export function buildCmdPack(opts: OptionValues) {
   )
 
   cmd.addCommand(
-    buildCmd('list', 'list from local')
+    buildCmd('list', 'list on local')
       .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
       .argument('[names...]', 'names to match')
       .action((names: Array<string>) => {
@@ -76,8 +76,8 @@ export function buildCmdPack(opts: OptionValues) {
   )
 
   cmd.addCommand(
-    buildCmd('out', 'outdated from local')
-      .aliases(['o', '!', 'ou', 'outdated', 'old', 'ob', 'obsolete'])
+    buildCmd('old', 'old on local')
+      .aliases(['o', '!', 'ol', 'ou', 'out', 'outdated', 'ob', 'obsolete'])
       .argument('[names...]', 'names to match')
       .action((names: Array<string>) => {
         runCmdPack('out', { names }, cmdOpts)
@@ -85,19 +85,8 @@ export function buildCmdPack(opts: OptionValues) {
   )
 
   cmd.addCommand(
-    buildCmd('tidy', 'tidyup from local')
-      .aliases([
-        't',
-        '@',
-        'tidyup',
-        'cl',
-        'clean',
-        'cleanup',
-        'pr',
-        'prune',
-        'pu',
-        'purge',
-      ])
+    buildCmd('tidy', 'tidy on local')
+      .aliases(['t', '@', 'ti', 'cl', 'clean', 'pr', 'prune', 'pu', 'purge'])
       .action(() => {
         runCmdPack('tidy', {}, cmdOpts)
       }),
