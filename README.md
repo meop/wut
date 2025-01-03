@@ -13,7 +13,7 @@ MacOS
 
 ### prereqs
 
-- bash
+- zsh
 - node
 - git
 
@@ -21,13 +21,13 @@ MacOS
 
 - link repo
 
-```bash
+```zsh
 ln -s "$HOME/source/code/meop/wut" "$HOME/.wut"
 ```
 
 - add to profile
 
-```bash
+```zsh
 if [[ -d "$HOME/.wut" ]]; then
   export WUT_LOCATION="$HOME/.wut"
   alias wut="$WUT_LOCATION/bin/wut.sh"
