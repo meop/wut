@@ -6,7 +6,9 @@ import { isInPath } from '../path.ts'
 
 import { Apt, AptGet } from './pack/aptget.ts'
 import { Brew } from './pack/brew.ts'
+import { Dnf } from './pack/dnf.ts'
 import { Yay, Pacman } from './pack/pacman.ts'
+import { Scoop } from './pack/scoop.ts'
 import { WinGet } from './pack/winget.ts'
 
 const packs = [
@@ -14,10 +16,18 @@ const packs = [
   'apt-get',
   'yay',
   'pacman',
+  'zypper',
+  'dnf',
   'brew',
   'winget',
   'scoop',
 ]
+
+const packWraps = {
+  apt: 'apt-get',
+  yay: 'pacman',
+  zypper: 'dnf',
+}
 
 export function buildCmdPack(opts: OptionValues) {
   const cmd = buildCmd('pack', 'packaging operations')
@@ -76,7 +86,18 @@ export function buildCmdPack(opts: OptionValues) {
 
   cmd.addCommand(
     buildCmd('tidy', 'tidyup from local')
-      .aliases(['t', '@', 'tidyup', 'cl', 'clean', 'cleanup', 'pu', 'purge'])
+      .aliases([
+        't',
+        '@',
+        'tidyup',
+        'cl',
+        'clean',
+        'cleanup',
+        'pr',
+        'prune',
+        'pu',
+        'purge',
+      ])
       .action(() => {
         runCmdPack('tidy', {}, cmdOpts)
       }),
@@ -110,9 +131,17 @@ async function runCmdPack(
   opArgs?: Record<string, any>,
   cmdOptions?: Record<string, any>,
 ): Promise<void> {
-  const packNames = cmdOptions?.manager
+  let packNames = cmdOptions?.manager
     ? [String(cmdOptions.manager)]
     : await getPacks(cmdOptions?.verbose)
+
+  const redundantPacks: Array<string> = []
+  for (const [key, value] of Object.entries(packWraps)) {
+    if (packNames.includes(key) && packNames.includes(value)) {
+      redundantPacks.push(value)
+    }
+  }
+  packNames = packNames.filter((p) => !redundantPacks.includes(p))
 
   for (const packName of packNames) {
     let pack: Pack
@@ -130,6 +159,9 @@ async function runCmdPack(
       case 'apt-get':
         pack = new AptGet(cmdOptions)
         break
+      case 'dnf':
+        pack = new Dnf(cmdOptions)
+        break
       case 'brew':
         pack = new Brew(cmdOptions)
         break
@@ -137,7 +169,7 @@ async function runCmdPack(
         pack = new WinGet(cmdOptions)
         break
       case 'scoop':
-        throw new Error(`not ready yet`)
+        pack = new Scoop(cmdOptions)
         break
       default:
         throw new Error(`not a supported package manager: ${packName}`)

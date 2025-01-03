@@ -37,7 +37,7 @@ export class AptGet implements Pack {
   }
   async out(options: { names: Array<string> }): Promise<void> {
     await this.shell(`${this.program} update`)
-    await this.shell(`${this.program} list --upgradeable`, options.names)
+    await this.shell(`${this.program} list --upgradable`, options.names)
   }
   async tidy(): Promise<void> {
     await this.shell(`${this.program} autoclean`)
