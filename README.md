@@ -1,18 +1,15 @@
 # wut
 
-web update tool
+Web Update Tool
 
 ## targets
 
-amd64 linux
-amd64 macos
-amd64 windows
-
-arm64 linux
-arm64 macos
-arm64 windows
+same targets as NodeJS
 
 ## unix
+
+Linux
+MacOS
 
 ### prereqs
 
