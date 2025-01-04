@@ -9,11 +9,9 @@ export async function runCli(name: string, description: string) {
   const prog = buildCmd(name, description, program)
     .option('-d, --dry-run', 'dry run')
     .option('-v, --verbose', 'verbose output')
-
-  const progOpts = prog.opts()
-  
-  prog.addCommand(buildCmdPack(progOpts))
-  prog.addCommand(buildCmdUp(progOpts))
+ 
+  prog.addCommand(buildCmdPack(() => prog.opts()))
+  prog.addCommand(buildCmdUp(() => prog.opts()))
     
   await prog.parseAsync()
 }

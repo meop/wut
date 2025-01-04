@@ -33,6 +33,11 @@ export class WinGet implements Pack {
   async out(options: { names: Array<string> }): Promise<void> {
     await this.shell(`${this.program} upgrade`, options.names)
   }
+  async repo(options: { names: Array<string> }): Promise<void> {
+    for (const name of options.names) {
+      await this.shell(`${this.program} source add ${name}`)
+    }
+  }
   async tidy(): Promise<void> {}
   async up(options: { names: Array<string> }): Promise<void> {
     await this.shell(

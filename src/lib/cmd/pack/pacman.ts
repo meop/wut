@@ -40,6 +40,9 @@ export class Pacman implements Pack {
     await this.shell(`${this.program} --sync --refresh`)
     await this.shell(`${this.program} --query --upgrades`, options.names)
   }
+  async repo(_options: { names: Array<string> }): Promise<void> {
+    throw new Error(`${this.program} edits repos manually in /etc/pacman.conf`)
+  }
   async tidy(): Promise<void> {
     await this.shell(`${this.program} --sync --clean`)
   }

@@ -36,6 +36,18 @@ export class Dnf implements Pack {
     await this.shell(`${this.program} check-update`)
     await this.shell(`${this.program} list --upgrades`, options.names)
   }
+  async repo(options: { names: Array<string> }): Promise<void> {
+    for (const name of options.names) {
+      await this.shell(`${this.program} config-manager --add-repo ${name}`)
+      await this.shell(
+        `${this.program} config-manager --set-enabled ${name
+          .split('/')
+          .pop()
+          ?.split('.')
+          .shift()}`,
+      )
+    }
+  }
   async tidy(): Promise<void> {
     await this.shell(`${this.program} clean dbcache`)
     await this.shell(`${this.program} autoremove`)

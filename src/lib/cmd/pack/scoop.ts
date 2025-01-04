@@ -36,6 +36,11 @@ export class Scoop implements Pack {
     await this.shell(`${this.program} update`)
     await this.shell(`${this.program} status`, options.names)
   }
+  async repo(options: { names: Array<string> }): Promise<void> {
+    for (const name of options.names) {
+      await this.shell(`${this.program} bucket add ${name}`)
+    }
+  }
   async tidy(): Promise<void> {
     await this.shell(`${this.program} cleanup --all --cache`)
   }

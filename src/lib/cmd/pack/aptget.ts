@@ -38,6 +38,12 @@ export class AptGet implements Pack {
     await this.shell(`${this.program} update`)
     await this.shell(`${this.program} list --upgradable`, options.names)
   }
+  async repo(options: { names: Array<string> }): Promise<void> {
+    await this.add({ names: ['software-properties-common'] })
+    for (const name of options.names) {
+      await this.shell(`add-apt-repository ${name}`)
+    }
+  }
   async tidy(): Promise<void> {
     await this.shell(`${this.program} autoclean`)
     await this.shell(`${this.program} autoremove`)

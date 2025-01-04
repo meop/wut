@@ -42,6 +42,11 @@ export class Brew implements Pack {
     await this.shell(`${this.program} update`)
     await this.shell(`${this.program} outdated`, options.names)
   }
+  async repo(options: { names: Array<string> }): Promise<void> {
+    for (const name of options.names) {
+      await this.shell(`${this.program} tap ${name}`)
+    }
+  }
   async tidy(): Promise<void> {
     await this.shell(`${this.program} cleanup --prune=all`)
   }
@@ -49,7 +54,7 @@ export class Brew implements Pack {
     await this.shell(`${this.program} update`)
     await this.shell(
       `${this.program} upgrade --greedy` +
-        (options.names?.length > 0 ? ` ${options.names.join(' ')}` : ''),
+      (options.names?.length > 0 ? ` ${options.names.join(' ')}` : ''),
     )
   }
 
