@@ -18,14 +18,22 @@ if ! type git > /dev/null; then
   exit 1
 fi
 
+if ! [[ -n "${WUT_CONFIG_LOCATION}" ]]; then
+  export WUT_CONFIG_LOCATION="${HOME}/.wut-config"
+fi
 if ! [[ -n "${WUT_LOCATION}" ]]; then
-  WUT_LOCATION="${HOME}/.wut"
+  export WUT_LOCATION="${HOME}/.wut"
 fi
 
 export NODE_NO_WARNINGS=1
 export NODE_OPTIONS='--experimental-strip-types --experimental-transform-types'
 
 if [[ "$#" -gt 0 && "$1" == 'up' ]]; then
+  echo "> git -C "${WUT_CONFIG_LOCATION}" pull --prune"
+  echo
+  git -C "${WUT_CONFIG_LOCATION}" pull --prune
+  echo
+
   echo "> git -C "${WUT_LOCATION}" pull --prune"
   echo
   git -C "${WUT_LOCATION}" pull --prune

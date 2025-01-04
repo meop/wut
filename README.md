@@ -22,6 +22,7 @@ MacOS
 - link repo
 
 ```zsh
+ln -s "$HOME/source/code/meop/wut-config" "$HOME/.wut-config"
 ln -s "$HOME/source/code/meop/wut" "$HOME/.wut"
 ```
 
@@ -29,8 +30,7 @@ ln -s "$HOME/source/code/meop/wut" "$HOME/.wut"
 
 ```zsh
 if [[ -d "$HOME/.wut" ]]; then
-  export WUT_LOCATION="$HOME/.wut"
-  alias wut="$WUT_LOCATION/bin/wut.sh"
+  alias wut="$HOME/.wut/bin/wut.zsh"
 fi
 ```
 
@@ -53,6 +53,7 @@ Windows
 - link repo
 
 ```pwsh
+New-Item -ItemType SymbolicLink -Value "$env:HOME\source\code\meop\wut-config" -Path "$env:HOME\.wut-config"
 New-Item -ItemType SymbolicLink -Value "$env:HOME\source\code\meop\wut" -Path "$env:HOME\.wut"
 ```
 
@@ -60,8 +61,7 @@ New-Item -ItemType SymbolicLink -Value "$env:HOME\source\code\meop\wut" -Path "$
 
 ```pwsh
 if (Test-Path "$env:HOME\.wut") {
-  $env:WUT_LOCATION = "$env:HOME\.wut"
-  Set-Alias -Name wut -Value "$env:WUT_LOCATION\bin\wut.ps1"
+  Set-Alias -Name wut -Value "$env:HOME\.wut\bin\wut.ps1"
 }
 ```
 

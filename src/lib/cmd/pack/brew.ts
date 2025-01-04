@@ -16,9 +16,16 @@ export class Brew implements Pack {
     })
   }
 
-  async add(options: { names: Array<string> }): Promise<void> {
+  async add(
+    options: { names: Array<string> },
+    cask: boolean = false,
+  ): Promise<void> {
     await this.shell(`${this.program} update`)
-    await this.shell(`${this.program} install ${options.names.join(' ')}`)
+    await this.shell(
+      `${this.program} install${cask ? ' --cask' : ''} ${options.names.join(
+        ' ',
+      )}`,
+    )
   }
   async del(options: { names: Array<string> }): Promise<void> {
     await this.shell(`${this.program} uninstall ${options.names.join(' ')}`)

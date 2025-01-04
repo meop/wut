@@ -100,19 +100,26 @@ export async function runShell(
     asRoot?: boolean
     dryRun?: boolean
     filter?: Array<string>
+    throwOnExitCode?: boolean
     verbose?: boolean
   },
 ) {
-  if (options?.filter && options?.filter.length > 0) {
-    const o = await execShell(command, options)
-    for (const line of o.stdout.split('\n')) {
-      for (const f of options.filter) {
-        if (line.toLowerCase().includes(f.toLowerCase())) {
-          log(line)
+  try {
+    if (options?.filter && options?.filter.length > 0) {
+      const o = await execShell(command, options)
+      for (const line of o.stdout.split('\n')) {
+        for (const f of options.filter) {
+          if (line.toLowerCase().includes(f.toLowerCase())) {
+            log(line)
+          }
         }
       }
+    } else {
+      await spawnShell(command, options)
     }
-  } else {
-    await spawnShell(command, options)
+  } catch (err) {
+    if (options?.throwOnExitCode) {
+      throw err
+    }
   }
 }

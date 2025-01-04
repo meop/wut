@@ -13,6 +13,7 @@ export async function isInPath(
 ): Promise<boolean> {
   try {
     await runShell(`${platformToFindCmd[getPlatform()]} ${program}`, {
+      throwOnExitCode: true,
       verbose,
     })
     return true

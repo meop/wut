@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "commander": "^13.0.0",
+    "yaml": "^2.7.0",
     "yoctocolors": "^2.1.1"
   }
 }
