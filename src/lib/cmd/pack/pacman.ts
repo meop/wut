@@ -1,71 +1,59 @@
-import type { Pack } from '../pack.i.ts'
+import type { Pack } from '../../cmd.ts'
+import type { ShellOpts } from '../../shell.ts'
 
-import { runShell } from '../../shell.ts'
+import { shellRun } from '../../shell.ts'
 
 export class Pacman implements Pack {
-  program = 'pacman'
-  asRoot = true
-  cmdOptions: Record<string, any>
+  program = 'sudo pacman'
+  shellOpts: ShellOpts
 
-  shell = (cmd: string, filter: Array<string> = []) => {
-    return runShell(cmd, {
-      asRoot: this.asRoot,
-      dryRun: this.cmdOptions?.dryRun,
-      filter,
+  shell = (cmd: string, filters?: Array<string>) => {
+    return shellRun(`${this.program} ${cmd}`, {
+      ...this.shellOpts,
+      filters,
       verbose: true,
     })
   }
 
-  async add(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} --sync --refresh`)
-    await this.shell(`${this.program} --sync ${options.names.join(' ')}`)
+  async add(names: Array<string>) {
+    await this.shell('--sync --refresh')
+    await this.shell(`--sync ${names.join(' ')}`)
   }
-  async del(options: { names: Array<string> }): Promise<void> {
-    await this.shell(
-      `${this.program} --remove --recursive --nosave ${options.names.join(
-        ' ',
-      )}`,
-    )
+  async del(names: Array<string>) {
+    await this.shell(`--remove --recursive --nosave ${names.join(' ')}`)
   }
-  async find(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} --sync --refresh`)
-    for (const name of options.names) {
-      await this.shell(`${this.program} --query --search ${name}`)
+  async find(names: Array<string>) {
+    await this.shell('--sync --refresh')
+    for (const name of names) {
+      await this.shell(`--query --search ${name}`)
     }
   }
-  async list(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} --query`, options.names)
+  async list(names: Array<string>) {
+    await this.shell('--query', names)
   }
-  async out(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} --sync --refresh`)
-    await this.shell(`${this.program} --query --upgrades`, options.names)
+  async out(names: Array<string>) {
+    await this.shell('--sync --refresh')
+    await this.shell('--query --upgrades', names)
   }
-  async repo(_options: { names: Array<string> }): Promise<void> {
-    throw new Error(`${this.program} edits repos manually in /etc/pacman.conf`)
+  async tidy() {
+    await this.shell('--sync --clean')
   }
-  async tidy(): Promise<void> {
-    await this.shell(`${this.program} --sync --clean`)
-  }
-  async up(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} --sync --refresh`)
+  async up(names: Array<string>) {
+    await this.shell('--sync --refresh')
     await this.shell(
-      `${this.program} --sync ` +
-        (options.names.length > 0
-          ? `${options.names.join(' ')}`
-          : '--sysupgrade'),
+      '--sync' + (names.length > 0 ? ` ${names.join(' ')}` : ' --sysupgrade'),
     )
   }
 
-  constructor(cmdOptions?: Record<string, any>) {
-    this.cmdOptions = cmdOptions ?? {}
+  constructor(shellOpts?: ShellOpts) {
+    this.shellOpts = shellOpts ?? {}
   }
 }
 
 export class Yay extends Pacman {
   program = 'yay'
-  asRoot = false
 
-  constructor(cmdOptions?: Record<string, any>) {
-    super(cmdOptions)
+  constructor(shellOpts?: ShellOpts) {
+    super(shellOpts)
   }
 }

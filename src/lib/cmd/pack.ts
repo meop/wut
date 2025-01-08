@@ -1,8 +1,12 @@
-import type { OptionValues } from 'commander'
+import type { Command } from 'commander'
+
+import type { CmdOpts, Pack } from '../cmd.ts'
+import type { ShellOpts } from '../shell.ts'
 
 import { buildCmd } from '../cmd.ts'
-import { loadConfigFilePath } from '../config.ts'
+import { findConfigFilePaths, loadConfigFile } from '../config.ts'
 import { isInPath } from '../path.ts'
+import { shellRun } from '../shell.ts'
 
 import { Apt, AptGet } from './pack/aptget.ts'
 import { Brew } from './pack/brew.ts'
@@ -29,8 +33,16 @@ const validPackWraps = {
   zypper: 'dnf',
 }
 
-export function buildCmdPack(getParentOpts: () => OptionValues) {
-  const cmd = buildCmd('pack', 'packaging operations')
+type CmdPackArgs = {
+  names?: Array<string>
+}
+
+type CmdPackOpts = {
+  manager?: string
+}
+
+export function buildCmdPack(getParentOpts: () => CmdOpts): Command {
+  const cmd = buildCmd('pack', 'package manager operations')
     .aliases(['p', 'package'])
     .option('-m, --manager <manager>', 'desired manager')
 
@@ -47,15 +59,6 @@ export function buildCmdPack(getParentOpts: () => OptionValues) {
       .argument('<names...>', 'names to match')
       .action((names: Array<string>) => {
         runCmdPack('add', { names }, getOpts)
-      }),
-  )
-
-  cmd.addCommand(
-    buildCmd('cfg', 'cfg from local')
-      .aliases(['c', '#', 'config', 'ru', 'run', 'ex', 'exe', 'exec'])
-      .argument('<names...>', 'names of config files')
-      .action((names: Array<string>) => {
-        runCmdPack('cfg', { names }, getOpts)
       }),
   )
 
@@ -115,10 +118,10 @@ export function buildCmdPack(getParentOpts: () => OptionValues) {
   return cmd
 }
 
-async function getValidPacks(verbose?: boolean): Promise<Array<string>> {
+export async function getValidPacks(shellOpts?: ShellOpts) {
   const packs: Array<string> = []
   for (const validPack of validPacks) {
-    if (await isInPath(validPack, verbose)) {
+    if (await isInPath(validPack, shellOpts)) {
       packs.push(validPack)
     }
   }
@@ -126,24 +129,24 @@ async function getValidPacks(verbose?: boolean): Promise<Array<string>> {
   return packs
 }
 
-function getPack(name: string, cmdOptions?: Record<string, any>) {
+function getPack(name: string, shellOpts?: ShellOpts): Pack {
   switch (name) {
     case 'yay':
-      return new Yay(cmdOptions)
+      return new Yay(shellOpts)
     case 'pacman':
-      return new Pacman(cmdOptions)
+      return new Pacman(shellOpts)
     case 'apt':
-      return new Apt(cmdOptions)
+      return new Apt(shellOpts)
     case 'apt-get':
-      return new AptGet(cmdOptions)
+      return new AptGet(shellOpts)
     case 'dnf':
-      return new Dnf(cmdOptions)
+      return new Dnf(shellOpts)
     case 'brew':
-      return new Brew(cmdOptions)
+      return new Brew(shellOpts)
     case 'winget':
-      return new WinGet(cmdOptions)
+      return new WinGet(shellOpts)
     case 'scoop':
-      return new Scoop(cmdOptions)
+      return new Scoop(shellOpts)
     default:
       throw new Error(`not a supported package manager: ${name}`)
   }
@@ -151,62 +154,73 @@ function getPack(name: string, cmdOptions?: Record<string, any>) {
 
 async function runCmdPack(
   op: string,
-  opArgs?: Record<string, any>,
-  getCmdOpts?: () => Record<string, any>,
-): Promise<void> {
-  const cmdOpts = getCmdOpts?.()
+  opArgs: CmdPackArgs,
+  getCmdOpts: () => CmdOpts & CmdPackOpts,
+) {
+  const cmdOpts = getCmdOpts()
 
-  let packs = cmdOpts?.manager
+  let packNames = cmdOpts.manager
     ? [String(cmdOpts.manager.toLowerCase())]
-    : await getValidPacks(cmdOpts?.verbose)
+    : await getValidPacks(cmdOpts)
 
-  if (op === 'add' && packs.length > 0) {
-    packs = [packs[0]]
-  }
+  const opArgsNames = opArgs.names ?? []
+  const opArgsNamesRemaining: Array<string> = []
 
-  if (op === 'cfg') {
-    for (const name of opArgs?.names) {
-      const config = await loadConfigFilePath('pack', name)
-      if (Object.keys(config).length === 0) {
+  const fsPaths = await findConfigFilePaths('pack')
+  for (const name of opArgsNames) {
+    const foundPath = fsPaths.find((f) => f.endsWith(`${name}.yaml`))
+    if (!foundPath) {
+      opArgsNamesRemaining.push(name)
+      continue
+    }
+
+    const config = await loadConfigFile(foundPath)
+    if (Object.keys(config).length === 0) {
+      continue
+    }
+
+    for (const packName of Object.keys(config)) {
+      if (!packNames.includes(packName)) {
+        continue
+      }
+      const packItem = config[packName]
+
+      const names = packItem['names'] ?? []
+      if (names.length === 0) {
         continue
       }
 
-      if (config['pack']) {
-        for (const packName of Object.keys(config['pack'])) {
-          if (!packs.includes(packName)) {
-            continue
-          }
-          const node = config['pack'][packName]
+      if (packItem['cask']) {
+        names.unshift('--cask')
+      }
 
-          const names = node['names'] ?? []
-          if (node['cask']) {
-            names.unshift('--cask')
-          }
-          if (names.length === 0) {
-            continue
-          }
-
-          const pack = getPack(packName, cmdOpts)
-
-          if (node['repo']) {
-            await pack['repo']({ names: [node['repo']] })
-          }
-
-          await pack['add']({ names })
+      if (packItem[op]) {
+        for (const packItemLineOp of packItem[op]
+          .split('\n')
+          .filter((f: string) => f)) {
+          await shellRun(packItemLineOp, { ...cmdOpts, pipeOutAndErr: true })
         }
       }
+
+      await getPack(packName, cmdOpts)[op](names)
     }
-  } else {
-    const redundantPacks: Array<string> = []
+  }
+
+  if (opArgsNames.length === 0 || opArgsNamesRemaining.length > 0) {
+    if (op === 'add' && packNames.length > 0) {
+      packNames = [packNames[0]]
+    }
+
+    const redundantPackNames: Array<string> = []
     for (const [key, value] of Object.entries(validPackWraps)) {
-      if (packs.includes(key) && packs.includes(value)) {
-        redundantPacks.push(value)
+      if (packNames.includes(key) && packNames.includes(value)) {
+        redundantPackNames.push(value)
       }
     }
-    packs = packs.filter((p) => !redundantPacks.includes(p))
+    packNames = packNames.filter((p) => !redundantPackNames.includes(p))
 
-    for (const pack of packs) {
-      await getPack(pack, cmdOpts)[op](opArgs)
+    for (const packName of packNames) {
+      await getPack(packName, cmdOpts)[op](opArgsNamesRemaining)
     }
   }
 }

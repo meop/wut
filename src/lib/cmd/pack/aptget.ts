@@ -1,79 +1,69 @@
-import type { Pack } from '../pack.i.ts'
+import type { Pack } from '../../cmd.ts'
+import type { ShellOpts } from '../../shell.ts'
 
-import { runShell } from '../../shell.ts'
+import { shellRun } from '../../shell.ts'
 
 export class AptGet implements Pack {
-  program = 'apt-get'
-  asRoot = true
-  cmdOptions: Record<string, any>
+  program = 'sudo apt-get'
+  shellOpts: ShellOpts
 
-  shell = (cmd: string, filter: Array<string> = []) => {
-    return runShell(cmd, {
-      asRoot: this.asRoot,
-      dryRun: this.cmdOptions?.dryRun,
-      filter,
+  shell = (cmd: string, filters?: Array<string>) => {
+    return shellRun(`${this.program} ${cmd}`, {
+      ...this.shellOpts,
+      filters,
       verbose: true,
     })
   }
 
-  async add(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} update`)
-    await this.shell(`${this.program} install ${options.names.join(' ')}`)
+  async add(names: Array<string>) {
+    await this.shell('update')
+    await this.shell(`install ${names.join(' ')}`)
   }
-  async del(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} purge ${options.names.join(' ')}`)
+  async del(names: Array<string>) {
+    await this.shell(`purge ${names.join(' ')}`)
   }
-  async find(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} update`)
-    for (const name of options.names) {
+  async find(names: Array<string>) {
+    await this.shell('update')
+    for (const name of names) {
       await this.shell(
         `${this.program.replace('apt-get', 'apt-cache')} search ${name}`,
       )
     }
   }
-  async list(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} list --installed`, options.names)
+  async list(names: Array<string>) {
+    await this.shell('list --installed', names)
   }
-  async out(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} update`)
-    await this.shell(`${this.program} list --upgradable`, options.names)
+  async out(names: Array<string>) {
+    await this.shell(`update`)
+    await this.shell('list --upgradable', names)
   }
-  async repo(options: { names: Array<string> }): Promise<void> {
-    await this.add({ names: ['software-properties-common'] })
-    for (const name of options.names) {
-      await this.shell(`add-apt-repository ${name}`)
-    }
-  }
-  async tidy(): Promise<void> {
-    await this.shell(`${this.program} autoclean`)
-    await this.shell(`${this.program} autoremove`)
+  async tidy() {
+    await this.shell('autoclean')
+    await this.shell('autoremove')
   }
   async up(
-    options: { names: Array<string> },
+    names: Array<string>,
     upgradeCmd: string = 'dist-upgrade',
-  ): Promise<void> {
-    await this.shell(`${this.program} update`)
+  ) {
+    await this.shell('update')
     await this.shell(
-      `${this.program}` +
-        (options.names.length > 0
-          ? ` install ${options.names.join(' ')}`
-          : ` ${upgradeCmd}`),
+      names.length > 0 ? `install ${names.join(' ')}` : upgradeCmd,
     )
   }
 
-  constructor(cmdOptions?: Record<string, any>) {
-    this.cmdOptions = cmdOptions ?? {}
+  constructor(shellOpts?: ShellOpts) {
+    this.shellOpts = shellOpts ?? {}
   }
 }
 
 export class Apt extends AptGet {
-  program = 'apt'
+  program = 'sudo apt'
 
-  async up(options: { names: Array<string> }): Promise<void> {
-    await super.up(options, 'full-upgrade')
+  async up(names: Array<string>) {
+    await super.up(names, 'full-upgrade')
   }
 
-  constructor(cmdOptions?: Record<string, any>) {
-    super(cmdOptions)
+  constructor(shellOpts?: ShellOpts) {
+    super(shellOpts)
   }
 }

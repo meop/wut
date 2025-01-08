@@ -2,37 +2,23 @@ import { join as pathJoin } from 'path'
 import { parse as yamlParse } from 'yaml'
 import { promises as fsPromises } from 'fs'
 
-import { doesPathExist } from './path.ts'
+import { doesPathExist, getFilePathsInDir } from './path.ts'
 
-export async function buildConfigFilePath(
+export async function findConfigFilePaths(
   cmd: string,
-  name: string,
-  tool?: string,
-): Promise<string> {
-  const pathParts: Array<string> = []
-  pathParts.push(process.env['WUT_CONFIG_LOCATION'] ?? '')
-  pathParts.push(cmd)
-  if (tool) {
-    pathParts.push(tool)
-  }
-  pathParts.push(`${name}.yaml`)
-
-  const path = pathJoin(...pathParts)
-
-  return path
+  ...parts: Array<string>
+) {
+  const dirPath = pathJoin(
+    ...[process.env['WUT_CONFIG_LOCATION'] ?? '', cmd, ...parts],
+  )
+  return await getFilePathsInDir(dirPath)
 }
 
-export async function loadConfigFilePath(
-  cmd: string,
-  name: string,
-  tool?: string,
-): Promise<any> {
-  const path = await buildConfigFilePath(cmd, name, tool)
-
-  if (!(await doesPathExist(path))) {
+export async function loadConfigFile(fsPath: string) {
+  if (!fsPath || !(await doesPathExist(fsPath))) {
     return {}
   }
 
-  const file = await fsPromises.readFile(path, { encoding: 'utf8' })
+  const file = await fsPromises.readFile(fsPath, { encoding: 'utf8' })
   return yamlParse(file)
 }

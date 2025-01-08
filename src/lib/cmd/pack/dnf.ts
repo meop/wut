@@ -1,68 +1,52 @@
-import type { Pack } from '../pack.i.ts'
+import type { Pack } from '../../cmd.ts'
+import type { ShellOpts } from '../../shell.ts'
 
-import { runShell } from '../../shell.ts'
+import { shellRun } from '../../shell.ts'
 
 export class Dnf implements Pack {
-  program = 'dnf'
-  asRoot = true
-  cmdOptions: Record<string, any>
+  program = 'sudo dnf'
+  shellOpts: ShellOpts
 
-  shell = (cmd: string, filter: Array<string> = []) => {
-    return runShell(cmd, {
-      asRoot: this.asRoot,
-      dryRun: this.cmdOptions?.dryRun,
-      filter,
+  shell = (cmd: string, filters?: Array<string>) => {
+    return shellRun(`${this.program} ${cmd}`, {
+      ...this.shellOpts,
+      filters,
       verbose: true,
     })
   }
 
-  async add(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} check-update`)
-    await this.shell(`${this.program} install ${options.names.join(' ')}`)
+  async add(names: Array<string>) {
+    await this.shell('check-update')
+    await this.shell(`install ${names.join(' ')}`)
   }
-  async del(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} remove ${options.names.join(' ')}`)
+  async del(names: Array<string>) {
+    await this.shell(`remove ${names.join(' ')}`)
   }
-  async find(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} check-update`)
-    for (const name of options.names) {
-      await this.shell(`${this.program} search ${name}`)
+  async find(names: Array<string>) {
+    await this.shell('check-update')
+    for (const name of names) {
+      await this.shell(`search ${name}`)
     }
   }
-  async list(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} list --installed`, options.names)
+  async list(names: Array<string>) {
+    await this.shell('list --installed', names)
   }
-  async out(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} check-update`)
-    await this.shell(`${this.program} list --upgrades`, options.names)
+  async out(names: Array<string>) {
+    await this.shell('check-update')
+    await this.shell('list --upgrades', names)
   }
-  async repo(options: { names: Array<string> }): Promise<void> {
-    for (const name of options.names) {
-      await this.shell(`${this.program} config-manager --add-repo ${name}`)
-      await this.shell(
-        `${this.program} config-manager --set-enabled ${name
-          .split('/')
-          .pop()
-          ?.split('.')
-          .shift()}`,
-      )
-    }
+  async tidy() {
+    await this.shell('clean dbcache')
+    await this.shell('autoremove')
   }
-  async tidy(): Promise<void> {
-    await this.shell(`${this.program} clean dbcache`)
-    await this.shell(`${this.program} autoremove`)
-  }
-  async up(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} check-update`)
+  async up(names: Array<string>) {
+    await this.shell('check-update')
     await this.shell(
-      `${this.program} ` +
-        (options.names.length > 0
-          ? `upgrade ${options.names.join(' ')}`
-          : 'distro-sync'),
+      names.length > 0 ? `upgrade ${names.join(' ')}` : 'distro-sync',
     )
   }
 
-  constructor(cmdOptions?: Record<string, any>) {
-    this.cmdOptions = cmdOptions ?? {}
+  constructor(shellOpts?: ShellOpts) {
+    this.shellOpts = shellOpts ?? {}
   }
 }

@@ -1,58 +1,51 @@
-import type { Pack } from '../pack.i.ts'
+import type { Pack } from '../../cmd.ts'
+import type { ShellOpts } from '../../shell.ts'
 
-import { runShell } from '../../shell.ts'
+import { shellRun } from '../../shell.ts'
 
 export class Scoop implements Pack {
   program = 'scoop'
-  asRoot = false
-  cmdOptions: Record<string, any>
+  shellOpts: ShellOpts
 
-  shell = (cmd: string, filter: Array<string> = []) => {
-    return runShell(cmd, {
-      asRoot: this.asRoot,
-      dryRun: this.cmdOptions?.dryRun,
-      filter,
+  shell = (cmd: string, filters?: Array<string>) => {
+    return shellRun(`${this.program} ${cmd}`, {
+      ...this.shellOpts,
+      filters,
       verbose: true,
     })
   }
 
-  async add(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} update`)
-    await this.shell(`${this.program} install ${options.names.join(' ')}`)
+  async add(names: Array<string>) {
+    await this.shell('update')
+    await this.shell(`install ${names.join(' ')}`)
   }
-  async del(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} uninstall ${options.names.join(' ')}`)
+  async del(names: Array<string>) {
+    await this.shell(`uninstall ${names.join(' ')}`)
   }
-  async find(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} update`)
-    for (const name of options.names) {
-      await this.shell(`${this.program} search ${name}`)
+  async find(names: Array<string>) {
+    await this.shell('update')
+    for (const name of names) {
+      await this.shell(`search ${name}`)
     }
   }
-  async list(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} list`, options.names)
+  async list(names: Array<string>) {
+    await this.shell('list', names)
   }
-  async out(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} update`)
-    await this.shell(`${this.program} status`, options.names)
+  async out(names: Array<string>) {
+    await this.shell('update')
+    await this.shell('status', names)
   }
-  async repo(options: { names: Array<string> }): Promise<void> {
-    for (const name of options.names) {
-      await this.shell(`${this.program} bucket add ${name}`)
-    }
+  async tidy() {
+    await this.shell('cleanup --all --cache')
   }
-  async tidy(): Promise<void> {
-    await this.shell(`${this.program} cleanup --all --cache`)
-  }
-  async up(options: { names: Array<string> }): Promise<void> {
-    await this.shell(`${this.program} update`)
+  async up(names: Array<string>) {
+    await this.shell('update')
     await this.shell(
-      `${this.program} update ` +
-        (options.names.length > 0 ? `${options.names.join(' ')}` : '--all'),
+      'update' + (names.length > 0 ? ` ${names.join(' ')}` : ' --all'),
     )
   }
 
-  constructor(cmdOptions?: Record<string, any>) {
-    this.cmdOptions = cmdOptions ?? {}
+  constructor(shellOpts?: ShellOpts) {
+    this.shellOpts = shellOpts ?? {}
   }
 }

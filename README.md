@@ -2,16 +2,38 @@
 
 Web Update Tool
 
+This tool is expected to be run locally and interactively
+
+Some operations cannot work over SSH because they are installing GUI tools
+
+Some operations create dynamic prompts for the user and cannot be scripted
+
 ## targets
 
-same targets as NodeJS
+Same targets as NodeJS
 
 ## unix
 
 Linux
+
 MacOS
 
 ### prereqs
+
+Yay [Arch]:
+
+```zsh
+sudo pacman -S --needed git base-devel
+git clone https://aur.archlinux.org/yay.git
+cd yay
+makepkg -si
+```
+
+Brew [MacOS]:
+
+```zsh
+curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh
+```
 
 - zsh
 - node
@@ -19,14 +41,14 @@ MacOS
 
 ### develop
 
-- link repo
+Link repo:
 
 ```zsh
 ln -s "$HOME/source/code/meop/wut-config" "$HOME/.wut-config"
 ln -s "$HOME/source/code/meop/wut" "$HOME/.wut"
 ```
 
-- add to profile
+Add to profile:
 
 ```zsh
 if [[ -d "$HOME/.wut" ]]; then
@@ -44,20 +66,27 @@ Windows
 
 ### prereqs
 
+Scoop [Windows]:
+
+```pwsh
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+```
+
 - pwsh
 - node
 - git
 
 ### develop
 
-- link repo
+Link repo:
 
 ```pwsh
 New-Item -ItemType SymbolicLink -Value "$env:HOME\source\code\meop\wut-config" -Path "$env:HOME\.wut-config"
 New-Item -ItemType SymbolicLink -Value "$env:HOME\source\code\meop\wut" -Path "$env:HOME\.wut"
 ```
 
-- add to profile
+Add to profile:
 
 ```pwsh
 if (Test-Path "$env:HOME\.wut") {
