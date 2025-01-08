@@ -30,7 +30,7 @@ export class Docker implements Virt {
     await this.shell('ps -a', filters)
   }
   async tidy() {
-    await this.shell('docker system prune -a --volumes')
+    await this.shell('system prune --all --volumes')
   }
   async up(fsPaths: Array<string>) {
     for (const fsPath of fsPaths) {
