@@ -55,11 +55,19 @@ export function buildCmdVirt(getParentOpts: () => OptionValues): Command {
 
   cmd.addCommand(
     buildCmd('stat', 'status on local')
-      .aliases(['s', '$', 'status'])
+      .aliases(['s', '$', 'st', 'status'])
       .argument('[tool]', 'tool to match')
       .argument('[name]', 'name to match')
       .action((tool?: string, name?: string) => {
         runCmdVirt('stat', { tool, name }, getOpts)
+      }),
+  )
+
+  cmd.addCommand(
+    buildCmd('tidy', 'tidy on local')
+      .aliases(['t', '@', 'ti', 'cl', 'clean', 'pr', 'prune', 'pu', 'purge'])
+      .action(() => {
+        runCmdVirt('tidy', {}, getOpts)
       }),
   )
 

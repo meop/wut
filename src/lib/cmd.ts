@@ -31,5 +31,6 @@ export interface Pack {
 export interface Virt {
   down: (fsPaths: Array<string>) => Promise<void>
   stat: (fsPaths: Array<string>) => Promise<void>
+  tidy: () => Promise<void>
   up: (fsPaths: Array<string>) => Promise<void>
 }

@@ -22,7 +22,6 @@ export class Docker implements Virt {
       await this.shell(`compose --file ${fsPath} down`)
     }
   }
-
   async stat(fsPaths: Array<string>) {
     const filters: Array<string> = []
     for (const fsPath of fsPaths) {
@@ -30,7 +29,9 @@ export class Docker implements Virt {
     }
     await this.shell('ps -a', filters)
   }
-
+  async tidy() {
+    await this.shell('docker system prune -a --volumes')
+  }
   async up(fsPaths: Array<string>) {
     for (const fsPath of fsPaths) {
       await this.shell(`compose --file ${fsPath} pull`)

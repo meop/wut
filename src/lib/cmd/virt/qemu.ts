@@ -258,11 +258,10 @@ export class Qemu implements Virt {
       }
     }
   }
-
   async stat(fsPaths: Array<string>) {
     await vmStats(fsPaths, { ...this.shellOpts, verbose: true })
   }
-
+  async tidy() {}
   async up(fsPaths: Array<string>) {
     const config = await loadConfigFile(
       (
