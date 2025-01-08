@@ -105,20 +105,25 @@ export async function shellRun(command: string, shellRunOpts?: ShellRunOpts) {
               match = !match
             }
             if (match) {
-              if (stream === 'out') {
-                shellStream.stdout!.push(l)
+              if (shellRunOpts?.pipeOutAndErr) {
+                if (stream === 'out') {
+                  shellStream.stdout!.push(l)
+                } else {
+                  shellStream.stderr!.push(l)
+                }
               } else {
-                shellStream.stderr!.push(l)
+                log(l)
               }
-              log(l)
             }
           }
         }
       } else {
-        if (stream === 'out') {
-          shellStream.stdout.push(...lines)
-        } else {
-          shellStream.stderr.push(...lines)
+        if (shellRunOpts?.pipeOutAndErr) {
+          if (stream === 'out') {
+            shellStream.stdout.push(...lines)
+          } else {
+            shellStream.stderr.push(...lines)
+          }
         }
       }
     }
@@ -144,10 +149,6 @@ export async function shellRun(command: string, shellRunOpts?: ShellRunOpts) {
     throw new Error(
       `running '${fullCommand}' produced error code: ${exitCode}\n`,
     )
-  }
-
-  if (!shellRunOpts?.pipeOutAndErr) {
-    return { stdout: [], stderr: [] }
   }
 
   return shellStream

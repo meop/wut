@@ -101,7 +101,7 @@ async function runCmdVirt(
 
   let fsPaths = await findConfigFilePaths('virt', ...parts)
   if (opArgs.name) {
-    fsPaths = fsPaths.filter((f) => f.endsWith(`${opArgs.name}.yaml`))
+    fsPaths = fsPaths.filter((f) => basename(f, '.yaml') === opArgs.name)
   }
 
   const fsPathMap: Map<string, Array<string>> = new Map()
