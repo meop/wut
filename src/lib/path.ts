@@ -35,6 +35,10 @@ export async function makePathExist(fsPath: string, shellOpts?: ShellOpts) {
 export async function getFilePathsInDir(dir: string) {
   const filePaths: Array<string> = []
 
+  if (!(await doesPathExist(dir))) {
+    return filePaths
+  }
+
   for (const dirent of await fsPromises.readdir(dir, { withFileTypes: true })) {
     const res = path.resolve(dir, dirent.name)
     const paths = dirent.isDirectory() ? await getFilePathsInDir(res) : [res]
