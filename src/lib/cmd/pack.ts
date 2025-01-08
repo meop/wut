@@ -176,9 +176,11 @@ async function runCmdPack(
 
     const config = await loadConfigFile(foundPath)
     if (Object.keys(config).length === 0) {
+      opArgsNamesRemaining.push(name)
       continue
     }
 
+    let matched = false
     for (const packName of Object.keys(config)) {
       if (!packNames.includes(packName)) {
         continue
@@ -189,6 +191,7 @@ async function runCmdPack(
       if (names.length === 0) {
         continue
       }
+      matched = true
 
       if (packItem['cask']) {
         names.unshift('--cask')
@@ -203,6 +206,9 @@ async function runCmdPack(
       }
 
       await getPack(packName, cmdOpts)[op](names)
+    }
+    if (!matched) {
+      opArgsNamesRemaining.push(name)
     }
   }
 
