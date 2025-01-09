@@ -1,5 +1,3 @@
-import type { Command } from 'commander'
-
 import type { CmdOpts, Pack } from '../cmd.ts'
 import type { ShellOpts } from '../shell.ts'
 
@@ -41,7 +39,7 @@ type CmdPackOpts = {
   manager?: string
 }
 
-export function buildCmdPack(getParentOpts: () => CmdOpts): Command {
+export function buildCmdPack(getParentOpts: () => CmdOpts) {
   const cmd = buildCmd('pack', 'package manager operations')
     .aliases(['p', 'package'])
     .option('-m, --manager <manager>', 'desired manager')
@@ -64,7 +62,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts): Command {
 
   cmd.addCommand(
     buildCmd('del', 'delete on local')
-      .aliases(['d', '-', 'delete', 'rm', 'rem', 'remove', 'un', 'uninstall'])
+      .aliases(['d', '-', 'delete', 'rm', 'remove', 'un', 'uninstall'])
       .argument('<names...>', 'names to match')
       .action((names: Array<string>) => {
         runCmdPack('del', { names }, getOpts)
@@ -197,15 +195,17 @@ async function runCmdPack(
         names.unshift('--cask')
       }
 
-      if (packItem[op]) {
-        for (const packItemLineOp of packItem[op]
-          .split('\n')
-          .filter((f: string) => f)) {
-          await shellRun(packItemLineOp, { ...cmdOpts, pipeOutAndErr: true })
+      const preOrPostCmd = async (opName: string) => {
+        if (op === opName && opName in packItem) {
+          for (const cmd of packItem[opName]) {
+            await shellRun(cmd, { ...cmdOpts, verbose: true })
+          }
         }
       }
 
+      await preOrPostCmd('add')
       await getPack(packName, cmdOpts)[op](names)
+      await preOrPostCmd('del')
     }
     if (!matched) {
       opArgsNamesRemaining.push(name)

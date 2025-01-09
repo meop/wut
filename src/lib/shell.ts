@@ -119,7 +119,9 @@ export async function shellRun(command: string, shellRunOpts?: ShellRunOpts) {
     err: [],
   }
   
-  
+  // moved filtering to after the proc ends
+  // because logging in the pipe handler
+  // was prefixing extra spacing to console for some reason
   for (const s of stdStream) {
     if (filters.length > 0) {
       for (const f of filters) {

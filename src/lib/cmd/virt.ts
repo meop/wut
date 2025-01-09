@@ -1,5 +1,3 @@
-import type { Command, OptionValues } from 'commander'
-
 import type { CmdOpts, Virt } from '../cmd.ts'
 import type { ShellOpts } from '../shell.ts'
 
@@ -20,7 +18,7 @@ type CmdVirtArgs = {
 
 type CmdVirtOpts = {}
 
-export function buildCmdVirt(getParentOpts: () => OptionValues): Command {
+export function buildCmdVirt(getParentOpts: () => CmdOpts) {
   const cmd = buildCmd('virt', 'virtualization manager operations').aliases([
     'v',
     'virtual',

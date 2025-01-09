@@ -30,10 +30,10 @@ export class AptGet implements Pack {
       )
     }
   }
-  async list(names: Array<string>) {
+  async list(names?: Array<string>) {
     await this.shell('list --installed', names)
   }
-  async out(names: Array<string>) {
+  async out(names?: Array<string>) {
     await this.shell(`update`)
     await this.shell('list --upgradable', names)
   }
@@ -41,13 +41,10 @@ export class AptGet implements Pack {
     await this.shell('autoclean')
     await this.shell('autoremove')
   }
-  async up(
-    names: Array<string>,
-    upgradeCmd: string = 'dist-upgrade',
-  ) {
+  async up(names?: Array<string>, upgradeCmd: string = 'dist-upgrade') {
     await this.shell('update')
     await this.shell(
-      names.length > 0 ? `install ${names.join(' ')}` : upgradeCmd,
+      (names?.length ?? 0) > 0 ? `install ${names!.join(' ')}` : upgradeCmd,
     )
   }
 
@@ -59,7 +56,7 @@ export class AptGet implements Pack {
 export class Apt extends AptGet {
   program = 'sudo apt'
 
-  async up(names: Array<string>) {
+  async up(names?: Array<string>) {
     await super.up(names, 'full-upgrade')
   }
 

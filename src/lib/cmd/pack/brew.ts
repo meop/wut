@@ -27,20 +27,21 @@ export class Brew implements Pack {
       await this.shell(`search ${name}`)
     }
   }
-  async list(names: Array<string>) {
+  async list(names?: Array<string>) {
     await this.shell('list', names)
   }
-  async out(names: Array<string>) {
+  async out(names?: Array<string>) {
     await this.shell('update')
     await this.shell('outdated', names)
   }
   async tidy() {
     await this.shell('cleanup --prune=all')
   }
-  async up(names: Array<string>) {
+  async up(names?: Array<string>) {
     await this.shell('update')
     await this.shell(
-      'upgrade --greedy' + (names.length > 0 ? ` ${names.join(' ')}` : ''),
+      'upgrade --greedy' +
+        ((names?.length ?? 0) > 0 ? ` ${names!.join(' ')}` : ''),
     )
   }
 

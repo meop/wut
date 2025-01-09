@@ -26,16 +26,17 @@ export class WinGet implements Pack {
       await this.shell(`search ${name}`)
     }
   }
-  async list(names: Array<string>) {
+  async list(names?: Array<string>) {
     await this.shell('list', names)
   }
-  async out(names: Array<string>) {
+  async out(names?: Array<string>) {
     await this.shell('upgrade', names)
   }
   async tidy() {}
-  async up(names: Array<string>) {
+  async up(names?: Array<string>) {
     await this.shell(
-      'upgrade' + (names.length > 0 ? ` ${names.join(' ')}` : ' --all'),
+      'upgrade' +
+        ((names?.length ?? 0) > 0 ? ` ${names!.join(' ')}` : ' --all'),
     )
   }
 

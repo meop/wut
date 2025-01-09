@@ -13,19 +13,18 @@ export type CmdOpts = {
 }
 
 export interface Dot {
-  find: (names: Array<string>) => Promise<void>
-  pull: (names: Array<string>) => Promise<void>
-  push: (names: Array<string>) => Promise<void>
+  pull: (names?: Array<string>) => Promise<void>
+  push: (names?: Array<string>) => Promise<void>
 }
 
 export interface Pack {
   add: (names: Array<string>) => Promise<void>
   del: (names: Array<string>) => Promise<void>
   find: (names: Array<string>) => Promise<void>
-  list: (names: Array<string>) => Promise<void>
-  out: (names: Array<string>) => Promise<void>
+  list: (names?: Array<string>) => Promise<void>
+  out: (names?: Array<string>) => Promise<void>
   tidy: () => Promise<void>
-  up: (names: Array<string>) => Promise<void>
+  up: (names?: Array<string>) => Promise<void>
 }
 
 export interface Virt {

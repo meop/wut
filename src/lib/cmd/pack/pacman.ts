@@ -28,20 +28,21 @@ export class Pacman implements Pack {
       await this.shell(`--query --search ${name}`)
     }
   }
-  async list(names: Array<string>) {
+  async list(names?: Array<string>) {
     await this.shell('--query', names)
   }
-  async out(names: Array<string>) {
+  async out(names?: Array<string>) {
     await this.shell('--sync --refresh')
     await this.shell('--query --upgrades', names)
   }
   async tidy() {
     await this.shell('--sync --clean')
   }
-  async up(names: Array<string>) {
+  async up(names?: Array<string>) {
     await this.shell('--sync --refresh')
     await this.shell(
-      '--sync' + (names.length > 0 ? ` ${names.join(' ')}` : ' --sysupgrade'),
+      '--sync' +
+        ((names?.length ?? 0) > 0 ? ` ${names!.join(' ')}` : ' --sysupgrade'),
     )
   }
 

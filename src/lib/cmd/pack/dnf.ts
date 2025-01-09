@@ -28,10 +28,10 @@ export class Dnf implements Pack {
       await this.shell(`search ${name}`)
     }
   }
-  async list(names: Array<string>) {
+  async list(names?: Array<string>) {
     await this.shell('list --installed', names)
   }
-  async out(names: Array<string>) {
+  async out(names?: Array<string>) {
     await this.shell('check-update')
     await this.shell('list --upgrades', names)
   }
@@ -39,10 +39,10 @@ export class Dnf implements Pack {
     await this.shell('clean dbcache')
     await this.shell('autoremove')
   }
-  async up(names: Array<string>) {
+  async up(names?: Array<string>) {
     await this.shell('check-update')
     await this.shell(
-      names.length > 0 ? `upgrade ${names.join(' ')}` : 'distro-sync',
+      (names?.length ?? 0) > 0 ? `upgrade ${names!.join(' ')}` : 'distro-sync',
     )
   }
 
