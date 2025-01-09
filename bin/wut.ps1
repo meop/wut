@@ -23,16 +23,16 @@ if (-not (Get-Command git -ErrorAction Ignore)) {
 }
 
 if (-not "${env:WUT_CONFIG_LOCATION}") {
-  ${env:WUT_CONFIG_LOCATION} = "${env:HOME}\.wut-config"
+  $env:WUT_CONFIG_LOCATION = "${env:HOME}\.wut-config"
 }
 if (-not "${env:WUT_LOCATION}") {
-  ${env:WUT_LOCATION} = "${env:HOME}\.wut"
+  $env:WUT_LOCATION = "${env:HOME}\.wut"
 }
 
-${env:NODE_NO_WARNINGS} = 1
-${env:NODE_OPTIONS} = '--experimental-strip-types --experimental-transform-types'
+$env:NODE_NO_WARNINGS = 1
+$env:NODE_OPTIONS = '--experimental-strip-types --experimental-transform-types'
 
-if (${args}.Length -gt 0 -and ${args[0]} -eq 'up') {
+if ($args.Length -gt 0 -and $args[0] -eq 'up') {
   Write-Output "> git -C `"${env:WUT_CONFIG_LOCATION}`" pull --prune"
   Write-Output ''
   git -C "${env:WUT_CONFIG_LOCATION}" pull --prune
@@ -52,5 +52,5 @@ if (${args}.Length -gt 0 -and ${args[0]} -eq 'up') {
 }
 
 Push-Location "${env:WUT_LOCATION}"
-node src/cli.ts ${args}
+node src\cli.ts $args
 Pop-Location
