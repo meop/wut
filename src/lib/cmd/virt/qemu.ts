@@ -72,15 +72,15 @@ async function rebindVfioPci(pciDevId: string, shellOpts: ShellOpts) {
   }
 
   const checkDriver = `readlink /sys/bus/pci/devices/${fullPciDevId}/driver`
-  const stdout = (
+  const out = (
     await shellRun(checkDriver, {
       ...shellOpts,
       dryRun: false,
       pipeOutAndErr: true,
     })
-  ).stdout
+  ).out
 
-  const currentDriver = stdout.length > 0 ? basename(stdout[0].trim()) : ''
+  const currentDriver = out.length > 0 ? basename(out[0].trim()) : ''
 
   if (currentDriver === driver) {
     return
@@ -137,9 +137,9 @@ async function vmRun(config: any, configVm: any, shellOpts: ShellOpts) {
   const envReplace = (flags: Array<string>) => {
     const newFlags: Array<string> = []
     for (let f of flags) {
-      if (f.includes('{env.')) {
+      if (f.includes('${')) {
         for (const e of Object.keys(env)) {
-          f = f.replace(`{env.${e}}`, env[e])
+          f = f.replace('${' + e + '}', env[e])
         }
       }
       newFlags.push(f)
@@ -222,8 +222,8 @@ async function vmStats(fsPaths: Array<string>, shellOpts: ShellOpts) {
       },
     )
 
-    if (stream.stdout) {
-      matches.push(...stream.stdout)
+    if (stream.out) {
+      matches.push(...stream.out)
     }
   }
 

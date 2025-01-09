@@ -44,15 +44,15 @@ curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh
 Link repo:
 
 ```zsh
-ln -s "$HOME/source/code/meop/wut-config" "$HOME/.wut-config"
-ln -s "$HOME/source/code/meop/wut" "$HOME/.wut"
+ln -s "${HOME}/source/code/meop/wut-config" "${HOME}/.wut-config"
+ln -s "${HOME}/source/code/meop/wut" "${HOME}/.wut"
 ```
 
 Add to profile:
 
 ```zsh
-if [[ -d "$HOME/.wut" ]]; then
-  alias wut="$HOME/.wut/bin/wut.zsh"
+if [[ -d "${HOME}/.wut" ]]; then
+  alias wut="${HOME}/.wut/bin/wut.zsh"
 fi
 ```
 
@@ -82,15 +82,15 @@ Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 Link repo:
 
 ```pwsh
-New-Item -ItemType SymbolicLink -Value "$env:HOME\source\code\meop\wut-config" -Path "$env:HOME\.wut-config"
-New-Item -ItemType SymbolicLink -Value "$env:HOME\source\code\meop\wut" -Path "$env:HOME\.wut"
+New-Item -ItemType SymbolicLink -Value "${env:HOME}\source\code\meop\wut-config" -Path "${env:HOME}\.wut-config"
+New-Item -ItemType SymbolicLink -Value "${env:HOME}\source\code\meop\wut" -Path "${env:HOME}\.wut"
 ```
 
 Add to profile:
 
 ```pwsh
-if (Test-Path "$env:HOME\.wut") {
-  Set-Alias -Name wut -Value "$env:HOME\.wut\bin\wut.ps1"
+if (Test-Path "${env:HOME}\.wut") {
+  Set-Alias -Name wut -Value "${env:HOME}\.wut\bin\wut.ps1"
 }
 ```
 

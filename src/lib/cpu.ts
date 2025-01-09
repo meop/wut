@@ -3,16 +3,15 @@ import type { ShellOpts } from './shell.ts'
 import { shellRun } from './shell.ts'
 
 export async function getCpuVendorName(shellOpts: ShellOpts) {
-  const stdout = (
+  const out = (
     await shellRun('cat /proc/cpuinfo | grep vendor_id | uniq', {
       ...shellOpts,
       dryRun: false,
       pipeOutAndErr: true,
     })
-  ).stdout
+  ).out
 
-  const cpu_vendor_id =
-    stdout.length > 0 ? stdout[0].split(':')[1].trim() : 'unknown'
+  const cpu_vendor_id = out.length > 0 ? out[0].split(':')[1].trim() : 'unknown'
 
   if (cpu_vendor_id === 'AuthenticAMD') {
     return 'amd'
@@ -24,37 +23,37 @@ export async function getCpuVendorName(shellOpts: ShellOpts) {
 }
 
 export async function getCpuSocketCount(shellOpts: ShellOpts) {
-  const stdout = (
+  const out = (
     await shellRun('lscpu | grep Socket', {
       ...shellOpts,
       dryRun: false,
       pipeOutAndErr: true,
     })
-  ).stdout
+  ).out
 
-  return stdout.length > 0 ? Number(stdout[0].split(':')[1].trim()) : 1
+  return out.length > 0 ? Number(out[0].split(':')[1].trim()) : 1
 }
 
 export async function getCpuCoreCount(shellOpts: ShellOpts) {
-  const stdout = (
+  const out = (
     await shellRun('lscpu | grep Core', {
       ...shellOpts,
       dryRun: false,
       pipeOutAndErr: true,
     })
-  ).stdout
+  ).out
 
-  return stdout.length > 0 ? Number(stdout[0].split(':')[1].trim()) : 1
+  return out.length > 0 ? Number(out[0].split(':')[1].trim()) : 1
 }
 
 export async function getCpuThreadCount(shellOpts: ShellOpts) {
-  const stdout = (
+  const out = (
     await shellRun('lscpu | grep Thread', {
       ...shellOpts,
       dryRun: false,
       pipeOutAndErr: true,
     })
-  ).stdout
+  ).out
 
-  return stdout.length > 0 ? Number(stdout[0].split(':')[1].trim()) : 1
+  return out.length > 0 ? Number(out[0].split(':')[1].trim()) : 1
 }

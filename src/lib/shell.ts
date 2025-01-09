@@ -15,10 +15,15 @@ export type ShellRunOpts = ShellOpts & {
   throwOnExitCode?: boolean
 }
 
-export type ShellStream = {
-  stdout: Array<string>
-  stderr: Array<string>
+export type StdStreamSplit = {
+  out: Array<string>
+  err: Array<string>
 }
+
+type StdStream = Array<{
+  std: string
+  val: string
+}>
 
 function getCmdAndCmdArgs(command: string, shellOpts?: ShellOpts) {
   const cmdArgs = command.split(' ')
@@ -36,19 +41,20 @@ export async function shellRun(command: string, shellRunOpts?: ShellRunOpts) {
   const { cmd, cmdArgs } = getCmdAndCmdArgs(command, shellRunOpts)
   const fullCommand = cmd! + (cmdArgs.length > 0 ? ` ${cmdArgs.join(' ')}` : '')
 
-  const shellStream: ShellStream = {
-    stdout: [],
-    stderr: [],
-  }
   if (shellRunOpts?.dryRun) {
-    return shellStream
+    return {
+      out: [],
+      err: [],
+    }
   }
 
   let done = false
   let exitCode = 0
-
-  let stdoutPartial = ''
-  let stderrPartial = ''
+  const stdStream: StdStream = []
+  const stdPartial = {
+    out: '',
+    err: '',
+  }
 
   const filters = shellRunOpts?.filters ?? []
   const internalStream = shellRunOpts?.pipeOutAndErr || filters.length > 0
@@ -74,58 +80,15 @@ export async function shellRun(command: string, shellRunOpts?: ShellRunOpts) {
     exitCode = code ?? 0
   })
 
-  const updateStream = (data: string, stream: 'out' | 'err') => {
-    let dataStr = ''
-    if (stream === 'out') {
-      dataStr = stdoutPartial
-      stdoutPartial = ''
-    } else {
-      dataStr = stderrPartial
-      stderrPartial = ''
+  const updateStream = (data: string, std: 'out' | 'err') => {
+    if (data === '') {
+      return
     }
-    dataStr += data
-
-    if (dataStr !== '') {
-      const lines = dataStr.split('\n')
-      const finalPartial = lines.pop() ?? ''
-      if (stream === 'out') {
-        stdoutPartial = finalPartial
-      } else {
-        stderrPartial = finalPartial
-      }
-
-      if (filters.length > 0) {
-        for (const l of lines) {
-          if (!l) {
-            continue
-          }
-          for (const f of filters) {
-            let match = l.toLowerCase().includes(f.toLowerCase())
-            if (shellRunOpts?.reverseFilters) {
-              match = !match
-            }
-            if (match) {
-              if (shellRunOpts?.pipeOutAndErr) {
-                if (stream === 'out') {
-                  shellStream.stdout!.push(l)
-                } else {
-                  shellStream.stderr!.push(l)
-                }
-              } else {
-                log(l)
-              }
-            }
-          }
-        }
-      } else {
-        if (shellRunOpts?.pipeOutAndErr) {
-          if (stream === 'out') {
-            shellStream.stdout.push(...lines)
-          } else {
-            shellStream.stderr.push(...lines)
-          }
-        }
-      }
+    const dataStr = `${stdPartial[std]}${data}`
+    const lines = dataStr.split('\n')
+    stdPartial[std] = lines.pop() ?? ''
+    for (const l of lines) {
+      stdStream.push({std, val: l})
     }
   }
 
@@ -151,5 +114,31 @@ export async function shellRun(command: string, shellRunOpts?: ShellRunOpts) {
     )
   }
 
-  return shellStream
+  const stdStreamSplit: StdStreamSplit = {
+    out: [],
+    err: [],
+  }
+  
+  
+  for (const s of stdStream) {
+    if (filters.length > 0) {
+      for (const f of filters) {
+        let match = s.val.toLowerCase().includes(f.toLowerCase())
+        if (shellRunOpts?.reverseFilters) {
+          match = !match
+        }
+        if (match) {
+          if (shellRunOpts?.pipeOutAndErr) {
+            stdStreamSplit[s.std].push(s.val)
+          } else {
+            log(s.val)
+          }
+        }
+      }
+    } else {
+      stdStreamSplit[s.std].push(s.val)
+    }
+  }
+
+  return stdStreamSplit
 }
