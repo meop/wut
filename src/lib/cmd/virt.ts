@@ -1,28 +1,29 @@
 import type { CmdOpts, Virt } from '../cmd.ts'
 import type { ShellOpts } from '../shell.ts'
 
-import { hostname } from 'os'
-import { basename, dirname } from 'path'
+import os from 'os'
+import path from 'path'
 
 import { buildCmd } from '../cmd.ts'
-import { findConfigFilePaths } from '../config.ts'
-import { log } from '../log.ts'
+import { doesPathExist } from '../path.ts'
 
 import { Docker } from './virt/docker.ts'
 import { Qemu } from './virt/qemu.ts'
 
+const validVirts = ['docker', 'qemu']
+
 type CmdVirtArgs = {
-  tool?: string
-  name?: string
+  names?: Array<string>
 }
 
-type CmdVirtOpts = {}
+type CmdVirtOpts = {
+  manager?: string
+}
 
 export function buildCmdVirt(getParentOpts: () => CmdOpts) {
-  const cmd = buildCmd('virt', 'virtualization manager operations').aliases([
-    'v',
-    'virtual',
-  ])
+  const cmd = buildCmd('virt', 'virtualization manager operations')
+    .aliases(['v', 'virtual'])
+    .option('-m, --manager <manager>', 'desired manager')
 
   const getOpts = () => {
     return {
@@ -34,30 +35,27 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('down', 'tear down from local')
       .aliases(['d', '%', 'downgrade', 'te', 'tear'])
-      .argument('[tool]', 'tool to match')
-      .argument('[name]', 'name to match')
-      .action((tool?: string, name?: string) => {
-        runCmdVirt('down', { tool, name }, getOpts)
+      .argument('[name...]', 'names to match')
+      .action((names?: Array<string>) => {
+        runCmdVirt('down', { names }, getOpts)
       }),
   )
 
   cmd.addCommand(
     buildCmd('list', 'list on local')
       .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
-      .argument('[tool]', 'tool to match')
-      .argument('[name]', 'name to match')
-      .action((tool?: string, name?: string) => {
-        runCmdVirt('list', { tool, name }, getOpts)
+      .argument('[names...]', 'names to match')
+      .action((names?: Array<string>) => {
+        runCmdVirt('list', { names }, getOpts)
       }),
   )
 
   cmd.addCommand(
     buildCmd('stat', 'status on local')
       .aliases(['s', '$', 'st', 'status'])
-      .argument('[tool]', 'tool to match')
-      .argument('[name]', 'name to match')
-      .action((tool?: string, name?: string) => {
-        runCmdVirt('stat', { tool, name }, getOpts)
+      .argument('[names...]', 'names to match')
+      .action((names?: Array<string>) => {
+        runCmdVirt('stat', { names }, getOpts)
       }),
   )
 
@@ -72,14 +70,32 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('up', 'sync up from local')
       .aliases(['u', '^', 'update', 'upgrade', 'sy', 'sync'])
-      .argument('[tool]', 'tool to match')
-      .argument('[name]', 'name to match')
-      .action((tool?: string, name?: string) => {
-        runCmdVirt('up', { tool, name }, getOpts)
+      .argument('[names...]', 'names to match')
+      .action((names?: Array<string>) => {
+        runCmdVirt('up', { names }, getOpts)
       }),
   )
 
   return cmd
+}
+
+async function getValidVirts() {
+  const virts: Array<string> = []
+  for (const validVirt of validVirts) {
+    if (
+      await doesPathExist(
+        path.join(
+          process.env.WUT_CONFIG_LOCATION ?? '',
+          'virt',
+          os.hostname(),
+          validVirt,
+        ),
+      )
+    ) {
+      virts.push(validVirt)
+    }
+  }
+  return virts
 }
 
 function getVirt(name: string, shellOpts: ShellOpts): Virt {
@@ -100,37 +116,13 @@ async function runCmdVirt(
 ) {
   const cmdOpts = getCmdOpts()
 
-  const parts = [hostname()]
-  if (opArgs.tool) {
-    parts.push(opArgs.tool)
-  }
+  const virtNames = cmdOpts.manager
+    ? [String(cmdOpts.manager.toLowerCase())]
+    : await getValidVirts()
 
-  let fsPaths = await findConfigFilePaths('virt', ...parts)
-  if (opArgs.name) {
-    fsPaths = fsPaths.filter((f) => basename(f, '.yaml') === opArgs.name)
-  }
-
-  const fsPathMap: Map<string, Array<string>> = new Map()
-
-  for (const fsPath of fsPaths) {
-    const virtName = basename(dirname(fsPath))
-    if (!fsPathMap.has(virtName)) {
-      fsPathMap.set(virtName, [])
-    }
-    fsPathMap.get(virtName)?.push(fsPath)
-  }
-
-  for (const fsPathItem of fsPathMap.keys()) {
-    if (op === 'list') {
-      log(`${fsPathItem}:`)
-      log(
-        fsPathMap
-          .get(fsPathItem)
-          ?.map((x) => `  ${x}`)
-          .join('\n') ?? '',
-      )
-    } else {
-      await getVirt(fsPathItem, cmdOpts)[op](fsPathMap.get(fsPathItem))
-    }
+  for (const virtName of virtNames) {
+    await getVirt(virtName, cmdOpts)[op](
+      opArgs.names?.map((n) => n.toLowerCase()),
+    )
   }
 }

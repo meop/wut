@@ -1,20 +1,9 @@
 import type { Pack } from '../../cmd.ts'
 import type { ShellOpts } from '../../shell.ts'
 
-import { shellRun } from '../../shell.ts'
+import { Tool } from '../../tool.ts'
 
-export class WinGet implements Pack {
-  program = 'winget'
-  shellOpts: ShellOpts
-
-  shell = (cmd: string, filters?: Array<string>) => {
-    return shellRun(`${this.program} ${cmd}`, {
-      ...this.shellOpts,
-      filters,
-      verbose: true,
-    })
-  }
-
+export class WinGet extends Tool implements Pack {
   async add(names: Array<string>) {
     await this.shell(`install ${names.join(' ')}`)
   }
@@ -41,6 +30,6 @@ export class WinGet implements Pack {
   }
 
   constructor(shellOpts?: ShellOpts) {
-    this.shellOpts = shellOpts ?? {}
+    super('winget', shellOpts)
   }
 }

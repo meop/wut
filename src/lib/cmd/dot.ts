@@ -1,5 +1,9 @@
-import { buildCmd, type CmdOpts, type Dot } from '../cmd.ts'
+import type { CmdOpts, Dot } from '../cmd.ts'
 import type { ShellOpts } from '../shell.ts'
+
+import { buildCmd } from '../cmd.ts'
+
+import { File } from './dot/file.ts'
 
 type CmdDotArgs = {
   names?: Array<string>
@@ -21,7 +25,7 @@ export function buildCmdDot(getParentOpts: () => CmdOpts) {
     buildCmd('list', 'list on local')
       .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
       .argument('[names...]', 'names to match')
-      .action((names: Array<string>) => {
+      .action((names?: Array<string>) => {
         runCmdDot('list', { names }, getOpts)
       }),
   )
@@ -30,7 +34,7 @@ export function buildCmdDot(getParentOpts: () => CmdOpts) {
     buildCmd('pull', 'pull from local')
       .aliases(['['])
       .argument('[names...]', 'names to match')
-      .action((names: Array<string>) => {
+      .action((names?: Array<string>) => {
         runCmdDot('pull', { names }, getOpts)
       }),
   )
@@ -39,12 +43,30 @@ export function buildCmdDot(getParentOpts: () => CmdOpts) {
     buildCmd('push', 'push to local')
       .aliases([']'])
       .argument('[names...]', 'names to match')
-      .action((names: Array<string>) => {
+      .action((names?: Array<string>) => {
         runCmdDot('push', { names }, getOpts)
       }),
   )
 
+  cmd.addCommand(
+    buildCmd('stat', 'status on local')
+      .aliases(['s', '$', 'st', 'status'])
+      .argument('[names...]', 'names to match')
+      .action((names?: Array<string>) => {
+        runCmdDot('stat', { names }, getOpts)
+      }),
+  )
+
   return cmd
+}
+
+function getDot(name: string, shellOpts: ShellOpts): Dot {
+  switch (name) {
+    case 'file':
+      return new File(shellOpts)
+    default:
+      throw new Error(`not a supported dot manager: ${name}`)
+  }
 }
 
 async function runCmdDot(
@@ -54,5 +76,5 @@ async function runCmdDot(
 ) {
   const cmdOpts = getCmdOpts()
 
-  const opArgsNames = opArgs.names ?? []
+  await getDot('file', cmdOpts)[op](opArgs.names?.map((n) => n.toLowerCase()))
 }

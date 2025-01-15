@@ -13,8 +13,10 @@ export type CmdOpts = {
 }
 
 export interface Dot {
+  list: (names?: Array<string>) => Promise<void>
   pull: (names?: Array<string>) => Promise<void>
   push: (names?: Array<string>) => Promise<void>
+  stat: (names?: Array<string>) => Promise<void>
 }
 
 export interface Pack {
@@ -28,8 +30,35 @@ export interface Pack {
 }
 
 export interface Virt {
-  down: (fsPaths: Array<string>) => Promise<void>
-  stat: (fsPaths: Array<string>) => Promise<void>
+  down: (names?: Array<string>) => Promise<void>
+  list: (names?: Array<string>) => Promise<void>
+  stat: (names?: Array<string>) => Promise<void>
   tidy: () => Promise<void>
-  up: (fsPaths: Array<string>) => Promise<void>
+  up: (names?: Array<string>) => Promise<void>
+}
+
+export function getPlatDiffCmd(plat: string, lPath: string, rPath: string) {
+  switch (plat) {
+    case 'linux':
+      return `diff "${lPath}" "${rPath}"`
+    case 'macos':
+      return `diff "${lPath}" "${rPath}"`
+    case 'windows':
+      return `fc "${lPath}" "${rPath}"`
+    default:
+      throw new Error(`plat is not supported: ${plat}`)
+  }
+}
+
+export function getPlatFindCmd(plat: string, program: string) {
+  switch (plat) {
+    case 'linux':
+      return `which ${program}`
+    case 'macos':
+      return `which ${program}`
+    case 'windows':
+      return `where ${program}`
+    default:
+      throw new Error(`plat is not supported: ${plat}`)
+  }
 }

@@ -1,45 +1,37 @@
 import type { Virt } from '../../cmd.ts'
 import type { ShellOpts } from '../../shell.ts'
 
-import { basename } from 'path'
+import { log } from '../../log.ts'
 
-import { shellRun } from '../../shell.ts'
+import { Tool } from '../../tool.ts'
 
-export class Docker implements Virt {
+export class Docker extends Tool implements Virt {
   program = 'docker'
-  shellOpts: ShellOpts
 
-  shell = (cmd: string, filters?: Array<string>) => {
-    return shellRun(`${this.program} ${cmd}`, {
-      ...this.shellOpts,
-      filters,
-      verbose: true,
-    })
-  }
-
-  async down(fsPaths: Array<string>) {
-    for (const fsPath of fsPaths) {
+  async down(names?: Array<string>) {
+    for (const fsPath of await this._fsPaths(names)) {
       await this.shell(`compose --file ${fsPath} down`)
     }
   }
-  async stat(fsPaths: Array<string>) {
-    const filters: Array<string> = []
-    for (const fsPath of fsPaths) {
-      filters.push(basename(fsPath, '.yaml'))
+  async list(names?: Array<string>) {
+    for (const fsPath of await this._fsPaths(names, true)) {
+      log(fsPath)
     }
-    await this.shell('ps -a', filters)
+  }
+  async stat(names?: Array<string>) {
+    await this.shell('ps -a', names)
   }
   async tidy() {
     await this.shell('system prune --all --volumes')
   }
-  async up(fsPaths: Array<string>) {
-    for (const fsPath of fsPaths) {
+  async up(names?: Array<string>) {
+    for (const fsPath of await this._fsPaths(names)) {
       await this.shell(`compose --file ${fsPath} pull`)
       await this.shell(`compose --file ${fsPath} up --detach`)
     }
   }
 
   constructor(shellOpts?: ShellOpts) {
-    this.shellOpts = shellOpts ?? {}
+    super('docker', shellOpts)
   }
 }

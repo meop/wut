@@ -1,20 +1,9 @@
 import type { Pack } from '../../cmd.ts'
 import type { ShellOpts } from '../../shell.ts'
 
-import { shellRun } from '../../shell.ts'
+import { Tool } from '../../tool.ts'
 
-export class Dnf implements Pack {
-  program = 'sudo dnf'
-  shellOpts: ShellOpts
-
-  shell = (cmd: string, filters?: Array<string>) => {
-    return shellRun(`${this.program} ${cmd}`, {
-      ...this.shellOpts,
-      filters,
-      verbose: true,
-    })
-  }
-
+export class Dnf extends Tool implements Pack {
   async add(names: Array<string>) {
     await this.shell('check-update')
     await this.shell(`install ${names.join(' ')}`)
@@ -47,6 +36,6 @@ export class Dnf implements Pack {
   }
 
   constructor(shellOpts?: ShellOpts) {
-    this.shellOpts = shellOpts ?? {}
+    super('sudo dnf', shellOpts)
   }
 }

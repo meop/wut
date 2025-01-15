@@ -21,8 +21,8 @@ const validPacks = [
   'zypper',
   'dnf',
   'brew',
-  'winget',
   'scoop',
+  'winget',
 ]
 
 const validPackWraps = {
@@ -62,7 +62,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
 
   cmd.addCommand(
     buildCmd('del', 'delete on local')
-      .aliases(['d', '-', 'delete', 'rm', 'remove', 'un', 'uninstall'])
+      .aliases(['d', '-', 'delete', 'rm', 'rem', 'remove', 'un', 'uninstall'])
       .argument('<names...>', 'names to match')
       .action((names: Array<string>) => {
         runCmdPack('del', { names }, getOpts)
@@ -82,7 +82,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
     buildCmd('list', 'list on local')
       .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
       .argument('[names...]', 'names to match')
-      .action((names: Array<string>) => {
+      .action((names?: Array<string>) => {
         runCmdPack('list', { names }, getOpts)
       }),
   )
@@ -91,7 +91,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
     buildCmd('out', 'out of sync on local')
       .aliases(['o', '!', 'ou', 'outdated', 'ob', 'obsolete', 'ol', 'old'])
       .argument('[names...]', 'names to match')
-      .action((names: Array<string>) => {
+      .action((names?: Array<string>) => {
         runCmdPack('out', { names }, getOpts)
       }),
   )
@@ -108,7 +108,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
     buildCmd('up', 'sync up from web')
       .aliases(['u', '^', 'update', 'upgrade', 'sy', 'sync'])
       .argument('[names...]', 'names to match')
-      .action((names: Array<string>) => {
+      .action((names?: Array<string>) => {
         runCmdPack('up', { names }, getOpts)
       }),
   )
@@ -116,7 +116,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
   return cmd
 }
 
-export async function getValidPacks(shellOpts?: ShellOpts) {
+async function getValidPacks(shellOpts?: ShellOpts) {
   const packs: Array<string> = []
   for (const validPack of validPacks) {
     if (await isInPath(validPack, shellOpts)) {
@@ -161,7 +161,7 @@ async function runCmdPack(
     ? [String(cmdOpts.manager.toLowerCase())]
     : await getValidPacks(cmdOpts)
 
-  const opArgsNames = opArgs.names ?? []
+  const opArgsNames = opArgs.names?.map((n) => n.toLowerCase()) ?? []
   const opArgsNamesRemaining: Array<string> = []
 
   const fsPaths = await findConfigFilePaths('pack')

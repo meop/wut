@@ -1,7 +1,7 @@
 import type { Virt } from '../../cmd.ts'
 import type { ShellOpts } from '../../shell.ts'
 
-import { basename } from 'path'
+import path from 'path'
 
 import { findConfigFilePaths, loadConfigFile } from '../../config.ts'
 import {
@@ -15,6 +15,8 @@ import { getNicIfIndex, getNicMac } from '../../net.ts'
 import { doesPathExist, makePathExist } from '../../path.ts'
 import { shellRun } from '../../shell.ts'
 import { sleep } from '../../time.ts'
+
+import { Tool } from '../../tool.ts'
 
 const SleepTimeMs = 2 * 1000
 
@@ -80,7 +82,7 @@ async function rebindVfioPci(pciDevId: string, shellOpts: ShellOpts) {
     })
   ).out
 
-  const currentDriver = out.length > 0 ? basename(out[0].trim()) : ''
+  const currentDriver = out.length > 0 ? path.basename(out[0].trim()) : ''
 
   if (currentDriver === driver) {
     return
@@ -104,7 +106,7 @@ async function rebindVfioPci(pciDevId: string, shellOpts: ShellOpts) {
 }
 
 function vmName(fsPath: string) {
-  return basename(fsPath, '.yaml')
+  return path.basename(fsPath, '.yaml')
 }
 
 async function vmRun(config: any, configVm: any, shellOpts: ShellOpts) {
@@ -236,11 +238,17 @@ async function vmStats(fsPaths: Array<string>, shellOpts: ShellOpts) {
   return matches
 }
 
-export class Qemu implements Virt {
+export class Qemu extends Tool implements Virt {
   shellOpts: ShellOpts
 
-  async down(fsPaths: Array<string>) {
-    for (const fsPath of fsPaths) {
+  async _config() {
+    return await loadConfigFile(
+      path.join(process.env.WUT_CONFIG_LOCATION ?? '', 'virt', 'qemu.yaml'),
+    )
+  }
+
+  async down(names?: Array<string>) {
+    for (const fsPath of await this._fsPaths(names)) {
       const matches = await vmStats([fsPath], {
         ...this.shellOpts,
         dryRun: false,
@@ -258,18 +266,22 @@ export class Qemu implements Virt {
       }
     }
   }
-  async stat(fsPaths: Array<string>) {
-    await vmStats(fsPaths, { ...this.shellOpts, verbose: true })
+  async list(names?: Array<string>) {
+    for (const fsPath of await this._fsPaths(names, true)) {
+      log(fsPath)
+    }
+  }
+  async stat(names?: Array<string>) {
+    await vmStats(await this._fsPaths(names), {
+      ...this.shellOpts,
+      verbose: true,
+    })
   }
   async tidy() {}
-  async up(fsPaths: Array<string>) {
-    const config = await loadConfigFile(
-      (
-        await findConfigFilePaths('virt')
-      ).find((f) => f.endsWith('qemu.yaml')) ?? '',
-    )
+  async up(names?: Array<string>) {
+    const config = await this._config()
 
-    for (const fsPath of fsPaths) {
+    for (const fsPath of await this._fsPaths(names)) {
       const matches = await vmStats([fsPath], {
         ...this.shellOpts,
         dryRun: false,
@@ -285,6 +297,7 @@ export class Qemu implements Virt {
   }
 
   constructor(shellOpts?: ShellOpts) {
+    super('qemu', shellOpts)
     this.shellOpts = shellOpts ?? {}
   }
 }

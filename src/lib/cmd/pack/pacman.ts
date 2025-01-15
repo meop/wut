@@ -1,20 +1,9 @@
 import type { Pack } from '../../cmd.ts'
 import type { ShellOpts } from '../../shell.ts'
 
-import { shellRun } from '../../shell.ts'
+import { Tool } from '../../tool.ts'
 
-export class Pacman implements Pack {
-  program = 'sudo pacman'
-  shellOpts: ShellOpts
-
-  shell = (cmd: string, filters?: Array<string>) => {
-    return shellRun(`${this.program} ${cmd}`, {
-      ...this.shellOpts,
-      filters,
-      verbose: true,
-    })
-  }
-
+export class Pacman extends Tool implements Pack {
   async add(names: Array<string>) {
     await this.shell('--sync --refresh')
     await this.shell(`--sync ${names.join(' ')}`)
@@ -25,7 +14,7 @@ export class Pacman implements Pack {
   async find(names: Array<string>) {
     await this.shell('--sync --refresh')
     for (const name of names) {
-      await this.shell(`--query --search ${name}`)
+      await this.shell(`--sync --search ${name}`)
     }
   }
   async list(names?: Array<string>) {
@@ -46,15 +35,13 @@ export class Pacman implements Pack {
     )
   }
 
-  constructor(shellOpts?: ShellOpts) {
-    this.shellOpts = shellOpts ?? {}
+  constructor(shellOpts?: ShellOpts, wrapper?: string) {
+    super(wrapper ?? 'sudo pacman', shellOpts)
   }
 }
 
 export class Yay extends Pacman {
-  program = 'yay'
-
   constructor(shellOpts?: ShellOpts) {
-    super(shellOpts)
+    super(shellOpts, 'yay')
   }
 }

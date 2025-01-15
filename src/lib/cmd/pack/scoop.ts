@@ -1,20 +1,9 @@
 import type { Pack } from '../../cmd.ts'
 import type { ShellOpts } from '../../shell.ts'
 
-import { shellRun } from '../../shell.ts'
+import { Tool } from '../../tool.ts'
 
-export class Scoop implements Pack {
-  program = 'scoop'
-  shellOpts: ShellOpts
-
-  shell = (cmd: string, filters?: Array<string>) => {
-    return shellRun(`${this.program} ${cmd}`, {
-      ...this.shellOpts,
-      filters,
-      verbose: true,
-    })
-  }
-
+export class Scoop extends Tool implements Pack {
   async add(names: Array<string>) {
     await this.shell('update')
     await this.shell(`install ${names.join(' ')}`)
@@ -46,6 +35,6 @@ export class Scoop implements Pack {
   }
 
   constructor(shellOpts?: ShellOpts) {
-    this.shellOpts = shellOpts ?? {}
+    super('scoop', shellOpts)
   }
 }

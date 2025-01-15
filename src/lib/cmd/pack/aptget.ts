@@ -1,20 +1,9 @@
 import type { Pack } from '../../cmd.ts'
 import type { ShellOpts } from '../../shell.ts'
 
-import { shellRun } from '../../shell.ts'
+import { Tool } from '../../tool.ts'
 
-export class AptGet implements Pack {
-  program = 'sudo apt-get'
-  shellOpts: ShellOpts
-
-  shell = (cmd: string, filters?: Array<string>) => {
-    return shellRun(`${this.program} ${cmd}`, {
-      ...this.shellOpts,
-      filters,
-      verbose: true,
-    })
-  }
-
+export class AptGet extends Tool implements Pack {
   async add(names: Array<string>) {
     await this.shell('update')
     await this.shell(`install ${names.join(' ')}`)
@@ -48,19 +37,17 @@ export class AptGet implements Pack {
     )
   }
 
-  constructor(shellOpts?: ShellOpts) {
-    this.shellOpts = shellOpts ?? {}
+  constructor(shellOpts?: ShellOpts, wrapper?: string) {
+    super(wrapper ?? 'sudo apt-get', shellOpts)
   }
 }
 
 export class Apt extends AptGet {
-  program = 'sudo apt'
-
   async up(names?: Array<string>) {
     await super.up(names, 'full-upgrade')
   }
 
   constructor(shellOpts?: ShellOpts) {
-    super(shellOpts)
+    super(shellOpts, 'sudo apt')
   }
 }

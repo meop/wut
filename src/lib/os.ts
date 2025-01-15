@@ -8,6 +8,7 @@ export function getArch() {
       throw new Error(`unsupported arch: ${process.arch}`)
   }
 }
+
 export function getPlat() {
   switch (process.platform) {
     case 'linux':

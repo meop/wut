@@ -1,16 +1,11 @@
 import type { ShellOpts } from './shell.ts'
 
 import { promises as fsPromises } from 'fs'
-
-import { getPlat } from './os.ts'
-import { shellRun } from './shell.ts'
 import path from 'path'
 
-const platFindCmd = {
-  linux: 'which',
-  macos: 'which',
-  windows: 'where',
-}
+import { getPlatFindCmd } from './cmd.ts'
+import { getPlat } from './os.ts'
+import { shellRun } from './shell.ts'
 
 export async function doesPathExist(fsPath: string) {
   return await fsPromises
@@ -32,16 +27,16 @@ export async function makePathExist(fsPath: string, shellOpts?: ShellOpts) {
   }
 }
 
-export async function getFilePathsInDir(dir: string) {
+export async function getFilePathsInDirPath(dirPath: string) {
   const filePaths: Array<string> = []
 
-  if (!(await doesPathExist(dir))) {
+  if (!(await doesPathExist(dirPath))) {
     return filePaths
   }
 
-  for (const dirent of await fsPromises.readdir(dir, { withFileTypes: true })) {
-    const res = path.resolve(dir, dirent.name)
-    const paths = dirent.isDirectory() ? await getFilePathsInDir(res) : [res]
+  for (const dirent of await fsPromises.readdir(dirPath, { withFileTypes: true })) {
+    const r = path.resolve(dirPath, dirent.name)
+    const paths = dirent.isDirectory() ? await getFilePathsInDirPath(r) : [r]
     filePaths.push(...paths)
   }
 
@@ -50,8 +45,8 @@ export async function getFilePathsInDir(dir: string) {
 
 export async function isInPath(program: string, shellOpts?: ShellOpts) {
   try {
-    const cmd = platFindCmd[getPlat()]
-    await shellRun(`${cmd} ${program}`, {
+    const cmd = getPlatFindCmd(getPlat(), program)
+    await shellRun(cmd, {
       ...shellOpts,
       dryRun: false,
       pipeOutAndErr: true,
