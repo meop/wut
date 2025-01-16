@@ -1,7 +1,7 @@
 import type { CmdOpts, Dot } from '../cmd.ts'
 import type { ShellOpts } from '../shell.ts'
 
-import { buildCmd } from '../cmd.ts'
+import { buildCmd, buildAct } from '../cmd.ts'
 
 import { File } from './dot/file.ts'
 
@@ -25,36 +25,44 @@ export function buildCmdDot(getParentOpts: () => CmdOpts) {
     buildCmd('list', 'list on local')
       .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
       .argument('[names...]', 'names to match')
-      .action((names?: Array<string>) => {
-        runCmdDot('list', { names }, getOpts)
-      }),
+      .action(
+        buildAct((names?: Array<string>) =>
+          runCmdDot('list', { names }, getOpts),
+        ),
+      ),
   )
 
   cmd.addCommand(
     buildCmd('pull', 'pull from local')
       .aliases(['['])
       .argument('[names...]', 'names to match')
-      .action((names?: Array<string>) => {
-        runCmdDot('pull', { names }, getOpts)
-      }),
+      .action(
+        buildAct((names?: Array<string>) =>
+          runCmdDot('pull', { names }, getOpts),
+        ),
+      ),
   )
 
   cmd.addCommand(
     buildCmd('push', 'push to local')
       .aliases([']'])
       .argument('[names...]', 'names to match')
-      .action((names?: Array<string>) => {
-        runCmdDot('push', { names }, getOpts)
-      }),
+      .action(
+        buildAct((names?: Array<string>) =>
+          runCmdDot('push', { names }, getOpts),
+        ),
+      ),
   )
 
   cmd.addCommand(
     buildCmd('stat', 'status on local')
       .aliases(['s', '$', 'st', 'status'])
       .argument('[names...]', 'names to match')
-      .action((names?: Array<string>) => {
-        runCmdDot('stat', { names }, getOpts)
-      }),
+      .action(
+        buildAct((names?: Array<string>) =>
+          runCmdDot('stat', { names }, getOpts),
+        ),
+      ),
   )
 
   return cmd
@@ -65,7 +73,7 @@ function getDot(name: string, shellOpts: ShellOpts): Dot {
     case 'file':
       return new File(shellOpts)
     default:
-      throw new Error(`not a supported dot manager: ${name}`)
+      throw new Error(`unsupported dotfile manager: ${name}`)
   }
 }
 

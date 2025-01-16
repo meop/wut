@@ -1,10 +1,17 @@
 import { Command } from 'commander'
 
+import { logError } from './log.ts'
+
 export function buildCmd(name: string, description: string, command?: Command) {
   return (command || new Command())
     .name(name)
     .description(description)
     .helpCommand(false)
+}
+
+export function buildAct(func: (...args: Array<any>) => Promise<any>) {
+  return (...args: Array<any>) =>
+    func(...args).catch((err) => logError(err.message))
 }
 
 export type CmdOpts = {
@@ -46,7 +53,7 @@ export function getPlatDiffCmd(plat: string, lPath: string, rPath: string) {
     case 'windows':
       return `fc "${lPath}" "${rPath}"`
     default:
-      throw new Error(`plat is not supported: ${plat}`)
+      throw new Error(`unsupported os platform: ${plat}`)
   }
 }
 
@@ -59,6 +66,6 @@ export function getPlatFindCmd(plat: string, program: string) {
     case 'windows':
       return `where ${program}`
     default:
-      throw new Error(`plat is not supported: ${plat}`)
+      throw new Error(`unsupported os platform: ${plat}`)
   }
 }

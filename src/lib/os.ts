@@ -5,7 +5,7 @@ export function getArch() {
     case 'arm64':
       return 'arm64'
     default:
-      throw new Error(`unsupported arch: ${process.arch}`)
+      throw new Error(`unsupported cpu architechure: ${process.arch}`)
   }
 }
 
@@ -18,6 +18,6 @@ export function getPlat() {
     case 'win32':
       return 'windows'
     default:
-      throw new Error(`unsupported plat: ${process.platform}`)
+      throw new Error(`unsupported os platform: ${process.platform}`)
   }
 }

@@ -2,7 +2,7 @@ import { join as pathJoin } from 'path'
 import { parse as yamlParse } from 'yaml'
 import { promises as fsPromises } from 'fs'
 
-import { doesPathExist, getFilePathsInDirPath } from './path.ts'
+import { getPathStat, getFilePathsInPath } from './path.ts'
 
 export async function findConfigFilePaths(
   cmd: string,
@@ -11,11 +11,11 @@ export async function findConfigFilePaths(
   const dirPath = pathJoin(
     ...[process.env['WUT_CONFIG_LOCATION'] ?? '', cmd, ...parts],
   )
-  return await getFilePathsInDirPath(dirPath)
+  return await getFilePathsInPath(dirPath)
 }
 
 export async function loadConfigFile(fsPath: string) {
-  if (!fsPath || !(await doesPathExist(fsPath))) {
+  if (!fsPath || !(await getPathStat(fsPath))) {
     return {}
   }
 

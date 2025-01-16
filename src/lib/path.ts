@@ -4,40 +4,71 @@ import { promises as fsPromises } from 'fs'
 import path from 'path'
 
 import { getPlatFindCmd } from './cmd.ts'
+import { log } from './log.ts'
 import { getPlat } from './os.ts'
 import { shellRun } from './shell.ts'
 
-export async function doesPathExist(fsPath: string) {
-  return await fsPromises
-    .stat(fsPath)
-    .then(
-      () => true,
-      () => false,
-    )
-    .catch(() => false)
+export async function getPathStat(fsPath: string) {
+  try {
+    return await fsPromises.stat(fsPath)
+  } catch {
+    return undefined
+  }
 }
 
-export async function makePathExist(fsPath: string, shellOpts?: ShellOpts) {
-  if (await doesPathExist(fsPath)) {
+export async function ensureDirPath(
+  dirPath: string,
+  shellOpts?: ShellOpts,
+  makeEmpty?: boolean,
+) {
+  const fsStat = await getPathStat(dirPath)
+  if (!fsStat || fsStat.isFile() || makeEmpty) {
+    if (shellOpts?.verbose) {
+      log(`reset: ${dirPath}`)
+    }
+    if (shellOpts?.dryRun) {
+      return
+    }
+    if (fsStat) {
+      await fsPromises.rm(dirPath, { recursive: true })
+    }
+    await fsPromises.mkdir(dirPath, { recursive: true })
+  }
+}
+
+export async function syncFilePath(
+  sourcePath: string,
+  targetPath: string,
+  shellOpts?: ShellOpts,
+) {
+  if (!(await getPathStat(sourcePath))) {
     return
   }
-
-  if (!shellOpts?.dryRun) {
-    await fsPromises.mkdir(fsPath, { recursive: true })
+  if (shellOpts?.verbose) {
+    log(`copy: ${sourcePath} to ${targetPath}`)
   }
+  if (shellOpts?.dryRun) {
+    return
+  }
+  await fsPromises.copyFile(sourcePath, targetPath)
 }
 
-export async function getFilePathsInDirPath(dirPath: string) {
+export async function getFilePathsInPath(fsPath: string) {
   const filePaths: Array<string> = []
 
-  if (!(await doesPathExist(dirPath))) {
+  const stat = await getPathStat(fsPath)
+  if (!stat) {
     return filePaths
   }
 
-  for (const dirent of await fsPromises.readdir(dirPath, { withFileTypes: true })) {
-    const r = path.resolve(dirPath, dirent.name)
-    const paths = dirent.isDirectory() ? await getFilePathsInDirPath(r) : [r]
-    filePaths.push(...paths)
+  if (stat.isDirectory()) {
+    for (const fsSubPath of await fsPromises.readdir(fsPath)) {
+      filePaths.push(
+        ...(await getFilePathsInPath(path.join(fsPath, fsSubPath))),
+      )
+    }
+  } else {
+    filePaths.push(fsPath)
   }
 
   return filePaths

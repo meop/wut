@@ -18,7 +18,7 @@ export async function getCpuVendorName(shellOpts: ShellOpts) {
   } else if (cpu_vendor_id === 'GenuineIntel') {
     return 'intel'
   } else {
-    throw new Error(`cpu vendor is not supported yet: ${cpu_vendor_id}`)
+    throw new Error(`unsupported cpu vendor: ${cpu_vendor_id}`)
   }
 }
 

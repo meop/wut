@@ -3,7 +3,7 @@ import type { ShellOpts } from '../../shell.ts'
 
 import path from 'path'
 
-import { findConfigFilePaths, loadConfigFile } from '../../config.ts'
+import { loadConfigFile } from '../../config.ts'
 import {
   getCpuCoreCount,
   getCpuSocketCount,
@@ -12,7 +12,7 @@ import {
 } from '../../cpu.ts'
 import { log, logInfo, logWarn } from '../../log.ts'
 import { getNicIfIndex, getNicMac } from '../../net.ts'
-import { doesPathExist, makePathExist } from '../../path.ts'
+import { getPathStat, ensureDirPath } from '../../path.ts'
 import { shellRun } from '../../shell.ts'
 import { sleep } from '../../time.ts'
 
@@ -32,7 +32,7 @@ initcall_blacklist=sysfb_init
 async function unbindEfiFb(shellOpts: ShellOpts) {
   const checkPath =
     '/sys/bus/platform/drivers/efi-framebuffer/efi-framebuffer.0'
-  if (!(await doesPathExist(checkPath))) {
+  if (!(await getPathStat(checkPath))) {
     return
   }
 
@@ -69,7 +69,7 @@ async function rebindVfioPci(pciDevId: string, shellOpts: ShellOpts) {
   const fullPciDevId = `0000:${pciDevId}`
 
   const checkPath = `/sys/bus/pci/devices/${fullPciDevId}/driver_override`
-  if (!(await doesPathExist(checkPath))) {
+  if (!(await getPathStat(checkPath))) {
     return
   }
 
@@ -142,6 +142,9 @@ async function vmRun(config: any, configVm: any, shellOpts: ShellOpts) {
       if (f.includes('${')) {
         for (const e of Object.keys(env)) {
           f = f.replace('${' + e + '}', env[e])
+          if (!f.includes('${')) {
+            break
+          }
         }
       }
       newFlags.push(f)
@@ -158,7 +161,7 @@ async function vmRun(config: any, configVm: any, shellOpts: ShellOpts) {
     for (const f of swtpmFlags) {
       if (f.includes('--tpmstate')) {
         const swtpmPath = f.split('=')[1]
-        await makePathExist(swtpmPath, shellOpts)
+        await ensureDirPath(swtpmPath, shellOpts)
       }
     }
 
