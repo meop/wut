@@ -51,7 +51,7 @@ export function getPlatDiffCmd(plat: string, lPath: string, rPath: string) {
     case 'macos':
       return `diff "${lPath}" "${rPath}"`
     case 'windows':
-      return `fc "${lPath}" "${rPath}"`
+      return `fc.exe "${lPath}" "${rPath}"`
     default:
       throw new Error(`unsupported os platform: ${plat}`)
   }
@@ -64,7 +64,7 @@ export function getPlatFindCmd(plat: string, program: string) {
     case 'macos':
       return `which ${program}`
     case 'windows':
-      return `where ${program}`
+      return `where.exe ${program}`
     default:
       throw new Error(`unsupported os platform: ${plat}`)
   }

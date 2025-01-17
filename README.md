@@ -124,15 +124,15 @@ Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 Link repo:
 
 ```pwsh
-New-Item -ItemType SymbolicLink -Value "${env:HOME}\source\code\meop\wut-config" -Path "${env:HOME}\.wut-config"
-New-Item -ItemType SymbolicLink -Value "${env:HOME}\source\code\meop\wut" -Path "${env:HOME}\.wut"
+New-Item -ItemType SymbolicLink -Value "${env:HOME}/source/code/meop/wut-config" -Path "${env:HOME}/.wut-config"
+New-Item -ItemType SymbolicLink -Value "${env:HOME}/source/code/meop/wut" -Path "${env:HOME}/.wut"
 ```
 
 Add to profile:
 
 ```pwsh
-if (Test-Path "${env:HOME}\.wut") {
-  Set-Alias -Name wut -Value "${env:HOME}\.wut\bin\wut.ps1"
+if (Test-Path "${env:HOME}/.wut") {
+  Set-Alias -Name wut -Value "${env:HOME}/.wut/bin/wut.ps1"
 }
 ```
 
