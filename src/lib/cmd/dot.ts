@@ -22,6 +22,17 @@ export function buildCmdDot(getParentOpts: () => CmdOpts) {
   }
 
   cmd.addCommand(
+    buildCmd('diff', 'diff vs local')
+      .aliases(['d', '?', 'de', 'delta'])
+      .argument('[names...]', 'names to match')
+      .action(
+        buildAct((names?: Array<string>) =>
+          runCmdDot('diff', { names }, getOpts),
+        ),
+      ),
+  )
+
+  cmd.addCommand(
     buildCmd('list', 'list on local')
       .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
       .argument('[names...]', 'names to match')
@@ -50,17 +61,6 @@ export function buildCmdDot(getParentOpts: () => CmdOpts) {
       .action(
         buildAct((names?: Array<string>) =>
           runCmdDot('push', { names }, getOpts),
-        ),
-      ),
-  )
-
-  cmd.addCommand(
-    buildCmd('stat', 'status on local')
-      .aliases(['s', '$', 'st', 'status'])
-      .argument('[names...]', 'names to match')
-      .action(
-        buildAct((names?: Array<string>) =>
-          runCmdDot('stat', { names }, getOpts),
         ),
       ),
   )

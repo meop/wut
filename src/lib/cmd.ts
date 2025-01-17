@@ -20,10 +20,10 @@ export type CmdOpts = {
 }
 
 export interface Dot {
+  diff: (names?: Array<string>) => Promise<void>
   list: (names?: Array<string>) => Promise<void>
   pull: (names?: Array<string>) => Promise<void>
   push: (names?: Array<string>) => Promise<void>
-  stat: (names?: Array<string>) => Promise<void>
 }
 
 export interface Pack {

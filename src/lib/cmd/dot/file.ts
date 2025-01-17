@@ -117,6 +117,19 @@ export class File implements Dot {
     return psc
   }
 
+  async diff(names?: Array<string>) {
+    const psc = await this._pathSyncConfig(names)
+    for (const psPair of psc.filePairPaths) {
+      if (await getPathStat(psPair.right)) {
+        await shellRun(getPlatDiffCmd(getPlat(), psPair.left, psPair.right), {
+          ...this.shellOpts,
+          verbose: true,
+        })
+      } else {
+        logWarn(`not yet in fs: ${psPair.right}`)
+      }
+    }
+  }
   async list(names?: Array<string>) {
     const psc = await this._pathSyncConfig(names)
 
@@ -146,19 +159,6 @@ export class File implements Dot {
         ...this.shellOpts,
         verbose: true,
       })
-    }
-  }
-  async stat(names?: Array<string>) {
-    const psc = await this._pathSyncConfig(names)
-    for (const psPair of psc.filePairPaths) {
-      if (await getPathStat(psPair.right)) {
-        await shellRun(getPlatDiffCmd(getPlat(), psPair.left, psPair.right), {
-          ...this.shellOpts,
-          verbose: true,
-        })
-      } else {
-        logWarn(`not yet in fs: ${psPair.right}`)
-      }
     }
   }
 
