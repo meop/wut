@@ -3,16 +3,49 @@ import type { ShellOpts } from './shell.ts'
 import { promises as fsPromises } from 'fs'
 import path from 'path'
 
-import { getPlatFindCmd } from './cmd.ts'
 import { log } from './log.ts'
 import { getPlat } from './os.ts'
 import { shellRun } from './shell.ts'
 
-export async function getPathStat(fsPath: string) {
+export function fmtPath(p: string) {
+  return p
+    .replaceAll(path.posix.sep, path.sep)
+    .replaceAll(path.win32.sep, path.sep)
+}
+
+export async function getPathContents(p: string) {
+  return await fsPromises.readFile(fmtPath(p), { encoding: 'utf8' })
+}
+
+export async function getPathStat(p: string) {
   try {
-    return await fsPromises.stat(fsPath)
+    return await fsPromises.stat(fmtPath(p))
   } catch {
     return undefined
+  }
+}
+
+export function getPlatDiffCmd(plat: string, lPath: string, rPath: string) {
+  switch (plat) {
+    case 'linux':
+    case 'macos':
+      return `diff "${fmtPath(lPath)}" "${fmtPath(rPath)}"`
+    case 'windows':
+      return `fc.exe "${fmtPath(lPath)}" "${fmtPath(rPath)}"`
+    default:
+      throw new Error(`unsupported os platform: ${plat}`)
+  }
+}
+
+export function getPlatFindCmd(plat: string, program: string) {
+  switch (plat) {
+    case 'linux':
+    case 'macos':
+      return `which ${program}`
+    case 'windows':
+      return `where.exe ${program}`
+    default:
+      throw new Error(`unsupported os platform: ${plat}`)
   }
 }
 
@@ -21,18 +54,20 @@ export async function ensureDirPath(
   shellOpts?: ShellOpts,
   makeEmpty?: boolean,
 ) {
-  const fsStat = await getPathStat(dirPath)
+  const fmtDirPath = fmtPath(dirPath)
+
+  const fsStat = await getPathStat(fmtDirPath)
   if (!fsStat || fsStat.isFile() || makeEmpty) {
     if (shellOpts?.verbose) {
-      log(`reset: ${dirPath}`)
+      log(`reset: ${fmtDirPath}`)
     }
     if (shellOpts?.dryRun) {
       return
     }
     if (fsStat) {
-      await fsPromises.rm(dirPath, { recursive: true })
+      await fsPromises.rm(fmtDirPath, { recursive: true })
     }
-    await fsPromises.mkdir(dirPath, { recursive: true })
+    await fsPromises.mkdir(fmtDirPath, { recursive: true })
   }
 }
 
@@ -41,35 +76,40 @@ export async function syncFilePath(
   targetPath: string,
   shellOpts?: ShellOpts,
 ) {
+  const fmtSourcePath = fmtPath(sourcePath)
+  const fmtTargetPath = fmtPath(targetPath)
+
   if (!(await getPathStat(sourcePath))) {
     return
   }
   if (shellOpts?.verbose) {
-    log(`copy: ${sourcePath} to ${targetPath}`)
+    log(`copy: ${fmtSourcePath} to ${fmtTargetPath}`)
   }
   if (shellOpts?.dryRun) {
     return
   }
   await ensureDirPath(path.dirname(targetPath))
-  await fsPromises.copyFile(sourcePath, targetPath)
+  await fsPromises.copyFile(fmtSourcePath, fmtTargetPath)
 }
 
 export async function getFilePathsInPath(fsPath: string) {
+  const fmtFsPath = fmtPath(fsPath)
+
   const filePaths: Array<string> = []
 
-  const stat = await getPathStat(fsPath)
+  const stat = await getPathStat(fmtFsPath)
   if (!stat) {
     return filePaths
   }
 
   if (stat.isDirectory()) {
-    for (const fsSubPath of await fsPromises.readdir(fsPath)) {
+    for (const fsSubPath of await fsPromises.readdir(fmtFsPath)) {
       filePaths.push(
-        ...(await getFilePathsInPath(path.join(fsPath, fsSubPath))),
+        ...(await getFilePathsInPath(path.join(fmtFsPath, fmtPath(fsSubPath)))),
       )
     }
   } else {
-    filePaths.push(fsPath)
+    filePaths.push(fmtFsPath)
   }
 
   return filePaths

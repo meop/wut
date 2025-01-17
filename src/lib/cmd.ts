@@ -43,29 +43,3 @@ export interface Virt {
   tidy: () => Promise<void>
   up: (names?: Array<string>) => Promise<void>
 }
-
-export function getPlatDiffCmd(plat: string, lPath: string, rPath: string) {
-  switch (plat) {
-    case 'linux':
-      return `diff "${lPath}" "${rPath}"`
-    case 'macos':
-      return `diff "${lPath}" "${rPath}"`
-    case 'windows':
-      return `fc.exe "${lPath}" "${rPath}"`
-    default:
-      throw new Error(`unsupported os platform: ${plat}`)
-  }
-}
-
-export function getPlatFindCmd(plat: string, program: string) {
-  switch (plat) {
-    case 'linux':
-      return `which ${program}`
-    case 'macos':
-      return `which ${program}`
-    case 'windows':
-      return `where.exe ${program}`
-    default:
-      throw new Error(`unsupported os platform: ${plat}`)
-  }
-}

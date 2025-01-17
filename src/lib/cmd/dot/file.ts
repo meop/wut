@@ -3,14 +3,14 @@ import type { ShellOpts } from '../../shell.ts'
 
 import path from 'path'
 
-import { getPlatDiffCmd } from '../../cmd.ts'
+import { getPlatDiffCmd } from '../../path.ts'
 import { loadConfigFile } from '../../config.ts'
 import { log, logWarn } from '../../log.ts'
 import { getPlat } from '../../os.ts'
 import {
+  ensureDirPath,
   getFilePathsInPath,
   getPathStat,
-  ensureDirPath,
   syncFilePath,
 } from '../../path.ts'
 import { shellRun } from '../../shell.ts'

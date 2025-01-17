@@ -1,8 +1,7 @@
 import { join as pathJoin } from 'path'
 import { parse as yamlParse } from 'yaml'
-import { promises as fsPromises } from 'fs'
 
-import { getPathStat, getFilePathsInPath } from './path.ts'
+import { getPathContents, getPathStat, getFilePathsInPath } from './path.ts'
 
 export async function findConfigFilePaths(
   cmd: string,
@@ -19,6 +18,5 @@ export async function loadConfigFile(fsPath: string) {
     return {}
   }
 
-  const file = await fsPromises.readFile(fsPath, { encoding: 'utf8' })
-  return yamlParse(file)
+  return yamlParse(await getPathContents(fsPath))
 }
