@@ -10,7 +10,7 @@ Some operations create dynamic prompts for the user and cannot be scripted
 
 ## targets
 
-Same targets as NodeJS
+Same targets as Bun
 
 ## unix
 
@@ -93,7 +93,7 @@ curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | 
 ```
 
 - zsh
-- node
+- bun
 - git
 
 ### develop
@@ -131,7 +131,7 @@ Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 ```
 
 - pwsh
-- node
+- bun
 - git
 
 ### develop

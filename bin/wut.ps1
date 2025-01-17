@@ -8,8 +8,8 @@ if ($PSVersionTable.PSVersion.Major -lt $verMajor || $PSVersionTable.PSVersion.M
   exit 1
 }
 
-if (-not (Get-Command node -ErrorAction Ignore)) {
-  Write-Error "node not found .. aborting"
+if (-not (Get-Command bun -ErrorAction Ignore)) {
+  Write-Error "bun not found .. aborting"
   exit 1
 }
 if (-not (Get-Command git -ErrorAction Ignore)) {
@@ -25,9 +25,6 @@ pwsh -nologo -noprofile -command {
     $env:WUT_LOCATION = "${env:HOME}/.wut"
   }
 
-  $env:NODE_NO_WARNINGS = 1
-  $env:NODE_OPTIONS = '--experimental-strip-types --experimental-transform-types'
-
   if ($args.Length -gt 0 -and $args[0] -eq 'up') {
     Write-Output "> git -C `"${env:WUT_CONFIG_LOCATION}`" pull --prune"
     Write-Output ''
@@ -40,14 +37,14 @@ pwsh -nologo -noprofile -command {
     Write-Output ''
 
     Push-Location "${env:WUT_LOCATION}"
-    Write-Output '> npm install'
-    npm install
+    Write-Output '> bun install'
+    bun install
     Pop-Location
 
     exit
   }
 
   Push-Location "${env:WUT_LOCATION}"
-  node src/cli.ts $args
+  bun run src/cli.ts $args
   Pop-Location
 } -args $args

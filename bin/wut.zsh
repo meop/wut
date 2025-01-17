@@ -9,8 +9,8 @@ if ! is-at-least "${verMajor}.${verMinor}"; then
   exit 1
 fi
 
-if ! type node > /dev/null; then
-  echo 'node not found .. aborting' >&2
+if ! type bun > /dev/null; then
+  echo 'bun not found .. aborting' >&2
   exit 1
 fi
 if ! type git > /dev/null; then
@@ -26,9 +26,6 @@ fi
     export WUT_LOCATION="${HOME}/.wut"
   fi
 
-  export NODE_NO_WARNINGS=1
-  export NODE_OPTIONS='--experimental-strip-types --experimental-transform-types'
-
   if [[ "$#" -gt 0 && "$1" == 'up' ]]; then
     echo "> git -C \"${WUT_CONFIG_LOCATION}\" pull --prune"
     echo
@@ -41,14 +38,14 @@ fi
     echo
 
     owd=$(pwd -P) && cd "${WUT_LOCATION}" || exit
-    echo '> npm install'
-    npm install
+    echo '> bun install'
+    bun install
     cd "${owd}" || exit
 
     exit
   fi
 
   owd=$(pwd -P) && cd "${WUT_LOCATION}" || exit
-  node src/cli.ts $@
+  bun run src/cli.ts $@
   cd "${owd}" || exit
 )
