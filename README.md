@@ -20,7 +20,49 @@ MacOS
 
 ### prereqs
 
-Yay [Arch]:
+#### Bun [Debian]
+
+```zsh
+curl -fLsS https://bun.sh/install | bash
+```
+
+#### DotNet / Powershell [Debian]
+
+dotnet: <https://learn.microsoft.com/en-us/dotnet/core/install/linux-debian>
+
+amd64: <https://learn.microsoft.com/en-us/powershell/scripting/install/install-debian>
+
+arm64: <https://learn.microsoft.com/en-us/powershell/scripting/install/community-support>
+
+#### NodeJS [Debian]
+
+(Replace 'v' with latest major version)
+
+```zsh
+curl -fLsS https://deb.nodesource.com/setup_v.x | sudo -E bash -
+```
+
+#### Starship [Debian]
+
+```zsh
+curl -fLsSO https://starship.rs/install.sh
+sh install.sh -b ${HOME}/.local/bin
+rm install.sh
+```
+
+#### Uv [Debian]
+
+```zsh
+curl -fLsS https://astral.sh/uv/install.sh | sh
+```
+
+#### Zoxide [Debian]
+
+```zsh
+curl -fLsS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+```
+
+#### Yay [Arch]
 
 ```zsh
 sudo pacman -S --needed git base-devel
@@ -29,10 +71,10 @@ cd yay-bin
 makepkg -si
 ```
 
-Brew [MacOS]:
+#### Brew [MacOS]
 
 ```zsh
-curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh
+curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | bash -
 ```
 
 - zsh
