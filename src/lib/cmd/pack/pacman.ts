@@ -35,8 +35,8 @@ export class Pacman extends Tool implements Pack {
     )
   }
 
-  constructor(shellOpts?: ShellOpts, wrapper?: string) {
-    super(wrapper ?? 'sudo pacman', shellOpts)
+  constructor(shellOpts?: ShellOpts, program?: string) {
+    super(program ?? 'sudo pacman', shellOpts)
   }
 }
 

@@ -13,11 +13,11 @@ export class AptGet extends Tool implements Pack {
   }
   async find(names: Array<string>) {
     await this.shell('update')
+    this.program = this.program.replace('apt-get', 'apt-cache')
     for (const name of names) {
-      await this.shell(
-        `${this.program.replace('apt-get', 'apt-cache')} search ${name}`,
-      )
+      await this.shell(`search ${name}`)
     }
+    this.program = this.program.replace('apt-cache', 'apt-get')
   }
   async list(names?: Array<string>) {
     await this.shell('list --installed', names)
@@ -37,8 +37,8 @@ export class AptGet extends Tool implements Pack {
     )
   }
 
-  constructor(shellOpts?: ShellOpts, wrapper?: string) {
-    super(wrapper ?? 'sudo apt-get', shellOpts)
+  constructor(shellOpts?: ShellOpts, program?: string) {
+    super(program ?? 'sudo apt-get', shellOpts)
   }
 }
 
