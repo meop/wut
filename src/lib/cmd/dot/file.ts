@@ -3,7 +3,7 @@ import type { ShellOpts } from '../../shell.ts'
 
 import path from 'path'
 
-import { getPlatDiffCmd } from '../../path.ts'
+import { getPlatDiffCmd, isInPath } from '../../path.ts'
 import { loadConfigFile } from '../../config.ts'
 import { log, logWarn } from '../../log.ts'
 import { getPlat } from '../../os.ts'
@@ -63,6 +63,10 @@ export class File implements Dot {
 
     const fileConfig = await this._fileConfig(names)
     for (const name of Object.keys(fileConfig)) {
+      if (!(await isInPath(name, this.shellOpts))) {
+        continue
+      }
+
       const fileConfigPath = path.join(
         process.env.WUT_CONFIG_LOCATION ?? '',
         'dot',
