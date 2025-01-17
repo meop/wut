@@ -128,7 +128,10 @@ export class File implements Dot {
     const psc = await this._pathSyncConfig(names)
 
     for (const psPair of psc.filePairPaths) {
-      await syncFilePath(psPair.right, psPair.left, this.shellOpts)
+      await syncFilePath(psPair.right, psPair.left, {
+        ...this.shellOpts,
+        verbose: true,
+      })
     }
   }
   async push(names?: Array<string>) {
@@ -139,7 +142,10 @@ export class File implements Dot {
     }
 
     for (const psPair of psc.filePairPaths) {
-      await syncFilePath(psPair.left, psPair.right, this.shellOpts)
+      await syncFilePath(psPair.left, psPair.right, {
+        ...this.shellOpts,
+        verbose: true,
+      })
     }
   }
   async stat(names?: Array<string>) {
