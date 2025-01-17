@@ -50,6 +50,7 @@ export async function syncFilePath(
   if (shellOpts?.dryRun) {
     return
   }
+  await ensureDirPath(path.dirname(targetPath))
   await fsPromises.copyFile(sourcePath, targetPath)
 }
 
