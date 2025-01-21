@@ -9,8 +9,13 @@ if ($PSVersionTable.PSVersion.Major -lt $verMajor || $PSVersionTable.PSVersion.M
 }
 
 if (-not (Get-Command bun -ErrorAction Ignore)) {
-  Write-Error "bun not found .. aborting"
-  exit 1
+  if (Test-Path "${env:HOME}/.bun") {
+    $env:BUN_INSTALL = "${env:HOME}/.bun"
+    $env:PATH = "${env:BUN_INSTALL}/bin;${env:PATH}"
+  } else {
+    Write-Error "bun not found .. aborting"
+    exit 1
+  }
 }
 if (-not (Get-Command git -ErrorAction Ignore)) {
   Write-Error "git not found .. aborting"

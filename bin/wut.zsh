@@ -10,8 +10,13 @@ if ! is-at-least "${verMajor}.${verMinor}"; then
 fi
 
 if ! type bun > /dev/null; then
-  echo 'bun not found .. aborting' >&2
-  exit 1
+  if [[ -d "${HOME}/.bun" ]]; then
+    export BUN_INSTALL="${HOME}/.bun"
+    export PATH="${BUN_INSTALL}/bin:${PATH}"
+  else
+    echo 'bun not found .. aborting' >&2
+    exit 1
+  fi
 fi
 if ! type git > /dev/null; then
   echo 'git not found .. aborting' >&2
