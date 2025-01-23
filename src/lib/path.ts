@@ -14,7 +14,7 @@ export function fmtPath(p: string) {
 }
 
 export async function getPathContents(p: string) {
-  return await fsPromises.readFile(fmtPath(p), { encoding: 'utf8' })
+  return await fsPromises.readFile(fmtPath(p), 'utf8')
 }
 
 export async function getPathStat(p: string) {
