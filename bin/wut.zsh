@@ -9,22 +9,22 @@ if ! is-at-least "${verMajor}.${verMinor}"; then
   exit 1
 fi
 
-if ! type bun > /dev/null; then
-  if [[ -d "${HOME}/.bun" ]]; then
-    export BUN_INSTALL="${HOME}/.bun"
-    export PATH="${BUN_INSTALL}/bin:${PATH}"
-  else
-    echo 'bun not found .. aborting' >&2
-    exit 1
-  fi
-fi
-if ! type git > /dev/null; then
-  echo 'git not found .. aborting' >&2
-  exit 1
-fi
-
 # subshell to avoid persisting env vars in session
 (
+  if ! type bun > /dev/null; then
+    if [[ -d "${HOME}/.bun" ]]; then
+      export BUN_INSTALL="${HOME}/.bun"
+      export PATH="${BUN_INSTALL}/bin:${PATH}"
+    else
+      echo 'bun not found .. aborting' >&2
+      exit 1
+    fi
+  fi
+  if ! type git > /dev/null; then
+    echo 'git not found .. aborting' >&2
+    exit 1
+  fi
+
   if ! [[ -n "${WUT_CONFIG_LOCATION}" ]]; then
     export WUT_CONFIG_LOCATION="${HOME}/.wut-config"
   fi
@@ -43,13 +43,16 @@ fi
     git -C "${WUT_LOCATION}" pull --prune
     echo
 
-    # this manager cannot update package if there are running processes
+    # this manager cannot upgrade if in use
     if type brew > /dev/null; then
       if brew list | grep -qw 'bun'; then
         brew upgrade bun
-      else
-        bun upgrade
       fi
+    fi
+
+    # if installed via script
+    if [[ "${BUN_INSTALL}" ]]; then
+      brew upgrade
     fi
 
     owd=$(pwd -P) && cd "${WUT_LOCATION}" || exit

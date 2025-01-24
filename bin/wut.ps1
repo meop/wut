@@ -8,22 +8,22 @@ if ($PSVersionTable.PSVersion.Major -lt $verMajor || $PSVersionTable.PSVersion.M
   exit 1
 }
 
-if (-not (Get-Command bun -ErrorAction Ignore)) {
-  if (Test-Path "${env:HOME}/.bun") {
-    $env:BUN_INSTALL = "${env:HOME}/.bun"
-    $env:PATH = "${env:BUN_INSTALL}/bin;${env:PATH}"
-  } else {
-    Write-Error "bun not found .. aborting"
-    exit 1
-  }
-}
-if (-not (Get-Command git -ErrorAction Ignore)) {
-  Write-Error "git not found .. aborting"
-  exit 1
-}
-
 # subshell to avoid persisting env vars in session
 pwsh -nologo -noprofile -command {
+  if (-not (Get-Command bun -ErrorAction Ignore)) {
+    if (Test-Path "${env:HOME}/.bun") {
+      $env:BUN_INSTALL = "${env:HOME}/.bun"
+      $env:PATH = "${env:BUN_INSTALL}/bin;${env:PATH}"
+    } else {
+      Write-Error "bun not found .. aborting"
+      exit 1
+    }
+  }
+  if (-not (Get-Command git -ErrorAction Ignore)) {
+    Write-Error "git not found .. aborting"
+    exit 1
+  }
+
   if (-not "${env:WUT_CONFIG_LOCATION}") {
     $env:WUT_CONFIG_LOCATION = "${env:HOME}/.wut-config"
   }
@@ -42,13 +42,16 @@ pwsh -nologo -noprofile -command {
     git -C "${env:WUT_LOCATION}" pull --prune
     Write-Output ''
 
-    # this manager cannot update package if there are running processes
+    # this manager cannot upgrade if in use
     if (Get-Command scoop -ErrorAction Ignore) {
       if (scoop list 2>$null 3>$null 4>$null 5>$null 6>$null | where {$_.Name -eq 'bun'}) {
         scoop update bun
-      } else {
-        bun upgrade
       }
+    }
+
+    # if installed via script
+    if ("${env:BUN_INSTALL}") {
+      bun upgrade
     }
 
     Push-Location "${env:WUT_LOCATION}"
