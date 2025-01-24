@@ -3,7 +3,8 @@
 $verMajor = 7
 $verMinor = 4
 
-if ($PSVersionTable.PSVersion.Major -lt $verMajor || $PSVersionTable.PSVersion.Minor -lt $verMinor) {
+if ($PSVersionTable.PSVersion.Major -lt $verMajor ||
+    $PSVersionTable.PSVersion.Minor -lt $verMinor) {
   Write-Error "pwsh must be >= $verMajor.$verMinor .. found $($PSVersionTable.PSVersion) .. aborting"
   exit 1
 }
@@ -44,7 +45,8 @@ pwsh -nologo -noprofile -command {
 
     # this manager cannot upgrade if in use
     if (Get-Command scoop -ErrorAction Ignore) {
-      if (scoop list 2>$null 3>$null 4>$null 5>$null 6>$null | where {$_.Name -eq 'bun'}) {
+      if (scoop list 2>$null 3>$null 4>$null 5>$null 6>$null |
+        Where-Object {$_.Name -eq 'bun'}) {
         scoop update bun
       }
     }
