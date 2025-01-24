@@ -41,6 +41,14 @@ pwsh -nologo -noprofile -command {
     git -C "${env:WUT_LOCATION}" pull --prune
     Write-Output ''
 
+    if (Get-Command scoop -ErrorAction Ignore) {
+      if (scoop list 2>$null 3>$null 4>$null 5>$null 6>$null | where {$_.Name -eq 'bun'}) {
+        scoop update bun
+      } else {
+        bun upgrade
+      }
+    }
+
     Push-Location "${env:WUT_LOCATION}"
     Write-Output '> bun install'
     bun install

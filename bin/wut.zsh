@@ -42,6 +42,14 @@ fi
     git -C "${WUT_LOCATION}" pull --prune
     echo
 
+    if type brew > /dev/null; then
+      if brew list | grep -qw 'bun'; then
+        brew upgrade bun
+      else
+        bun upgrade
+      fi
+    fi
+
     owd=$(pwd -P) && cd "${WUT_LOCATION}" || exit
     echo '> bun install'
     bun install
