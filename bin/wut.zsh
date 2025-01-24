@@ -23,6 +23,7 @@ if ! type git > /dev/null; then
   exit 1
 fi
 
+# subshell to avoid persisting env vars in session
 (
   if ! [[ -n "${WUT_CONFIG_LOCATION}" ]]; then
     export WUT_CONFIG_LOCATION="${HOME}/.wut-config"
@@ -42,6 +43,7 @@ fi
     git -C "${WUT_LOCATION}" pull --prune
     echo
 
+    # this manager cannot update package if there are running processes
     if type brew > /dev/null; then
       if brew list | grep -qw 'bun'; then
         brew upgrade bun

@@ -22,6 +22,7 @@ if (-not (Get-Command git -ErrorAction Ignore)) {
   exit 1
 }
 
+# subshell to avoid persisting env vars in session
 pwsh -nologo -noprofile -command {
   if (-not "${env:WUT_CONFIG_LOCATION}") {
     $env:WUT_CONFIG_LOCATION = "${env:HOME}/.wut-config"
@@ -41,6 +42,7 @@ pwsh -nologo -noprofile -command {
     git -C "${env:WUT_LOCATION}" pull --prune
     Write-Output ''
 
+    # this manager cannot update package if there are running processes
     if (Get-Command scoop -ErrorAction Ignore) {
       if (scoop list 2>$null 3>$null 4>$null 5>$null 6>$null | where {$_.Name -eq 'bun'}) {
         scoop update bun
