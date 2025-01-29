@@ -118,7 +118,7 @@ export async function shellRun(command: string, shellRunOpts?: ShellRunOpts) {
     out: [],
     err: [],
   }
-  
+
   // moved filtering to after the proc ends
   // because logging in the pipe handler
   // was prefixing extra spacing to console for some reason

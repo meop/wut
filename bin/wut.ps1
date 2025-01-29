@@ -43,14 +43,6 @@ pwsh -nologo -noprofile -command {
     git -C "${env:WUT_LOCATION}" pull --prune
     Write-Output ''
 
-    # this manager cannot upgrade if in use
-    if (Get-Command scoop -ErrorAction Ignore) {
-      if (scoop list 2>$null 3>$null 4>$null 5>$null 6>$null |
-        Where-Object {$_.Name -eq 'bun'}) {
-        scoop update bun
-      }
-    }
-
     # if installed via script
     if ("${env:BUN_INSTALL}") {
       bun upgrade

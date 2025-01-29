@@ -43,13 +43,6 @@ fi
     git -C "${WUT_LOCATION}" pull --prune
     echo
 
-    # this manager cannot upgrade if in use
-    if type brew > /dev/null; then
-      if brew list | grep -qw 'bun'; then
-        brew upgrade bun
-      fi
-    fi
-
     # if installed via script
     if [[ "${BUN_INSTALL}" ]]; then
       brew upgrade
