@@ -21,8 +21,8 @@ const validPacks = [
   'zypper',
   'dnf',
   'brew',
-  'scoop',
   'winget',
+  'scoop',
 ]
 
 const validPackWraps = {
