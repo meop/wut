@@ -45,7 +45,7 @@ fi
 
     # if installed via script
     if [[ "${BUN_INSTALL}" ]]; then
-      brew upgrade
+      bun upgrade
     fi
 
     owd=$(pwd -P) && cd "${WUT_LOCATION}" || exit
