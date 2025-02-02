@@ -37,8 +37,8 @@ export class AptGet extends Tool implements Pack {
     )
   }
 
-  constructor(shellOpts?: ShellOpts, program?: string) {
-    super(program ?? 'sudo apt-get', shellOpts)
+  constructor(shellOpts?: ShellOpts, program?: string, executor?: string) {
+    super(program ?? 'apt-get', executor ?? 'sudo', shellOpts)
   }
 }
 
@@ -48,6 +48,6 @@ export class Apt extends AptGet {
   }
 
   constructor(shellOpts?: ShellOpts) {
-    super(shellOpts, 'sudo apt')
+    super(shellOpts, 'apt', 'sudo')
   }
 }

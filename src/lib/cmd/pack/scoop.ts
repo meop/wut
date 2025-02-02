@@ -35,6 +35,6 @@ export class Scoop extends Tool implements Pack {
   }
 
   constructor(shellOpts?: ShellOpts) {
-    super('scoop', shellOpts)
+    super('scoop', '', shellOpts)
   }
 }

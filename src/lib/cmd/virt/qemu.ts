@@ -251,7 +251,7 @@ export class Qemu extends Tool implements Virt {
   }
 
   async down(names?: Array<string>) {
-    for (const fsPath of await this._fsPaths(names)) {
+    for (const fsPath of await this.configFilePaths('virt', names)) {
       const matches = await vmStats([fsPath], {
         ...this.shellOpts,
         dryRun: false,
@@ -270,12 +270,12 @@ export class Qemu extends Tool implements Virt {
     }
   }
   async list(names?: Array<string>) {
-    for (const fsPath of await this._fsPaths(names, true)) {
+    for (const fsPath of await this.configFilePaths('virt', names, true)) {
       log(fsPath)
     }
   }
   async stat(names?: Array<string>) {
-    await vmStats(await this._fsPaths(names), {
+    await vmStats(await this.configFilePaths('virt', names), {
       ...this.shellOpts,
       verbose: true,
     })
@@ -284,7 +284,7 @@ export class Qemu extends Tool implements Virt {
   async up(names?: Array<string>) {
     const config = await this._config()
 
-    for (const fsPath of await this._fsPaths(names)) {
+    for (const fsPath of await this.configFilePaths('virt', names)) {
       const matches = await vmStats([fsPath], {
         ...this.shellOpts,
         dryRun: false,
@@ -300,7 +300,7 @@ export class Qemu extends Tool implements Virt {
   }
 
   constructor(shellOpts?: ShellOpts) {
-    super('qemu', shellOpts)
+    super('qemu', '', shellOpts)
     this.shellOpts = shellOpts ?? {}
   }
 }

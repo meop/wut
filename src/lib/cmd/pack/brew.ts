@@ -35,6 +35,6 @@ export class Brew extends Tool implements Pack {
   }
 
   constructor(shellOpts?: ShellOpts) {
-    super('brew', shellOpts)
+    super('brew', '', shellOpts)
   }
 }

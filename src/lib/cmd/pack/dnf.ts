@@ -36,6 +36,6 @@ export class Dnf extends Tool implements Pack {
   }
 
   constructor(shellOpts?: ShellOpts) {
-    super('sudo dnf', shellOpts)
+    super('dnf', 'sudo', shellOpts)
   }
 }

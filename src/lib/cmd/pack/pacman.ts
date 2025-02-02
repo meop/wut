@@ -35,13 +35,13 @@ export class Pacman extends Tool implements Pack {
     )
   }
 
-  constructor(shellOpts?: ShellOpts, program?: string) {
-    super(program ?? 'sudo pacman', shellOpts)
+  constructor(shellOpts?: ShellOpts, program?: string, executor?: string) {
+    super(program ?? 'pacman', executor ?? 'sudo', shellOpts)
   }
 }
 
 export class Yay extends Pacman {
   constructor(shellOpts?: ShellOpts) {
-    super(shellOpts, 'yay')
+    super(shellOpts, 'yay', '')
   }
 }

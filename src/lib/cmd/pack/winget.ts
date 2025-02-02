@@ -30,6 +30,6 @@ export class WinGet extends Tool implements Pack {
   }
 
   constructor(shellOpts?: ShellOpts) {
-    super('winget', shellOpts)
+    super('winget', '', shellOpts)
   }
 }
