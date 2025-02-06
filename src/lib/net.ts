@@ -1,6 +1,4 @@
-import type { ShellOpts } from './shell.ts'
-
-import { shellRun } from './shell.ts'
+import { type ShellOpts, shellRun } from './sh'
 
 export async function getNicMac(nic: string, shellOpts: ShellOpts) {
   const out = (
@@ -23,5 +21,5 @@ export async function getNicIfIndex(nic: string, shellOpts: ShellOpts) {
     })
   ).out
 
-  return out.length > 0 ? out[0].trim() : ''
+  return out.length > 0 ? Number(out[0].trim()) : -1
 }

@@ -1,7 +1,6 @@
-import type { Pack } from '../../cmd.ts'
-import type { ShellOpts } from '../../shell.ts'
-
-import { Tool } from '../../tool.ts'
+import type { Pack } from '../../cmd'
+import type { ShellOpts } from '../../sh'
+import { Tool } from '../../tool'
 
 export class Dnf extends Tool implements Pack {
   async add(names: Array<string>) {
@@ -31,7 +30,7 @@ export class Dnf extends Tool implements Pack {
   async up(names?: Array<string>) {
     await this.shell('check-update')
     await this.shell(
-      (names?.length ?? 0) > 0 ? `upgrade ${names!.join(' ')}` : 'distro-sync',
+      (names?.length ?? 0) > 0 ? `upgrade ${names?.join(' ')}` : 'distro-sync',
     )
   }
 

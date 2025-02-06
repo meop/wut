@@ -33,12 +33,12 @@ pwsh -nologo -noprofile -command {
   }
 
   if ($args.Length -gt 0 -and $args[0] -eq 'up') {
-    Write-Output "> git -C `"${env:WUT_CONFIG_LOCATION}`" pull --prune"
+    Write-Output "> git -C `'${env:WUT_CONFIG_LOCATION}`' pull --prune"
     Write-Output ''
     git -C "${env:WUT_CONFIG_LOCATION}" pull --prune
     Write-Output ''
 
-    Write-Output "> git -C `"${env:WUT_LOCATION}`" pull --prune"
+    Write-Output "> git -C `'${env:WUT_LOCATION}`' pull --prune"
     Write-Output ''
     git -C "${env:WUT_LOCATION}" pull --prune
     Write-Output ''

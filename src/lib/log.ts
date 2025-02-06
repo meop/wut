@@ -8,7 +8,7 @@ const stderrWrite = (msg: string) => process.stderr.write(msg)
 function colorLog(
   msg: string,
   newLine: boolean,
-  color: string = 'white',
+  color = 'white',
   writeFunc: (str: string) => void = stdoutWrite,
 ) {
   writeFunc(colorStr(color, msg))
@@ -17,24 +17,24 @@ function colorLog(
   }
 }
 
-export function log(msg: string, newLine: boolean = true) {
+export function log(msg: string, newLine = true) {
   colorLog(msg, newLine)
 }
-export function logCmd(msg: string, newLine: boolean = true) {
+export function logCmd(msg: string, newLine = true) {
   colorLog(msg, newLine, 'cyan')
 }
-export function logArg(msg: string, newLine: boolean = true) {
+export function logArg(msg: string, newLine = true) {
   colorLog(msg, newLine, 'magenta')
 }
-export function logDebug(msg: string, newLine: boolean = true) {
+export function logDebug(msg: string, newLine = true) {
   colorLog(msg, newLine, 'blue')
 }
-export function logInfo(msg: string, newLine: boolean = true) {
+export function logInfo(msg: string, newLine = true) {
   colorLog(msg, newLine, 'green')
 }
-export function logWarn(msg: string, newLine: boolean = true) {
+export function logWarn(msg: string, newLine = true) {
   colorLog(msg, newLine, 'yellow')
 }
-export function logError(msg: string, newLine: boolean = true) {
+export function logError(msg: string, newLine = true) {
   colorLog(msg, newLine, 'red', stderrWrite)
 }

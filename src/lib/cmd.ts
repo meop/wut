@@ -1,17 +1,30 @@
 import { Command } from 'commander'
 
-import { logError } from './log.ts'
+import { logError } from './log'
 
-export function buildCmd(name: string, description: string, command?: Command) {
+export function buildCommand(
+  name: string,
+  description: string,
+  command?: Command,
+) {
   return (command || new Command())
     .name(name)
     .description(description)
     .helpCommand(false)
 }
 
-export function buildAct(func: (...args: Array<any>) => Promise<any>) {
-  return (...args: Array<any>) =>
-    func(...args).catch((err) => logError(err.message))
+// biome-ignore lint/suspicious/noExplicitAny: generic decorator
+export function buildAction(func: (...args: Array<any>) => Promise<void>) {
+  // biome-ignore lint/suspicious/noExplicitAny: generic decorator
+  return async (...args: Array<any>) => {
+    try {
+      await func(...args)
+    } catch (err) {
+      if (err.message) {
+        logError(String(err.message))
+      }
+    }
+  }
 }
 
 export type CmdOpts = {

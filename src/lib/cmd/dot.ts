@@ -1,20 +1,18 @@
-import type { CmdOpts, Dot } from '../cmd.ts'
-import type { ShellOpts } from '../shell.ts'
-
-import { buildCmd, buildAct } from '../cmd.ts'
-
-import { File } from './dot/file.ts'
+import { type CmdOpts, type Dot, buildCommand, buildAction } from '../cmd'
+import type { ShellOpts } from '../sh'
+import { File } from './dot/file'
 
 type CmdDotArgs = {
   names?: Array<string>
 }
 
-type CmdDotOpts = {}
-
 export function buildCmdDot(getParentOpts: () => CmdOpts) {
-  const cmd = buildCmd('dot', 'dotfile operations').aliases(['d', 'dotfile'])
+  const cmd = buildCommand('dot', 'dotfile operations').aliases([
+    'd',
+    'dotfile',
+  ])
 
-  const getOpts = () => {
+  const getCmdOpts = () => {
     return {
       ...getParentOpts(),
       ...cmd.opts(),
@@ -22,45 +20,45 @@ export function buildCmdDot(getParentOpts: () => CmdOpts) {
   }
 
   cmd.addCommand(
-    buildCmd('diff', 'diff vs local')
+    buildCommand('diff', 'diff vs local')
       .aliases(['d', '?', 'de', 'delta'])
       .argument('[names...]', 'names to match')
       .action(
-        buildAct((names?: Array<string>) =>
-          runCmdDot('diff', { names }, getOpts),
+        buildAction((names?: Array<string>) =>
+          runCmdDot('diff', { names }, getCmdOpts),
         ),
       ),
   )
 
   cmd.addCommand(
-    buildCmd('list', 'list on local')
+    buildCommand('list', 'list on local')
       .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
       .argument('[names...]', 'names to match')
       .action(
-        buildAct((names?: Array<string>) =>
-          runCmdDot('list', { names }, getOpts),
+        buildAction((names?: Array<string>) =>
+          runCmdDot('list', { names }, getCmdOpts),
         ),
       ),
   )
 
   cmd.addCommand(
-    buildCmd('pull', 'pull from local')
+    buildCommand('pull', 'pull from local')
       .aliases(['['])
       .argument('[names...]', 'names to match')
       .action(
-        buildAct((names?: Array<string>) =>
-          runCmdDot('pull', { names }, getOpts),
+        buildAction((names?: Array<string>) =>
+          runCmdDot('pull', { names }, getCmdOpts),
         ),
       ),
   )
 
   cmd.addCommand(
-    buildCmd('push', 'push to local')
+    buildCommand('push', 'push to local')
       .aliases([']'])
       .argument('[names...]', 'names to match')
       .action(
-        buildAct((names?: Array<string>) =>
-          runCmdDot('push', { names }, getOpts),
+        buildAction((names?: Array<string>) =>
+          runCmdDot('push', { names }, getCmdOpts),
         ),
       ),
   )
@@ -80,9 +78,9 @@ function getDot(name: string, shellOpts: ShellOpts): Dot {
 async function runCmdDot(
   op: string,
   opArgs: CmdDotArgs,
-  getCmdOpts: () => CmdOpts & CmdDotOpts,
+  getCmdOpts: () => CmdOpts,
 ) {
   const cmdOpts = getCmdOpts()
 
-  await getDot('file', cmdOpts)[op](opArgs.names?.map((n) => n.toLowerCase()))
+  await getDot('file', cmdOpts)[op](opArgs.names?.map(n => n.toLowerCase()))
 }

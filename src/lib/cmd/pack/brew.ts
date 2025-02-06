@@ -1,10 +1,9 @@
-import type { Pack } from '../../cmd.ts'
-import type { ShellOpts } from '../../shell.ts'
-
-import { Tool } from '../../tool.ts'
+import type { Pack } from '../../cmd'
+import type { ShellOpts } from '../../sh'
+import { Tool } from '../../tool'
 
 export class Brew extends Tool implements Pack {
-  async add(names: Array<string>, cask: boolean = false) {
+  async add(names: Array<string>, cask = false) {
     await this.shell('update')
     await this.shell(`install${cask ? ' --cask' : ''} ${names.join(' ')}`)
   }
@@ -29,8 +28,7 @@ export class Brew extends Tool implements Pack {
   async up(names?: Array<string>) {
     await this.shell('update')
     await this.shell(
-      'upgrade --greedy' +
-        ((names?.length ?? 0) > 0 ? ` ${names!.join(' ')}` : ''),
+      `upgrade --greedy${(names?.length ?? 0) > 0 ? ` ${names?.join(' ')}` : ''}`,
     )
   }
 

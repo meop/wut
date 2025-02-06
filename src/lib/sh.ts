@@ -1,7 +1,7 @@
-import * as cp from 'child_process'
+import * as cp from 'node:child_process'
 
-import { log, logArg, logCmd, logError } from './log.ts'
-import { sleep } from './time.ts'
+import { log, logArg, logCmd, logError } from './log'
+import { sleep } from './time'
 
 export type ShellOpts = {
   dryRun?: boolean
@@ -26,12 +26,15 @@ type StdStream = Array<{
 }>
 
 function getCmdAndCmdArgs(command: string, shellOpts?: ShellOpts) {
-  const cmdArgs = command.split(' ')
-  const cmd = cmdArgs.shift()
+  const cmdArgs = command.split(' ').filter(c => c)
+  const cmd = cmdArgs.shift() ?? ''
+  const cmdArgsFull = cmdArgs.join(' ').trim()
 
   if (shellOpts?.verbose) {
-    logCmd(cmd! + ' ', false)
-    logArg(cmdArgs.join(' '))
+    logCmd(cmd, false)
+    if (cmdArgsFull) {
+      logArg(cmdArgsFull)
+    }
   }
 
   return { cmd, cmdArgs }
@@ -39,7 +42,8 @@ function getCmdAndCmdArgs(command: string, shellOpts?: ShellOpts) {
 
 export async function shellRun(command: string, shellRunOpts?: ShellRunOpts) {
   const { cmd, cmdArgs } = getCmdAndCmdArgs(command, shellRunOpts)
-  const fullCommand = cmd! + (cmdArgs.length > 0 ? ` ${cmdArgs.join(' ')}` : '')
+  const cmdArgsFull = cmdArgs.join(' ').trim()
+  const fullCmd = cmdArgsFull ? `${cmd} ${cmdArgsFull}` : cmd
 
   if (shellRunOpts?.dryRun) {
     return {
@@ -59,7 +63,7 @@ export async function shellRun(command: string, shellRunOpts?: ShellRunOpts) {
   const filters = shellRunOpts?.filters ?? []
   const internalStream = shellRunOpts?.pipeOutAndErr || filters.length > 0
 
-  const proc = cp.spawn(cmd!, cmdArgs, {
+  const proc = cp.spawn(cmd, cmdArgs, {
     shell: true,
     stdio: [
       'inherit',
@@ -72,11 +76,11 @@ export async function shellRun(command: string, shellRunOpts?: ShellRunOpts) {
     done = true
   })
 
-  proc.on('error', (err) => {
-    logError(`running '${fullCommand}' produced error: ${err.message}\n`)
+  proc.on('error', err => {
+    logError(`running: '${fullCmd}' | produced error: '${err.message}'`)
   })
 
-  proc.on('exit', (code) => {
+  proc.on('exit', code => {
     exitCode = code ?? 0
   })
 
@@ -88,18 +92,18 @@ export async function shellRun(command: string, shellRunOpts?: ShellRunOpts) {
     const lines = dataStr.split('\n')
     stdPartial[std] = lines.pop() ?? ''
     for (const l of lines) {
-      stdStream.push({std, val: l})
+      stdStream.push({ std, val: l })
     }
   }
 
   if (proc.stdout) {
-    proc.stdout.on('data', (data) => {
+    proc.stdout.on('data', data => {
       updateStream(String(data), 'out')
     })
   }
 
   if (proc.stderr) {
-    proc.stderr.on('data', (data) => {
+    proc.stderr.on('data', data => {
       updateStream(String(data), 'err')
     })
   }
@@ -109,9 +113,7 @@ export async function shellRun(command: string, shellRunOpts?: ShellRunOpts) {
   }
 
   if (exitCode !== 0 && shellRunOpts?.throwOnExitCode) {
-    throw new Error(
-      `running '${fullCommand}' produced error code: ${exitCode}\n`,
-    )
+    throw new Error(`running '${fullCmd}' produced error code: ${exitCode}\n`)
   }
 
   const stdStreamSplit: StdStreamSplit = {

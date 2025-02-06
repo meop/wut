@@ -1,14 +1,15 @@
-import { join as pathJoin } from 'path'
+import { join as pathJoin } from 'node:path'
+
 import { parse as yamlParse } from 'yaml'
 
-import { getPathContents, getPathStat, getFilePathsInPath } from './path.ts'
+import { getPathContents, getPathStat, getFilePathsInPath } from './path'
 
 export async function findConfigFilePaths(
   cmd: string,
   ...parts: Array<string>
 ) {
   const dirPath = pathJoin(
-    ...[process.env['WUT_CONFIG_LOCATION'] ?? '', cmd, ...parts],
+    ...[process.env.WUT_CONFIG_LOCATION ?? '', cmd, ...parts],
   )
   return await getFilePathsInPath(dirPath)
 }

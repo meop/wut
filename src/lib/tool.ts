@@ -1,11 +1,9 @@
-import type { ShellOpts } from './shell.ts'
+import os from 'node:os'
+import path from 'node:path'
 
-import os from 'os'
-import path from 'path'
-
-import { findConfigFilePaths } from './config.ts'
-import { shellRun } from './shell.ts'
-import { isInPath } from './path.ts'
+import { findConfigFilePaths } from './cfg'
+import { type ShellOpts, shellRun } from './sh'
+import { isInPath } from './path'
 
 export class Tool {
   program: string
@@ -13,7 +11,10 @@ export class Tool {
   shellOpts: ShellOpts
 
   shell = async (cmd: string, filters?: Array<string>) => {
-    const executor = (this.executor && await isInPath(this.executor)) ? `${this.executor} ` : ''
+    const executor =
+      this.executor && (await isInPath(this.executor))
+        ? `${this.executor} `
+        : ''
     return shellRun(`${executor}${this.program} ${cmd}`, {
       ...this.shellOpts,
       filters,
@@ -21,10 +22,18 @@ export class Tool {
     })
   }
 
-  async configFilePaths(category: string, names?: Array<string>, partialMatch: boolean = false) {
-    let fsPaths = await findConfigFilePaths(category, os.hostname(), this.program)
+  async configFilePaths(
+    category: string,
+    names?: Array<string>,
+    partialMatch = false,
+  ) {
+    let fsPaths = await findConfigFilePaths(
+      category,
+      os.hostname(),
+      this.program,
+    )
     for (const name of names ?? []) {
-      fsPaths = fsPaths.filter((f) =>
+      fsPaths = fsPaths.filter(f =>
         partialMatch
           ? path.basename(f, '.yaml').includes(name.toLowerCase())
           : path.basename(f, '.yaml') === name.toLowerCase(),

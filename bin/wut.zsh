@@ -33,12 +33,12 @@ fi
   fi
 
   if [[ "$#" -gt 0 && "$1" == 'up' ]]; then
-    echo "> git -C \"${WUT_CONFIG_LOCATION}\" pull --prune"
+    echo "> git -C \'${WUT_CONFIG_LOCATION}\' pull --prune"
     echo
     git -C "${WUT_CONFIG_LOCATION}" pull --prune
     echo
 
-    echo "> git -C \"${WUT_LOCATION}\" pull --prune"
+    echo "> git -C \'${WUT_LOCATION}\' pull --prune"
     echo
     git -C "${WUT_LOCATION}" pull --prune
     echo

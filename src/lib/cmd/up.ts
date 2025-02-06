@@ -1,10 +1,8 @@
-import type { CmdOpts } from '../cmd.ts'
-
-import { buildCmd } from '../cmd.ts'
+import { type CmdOpts, buildCommand } from '../cmd'
 
 // currently implemented in launcher
 export function buildCmdUp(_: () => CmdOpts) {
-  return buildCmd('up', 'sync up from web').aliases([
+  return buildCommand('up', 'sync up from web').aliases([
     'u',
     '^',
     'update',

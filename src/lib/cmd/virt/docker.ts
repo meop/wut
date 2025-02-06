@@ -1,9 +1,7 @@
-import type { Virt } from '../../cmd.ts'
-import type { ShellOpts } from '../../shell.ts'
-
-import { log } from '../../log.ts'
-
-import { Tool } from '../../tool.ts'
+import type { Virt } from '../../cmd'
+import { log } from '../../log'
+import type { ShellOpts } from '../../sh'
+import { Tool } from '../../tool'
 
 export class Docker extends Tool implements Virt {
   program = 'docker'

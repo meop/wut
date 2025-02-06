@@ -1,6 +1,4 @@
-import type { ShellOpts } from './shell.ts'
-
-import { shellRun } from './shell.ts'
+import { type ShellOpts, shellRun } from './sh'
 
 export async function getCpuVendorName(shellOpts: ShellOpts) {
   const out = (
@@ -15,11 +13,11 @@ export async function getCpuVendorName(shellOpts: ShellOpts) {
 
   if (cpu_vendor_id === 'AuthenticAMD') {
     return 'amd'
-  } else if (cpu_vendor_id === 'GenuineIntel') {
-    return 'intel'
-  } else {
-    throw new Error(`unsupported cpu vendor: ${cpu_vendor_id}`)
   }
+  if (cpu_vendor_id === 'GenuineIntel') {
+    return 'intel'
+  }
+  throw new Error(`unsupported cpu vendor: ${cpu_vendor_id}`)
 }
 
 export async function getCpuSocketCount(shellOpts: ShellOpts) {

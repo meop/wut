@@ -1,7 +1,6 @@
-import type { Pack } from '../../cmd.ts'
-import type { ShellOpts } from '../../shell.ts'
-
-import { Tool } from '../../tool.ts'
+import type { Pack } from '../../cmd'
+import type { ShellOpts } from '../../sh'
+import { Tool } from '../../tool'
 
 export class Scoop extends Tool implements Pack {
   async add(names: Array<string>) {
@@ -30,7 +29,7 @@ export class Scoop extends Tool implements Pack {
   async up(names?: Array<string>) {
     await this.shell('update')
     await this.shell(
-      'update' + ((names?.length ?? 0) > 0 ? ` ${names!.join(' ')}` : ' --all'),
+      `update${(names?.length ?? 0) > 0 ? ` ${names?.join(' ')}` : ' --all'}`,
     )
   }
 

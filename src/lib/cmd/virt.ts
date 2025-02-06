@@ -1,14 +1,11 @@
-import type { CmdOpts, Virt } from '../cmd.ts'
-import type { ShellOpts } from '../shell.ts'
+import os from 'node:os'
+import path from 'node:path'
 
-import os from 'os'
-import path from 'path'
-
-import { buildCmd, buildAct } from '../cmd.ts'
-import { getPathStat } from '../path.ts'
-
-import { Docker } from './virt/docker.ts'
-import { Qemu } from './virt/qemu.ts'
+import { type CmdOpts, type Virt, buildCommand, buildAction } from '../cmd'
+import { getPathStat } from '../path'
+import type { ShellOpts } from '../sh'
+import { Docker } from './virt/docker'
+import { Qemu } from './virt/qemu'
 
 const validVirts = ['docker', 'qemu']
 
@@ -21,11 +18,11 @@ type CmdVirtOpts = {
 }
 
 export function buildCmdVirt(getParentOpts: () => CmdOpts) {
-  const cmd = buildCmd('virt', 'virtualization operations')
+  const cmd = buildCommand('virt', 'virtualization operations')
     .aliases(['v', 'virtual'])
     .option('-m, --manager <manager>', 'virtualization manager')
 
-  const getOpts = () => {
+  const getCmdOpts = () => {
     return {
       ...getParentOpts(),
       ...cmd.opts(),
@@ -33,51 +30,51 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
   }
 
   cmd.addCommand(
-    buildCmd('down', 'tear down from local')
+    buildCommand('down', 'tear down from local')
       .aliases(['d', '%', 'downgrade', 'te', 'tear'])
       .argument('[name...]', 'names to match')
       .action(
-        buildAct((names?: Array<string>) =>
-          runCmdVirt('down', { names }, getOpts),
+        buildAction((names?: Array<string>) =>
+          runCmdVirt('down', { names }, getCmdOpts),
         ),
       ),
   )
 
   cmd.addCommand(
-    buildCmd('list', 'list on local')
+    buildCommand('list', 'list on local')
       .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
       .argument('[names...]', 'names to match')
       .action(
-        buildAct((names?: Array<string>) =>
-          runCmdVirt('list', { names }, getOpts),
+        buildAction((names?: Array<string>) =>
+          runCmdVirt('list', { names }, getCmdOpts),
         ),
       ),
   )
 
   cmd.addCommand(
-    buildCmd('stat', 'status on local')
+    buildCommand('stat', 'status on local')
       .aliases(['s', '$', 'st', 'status'])
       .argument('[names...]', 'names to match')
       .action(
-        buildAct((names?: Array<string>) =>
-          runCmdVirt('stat', { names }, getOpts),
+        buildAction((names?: Array<string>) =>
+          runCmdVirt('stat', { names }, getCmdOpts),
         ),
       ),
   )
 
   cmd.addCommand(
-    buildCmd('tidy', 'tidy on local')
+    buildCommand('tidy', 'tidy on local')
       .aliases(['t', '@', 'ti', 'cl', 'clean', 'pr', 'prune', 'pu', 'purge'])
-      .action(buildAct(() => runCmdVirt('tidy', {}, getOpts))),
+      .action(buildAction(() => runCmdVirt('tidy', {}, getCmdOpts))),
   )
 
   cmd.addCommand(
-    buildCmd('up', 'sync up from local')
+    buildCommand('up', 'sync up from local')
       .aliases(['u', '^', 'update', 'upgrade', 'sy', 'sync'])
       .argument('[names...]', 'names to match')
       .action(
-        buildAct((names?: Array<string>) =>
-          runCmdVirt('up', { names }, getOpts),
+        buildAction((names?: Array<string>) =>
+          runCmdVirt('up', { names }, getCmdOpts),
         ),
       ),
   )
@@ -126,7 +123,7 @@ async function runCmdVirt(
 
   for (const virtName of virtNames) {
     await getVirt(virtName, cmdOpts)[op](
-      opArgs.names?.map((n) => n.toLowerCase()),
+      opArgs.names?.map(n => n.toLowerCase()),
     )
   }
 }

@@ -1,19 +1,19 @@
-import type { Dot } from '../../cmd.ts'
-import type { ShellOpts } from '../../shell.ts'
+import path from 'node:path'
 
-import path from 'path'
-
-import { getPlatDiffCmd, isInPath } from '../../path.ts'
-import { loadConfigFile } from '../../config.ts'
-import { log, logWarn } from '../../log.ts'
-import { getPlat } from '../../os.ts'
+import { loadConfigFile } from '../../cfg'
+import type { Dot } from '../../cmd'
+import { log, logWarn } from '../../log'
+import { getPlat } from '../../os'
 import {
   ensureDirPath,
   getFilePathsInPath,
   getPathStat,
+  getPlatDiffCmd,
+  isInPath,
+  type PathPermission,
   syncFilePath,
-} from '../../path.ts'
-import { shellRun } from '../../shell.ts'
+} from '../../path'
+import { type ShellOpts, shellRun } from '../../sh'
 
 type FileConfig = {
   [key: string]: [
@@ -24,13 +24,15 @@ type FileConfig = {
         macos: string
         windows: string
       }
+      permission?: PathPermission
     },
   ]
 }
 
 type FilePathPair = {
-  left: string
-  right: string
+  sourcePath: string
+  targetPath: string
+  targetPerm?: PathPermission
 }
 
 type PathSyncConfig = {
@@ -48,7 +50,7 @@ export class File implements Dot {
     )
 
     for (const key of Object.keys(config)) {
-      if ((names?.length ?? 0) === 0 || names?.find((n) => key.includes(n))) {
+      if ((names?.length ?? 0) === 0 || names?.find(n => key.includes(n))) {
         fileConfig[key] = config[key]
       }
     }
@@ -86,7 +88,7 @@ export class File implements Dot {
 
         const filePaths = isDirSync
           ? fileConfigPaths.filter(
-              (f) => f.startsWith(inPath) && path.dirname(f) === inPath,
+              f => f.startsWith(inPath) && path.dirname(f) === inPath,
             )
           : [inPath]
 
@@ -94,7 +96,7 @@ export class File implements Dot {
           let outPath = fileConfigItem.out[getPlat()]
           if (outPath.includes('${')) {
             for (const e of Object.keys(process.env)) {
-              outPath = outPath.replace('${' + e + '}', process.env[e] ?? '')
+              outPath = outPath.replace(`\${${e}}`, process.env[e] ?? '')
               if (!outPath.includes('${')) {
                 break
               }
@@ -103,13 +105,14 @@ export class File implements Dot {
 
           if (outPath === process.env.HOME) {
             throw new Error(
-              `unsupported config: ${process.env.HOME} cannot be set as 'out' directly`,
+              `unsupported config: ${outPath} cannot be set as 'out' directly`,
             )
           }
 
           psc.filePairPaths.add({
-            left: filePath,
-            right: filePath.replace(inPath, outPath),
+            sourcePath: filePath,
+            targetPath: filePath.replace(inPath, outPath),
+            targetPerm: fileConfigItem.permission,
           })
           if (isDirSync) {
             psc.dirPaths.add(outPath)
@@ -124,13 +127,16 @@ export class File implements Dot {
   async diff(names?: Array<string>) {
     const psc = await this._pathSyncConfig(names)
     for (const psPair of psc.filePairPaths) {
-      if (await getPathStat(psPair.right)) {
-        await shellRun(getPlatDiffCmd(getPlat(), psPair.left, psPair.right), {
-          ...this.shellOpts,
-          verbose: true,
-        })
+      if (await getPathStat(psPair.targetPath)) {
+        await shellRun(
+          getPlatDiffCmd(getPlat(), psPair.sourcePath, psPair.targetPath),
+          {
+            ...this.shellOpts,
+            verbose: true,
+          },
+        )
       } else {
-        logWarn(`not yet in fs: ${psPair.right}`)
+        logWarn(`not yet in fs: '${psPair.targetPath}'`)
       }
     }
   }
@@ -138,17 +144,22 @@ export class File implements Dot {
     const psc = await this._pathSyncConfig(names)
 
     for (const psPair of psc.filePairPaths) {
-      log(`"${psPair.left}" <-> "${psPair.right}"`)
+      log(`"${psPair.sourcePath}" <-> "${psPair.targetPath}"`)
     }
   }
   async pull(names?: Array<string>) {
     const psc = await this._pathSyncConfig(names)
 
     for (const psPair of psc.filePairPaths) {
-      await syncFilePath(psPair.right, psPair.left, {
-        ...this.shellOpts,
-        verbose: true,
-      })
+      await syncFilePath(
+        psPair.targetPath,
+        psPair.sourcePath,
+        psPair.targetPerm,
+        {
+          ...this.shellOpts,
+          verbose: true,
+        },
+      )
     }
   }
   async push(names?: Array<string>) {
@@ -159,10 +170,15 @@ export class File implements Dot {
     }
 
     for (const psPair of psc.filePairPaths) {
-      await syncFilePath(psPair.left, psPair.right, {
-        ...this.shellOpts,
-        verbose: true,
-      })
+      await syncFilePath(
+        psPair.sourcePath,
+        psPair.targetPath,
+        psPair.targetPerm,
+        {
+          ...this.shellOpts,
+          verbose: true,
+        },
+      )
     }
   }
 

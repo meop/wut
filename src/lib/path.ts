@@ -1,11 +1,21 @@
-import type { ShellOpts } from './shell.ts'
+import { promises as fsPromises } from 'node:fs'
+import path from 'node:path'
 
-import { promises as fsPromises } from 'fs'
-import path from 'path'
+import { logInfo } from './log'
+import { getPlat } from './os'
+import { type ShellOpts, shellRun } from './sh'
 
-import { log } from './log.ts'
-import { getPlat } from './os.ts'
-import { shellRun } from './shell.ts'
+export type PathItemPermission = {
+  read?: boolean
+  write?: boolean
+  execute?: boolean
+}
+
+export type PathPermission = {
+  user?: PathItemPermission
+  group?: PathItemPermission
+  other?: PathItemPermission
+}
 
 export function fmtPath(p: string) {
   return p
@@ -37,13 +47,43 @@ export function getPlatDiffCmd(plat: string, lPath: string, rPath: string) {
   }
 }
 
-export function getPlatFindCmd(plat: string, program: string) {
+export function getPlatFindCmd(plat: string, prog: string) {
   switch (plat) {
     case 'linux':
     case 'macos':
-      return `which ${program}`
+      return `which ${prog}`
     case 'windows':
-      return `where.exe ${program}`
+      return `where.exe ${prog}`
+    default:
+      throw new Error(`unsupported os platform: ${plat}`)
+  }
+}
+
+function getFsScopeVal(permItem?: PathItemPermission) {
+  let val = 0
+  if (permItem?.read) {
+    val += 4
+  }
+  if (permItem?.write) {
+    val += 2
+  }
+  if (permItem?.execute) {
+    val += 1
+  }
+  return val
+}
+
+function getFsModVal(perm: PathPermission) {
+  return `${getFsScopeVal(perm.user)}${getFsScopeVal(perm.group)}${getFsScopeVal(perm.other)}`
+}
+
+export function getPlatPermCmd(plat: string, perm: PathPermission) {
+  switch (plat) {
+    case 'linux':
+    case 'macos':
+      return `chmod ${getFsModVal(perm)}`
+    case 'windows':
+      return ''
     default:
       throw new Error(`unsupported os platform: ${plat}`)
   }
@@ -59,21 +99,21 @@ export async function ensureDirPath(
   const fsStat = await getPathStat(fmtDirPath)
   if (!fsStat || fsStat.isFile() || makeEmpty) {
     if (shellOpts?.verbose) {
-      log(`reset: ${fmtDirPath}`)
+      logInfo(`reset: '${fmtDirPath}'`)
     }
-    if (shellOpts?.dryRun) {
-      return
+    if (!shellOpts?.dryRun) {
+      if (fsStat) {
+        await fsPromises.rm(fmtDirPath, { recursive: true })
+      }
+      await fsPromises.mkdir(fmtDirPath, { recursive: true })
     }
-    if (fsStat) {
-      await fsPromises.rm(fmtDirPath, { recursive: true })
-    }
-    await fsPromises.mkdir(fmtDirPath, { recursive: true })
   }
 }
 
 export async function syncFilePath(
   sourcePath: string,
   targetPath: string,
+  targetPerm?: PathPermission,
   shellOpts?: ShellOpts,
 ) {
   const fmtSourcePath = fmtPath(sourcePath)
@@ -82,14 +122,20 @@ export async function syncFilePath(
   if (!(await getPathStat(sourcePath))) {
     return
   }
-  if (shellOpts?.verbose) {
-    log(`copy: ${fmtSourcePath} to ${fmtTargetPath}`)
+
+  logInfo(`copy: '${fmtSourcePath}' | to: '${fmtTargetPath}'`)
+  if (!shellOpts?.dryRun) {
+    await ensureDirPath(path.dirname(targetPath))
+    await fsPromises.copyFile(fmtSourcePath, fmtTargetPath)
   }
-  if (shellOpts?.dryRun) {
-    return
+
+  if (targetPerm) {
+    const cmd = getPlatPermCmd(getPlat(), targetPerm)
+    if (cmd) {
+      const fullCmd = `${cmd} ${fmtTargetPath}`
+      await shellRun(fullCmd, shellOpts)
+    }
   }
-  await ensureDirPath(path.dirname(targetPath))
-  await fsPromises.copyFile(fmtSourcePath, fmtTargetPath)
 }
 
 export async function getFilePathsInPath(fsPath: string) {
@@ -115,9 +161,9 @@ export async function getFilePathsInPath(fsPath: string) {
   return filePaths
 }
 
-export async function isInPath(program: string, shellOpts?: ShellOpts) {
+export async function isInPath(prog: string, shellOpts?: ShellOpts) {
   try {
-    const cmd = getPlatFindCmd(getPlat(), program)
+    const cmd = getPlatFindCmd(getPlat(), prog)
     await shellRun(cmd, {
       ...shellOpts,
       dryRun: false,

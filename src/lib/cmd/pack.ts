@@ -1,17 +1,13 @@
-import type { CmdOpts, Pack } from '../cmd.ts'
-import type { ShellOpts } from '../shell.ts'
-
-import { buildCmd, buildAct } from '../cmd.ts'
-import { findConfigFilePaths, loadConfigFile } from '../config.ts'
-import { isInPath } from '../path.ts'
-import { shellRun } from '../shell.ts'
-
-import { Apt, AptGet } from './pack/aptget.ts'
-import { Brew } from './pack/brew.ts'
-import { Dnf } from './pack/dnf.ts'
-import { Yay, Pacman } from './pack/pacman.ts'
-import { Scoop } from './pack/scoop.ts'
-import { WinGet } from './pack/winget.ts'
+import { findConfigFilePaths, loadConfigFile } from '../cfg'
+import { type CmdOpts, type Pack, buildCommand, buildAction } from '../cmd'
+import { isInPath } from '../path'
+import { type ShellOpts, shellRun } from '../sh'
+import { Apt, AptGet } from './pack/aptget'
+import { Brew } from './pack/brew'
+import { Dnf } from './pack/dnf'
+import { Yay, Pacman } from './pack/pacman'
+import { Scoop } from './pack/scoop'
+import { WinGet } from './pack/winget'
 
 const validPacks = [
   'apt',
@@ -40,11 +36,11 @@ type CmdPackOpts = {
 }
 
 export function buildCmdPack(getParentOpts: () => CmdOpts) {
-  const cmd = buildCmd('pack', 'package operations')
+  const cmd = buildCommand('pack', 'package operations')
     .aliases(['p', 'package'])
     .option('-m, --manager <manager>', 'package manager')
 
-  const getOpts = () => {
+  const getCmdOpts = () => {
     return {
       ...getParentOpts(),
       ...cmd.opts(),
@@ -52,73 +48,73 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
   }
 
   cmd.addCommand(
-    buildCmd('add', 'add from web')
+    buildCommand('add', 'add from web')
       .aliases(['a', '+', 'in', 'install'])
       .argument('<names...>', 'names to match')
       .action(
-        buildAct((names: Array<string>) =>
-          runCmdPack('add', { names }, getOpts),
+        buildAction((names: Array<string>) =>
+          runCmdPack('add', { names }, getCmdOpts),
         ),
       ),
   )
 
   cmd.addCommand(
-    buildCmd('del', 'delete on local')
+    buildCommand('del', 'delete on local')
       .aliases(['d', '-', 'delete', 'rm', 'rem', 'remove', 'un', 'uninstall'])
       .argument('<names...>', 'names to match')
       .action(
-        buildAct((names: Array<string>) =>
-          runCmdPack('del', { names }, getOpts),
+        buildAction((names: Array<string>) =>
+          runCmdPack('del', { names }, getCmdOpts),
         ),
       ),
   )
 
   cmd.addCommand(
-    buildCmd('find', 'find from web')
+    buildCommand('find', 'find from web')
       .aliases(['f', '?', 'fi', 'se', 'search'])
       .argument('<names...>', 'names to match')
       .action(
-        buildAct((names: Array<string>) =>
-          runCmdPack('find', { names }, getOpts),
+        buildAction((names: Array<string>) =>
+          runCmdPack('find', { names }, getCmdOpts),
         ),
       ),
   )
 
   cmd.addCommand(
-    buildCmd('list', 'list on local')
+    buildCommand('list', 'list on local')
       .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
       .argument('[names...]', 'names to match')
       .action(
-        buildAct((names?: Array<string>) =>
-          runCmdPack('list', { names }, getOpts),
+        buildAction((names?: Array<string>) =>
+          runCmdPack('list', { names }, getCmdOpts),
         ),
       ),
   )
 
   cmd.addCommand(
-    buildCmd('out', 'out of sync on local')
+    buildCommand('out', 'out of sync on local')
       .aliases(['o', '!', 'ou', 'outdated', 'ob', 'obsolete', 'ol', 'old'])
       .argument('[names...]', 'names to match')
       .action(
-        buildAct((names?: Array<string>) =>
-          runCmdPack('out', { names }, getOpts),
+        buildAction((names?: Array<string>) =>
+          runCmdPack('out', { names }, getCmdOpts),
         ),
       ),
   )
 
   cmd.addCommand(
-    buildCmd('tidy', 'tidy on local')
+    buildCommand('tidy', 'tidy on local')
       .aliases(['t', '@', 'ti', 'cl', 'clean', 'pr', 'prune', 'pu', 'purge'])
-      .action(buildAct(() => runCmdPack('tidy', {}, getOpts))),
+      .action(buildAction(() => runCmdPack('tidy', {}, getCmdOpts))),
   )
 
   cmd.addCommand(
-    buildCmd('up', 'sync up from web')
+    buildCommand('up', 'sync up from web')
       .aliases(['u', '^', 'update', 'upgrade', 'sy', 'sync'])
       .argument('[names...]', 'names to match')
       .action(
-        buildAct((names?: Array<string>) =>
-          runCmdPack('up', { names }, getOpts),
+        buildAction((names?: Array<string>) =>
+          runCmdPack('up', { names }, getCmdOpts),
         ),
       ),
   )
@@ -171,12 +167,12 @@ async function runCmdPack(
     ? [String(cmdOpts.manager.toLowerCase())]
     : await getValidPacks(cmdOpts)
 
-  const opArgsNames = opArgs.names?.map((n) => n.toLowerCase()) ?? []
+  const opArgsNames = opArgs.names?.map(n => n.toLowerCase()) ?? []
   const opArgsNamesRemaining: Array<string> = []
 
   const fsPaths = await findConfigFilePaths('pack')
   for (const name of opArgsNames) {
-    const foundPath = fsPaths.find((f) => f.endsWith(`${name}.yaml`))
+    const foundPath = fsPaths.find(f => f.endsWith(`${name}.yaml`))
     if (!foundPath) {
       opArgsNamesRemaining.push(name)
       continue
@@ -195,13 +191,13 @@ async function runCmdPack(
       }
       const packItem = config[packName]
 
-      const names = packItem['names'] ?? []
+      const names = packItem.names ?? []
       if (names.length === 0) {
         continue
       }
       matched = true
 
-      if (packItem['cask']) {
+      if (packItem.cask) {
         names.unshift('--cask')
       }
 
@@ -233,7 +229,7 @@ async function runCmdPack(
         redundantPackNames.push(value)
       }
     }
-    packNames = packNames.filter((p) => !redundantPackNames.includes(p))
+    packNames = packNames.filter(p => !redundantPackNames.includes(p))
 
     for (const packName of packNames) {
       await getPack(packName, cmdOpts)[op](opArgsNamesRemaining)
