@@ -1,4 +1,4 @@
-import { type CmdOpts, type Dot, buildCommand, buildAction } from '../cmd'
+import { type CmdOpts, type Dot, buildCmd, buildAction } from '../cmd'
 import type { ShellOpts } from '../sh'
 import { File } from './dot/file'
 
@@ -7,10 +7,7 @@ type CmdDotArgs = {
 }
 
 export function buildCmdDot(getParentOpts: () => CmdOpts) {
-  const cmd = buildCommand('dot', 'dotfile operations').aliases([
-    'd',
-    'dotfile',
-  ])
+  const cmd = buildCmd('dot', 'dotfile operations').aliases(['d', 'dotfile'])
 
   const getCmdOpts = () => {
     return {
@@ -20,7 +17,7 @@ export function buildCmdDot(getParentOpts: () => CmdOpts) {
   }
 
   cmd.addCommand(
-    buildCommand('diff', 'diff vs local')
+    buildCmd('diff', 'diff vs local')
       .aliases(['d', '?', 'de', 'delta'])
       .argument('[names...]', 'names to match')
       .action(
@@ -31,7 +28,7 @@ export function buildCmdDot(getParentOpts: () => CmdOpts) {
   )
 
   cmd.addCommand(
-    buildCommand('list', 'list on local')
+    buildCmd('list', 'list on local')
       .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
       .argument('[names...]', 'names to match')
       .action(
@@ -42,7 +39,7 @@ export function buildCmdDot(getParentOpts: () => CmdOpts) {
   )
 
   cmd.addCommand(
-    buildCommand('pull', 'pull from local')
+    buildCmd('pull', 'pull from local')
       .aliases(['['])
       .argument('[names...]', 'names to match')
       .action(
@@ -53,7 +50,7 @@ export function buildCmdDot(getParentOpts: () => CmdOpts) {
   )
 
   cmd.addCommand(
-    buildCommand('push', 'push to local')
+    buildCmd('push', 'push to local')
       .aliases([']'])
       .argument('[names...]', 'names to match')
       .action(

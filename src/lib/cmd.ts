@@ -2,11 +2,7 @@ import { Command } from 'commander'
 
 import { logError } from './log'
 
-export function buildCommand(
-  name: string,
-  description: string,
-  command?: Command,
-) {
+export function buildCmd(name: string, description: string, command?: Command) {
   return (command || new Command())
     .name(name)
     .description(description)
@@ -30,6 +26,11 @@ export function buildAction(func: (...args: Array<any>) => Promise<void>) {
 export type CmdOpts = {
   dryRun?: boolean
   verbose?: boolean
+}
+
+export interface Bin {
+  list: (names?: Array<string>) => Promise<void>
+  run: (names: Array<string>) => Promise<void>
 }
 
 export interface Dot {

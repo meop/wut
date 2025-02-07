@@ -1,5 +1,5 @@
 import { findConfigFilePaths, loadConfigFile } from '../cfg'
-import { type CmdOpts, type Pack, buildCommand, buildAction } from '../cmd'
+import { type CmdOpts, type Pack, buildCmd, buildAction } from '../cmd'
 import { isInPath } from '../path'
 import { type ShellOpts, shellRun } from '../sh'
 import { Apt, AptGet } from './pack/aptget'
@@ -36,7 +36,7 @@ type CmdPackOpts = {
 }
 
 export function buildCmdPack(getParentOpts: () => CmdOpts) {
-  const cmd = buildCommand('pack', 'package operations')
+  const cmd = buildCmd('pack', 'package operations')
     .aliases(['p', 'package'])
     .option('-m, --manager <manager>', 'package manager')
 
@@ -48,7 +48,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
   }
 
   cmd.addCommand(
-    buildCommand('add', 'add from web')
+    buildCmd('add', 'add from web')
       .aliases(['a', '+', 'in', 'install'])
       .argument('<names...>', 'names to match')
       .action(
@@ -59,7 +59,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
   )
 
   cmd.addCommand(
-    buildCommand('del', 'delete on local')
+    buildCmd('del', 'delete on local')
       .aliases(['d', '-', 'delete', 'rm', 'rem', 'remove', 'un', 'uninstall'])
       .argument('<names...>', 'names to match')
       .action(
@@ -70,7 +70,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
   )
 
   cmd.addCommand(
-    buildCommand('find', 'find from web')
+    buildCmd('find', 'find from web')
       .aliases(['f', '?', 'fi', 'se', 'search'])
       .argument('<names...>', 'names to match')
       .action(
@@ -81,7 +81,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
   )
 
   cmd.addCommand(
-    buildCommand('list', 'list on local')
+    buildCmd('list', 'list on local')
       .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
       .argument('[names...]', 'names to match')
       .action(
@@ -92,7 +92,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
   )
 
   cmd.addCommand(
-    buildCommand('out', 'out of sync on local')
+    buildCmd('out', 'out of sync on local')
       .aliases(['o', '!', 'ou', 'outdated', 'ob', 'obsolete', 'ol', 'old'])
       .argument('[names...]', 'names to match')
       .action(
@@ -103,13 +103,13 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
   )
 
   cmd.addCommand(
-    buildCommand('tidy', 'tidy on local')
+    buildCmd('tidy', 'tidy on local')
       .aliases(['t', '@', 'ti', 'cl', 'clean', 'pr', 'prune', 'pu', 'purge'])
       .action(buildAction(() => runCmdPack('tidy', {}, getCmdOpts))),
   )
 
   cmd.addCommand(
-    buildCommand('up', 'sync up from web')
+    buildCmd('up', 'sync up from web')
       .aliases(['u', '^', 'update', 'upgrade', 'sy', 'sync'])
       .argument('[names...]', 'names to match')
       .action(
