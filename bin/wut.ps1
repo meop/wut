@@ -45,6 +45,7 @@ pwsh -nologo -noprofile -command {
 
     # if installed via script
     if ("${env:BUN_INSTALL}") {
+      Write-Output "> bun upgrade"
       bun upgrade
     }
 

@@ -45,6 +45,7 @@ fi
 
     # if installed via script
     if [[ "${BUN_INSTALL}" ]]; then
+      echo '> bun upgrade'
       bun upgrade
     fi
 
