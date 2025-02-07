@@ -33,7 +33,7 @@ function getCmdAndCmdArgs(command: string, shellOpts?: ShellOpts) {
   if (shellOpts?.verbose) {
     logCmd(cmd, false)
     if (cmdArgsFull) {
-      logArg(cmdArgsFull)
+      logArg(` ${cmdArgsFull}`)
     }
   }
 
