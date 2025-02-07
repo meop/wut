@@ -34,12 +34,10 @@ fi
 
   if [[ "$#" -gt 0 && "$1" == 'up' ]]; then
     echo "> git -C \'${WUT_CONFIG_LOCATION}\' pull --prune"
-    echo
     git -C "${WUT_CONFIG_LOCATION}" pull --prune
     echo
 
     echo "> git -C \'${WUT_LOCATION}\' pull --prune"
-    echo
     git -C "${WUT_LOCATION}" pull --prune
     echo
 
@@ -47,6 +45,7 @@ fi
     if [[ "${BUN_INSTALL}" ]]; then
       echo '> bun upgrade'
       bun upgrade
+      echo
     fi
 
     owd=$(pwd -P) && cd "${WUT_LOCATION}" || exit
