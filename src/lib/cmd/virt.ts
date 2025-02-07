@@ -1,7 +1,7 @@
 import os from 'node:os'
 import path from 'node:path'
 
-import { type CmdOpts, type Virt, buildCommand, buildAction } from '../cmd'
+import { type CmdOpts, type Virt, buildCmd, buildAction } from '../cmd'
 import { getPathStat } from '../path'
 import type { ShellOpts } from '../sh'
 import { Docker } from './virt/docker'
@@ -18,7 +18,7 @@ type CmdVirtOpts = {
 }
 
 export function buildCmdVirt(getParentOpts: () => CmdOpts) {
-  const cmd = buildCommand('virt', 'virtualization operations')
+  const cmd = buildCmd('virt', 'virtualization operations')
     .aliases(['v', 'virtual'])
     .option('-m, --manager <manager>', 'virtualization manager')
 
@@ -30,7 +30,7 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
   }
 
   cmd.addCommand(
-    buildCommand('down', 'tear down from local')
+    buildCmd('down', 'tear down from local')
       .aliases(['d', '%', 'downgrade', 'te', 'tear'])
       .argument('[name...]', 'names to match')
       .action(
@@ -41,7 +41,7 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
   )
 
   cmd.addCommand(
-    buildCommand('list', 'list on local')
+    buildCmd('list', 'list on local')
       .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
       .argument('[names...]', 'names to match')
       .action(
@@ -52,7 +52,7 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
   )
 
   cmd.addCommand(
-    buildCommand('stat', 'status on local')
+    buildCmd('stat', 'status on local')
       .aliases(['s', '$', 'st', 'status'])
       .argument('[names...]', 'names to match')
       .action(
@@ -63,13 +63,13 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
   )
 
   cmd.addCommand(
-    buildCommand('tidy', 'tidy on local')
+    buildCmd('tidy', 'tidy on local')
       .aliases(['t', '@', 'ti', 'cl', 'clean', 'pr', 'prune', 'pu', 'purge'])
       .action(buildAction(() => runCmdVirt('tidy', {}, getCmdOpts))),
   )
 
   cmd.addCommand(
-    buildCommand('up', 'sync up from local')
+    buildCmd('up', 'sync up from local')
       .aliases(['u', '^', 'update', 'upgrade', 'sy', 'sync'])
       .argument('[names...]', 'names to match')
       .action(
