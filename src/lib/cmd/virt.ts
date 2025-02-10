@@ -31,7 +31,7 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
 
   cmd.addCommand(
     buildCmd('down', 'tear down from local')
-      .aliases(['d', '%', 'downgrade', 'te', 'tear'])
+      .aliases(['d', '#', 'downgrade', 'te', 'tear'])
       .argument('[name...]', 'names to match')
       .action(
         buildAction((names?: Array<string>) =>
@@ -53,7 +53,7 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
 
   cmd.addCommand(
     buildCmd('stat', 'status on local')
-      .aliases(['s', '$', 'st', 'status'])
+      .aliases(['s', '%', 'st', 'status'])
       .argument('[names...]', 'names to match')
       .action(
         buildAction((names?: Array<string>) =>

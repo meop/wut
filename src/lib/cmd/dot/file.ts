@@ -24,7 +24,7 @@ type FileConfig = {
         macos: string
         windows: string
       }
-      permission?: PathPermission
+      perm?: PathPermission
     },
   ]
 }
@@ -112,7 +112,7 @@ export class File implements Dot {
           psc.filePairPaths.add({
             sourcePath: filePath,
             targetPath: filePath.replace(inPath, outPath),
-            targetPerm: fileConfigItem.permission,
+            targetPerm: fileConfigItem.perm,
           })
           if (isDirSync) {
             psc.dirPaths.add(outPath)

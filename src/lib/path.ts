@@ -5,16 +5,16 @@ import { logInfo } from './log'
 import { getPlat } from './os'
 import { type ShellOpts, shellRun } from './sh'
 
-export type PathItemPermission = {
+export type AclPermScope = {
   read?: boolean
   write?: boolean
   execute?: boolean
 }
 
-export type PathPermission = {
-  user?: PathItemPermission
-  group?: PathItemPermission
-  other?: PathItemPermission
+export type AclPerm = {
+  user?: AclPermScope
+  group?: AclPermScope
+  other?: AclPermScope
 }
 
 export function fmtPath(p: string) {
@@ -39,7 +39,7 @@ export function getPlatDiffCmd(plat: string, lPath: string, rPath: string) {
   switch (plat) {
     case 'linux':
     case 'macos':
-      return `diff "${fmtPath(lPath)}" "${fmtPath(rPath)}"`
+      return `diff '${fmtPath(lPath)}' '${fmtPath(rPath)}'`
     case 'windows':
       return `fc.exe "${fmtPath(lPath)}" "${fmtPath(rPath)}"`
     default:
@@ -59,31 +59,74 @@ export function getPlatFindCmd(plat: string, prog: string) {
   }
 }
 
-function getFsScopeVal(permItem?: PathItemPermission) {
-  let val = 0
-  if (permItem?.read) {
-    val += 4
+function getFsAclUnixSymVal(itemPerm?: AclPermScope) {
+  let symbols = ''
+  if (itemPerm?.read) {
+    symbols += 'r'
   }
-  if (permItem?.write) {
-    val += 2
+  if (itemPerm?.write) {
+    symbols += 'w'
   }
-  if (permItem?.execute) {
-    val += 1
+  if (itemPerm?.execute) {
+    symbols += 'x'
   }
-  return val
+  return symbols
 }
 
-function getFsModVal(perm: PathPermission) {
-  return `${getFsScopeVal(perm.user)}${getFsScopeVal(perm.group)}${getFsScopeVal(perm.other)}`
+function getFsAclUnixVal(perm: AclPerm) {
+  const permBlocks: Array<string> = []
+  permBlocks.push(`u=${getFsAclUnixSymVal(perm.user)}`)
+  permBlocks.push(`g=${getFsAclUnixSymVal(perm.group)}`)
+  permBlocks.push(`o=${getFsAclUnixSymVal(perm.other)}`)
+  return permBlocks.join(',')
 }
 
-export function getPlatPermCmd(plat: string, perm: PathPermission) {
+function getFsAclWinntSymVal(itemPerm?: AclPermScope) {
+  const symbols: Array<string> = []
+  if (itemPerm?.read) {
+    symbols.push('gr')
+  }
+  if (itemPerm?.write) {
+    symbols.push('gw')
+  }
+  if (itemPerm?.execute) {
+    symbols.push('ge')
+  }
+
+  return symbols.join(',')
+}
+
+function getFsAclWinntVal(perm: AclPerm) {
+  const permBlocks: Array<string> = []
+  const userPerms = getFsAclWinntSymVal(perm.user)
+  if (userPerms !== '') {
+    permBlocks.push(`"${process.env.USER}:(${userPerms})"`)
+  }
+  const groupPerms = getFsAclWinntSymVal(perm.group)
+  if (groupPerms !== '') {
+    permBlocks.push(`"Administrators:(${groupPerms})"`)
+  }
+  const otherPerms = getFsAclWinntSymVal(perm.other)
+  if (otherPerms !== '') {
+    permBlocks.push(`"SYSTEM:(${otherPerms})"`)
+  }
+  return permBlocks.join(' ')
+}
+
+export function getPlatAclPermCmds(
+  plat: string,
+  fsPath: string,
+  perm: AclPerm,
+) {
   switch (plat) {
     case 'linux':
     case 'macos':
-      return `chmod ${getFsModVal(perm)}`
+      return [`chmod -R a-s,${getFsAclUnixVal(perm)} '${fsPath}'`]
     case 'windows':
-      return ''
+      return [
+        `icacls.exe "${fsPath}" /t /reset`,
+        `icacls.exe "${fsPath}" /t /inheritance:r /grant ${getFsAclWinntVal(perm)}`,
+      ]
     default:
       throw new Error(`unsupported os platform: ${plat}`)
   }
@@ -113,7 +156,7 @@ export async function ensureDirPath(
 export async function syncFilePath(
   sourcePath: string,
   targetPath: string,
-  targetPerm?: PathPermission,
+  targetPerm?: AclPerm,
   shellOpts?: ShellOpts,
 ) {
   const fmtSourcePath = fmtPath(sourcePath)
@@ -130,10 +173,9 @@ export async function syncFilePath(
   }
 
   if (targetPerm) {
-    const cmd = getPlatPermCmd(getPlat(), targetPerm)
-    if (cmd) {
-      const fullCmd = `${cmd} ${fmtTargetPath}`
-      await shellRun(fullCmd, shellOpts)
+    const cmds = getPlatAclPermCmds(getPlat(), fmtTargetPath, targetPerm)
+    for (const cmd of cmds) {
+      await shellRun(cmd, shellOpts)
     }
   }
 }
