@@ -1,21 +1,20 @@
 import path from 'node:path'
 
-import { loadConfigFile } from '../../cfg'
+import { getCfgFilePath, getCfgFilePaths, loadCfgFileContents } from '../../cfg'
 import type { Dot } from '../../cmd'
 import { log, logWarn } from '../../log'
 import { getPlat } from '../../os'
 import {
+  type AclPerm,
   ensureDirPath,
-  getFilePathsInPath,
   getPathStat,
   getPlatDiffCmd,
   isInPath,
-  type PathPermission,
   syncFilePath,
 } from '../../path'
 import { type ShellOpts, shellRun } from '../../sh'
 
-type FileConfig = {
+type Sync = {
   [key: string]: [
     {
       in: string
@@ -24,76 +23,55 @@ type FileConfig = {
         macos: string
         windows: string
       }
-      perm?: PathPermission
+      perm?: AclPerm
     },
   ]
 }
 
-type FilePathPair = {
-  sourcePath: string
-  targetPath: string
-  targetPerm?: PathPermission
+type FileSync = {
+  sourceFilePath: string
+  targetFilePath: string
+  targetFilePerm?: AclPerm
 }
 
-type PathSyncConfig = {
-  dirPaths: Set<string>
-  filePairPaths: Set<FilePathPair>
+type DotFileSync = {
+  cleanDirPaths: Set<string>
+  dirtyDirPaths: Set<string>
+  fileSyncs: Set<FileSync>
 }
 
 export class File implements Dot {
   shellOpts: ShellOpts
 
-  async _fileConfig(names?: Array<string>) {
-    const fileConfig: FileConfig = {}
-    const config = await loadConfigFile(
-      path.join(process.env.WUT_CONFIG_LOCATION ?? '', 'dot', 'file.yaml'),
+  async _dotFileSync(names?: Array<string>) {
+    const dotFileSync: DotFileSync = {
+      cleanDirPaths: new Set<string>(),
+      dirtyDirPaths: new Set<string>(),
+      fileSyncs: new Set<FileSync>(),
+    }
+
+    const sync: Sync = await loadCfgFileContents(
+      getCfgFilePath(['dot', 'file.yaml']),
     )
 
-    for (const key of Object.keys(config)) {
-      if ((names?.length ?? 0) === 0 || names?.find(n => key.includes(n))) {
-        fileConfig[key] = config[key]
-      }
-    }
-    return fileConfig
-  }
-
-  async _pathSyncConfig(names?: Array<string>) {
-    const psc: PathSyncConfig = {
-      dirPaths: new Set<string>(),
-      filePairPaths: new Set<FilePathPair>(),
-    }
-
-    const fileConfig = await this._fileConfig(names)
-    for (const name of Object.keys(fileConfig)) {
-      if (!(await isInPath(name, this.shellOpts))) {
+    for (const toolName of Object.keys(sync)) {
+      if (!(await isInPath(toolName, this.shellOpts))) {
         continue
       }
 
-      const fileConfigPath = path.join(
-        process.env.WUT_CONFIG_LOCATION ?? '',
-        'dot',
-        name,
-      )
-
-      const fileConfigPaths = await getFilePathsInPath(fileConfigPath)
-
-      for (const fileConfigItem of fileConfig[name]) {
-        if (!fileConfigItem?.out[getPlat()]) {
+      for (const syncItem of sync[toolName]) {
+        if (!syncItem?.out[getPlat()]) {
           continue
         }
 
-        const inPath = path.join(fileConfigPath, fileConfigItem.in)
+        const inPath = getCfgFilePath(['dot', toolName, syncItem.in])
+        const inPathIsDir = (await getPathStat(inPath))?.isDirectory() ?? false
+        const inPaths = inPathIsDir
+          ? await getCfgFilePaths(['dot', toolName, syncItem.in], names)
+          : [inPath].filter(p => names?.every(n => p.toLowerCase().includes(n)))
 
-        const isDirSync = (await getPathStat(inPath))?.isDirectory() ?? false
-
-        const filePaths = isDirSync
-          ? fileConfigPaths.filter(
-              f => f.startsWith(inPath) && path.dirname(f) === inPath,
-            )
-          : [inPath]
-
-        for (const filePath of filePaths) {
-          let outPath = fileConfigItem.out[getPlat()]
+        for (const p of inPaths) {
+          let outPath = syncItem.out[getPlat()]
           if (outPath.includes('${')) {
             for (const e of Object.keys(process.env)) {
               outPath = outPath.replace(`\${${e}}`, process.env[e] ?? '')
@@ -103,58 +81,62 @@ export class File implements Dot {
             }
           }
 
-          if (outPath === process.env.HOME) {
-            throw new Error(
-              `unsupported config: ${outPath} cannot be set as 'out' directly`,
-            )
-          }
+          const targetFilePath = p.replace(inPath, outPath)
 
-          psc.filePairPaths.add({
-            sourcePath: filePath,
-            targetPath: filePath.replace(inPath, outPath),
-            targetPerm: fileConfigItem.perm,
+          dotFileSync.fileSyncs.add({
+            sourceFilePath: p,
+            targetFilePath,
+            targetFilePerm: syncItem.perm,
           })
-          if (isDirSync) {
-            psc.dirPaths.add(outPath)
+
+          if (inPathIsDir) {
+            dotFileSync.cleanDirPaths.add(path.dirname(targetFilePath))
+          } else {
+            dotFileSync.dirtyDirPaths.add(path.dirname(targetFilePath))
           }
         }
       }
     }
 
-    return psc
+    return dotFileSync
   }
 
   async diff(names?: Array<string>) {
-    const psc = await this._pathSyncConfig(names)
-    for (const psPair of psc.filePairPaths) {
-      if (await getPathStat(psPair.targetPath)) {
+    const dotFileSync = await this._dotFileSync(names)
+
+    for (const fileSync of dotFileSync.fileSyncs) {
+      if (await getPathStat(fileSync.targetFilePath)) {
         await shellRun(
-          getPlatDiffCmd(getPlat(), psPair.sourcePath, psPair.targetPath),
+          getPlatDiffCmd(
+            getPlat(),
+            fileSync.sourceFilePath,
+            fileSync.targetFilePath,
+          ),
           {
             ...this.shellOpts,
             verbose: true,
           },
         )
       } else {
-        logWarn(`not yet in fs: '${psPair.targetPath}'`)
+        logWarn(`not yet in fs: '${fileSync.targetFilePath}'`)
       }
     }
   }
   async list(names?: Array<string>) {
-    const psc = await this._pathSyncConfig(names)
+    const dotFileSync = await this._dotFileSync(names)
 
-    for (const psPair of psc.filePairPaths) {
-      log(`"${psPair.sourcePath}" <-> "${psPair.targetPath}"`)
+    for (const fileSync of dotFileSync.fileSyncs) {
+      log(`'${fileSync.sourceFilePath}' <-> '${fileSync.targetFilePath}'`)
     }
   }
   async pull(names?: Array<string>) {
-    const psc = await this._pathSyncConfig(names)
+    const dotFileSync = await this._dotFileSync(names)
 
-    for (const psPair of psc.filePairPaths) {
+    for (const fileSync of dotFileSync.fileSyncs) {
       await syncFilePath(
-        psPair.targetPath,
-        psPair.sourcePath,
-        psPair.targetPerm,
+        fileSync.targetFilePath,
+        fileSync.sourceFilePath,
+        fileSync.targetFilePerm,
         {
           ...this.shellOpts,
           verbose: true,
@@ -163,17 +145,21 @@ export class File implements Dot {
     }
   }
   async push(names?: Array<string>) {
-    const psc = await this._pathSyncConfig(names)
+    const dotFileSync = await this._dotFileSync(names)
 
-    for (const psDir of psc.dirPaths) {
-      await ensureDirPath(psDir, this.shellOpts, true)
+    for (const dirPath of dotFileSync.cleanDirPaths) {
+      await ensureDirPath(dirPath, this.shellOpts, true)
     }
 
-    for (const psPair of psc.filePairPaths) {
+    for (const dirPath of dotFileSync.dirtyDirPaths) {
+      await ensureDirPath(dirPath, this.shellOpts)
+    }
+
+    for (const fileSync of dotFileSync.fileSyncs) {
       await syncFilePath(
-        psPair.sourcePath,
-        psPair.targetPath,
-        psPair.targetPerm,
+        fileSync.sourceFilePath,
+        fileSync.targetFilePath,
+        fileSync.targetFilePerm,
         {
           ...this.shellOpts,
           verbose: true,

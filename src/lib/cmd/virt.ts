@@ -1,9 +1,7 @@
-import os from 'node:os'
-import path from 'node:path'
-
 import { type CmdOpts, type Virt, buildCmd, buildAction } from '../cmd'
-import { getPathStat } from '../path'
+import { isInPath } from '../path'
 import type { ShellOpts } from '../sh'
+
 import { Docker } from './virt/docker'
 import { Qemu } from './virt/qemu'
 
@@ -82,20 +80,14 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
   return cmd
 }
 
-async function getValidVirts() {
+async function getValidVirts(shellOpts?: ShellOpts) {
   const virts: Array<string> = []
   for (const validVirt of validVirts) {
-    const virtPath = path.join(
-      process.env.WUT_CONFIG_LOCATION ?? '',
-      'virt',
-      os.hostname(),
-      validVirt,
-    )
-
-    if (await getPathStat(virtPath)) {
+    if (await isInPath(validVirt, shellOpts)) {
       virts.push(validVirt)
     }
   }
+
   return virts
 }
 
@@ -118,8 +110,8 @@ async function runCmdVirt(
   const cmdOpts = getCmdOpts()
 
   const virtNames = cmdOpts.manager
-    ? [String(cmdOpts.manager.toLowerCase())]
-    : await getValidVirts()
+    ? [cmdOpts.manager.toLowerCase()]
+    : await getValidVirts(cmdOpts)
 
   for (const virtName of virtNames) {
     await getVirt(virtName, cmdOpts)[op](

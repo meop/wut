@@ -29,7 +29,7 @@ export class Pacman extends Tool implements Pack {
   async up(names?: Array<string>) {
     await this.shell('--sync --refresh')
     await this.shell(
-      `--sync${(names?.length ?? 0) > 0 ? ` ${names?.join(' ')}` : ' --sysupgrade'}`,
+      `--sync${names?.length ? ` ${names.join(' ')}` : ' --sysupgrade'}`,
     )
   }
 

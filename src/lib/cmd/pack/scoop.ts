@@ -29,7 +29,7 @@ export class Scoop extends Tool implements Pack {
   async up(names?: Array<string>) {
     await this.shell('update')
     await this.shell(
-      `update${(names?.length ?? 0) > 0 ? ` ${names?.join(' ')}` : ' --all'}`,
+      `update${names?.length ? ` ${names.join(' ')}` : ' --all'}`,
     )
   }
 

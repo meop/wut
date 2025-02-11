@@ -30,7 +30,7 @@ export class Dnf extends Tool implements Pack {
   async up(names?: Array<string>) {
     await this.shell('check-update')
     await this.shell(
-      (names?.length ?? 0) > 0 ? `upgrade ${names?.join(' ')}` : 'distro-sync',
+      names?.length ? `upgrade ${names.join(' ')}` : 'distro-sync',
     )
   }
 

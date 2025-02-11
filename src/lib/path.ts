@@ -1,4 +1,4 @@
-import { promises as fsPromises } from 'node:fs'
+import { promises as fs } from 'node:fs'
 import path from 'node:path'
 
 import { logInfo } from './log'
@@ -23,13 +23,17 @@ export function fmtPath(p: string) {
     .replaceAll(path.win32.sep, path.sep)
 }
 
+export function splitPath(p: string) {
+  return p.split(path.sep)
+}
+
 export async function getPathContents(p: string) {
-  return await fsPromises.readFile(fmtPath(p), 'utf8')
+  return await fs.readFile(fmtPath(p), 'utf8')
 }
 
 export async function getPathStat(p: string) {
   try {
-    return await fsPromises.stat(fmtPath(p))
+    return await fs.stat(fmtPath(p))
   } catch {
     return undefined
   }
@@ -138,17 +142,17 @@ export async function ensureDirPath(
   makeEmpty?: boolean,
 ) {
   const fmtDirPath = fmtPath(dirPath)
+  if (shellOpts?.verbose) {
+    logInfo(`ensure dir: '${fmtDirPath}' | makeEmpty: ${makeEmpty ?? false}`)
+  }
 
   const fsStat = await getPathStat(fmtDirPath)
   if (!fsStat || fsStat.isFile() || makeEmpty) {
-    if (shellOpts?.verbose) {
-      logInfo(`reset: '${fmtDirPath}'`)
-    }
     if (!shellOpts?.dryRun) {
       if (fsStat) {
-        await fsPromises.rm(fmtDirPath, { recursive: true })
+        await fs.rm(fmtDirPath, { recursive: true })
       }
-      await fsPromises.mkdir(fmtDirPath, { recursive: true })
+      await fs.mkdir(fmtDirPath, { recursive: true })
     }
   }
 }
@@ -169,7 +173,7 @@ export async function syncFilePath(
   logInfo(`copy: '${fmtSourcePath}' | to: '${fmtTargetPath}'`)
   if (!shellOpts?.dryRun) {
     await ensureDirPath(path.dirname(targetPath))
-    await fsPromises.copyFile(fmtSourcePath, fmtTargetPath)
+    await fs.copyFile(fmtSourcePath, fmtTargetPath)
   }
 
   if (targetPerm) {
@@ -191,7 +195,7 @@ export async function getFilePathsInPath(fsPath: string) {
   }
 
   if (stat.isDirectory()) {
-    for (const fsSubPath of await fsPromises.readdir(fmtFsPath)) {
+    for (const fsSubPath of await fs.readdir(fmtFsPath)) {
       filePaths.push(
         ...(await getFilePathsInPath(path.join(fmtFsPath, fmtPath(fsSubPath)))),
       )

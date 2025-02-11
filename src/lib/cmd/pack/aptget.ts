@@ -31,9 +31,7 @@ export class AptGet extends Tool implements Pack {
   }
   async up(names?: Array<string>, upgradeCmd = 'dist-upgrade') {
     await this.shell('update')
-    await this.shell(
-      (names?.length ?? 0) > 0 ? `install ${names?.join(' ')}` : upgradeCmd,
-    )
+    await this.shell(names?.length ? `install ${names.join(' ')}` : upgradeCmd)
   }
 
   constructor(shellOpts?: ShellOpts, program?: string, executor?: string) {

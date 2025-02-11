@@ -1,7 +1,10 @@
-import { findConfigFilePaths, loadConfigFile } from '../cfg'
+import path from 'node:path'
+
+import { getCfgFilePaths, loadCfgFileContents } from '../cfg'
 import { type CmdOpts, type Pack, buildCmd, buildAction } from '../cmd'
 import { isInPath } from '../path'
 import { type ShellOpts, shellRun } from '../sh'
+
 import { Apt, AptGet } from './pack/aptget'
 import { Brew } from './pack/brew'
 import { Dnf } from './pack/dnf'
@@ -163,26 +166,48 @@ async function runCmdPack(
 ) {
   const cmdOpts = getCmdOpts()
 
-  let packNames = cmdOpts.manager
-    ? [String(cmdOpts.manager.toLowerCase())]
+  const packNames = cmdOpts.manager
+    ? [cmdOpts.manager.toLowerCase()]
     : await getValidPacks(cmdOpts)
 
   const opArgsNames = opArgs.names?.map(n => n.toLowerCase()) ?? []
-  const opArgsNamesRemaining: Array<string> = []
 
-  const fsPaths = await findConfigFilePaths('pack')
+  const redundantPackNames: Array<string> = []
+  for (const [key, value] of Object.entries(validPackWraps)) {
+    if (packNames.includes(key) && packNames.includes(value)) {
+      redundantPackNames.push(value)
+    }
+  }
+
+  let fallbackPackNames = packNames.filter(p => !redundantPackNames.includes(p))
+
+  if (['add', 'del', 'find'].includes(op)) {
+    fallbackPackNames = [fallbackPackNames[0]]
+  }
+
+  const invokeFallbackPackNames = async (name?: string) => {
+    for (const packName of fallbackPackNames) {
+      await getPack(packName, cmdOpts)[op](name ? [name] : undefined)
+    }
+  }
+
+  if (!opArgsNames.length) {
+    await invokeFallbackPackNames()
+    return
+  }
+
+  const fsPaths = await getCfgFilePaths(['pack'])
+
   for (const name of opArgsNames) {
-    const foundPath = fsPaths.find(f => f.endsWith(`${name}.yaml`))
+    const foundPath = fsPaths.find(
+      f => path.parse(f).name.toLowerCase() === name,
+    )
     if (!foundPath) {
-      opArgsNamesRemaining.push(name)
+      await invokeFallbackPackNames(name)
       continue
     }
 
-    const config = await loadConfigFile(foundPath)
-    if (Object.keys(config).length === 0) {
-      opArgsNamesRemaining.push(name)
-      continue
-    }
+    const config = await loadCfgFileContents(foundPath)
 
     let matched = false
     for (const packName of Object.keys(config)) {
@@ -192,7 +217,7 @@ async function runCmdPack(
       const packItem = config[packName]
 
       const names = packItem.names ?? []
-      if (names.length === 0) {
+      if (!names.length) {
         continue
       }
       matched = true
@@ -214,25 +239,7 @@ async function runCmdPack(
       await preOrPostCmd('del')
     }
     if (!matched) {
-      opArgsNamesRemaining.push(name)
-    }
-  }
-
-  if (opArgsNames.length === 0 || opArgsNamesRemaining.length > 0) {
-    if (op === 'add' && packNames.length > 0) {
-      packNames = [packNames[0]]
-    }
-
-    const redundantPackNames: Array<string> = []
-    for (const [key, value] of Object.entries(validPackWraps)) {
-      if (packNames.includes(key) && packNames.includes(value)) {
-        redundantPackNames.push(value)
-      }
-    }
-    packNames = packNames.filter(p => !redundantPackNames.includes(p))
-
-    for (const packName of packNames) {
-      await getPack(packName, cmdOpts)[op](opArgsNamesRemaining)
+      await invokeFallbackPackNames(name)
     }
   }
 }

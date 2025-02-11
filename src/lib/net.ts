@@ -9,7 +9,7 @@ export async function getNicMac(nic: string, shellOpts: ShellOpts) {
     })
   ).out
 
-  return out.length > 0 ? out[0].trim() : ''
+  return out.length ? out[0].trim() : ''
 }
 
 export async function getNicIfIndex(nic: string, shellOpts: ShellOpts) {
@@ -21,5 +21,5 @@ export async function getNicIfIndex(nic: string, shellOpts: ShellOpts) {
     })
   ).out
 
-  return out.length > 0 ? Number(out[0].trim()) : -1
+  return out.length ? Number(out[0].trim()) : -1
 }

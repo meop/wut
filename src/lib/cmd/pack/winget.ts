@@ -23,7 +23,7 @@ export class WinGet extends Tool implements Pack {
   async tidy() {}
   async up(names?: Array<string>) {
     await this.shell(
-      `upgrade${(names?.length ?? 0) > 0 ? ` ${names?.join(' ')}` : ' --all'}`,
+      `upgrade${names?.length ? ` ${names.join(' ')}` : ' --all'}`,
     )
   }
 

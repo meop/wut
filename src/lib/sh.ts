@@ -61,7 +61,7 @@ export async function shellRun(command: string, shellRunOpts?: ShellRunOpts) {
   }
 
   const filters = shellRunOpts?.filters ?? []
-  const internalStream = shellRunOpts?.pipeOutAndErr || filters.length > 0
+  const internalStream = shellRunOpts?.pipeOutAndErr || filters.length
 
   const proc = cp.spawn(cmd, cmdArgs, {
     shell: true,
@@ -125,9 +125,9 @@ export async function shellRun(command: string, shellRunOpts?: ShellRunOpts) {
   // because logging in the pipe handler
   // was prefixing extra spacing to console for some reason
   for (const s of stdStream) {
-    if (filters.length > 0) {
-      for (const f of filters) {
-        let match = s.val.toLowerCase().includes(f.toLowerCase())
+    if (filters.length) {
+      for (const filter of filters) {
+        let match = s.val.toLowerCase().includes(filter)
         if (shellRunOpts?.reverseFilters) {
           match = !match
         }

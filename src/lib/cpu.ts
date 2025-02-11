@@ -9,7 +9,7 @@ export async function getCpuVendorName(shellOpts: ShellOpts) {
     })
   ).out
 
-  const cpu_vendor_id = out.length > 0 ? out[0].split(':')[1].trim() : 'unknown'
+  const cpu_vendor_id = out.length ? out[0].split(':')[1].trim() : 'unknown'
 
   if (cpu_vendor_id === 'AuthenticAMD') {
     return 'amd'
@@ -29,7 +29,7 @@ export async function getCpuSocketCount(shellOpts: ShellOpts) {
     })
   ).out
 
-  return out.length > 0 ? Number(out[0].split(':')[1].trim()) : 1
+  return out.length ? Number(out[0].split(':')[1].trim()) : 1
 }
 
 export async function getCpuCoreCount(shellOpts: ShellOpts) {
@@ -41,7 +41,7 @@ export async function getCpuCoreCount(shellOpts: ShellOpts) {
     })
   ).out
 
-  return out.length > 0 ? Number(out[0].split(':')[1].trim()) : 1
+  return out.length ? Number(out[0].split(':')[1].trim()) : 1
 }
 
 export async function getCpuThreadCount(shellOpts: ShellOpts) {
@@ -53,5 +53,5 @@ export async function getCpuThreadCount(shellOpts: ShellOpts) {
     })
   ).out
 
-  return out.length > 0 ? Number(out[0].split(':')[1].trim()) : 1
+  return out.length ? Number(out[0].split(':')[1].trim()) : 1
 }

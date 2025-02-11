@@ -28,7 +28,7 @@ export class Brew extends Tool implements Pack {
   async up(names?: Array<string>) {
     await this.shell('update')
     await this.shell(
-      `upgrade --greedy${(names?.length ?? 0) > 0 ? ` ${names?.join(' ')}` : ''}`,
+      `upgrade --greedy${names?.length ? ` ${names.join(' ')}` : ''}`,
     )
   }
 
