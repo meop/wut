@@ -143,7 +143,7 @@ export async function ensureDirPath(
 ) {
   const fmtDirPath = fmtPath(dirPath)
   if (shellOpts?.verbose) {
-    logInfo(`ensure dir: '${fmtDirPath}' | makeEmpty: ${makeEmpty ?? false}`)
+    logInfo(`ensure dir: '${fmtDirPath}' | make empty: ${makeEmpty ?? false}`)
   }
 
   const fsStat = await getPathStat(fmtDirPath)
@@ -172,7 +172,7 @@ export async function syncFilePath(
 
   logInfo(`copy: '${fmtSourcePath}' | to: '${fmtTargetPath}'`)
   if (!shellOpts?.dryRun) {
-    await ensureDirPath(path.dirname(targetPath))
+    await ensureDirPath(path.dirname(targetPath), shellOpts)
     await fs.copyFile(fmtSourcePath, fmtTargetPath)
   }
 

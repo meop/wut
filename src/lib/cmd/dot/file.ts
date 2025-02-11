@@ -35,8 +35,7 @@ type FileSync = {
 }
 
 type DotFileSync = {
-  cleanDirPaths: Set<string>
-  dirtyDirPaths: Set<string>
+  dirPaths: Set<string>
   fileSyncs: Set<FileSync>
 }
 
@@ -45,8 +44,7 @@ export class File implements Dot {
 
   async _dotFileSync(names?: Array<string>) {
     const dotFileSync: DotFileSync = {
-      cleanDirPaths: new Set<string>(),
-      dirtyDirPaths: new Set<string>(),
+      dirPaths: new Set<string>(),
       fileSyncs: new Set<FileSync>(),
     }
 
@@ -96,9 +94,7 @@ export class File implements Dot {
           })
 
           if (inPathIsDir) {
-            dotFileSync.cleanDirPaths.add(path.dirname(targetFilePath))
-          } else {
-            dotFileSync.dirtyDirPaths.add(path.dirname(targetFilePath))
+            dotFileSync.dirPaths.add(path.dirname(targetFilePath))
           }
         }
       }
@@ -143,22 +139,22 @@ export class File implements Dot {
         fileSync.targetFilePath,
         fileSync.sourceFilePath,
         fileSync.targetFilePerm,
-        {
-          ...this.shellOpts,
-          verbose: true,
-        },
+        this.shellOpts,
       )
     }
   }
   async push(names?: Array<string>) {
     const dotFileSync = await this._dotFileSync(names)
 
-    for (const dirPath of dotFileSync.cleanDirPaths) {
-      await ensureDirPath(dirPath, this.shellOpts, true)
-    }
-
-    for (const dirPath of dotFileSync.dirtyDirPaths) {
-      await ensureDirPath(dirPath, this.shellOpts)
+    for (const dirPath of dotFileSync.dirPaths) {
+      await ensureDirPath(
+        dirPath,
+        {
+          ...this.shellOpts,
+          verbose: true,
+        },
+        true,
+      )
     }
 
     for (const fileSync of dotFileSync.fileSyncs) {
@@ -166,10 +162,7 @@ export class File implements Dot {
         fileSync.sourceFilePath,
         fileSync.targetFilePath,
         fileSync.targetFilePerm,
-        {
-          ...this.shellOpts,
-          verbose: true,
-        },
+        this.shellOpts,
       )
     }
   }
