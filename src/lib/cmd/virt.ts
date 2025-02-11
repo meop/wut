@@ -1,11 +1,21 @@
 import { type CmdOpts, type Virt, buildCmd, buildAction } from '../cmd'
+import { getArch } from '../os'
 import { isInPath } from '../path'
 import type { ShellOpts } from '../sh'
 
 import { Docker } from './virt/docker'
 import { Qemu } from './virt/qemu'
 
-const validVirts = ['docker', 'qemu']
+const validVirts = {
+  docker: {
+    amd64: 'docker',
+    arm64: 'docker',
+  },
+  qemu: {
+    amd64: 'qemu-system-x86_64',
+    arm64: 'qemu-system-aarch64',
+  },
+}
 
 type CmdVirtArgs = {
   names?: Array<string>
@@ -82,8 +92,8 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
 
 async function getValidVirts(shellOpts?: ShellOpts) {
   const virts: Array<string> = []
-  for (const validVirt of validVirts) {
-    if (await isInPath(validVirt, shellOpts)) {
+  for (const validVirt of Object.keys(validVirts)) {
+    if (await isInPath(validVirts[validVirt][getArch()], shellOpts)) {
       virts.push(validVirt)
     }
   }

@@ -127,6 +127,7 @@ async function vmRun(config: any, configVm: any, shellOpts: ShellOpts) {
     const parts = e.split('=')
     env[parts[0]] = parts[1]
   }
+
   env.QEMU_GUEST_CPU_CORES = await getCpuCoreCount(shellOpts)
   env.QEMU_GUEST_CPU_SOCKETS = await getCpuSocketCount(shellOpts)
   env.QEMU_GUEST_CPU_THREADS = await getCpuThreadCount(shellOpts)
@@ -166,7 +167,7 @@ async function vmRun(config: any, configVm: any, shellOpts: ShellOpts) {
   }
 
   if ('swtpm' in configVm) {
-    const swtpmBin: string = config[configVm.swtpm][arch].bin
+    const swtpmBin: string = config.swtpm[arch].bin
 
     const swtpmFlagsRaw: Array<string> = configVm.swtpm.flags
     const swtpmFlags = envReplace(swtpmFlagsRaw)
