@@ -65,10 +65,16 @@ export class File implements Dot {
         }
 
         const inPath = getCfgFilePath(['dot', toolName, syncItem.in])
+        if (names?.length) {
+          if (!names.every(n => inPath.toLowerCase().includes(n))) {
+            continue
+          }
+        }
+
         const inPathIsDir = (await getPathStat(inPath))?.isDirectory() ?? false
         const inPaths = inPathIsDir
-          ? await getCfgFilePaths(['dot', toolName, syncItem.in], names)
-          : [inPath].filter(p => names?.every(n => p.toLowerCase().includes(n)))
+          ? await getCfgFilePaths(['dot', toolName, syncItem.in])
+          : [inPath]
 
         for (const p of inPaths) {
           let outPath = syncItem.out[getPlat()]
