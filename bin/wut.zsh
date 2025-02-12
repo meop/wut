@@ -48,15 +48,15 @@ fi
       echo
     fi
 
-    owd=$(pwd -P) && cd "${WUT_LOCATION}" || exit
+    pushd "${WUT_LOCATION}"
     echo '> bun install'
     bun install
-    cd "${owd}" || exit
+    popd
 
     exit
   fi
 
-  owd=$(pwd -P) && cd "${WUT_LOCATION}" || exit
+  pushd "${WUT_LOCATION}"
   bun run src/cli.ts $@
-  cd "${owd}" || exit
+  popd
 )
