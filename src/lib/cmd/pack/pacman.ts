@@ -5,7 +5,7 @@ import { Tool } from '../../tool'
 export class Pacman extends Tool implements Pack {
   async add(names: Array<string>) {
     await this.shell('--sync --refresh')
-    await this.shell(`--sync ${names.join(' ')}`)
+    await this.shell(`--sync --needed ${names.join(' ')}`)
   }
   async del(names: Array<string>) {
     await this.shell(`--remove --recursive --nosave ${names.join(' ')}`)
