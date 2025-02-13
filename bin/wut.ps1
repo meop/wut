@@ -5,7 +5,7 @@ $verMinor = 4
 
 if ($PSVersionTable.PSVersion.Major -lt $verMajor ||
     $PSVersionTable.PSVersion.Minor -lt $verMinor) {
-  Write-Error "pwsh must be >= $verMajor.$verMinor .. found $($PSVersionTable.PSVersion) .. aborting"
+  Write-Error "pwsh must be >= '$verMajor.$verMinor' .. found '$($PSVersionTable.PSVersion)' .. aborting"
   exit 1
 }
 
@@ -16,12 +16,12 @@ pwsh -nologo -noprofile -command {
       $env:BUN_INSTALL = "${env:HOME}/.bun"
       $env:PATH = "${env:BUN_INSTALL}/bin;${env:PATH}"
     } else {
-      Write-Error "bun not found .. aborting"
+      Write-Error 'bun not found .. aborting'
       exit 1
     }
   }
   if (-not (Get-Command git -ErrorAction Ignore)) {
-    Write-Error "git not found .. aborting"
+    Write-Error 'git not found .. aborting'
     exit 1
   }
 
@@ -33,17 +33,27 @@ pwsh -nologo -noprofile -command {
   }
 
   if ($args.Length -gt 0 -and $args[0] -eq 'up') {
-    Write-Output "> git -C `"${env:WUT_CONFIG_LOCATION}`" pull --prune"
-    git -C "${env:WUT_CONFIG_LOCATION}" pull --prune
-    Write-Output ''
+    if (Test-Path "${env:WUT_CONFIG_LOCATION}") {
+      Write-Output "> git -C '${env:WUT_CONFIG_LOCATION}' pull --prune"
+      git -C "${env:WUT_CONFIG_LOCATION}" pull --prune
+      Write-Output ''
+    } else {
+      Write-Output "> git clone --quiet --depth 1 'git@github.com:meop/wut-config.git' '${env:WUT_CONFIG_LOCATION}'"
+      git clone --quiet `
+        --depth 1 `
+        'git@github.com:meop/wut-config.git' `
+        "${env:WUT_CONFIG_LOCATION}"
+      Write-Output ''
+    }
 
-    Write-Output "> git -C `"${env:WUT_LOCATION}`" pull --prune"
+
+    Write-Output "> git -C '${env:WUT_LOCATION}' pull --prune"
     git -C "${env:WUT_LOCATION}" pull --prune
     Write-Output ''
 
     # if installed via script
     if ("${env:BUN_INSTALL}") {
-      Write-Output "> bun upgrade"
+      Write-Output '> bun upgrade'
       bun upgrade
       Write-Output ''
     }

@@ -5,7 +5,7 @@ verMinor=9
 
 autoload is-at-least
 if ! is-at-least "${verMajor}.${verMinor}"; then
-  echo "zsh must be >= ${verMajor}.${verMinor} .. found ${ZSH_VERSION} .. aborting" >&2
+  echo "zsh must be >= '${verMajor}.${verMinor}' .. found '${ZSH_VERSION}' .. aborting" >&2
   exit 1
 fi
 
@@ -33,9 +33,18 @@ fi
   fi
 
   if [[ "$#" -gt 0 && "$1" == 'up' ]]; then
-    echo "> git -C '${WUT_CONFIG_LOCATION}' pull --prune"
-    git -C "${WUT_CONFIG_LOCATION}" pull --prune
-    echo
+    if [[ -d "${WUT_CONFIG_LOCATION}" ]]; then
+      echo "> git -C '${WUT_CONFIG_LOCATION}' pull --prune"
+      git -C "${WUT_CONFIG_LOCATION}" pull --prune
+      echo
+    else
+      echo "> git clone --quiet --depth 1 'git@github.com:meop/wut-config.git' '${WUT_CONFIG_LOCATION}'"
+      git clone --quiet \
+        --depth 1 \
+        'git@github.com:meop/wut-config.git' \
+        "${WUT_CONFIG_LOCATION}"
+      echo
+    fi
 
     echo "> git -C '${WUT_LOCATION}' pull --prune"
     git -C "${WUT_LOCATION}" pull --prune
