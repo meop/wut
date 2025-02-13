@@ -25,10 +25,10 @@ fi
     exit 1
   fi
 
-  if ! [[ -n "${WUT_CONFIG_LOCATION}" ]]; then
+  if [[ -z "${WUT_CONFIG_LOCATION}" ]]; then
     export WUT_CONFIG_LOCATION="${HOME}/.wut-config"
   fi
-  if ! [[ -n "${WUT_LOCATION}" ]]; then
+  if [[ -z "${WUT_LOCATION}" ]]; then
     export WUT_LOCATION="${HOME}/.wut"
   fi
 
