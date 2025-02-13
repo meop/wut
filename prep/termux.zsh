@@ -32,4 +32,4 @@ cp "${WUT_CONFIG_LOCATION}/dot/starship/starship.toml" "${HOME}/.config/starship
 mkdir -p "${HOME}/.zsh" > /dev/null 2>&1
 cp "${WUT_CONFIG_LOCATION}/dot/zsh/zshrc" "${HOME}/.zshrc"
 cp "${WUT_CONFIG_LOCATION}/dot/zsh/zshenv" "${HOME}/.zshenv"
-cp "${WUT_CONFIG_LOCATION}/dot/zsh/zsh/*" "${HOME}/.zsh/"
+cp "${WUT_CONFIG_LOCATION}/dot/zsh/zsh/"* "${HOME}/.zsh"
