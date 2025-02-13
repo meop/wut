@@ -32,7 +32,7 @@ fi
     export WUT_LOCATION="${HOME}/.wut"
   fi
 
-  if [[ "$#" -gt 0 && "$1" == 'up' ]]; then
+  if [[ "${#}" -gt 0 && "${1}" == 'up' ]]; then
     if [[ -d "${WUT_CONFIG_LOCATION}" ]]; then
       echo "> git -C '${WUT_CONFIG_LOCATION}' pull --prune"
       git -C "${WUT_CONFIG_LOCATION}" pull --prune
@@ -66,6 +66,6 @@ fi
   fi
 
   pushd "${WUT_LOCATION}"
-  bun run src/cli.ts $@
+  bun run src/cli.ts ${@}
   popd
 )
