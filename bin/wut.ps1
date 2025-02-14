@@ -48,12 +48,12 @@ pwsh -nologo -noprofile -command {
 
   if ($args.Length -gt 0 -and ($args[0] -eq 'up' -or $args[0] -eq 'u')) {
     Write-Output "> git -C '${env:WUT_LOCATION}' pull --prune"
-    git -C "${env:WUT_LOCATION}" pull --prune
+    git -C "${env:WUT_LOCATION}" pull --prune | Out-Null
     Write-Output ''
 
     if (Test-Path "${env:WUT_CONFIG_LOCATION}") {
       Write-Output "> git -C '${env:WUT_CONFIG_LOCATION}' pull --prune"
-      git -C "${env:WUT_CONFIG_LOCATION}" pull --prune
+      git -C "${env:WUT_CONFIG_LOCATION}" pull --prune | Out-Null
       Write-Output ''
     }
 
