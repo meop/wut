@@ -6,10 +6,6 @@ if [[ -f '/etc/os-release' ]]; then
   echo 'not supported in termux proot .. aborting' >&2
   exit 1
 fi
-if [[ -z "${WUT_CONFIG_LOCATION}" ]]; then
-  echo 'WUT_CONFIG_LOCATION not set .. aborting' >&2
-  exit 1
-fi
 
 zsh "${WUT_CONFIG_LOCATION}/bin/zsh/setup/termux.zsh"
 
