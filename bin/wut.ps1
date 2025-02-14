@@ -3,9 +3,9 @@
 $verMajor = 7
 $verMinor = 4
 
-if ($PSVersionTable.PSVersion.Major -lt $verMajor ||
-    $PSVersionTable.PSVersion.Minor -lt $verMinor) {
-  Write-Error "pwsh must be >= '$verMajor.$verMinor' .. found '$($PSVersionTable.PSVersion)' .. aborting"
+if ($PSVersionTable.PSVersion.Major -lt ${verMajor} ||
+    $PSVersionTable.PSVersion.Minor -lt ${verMinor}) {
+  Write-Error "pwsh must be >= '${verMajor}.${verMinor}' .. found '$($PSVersionTable.PSVersion)' .. aborting"
   exit 1
 }
 
