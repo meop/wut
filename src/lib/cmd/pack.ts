@@ -53,7 +53,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('add', 'add from web')
       .aliases(['a', '+', 'in', 'install'])
-      .argument('<names...>', 'names to match')
+      .argument('<names...>', 'name(s) to match')
       .action(
         buildAction((names: Array<string>) =>
           runCmdPack('add', { names }, getCmdOpts),
@@ -64,7 +64,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('del', 'delete on local')
       .aliases(['d', '-', 'delete', 'rm', 'rem', 'remove', 'un', 'uninstall'])
-      .argument('<names...>', 'names to match')
+      .argument('<names...>', 'name(s) to match')
       .action(
         buildAction((names: Array<string>) =>
           runCmdPack('del', { names }, getCmdOpts),
@@ -75,7 +75,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('find', 'find from web')
       .aliases(['f', '?', 'fi', 'se', 'search'])
-      .argument('<names...>', 'names to match')
+      .argument('<names...>', 'name(s) to match')
       .action(
         buildAction((names: Array<string>) =>
           runCmdPack('find', { names }, getCmdOpts),
@@ -86,7 +86,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('list', 'list on local')
       .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
-      .argument('[names...]', 'names to match')
+      .argument('[names...]', 'name(s) to match')
       .action(
         buildAction((names?: Array<string>) =>
           runCmdPack('list', { names }, getCmdOpts),
@@ -97,7 +97,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('out', 'out of sync on local')
       .aliases(['o', '!', 'ou', 'outdated', 'ob', 'obsolete', 'ol', 'old'])
-      .argument('[names...]', 'names to match')
+      .argument('[names...]', 'name(s) to match')
       .action(
         buildAction((names?: Array<string>) =>
           runCmdPack('out', { names }, getCmdOpts),
@@ -114,7 +114,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('up', 'sync up from web')
       .aliases(['u', '^', 'update', 'upgrade', 'sy', 'sync'])
-      .argument('[names...]', 'names to match')
+      .argument('[names...]', 'name(s) to match')
       .action(
         buildAction((names?: Array<string>) =>
           runCmdPack('up', { names }, getCmdOpts),
@@ -199,46 +199,48 @@ async function runCmdPack(
   const fsPaths = await getCfgFilePaths(['pack'])
 
   for (const name of opArgsNames) {
-    const foundPath = fsPaths.find(
+    const foundPaths = fsPaths.filter(
       f => path.parse(f).name.toLowerCase() === name,
     )
-    if (!foundPath) {
+    if (!foundPaths.length) {
       await invokeFallbackPackNames(name)
       continue
     }
 
-    const config = await loadCfgFileContents(foundPath)
+    let foundPackages = false
+    for (const foundPath of foundPaths) {
+      const config = await loadCfgFileContents(foundPath)
 
-    let matched = false
-    for (const packName of Object.keys(config)) {
-      if (!packNames.includes(packName)) {
-        continue
-      }
-      const packItem = config[packName]
+      for (const packName of Object.keys(config)) {
+        if (!packNames.includes(packName)) {
+          continue
+        }
+        const packItem = config[packName]
 
-      const names = packItem.names ?? []
-      if (!names.length) {
-        continue
-      }
-      matched = true
+        const names = packItem.names ?? []
+        if (!names.length) {
+          continue
+        }
+        foundPackages = true
 
-      if (packItem.cask) {
-        names.unshift('--cask')
-      }
+        if (packItem.cask) {
+          names.unshift('--cask')
+        }
 
-      const preOrPostCmd = async (opName: string) => {
-        if (op === opName && opName in packItem) {
-          for (const cmd of packItem[opName]) {
-            await shellRun(cmd, { ...cmdOpts, verbose: true })
+        const preOrPostCmd = async (opName: string) => {
+          if (op === opName && opName in packItem) {
+            for (const cmd of packItem[opName]) {
+              await shellRun(cmd, { ...cmdOpts, verbose: true })
+            }
           }
         }
-      }
 
-      await preOrPostCmd('add')
-      await getPack(packName, cmdOpts)[op](names)
-      await preOrPostCmd('del')
+        await preOrPostCmd('add')
+        await getPack(packName, cmdOpts)[op](names)
+        await preOrPostCmd('del')
+      }
     }
-    if (!matched) {
+    if (!foundPackages) {
       await invokeFallbackPackNames(name)
     }
   }

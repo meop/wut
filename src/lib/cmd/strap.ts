@@ -1,14 +1,14 @@
-import { type CmdOpts, type Bin, buildCmd, buildAction } from '../cmd'
+import { type CmdOpts, type Strap, buildCmd, buildAction } from '../cmd'
 import type { ShellOpts } from '../sh'
 
-import { Shell } from './bin/shell'
+import { Shell } from './strap/shell'
 
-type CmdBinArgs = {
+type CmdStrapArgs = {
   names?: Array<string>
 }
 
-export function buildCmdBin(getParentOpts: () => CmdOpts) {
-  const cmd = buildCmd('bin', 'bin operations').aliases(['b', 'binexec'])
+export function buildCmdStrap(getParentOpts: () => CmdOpts) {
+  const cmd = buildCmd('strap', 'strap operations').aliases(['s', 'st', 'str'])
 
   const getCmdOpts = () => {
     return {
@@ -20,10 +20,10 @@ export function buildCmdBin(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('list', 'list on local')
       .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
-      .argument('[names...]', 'names to match')
+      .argument('[names...]', 'name(s) to match')
       .action(
         buildAction((names?: Array<string>) =>
-          runCmdBin('list', { names }, getCmdOpts),
+          runCmdStrap('list', { names }, getCmdOpts),
         ),
       ),
   )
@@ -31,10 +31,10 @@ export function buildCmdBin(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('run', 'run on local')
       .aliases(['r', '$', 'exe', 'exec', 'execute'])
-      .argument('<names...>', 'names to match')
+      .argument('<names...>', 'name(s) to match')
       .action(
         buildAction((names: Array<string>) =>
-          runCmdBin('run', { names }, getCmdOpts),
+          runCmdStrap('run', { names }, getCmdOpts),
         ),
       ),
   )
@@ -42,21 +42,21 @@ export function buildCmdBin(getParentOpts: () => CmdOpts) {
   return cmd
 }
 
-function getBin(name: string, shellOpts: ShellOpts): Bin {
+function getStrap(name: string, shellOpts: ShellOpts): Strap {
   switch (name) {
     case 'shell':
       return new Shell(shellOpts)
     default:
-      throw new Error(`unsupported bin manager: ${name}`)
+      throw new Error(`unsupported strap manager: ${name}`)
   }
 }
 
-async function runCmdBin(
+async function runCmdStrap(
   op: string,
-  opArgs: CmdBinArgs,
+  opArgs: CmdStrapArgs,
   getCmdOpts: () => CmdOpts,
 ) {
   const cmdOpts = getCmdOpts()
 
-  await getBin('shell', cmdOpts)[op](opArgs.names?.map(n => n.toLowerCase()))
+  await getStrap('shell', cmdOpts)[op](opArgs.names?.map(n => n.toLowerCase()))
 }

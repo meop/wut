@@ -8,7 +8,7 @@ import { Tool } from '../../tool'
 
 export class Docker extends Tool implements Virt {
   getCfgFilePaths = (names?: Array<string>) =>
-    getCfgFilePaths(['virt', os.hostname(), this.program], names)
+    getCfgFilePaths(['virt', this.program, os.hostname()], names)
 
   async down(names?: Array<string>) {
     for (const fsPath of await this.getCfgFilePaths(names)) {

@@ -254,7 +254,7 @@ async function vmStats(fsPaths: Array<string>, shellOpts: ShellOpts) {
 
 export class Qemu extends Tool implements Virt {
   getCfgFilePaths = (names?: Array<string>) =>
-    getCfgFilePaths(['virt', os.hostname(), this.program], names)
+    getCfgFilePaths(['virt', this.program, os.hostname()], names)
 
   async down(names?: Array<string>) {
     for (const fsPath of await this.getCfgFilePaths(names)) {

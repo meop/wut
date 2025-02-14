@@ -40,7 +40,7 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('down', 'tear down from local')
       .aliases(['d', '#', 'downgrade', 'te', 'tear'])
-      .argument('[name...]', 'names to match')
+      .argument('[names...]', 'name(s) tomatch')
       .action(
         buildAction((names?: Array<string>) =>
           runCmdVirt('down', { names }, getCmdOpts),
@@ -51,7 +51,7 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('list', 'list on local')
       .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
-      .argument('[names...]', 'names to match')
+      .argument('[names...]', 'name(s) tomatch')
       .action(
         buildAction((names?: Array<string>) =>
           runCmdVirt('list', { names }, getCmdOpts),
@@ -62,7 +62,7 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('stat', 'status on local')
       .aliases(['s', '%', 'st', 'status'])
-      .argument('[names...]', 'names to match')
+      .argument('[names...]', 'name(s) tomatch')
       .action(
         buildAction((names?: Array<string>) =>
           runCmdVirt('stat', { names }, getCmdOpts),
@@ -79,7 +79,7 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('up', 'sync up from local')
       .aliases(['u', '^', 'update', 'upgrade', 'sy', 'sync'])
-      .argument('[names...]', 'names to match')
+      .argument('[names...]', 'name(s) tomatch')
       .action(
         buildAction((names?: Array<string>) =>
           runCmdVirt('up', { names }, getCmdOpts),

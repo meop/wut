@@ -1,19 +1,19 @@
 import { getCfgFilePath, getCfgFilePaths } from '../../cfg'
-import type { Bin } from '../../cmd'
+import type { Strap } from '../../cmd'
 import { log } from '../../log'
 import { isInPath, splitPath } from '../../path'
 import { shellRun, type ShellOpts } from '../../sh'
 
-export class Shell implements Bin {
+export class Shell implements Strap {
   shellOpts: ShellOpts
 
   async _paths(names?: Array<string>) {
-    const root = getCfgFilePath(['bin'])
-    const filePaths = (await getCfgFilePaths(['bin'])).filter(p =>
+    const root = getCfgFilePath(['strap'])
+    const filePaths = (await getCfgFilePaths(['strap'])).filter(p =>
       names?.every(n => p.toLowerCase().includes(n)),
     )
     const shells = new Set<string>()
-    const bins: Array<{ shell: string; fsPath: string }> = []
+    const straps: Array<{ shell: string; fsPath: string }> = []
 
     for (const filePath of filePaths) {
       const filePathParts = splitPath(filePath.replace(root, ''))
@@ -23,7 +23,7 @@ export class Shell implements Bin {
         continue
       }
       shells.add(shellName)
-      bins.push({ shell: shellName, fsPath: filePath })
+      straps.push({ shell: shellName, fsPath: filePath })
     }
 
     const shellsInPath: Array<string> = []
@@ -33,7 +33,7 @@ export class Shell implements Bin {
       }
     }
 
-    return bins.filter(({ shell }) => shellsInPath.includes(shell))
+    return straps.filter(({ shell }) => shellsInPath.includes(shell))
   }
 
   async list(names?: Array<string>) {

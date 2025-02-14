@@ -62,7 +62,7 @@ export class File implements Dot {
           continue
         }
 
-        const inPath = getCfgFilePath(['dot', toolName, syncItem.in])
+        const inPath = getCfgFilePath(['dot', 'file', toolName, syncItem.in])
         if (names?.length) {
           if (!names.every(n => inPath.toLowerCase().includes(n))) {
             continue
