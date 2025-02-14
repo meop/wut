@@ -30,6 +30,7 @@ fi
 
     if [[ "$2" == 'list' || "$2" == 'l' || "$2" == '/' || "$2" == 'li' || "$2" == 'ls' ]]; then
       find "${WUT_LOCATION}/load" -iname '*.zsh'
+      exit 0
     fi
 
     if [[ "$#" -lt 3 ]]; then
@@ -39,9 +40,10 @@ fi
 
     if [[ "$2" == 'run' || "$2" == 'r' || "$2" == '$' ]]; then
       zsh "${WUT_LOCATION}/load/$3.zsh"
+      exit 0
     fi
 
-    exit
+    exit 0
   fi
 
   if [[ "$#" -gt 0 && ( "$1" == 'up' || "$1" == 'u' ) ]]; then
@@ -68,7 +70,7 @@ fi
       popd
     fi
 
-    exit
+    exit 0
   fi
 
   if ! type bun > /dev/null; then

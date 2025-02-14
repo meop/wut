@@ -30,6 +30,7 @@ pwsh -nologo -noprofile -command {
 
     if ($args[1] -eq 'list' -or $args[1] -eq 'l' -or $args[1] -eq '/' -or $args[1] -eq 'li' -or $args[1] -eq 'ls') {
       Get-ChildItem "${env:WUT_LOCATION}/load" -Filter '*.pwsh' | Select-Object -ExpandProperty FullName
+      exit 0
     }
 
     if ($args.Length -lt 3) {
@@ -39,9 +40,10 @@ pwsh -nologo -noprofile -command {
 
     if ($args[1] -eq 'run' -or $args[1] -eq 'r' -or $args[1] -eq '$') {
       pwsh "${env:WUT_LOCATION}/load/$($args[2]).pwsh"
+      exit 0
     }
 
-    exit
+    exit 0
   }
 
   if ($args.Length -gt 0 -and ($args[0] -eq 'up' -or $args[0] -eq 'u')) {
@@ -68,7 +70,7 @@ pwsh -nologo -noprofile -command {
       Pop-Location
     }
 
-    exit
+    exit 0
   }
 
   if (-not (Get-Command bun -ErrorAction Ignore)) {
