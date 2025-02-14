@@ -45,19 +45,16 @@ fi
   if [[ "$#" -gt 0 && ( "$1" == 'up' || "$1" == 'u' || "$1" == '^' ) ]]; then
     echo "> git -C '${WUT_LOCATION}' pull --prune"
     git -C "${WUT_LOCATION}" pull --prune > /dev/null 2>&1
-    echo
 
     if [[ -d "${WUT_CONFIG_LOCATION}" ]]; then
       echo "> git -C '${WUT_CONFIG_LOCATION}' pull --prune"
       git -C "${WUT_CONFIG_LOCATION}" pull --prune > /dev/null 2>&1
-      echo
     fi
 
     if type bun > /dev/null; then
       if [[ "${BUN_INSTALL}" ]]; then
         echo '> bun upgrade'
         bun upgrade
-        echo
       fi
 
       pushd "${WUT_LOCATION}"
