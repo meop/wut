@@ -11,10 +11,6 @@ fi
 
 # subshell to avoid persisting env vars in session
 (
-  if [[ -d "${HOME}/.bun" ]]; then
-    export BUN_INSTALL="${HOME}/.bun"
-    export PATH="${BUN_INSTALL}/bin:${PATH}"
-  fi
   if [[ -z "${WUT_LOCATION}" ]]; then
     export WUT_LOCATION="${HOME}/.wut"
   fi

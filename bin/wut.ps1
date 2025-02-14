@@ -11,10 +11,6 @@ if ($PSVersionTable.PSVersion.Major -lt ${verMajor} ||
 
 # subshell to avoid persisting env vars in session
 pwsh -nologo -noprofile -command {
-  if (Test-Path "${env:HOME}/.bun") {
-    $env:BUN_INSTALL = "${env:HOME}/.bun"
-    $env:PATH = "${env:BUN_INSTALL}/bin;${env:PATH}"
-  }
   if (-not "${env:WUT_LOCATION}") {
     $env:WUT_LOCATION = "${env:HOME}/.wut"
   }
