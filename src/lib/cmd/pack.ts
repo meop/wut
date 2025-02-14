@@ -194,8 +194,9 @@ async function runCmdPack(
     return
   }
 
-  const cPath = getCfgFilePath(['pack'])
-  const fsPaths = await getCfgFilePaths(['pack'])
+  const pathParts = ['pack']
+  const cPath = getCfgFilePath(pathParts)
+  const fsPaths = await getCfgFilePaths(pathParts)
 
   for (const name of opArgsNames) {
     const foundPaths = fsPaths.filter(f =>

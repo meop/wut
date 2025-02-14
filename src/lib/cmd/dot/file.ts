@@ -61,19 +61,17 @@ export class File implements Dot {
         if (!syncItem?.out[getPlat()]) {
           continue
         }
-
-        const inPath = getCfgFilePath(['dot', 'file', toolName, syncItem.in])
+        const pathParts = ['dot', 'file', toolName, syncItem.in]
+        const inPath = getCfgFilePath(pathParts)
         if (names?.length) {
           if (!names.every(n => inPath.toLowerCase().includes(n))) {
             continue
           }
         }
-
         const inPathIsDir = (await getPathStat(inPath))?.isDirectory() ?? false
         const inPaths = inPathIsDir
-          ? await getCfgFilePaths(['dot', 'file', toolName, syncItem.in])
+          ? await getCfgFilePaths(pathParts)
           : [inPath]
-
         for (const p of inPaths) {
           let outPath = syncItem.out[getPlat()]
           if (outPath.includes('${')) {
@@ -84,15 +82,12 @@ export class File implements Dot {
               }
             }
           }
-
           const targetFilePath = p.replace(inPath, outPath)
-
           dotFileSync.fileSyncs.add({
             sourceFilePath: p,
             targetFilePath,
             targetFilePerm: syncItem.perm,
           })
-
           if (inPathIsDir) {
             dotFileSync.dirPaths.add(path.parse(targetFilePath).dir)
           }

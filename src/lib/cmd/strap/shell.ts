@@ -8,8 +8,9 @@ export class Shell implements Strap {
   shellOpts: ShellOpts
 
   async _paths(names?: Array<string>) {
-    const root = getCfgFilePath(['strap'])
-    const filePaths = (await getCfgFilePaths(['strap'])).filter(p =>
+    const pathParts = ['strap']
+    const root = getCfgFilePath(pathParts)
+    const filePaths = (await getCfgFilePaths(pathParts)).filter(p =>
       names?.every(n => p.toLowerCase().includes(n)),
     )
     const shells = new Set<string>()
