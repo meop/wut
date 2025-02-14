@@ -11,59 +11,69 @@ if ($PSVersionTable.PSVersion.Major -lt ${verMajor} ||
 
 # subshell to avoid persisting env vars in session
 pwsh -nologo -noprofile -command {
-  if (-not (Get-Command bun -ErrorAction Ignore)) {
-    if (Test-Path "${env:HOME}/.bun") {
-      $env:BUN_INSTALL = "${env:HOME}/.bun"
-      $env:PATH = "${env:BUN_INSTALL}/bin;${env:PATH}"
-    } else {
-      Write-Error 'bun not found .. aborting'
-      exit 1
-    }
-  }
-  if (-not (Get-Command git -ErrorAction Ignore)) {
-    Write-Error 'git not found .. aborting'
-    exit 1
-  }
-
-  if (-not "${env:WUT_CONFIG_LOCATION}") {
-    $env:WUT_CONFIG_LOCATION = "${env:HOME}/.wut-config"
+  if (Test-Path "${env:HOME}/.bun") {
+    $env:BUN_INSTALL = "${env:HOME}/.bun"
+    $env:PATH = "${env:BUN_INSTALL}/bin;${env:PATH}"
   }
   if (-not "${env:WUT_LOCATION}") {
     $env:WUT_LOCATION = "${env:HOME}/.wut"
   }
+  if (-not "${env:WUT_CONFIG_LOCATION}") {
+    $env:WUT_CONFIG_LOCATION = "${env:HOME}/.wut-config"
+  }
 
-  if ($args.Length -gt 0 -and $args[0] -eq 'up') {
-    if (Test-Path "${env:WUT_CONFIG_LOCATION}") {
-      Write-Output "> git -C '${env:WUT_CONFIG_LOCATION}' pull --prune"
-      git -C "${env:WUT_CONFIG_LOCATION}" pull --prune
-      Write-Output ''
-    } else {
-      Write-Output "> git clone --quiet --depth 1 'git@github.com:meop/wut-config.git' '${env:WUT_CONFIG_LOCATION}'"
-      git clone --quiet `
-        --depth 1 `
-        'git@github.com:meop/wut-config.git' `
-        "${env:WUT_CONFIG_LOCATION}"
-      Write-Output ''
+  if ($args.Length -gt 0 -and ($args[0] -eq 'load' -or $args[0] -eq 'l')) {
+    if ($args.Length -lt 2) {
+      Write-Error 'no command specified .. aborting'
+      exit 1
     }
 
+    if ($args[1] -eq 'list' -or $args[1] -eq 'l' -or $args[1] -eq '/' -or $args[1] -eq 'li' -or $args[1] -eq 'ls') {
+      Get-ChildItem "${env:WUT_LOCATION}/load" -Filter '*.pwsh' | Select-Object -ExpandProperty FullName
+    }
 
+    if ($args.Length -lt 3) {
+      Write-Error 'no name specified .. aborting'
+      exit 1
+    }
+
+    if ($args[1] -eq 'run' -or $args[1] -eq 'r' -or $args[1] -eq '$') {
+      pwsh "${env:WUT_LOCATION}/load/$($args[2]).pwsh"
+    }
+
+    exit
+  }
+
+  if ($args.Length -gt 0 -and ($args[0] -eq 'up' -or $args[0] -eq 'u')) {
     Write-Output "> git -C '${env:WUT_LOCATION}' pull --prune"
     git -C "${env:WUT_LOCATION}" pull --prune
     Write-Output ''
 
-    # if installed via script
-    if ("${env:BUN_INSTALL}") {
-      Write-Output '> bun upgrade'
-      bun upgrade
+    if (Test-Path "${env:WUT_CONFIG_LOCATION}") {
+      Write-Output "> git -C '${env:WUT_CONFIG_LOCATION}' pull --prune"
+      git -C "${env:WUT_CONFIG_LOCATION}" pull --prune
       Write-Output ''
     }
 
-    Push-Location "${env:WUT_LOCATION}"
-    Write-Output '> bun install'
-    bun install
-    Pop-Location
+    if (Get-Command bun -ErrorAction Ignore) {
+      if ("${env:BUN_INSTALL}") {
+        Write-Output '> bun upgrade'
+        bun upgrade
+        Write-Output ''
+      }
+
+      Push-Location "${env:WUT_LOCATION}"
+      Write-Output '> bun install'
+      bun install
+      Pop-Location
+    }
 
     exit
+  }
+
+  if (-not (Get-Command bun -ErrorAction Ignore)) {
+    Write-Error 'bun not found .. aborting'
+    exit 1
   }
 
   Push-Location "${env:WUT_LOCATION}"

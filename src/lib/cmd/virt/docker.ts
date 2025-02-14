@@ -17,7 +17,7 @@ export class Docker extends Tool implements Virt {
   }
   async list(names?: Array<string>) {
     for (const fsPath of await this.getCfgFilePaths(names)) {
-      log(`'${fsPath}'`)
+      log(fsPath)
     }
   }
   async stat(names?: Array<string>) {

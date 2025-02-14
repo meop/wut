@@ -13,7 +13,7 @@ export class Shell implements Bin {
       names?.every(n => p.toLowerCase().includes(n)),
     )
     const shells = new Set<string>()
-    const bins: Array<{ shell: string; path: string }> = []
+    const bins: Array<{ shell: string; fsPath: string }> = []
 
     for (const filePath of filePaths) {
       const filePathParts = splitPath(filePath.replace(root, ''))
@@ -23,7 +23,7 @@ export class Shell implements Bin {
         continue
       }
       shells.add(shellName)
-      bins.push({ shell: shellName, path: filePath })
+      bins.push({ shell: shellName, fsPath: filePath })
     }
 
     const shellsInPath: Array<string> = []
@@ -37,13 +37,13 @@ export class Shell implements Bin {
   }
 
   async list(names?: Array<string>) {
-    for (const { path } of await this._paths(names)) {
-      log(`'${path}'`)
+    for (const { fsPath } of await this._paths(names)) {
+      log(fsPath)
     }
   }
   async run(names: Array<string>) {
-    for (const { shell, path } of await this._paths(names)) {
-      await shellRun(`${shell} ${path}`, { ...this.shellOpts, verbose: true })
+    for (const { shell, fsPath } of await this._paths(names)) {
+      await shellRun(`${shell} ${fsPath}`, { ...this.shellOpts, verbose: true })
     }
   }
 
