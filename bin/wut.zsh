@@ -22,14 +22,14 @@ fi
     export WUT_CONFIG_LOCATION="${HOME}/.wut-config"
   fi
 
-  if [[ "$#" -gt 0 && ( "$1" == 'load' || "$1" == 'l' ) ]]; then
+  if [[ "$#" -gt 0 && ( "$1" == 'boot' || "$1" == 'b' || "$1" == 'bs' ) ]]; then
     if [[ "$#" -lt 2 ]]; then
       echo 'no command specified .. aborting' >&2
       exit 1
     fi
 
     if [[ "$2" == 'list' || "$2" == 'l' || "$2" == '/' || "$2" == 'li' || "$2" == 'ls' ]]; then
-      find "${WUT_LOCATION}/load" -iname '*.zsh'
+      find "${WUT_LOCATION}/boot" -iname '*.zsh'
       exit
     fi
 
@@ -38,15 +38,15 @@ fi
       exit 1
     fi
 
-    if [[ "$2" == 'run' || "$2" == 'r' || "$2" == '$' ]]; then
-      zsh "${WUT_LOCATION}/load/$3.zsh"
+    if [[ "$2" == 'run' || "$2" == 'r' || "$2" == '$' || "$2" == 'rn' ]]; then
+      zsh "${WUT_LOCATION}/boot/$3.zsh"
       exit
     fi
 
     exit
   fi
 
-  if [[ "$#" -gt 0 && ( "$1" == 'up' || "$1" == 'u' ) ]]; then
+  if [[ "$#" -gt 0 && ( "$1" == 'up' || "$1" == 'u' || "$1" == '^' ) ]]; then
     echo "> git -C '${WUT_LOCATION}' pull --prune"
     git -C "${WUT_LOCATION}" pull --prune > /dev/null 2>&1
     echo

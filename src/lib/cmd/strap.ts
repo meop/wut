@@ -30,7 +30,7 @@ export function buildCmdStrap(getParentOpts: () => CmdOpts) {
 
   cmd.addCommand(
     buildCmd('run', 'run on local')
-      .aliases(['r', '$', 'exe', 'exec', 'execute'])
+      .aliases(['r', '$', 'rn', 'exe', 'exec', 'execute'])
       .argument('<names...>', 'name(s) to match')
       .action(
         buildAction((names: Array<string>) =>

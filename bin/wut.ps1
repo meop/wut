@@ -22,14 +22,14 @@ pwsh -nologo -noprofile -command {
     $env:WUT_CONFIG_LOCATION = "${env:HOME}/.wut-config"
   }
 
-  if ($args.Length -gt 0 -and ($args[0] -eq 'load' -or $args[0] -eq 'l')) {
+  if ($args.Length -gt 0 -and ($args[0] -eq 'boot' -or $args[0] -eq 'b' -or $args[0] -eq 'bs')) {
     if ($args.Length -lt 2) {
       Write-Error 'no command specified .. aborting'
       exit 1
     }
 
     if ($args[1] -eq 'list' -or $args[1] -eq 'l' -or $args[1] -eq '/' -or $args[1] -eq 'li' -or $args[1] -eq 'ls') {
-      Get-ChildItem "${env:WUT_LOCATION}/load" -Filter '*.pwsh' | Select-Object -ExpandProperty FullName
+      Get-ChildItem "${env:WUT_LOCATION}/boot" -Filter '*.pwsh' | Select-Object -ExpandProperty FullName
       exit
     }
 
@@ -38,15 +38,15 @@ pwsh -nologo -noprofile -command {
       exit 1
     }
 
-    if ($args[1] -eq 'run' -or $args[1] -eq 'r' -or $args[1] -eq '$') {
-      pwsh "${env:WUT_LOCATION}/load/$($args[2]).pwsh"
+    if ($args[1] -eq 'run' -or $args[1] -eq 'r' -or $args[1] -eq '$' -or $args[1] -eq 'rn') {
+      pwsh "${env:WUT_LOCATION}/boot/$($args[2]).pwsh"
       exit
     }
 
     exit
   }
 
-  if ($args.Length -gt 0 -and ($args[0] -eq 'up' -or $args[0] -eq 'u')) {
+  if ($args.Length -gt 0 -and ($args[0] -eq 'up' -or $args[0] -eq 'u' -or $args[0] -eq '^')) {
     Write-Output "> git -C '${env:WUT_LOCATION}' pull --prune"
     git -C "${env:WUT_LOCATION}" pull --prune | Out-Null
     Write-Output ''
