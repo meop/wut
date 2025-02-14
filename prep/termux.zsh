@@ -33,6 +33,7 @@ zsh "${WUT_CONFIG_LOCATION}/bin/zsh/setup/tmux.zsh"
 rm -r -f "${HOME}/.zsh" > /dev/null 2>&1
 
 mkdir -p "${HOME}/.config" > /dev/null 2>&1
+mkdir -p "${HOME}/.config/nvim" > /dev/null 2>&1
 mkdir -p "${HOME}/.ssh" > /dev/null 2>&1
 mkdir -p "${HOME}/.zsh" > /dev/null 2>&1
 
