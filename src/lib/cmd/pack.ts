@@ -1,7 +1,7 @@
 import { getCfgFilePath, getCfgFilePaths, loadCfgFileContents } from '../cfg'
 import { type CmdOpts, type Pack, buildCmd, buildAction } from '../cmd'
 import { isInPath, splitPath } from '../path'
-import { type ShellOpts, shellRun } from '../sh'
+import { type ShOpts, shellRun } from '../sh'
 
 import { Apt, AptGet } from './pack/aptget'
 import { Brew } from './pack/brew'
@@ -28,16 +28,16 @@ const validPackWraps = {
   zypper: 'dnf',
 }
 
-type CmdPackArgs = {
+type OpArgs = {
   names?: Array<string>
 }
 
-type CmdPackOpts = {
+type SubCmdOpts = {
   manager?: string
 }
 
-export function buildCmdPack(getParentOpts: () => CmdOpts) {
-  const cmd = buildCmd('pack', 'package operations')
+export function buildSubCmd(getParentOpts: () => CmdOpts) {
+  const cmd = buildCmd('pack', 'package manager ops')
     .aliases(['p', 'package'])
     .option('-m, --manager <manager>', 'package manager')
 
@@ -54,7 +54,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
       .argument('<names...>', 'name(s) to match')
       .action(
         buildAction((names: Array<string>) =>
-          runCmdPack('add', { names }, getCmdOpts),
+          runSubCmd('add', { names }, getCmdOpts),
         ),
       ),
   )
@@ -65,7 +65,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
       .argument('<names...>', 'name(s) to match')
       .action(
         buildAction((names: Array<string>) =>
-          runCmdPack('del', { names }, getCmdOpts),
+          runSubCmd('del', { names }, getCmdOpts),
         ),
       ),
   )
@@ -76,7 +76,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
       .argument('<names...>', 'name(s) to match')
       .action(
         buildAction((names: Array<string>) =>
-          runCmdPack('find', { names }, getCmdOpts),
+          runSubCmd('find', { names }, getCmdOpts),
         ),
       ),
   )
@@ -87,7 +87,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
       .argument('[names...]', 'name(s) to match')
       .action(
         buildAction((names?: Array<string>) =>
-          runCmdPack('list', { names }, getCmdOpts),
+          runSubCmd('list', { names }, getCmdOpts),
         ),
       ),
   )
@@ -98,7 +98,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
       .argument('[names...]', 'name(s) to match')
       .action(
         buildAction((names?: Array<string>) =>
-          runCmdPack('out', { names }, getCmdOpts),
+          runSubCmd('out', { names }, getCmdOpts),
         ),
       ),
   )
@@ -106,7 +106,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('tidy', 'tidy on local')
       .aliases(['t', '@', 'ti', 'cl', 'clean', 'pr', 'prune', 'pu', 'purge'])
-      .action(buildAction(() => runCmdPack('tidy', {}, getCmdOpts))),
+      .action(buildAction(() => runSubCmd('tidy', {}, getCmdOpts))),
   )
 
   cmd.addCommand(
@@ -115,7 +115,7 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
       .argument('[names...]', 'name(s) to match')
       .action(
         buildAction((names?: Array<string>) =>
-          runCmdPack('up', { names }, getCmdOpts),
+          runSubCmd('up', { names }, getCmdOpts),
         ),
       ),
   )
@@ -123,10 +123,10 @@ export function buildCmdPack(getParentOpts: () => CmdOpts) {
   return cmd
 }
 
-async function getValidPacks(shellOpts?: ShellOpts) {
+async function getValidPacks(shOpts?: ShOpts) {
   const packs: Array<string> = []
   for (const validPack of validPacks) {
-    if (await isInPath(validPack, shellOpts)) {
+    if (await isInPath(validPack, shOpts)) {
       packs.push(validPack)
     }
   }
@@ -134,33 +134,33 @@ async function getValidPacks(shellOpts?: ShellOpts) {
   return packs
 }
 
-function getPack(name: string, shellOpts?: ShellOpts): Pack {
+function getImpl(name: string, shOpts?: ShOpts): Pack {
   switch (name) {
     case 'yay':
-      return new Yay(shellOpts)
+      return new Yay(shOpts)
     case 'pacman':
-      return new Pacman(shellOpts)
+      return new Pacman(shOpts)
     case 'apt':
-      return new Apt(shellOpts)
+      return new Apt(shOpts)
     case 'apt-get':
-      return new AptGet(shellOpts)
+      return new AptGet(shOpts)
     case 'dnf':
-      return new Dnf(shellOpts)
+      return new Dnf(shOpts)
     case 'brew':
-      return new Brew(shellOpts)
+      return new Brew(shOpts)
     case 'winget':
-      return new WinGet(shellOpts)
+      return new WinGet(shOpts)
     case 'scoop':
-      return new Scoop(shellOpts)
+      return new Scoop(shOpts)
     default:
       throw new Error(`unsupported package manager: ${name}`)
   }
 }
 
-async function runCmdPack(
+async function runSubCmd(
   op: string,
-  opArgs: CmdPackArgs,
-  getCmdOpts: () => CmdOpts & CmdPackOpts,
+  opArgs: OpArgs,
+  getCmdOpts: () => CmdOpts & SubCmdOpts,
 ) {
   const cmdOpts = getCmdOpts()
 
@@ -185,7 +185,7 @@ async function runCmdPack(
 
   const invokeFallbackPackNames = async (name?: string) => {
     for (const packName of fallbackPackNames) {
-      await getPack(packName, cmdOpts)[op](name ? [name] : undefined)
+      await getImpl(packName, cmdOpts)[op](name ? [name] : undefined)
     }
   }
 
@@ -238,7 +238,7 @@ async function runCmdPack(
         }
 
         await preOrPostCmd('add')
-        await getPack(packName, cmdOpts)[op](names)
+        await getImpl(packName, cmdOpts)[op](names)
         await preOrPostCmd('del')
       }
     }

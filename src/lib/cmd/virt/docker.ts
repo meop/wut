@@ -3,7 +3,7 @@ import os from 'node:os'
 import { getCfgFilePaths } from '../../cfg'
 import type { Virt } from '../../cmd'
 import { log } from '../../log'
-import type { ShellOpts } from '../../sh'
+import type { ShOpts } from '../../sh'
 import { Tool } from '../../tool'
 
 export class Docker extends Tool implements Virt {
@@ -33,7 +33,7 @@ export class Docker extends Tool implements Virt {
     }
   }
 
-  constructor(shellOpts?: ShellOpts) {
-    super('docker', '', shellOpts)
+  constructor(shOpts?: ShOpts) {
+    super('docker', '', shOpts)
   }
 }

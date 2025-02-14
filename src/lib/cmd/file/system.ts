@@ -1,7 +1,7 @@
 import path from 'node:path'
 
 import { getCfgFilePath, getCfgFilePaths, loadCfgFileContents } from '../../cfg'
-import type { Dot } from '../../cmd'
+import type { File } from '../../cmd'
 import { log, logWarn } from '../../log'
 import { getPlat } from '../../os'
 import {
@@ -12,7 +12,7 @@ import {
   isInPath,
   syncFilePath,
 } from '../../path'
-import { type ShellOpts, shellRun } from '../../sh'
+import { type ShOpts, shellRun } from '../../sh'
 
 type Sync = {
   [key: string]: [
@@ -29,31 +29,29 @@ type Sync = {
 }
 
 type FileSync = {
-  sourceFilePath: string
-  targetFilePath: string
-  targetFilePerm?: AclPerm
+  sourcePath: string
+  targetPath: string
+  targetPerm?: AclPerm
 }
 
-type DotFileSync = {
+type GroupFileSync = {
   dirPaths: Set<string>
   fileSyncs: Set<FileSync>
 }
 
-export class File implements Dot {
-  shellOpts: ShellOpts
+export class System implements File {
+  shOpts: ShOpts
 
-  async _dotFileSync(names?: Array<string>) {
-    const dotFileSync: DotFileSync = {
+  async _groupFileSync(names?: Array<string>) {
+    const groupFileSync: GroupFileSync = {
       dirPaths: new Set<string>(),
       fileSyncs: new Set<FileSync>(),
     }
 
-    const sync: Sync = await loadCfgFileContents(
-      getCfgFilePath(['dot', 'file.yaml']),
-    )
+    const sync: Sync = await loadCfgFileContents(getCfgFilePath(['file.yaml']))
 
     for (const toolName of Object.keys(sync)) {
-      if (!(await isInPath(toolName, this.shellOpts))) {
+      if (!(await isInPath(toolName, this.shOpts))) {
         continue
       }
 
@@ -61,7 +59,7 @@ export class File implements Dot {
         if (!syncItem?.out[getPlat()]) {
           continue
         }
-        const pathParts = ['dot', 'file', toolName, syncItem.in]
+        const pathParts = ['file', toolName, syncItem.in]
         const inPath = getCfgFilePath(pathParts)
         if (names?.length) {
           if (!names.every(n => inPath.toLowerCase().includes(n))) {
@@ -82,87 +80,83 @@ export class File implements Dot {
               }
             }
           }
-          const targetFilePath = p.replace(inPath, outPath)
-          dotFileSync.fileSyncs.add({
-            sourceFilePath: p,
-            targetFilePath,
-            targetFilePerm: syncItem.perm,
+          const targetPath = p.replace(inPath, outPath)
+          groupFileSync.fileSyncs.add({
+            sourcePath: p,
+            targetPath,
+            targetPerm: syncItem.perm,
           })
           if (inPathIsDir) {
-            dotFileSync.dirPaths.add(path.parse(targetFilePath).dir)
+            groupFileSync.dirPaths.add(path.parse(targetPath).dir)
           }
         }
       }
     }
 
-    return dotFileSync
+    return groupFileSync
   }
 
   async diff(names?: Array<string>) {
-    const dotFileSync = await this._dotFileSync(names)
+    const groupFileSync = await this._groupFileSync(names)
 
-    for (const fileSync of dotFileSync.fileSyncs) {
-      if (await getPathStat(fileSync.targetFilePath)) {
+    for (const fileSync of groupFileSync.fileSyncs) {
+      if (await getPathStat(fileSync.targetPath)) {
         await shellRun(
-          getPlatDiffCmd(
-            getPlat(),
-            fileSync.sourceFilePath,
-            fileSync.targetFilePath,
-          ),
+          getPlatDiffCmd(getPlat(), fileSync.sourcePath, fileSync.targetPath),
           {
-            ...this.shellOpts,
+            ...this.shOpts,
             verbose: true,
           },
         )
       } else {
-        logWarn(`not yet in fs: '${fileSync.targetFilePath}'`)
+        logWarn(`not yet in fs: '${fileSync.targetPath}'`)
       }
     }
   }
   async list(names?: Array<string>) {
-    const dotFileSync = await this._dotFileSync(names)
+    const groupFileSync = await this._groupFileSync(names)
 
-    for (const fileSync of dotFileSync.fileSyncs) {
-      log(`'${fileSync.sourceFilePath}' <-> '${fileSync.targetFilePath}'`)
+    for (const fileSync of groupFileSync.fileSyncs) {
+      log(`'${fileSync.sourcePath}' <-> '${fileSync.targetPath}'`)
     }
   }
   async pull(names?: Array<string>) {
-    const dotFileSync = await this._dotFileSync(names)
+    const groupFileSync = await this._groupFileSync(names)
 
-    for (const fileSync of dotFileSync.fileSyncs) {
+    for (const fileSync of groupFileSync.fileSyncs) {
       await syncFilePath(
-        fileSync.targetFilePath,
-        fileSync.sourceFilePath,
-        fileSync.targetFilePerm,
-        this.shellOpts,
+        fileSync.targetPath,
+        fileSync.sourcePath,
+        fileSync.targetPerm,
+        this.shOpts,
       )
     }
   }
   async push(names?: Array<string>) {
-    const dotFileSync = await this._dotFileSync(names)
+    const groupFileSync = await this._groupFileSync(names)
 
-    for (const dirPath of dotFileSync.dirPaths) {
+    for (const dirPath of groupFileSync.dirPaths) {
       await ensureDirPath(
         dirPath,
         {
-          ...this.shellOpts,
+          ...this.shOpts,
           verbose: true,
         },
         true,
       )
     }
 
-    for (const fileSync of dotFileSync.fileSyncs) {
+    for (const fileSync of groupFileSync.fileSyncs) {
       await syncFilePath(
-        fileSync.sourceFilePath,
-        fileSync.targetFilePath,
-        fileSync.targetFilePerm,
-        this.shellOpts,
+        fileSync.sourcePath,
+        fileSync.targetPath,
+        fileSync.targetPerm,
+        this.shOpts,
       )
     }
   }
 
-  constructor(shellOpts?: ShellOpts) {
-    this.shellOpts = shellOpts ?? {}
+  constructor(shOpts?: ShOpts) {
+    this.shOpts = shOpts ?? {}
   }
 }

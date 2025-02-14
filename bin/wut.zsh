@@ -18,14 +18,14 @@ fi
     export WUT_CONFIG_LOCATION="${HOME}/.wut-config"
   fi
 
-  if [[ "$#" -gt 0 && ( "$1" == 'boot' || "$1" == 'b' || "$1" == 'bs' ) ]]; then
+  if [[ "$#" -gt 0 && ( "$1" == 'gud' || "$1" == 'g' || "$1" == ':' ) ]]; then
     if [[ "$#" -lt 2 ]]; then
       echo 'no command specified .. aborting' >&2
       exit 1
     fi
 
     if [[ "$2" == 'list' || "$2" == 'l' || "$2" == '/' || "$2" == 'li' || "$2" == 'ls' ]]; then
-      find "${WUT_LOCATION}/boot" -iname '*.zsh'
+      find "${WUT_LOCATION}/gud" -iname '*.zsh'
       exit
     fi
 
@@ -35,7 +35,7 @@ fi
     fi
 
     if [[ "$2" == 'run' || "$2" == 'r' || "$2" == '$' || "$2" == 'rn' ]]; then
-      zsh "${WUT_LOCATION}/boot/$3.zsh"
+      zsh "${WUT_LOCATION}/gud/$3.zsh"
       exit
     fi
 

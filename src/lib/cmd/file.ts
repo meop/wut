@@ -1,14 +1,19 @@
-import { type CmdOpts, type Dot, buildCmd, buildAction } from '../cmd'
-import type { ShellOpts } from '../sh'
+import { type CmdOpts, type File, buildCmd, buildAction } from '../cmd'
+import type { ShOpts } from '../sh'
 
-import { File } from './dot/file'
+import { System } from './file/system'
 
-type CmdDotArgs = {
+type OpArgs = {
   names?: Array<string>
 }
 
-export function buildCmdDot(getParentOpts: () => CmdOpts) {
-  const cmd = buildCmd('dot', 'dot file operations').aliases(['d', 'dotfile'])
+export function buildSubCmd(getParentOpts: () => CmdOpts) {
+  const cmd = buildCmd('file', 'dot file ops').aliases([
+    'f',
+    'd',
+    'dot',
+    'dotfile',
+  ])
 
   const getCmdOpts = () => {
     return {
@@ -23,7 +28,7 @@ export function buildCmdDot(getParentOpts: () => CmdOpts) {
       .argument('[names...]', 'name(s) tomatch')
       .action(
         buildAction((names?: Array<string>) =>
-          runCmdDot('diff', { names }, getCmdOpts),
+          runSubCmd('diff', { names }, getCmdOpts),
         ),
       ),
   )
@@ -34,7 +39,7 @@ export function buildCmdDot(getParentOpts: () => CmdOpts) {
       .argument('[names...]', 'name(s) tomatch')
       .action(
         buildAction((names?: Array<string>) =>
-          runCmdDot('list', { names }, getCmdOpts),
+          runSubCmd('list', { names }, getCmdOpts),
         ),
       ),
   )
@@ -45,18 +50,18 @@ export function buildCmdDot(getParentOpts: () => CmdOpts) {
       .argument('[names...]', 'name(s) tomatch')
       .action(
         buildAction((names?: Array<string>) =>
-          runCmdDot('pull', { names }, getCmdOpts),
+          runSubCmd('pull', { names }, getCmdOpts),
         ),
       ),
   )
 
   cmd.addCommand(
-    buildCmd('push', 'push to local')
+    buildCmd('push', 'push from local')
       .aliases([']'])
       .argument('[names...]', 'name(s) tomatch')
       .action(
         buildAction((names?: Array<string>) =>
-          runCmdDot('push', { names }, getCmdOpts),
+          runSubCmd('push', { names }, getCmdOpts),
         ),
       ),
   )
@@ -64,21 +69,21 @@ export function buildCmdDot(getParentOpts: () => CmdOpts) {
   return cmd
 }
 
-function getDot(name: string, shellOpts: ShellOpts): Dot {
+function getDot(name: string, shOpts: ShOpts): File {
   switch (name) {
-    case 'file':
-      return new File(shellOpts)
+    case 'system':
+      return new System(shOpts)
     default:
-      throw new Error(`unsupported dot file manager: ${name}`)
+      throw new Error(`unsupported file manager: ${name}`)
   }
 }
 
-async function runCmdDot(
+async function runSubCmd(
   op: string,
-  opArgs: CmdDotArgs,
+  opArgs: OpArgs,
   getCmdOpts: () => CmdOpts,
 ) {
   const cmdOpts = getCmdOpts()
 
-  await getDot('file', cmdOpts)[op](opArgs.names?.map(n => n.toLowerCase()))
+  await getDot('system', cmdOpts)[op](opArgs.names?.map(n => n.toLowerCase()))
 }

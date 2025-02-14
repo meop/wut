@@ -1,5 +1,5 @@
 import type { Pack } from '../../cmd'
-import type { ShellOpts } from '../../sh'
+import type { ShOpts } from '../../sh'
 import { Tool } from '../../tool'
 
 export class Pacman extends Tool implements Pack {
@@ -33,13 +33,13 @@ export class Pacman extends Tool implements Pack {
     )
   }
 
-  constructor(shellOpts?: ShellOpts, program?: string, executor?: string) {
-    super(program ?? 'pacman', executor ?? 'sudo', shellOpts)
+  constructor(shOpts?: ShOpts, program?: string, executor?: string) {
+    super(program ?? 'pacman', executor ?? 'sudo', shOpts)
   }
 }
 
 export class Yay extends Pacman {
-  constructor(shellOpts?: ShellOpts) {
-    super(shellOpts, 'yay', '')
+  constructor(shOpts?: ShOpts) {
+    super(shOpts, 'yay', '')
   }
 }

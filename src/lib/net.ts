@@ -1,9 +1,9 @@
-import { type ShellOpts, shellRun } from './sh'
+import { type ShOpts, shellRun } from './sh'
 
-export async function getNicMac(nic: string, shellOpts: ShellOpts) {
+export async function getNicMac(nic: string, shOpts: ShOpts) {
   const out = (
     await shellRun(`cat /sys/class/net/${nic}/address`, {
-      ...shellOpts,
+      ...shOpts,
       dryRun: false,
       pipeOutAndErr: true,
     })
@@ -12,10 +12,10 @@ export async function getNicMac(nic: string, shellOpts: ShellOpts) {
   return out.length ? out[0].trim() : ''
 }
 
-export async function getNicIfIndex(nic: string, shellOpts: ShellOpts) {
+export async function getNicIfIndex(nic: string, shOpts: ShOpts) {
   const out = (
     await shellRun(`cat /sys/class/net/${nic}/ifindex`, {
-      ...shellOpts,
+      ...shOpts,
       dryRun: false,
       pipeOutAndErr: true,
     })

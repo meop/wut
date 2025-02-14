@@ -1,5 +1,5 @@
 import type { Pack } from '../../cmd'
-import type { ShellOpts } from '../../sh'
+import type { ShOpts } from '../../sh'
 import { Tool } from '../../tool'
 
 export class Dnf extends Tool implements Pack {
@@ -34,7 +34,7 @@ export class Dnf extends Tool implements Pack {
     )
   }
 
-  constructor(shellOpts?: ShellOpts) {
-    super('dnf', 'sudo', shellOpts)
+  constructor(shOpts?: ShOpts) {
+    super('dnf', 'sudo', shOpts)
   }
 }

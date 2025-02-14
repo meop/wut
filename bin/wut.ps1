@@ -18,14 +18,14 @@ pwsh -nologo -noprofile -command {
     $env:WUT_CONFIG_LOCATION = "${env:HOME}/.wut-config"
   }
 
-  if ($args.Length -gt 0 -and ($args[0] -eq 'boot' -or $args[0] -eq 'b' -or $args[0] -eq 'bs')) {
+  if ($args.Length -gt 0 -and ($args[0] -eq 'gud' -or $args[0] -eq 'g' -or $args[0] -eq ':')) {
     if ($args.Length -lt 2) {
       Write-Error 'no command specified .. aborting'
       exit 1
     }
 
     if ($args[1] -eq 'list' -or $args[1] -eq 'l' -or $args[1] -eq '/' -or $args[1] -eq 'li' -or $args[1] -eq 'ls') {
-      Get-ChildItem "${env:WUT_LOCATION}/boot" -Filter '*.pwsh' | Select-Object -ExpandProperty FullName
+      Get-ChildItem "${env:WUT_LOCATION}/gud" -Filter '*.pwsh' | Select-Object -ExpandProperty FullName
       exit
     }
 
@@ -35,7 +35,7 @@ pwsh -nologo -noprofile -command {
     }
 
     if ($args[1] -eq 'run' -or $args[1] -eq 'r' -or $args[1] -eq '$' -or $args[1] -eq 'rn') {
-      pwsh "${env:WUT_LOCATION}/boot/$($args[2]).pwsh"
+      pwsh "${env:WUT_LOCATION}/gud/$($args[2]).pwsh"
       exit
     }
 

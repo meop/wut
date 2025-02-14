@@ -1,9 +1,9 @@
-import { type ShellOpts, shellRun } from './sh'
+import { type ShOpts, shellRun } from './sh'
 
-export async function getCpuVendorName(shellOpts: ShellOpts) {
+export async function getCpuVendorName(shOpts: ShOpts) {
   const out = (
     await shellRun('cat /proc/cpuinfo | grep vendor_id | uniq', {
-      ...shellOpts,
+      ...shOpts,
       dryRun: false,
       pipeOutAndErr: true,
     })
@@ -20,10 +20,10 @@ export async function getCpuVendorName(shellOpts: ShellOpts) {
   throw new Error(`unsupported cpu vendor: ${cpu_vendor_id}`)
 }
 
-export async function getCpuSocketCount(shellOpts: ShellOpts) {
+export async function getCpuSocketCount(shOpts: ShOpts) {
   const out = (
     await shellRun('lscpu | grep Socket', {
-      ...shellOpts,
+      ...shOpts,
       dryRun: false,
       pipeOutAndErr: true,
     })
@@ -32,10 +32,10 @@ export async function getCpuSocketCount(shellOpts: ShellOpts) {
   return out.length ? Number(out[0].split(':')[1].trim()) : 1
 }
 
-export async function getCpuCoreCount(shellOpts: ShellOpts) {
+export async function getCpuCoreCount(shOpts: ShOpts) {
   const out = (
     await shellRun('lscpu | grep Core', {
-      ...shellOpts,
+      ...shOpts,
       dryRun: false,
       pipeOutAndErr: true,
     })
@@ -44,10 +44,10 @@ export async function getCpuCoreCount(shellOpts: ShellOpts) {
   return out.length ? Number(out[0].split(':')[1].trim()) : 1
 }
 
-export async function getCpuThreadCount(shellOpts: ShellOpts) {
+export async function getCpuThreadCount(shOpts: ShOpts) {
   const out = (
     await shellRun('lscpu | grep Thread', {
-      ...shellOpts,
+      ...shOpts,
       dryRun: false,
       pipeOutAndErr: true,
     })

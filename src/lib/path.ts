@@ -3,7 +3,7 @@ import path from 'node:path'
 
 import { logInfo } from './log'
 import { getPlat } from './os'
-import { type ShellOpts, shellRun } from './sh'
+import { type ShOpts, shellRun } from './sh'
 
 export type AclPermScope = {
   read?: boolean
@@ -138,17 +138,17 @@ export function getPlatAclPermCmds(
 
 export async function ensureDirPath(
   dirPath: string,
-  shellOpts?: ShellOpts,
+  shOpts?: ShOpts,
   makeEmpty?: boolean,
 ) {
   const fmtDirPath = fmtPath(dirPath)
-  if (shellOpts?.verbose) {
+  if (shOpts?.verbose) {
     logInfo(`ensure dir: '${fmtDirPath}' | make empty: ${makeEmpty ?? false}`)
   }
 
   const fsStat = await getPathStat(fmtDirPath)
   if (!fsStat || fsStat.isFile() || makeEmpty) {
-    if (!shellOpts?.dryRun) {
+    if (!shOpts?.dryRun) {
       if (fsStat) {
         await fs.rm(fmtDirPath, { recursive: true })
       }
@@ -161,7 +161,7 @@ export async function syncFilePath(
   sourcePath: string,
   targetPath: string,
   targetPerm?: AclPerm,
-  shellOpts?: ShellOpts,
+  shOpts?: ShOpts,
 ) {
   const fmtSourcePath = fmtPath(sourcePath)
   const fmtTargetPath = fmtPath(targetPath)
@@ -171,15 +171,15 @@ export async function syncFilePath(
   }
 
   logInfo(`copy: '${fmtSourcePath}' | to: '${fmtTargetPath}'`)
-  if (!shellOpts?.dryRun) {
-    await ensureDirPath(path.parse(targetPath).dir, shellOpts)
+  if (!shOpts?.dryRun) {
+    await ensureDirPath(path.parse(targetPath).dir, shOpts)
     await fs.copyFile(fmtSourcePath, fmtTargetPath)
   }
 
   if (targetPerm) {
     const cmds = getPlatAclPermCmds(getPlat(), fmtTargetPath, targetPerm)
     for (const cmd of cmds) {
-      await shellRun(cmd, { ...shellOpts, verbose: true })
+      await shellRun(cmd, { ...shOpts, verbose: true })
     }
   }
 }
@@ -207,11 +207,11 @@ export async function getFilePathsInPath(fsPath: string) {
   return filePaths
 }
 
-export async function isInPath(prog: string, shellOpts?: ShellOpts) {
+export async function isInPath(prog: string, shOpts?: ShOpts) {
   try {
     const cmd = getPlatFindCmd(getPlat(), prog)
     await shellRun(cmd, {
-      ...shellOpts,
+      ...shOpts,
       dryRun: false,
       pipeOutAndErr: true,
       throwOnExitCode: true,

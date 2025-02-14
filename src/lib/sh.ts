@@ -3,12 +3,12 @@ import * as cp from 'node:child_process'
 import { log, logArg, logCmd, logError } from './log'
 import { sleep } from './time'
 
-export type ShellOpts = {
+export type ShOpts = {
   dryRun?: boolean
   verbose?: boolean
 }
 
-export type ShellRunOpts = ShellOpts & {
+export type ShellRunOpts = ShOpts & {
   filters?: Array<string>
   pipeOutAndErr?: boolean
   reverseFilters?: boolean
@@ -25,12 +25,12 @@ type StdStream = Array<{
   val: string
 }>
 
-function getCmdAndCmdArgs(command: string, shellOpts?: ShellOpts) {
+function getCmdAndCmdArgs(command: string, shOpts?: ShOpts) {
   const cmdArgs = command.split(' ').filter(c => c)
   const cmd = cmdArgs.shift() ?? ''
   const cmdArgsFull = cmdArgs.join(' ').trim()
 
-  if (shellOpts?.verbose) {
+  if (shOpts?.verbose) {
     logCmd(cmd, false)
     if (cmdArgsFull) {
       logArg(` ${cmdArgsFull}`)

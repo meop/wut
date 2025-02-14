@@ -12,7 +12,7 @@ import {
 import { log, logInfo, logWarn } from '../../log'
 import { getNicIfIndex, getNicMac } from '../../net'
 import { getPathStat, ensureDirPath } from '../../path'
-import { type ShellOpts, shellRun } from '../../sh'
+import { type ShOpts, shellRun } from '../../sh'
 import { sleep } from '../../time'
 import { Tool } from '../../tool'
 
@@ -27,7 +27,7 @@ initcall_blacklist=sysfb_init
 */
 // but this option may be undesired if you want to see output during boot
 // so we can instead rebind post-boot like so
-async function unbindEfiFb(shellOpts: ShellOpts) {
+async function unbindEfiFb(shOpts: ShOpts) {
   const checkPath =
     '/sys/bus/platform/drivers/efi-framebuffer/efi-framebuffer.0'
   if (!(await getPathStat(checkPath))) {
@@ -41,12 +41,12 @@ async function unbindEfiFb(shellOpts: ShellOpts) {
   ]
   for (const cmd of cmds) {
     await shellRun(`sudo -E sh -c '${cmd}'`, {
-      ...shellOpts,
+      ...shOpts,
       pipeOutAndErr: true,
     })
   }
 
-  await sleep(shellOpts?.dryRun ? 0 : SleepTimeMs)
+  await sleep(shOpts?.dryRun ? 0 : SleepTimeMs)
 }
 
 // GPU is often made up of mutiple devices: VGA, Audio, USB, Serial
@@ -62,7 +62,7 @@ options vfio_pci ids=10de:1ec7,10de:10f8,10de:1ad8,10de:1ad9
 // it may be possible to carefully arrange pieces of /etc/mkinitcpio.conf
 // to control driver load order, but that may be tedious, and not always work either
 // so we can instead rebind post-boot like so
-async function rebindVfioPci(pciDevId: string, shellOpts: ShellOpts) {
+async function rebindVfioPci(pciDevId: string, shOpts: ShOpts) {
   const driver = 'vfio-pci'
   const fullPciDevId = `0000:${pciDevId}`
 
@@ -74,7 +74,7 @@ async function rebindVfioPci(pciDevId: string, shellOpts: ShellOpts) {
   const checkDriver = `readlink /sys/bus/pci/devices/${fullPciDevId}/driver`
   const out = (
     await shellRun(checkDriver, {
-      ...shellOpts,
+      ...shOpts,
       dryRun: false,
       pipeOutAndErr: true,
     })
@@ -95,12 +95,12 @@ async function rebindVfioPci(pciDevId: string, shellOpts: ShellOpts) {
 
   for (const cmd of cmds) {
     await shellRun(`sudo -E sh -c '${cmd}'`, {
-      ...shellOpts,
+      ...shOpts,
       pipeOutAndErr: true,
     })
   }
 
-  await sleep(shellOpts?.dryRun ? 0 : SleepTimeMs)
+  await sleep(shOpts?.dryRun ? 0 : SleepTimeMs)
 }
 
 function vmName(fsPath: string) {
@@ -108,7 +108,7 @@ function vmName(fsPath: string) {
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: custom yaml files
-async function vmRun(config: any, configVm: any, shellOpts: ShellOpts) {
+async function vmRun(config: any, configVm: any, shOpts: ShOpts) {
   const env: {
     QEMU_GUEST_ARCH?: string
     QEMU_GUEST_CPU_CORES?: number
@@ -128,26 +128,26 @@ async function vmRun(config: any, configVm: any, shellOpts: ShellOpts) {
     env[parts[0]] = parts[1]
   }
 
-  env.QEMU_GUEST_CPU_CORES = await getCpuCoreCount(shellOpts)
-  env.QEMU_GUEST_CPU_SOCKETS = await getCpuSocketCount(shellOpts)
-  env.QEMU_GUEST_CPU_THREADS = await getCpuThreadCount(shellOpts)
-  env.QEMU_GUEST_CPU_VENDOR_NAME = await getCpuVendorName(shellOpts)
+  env.QEMU_GUEST_CPU_CORES = await getCpuCoreCount(shOpts)
+  env.QEMU_GUEST_CPU_SOCKETS = await getCpuSocketCount(shOpts)
+  env.QEMU_GUEST_CPU_THREADS = await getCpuThreadCount(shOpts)
+  env.QEMU_GUEST_CPU_VENDOR_NAME = await getCpuVendorName(shOpts)
 
-  env.QEMU_HOST_NIC_MAC = await getNicMac(env.QEMU_HOST_NIC ?? '', shellOpts)
+  env.QEMU_HOST_NIC_MAC = await getNicMac(env.QEMU_HOST_NIC ?? '', shOpts)
   env.QEMU_HOST_NIC_IF_INDEX = await getNicIfIndex(
     env.QEMU_HOST_NIC ?? '',
-    shellOpts,
+    shOpts,
   )
 
   const arch = env.QEMU_GUEST_ARCH ?? ''
   const plat = env.QEMU_GUEST_PLAT ?? ''
   const vendor = env.QEMU_GUEST_CPU_VENDOR_NAME ?? ''
 
-  await unbindEfiFb(shellOpts)
+  await unbindEfiFb(shOpts)
   for (const pciDevId of (env.VFIO_PCI_DEV_IDS ?? '')
     .split(',')
     .filter(v => v)) {
-    await rebindVfioPci(pciDevId, shellOpts)
+    await rebindVfioPci(pciDevId, shOpts)
   }
 
   const envReplace = (flags: Array<string>) => {
@@ -175,17 +175,17 @@ async function vmRun(config: any, configVm: any, shellOpts: ShellOpts) {
     for (const f of swtpmFlags) {
       if (f.includes('--tpmstate')) {
         const swtpmPath = f.split('=')[1]
-        await ensureDirPath(swtpmPath, shellOpts)
+        await ensureDirPath(swtpmPath, shOpts)
       }
     }
 
     const swtpmFullCmd = `${swtpmBin}${swtpmFlags.length ? ` ${swtpmFlags.join(' ')}` : ''}`
     await shellRun(`sudo -E sh -c '${swtpmFullCmd}'`, {
-      ...shellOpts,
+      ...shOpts,
       verbose: true,
     })
 
-    await sleep(shellOpts?.dryRun ? 0 : SleepTimeMs)
+    await sleep(shOpts?.dryRun ? 0 : SleepTimeMs)
   }
 
   if ('qemu' in configVm) {
@@ -215,15 +215,15 @@ async function vmRun(config: any, configVm: any, shellOpts: ShellOpts) {
 
     const qemuFullCmd = `${qemuBin}${qemuFlags.length ? ` ${qemuFlags.join(' ')}` : ''}`
     await shellRun(`sudo -E sh -c '${qemuFullCmd}'`, {
-      ...shellOpts,
+      ...shOpts,
       verbose: true,
     })
 
-    await sleep(shellOpts?.dryRun ? 0 : SleepTimeMs)
+    await sleep(shOpts?.dryRun ? 0 : SleepTimeMs)
   }
 }
 
-async function vmStats(fsPaths: Array<string>, shellOpts: ShellOpts) {
+async function vmStats(fsPaths: Array<string>, shOpts: ShOpts) {
   const matches: Array<string> = []
 
   for (const name of fsPaths.map(f => vmName(f))) {
@@ -232,7 +232,7 @@ async function vmStats(fsPaths: Array<string>, shellOpts: ShellOpts) {
     const stream = await shellRun(
       `sudo -E sh -c '${findCmd} "${procFilter}" && echo -n ""'`,
       {
-        ...shellOpts,
+        ...shOpts,
         dryRun: false,
         filters: [findCmd],
         pipeOutAndErr: true,
@@ -243,7 +243,7 @@ async function vmStats(fsPaths: Array<string>, shellOpts: ShellOpts) {
     matches.push(...stream.out)
   }
 
-  if (shellOpts?.verbose) {
+  if (shOpts?.verbose) {
     for (const match of matches) {
       logInfo(match)
     }
@@ -259,7 +259,7 @@ export class Qemu extends Tool implements Virt {
   async down(names?: Array<string>) {
     for (const fsPath of await this.getCfgFilePaths(names)) {
       const matches = await vmStats([fsPath], {
-        ...this.shellOpts,
+        ...this.shOpts,
         dryRun: false,
       })
       if (matches.length) {
@@ -268,7 +268,7 @@ export class Qemu extends Tool implements Virt {
         const termFilter = ['qemu', vmName(fsPath)].join('.*')
         await shellRun(
           `sudo -E sh -c '${termCmd} "${termFilter}"'`,
-          this.shellOpts,
+          this.shOpts,
         )
       } else {
         logWarn(`already down: '${fsPath}'`)
@@ -282,7 +282,7 @@ export class Qemu extends Tool implements Virt {
   }
   async stat(names?: Array<string>) {
     await vmStats(await this.getCfgFilePaths(names), {
-      ...this.shellOpts,
+      ...this.shOpts,
       verbose: true,
     })
   }
@@ -294,7 +294,7 @@ export class Qemu extends Tool implements Virt {
 
     for (const fsPath of await this.getCfgFilePaths(names)) {
       const matches = await vmStats([fsPath], {
-        ...this.shellOpts,
+        ...this.shOpts,
         dryRun: false,
       })
       if (matches.length) {
@@ -302,12 +302,12 @@ export class Qemu extends Tool implements Virt {
       } else {
         logInfo(`setting up: '${fsPath}'`)
         const configVm = await loadCfgFileContents(fsPath)
-        await vmRun(config, configVm, this.shellOpts)
+        await vmRun(config, configVm, this.shOpts)
       }
     }
   }
 
-  constructor(shellOpts?: ShellOpts) {
-    super('qemu', '', shellOpts)
+  constructor(shOpts?: ShOpts) {
+    super('qemu', '', shOpts)
   }
 }

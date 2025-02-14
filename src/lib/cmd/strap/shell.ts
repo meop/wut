@@ -2,10 +2,10 @@ import { getCfgFilePath, getCfgFilePaths } from '../../cfg'
 import type { Strap } from '../../cmd'
 import { log } from '../../log'
 import { isInPath, splitPath } from '../../path'
-import { shellRun, type ShellOpts } from '../../sh'
+import { shellRun, type ShOpts } from '../../sh'
 
 export class Shell implements Strap {
-  shellOpts: ShellOpts
+  shOpts: ShOpts
 
   async _paths(names?: Array<string>) {
     const pathParts = ['strap']
@@ -29,7 +29,7 @@ export class Shell implements Strap {
 
     const shellsInPath: Array<string> = []
     for (const shell of shells) {
-      if (await isInPath(shell, this.shellOpts)) {
+      if (await isInPath(shell, this.shOpts)) {
         shellsInPath.push(shell)
       }
     }
@@ -44,11 +44,11 @@ export class Shell implements Strap {
   }
   async run(names: Array<string>) {
     for (const { shell, fsPath } of await this._paths(names)) {
-      await shellRun(`${shell} ${fsPath}`, { ...this.shellOpts, verbose: true })
+      await shellRun(`${shell} ${fsPath}`, { ...this.shOpts, verbose: true })
     }
   }
 
-  constructor(shellOpts?: ShellOpts) {
-    this.shellOpts = shellOpts ?? {}
+  constructor(shOpts?: ShOpts) {
+    this.shOpts = shOpts ?? {}
   }
 }

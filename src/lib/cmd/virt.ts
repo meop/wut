@@ -1,7 +1,7 @@
 import { type CmdOpts, type Virt, buildCmd, buildAction } from '../cmd'
 import { getArch } from '../os'
 import { isInPath } from '../path'
-import type { ShellOpts } from '../sh'
+import type { ShOpts } from '../sh'
 
 import { Docker } from './virt/docker'
 import { Qemu } from './virt/qemu'
@@ -17,18 +17,18 @@ const validVirts = {
   },
 }
 
-type CmdVirtArgs = {
+type OpArgs = {
   names?: Array<string>
 }
 
-type CmdVirtOpts = {
+type SubCmdOpts = {
   manager?: string
 }
 
-export function buildCmdVirt(getParentOpts: () => CmdOpts) {
-  const cmd = buildCmd('virt', 'virtualization operations')
+export function buildSubCmd(getParentOpts: () => CmdOpts) {
+  const cmd = buildCmd('virt', 'virtual manager ops')
     .aliases(['v', 'virtual'])
-    .option('-m, --manager <manager>', 'virtualization manager')
+    .option('-m, --manager <manager>', 'virual manager')
 
   const getCmdOpts = () => {
     return {
@@ -38,12 +38,12 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
   }
 
   cmd.addCommand(
-    buildCmd('down', 'tear down from local')
+    buildCmd('down', 'tear down on local')
       .aliases(['d', '#', 'downgrade', 'te', 'tear'])
       .argument('[names...]', 'name(s) tomatch')
       .action(
         buildAction((names?: Array<string>) =>
-          runCmdVirt('down', { names }, getCmdOpts),
+          runSubCmd('down', { names }, getCmdOpts),
         ),
       ),
   )
@@ -54,7 +54,7 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
       .argument('[names...]', 'name(s) tomatch')
       .action(
         buildAction((names?: Array<string>) =>
-          runCmdVirt('list', { names }, getCmdOpts),
+          runSubCmd('list', { names }, getCmdOpts),
         ),
       ),
   )
@@ -65,7 +65,7 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
       .argument('[names...]', 'name(s) tomatch')
       .action(
         buildAction((names?: Array<string>) =>
-          runCmdVirt('stat', { names }, getCmdOpts),
+          runSubCmd('stat', { names }, getCmdOpts),
         ),
       ),
   )
@@ -73,16 +73,16 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('tidy', 'tidy on local')
       .aliases(['t', '@', 'ti', 'cl', 'clean', 'pr', 'prune', 'pu', 'purge'])
-      .action(buildAction(() => runCmdVirt('tidy', {}, getCmdOpts))),
+      .action(buildAction(() => runSubCmd('tidy', {}, getCmdOpts))),
   )
 
   cmd.addCommand(
-    buildCmd('up', 'sync up from local')
+    buildCmd('up', 'sync up from web')
       .aliases(['u', '^', 'update', 'upgrade', 'sy', 'sync'])
       .argument('[names...]', 'name(s) tomatch')
       .action(
         buildAction((names?: Array<string>) =>
-          runCmdVirt('up', { names }, getCmdOpts),
+          runSubCmd('up', { names }, getCmdOpts),
         ),
       ),
   )
@@ -90,10 +90,10 @@ export function buildCmdVirt(getParentOpts: () => CmdOpts) {
   return cmd
 }
 
-async function getValidVirts(shellOpts?: ShellOpts) {
+async function getValidVirts(shOpts?: ShOpts) {
   const virts: Array<string> = []
   for (const validVirt of Object.keys(validVirts)) {
-    if (await isInPath(validVirts[validVirt][getArch()], shellOpts)) {
+    if (await isInPath(validVirts[validVirt][getArch()], shOpts)) {
       virts.push(validVirt)
     }
   }
@@ -101,21 +101,21 @@ async function getValidVirts(shellOpts?: ShellOpts) {
   return virts
 }
 
-function getVirt(name: string, shellOpts: ShellOpts): Virt {
+function getImpl(name: string, shOpts: ShOpts): Virt {
   switch (name) {
     case 'docker':
-      return new Docker(shellOpts)
+      return new Docker(shOpts)
     case 'qemu':
-      return new Qemu(shellOpts)
+      return new Qemu(shOpts)
     default:
-      throw new Error(`unsupported virtualization manager: ${name}`)
+      throw new Error(`unsupported virtual manager: ${name}`)
   }
 }
 
-async function runCmdVirt(
+async function runSubCmd(
   op: string,
-  opArgs: CmdVirtArgs,
-  getCmdOpts: () => CmdOpts & CmdVirtOpts,
+  opArgs: OpArgs,
+  getCmdOpts: () => CmdOpts & SubCmdOpts,
 ) {
   const cmdOpts = getCmdOpts()
 
@@ -124,7 +124,7 @@ async function runCmdVirt(
     : await getValidVirts(cmdOpts)
 
   for (const virtName of virtNames) {
-    await getVirt(virtName, cmdOpts)[op](
+    await getImpl(virtName, cmdOpts)[op](
       opArgs.names?.map(n => n.toLowerCase()),
     )
   }

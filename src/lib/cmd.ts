@@ -28,7 +28,7 @@ export type CmdOpts = {
   verbose?: boolean
 }
 
-export interface Dot {
+export interface File {
   diff: (names?: Array<string>) => Promise<void>
   list: (names?: Array<string>) => Promise<void>
   pull: (names?: Array<string>) => Promise<void>

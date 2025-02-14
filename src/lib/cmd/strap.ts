@@ -1,14 +1,22 @@
 import { type CmdOpts, type Strap, buildCmd, buildAction } from '../cmd'
-import type { ShellOpts } from '../sh'
+import type { ShOpts } from '../sh'
 
 import { Shell } from './strap/shell'
 
-type CmdStrapArgs = {
+type OpArgs = {
   names?: Array<string>
 }
 
-export function buildCmdStrap(getParentOpts: () => CmdOpts) {
-  const cmd = buildCmd('strap', 'strap operations').aliases(['s', 'st', 'str'])
+export function buildSubCmd(getParentOpts: () => CmdOpts) {
+  const cmd = buildCmd('strap', 'boot strap ops').aliases([
+    's',
+    'st',
+    'str',
+    'b',
+    'bs',
+    'boot',
+    'bootstrap',
+  ])
 
   const getCmdOpts = () => {
     return {
@@ -23,18 +31,18 @@ export function buildCmdStrap(getParentOpts: () => CmdOpts) {
       .argument('[names...]', 'name(s) to match')
       .action(
         buildAction((names?: Array<string>) =>
-          runCmdStrap('list', { names }, getCmdOpts),
+          runSubCmd('list', { names }, getCmdOpts),
         ),
       ),
   )
 
   cmd.addCommand(
-    buildCmd('run', 'run on local')
+    buildCmd('run', 'run from local')
       .aliases(['r', '$', 'rn', 'exe', 'exec', 'execute'])
       .argument('<names...>', 'name(s) to match')
       .action(
         buildAction((names: Array<string>) =>
-          runCmdStrap('run', { names }, getCmdOpts),
+          runSubCmd('run', { names }, getCmdOpts),
         ),
       ),
   )
@@ -42,21 +50,21 @@ export function buildCmdStrap(getParentOpts: () => CmdOpts) {
   return cmd
 }
 
-function getStrap(name: string, shellOpts: ShellOpts): Strap {
+function getImpl(name: string, shOpts: ShOpts): Strap {
   switch (name) {
     case 'shell':
-      return new Shell(shellOpts)
+      return new Shell(shOpts)
     default:
       throw new Error(`unsupported strap manager: ${name}`)
   }
 }
 
-async function runCmdStrap(
+async function runSubCmd(
   op: string,
-  opArgs: CmdStrapArgs,
+  opArgs: OpArgs,
   getCmdOpts: () => CmdOpts,
 ) {
   const cmdOpts = getCmdOpts()
 
-  await getStrap('shell', cmdOpts)[op](opArgs.names?.map(n => n.toLowerCase()))
+  await getImpl('shell', cmdOpts)[op](opArgs.names?.map(n => n.toLowerCase()))
 }

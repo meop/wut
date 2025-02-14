@@ -1,10 +1,10 @@
 import { isInPath } from './path'
-import { type ShellOpts, shellRun } from './sh'
+import { type ShOpts, shellRun } from './sh'
 
 export class Tool {
   program: string
   executor: string
-  shellOpts: ShellOpts
+  shOpts: ShOpts
 
   shell = async (cmd: string, filters?: Array<string>) => {
     const executor =
@@ -12,15 +12,15 @@ export class Tool {
         ? `${this.executor} `
         : ''
     return shellRun(`${executor}${this.program} ${cmd}`, {
-      ...this.shellOpts,
+      ...this.shOpts,
       filters,
       verbose: true,
     })
   }
 
-  constructor(program: string, executor?: string, shellOpts?: ShellOpts) {
+  constructor(program: string, executor?: string, shOpts?: ShOpts) {
     this.program = program
     this.executor = executor ?? ''
-    this.shellOpts = shellOpts ?? {}
+    this.shOpts = shOpts ?? {}
   }
 }

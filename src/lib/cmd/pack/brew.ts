@@ -1,5 +1,5 @@
 import type { Pack } from '../../cmd'
-import type { ShellOpts } from '../../sh'
+import type { ShOpts } from '../../sh'
 import { Tool } from '../../tool'
 
 export class Brew extends Tool implements Pack {
@@ -32,7 +32,7 @@ export class Brew extends Tool implements Pack {
     )
   }
 
-  constructor(shellOpts?: ShellOpts) {
-    super('brew', '', shellOpts)
+  constructor(shOpts?: ShOpts) {
+    super('brew', '', shOpts)
   }
 }

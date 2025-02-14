@@ -1,8 +1,7 @@
 import { type CmdOpts, buildCmd } from '../cmd'
 
-// currently implemented in launcher
-export function buildCmdBoot(_: () => CmdOpts) {
-  const cmd = buildCmd('boot', 'boot strap from local').aliases(['b', 'bs'])
+export function buildSubCmd(_: () => CmdOpts) {
+  const cmd = buildCmd('gud', 'make good ops').aliases(['g', ':'])
 
   cmd.addCommand(
     buildCmd('list', 'list on local').aliases(['l', '/', 'li', 'ls']),

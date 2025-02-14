@@ -1,5 +1,5 @@
 import type { Pack } from '../../cmd'
-import type { ShellOpts } from '../../sh'
+import type { ShOpts } from '../../sh'
 import { Tool } from '../../tool'
 
 export class AptGet extends Tool implements Pack {
@@ -34,8 +34,8 @@ export class AptGet extends Tool implements Pack {
     await this.shell(names?.length ? `install ${names.join(' ')}` : upgradeCmd)
   }
 
-  constructor(shellOpts?: ShellOpts, program?: string, executor?: string) {
-    super(program ?? 'apt-get', executor ?? 'sudo', shellOpts)
+  constructor(shOpts?: ShOpts, program?: string, executor?: string) {
+    super(program ?? 'apt-get', executor ?? 'sudo', shOpts)
   }
 }
 
@@ -44,7 +44,7 @@ export class Apt extends AptGet {
     await super.up(names, 'full-upgrade')
   }
 
-  constructor(shellOpts?: ShellOpts) {
-    super(shellOpts, 'apt', 'sudo')
+  constructor(shOpts?: ShOpts) {
+    super(shOpts, 'apt', 'sudo')
   }
 }

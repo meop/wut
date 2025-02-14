@@ -1,5 +1,5 @@
 import type { Pack } from '../../cmd'
-import type { ShellOpts } from '../../sh'
+import type { ShOpts } from '../../sh'
 import { Tool } from '../../tool'
 
 export class WinGet extends Tool implements Pack {
@@ -27,7 +27,7 @@ export class WinGet extends Tool implements Pack {
     )
   }
 
-  constructor(shellOpts?: ShellOpts) {
-    super('winget', '', shellOpts)
+  constructor(shOpts?: ShOpts) {
+    super('winget', '', shOpts)
   }
 }
