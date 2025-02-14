@@ -9,10 +9,6 @@ import {
   getFilePathsInPath,
 } from './path'
 
-export function getCfgFileName(fsPath: string) {
-  return path.parse(fsPath).name
-}
-
 export function getCfgFilePath(parts?: Array<string>) {
   return fmtPath(
     path.join(process.env.WUT_CONFIG_LOCATION ?? '', ...(parts ?? [])),

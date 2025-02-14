@@ -1,8 +1,6 @@
-import path from 'node:path'
-
-import { getCfgFilePaths, loadCfgFileContents } from '../cfg'
+import { getCfgFilePath, getCfgFilePaths, loadCfgFileContents } from '../cfg'
 import { type CmdOpts, type Pack, buildCmd, buildAction } from '../cmd'
-import { isInPath } from '../path'
+import { isInPath, splitPath } from '../path'
 import { type ShellOpts, shellRun } from '../sh'
 
 import { Apt, AptGet } from './pack/aptget'
@@ -196,11 +194,14 @@ async function runCmdPack(
     return
   }
 
+  const cPath = getCfgFilePath(['pack'])
   const fsPaths = await getCfgFilePaths(['pack'])
 
   for (const name of opArgsNames) {
-    const foundPaths = fsPaths.filter(
-      f => path.parse(f).name.toLowerCase() === name,
+    const foundPaths = fsPaths.filter(f =>
+      splitPath(f.replace(cPath, '')).find(
+        p => p.split('.')[0].toLowerCase() === name,
+      ),
     )
     if (!foundPaths.length) {
       await invokeFallbackPackNames(name)
