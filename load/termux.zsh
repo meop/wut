@@ -7,7 +7,7 @@ if [[ -f '/etc/os-release' ]]; then
   exit 1
 fi
 
-echo -n 'deploy wut configs? (y/N) '
+echo -n '>> bin run wut setups? (y/N) '
 read yn
 if [[ "$yn" == 'y' ]]; then
   zsh "${WUT_CONFIG_LOCATION}/bin/zsh/setup/termux.zsh"
@@ -15,7 +15,11 @@ if [[ "$yn" == 'y' ]]; then
   zsh "${WUT_CONFIG_LOCATION}/bin/zsh/setup/fzf.zsh"
   zsh "${WUT_CONFIG_LOCATION}/bin/zsh/setup/nvim.zsh"
   zsh "${WUT_CONFIG_LOCATION}/bin/zsh/setup/tmux.zsh"
+fi
 
+echo -n '>> dot push wut files? (y/N) '
+read yn
+if [[ "$yn" == 'y' ]]; then
   rm -r -f "${HOME}/.zsh" > /dev/null 2>&1
 
   mkdir -p "${HOME}/.config" > /dev/null 2>&1
