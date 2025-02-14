@@ -71,7 +71,7 @@ export class File implements Dot {
 
         const inPathIsDir = (await getPathStat(inPath))?.isDirectory() ?? false
         const inPaths = inPathIsDir
-          ? await getCfgFilePaths(['dot', toolName, syncItem.in])
+          ? await getCfgFilePaths(['dot', 'file', toolName, syncItem.in])
           : [inPath]
 
         for (const p of inPaths) {
@@ -94,7 +94,7 @@ export class File implements Dot {
           })
 
           if (inPathIsDir) {
-            dotFileSync.dirPaths.add(path.dirname(targetFilePath))
+            dotFileSync.dirPaths.add(path.parse(targetFilePath).dir)
           }
         }
       }
