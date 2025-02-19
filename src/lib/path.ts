@@ -184,10 +184,21 @@ export async function syncFilePath(
   }
 }
 
-export async function getFilePathsInPath(fsPath: string) {
+export function getFilePath(parts?: Array<string>) {
+  return fmtPath(path.join(...(parts ?? [])))
+}
+
+export function getFilePaths(parts?: Array<string>, filters?: Array<string>) {
+  return getFilePathsInPath(getFilePath(parts), filters)
+}
+
+export async function getFilePathsInPath(
+  fsPath: string,
+  filters?: Array<string>,
+) {
   const fmtFsPath = fmtPath(fsPath)
 
-  const filePaths: Array<string> = []
+  let filePaths: Array<string> = []
 
   const stat = await getPathStat(fmtFsPath)
   if (!stat) {
@@ -202,6 +213,12 @@ export async function getFilePathsInPath(fsPath: string) {
     }
   } else {
     filePaths.push(fmtFsPath)
+  }
+
+  if (filters) {
+    filePaths = filePaths.filter(p =>
+      filters?.every(f => p.toLowerCase().includes(f)),
+    )
   }
 
   return filePaths

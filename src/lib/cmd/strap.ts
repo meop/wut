@@ -1,7 +1,7 @@
-import { type CmdOpts, type Strap, buildCmd, buildAction } from '../cmd'
+import { type CmdOpts, type Exec, buildCmd, buildAction } from '../cmd'
 import type { ShOpts } from '../sh'
 
-import { Shell } from './strap/shell'
+import { Shell } from './exec/shell'
 
 type OpArgs = {
   names?: Array<string>
@@ -50,10 +50,10 @@ export function buildSubCmd(getParentOpts: () => CmdOpts) {
   return cmd
 }
 
-function getImpl(name: string, shOpts: ShOpts): Strap {
+function getImpl(name: string, shOpts: ShOpts): Exec {
   switch (name) {
     case 'shell':
-      return new Shell(shOpts)
+      return new Shell(true, ['strap'], shOpts)
     default:
       throw new Error(`unsupported strap manager: ${name}`)
   }

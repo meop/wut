@@ -28,6 +28,11 @@ export type CmdOpts = {
   verbose?: boolean
 }
 
+export interface Exec {
+  list: (names?: Array<string>) => Promise<void>
+  run: (names: Array<string>) => Promise<void>
+}
+
 export interface File {
   diff: (names?: Array<string>) => Promise<void>
   list: (names?: Array<string>) => Promise<void>
@@ -43,11 +48,6 @@ export interface Pack {
   out: (names?: Array<string>) => Promise<void>
   tidy: () => Promise<void>
   up: (names?: Array<string>) => Promise<void>
-}
-
-export interface Strap {
-  list: (names?: Array<string>) => Promise<void>
-  run: (names: Array<string>) => Promise<void>
 }
 
 export interface Virt {

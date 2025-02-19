@@ -1,30 +1,37 @@
-import { getCfgFilePath, getCfgFilePaths } from '../../cfg'
-import type { Strap } from '../../cmd'
+import path from 'node:path'
+
+import { getBaseFilePaths } from '../../base'
+import { getCfgFilePaths } from '../../cfg'
+import type { Exec } from '../../cmd'
 import { log } from '../../log'
-import { isInPath, splitPath } from '../../path'
+import { isInPath } from '../../path'
 import { shellRun, type ShOpts } from '../../sh'
 
-export class Shell implements Strap {
+const validExts = {
+  zsh: 'zsh',
+  ps1: 'pwsh',
+}
+
+export class Shell implements Exec {
+  pathIsCfg: boolean
+  pathParts: Array<string>
   shOpts: ShOpts
 
   async _paths(names?: Array<string>) {
-    const pathParts = ['strap']
-    const root = getCfgFilePath(pathParts)
-    const filePaths = (await getCfgFilePaths(pathParts)).filter(p =>
-      names?.every(n => p.toLowerCase().includes(n)),
-    )
+    const filePaths = this.pathIsCfg
+      ? await getCfgFilePaths(this.pathParts, names)
+      : await getBaseFilePaths(this.pathParts, names)
+
     const shells = new Set<string>()
     const straps: Array<{ shell: string; fsPath: string }> = []
 
     for (const filePath of filePaths) {
-      const filePathParts = splitPath(filePath.replace(root, ''))
-      filePathParts.shift()
-      const shellName = filePathParts.shift() ?? ''
-      if (!shellName) {
-        continue
+      const extension = path.parse(filePath).ext.split('.').pop() ?? ''
+      if (extension in validExts) {
+        const shellName = validExts[extension]
+        shells.add(shellName)
+        straps.push({ shell: shellName, fsPath: filePath })
       }
-      shells.add(shellName)
-      straps.push({ shell: shellName, fsPath: filePath })
     }
 
     const shellsInPath: Array<string> = []
@@ -48,7 +55,9 @@ export class Shell implements Strap {
     }
   }
 
-  constructor(shOpts?: ShOpts) {
+  constructor(pathIsCfg?: boolean, pathParts?: Array<string>, shOpts?: ShOpts) {
+    this.pathIsCfg = pathIsCfg ?? false
+    this.pathParts = pathParts ?? []
     this.shOpts = shOpts ?? {}
   }
 }

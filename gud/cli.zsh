@@ -1,31 +1,38 @@
 #!/usr/bin/env zsh
 
-echo -n '> run (boot)straps? (y/N) '
-read yn
-if [[ "$yn" == 'y' ]]; then
-  zsh "${WUT_CONFIG_LOCATION}/strap/zsh/setup/fzf.zsh"
-  zsh "${WUT_CONFIG_LOCATION}/strap/zsh/setup/nvim.zsh"
-  zsh "${WUT_CONFIG_LOCATION}/strap/zsh/setup/tmux.zsh"
-fi
+(
+  if [[ -z "${WUT_CONFIG_LOCATION}" ]]; then
+    export WUT_CONFIG_LOCATION="${HOME}/.wut-config"
+  fi
 
-echo -n '> push (dot)files [user]? (y/N) '
-read yn
-if [[ "$yn" == 'y' ]]; then
-  rm -r -f "${HOME}/.zsh" > /dev/null 2>&1
+  echo -n '> run (boot)straps? (y/N) '
+  read yn
+  if [[ "${yn}" == 'y' ]]; then
+    if [[ "${OS_TYPE}" == 'darwin'* ]]; then
+      zsh "${WUT_CONFIG_LOCATION}/strap/zsh/install/brew.zsh"
+    else
+      OS_RELEASE_ID="$(grep -Po '^ID=\K[a-zA-Z0-9._-]+' '/etc/os-release')"
 
-  mkdir -p "${HOME}/.config" > /dev/null 2>&1
-  mkdir -p "${HOME}/.config/nvim" > /dev/null 2>&1
-  mkdir -p "${HOME}/.ssh" > /dev/null 2>&1
-  mkdir -p "${HOME}/.zsh" > /dev/null 2>&1
+      if [[ "${OS_RELEASE_ID}" == 'arch']]; then
+        zsh "${WUT_CONFIG_LOCATION}/strap/zsh/install/yay.zsh"
+      fi
 
-  cp "${WUT_CONFIG_LOCATION}/file/git/gitconfig" "${HOME}/.gitconfig"
-  cp "${WUT_CONFIG_LOCATION}/file/nvim/init.lua" "${HOME}/.config/nvim/init.lua"
-  cp "${WUT_CONFIG_LOCATION}/file/ssh/config" "${HOME}/.ssh/config"
-  cp "${WUT_CONFIG_LOCATION}/file/starship/starship.toml" "${HOME}/.config/starship.toml"
-  cp "${WUT_CONFIG_LOCATION}/file/tmux/tmux.conf" "${HOME}/.tmux.conf"
-  cp "${WUT_CONFIG_LOCATION}/file/zsh/zshrc" "${HOME}/.zshrc"
-  cp "${WUT_CONFIG_LOCATION}/file/zsh/zshenv" "${HOME}/.zshenv"
-  cp "${WUT_CONFIG_LOCATION}/file/zsh/zsh/"* "${HOME}/.zsh"
+      if [[ "${OS_RELEASE_ID}" == 'debian' ]]; then
+        zsh "${WUT_CONFIG_LOCATION}/strap/zsh/install/ms-tools.zsh"
+        zsh "${WUT_CONFIG_LOCATION}/strap/zsh/install/node.zsh"
 
-  chmod u=rw,g=,o= "${HOME}/.ssh/config" > /dev/null 2>&1
-fi
+        zsh "${WUT_CONFIG_LOCATION}/strap/zsh/install/starship.zsh"
+        zsh "${WUT_CONFIG_LOCATION}/strap/zsh/install/uv.zsh"
+        zsh "${WUT_CONFIG_LOCATION}/strap/zsh/install/zoxide.zsh"
+
+        zsh "${WUT_CONFIG_LOCATION}/strap/zsh/setup/fonts.zsh"
+      fi
+    fi
+
+    zsh "${WUT_CONFIG_LOCATION}/strap/zsh/install/bun.zsh"
+
+    zsh "${WUT_CONFIG_LOCATION}/strap/zsh/setup/fzf.zsh"
+    zsh "${WUT_CONFIG_LOCATION}/strap/zsh/setup/nvim.zsh"
+    zsh "${WUT_CONFIG_LOCATION}/strap/zsh/setup/tmux.zsh"
+  fi
+)
