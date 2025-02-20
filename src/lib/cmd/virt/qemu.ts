@@ -150,18 +150,18 @@ async function vmRun(config: any, configVm: any, shOpts: ShOpts) {
     await rebindVfioPci(pciDevId, shOpts)
   }
 
-  const envReplace = (flags: Array<string>) => {
+  const envReplace = (args: Array<string>) => {
     const newFlags: Array<string> = []
-    for (let f of flags) {
-      if (f.includes('${')) {
+    for (let a of args) {
+      if (a.includes('${')) {
         for (const e of Object.keys(env)) {
-          f = f.replace(`\${${e}}`, env[e])
-          if (!f.includes('${')) {
+          a = a.replace(`\${${e}}`, env[e])
+          if (!a.includes('${')) {
             break
           }
         }
       }
-      newFlags.push(f)
+      newFlags.push(a)
     }
     return newFlags
   }
@@ -169,17 +169,17 @@ async function vmRun(config: any, configVm: any, shOpts: ShOpts) {
   if ('swtpm' in configVm) {
     const swtpmBin: string = config.swtpm[arch].bin
 
-    const swtpmFlagsRaw: Array<string> = configVm.swtpm.flags
-    const swtpmFlags = envReplace(swtpmFlagsRaw)
+    const swtpmArgsRaw: Array<string> = configVm.swtpm.arguments
+    const swtpmArgs = envReplace(swtpmArgsRaw)
 
-    for (const f of swtpmFlags) {
-      if (f.includes('--tpmstate')) {
-        const swtpmPath = f.split('=')[1]
+    for (const a of swtpmArgs) {
+      if (a.includes('--tpmstate')) {
+        const swtpmPath = a.split('=')[1]
         await ensureDirPath(swtpmPath, shOpts)
       }
     }
 
-    const swtpmFullCmd = `${swtpmBin}${swtpmFlags.length ? ` ${swtpmFlags.join(' ')}` : ''}`
+    const swtpmFullCmd = `${swtpmBin}${swtpmArgs.length ? ` ${swtpmArgs.join(' ')}` : ''}`
     await shellRun(`sudo -E sh -c '${swtpmFullCmd}'`, {
       ...shOpts,
       verbose: true,
@@ -210,10 +210,10 @@ async function vmRun(config: any, configVm: any, shOpts: ShOpts) {
       ? `,${qemuCpuFlags.join(',')}`
       : ''
 
-    const qemuFlagsRaw: Array<string> = configVm.qemu.flags
-    const qemuFlags = envReplace(qemuFlagsRaw)
+    const qemuArgsRaw: Array<string> = configVm.qemu.arguments
+    const qemuArgs = envReplace(qemuArgsRaw)
 
-    const qemuFullCmd = `${qemuBin}${qemuFlags.length ? ` ${qemuFlags.join(' ')}` : ''}`
+    const qemuFullCmd = `${qemuBin}${qemuArgs.length ? ` ${qemuArgs.join(' ')}` : ''}`
     await shellRun(`sudo -E sh -c '${qemuFullCmd}'`, {
       ...shOpts,
       verbose: true,
