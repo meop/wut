@@ -8,16 +8,18 @@
   echo -n '> run (boot)straps? (y/N) '
   read yn
   if [[ "${yn}" == 'y' ]]; then
-    if [[ "${OS_TYPE}" == 'darwin'* ]]; then
+    OS_TYPE=$(uname)
+
+    if [[ "$(OS_TYPE)" == 'Darwin' ]]; then
       zsh "${WUT_CONFIG_LOCATION}/strap/zsh/install/brew.zsh"
     else
-      OS_RELEASE_ID="$(grep -Po '^ID=\K[a-zA-Z0-9._-]+' '/etc/os-release')"
+      OS_ID="$(grep -Po '^ID=\K[a-zA-Z0-9._-]+' /etc/os-release)"
 
-      if [[ "${OS_RELEASE_ID}" == 'arch']]; then
+      if [[ "${OS_ID}" == 'arch']]; then
         zsh "${WUT_CONFIG_LOCATION}/strap/zsh/install/yay.zsh"
       fi
 
-      if [[ "${OS_RELEASE_ID}" == 'debian' ]]; then
+      if [[ "${OS_ID}" == 'debian' ]]; then
         zsh "${WUT_CONFIG_LOCATION}/strap/zsh/install/ms-tools.zsh"
         zsh "${WUT_CONFIG_LOCATION}/strap/zsh/install/node.zsh"
 

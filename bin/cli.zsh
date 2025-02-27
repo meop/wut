@@ -23,6 +23,6 @@ fi
   fi
 
   pushd "${WUT_LOCATION}"
-  bun run src/cli.ts $@
+  bun run src/cli.ts $@ | zsh
   popd
 )

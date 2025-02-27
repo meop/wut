@@ -4,7 +4,7 @@ if ! type termux-reload-settings > /dev/null; then
   echo 'only supported on termux .. aborting' >&2
   exit 1
 fi
-if [[ -f '/etc/os-release' ]]; then
+if [[ -f /etc/os-release ]]; then
   echo 'not supported in termux proot .. aborting' >&2
   exit 1
 fi

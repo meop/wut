@@ -23,6 +23,6 @@ pwsh -nologo -noprofile -command {
   }
 
   Push-Location "${env:WUT_LOCATION}"
-  bun run src/cli.ts $args
+  bun run src/cli.ts $args | Invoke-Expression
   Pop-Location
 } -args $args

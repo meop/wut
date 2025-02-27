@@ -25,7 +25,7 @@ export function buildSubCmd(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('diff', 'diff vs local')
       .aliases(['d', '?', 'de', 'delta'])
-      .argument('[names...]', 'name(s) tomatch')
+      .argument('[names...]', 'name(s) to match')
       .action(
         buildAction((names?: Array<string>) =>
           runSubCmd('diff', { names }, getCmdOpts),
@@ -36,7 +36,7 @@ export function buildSubCmd(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('list', 'list on local')
       .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
-      .argument('[names...]', 'name(s) tomatch')
+      .argument('[names...]', 'name(s) to match')
       .action(
         buildAction((names?: Array<string>) =>
           runSubCmd('list', { names }, getCmdOpts),
@@ -47,7 +47,7 @@ export function buildSubCmd(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('pull', 'pull from local')
       .aliases(['['])
-      .argument('[names...]', 'name(s) tomatch')
+      .argument('[names...]', 'name(s) to match')
       .action(
         buildAction((names?: Array<string>) =>
           runSubCmd('pull', { names }, getCmdOpts),
@@ -58,7 +58,7 @@ export function buildSubCmd(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('push', 'push from local')
       .aliases([']'])
-      .argument('[names...]', 'name(s) tomatch')
+      .argument('[names...]', 'name(s) to match')
       .action(
         buildAction((names?: Array<string>) =>
           runSubCmd('push', { names }, getCmdOpts),

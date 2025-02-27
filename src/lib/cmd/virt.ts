@@ -40,7 +40,7 @@ export function buildSubCmd(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('down', 'tear down on local')
       .aliases(['d', '#', 'downgrade', 'te', 'tear'])
-      .argument('[names...]', 'name(s) tomatch')
+      .argument('[names...]', 'name(s) to match')
       .action(
         buildAction((names?: Array<string>) =>
           runSubCmd('down', { names }, getCmdOpts),
@@ -51,7 +51,7 @@ export function buildSubCmd(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('list', 'list on local')
       .aliases(['l', '/', 'li', 'ls', 'qu', 'query'])
-      .argument('[names...]', 'name(s) tomatch')
+      .argument('[names...]', 'name(s) to match')
       .action(
         buildAction((names?: Array<string>) =>
           runSubCmd('list', { names }, getCmdOpts),
@@ -62,7 +62,7 @@ export function buildSubCmd(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('stat', 'status on local')
       .aliases(['s', '%', 'st', 'status'])
-      .argument('[names...]', 'name(s) tomatch')
+      .argument('[names...]', 'name(s) to match')
       .action(
         buildAction((names?: Array<string>) =>
           runSubCmd('stat', { names }, getCmdOpts),
@@ -79,7 +79,7 @@ export function buildSubCmd(getParentOpts: () => CmdOpts) {
   cmd.addCommand(
     buildCmd('up', 'sync up from web')
       .aliases(['u', '^', 'update', 'upgrade', 'sy', 'sync'])
-      .argument('[names...]', 'name(s) tomatch')
+      .argument('[names...]', 'name(s) to match')
       .action(
         buildAction((names?: Array<string>) =>
           runSubCmd('up', { names }, getCmdOpts),

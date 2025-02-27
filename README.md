@@ -18,60 +18,80 @@ Linux
 
 MacOS
 
-### prereqs
+### cli
+
+Required:
 
 - zsh
 - bun
-- git
-
-### develop
 
 Link repo:
 
 ```zsh
-ln -s "${HOME}/source/code/meop/wut-config" "${HOME}/.wut-config"
 ln -s "${HOME}/source/code/meop/wut" "${HOME}/.wut"
+ln -s "${HOME}/source/code/meop/wut-config" "${HOME}/.wut-config"
 ```
 
 Add to profile:
 
 ```zsh
 if [[ -d "${HOME}/.wut" ]]; then
-  alias wut="${HOME}/.wut/bin/wut.zsh"
+  alias wut="${HOME}/.wut/bin/cli.zsh"
 fi
 ```
 
-### install
+### web
 
-TBD
+Required:
+
+- zsh
+
+Add to profile:
+
+```zsh
+alias wut=wut_wrap
+function wut_wrap {
+  curl -fLsS --url 'http://yard.lan:9000/zsh' | zsh
+}
+```
 
 ## winnt
 
 Windows
 
-### prereqs
+### cli
+
+Required:
 
 - pwsh
 - bun
-- git
-
-### develop
 
 Link repo:
 
 ```pwsh
-New-Item -ItemType SymbolicLink -Value "${env:HOME}/source/code/meop/wut-config" -Path "${env:HOME}/.wut-config"
 New-Item -ItemType SymbolicLink -Value "${env:HOME}/source/code/meop/wut" -Path "${env:HOME}/.wut"
+New-Item -ItemType SymbolicLink -Value "${env:HOME}/source/code/meop/wut-config" -Path "${env:HOME}/.wut-config"
 ```
 
 Add to profile:
 
 ```pwsh
 if (Test-Path "${env:HOME}/.wut") {
-  Set-Alias -Name wut -Value "${env:HOME}/.wut/bin/wut.ps1"
+  Set-Alias -Name wut -Value "${env:HOME}/.wut/bin/cli.ps1"
 }
 ```
 
-### install
+### web
 
-TBD
+Required:
+
+- pwsh
+
+Add to profile:
+
+```pwsh
+Set-Alias -Name wut -Value wut_wrap
+function wut_wrap {
+  Invoke-RestMethod -Uri 'http://yard.lan:9000/pwsh' | Invoke-Expression
+}
+```

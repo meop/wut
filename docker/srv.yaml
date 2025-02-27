@@ -1,0 +1,23 @@
+---
+name: wut
+services:
+  web:
+    command: bun --hot run src/srv.ts
+    # command: '-f /dev/null'
+    # entrypoint: '/usr/bin/tail'
+    # tty: true
+    environment:
+      - PORT=9000
+    hostname: wut-web
+    image: docker.io/oven/bun:canary
+    ports:
+      - '9000:9000/tcp'
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /vol/src/code/meop/wut
+        target: /wut
+      - type: bind
+        source: /vol/src/code/meop/wut-config
+        target: /wut-config
+    working_dir: /wut
