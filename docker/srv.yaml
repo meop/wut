@@ -9,7 +9,7 @@ services:
     environment:
       - PORT=9000
     hostname: wut-web
-    image: docker.io/oven/bun:canary
+    image: docker.io/oven/bun:latest
     ports:
       - '9000:9000/tcp'
     restart: unless-stopped

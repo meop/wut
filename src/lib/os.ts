@@ -1,8 +1,6 @@
-import { fmtPath, splitPath } from './path'
-
-export function getArch(arch: string = process.arch) {
-  const archLower = arch.toLowerCase()
-  switch (archLower) {
+export function getCpuArch(cpuArch: string) {
+  const cpuArchLower = cpuArch.toLowerCase()
+  switch (cpuArchLower) {
     case 'amd64':
     case 'x64':
     case 'x86_64':
@@ -11,13 +9,13 @@ export function getArch(arch: string = process.arch) {
     case 'arm64':
       return 'arm64'
     default:
-      throw new Error(`unsupported cpu architecture: ${archLower}`)
+      throw new Error(`unsupported cpu architecture: ${cpuArchLower}`)
   }
 }
 
-export function getPlat(plat: string = process.platform) {
-  const platLower = plat.toLowerCase()
-  switch (platLower) {
+export function getOsPlat(osPlat: string) {
+  const osPlatLower = osPlat.toLowerCase()
+  switch (osPlatLower) {
     case 'linux':
       return 'linux'
     case 'darwin':
@@ -28,19 +26,18 @@ export function getPlat(plat: string = process.platform) {
     case 'windows':
       return 'windows'
     default:
-      throw new Error(`unsupported os platform: ${platLower}`)
+      throw new Error(`unsupported os platform: ${osPlatLower}`)
   }
 }
 
-export function getSh(sh: string = process.env.SHELL ?? '') {
-  const shLeaf = splitPath(fmtPath(sh)).pop() ?? ''
-  const shLower = shLeaf.toLowerCase()
-  switch (shLower) {
+export function getSysSh(sysSh: string) {
+  const sysShLower = sysSh.toLowerCase()
+  switch (sysShLower) {
     case 'pwsh':
       return 'pwsh'
     case 'zsh':
       return 'zsh'
     default:
-      throw new Error(`unsupported sys shell: ${shLower}`)
+      throw new Error(`unsupported sys shell: ${sysShLower}`)
   }
 }

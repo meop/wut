@@ -1,30 +1,27 @@
 import type { BunRequest } from 'bun'
-import { getArch, getPlat, getSh } from './lib/os'
-import { buildProg } from './prog'
 
-const shExt = {
-  pwsh: 'ps1',
-  zsh: 'zsh',
+import { getCpuArch, getOsPlat, getSysSh } from './lib/os'
+
+import type { Sh } from './lib/cmd/sh'
+import { Pwsh } from './lib/cmd/sh/pwsh'
+import { Zsh } from './lib/cmd/sh/zsh'
+
+function getSh(sysSh: string) {
+  let sh: Sh
+  if (sysSh === 'pwsh') {
+    sh = new Pwsh()
+  } else {
+    sh = new Zsh()
+  }
+  return sh
 }
 
-const shVarPrefix = {
-  pwsh: '$',
-  zsh: '',
-}
-
-async function repeatSearch(urlStr: string, sh: string) {
-  const lines: Array<string> = []
-  const extension = shExt[sh]
-  const prefix = shVarPrefix[sh]
-
-  lines.push(
-    `${prefix}urlStr='${urlStr}'`,
-    '',
-    await Bun.file(`${import.meta.dir}/snip/${sh}/os.${extension}`).text(),
-    await Bun.file(`${import.meta.dir}/snip/${sh}/web.${extension}`).text(),
-  )
-
-  return lines.join('\n')
+async function reHydrate(url: string, sysSh: string) {
+  return await getSh(sysSh)
+    .withSetVar('WUT_URL', url, { singleQ: true })
+    .withLoadFilePath('sys', 'env')
+    .withLoadFilePath('cli')
+    .build()
 }
 
 function getSearchParam(searchParams: URLSearchParams, key: string) {
@@ -35,35 +32,38 @@ function getSearchParam(searchParams: URLSearchParams, key: string) {
   return value
 }
 
-async function runSrv(req: BunRequest<'/:sh'>) {
+async function runSrv(req: BunRequest<'/*' | '/'>) {
   try {
     const url = new URL(req.url)
     const urlSearchParams = new URLSearchParams(url.search)
 
-    let sh = req.params.sh
-    sh = getSh(sh)
+    const spSysCpuArch = getSearchParam(urlSearchParams, 'sysCpuArch')
+    const spSysOsPlat = getSearchParam(urlSearchParams, 'sysOsPlat')
+    const spSysOsDist = getSearchParam(urlSearchParams, 'sysOsDist')
+    const spSysOsVer = getSearchParam(urlSearchParams, 'sysOsVer')
+    const spSysSh = getSearchParam(urlSearchParams, 'sysSh')
 
-    let arch = getSearchParam(urlSearchParams, 'arch')
-    let plat = getSearchParam(urlSearchParams, 'plat')
-    let dist = getSearchParam(urlSearchParams, 'dist')
+    const sysSh = spSysSh ? getSysSh(spSysSh) : ''
 
-    if (!arch || !plat) {
-      return new Response(await repeatSearch(req.url, sh))
+    if (!spSysCpuArch || !spSysOsPlat) {
+      return new Response(await reHydrate(url.toString(), sysSh))
     }
 
-    arch = getArch(arch)
-    plat = getPlat(plat)
-    dist = dist ? dist.toLowerCase() : undefined
+    const sysCpuArch = getCpuArch(spSysCpuArch)
+    const sysOsPlat = getOsPlat(spSysOsPlat)
+    const sysOsDist = spSysOsDist ? spSysOsDist.toLowerCase() : undefined
+    const sysOsVer = spSysOsVer ? spSysOsVer.toLowerCase() : undefined
 
-    const prog = await buildProg()
-
-    const help = prog.helpInformation()
-    const helpLines = help
-      .split('\n')
-      .map(l => `echo '${l}'`)
-      .join('\n')
-
-    return new Response(helpLines)
+    return new Response(
+      await getSh(sysSh)
+        .withLoadFilePath('sys', 'log')
+        .withLogInfo(`sysCpuArch=${sysCpuArch}`)
+        .withLogInfo(`sysOsPlat=${sysOsPlat}`)
+        .withLogInfo(`sysOsDist=${sysOsDist}`)
+        .withLogInfo(`sysOsVer=${sysOsVer}`)
+        .withLogInfo(`sysSh=${sysSh}`)
+        .build(),
+    )
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     const fullMessage = message.endsWith('\n') ? message : `${message}\n`
@@ -76,12 +76,20 @@ const server = Bun.serve({
   hostname: process.env.hostname ?? '0.0.0.0',
   port: process.env.port ?? 9000,
   fetch(_) {
+    // console.log('root fetch')
     return new Response()
   },
 })
 
 server.reload({
   routes: {
-    '/:sh': async req => await runSrv(req),
+    '/*': async req => {
+      // console.log('wild route')
+      return await runSrv(req)
+    },
+    '/': async req => {
+      // console.log('root route')
+      return await runSrv(req)
+    },
   },
 })
