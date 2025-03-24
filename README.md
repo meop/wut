@@ -67,8 +67,8 @@ Set-Alias -Name wut -Value 'wut_wrap'
 
 function wut_wrap {
   pwsh -nologo -noprofile -command {
-    $WUT_URL = ${env:WUT_URL}.Trim('/')
-    $WUT_URL += "$($args -join '/')".Trim('/')
+    $WUT_URL = ${env:WUT_URL}.TrimEnd('/')
+    $WUT_URL += "/$($args -join '/')".TrimEnd('/')
     $WUT_URL += '/?sysSh=pwsh'
 
     Invoke-RestMethod -Uri "${WUT_URL}" | Invoke-Expression
