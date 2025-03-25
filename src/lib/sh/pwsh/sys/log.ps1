@@ -1,14 +1,14 @@
-function wutLog {
-  if ("${WUT_SUCCINCT}") {
+function log {
+  if ("${SUCCINCT}") {
     return
   }
   [Console]::WriteLine($($args -Join ' '))
 }
-function wutLogErr {
-  if ("${WUT_SUCCINCT}") {
+function logErr {
+  if ("${SUCCINCT}") {
     return
   }
-  if ("${WUT_GRAYSCALE}") {
+  if ("${GRAYSCALE}") {
     [Console]::Error.WriteLine($args)
     return
   }
@@ -16,11 +16,11 @@ function wutLogErr {
   [Console]::Error.WriteLine($($args -Join ' '))
   [Console]::ResetColor()
 }
-function wutLogSucc {
-  if ("${WUT_SUCCINCT}") {
+function logSucc {
+  if ("${SUCCINCT}") {
     return
   }
-  if ("${WUT_GRAYSCALE}") {
+  if ("${GRAYSCALE}") {
     [Console]::WriteLine($($args -Join ' '))
     return
   }
@@ -28,11 +28,11 @@ function wutLogSucc {
   [Console]::WriteLine($($args -Join ' '))
   [Console]::ResetColor()
 }
-function wutLogWarn {
-  if ("${WUT_SUCCINCT}") {
+function logWarn {
+  if ("${SUCCINCT}") {
     return
   }
-  if ("${WUT_GRAYSCALE}") {
+  if ("${GRAYSCALE}") {
     [Console]::WriteLine($($args -Join ' '))
     return
   }
@@ -40,11 +40,11 @@ function wutLogWarn {
   [Console]::WriteLine($($args -Join ' '))
   [Console]::ResetColor()
 }
-function wutLogInfo {
-  if ("${WUT_SUCCINCT}") {
+function logInfo {
+  if ("${SUCCINCT}") {
     return
   }
-  if ("${WUT_GRAYSCALE}") {
+  if ("${GRAYSCALE}") {
     [Console]::WriteLine($($args -Join ' '))
     return
   }
@@ -52,11 +52,11 @@ function wutLogInfo {
   [Console]::WriteLine($($args -Join ' '))
   [Console]::ResetColor()
 }
-function wutLogOp {
-  if ("${WUT_SUCCINCT}") {
+function logOp {
+  if ("${SUCCINCT}") {
     return
   }
-  if ("${WUT_GRAYSCALE}") {
+  if ("${GRAYSCALE}") {
     [Console]::WriteLine($($args -Join ' '))
     return
   }

@@ -1,14 +1,14 @@
-function wutLog {
-  if [[ "${WUT_SUCCINCT}" ]]; then
+function log {
+  if [[ "${SUCCINCT}" ]]; then
     return
   fi
   echo $@
 }
-function wutLogErr {
-  if [[ "${WUT_SUCCINCT}" ]]; then
+function logErr {
+  if [[ "${SUCCINCT}" ]]; then
     return
   fi
-  if [[ "${WUT_GRAYSCALE}" ]]; then
+  if [[ "${GRAYSCALE}" ]]; then
     echo $@ >&2
     return
   fi
@@ -16,11 +16,11 @@ function wutLogErr {
   echo -n $@ >&2
   echo '\033[0m' >&2
 }
-function wutLogSucc {
-  if [[ "${WUT_SUCCINCT}" ]]; then
+function logSucc {
+  if [[ "${SUCCINCT}" ]]; then
     return
   fi
-  if [[ "${WUT_GRAYSCALE}" ]]; then
+  if [[ "${GRAYSCALE}" ]]; then
     echo $@
     return
   fi
@@ -28,11 +28,11 @@ function wutLogSucc {
   echo -n $@
   echo '\033[0m'
 }
-function wutLogWarn {
-  if [[ "${WUT_SUCCINCT}" ]]; then
+function logWarn {
+  if [[ "${SUCCINCT}" ]]; then
     return
   fi
-  if [[ "${WUT_GRAYSCALE}" ]]; then
+  if [[ "${GRAYSCALE}" ]]; then
     echo $@
     return
   fi
@@ -40,11 +40,11 @@ function wutLogWarn {
   echo -n $@
   echo '\033[0m'
 }
-function wutLogInfo {
-  if [[ "${WUT_SUCCINCT}" ]]; then
+function logInfo {
+  if [[ "${SUCCINCT}" ]]; then
     return
   fi
-  if [[ "${WUT_GRAYSCALE}" ]]; then
+  if [[ "${GRAYSCALE}" ]]; then
     echo $@
     return
   fi
@@ -52,11 +52,11 @@ function wutLogInfo {
   echo -n $@
   echo '\033[0m'
 }
-function wutLogOp {
-  if [[ "${WUT_SUCCINCT}" ]]; then
+function logOp {
+  if [[ "${SUCCINCT}" ]]; then
     return
   fi
-  if [[ "${WUT_GRAYSCALE}" ]]; then
+  if [[ "${GRAYSCALE}" ]]; then
     echo $@
     return
   fi

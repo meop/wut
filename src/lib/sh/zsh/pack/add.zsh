@@ -1,153 +1,135 @@
-if type apt > /dev/null; then
-  if [[ -z "${WUT_PACK_MANAGER}" ]]; then
-    echo -n '> add packages with apt [system]? (y/N) '
-    read yn
-  elif [[ "${WUT_PACK_MANAGER}" == 'apt' ]]; then
+if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt' ]] && type apt > /dev/null; then
+  if [[ "${YES}" ]]; then
     yn='y'
   else
-    yn='n'
+    read yn?'> add packages with apt [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      wutLogOp sudo apt update
-      if [[ -z "${WUT_NOOP}" ]]; then
+      logOp sudo apt update
+      if [[ -z "${NOOP}" ]]; then
         sudo apt update
       fi
-      wutLogOp sudo apt install $WUT_PACK_NAMES
-      if [[ -z "${WUT_NOOP}" ]]; then
-        sudo apt install $WUT_PACK_NAMES
+      logOp sudo apt install $PACK_ADD_NAMES
+      if [[ -z "${NOOP}" ]]; then
+        sudo apt install $PACK_ADD_NAMES
       fi
     else
-      wutLogOp apt update
-      if [[ -z "${WUT_NOOP}" ]]; then
+      logOp apt update
+      if [[ -z "${NOOP}" ]]; then
         apt update
       fi
-      wutLogOp apt install $WUT_PACK_NAMES
-      if [[ -z "${WUT_NOOP}" ]]; then
-        apt install $WUT_PACK_NAMES
+      logOp apt install $PACK_ADD_NAMES
+      if [[ -z "${NOOP}" ]]; then
+        apt install $PACK_ADD_NAMES
       fi
     fi
-    WUT_PACK='apt'
   fi
-elif type apt-get > /dev/null; then
-  if [[ -z "${WUT_PACK_MANAGER}" ]]; then
-    echo -n '> add packages with apt-get [system]? (y/N) '
-    read yn
-  elif [[ "${WUT_PACK_MANAGER}" == 'apt-get' ]]; then
+fi
+if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt-get' ]] && type apt-get > /dev/null; then
+  if [[ -z "${PACK_MANAGER}" ]] && type apt > /dev/null; then
+    yn='n'
+  elif [[ "${YES}" ]]; then
     yn='y'
   else
-    yn='n'
+    read yn?'> add packages with apt-get [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      wutLogOp sudo apt-get update
-      if [[ -z "${WUT_NOOP}" ]]; then
+      logOp sudo apt-get update
+      if [[ -z "${NOOP}" ]]; then
         sudo apt-get update
       fi
-      wutLogOp sudo apt-get install $WUT_PACK_NAMES
-      if [[ -z "${WUT_NOOP}" ]]; then
-        sudo apt-get install $WUT_PACK_NAMES
+      logOp sudo apt-get install $PACK_ADD_NAMES
+      if [[ -z "${NOOP}" ]]; then
+        sudo apt-get install $PACK_ADD_NAMES
       fi
     fi
-    WUT_PACK='apt-get'
   fi
 fi
 
-if type brew > /dev/null; then
-  if [[ -z "${WUT_PACK_MANAGER}" ]]; then
-    echo -n '> add packages with brew [system]? (y/N) '
-    read yn
-  elif [[ "${WUT_PACK_MANAGER}" == 'brew' ]]; then
+if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'brew' ]] && type brew > /dev/null; then
+  if [[ "${YES}" ]]; then
     yn='y'
   else
-    yn='n'
+    read yn?'> add packages with brew [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
-    wutLogOp brew update
-    if [[ -z "${WUT_NOOP}" ]]; then
+    logOp brew update
+    if [[ -z "${NOOP}" ]]; then
       brew update
     fi
-    wutLogOp brew install $WUT_PACK_NAMES
-    if [[ -z "${WUT_NOOP}" ]]; then
-      brew install $WUT_PACK_NAMES
+    logOp brew install $PACK_ADD_NAMES
+    if [[ -z "${NOOP}" ]]; then
+      brew install $PACK_ADD_NAMES
     fi
-    WUT_PACK='brew'
   fi
 fi
 
-if type dnf > /dev/null; then
-  if [[ -z "${WUT_PACK_MANAGER}" ]]; then
-    echo -n '> add packages with dnf [system]? (y/N) '
-    read yn
-  elif [[ "${WUT_PACK_MANAGER}" == 'dnf' ]]; then
+if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'dnf' ]] && type dnf > /dev/null; then
+  if [[ "${YES}" ]]; then
     yn='y'
   else
-    yn='n'
+    read yn?'> add packages with dnf [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      wutLogOp sudo dnf check-update
-      if [[ -z "${WUT_NOOP}" ]]; then
+      logOp sudo dnf check-update
+      if [[ -z "${NOOP}" ]]; then
         sudo dnf check-update
       fi
-      wutLogOp sudo dnf install $WUT_PACK_NAMES
-      if [[ -z "${WUT_NOOP}" ]]; then
-        sudo dnf install $WUT_PACK_NAMES
+      logOp sudo dnf install $PACK_ADD_NAMES
+      if [[ -z "${NOOP}" ]]; then
+        sudo dnf install $PACK_ADD_NAMES
       fi
     fi
-    WUT_PACK='dnf'
   fi
 fi
 
-if type yay > /dev/null; then
-  if [[ -z "${WUT_PACK_MANAGER}" ]]; then
-    echo -n '> add packages with yay [system]? (y/N) '
-    read yn
-  elif [[ "${WUT_PACK_MANAGER}" == 'yay' ]]; then
+if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'yay' ]] &&type yay > /dev/null; then
+  if [[ "${YES}" ]]; then
     yn='y'
   else
-    yn='n'
+    read yn?'> add packages with yay [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
-    wutLogOp yay --sync --refresh
-    if [[ -z "${WUT_NOOP}" ]]; then
+    logOp yay --sync --refresh
+    if [[ -z "${NOOP}" ]]; then
       yay --sync --refresh
     fi
-    wutLogOp yay --sync --needed $WUT_PACK_NAMES
-    if [[ -z "${WUT_NOOP}" ]]; then
-      yay --sync --needed $WUT_PACK_NAMES
+    logOp yay --sync --needed $PACK_ADD_NAMES
+    if [[ -z "${NOOP}" ]]; then
+      yay --sync --needed $PACK_ADD_NAMES
     fi
-    WUT_PACK='yay'
   fi
-elif type pacman > /dev/null; then
-  if [[ -z "${WUT_PACK_MANAGER}" ]]; then
-    echo -n '> add packages with pacman [system]? (y/N) '
-    read yn
-  elif [[ "${WUT_PACK_MANAGER}" == 'pacman' ]]; then
+fi
+if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > /dev/null; then
+  if [[ -z "${PACK_MANAGER}" ]] && type yay > /dev/null; then
+    yn='n'
+  elif [[ "${YES}" ]]; then
     yn='y'
   else
-    yn='n'
+    read yn?'> add packages with pacman [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      wutLogOp sudo pacman --sync --refresh
-      if [[ -z "${WUT_NOOP}" ]]; then
+      logOp sudo pacman --sync --refresh
+      if [[ -z "${NOOP}" ]]; then
         sudo pacman --sync --refresh
       fi
-      wutLogOp sudo pacman --sync --needed $WUT_PACK_NAMES
-      if [[ -z "${WUT_NOOP}" ]]; then
-        sudo pacman --sync --needed $WUT_PACK_NAMES
+      logOp sudo pacman --sync --needed $PACK_ADD_NAMES
+      if [[ -z "${NOOP}" ]]; then
+        sudo pacman --sync --needed $PACK_ADD_NAMES
       fi
     else
-      wutLogOp pacman --sync --refresh
-      if [[ -z "${WUT_NOOP}" ]]; then
+      logOp pacman --sync --refresh
+      if [[ -z "${NOOP}" ]]; then
         pacman --sync --refresh
       fi
-      wutLogOp pacman --sync --needed $WUT_PACK_NAMES
-      if [[ -z "${WUT_NOOP}" ]]; then
-        pacman --sync --needed $WUT_PACK_NAMES
+      logOp pacman --sync --needed $PACK_ADD_NAMES
+      if [[ -z "${NOOP}" ]]; then
+        pacman --sync --needed $PACK_ADD_NAMES
       fi
     fi
-    WUT_PACK='pacman'
   fi
 fi

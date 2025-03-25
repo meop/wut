@@ -1,9 +1,8 @@
-echo -n '> install uv [user]? (y/N) '
-read yn
+read yn?'> install uv [user]? (y/N) '
 if [[ "${yn}" == 'y' ]]; then
   uri='https://astral.sh/uv/install.sh'
-  wutLogOp curl --fail --location --show-error --silent --url "${uri}" '| sh'
-  if [[ -z "${WUT_NOOP}" ]]; then
-    curl --fail --location --show-error --silent --url "${uri}" | sh
+  logOp source '<(' curl --fail --location --show-error --silent --url "${uri}" ')'
+  if [[ -z "${NOOP}" ]]; then
+    source <( curl --fail --location --show-error --silent --url "${uri}" )
   fi
 fi

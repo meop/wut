@@ -1,70 +1,67 @@
-if type apt > /dev/null; then
-  if [[ -z "${WUT_PACK_MANAGER}" ]]; then
-    echo -n '> out packages with apt [system]? (y/N) '
-    read yn
-  elif [[ "${WUT_PACK_MANAGER}" == 'apt' ]]; then
+if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt' ]] && type apt > /dev/null; then
+  if [[ "${YES}" ]]; then
     yn='y'
   else
-    yn='n'
+    read yn?'> out packages with apt [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      wutLogOp sudo apt update
-      if [[ "${WUT_PACK_NAMES}" ]]; then
+      logOp sudo apt update
+      if [[ -z "${NOOP}" ]]; then
         sudo apt update
       fi
-      if [[ "${WUT_PACK_NAMES}" ]]; then
-        wutLogOp sudo apt list --upgradable | grep --ignore-case $WUT_PACK_NAMES
-        if [[ -z "${WUT_NOOP}" ]]; then
-          sudo apt list --upgradable | grep --ignore-case $WUT_PACK_NAMES
+      if [[ "${PACK_OUT_NAMES}" ]]; then
+        logOp sudo apt list --upgradable '|' grep --ignore-case $PACK_OUT_NAMES
+        if [[ -z "${NOOP}" ]]; then
+          sudo apt list --upgradable | grep --ignore-case $PACK_OUT_NAMES
         fi
       else
-        wutLogOp sudo apt list --upgradable
-        if [[ -z "${WUT_NOOP}" ]]; then
+        logOp sudo apt list --upgradable
+        if [[ -z "${NOOP}" ]]; then
           sudo apt list --upgradable
         fi
       fi
     else
-      wutLogOp apt update
-      if [[ "${WUT_PACK_NAMES}" ]]; then
+      logOp apt update
+      if [[ -z "${NOOP}" ]]; then
         apt update
       fi
-      if [[ "${WUT_PACK_NAMES}" ]]; then
-        wutLogOp apt list --upgradable | grep --ignore-case $WUT_PACK_NAMES
-        if [[ -z "${WUT_NOOP}" ]]; then
-          apt list --upgradable | grep --ignore-case $WUT_PACK_NAMES
+      if [[ "${PACK_OUT_NAMES}" ]]; then
+        logOp apt list --upgradable '|' grep --ignore-case $PACK_OUT_NAMES
+        if [[ -z "${NOOP}" ]]; then
+          apt list --upgradable | grep --ignore-case $PACK_OUT_NAMES
         fi
       else
-        wutLogOp apt list --upgradable
-        if [[ -z "${WUT_NOOP}" ]]; then
+        logOp apt list --upgradable
+        if [[ -z "${NOOP}" ]]; then
           apt list --upgradable
         fi
       fi
     fi
   fi
-elif type apt-get > /dev/null; then
-  if [[ -z "${WUT_PACK_MANAGER}" ]]; then
-    echo -n '> out packages with apt-get [system]? (y/N) '
-    read yn
-  elif [[ "${WUT_PACK_MANAGER}" == 'apt-get' ]]; then
+fi
+if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt-get' ]] && type apt-get > /dev/null; then
+  if [[ -z "${PACK_MANAGER}" ]] && type apt > /dev/null; then
+    yn='n'
+  elif [[ "${YES}" ]]; then
     yn='y'
   else
-    yn='n'
+    read yn?'> out packages with apt-get [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      wutLogOp sudo apt-get update
-      if [[ "${WUT_PACK_NAMES}" ]]; then
+      logOp sudo apt-get update
+      if [[ -z "${NOOP}" ]]; then
         sudo apt-get update
       fi
-      if [[ "${WUT_PACK_NAMES}" ]]; then
-        wutLogOp sudo apt-get list --upgradable | grep --ignore-case $WUT_PACK_NAMES
-        if [[ -z "${WUT_NOOP}" ]]; then
-          sudo apt-get list --upgradable | grep --ignore-case $WUT_PACK_NAMES
+      if [[ "${PACK_OUT_NAMES}" ]]; then
+        logOp sudo apt-get list --upgradable '|' grep --ignore-case $PACK_OUT_NAMES
+        if [[ -z "${NOOP}" ]]; then
+          sudo apt-get list --upgradable | grep --ignore-case $PACK_OUT_NAMES
         fi
       else
-        wutLogOp sudo apt-get list --upgradable
-        if [[ -z "${WUT_NOOP}" ]]; then
+        logOp sudo apt-get list --upgradable
+        if [[ -z "${NOOP}" ]]; then
           sudo apt-get list --upgradable
         fi
       fi
@@ -72,57 +69,51 @@ elif type apt-get > /dev/null; then
   fi
 fi
 
-if type brew > /dev/null; then
-  if [[ -z "${WUT_PACK_MANAGER}" ]]; then
-    echo -n '> out packages with brew [system]? (y/N) '
-    read yn
-  elif [[ "${WUT_PACK_MANAGER}" == 'brew' ]]; then
+if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'brew' ]] && type brew > /dev/null; then
+  if [[ "${YES}" ]]; then
     yn='y'
   else
-    yn='n'
+    read yn?'> out packages with brew [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
-    wutLogOp brew update
-    if [[ "${WUT_PACK_NAMES}" ]]; then
+    logOp brew update
+    if [[ -z "${NOOP}" ]]; then
       brew update
     fi
-    if [[ "${WUT_PACK_NAMES}" ]]; then
-      wutLogOp brew outdated | grep --ignore-case $WUT_PACK_NAMES
-      if [[ -z "${WUT_NOOP}" ]]; then
-        brew outdated | grep --ignore-case $WUT_PACK_NAMES
+    if [[ "${PACK_OUT_NAMES}" ]]; then
+      logOp brew outdated | grep --ignore-case $PACK_OUT_NAMES
+      if [[ -z "${NOOP}" ]]; then
+        brew outdated | grep --ignore-case $PACK_OUT_NAMES
       fi
     else
-      wutLogOp brew outdated
-      if [[ -z "${WUT_NOOP}" ]]; then
+      logOp brew outdated
+      if [[ -z "${NOOP}" ]]; then
         brew outdated
       fi
     fi
   fi
 fi
 
-if type dnf > /dev/null; then
-  if [[ -z "${WUT_PACK_MANAGER}" ]]; then
-    echo -n '> out packages with dnf [system]? (y/N) '
-    read yn
-  elif [[ "${WUT_PACK_MANAGER}" == 'dnf' ]]; then
+if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'dnf' ]] && type dnf > /dev/null; then
+  if [[ "${YES}" ]]; then
     yn='y'
   else
-    yn='n'
+    read yn?'> out packages with dnf [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      wutLogOp sudo dnf check-update
-      if [[ "${WUT_PACK_NAMES}" ]]; then
+      logOp sudo dnf check-update
+      if [[ -z "${NOOP}" ]]; then
         sudo dnf check-update
       fi
-      if [[ "${WUT_PACK_NAMES}" ]]; then
-        wutLogOp sudo dnf list --upgrades | grep --ignore-case $WUT_PACK_NAMES
-        if [[ -z "${WUT_NOOP}" ]]; then
-          sudo dnf list --upgrades | grep --ignore-case $WUT_PACK_NAMES
+      if [[ "${PACK_OUT_NAMES}" ]]; then
+        logOp sudo dnf list --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
+        if [[ -z "${NOOP}" ]]; then
+          sudo dnf list --upgrades | grep --ignore-case $PACK_OUT_NAMES
         fi
       else
-        wutLogOp sudo dnf list --upgrades
-        if [[ -z "${WUT_NOOP}" ]]; then
+        logOp sudo dnf list --upgrades
+        if [[ -z "${NOOP}" ]]; then
           sudo dnf list --upgrades
         fi
       fi
@@ -130,71 +121,68 @@ if type dnf > /dev/null; then
   fi
 fi
 
-if type yay > /dev/null; then
-  if [[ -z "${WUT_PACK_MANAGER}" ]]; then
-    echo -n '> out packages with yay [system]? (y/N) '
-    read yn
-  elif [[ "${WUT_PACK_MANAGER}" == 'yay' ]]; then
+if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'yay' ]] && type yay > /dev/null; then
+  if [[ "${YES}" ]]; then
     yn='y'
   else
-    yn='n'
+    read yn?'> out packages with yay [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
-    wutLogOp yay --sync --refresh
-    if [[ "${WUT_PACK_NAMES}" ]]; then
+    logOp yay --sync --refresh
+    if [[ -z "${NOOP}" ]]; then
       yay --sync --refresh
     fi
-    if [[ "${WUT_PACK_NAMES}" ]]; then
-      wutLogOp yay --query --upgrades | grep --ignore-case $WUT_PACK_NAMES
-      if [[ -z "${WUT_NOOP}" ]]; then
-        yay --query --upgrades | grep --ignore-case $WUT_PACK_NAMES
+    if [[ "${PACK_OUT_NAMES}" ]]; then
+      logOp yay --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
+      if [[ -z "${NOOP}" ]]; then
+        yay --query --upgrades | grep --ignore-case $PACK_OUT_NAMES
       fi
     else
-      wutLogOp yay --query --upgrades
-      if [[ -z "${WUT_NOOP}" ]]; then
+      logOp yay --query --upgrades
+      if [[ -z "${NOOP}" ]]; then
         yay --query --upgrades
       fi
     fi
   fi
-elif type pacman > /dev/null; then
-  if [[ -z "${WUT_PACK_MANAGER}" ]]; then
-    echo -n '> out packages with pacman [system]? (y/N) '
-    read yn
-  elif [[ "${WUT_PACK_MANAGER}" == 'pacman' ]]; then
+fi
+if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > /dev/null; then
+  if [[ -z "${PACK_MANAGER}" ]] && type yay > /dev/null; then
+    yn='n'
+  elif [[ "${YES}" ]]; then
     yn='y'
   else
-    yn='n'
+    read yn?'> out packages with pacman [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      wutLogOp sudo pacman --sync --refresh
-      if [[ "${WUT_PACK_NAMES}" ]]; then
+      logOp sudo pacman --sync --refresh
+      if [[ -z "${NOOP}" ]]; then
         sudo pacman --sync --refresh
       fi
-      if [[ "${WUT_PACK_NAMES}" ]]; then
-        wutLogOp sudo pacman --query --upgrades | grep --ignore-case $WUT_PACK_NAMES
-        if [[ -z "${WUT_NOOP}" ]]; then
-          sudo pacman --query --upgrades | grep --ignore-case $WUT_PACK_NAMES
+      if [[ "${PACK_OUT_NAMES}" ]]; then
+        logOp sudo pacman --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
+        if [[ -z "${NOOP}" ]]; then
+          sudo pacman --query --upgrades | grep --ignore-case $PACK_OUT_NAMES
         fi
       else
-        wutLogOp sudo pacman --query --upgrades
-        if [[ -z "${WUT_NOOP}" ]]; then
+        logOp sudo pacman --query --upgrades
+        if [[ -z "${NOOP}" ]]; then
           sudo pacman --query --upgrades
         fi
       fi
     else
-      wutLogOp pacman --sync --refresh
-      if [[ "${WUT_PACK_NAMES}" ]]; then
+      logOp pacman --sync --refresh
+      if [[ -z "${NOOP}" ]]; then
         pacman --sync --refresh
       fi
-      if [[ "${WUT_PACK_NAMES}" ]]; then
-        wutLogOp pacman --query --upgrades | grep --ignore-case $WUT_PACK_NAMES
-        if [[ -z "${WUT_NOOP}" ]]; then
-          pacman --query --upgrades | grep --ignore-case $WUT_PACK_NAMES
+      if [[ "${PACK_OUT_NAMES}" ]]; then
+        logOp pacman --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
+        if [[ -z "${NOOP}" ]]; then
+          pacman --query --upgrades | grep --ignore-case $PACK_OUT_NAMES
         fi
       else
-        wutLogOp pacman --query --upgrades
-        if [[ -z "${WUT_NOOP}" ]]; then
+        logOp pacman --query --upgrades
+        if [[ -z "${NOOP}" ]]; then
           pacman --query --upgrades
         fi
       fi

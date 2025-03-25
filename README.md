@@ -28,17 +28,17 @@ if ! is-at-least "${verMajor}.${verMinor}"; then
   exit 1
 fi
 
-export WUT_URL='http://yard.lan:9000'
+export URL='http://yard.lan:9000'
 
 alias wut='wut_wrap'
 
 function wut_wrap {
   (
-    WUT_URL=$(echo "${WUT_URL}" | sed 's:/*$::')
-    WUT_URL=$(echo "${WUT_URL}" "$@" | sed 's/ /\//g' | sed 's:/*$::')
-    WUT_URL="${WUT_URL}/?sysSh=zsh"
+    URL=$(echo "${URL}" | sed 's:/*$::')
+    URL=$(echo "${URL}" "$@" | sed 's/ /\//g' | sed 's:/*$::')
+    URL="${URL}/?sysSh=zsh"
 
-    curl --fail --location --show-error --silent --url "${WUT_URL}" | zsh
+    source <( curl --fail --location --show-error --silent --url "${URL}" )
   )
 }
 ```
@@ -61,17 +61,17 @@ if ($PSVersionTable.PSVersion.Major -lt ${verMajor} ||
   exit 1
 }
 
-${env:WUT_URL} = 'http://yard.lan:9000'
+${env:URL} = 'http://yard.lan:9000'
 
 Set-Alias -Name wut -Value 'wut_wrap'
 
 function wut_wrap {
   pwsh -nologo -noprofile -command {
-    $WUT_URL = ${env:WUT_URL}.TrimEnd('/')
-    $WUT_URL += "/$($args -join '/')".TrimEnd('/')
-    $WUT_URL += '/?sysSh=pwsh'
+    $URL = ${env:URL}.TrimEnd('/')
+    $URL += "/$($args -join '/')".TrimEnd('/')
+    $URL += '/?sysSh=pwsh'
 
-    Invoke-RestMethod -Uri "${WUT_URL}" | Invoke-Expression
+    Invoke-RestMethod -Uri "${URL}" | Invoke-Expression
   } -args $args
 }
 ```

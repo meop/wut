@@ -1,6 +1,6 @@
-if [[ "${WUT_CPU_ARCH}" == 'x86_64' ]]; then
-  if [[ "$(WUT_OS_PLAT)" == 'Linux' ]]; then
-    if [[ "${WUT_OS_DIST}" == 'debian' ]]; then
+if [[ "${SYS_CPU_ARCH}" == 'x86_64' ]]; then
+  if [[ "$(SYS_OS_PLAT)" == 'Linux' ]]; then
+    if [[ "${SYS_OS_DIST}" == 'debian' ]]; then
       DOTNET_VERSION=9.0
 
       # dotnet-sdk: <https://learn.microsoft.com/en-us/dotnet/core/install/linux-debian>
@@ -10,46 +10,44 @@ if [[ "${WUT_CPU_ARCH}" == 'x86_64' ]]; then
       function install_packages_microsoft_repo {
         if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep -v '^#' | grep -v '^$' | grep '^.*packages.*microsoft.*com.*$' > /dev/null; then
           output="${HOME}/packages-microsoft-prod.deb"
-          uri="https://packages.microsoft.com/config/${WUT_OS_DIST}/${WUT_OS_VER}/packages-microsoft-prod.deb"
-          wutLogOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
-          if [[ -z "${WUT_NOOP}" ]]; then
+          uri="https://packages.microsoft.com/config/${SYS_OS_DIST}/${SYS_OS_VER}/packages-microsoft-prod.deb"
+          logOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+          if [[ -z "${NOOP}" ]]; then
             curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
           fi
-          wutLogOp sudo dpkg -i "${output}"
-          if [[ -z "${WUT_NOOP}" ]]; then
+          logOp sudo dpkg -i "${output}"
+          if [[ -z "${NOOP}" ]]; then
             sudo dpkg -i "${output}"
           fi
-          wutLogOp rm "${output}"
-          if [[ -z "${WUT_NOOP}" ]]; then
+          logOp rm "${output}"
+          if [[ -z "${NOOP}" ]]; then
             rm "${output}"
           fi
         fi
       }
 
-      echo -n '> install dotnet sdk [system]? (y/N) '
-      read yn
+      read yn?'> install dotnet sdk [system]? (y/N) '
       if [[ "${yn}" == 'y' ]]; then
         install_packages_microsoft_repo
-        wutLogOp sudo apt update
-        if [[ -z "${WUT_NOOP}" ]]; then
+        logOp sudo apt update
+        if [[ -z "${NOOP}" ]]; then
           sudo apt update
         fi
-        wutLogOp sudo apt install dotnet-sdk-${DOTNET_VERSION}
-        if [[ -z "${WUT_NOOP}" ]]; then
+        logOp sudo apt install dotnet-sdk-${DOTNET_VERSION}
+        if [[ -z "${NOOP}" ]]; then
           sudo apt install dotnet-sdk-${DOTNET_VERSION}
         fi
       fi
 
-      echo -n '> install pwsh [system]? (y/N) '
-      read yn
+      read yn?'> install pwsh [system]? (y/N) '
       if [[ "${yn}" == 'y' ]]; then
         install_packages_microsoft_repo
-        wutLogOp sudo apt update
-        if [[ -z "${WUT_NOOP}" ]]; then
+        logOp sudo apt update
+        if [[ -z "${NOOP}" ]]; then
           sudo apt update
         fi
-        wutLogOp sudo apt install powershell
-        if [[ -z "${WUT_NOOP}" ]]; then
+        logOp sudo apt install powershell
+        if [[ -z "${NOOP}" ]]; then
           sudo apt install powershell
         fi
       fi

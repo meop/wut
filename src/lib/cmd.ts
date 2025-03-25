@@ -1,4 +1,5 @@
 import { getCtx, type Ctx } from './ctx'
+import type { Env } from './env'
 import type { Sh } from './sh'
 import { Pwsh } from './sh/pwsh'
 import { Zsh } from './sh/zsh'
@@ -13,14 +14,14 @@ export interface Cmd {
   switches: Array<{ keys: Array<string>; desc: string }>
 
   commands: Array<Cmd>
-  roots: Array<string>
+  scopes: Array<string>
 
   process(
     url: URL,
     usp: URLSearchParams,
     paths: Array<string>,
     context?: Ctx,
-    environment?: { [key: string]: string },
+    environment?: Env,
     shell?: Sh,
   ): Promise<string>
 }
@@ -35,12 +36,12 @@ export class CmdBase implements Cmd {
   switches: Array<{ keys: Array<string>; desc: string }> = []
 
   commands: Array<Cmd> = []
-  roots: Array<string> = []
+  scopes: Array<string> = []
 
-  help(): Array<string> {
+  help(shell: Sh): Promise<string> {
     const contents: Array<string> = []
 
-    contents.push(`${[...this.roots, this.name].join(' ')} | ${this.desc}`)
+    contents.push(`${[...this.scopes].join(' ')} | ${this.desc}`)
     if (this.aliases.length) {
       contents.push('aliases:')
       contents.push(`  ${this.aliases.join(', ')}`)
@@ -74,23 +75,21 @@ export class CmdBase implements Cmd {
       contents.push(`  ${this.commands.map(s => s.name).join(', ')}`)
     }
 
-    return contents
+    return shell.withLogInfo(contents, { singleQuote: true }).build()
   }
 
-  async work(shell: Sh): Promise<string> {
-    return await shell.withLogInfo(this.help(), { singleQuote: true }).build()
+  work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
+    return this.help(shell)
   }
 
-  async process(
+  process(
     url: URL,
     usp: URLSearchParams,
     paths: Array<string>,
     context?: Ctx,
-    environment?: { [key: string]: string },
+    environment?: Env,
     shell?: Sh,
   ): Promise<string> {
-    const baseName = this.roots.length ? this.roots[0] : this.name
-
     const _context = context ? context : getCtx(usp)
 
     const _environment = environment ? environment : {}
@@ -98,22 +97,18 @@ export class CmdBase implements Cmd {
     let _shell = shell
       ? shell
       : (_context.sys.sh === 'pwsh' ? new Pwsh() : new Zsh())
-          .withSetVar(
-            [baseName, 'URL'].join('_').toUpperCase(),
-            url.toString(),
-            {
-              singleQuote: true,
-            },
-          )
+          .withSetVar('url'.toUpperCase(), url.toString(), {
+            singleQuote: true,
+          })
           .withLoadFilePath('sys', 'env')
           .withLoadFilePath('sys', 'log')
 
     if (!_context.sys.cpu.arch) {
-      return await _shell.withLoadFilePath('cli').build()
+      return _shell.withLoadFilePath('cli').build()
     }
 
     const setEnv = (key: string, value: string, append = false) => {
-      const fullKey = [...this.roots, this.name, key].join('_').toUpperCase()
+      const fullKey = [...this.scopes.slice(1), key].join('_').toUpperCase()
       if (append && _environment[fullKey]) {
         _environment[fullKey] += ` ${value}`
       } else {
@@ -121,24 +116,18 @@ export class CmdBase implements Cmd {
       }
     }
 
-    const setShEnv = () => {
+    const processShEnv = (func: () => Promise<string>) => {
       for (const [key, value] of Object.entries(_environment)) {
         _shell = _shell.withSetVar(key, value, {
           singleQuote: true,
         })
       }
 
-      const traceKey = [...this.roots, this.name, 'TRACE']
-        .join('_')
-        .toUpperCase()
-      if (_environment[traceKey]) {
+      if (_environment['trace'.toUpperCase()]) {
         _shell = _shell.withLoadFilePath('sys', 'trace')
       }
 
-      const debugKey = [...this.roots, this.name, 'DEBUG']
-        .join('_')
-        .toUpperCase()
-      if (_environment[debugKey]) {
+      if (_environment['debug'.toUpperCase()]) {
         _shell = _shell.withLogSucc(['url:'])
         _shell = _shell.withLog([url.toString()], { singleQuote: true })
         _shell = _shell.withLogSucc(['context:'])
@@ -150,6 +139,8 @@ export class CmdBase implements Cmd {
           singleQuote: true,
         })
       }
+
+      return func()
     }
 
     let pathsIndex = 0
@@ -171,10 +162,7 @@ export class CmdBase implements Cmd {
         const _option = this.options.find(o => o.keys.includes(path))
         if (_option && pathsIndex + 1 < paths.length) {
           if (paths[pathsIndex + 1].startsWith('-')) {
-            setShEnv()
-            return await _shell
-              .withLogInfo(this.help(), { singleQuote: true })
-              .build()
+            return processShEnv(() => this.help(_shell))
           }
           setEnv(
             _option.keys.find(k => k.startsWith('--'))?.split('--')[1] ?? '',
@@ -183,16 +171,15 @@ export class CmdBase implements Cmd {
           pathsIndex += 2
           continue
         }
-        setShEnv()
-        return await _shell
-          .withLogInfo(this.help(), { singleQuote: true })
-          .build()
+
+        return processShEnv(() => this.help(_shell))
       }
 
       if (this.commands.length) {
-        const _command = this.commands.find(s => s.name === path)
+        const _command = this.commands.find(
+          c => c.name === path || c.aliases.find(a => a === path),
+        )
         if (_command) {
-          setShEnv()
           return _command.process(
             url,
             usp,
@@ -205,7 +192,7 @@ export class CmdBase implements Cmd {
       }
 
       if (this.arguments.length) {
-        const lastArg = argumentIndex + 1 === this.arguments.length
+        const lastArg = argumentIndex === this.arguments.length - 1
         setEnv(this.arguments[argumentIndex].name, path, lastArg)
         if (!lastArg) {
           argumentIndex += 1
@@ -214,13 +201,16 @@ export class CmdBase implements Cmd {
         continue
       }
 
-      setShEnv()
-      return await _shell
-        .withLogInfo(this.help(), { singleQuote: true })
-        .build()
+      return processShEnv(() => this.help(_shell))
     }
 
-    setShEnv()
-    return await this.work(_shell)
+    while (argumentIndex < this.arguments.length - 1) {
+      if (this.arguments[argumentIndex].req) {
+        return processShEnv(() => this.help(_shell))
+      }
+      argumentIndex += 1
+    }
+
+    return processShEnv(() => this.work(_context, _environment, _shell))
   }
 }

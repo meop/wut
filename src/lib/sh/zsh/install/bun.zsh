@@ -1,9 +1,8 @@
-echo -n '> install bun [user]? (y/N) '
-read yn
+read yn?'> install bun [user]? (y/N) '
 if [[ "${yn}" == 'y' ]]; then
   uri='https://bun.sh/install'
-  wutLogOp curl --fail --location --show-error --silent --url "${uri}" '| bash'
-  if [[ -z "${WUT_NOOP}" ]]; then
-    curl --fail --location --show-error --silent --url "${uri}" | bash
+  logOp source '<(' curl --fail --location --show-error --silent --url "${uri}" ')'
+  if [[ -z "${NOOP}" ]]; then
+    source <( curl --fail --location --show-error --silent --url "${uri}" )
   fi
 fi

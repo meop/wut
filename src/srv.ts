@@ -9,15 +9,17 @@ class SrvCmd extends CmdBase implements Cmd {
     super()
     this.name = pkg.name.toLowerCase()
     this.desc = pkg.description.toLowerCase()
+    this.scopes = [this.name]
     this.switches = [
       { keys: ['-d', '--debug'], desc: 'debug' },
       { keys: ['-g', '--grayscale'], desc: 'no color' },
       { keys: ['-n', '--noop'], desc: 'no op' },
-      { keys: ['-s', '--succinct'], desc: 'no info' },
+      { keys: ['-s', '--succinct'], desc: 'omit info' },
       { keys: ['-t', '--trace'], desc: 'trace' },
-      { keys: ['-v', '--verbose'], desc: 'more info' },
+      { keys: ['-v', '--verbose'], desc: 'add info' },
+      { keys: ['-y', '--yes'], desc: 'yes' },
     ]
-    this.commands = [new PackCmd([this.name])]
+    this.commands = [new PackCmd(this.scopes)]
   }
 }
 
@@ -28,8 +30,7 @@ async function runSrv(req: Request) {
     const usp = new URLSearchParams(url.search)
     const paths = url.pathname.split('/').filter(p => p.length > 0)
 
-    const spSysSh = getSp(usp, 'sysSh')
-    if (!spSysSh) {
+    if (!getSp(usp, 'sysSh')) {
       throw new Error('url param missing: sysSh')
     }
 

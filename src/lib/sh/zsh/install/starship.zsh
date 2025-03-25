@@ -1,18 +1,17 @@
-echo -n '> install starship [user]? (y/N) '
-read yn
+read yn?'> install starship [user]? (y/N) '
 if [[ "${yn}" == 'y' ]]; then
   output="${HOME}/install-starship.sh"
   uri='https://starship.rs/install.sh'
-  wutLogOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
-  if [[ -z "${WUT_NOOP}" ]]; then
+  logOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+  if [[ -z "${NOOP}" ]]; then
     curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
   fi
-  wutLogOp sh "${output}" -b "${HOME}/.local/bin"
-  if [[ -z "${WUT_NOOP}" ]]; then
+  logOp sh "${output}" -b "${HOME}/.local/bin"
+  if [[ -z "${NOOP}" ]]; then
     sh "${output}" -b "${HOME}/.local/bin"
   fi
-  wutLogOp rm -r -f "${output}"'*'
-  if [[ -z "${WUT_NOOP}" ]]; then
+  logOp rm -r -f "${output}"'*'
+  if [[ -z "${NOOP}" ]]; then
     rm -r -f "${output}"*
   fi
 fi

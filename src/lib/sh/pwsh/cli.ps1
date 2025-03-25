@@ -1,1 +1,1 @@
-Invoke-RestMethod -Uri "${WUT_URL}" | Invoke-Expression
+Invoke-RestMethod -Uri "${URL}" | Invoke-Expression
