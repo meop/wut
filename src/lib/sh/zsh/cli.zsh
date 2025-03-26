@@ -1,1 +1,1 @@
-source <( curl --fail --location --show-error --silent --url "${URL}" )
+eval "$( curl --fail --location --show-error --silent --url "${url}" )"

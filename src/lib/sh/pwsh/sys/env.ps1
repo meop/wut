@@ -1,48 +1,48 @@
-if (-not "${SYS_CPU_ARCH}") {
+if (-not "${sys_cpu_arch}") {
   if ($IsWindows) {
-    $SYS_CPU_ARCH = ${env:PROCESSOR_ARCHITECTURE}
+    $sys_cpu_arch = ${env:PROCESSOR_ARCHITECTURE}
   } else {
-    $SYS_CPU_ARCH = $(uname -m)
+    $sys_cpu_arch = $(uname -m)
   }
-  if ("${SYS_CPU_ARCH}") {
-    $URL = "${URL}?sysCpuArch=${SYS_CPU_ARCH}"
+  if ("${sys_cpu_arch}") {
+    $url = "${url}?sysCpuArch=${sys_cpu_arch}"
   }
 }
 
-if (-not "${SYS_OS_PLAT}") {
+if (-not "${sys_os_plat}") {
   if ($IsWindows) {
-    $SYS_OS_PLAT = 'Windows'
+    $sys_os_plat = 'Windows'
   } elseif ($IsMacOS) {
-    $SYS_OS_PLAT = 'Darwin'
+    $sys_os_plat = 'Darwin'
   } elseif ($IsLinux) {
-    $SYS_OS_PLAT = 'Linux'
+    $sys_os_plat = 'Linux'
   }
-  if ("${SYS_OS_PLAT}") {
-    $URL = "${URL}&sysOsPlat=${SYS_OS_PLAT}"
+  if ("${sys_os_plat}") {
+    $url = "${url}&sysOsPlat=${sys_os_plat}"
   }
 }
 
-if ("${SYS_OS_PLAT}" -eq 'Linux') {
+if ("${sys_os_plat}" -eq 'Linux') {
   if (Test-Path /etc/os-release) {
-    if (-not "${SYS_OS_DIST}") {
-      $SYS_OS_DIST = $(grep --only-matching --perl-regexp '^ID=\K[a-zA-Z0-9._-]+' /etc/os-release)
-      if ("${SYS_OS_DIST}") {
-        $URL = "${URL}&sysOsDist=${SYS_OS_DIST}"
+    if (-not "${sys_os_dist}") {
+      $sys_os_dist = $(grep --only-matching --perl-regexp '^ID=\K[a-zA-Z0-9._-]+' /etc/os-release)
+      if ("${sys_os_dist}") {
+        $url = "${url}&sysOsDist=${sys_os_dist}"
       }
     }
 
-    if (-not "${SYS_OS_VER}") {
-      $SYS_OS_VER = $(grep '^VERSION_ID=' /etc/os-release | cut -d '=' -f 2 | tr -d '"')
-      if ("${SYS_OS_VER}") {
-        $URL = "${URL}&sysOsVer=${SYS_OS_VER}"
+    if (-not "${sys_os_ver}") {
+      $sys_os_ver = $(grep '^VERSION_ID=' /etc/os-release | cut -d '=' -f 2 | tr -d '"')
+      if ("${sys_os_ver}") {
+        $url = "${url}&sysOsVer=${sys_os_ver}"
       }
     }
   }
 }
 
-if (-not "${SYS_USER}") {
-  $SYS_USER = "${env:USER}"
-  if ("${SYS_USER}") {
-    $URL = "${URL}&sysUser=${SYS_USER}"
+if (-not "${sys_user}") {
+  $sys_user = "${env:USER}"
+  if ("${sys_user}") {
+    $url = "${url}&sysUser=${sys_user}"
   }
 }

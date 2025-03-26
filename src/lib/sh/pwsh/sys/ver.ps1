@@ -1,8 +1,8 @@
-$SH_VERSION_MAJOR = 7
-$SH_VERSION_MINOR = 5
+$sh_version_major = 7
+$sh_version_minor = 5
 
-if ($PSVersionTable.PSVersion.Major -lt ${SH_VERSION_MAJOR} -or
-    $PSVersionTable.PSVersion.Minor -lt ${SH_VERSION_MINOR}) {
-  Write-Error "pwsh must be >= '${SH_VERSION_MAJOR}.${SH_VERSION_MINOR}' .. found '$($PSVersionTable.PSVersion)' .. aborting"
+if ($PSVersionTable.PSVersion.Major -lt ${sh_version_major} -or
+    $PSVersionTable.PSVersion.Minor -lt ${sh_version_minor}) {
+  Write-Error "pwsh must be >= '${sh_version_major}.${sh_version_minor}' .. found '$($PSVersionTable.PSVersion)' .. aborting"
   exit 1
 }

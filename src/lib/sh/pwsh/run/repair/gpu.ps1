@@ -4,22 +4,22 @@ if ($IsWindows) {
     pwsh -nologo -noprofile -command {
       Set-Location HKLM:
 
-      $root_path = '\SYSTEM\CurrentControlSet\Enum\PCI'
-      $root_pci_base_id = '10DE' # nvidia
+      $_root_path = '\SYSTEM\CurrentControlSet\Enum\PCI'
+      $_root_pci_base_id = '10DE' # nvidia
 
-      foreach ($pci_dev_desc_key in (Get-ChildItem $root_path).Name) {
-        if ($pci_dev_desc_key -Match $root_pci_base_id) {
-          foreach ($key in (Get-ChildItem $pci_dev_desc_key).Name) {
+      foreach ($_pci_dev_desc_key in (Get-ChildItem $_root_path).Name) {
+        if ($_pci_dev_desc_key -Match $_root_pci_base_id) {
+          foreach ($key in (Get-ChildItem $_pci_dev_desc_key).Name) {
             $path = Join-Path $key 'Device Parameters' 'Interrupt Management' 'MessageSignaledInterruptProperties'
 
             if (-not (Test-Path $path)) {
-              New-Item $path -ItemType Directory
+              runOp New-Item $path -ItemType Directory
             }
 
             if (-not (Get-ItemProperty $path).MSISupported) {
-              New-ItemProperty $path -Name MSISupported -Value 1 -PropertyType DWord
+              runOp New-ItemProperty $path -Name MSISupported -Value 1 -PropertyType DWord
             } else {
-              Set-ItemProperty $path -Name MSISupported -Value 1
+              runOp Set-ItemProperty $path -Name MSISupported -Value 1
             }
 
             Write-Output $path MSISupported (Get-ItemProperty $path).MSISupported

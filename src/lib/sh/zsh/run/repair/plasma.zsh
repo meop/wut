@@ -8,18 +8,12 @@
 if [[ -f "${HOME}/.config/globalshortcutsrc" ]]; then
   read yn?'? repair plasma global shortcuts [user] (y/N) '
   if [[ "${yn}" == 'y' ]]; then
-    printOp rm "${HOME}/.config/globalshortcutsrc"
-    if [[ -z "${NOOP}" ]]; then
-      rm "${HOME}/.config/kglobalshortcutsrc"
-    fi
+    runOp rm "${HOME}/.config/globalshortcutsrc"
   fi
 fi
 if [[ -f "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc" ]]; then
   read yn?'? repair plasma panel applets [user] (y/N) '
   if [[ "${yn}" == 'y' ]]; then
-    printOp rm "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc"
-    if [[ -z "${NOOP}" ]]; then
-      rm "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc"
-    fi
+    runOp rm "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc"
   fi
 fi

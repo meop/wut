@@ -1,38 +1,38 @@
-if [[ -z "${SYS_CPU_ARCH}" ]]; then
-  SYS_CPU_ARCH=$(uname -m)
-  if [[ "${SYS_CPU_ARCH}" ]]; then
-    URL="${URL}?sysCpuArch=${SYS_CPU_ARCH}"
+if [[ -z "${sys_cpu_arch}" ]]; then
+  sys_cpu_arch=$(uname -m)
+  if [[ "${sys_cpu_arch}" ]]; then
+    url="${url}?sysCpuArch=${sys_cpu_arch}"
   fi
 fi
 
-if [[ -z "${SYS_OS_PLAT}" ]]; then
-  SYS_OS_PLAT=$(uname)
-  if [[ "${SYS_OS_PLAT}" ]]; then
-    URL="${URL}&sysOsPlat=${SYS_OS_PLAT}"
+if [[ -z "${sys_os_plat}" ]]; then
+  sys_os_plat=$(uname)
+  if [[ "${sys_os_plat}" ]]; then
+    url="${url}&sysOsPlat=${sys_os_plat}"
   fi
 fi
 
-if [[ "${SYS_OS_PLAT}" == 'Linux' ]]; then
+if [[ "${sys_os_plat}" == 'Linux' ]]; then
   if [[ -f /etc/os-release ]]; then
-    if [[ -z "${SYS_OS_DIST}" ]]; then
-      SYS_OS_DIST=$(grep --only-matching --perl-regexp '^ID=\K[a-zA-Z0-9._-]+' /etc/os-release)
-      if [[ "${SYS_OS_DIST}" ]]; then
-        URL="${URL}&sysOsDist=${SYS_OS_DIST}"
+    if [[ -z "${sys_os_dist}" ]]; then
+      sys_os_dist=$(grep --only-matching --perl-regexp '^ID=\K[a-zA-Z0-9._-]+' /etc/os-release)
+      if [[ "${sys_os_dist}" ]]; then
+        url="${url}&sysOsDist=${sys_os_dist}"
       fi
     fi
 
-    if [[ -z "${SYS_OS_VER}" ]]; then
-      SYS_OS_VER=$(grep '^VERSION_ID=' /etc/os-release | cut -d '=' -f 2 | tr -d '"')
-      if [[ "${SYS_OS_VER}" ]]; then
-        URL="${URL}&sysOsVer=${SYS_OS_VER}"
+    if [[ -z "${sys_os_ver}" ]]; then
+      sys_os_ver=$(grep '^VERSION_ID=' /etc/os-release | cut -d '=' -f 2 | tr -d '"')
+      if [[ "${sys_os_ver}" ]]; then
+        url="${url}&sysOsVer=${sys_os_ver}"
       fi
     fi
   fi
 fi
 
-if [[ -z "${SYS_USER}" ]]; then
-  SYS_USER="$USER"
-  if [[ "${SYS_USER}" ]]; then
-    URL="${URL}&sysUser=${SYS_USER}"
+if [[ -z "${sys_user}" ]]; then
+  sys_user="$USER"
+  if [[ "${sys_user}" ]]; then
+    url="${url}&sysUser=${sys_user}"
   fi
 fi

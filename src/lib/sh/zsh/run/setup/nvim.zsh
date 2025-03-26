@@ -1,14 +1,11 @@
 if type nvim > /dev/null; then
   read yn?'? setup nvim plugin manager [local] (y/N) '
   if [[ "${yn}" == 'y' ]]; then
-    LOCAL_SHARE="${XDG_DATA_HOME:-$HOME/.local/share}"
-    NVIM_DATA="${LOCAL_SHARE}/nvim"
+    _local_share="${XDG_DATA_HOME:-$HOME/.local/share}"
+    _nvim="${_local_share}/nvim"
 
-    output="${NVIM_DATA}/site/autoload/plug.vim"
-    url='https://raw.githubusercontent.com/junegunn/vim-plug/HEAD/plug.vim'
-    printOp curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
-    if [[ -z "${NOOP}" ]]; then
-      curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
-    fi
+    _output="${_nvim}/site/autoload/plug.vim"
+    _url='https://raw.githubusercontent.com/junegunn/vim-plug/HEAD/plug.vim'
+    runOp curl --fail --location --show-error --silent --url "${_url}" --create-dirs --output "${_output}"
   fi
 fi
