@@ -1,9 +1,7 @@
-import { type Ctx, getCtx } from './ctx'
+import type { Ctx } from './ctx'
 import type { Env } from './env'
 import { type Fmt, consStr } from './seri'
 import type { Sh } from './sh'
-import { Pwsh } from './sh/pwsh'
-import { Zsh } from './sh/zsh'
 
 export interface Cmd {
   name: string
@@ -21,9 +19,9 @@ export interface Cmd {
     url: URL,
     usp: URLSearchParams,
     parts: Array<string>,
-    context?: Ctx,
+    shell: Sh,
+    context: Ctx,
     environment?: Env,
-    shell?: Sh,
   ): Promise<string>
 }
 
@@ -87,24 +85,13 @@ export class CmdBase {
     url: URL,
     usp: URLSearchParams,
     parts: Array<string>,
-    context?: Ctx,
+    shell: Sh,
+    context: Ctx,
     environment?: Env,
-    shell?: Sh,
   ): Promise<string> {
-    const _context = context ? context : getCtx(usp)
-
-    const _environment = environment ? environment : {}
-
     let _shell = shell
-      ? shell
-      : (_context.sys.sh === 'pwsh' ? new Pwsh() : new Zsh())
-          .withSetVar('url'.toUpperCase(), url.toString())
-          .withLoadFilePath('sys', 'env')
-          .withLoadFilePath('sys', 'print')
-
-    if (!_context.sys.cpu.arch) {
-      return _shell.withLoadFilePath('cli').build()
-    }
+    const _context = context
+    const _environment = environment ? environment : {}
 
     const setEnv = (key: string, value: string, append = false) => {
       const fullKey = [...this.scopes.slice(1), key].join('_').toUpperCase()
@@ -180,9 +167,9 @@ export class CmdBase {
             url,
             usp,
             parts.slice(partsIndex + 1),
+            _shell,
             _context,
             _environment,
-            _shell,
           )
         }
       }

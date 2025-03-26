@@ -1,5 +1,5 @@
 if ($IsWindows) {
-  $yn = Read-Host '> repair rtc utc [system]? (y/N)'
+  $yn = Read-Host '? repair rtc utc [system] (y/N)'
   if ("${yn}" -eq 'y') {
     pwsh -nologo -noprofile -command {
       Set-Location HKLM:

@@ -1,8 +1,8 @@
-read yn?'> install bun [user]? (y/N) '
+read yn?'? install bun [user] (y/N) '
 if [[ "${yn}" == 'y' ]]; then
-  uri='https://bun.sh/install'
-  printOp source '<(' curl --fail --location --show-error --silent --url "${uri}" ')'
+  url='https://bun.sh/install'
+  printOp source '<(' curl --fail --location --show-error --silent --url "${url}" ')'
   if [[ -z "${NOOP}" ]]; then
-    source <( curl --fail --location --show-error --silent --url "${uri}" )
+    source <( curl --fail --location --show-error --silent --url "${url}" )
   fi
 fi

@@ -10,10 +10,10 @@ if [[ "${SYS_CPU_ARCH}" == 'x86_64' ]]; then
       function install_packages_microsoft_repo {
         if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep -v '^#' | grep -v '^$' | grep '^.*packages.*microsoft.*com.*$' > /dev/null; then
           output="${HOME}/packages-microsoft-prod.deb"
-          uri="https://packages.microsoft.com/config/${SYS_OS_DIST}/${SYS_OS_VER}/packages-microsoft-prod.deb"
-          printOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+          url="https://packages.microsoft.com/config/${SYS_OS_DIST}/${SYS_OS_VER}/packages-microsoft-prod.deb"
+          printOp curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
           if [[ -z "${NOOP}" ]]; then
-            curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+            curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
           fi
           printOp sudo dpkg -i "${output}"
           if [[ -z "${NOOP}" ]]; then
@@ -26,7 +26,7 @@ if [[ "${SYS_CPU_ARCH}" == 'x86_64' ]]; then
         fi
       }
 
-      read yn?'> install dotnet sdk [system]? (y/N) '
+      read yn?'? install dotnet sdk [system] (y/N) '
       if [[ "${yn}" == 'y' ]]; then
         install_packages_microsoft_repo
         printOp sudo apt update
@@ -39,7 +39,7 @@ if [[ "${SYS_CPU_ARCH}" == 'x86_64' ]]; then
         fi
       fi
 
-      read yn?'> install pwsh [system]? (y/N) '
+      read yn?'? install pwsh [system] (y/N) '
       if [[ "${yn}" == 'y' ]]; then
         install_packages_microsoft_repo
         printOp sudo apt update

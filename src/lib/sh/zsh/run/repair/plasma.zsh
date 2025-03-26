@@ -6,7 +6,7 @@
 # the only workaround to reset this behavior is to start over by erasing these
 # files and setting up new panels
 if [[ -f "${HOME}/.config/globalshortcutsrc" ]]; then
-  read yn?'> repair plasma global shortcuts [user]? (y/N) '
+  read yn?'? repair plasma global shortcuts [user] (y/N) '
   if [[ "${yn}" == 'y' ]]; then
     printOp rm "${HOME}/.config/globalshortcutsrc"
     if [[ -z "${NOOP}" ]]; then
@@ -15,7 +15,7 @@ if [[ -f "${HOME}/.config/globalshortcutsrc" ]]; then
   fi
 fi
 if [[ -f "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc" ]]; then
-  read yn?'> repair plasma panel applets [user]? (y/N) '
+  read yn?'? repair plasma panel applets [user] (y/N) '
   if [[ "${yn}" == 'y' ]]; then
     printOp rm "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc"
     if [[ -z "${NOOP}" ]]; then

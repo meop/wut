@@ -4,7 +4,7 @@ if type termux-reload-settings > /dev/null; then
   if [[ ! -f /etc/os-release ]]; then
     TERMUX_HOME="${HOME}/.termux"
 
-    read yn?'> setup termux mirrors? (y/N) '
+    read yn?'? setup termux mirrors (y/N) '
     if [[ "${yn}" == 'y' ]]; then
       printOp termux-change-mirror
       if [[ -z "${NOOP}" ]]; then
@@ -12,7 +12,7 @@ if type termux-reload-settings > /dev/null; then
       fi
     fi
 
-    read yn?'> setup termux proots? (y/N) '
+    read yn?'? setup termux proots (y/N) '
     if [[ "${yn}" == 'y' ]]; then
       PROOT_DATA="${PREFIX}/var/lib/proot-distro/installed-rootfs"
       if [[ ! -d "${PROOT_DATA}/archlinux" ]]; then
@@ -31,7 +31,7 @@ if type termux-reload-settings > /dev/null; then
       fi
     fi
 
-    read yn?'> setup termux storage? (y/N) '
+    read yn?'? setup termux storage (y/N) '
     if [[ "${yn}" == 'y' ]]; then
       printOp termux-setup-storage
       if [[ -z "${NOOP}" ]]; then
@@ -39,19 +39,19 @@ if type termux-reload-settings > /dev/null; then
       fi
     fi
 
-    read yn?'> setup termux theme [user]? (y/N) '
+    read yn?'? setup termux theme [user] (y/N) '
     if [[ "${yn}" == 'y' ]]; then
       output="${TERMUX_HOME}/colors.properties"
-      uri='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/termux/tokyonight_moon.properties'
-      printOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+      url='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/termux/tokyonight_moon.properties'
+      printOp curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
       if [[ -z "${NOOP}" ]]; then
-        curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+        curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
       fi
       output="${TERMUX_HOME}/Hack.zip"
-      uri='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/Hack.zip'
-      printOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+      url='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/Hack.zip'
+      printOp curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
       if [[ -z "${NOOP}" ]]; then
-        curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+        curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
       fi
       printOp unzip -q "${output}" -d "${output}.unzip"
       if [[ -z "${NOOP}" ]]; then

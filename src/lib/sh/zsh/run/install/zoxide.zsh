@@ -1,8 +1,8 @@
-read yn?'> install zoxide [user]? (y/N) '
+read yn?'? install zoxide [user] (y/N) '
 if [[ "${yn}" == 'y' ]]; then
-  uri='https://raw.githubusercontent.com/ajeetdsouza/zoxide/HEAD/install.sh'
-  printOp source '<(' curl --fail --location --show-error --silent --url "${uri}" ')'
+  url='https://raw.githubusercontent.com/ajeetdsouza/zoxide/HEAD/install.sh'
+  printOp source '<(' curl --fail --location --show-error --silent --url "${url}" ')'
   if [[ -z "${NOOP}" ]]; then
-    source <( curl --fail --location --show-error --silent --url "${uri}" )
+    source <( curl --fail --location --show-error --silent --url "${url}" )
   fi
 fi

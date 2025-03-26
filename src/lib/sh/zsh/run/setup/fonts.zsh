@@ -1,5 +1,5 @@
 if [[ "$OSTYPE" == 'linux'* ]]; then
-  read yn?'> setup nerd fonts [local]? (y/N) '
+  read yn?'? setup nerd fonts [local] (y/N) '
   if [[ "${yn}" == 'y' ]]; then
     LOCAL_SHARE="${XDG_DATA_HOME:-$HOME/.local/share}"
     FONTS_DATA="${LOCAL_SHARE}/fonts"
@@ -10,10 +10,10 @@ if [[ "$OSTYPE" == 'linux'* ]]; then
     fi
 
     output="${HOME}/Hack.zip"
-    uri='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/Hack.zip'
-    printOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+    url='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/Hack.zip'
+    printOp curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
     if [[ -z "${NOOP}" ]]; then
-      curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+      curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
     fi
     printOp unzip -q "${output}" -d "${output}.unzip"
     if [[ -z "${NOOP}" ]]; then
@@ -29,10 +29,10 @@ if [[ "$OSTYPE" == 'linux'* ]]; then
     fi
 
     output="${HOME}/FiraCode.zip"
-    uri='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/FiraCode.zip'
-    printOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+    url='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/FiraCode.zip'
+    printOp curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
     if [[ -z "${NOOP}" ]]; then
-      curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+      curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
     fi
     printOp unzip -q "${output}" -d "${output}.unzip"
     if [[ -z "${NOOP}" ]]; then

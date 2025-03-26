@@ -1,10 +1,10 @@
-read yn?'> install starship [user]? (y/N) '
+read yn?'? install starship [user] (y/N) '
 if [[ "${yn}" == 'y' ]]; then
   output="${HOME}/install-starship.sh"
-  uri='https://starship.rs/install.sh'
-  printOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+  url='https://starship.rs/install.sh'
+  printOp curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
   if [[ -z "${NOOP}" ]]; then
-    curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+    curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
   fi
   printOp sh "${output}" -b "${HOME}/.local/bin"
   if [[ -z "${NOOP}" ]]; then

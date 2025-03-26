@@ -1,16 +1,15 @@
-import { getCpuArch, getOsPlat, getSysSh } from './os'
+import { getCpuArch, getOsPlat } from './os'
 
 export type Ctx = {
-  sys: {
-    cpu: {
+  sys?: {
+    cpu?: {
       arch?: string
     }
-    os: {
+    os?: {
       plat?: string
       dist?: string
       ver?: string
     }
-    sh?: string
     user?: string
   }
 }
@@ -24,14 +23,12 @@ export function getCtx(usp: URLSearchParams): Ctx {
   const spSysOsPlat = getSp(usp, 'sysOsPlat')
   const spSysOsDist = getSp(usp, 'sysOsDist')
   const spSysOsVer = getSp(usp, 'sysOsVer')
-  const spSysSh = getSp(usp, 'sysSh')
   const spSysUser = getSp(usp, 'sysUser')
 
   const sysCpuArch = spSysCpuArch ? getCpuArch(spSysCpuArch) : undefined
   const sysOsPlat = spSysOsPlat ? getOsPlat(spSysOsPlat) : undefined
   const sysOsDist = spSysOsDist
   const sysOsVer = spSysOsVer
-  const sysSh = spSysSh ? getSysSh(spSysSh) : undefined
   const sysUser = spSysUser
 
   return {
@@ -44,7 +41,6 @@ export function getCtx(usp: URLSearchParams): Ctx {
         dist: sysOsDist,
         ver: sysOsVer,
       },
-      sh: sysSh,
       user: sysUser,
     },
   }

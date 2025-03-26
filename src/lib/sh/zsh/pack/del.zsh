@@ -2,25 +2,16 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt' ]] &&type apt > /dev/nu
   if [[ "${YES}" ]]; then
     yn='y'
   else
-    read yn?'> del packages with apt [system]? (y/N) '
+    read yn?'? del packages with apt [system] (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      printOp sudo apt purge $PACK_DEL_NAMES
-      if [[ -z "${NOOP}" ]]; then
-        sudo apt purge $PACK_DEL_NAMES
-      fi
+      runOp sudo apt purge $PACK_DEL_NAMES
     else
-      printOp apt purge $PACK_DEL_NAMES
-      if [[ -z "${NOOP}" ]]; then
-        apt purge $PACK_DEL_NAMES
-      fi
+      runOp apt purge $PACK_DEL_NAMES
     fi
     if [[ $PACK_DEL_PRESET ]]; then
-      printOp eval $PACK_DEL_PRESET
-      if [[ -z "${NOOP}" ]]; then
-        eval $PACK_DEL_PRESET
-      fi
+      runOp $PACK_DEL_PRESET
     fi
   fi
 fi
@@ -30,20 +21,14 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt-get' ]] && type apt-get 
   elif [[ "${YES}" ]]; then
     yn='y'
   else
-    read yn?'> del packages with apt-get [system]? (y/N) '
+    read yn?'? del packages with apt-get [system] (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      printOp sudo apt-get purge $PACK_DEL_NAMES
-      if [[ -z "${NOOP}" ]]; then
-        sudo apt-get purge $PACK_DEL_NAMES
-      fi
+      runOp sudo apt-get purge $PACK_DEL_NAMES
     fi
     if [[ $PACK_DEL_PRESET ]]; then
-      printOp eval $PACK_DEL_PRESET
-      if [[ -z "${NOOP}" ]]; then
-        eval $PACK_DEL_PRESET
-      fi
+      runOp $PACK_DEL_PRESET
     fi
   fi
 fi
@@ -52,18 +37,12 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'brew' ]] && type brew > /dev
   if [[ "${YES}" ]]; then
     yn='y'
   else
-    read yn?'> del packages with brew [system]? (y/N) '
+    read yn?'? del packages with brew [system] (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
-    printOp brew uninstall $PACK_DEL_NAMES
-    if [[ -z "${NOOP}" ]]; then
-      brew uninstall $PACK_DEL_NAMES
-    fi
+    runOp brew uninstall $PACK_DEL_NAMES
     if [[ $PACK_DEL_PRESET ]]; then
-      printOp eval $PACK_DEL_PRESET
-      if [[ -z "${NOOP}" ]]; then
-        eval $PACK_DEL_PRESET
-      fi
+      runOp $PACK_DEL_PRESET
     fi
   fi
 fi
@@ -72,20 +51,14 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'dnf' ]] && type dnf > /dev/n
   if [[ "${YES}" ]]; then
     yn='y'
   else
-    read yn?'> del packages with dnf [system]? (y/N) '
+    read yn?'? del packages with dnf [system] (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      printOp sudo dnf remove $PACK_DEL_NAMES
-      if [[ -z "${NOOP}" ]]; then
-        sudo dnf remove $PACK_DEL_NAMES
-      fi
+      runOp sudo dnf remove $PACK_DEL_NAMES
     fi
     if [[ $PACK_DEL_PRESET ]]; then
-      printOp eval $PACK_DEL_PRESET
-      if [[ -z "${NOOP}" ]]; then
-        eval $PACK_DEL_PRESET
-      fi
+      runOp $PACK_DEL_PRESET
     fi
   fi
 fi
@@ -94,18 +67,12 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'yay' ]] && type yay > /dev/n
   if [[ "${YES}" ]]; then
     yn='y'
   else
-    read yn?'> del packages with yay [system]? (y/N) '
+    read yn?'? del packages with yay [system] (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
-    printOp yay --remove --recursive --nosave $PACK_DEL_NAMES
-    if [[ -z "${NOOP}" ]]; then
-      yay --remove --recursive --nosave $PACK_DEL_NAMES
-    fi
+    runOp yay --remove --recursive --nosave $PACK_DEL_NAMES
     if [[ $PACK_DEL_PRESET ]]; then
-      printOp eval $PACK_DEL_PRESET
-      if [[ -z "${NOOP}" ]]; then
-        eval $PACK_DEL_PRESET
-      fi
+      runOp $PACK_DEL_PRESET
     fi
   fi
 fi
@@ -115,25 +82,16 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > 
   elif [[ "${YES}" ]]; then
     yn='y'
   else
-    read yn?'> del packages with pacman [system]? (y/N) '
+    read yn?'? del packages with pacman [system] (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      printOp sudo pacman --remove --recursive --nosave $PACK_DEL_NAMES
-      if [[ -z "${NOOP}" ]]; then
-        sudo pacman --remove --recursive --nosave $PACK_DEL_NAMES
-      fi
+      runOp sudo pacman --remove --recursive --nosave $PACK_DEL_NAMES
     else
-      printOp pacman --remove --recursive --nosave $PACK_DEL_NAMES
-      if [[ -z "${NOOP}" ]]; then
-        pacman --remove --recursive --nosave $PACK_DEL_NAMES
-      fi
+      runOp pacman --remove --recursive --nosave $PACK_DEL_NAMES
     fi
     if [[ $PACK_DEL_PRESET ]]; then
-      printOp eval $PACK_DEL_PRESET
-      if [[ -z "${NOOP}" ]]; then
-        eval $PACK_DEL_PRESET
-      fi
+      runOp $PACK_DEL_PRESET
     fi
   fi
 fi

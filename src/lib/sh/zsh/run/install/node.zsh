@@ -4,15 +4,15 @@ if [[ "${SYS_OS_PLAT}" == 'Linux' ]]; then
 
     function install_nodesource_repo {
       if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep -v '^#' | grep -v '^$' | grep '^.*nodesource.*com.*$' > /dev/null; then
-        uri="https://deb.nodesource.com/setup_${NODE_VERSION}.x"
-        printOp curl --fail --location --show-error --silent --url "${uri}" '|' sudo -E bash
+        url="https://deb.nodesource.com/setup_${NODE_VERSION}.x"
+        printOp curl --fail --location --show-error --silent --url "${url}" '|' sudo -E bash
         if [[ -z "${NOOP}" ]]; then
-          curl --fail --location --show-error --silent --url "${uri}" | sudo -E bash
+          curl --fail --location --show-error --silent --url "${url}" | sudo -E bash
         fi
       fi
     }
 
-    read yn?'> install node js [system]? (y/N) '
+    read yn?'? install node js [system] (y/N) '
     if [[ "${yn}" == 'y' ]]; then
       install_nodesource_repo
       printOp sudo apt update
@@ -25,7 +25,7 @@ if [[ "${SYS_OS_PLAT}" == 'Linux' ]]; then
       fi
     fi
 
-    read yn?'> install npm [system]? (y/N) '
+    read yn?'? install npm [system] (y/N) '
     if [[ "${yn}" == 'y' ]]; then
       install_nodesource_repo
       printOp sudo apt update

@@ -29,15 +29,3 @@ export function getOsPlat(osPlat: string) {
       throw new Error(`unsupported os platform: ${osPlatLower}`)
   }
 }
-
-export function getSysSh(sysSh: string) {
-  const sysShLower = sysSh.toLowerCase()
-  switch (sysShLower) {
-    case 'pwsh':
-      return 'pwsh'
-    case 'zsh':
-      return 'zsh'
-    default:
-      throw new Error(`unsupported sys shell: ${sysShLower}`)
-  }
-}

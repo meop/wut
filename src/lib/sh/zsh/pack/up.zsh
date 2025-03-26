@@ -2,40 +2,22 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt' ]] && type apt > /dev/n
   if [[ "${YES}" ]]; then
     yn='y'
   else
-    read yn?'> up packages with apt [system]? (y/N) '
+    read yn?'? up packages with apt [system] (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      printOp sudo apt update
-      if [[ -z "${NOOP}" ]]; then
-        sudo apt update
-      fi
+      runOp sudo apt update
       if [[ "${PACK_UP_NAMES}" ]]; then
-        printOp sudo apt install $PACK_UP_NAMES
-        if [[ -z "${NOOP}" ]]; then
-          sudo apt install $PACK_UP_NAMES
-        fi
+        runOp sudo apt install $PACK_UP_NAMES
       else
-        printOp sudo apt full-upgrade
-        if [[ -z "${NOOP}" ]]; then
-          sudo apt full-upgrade
-        fi
+        runOp sudo apt full-upgrade
       fi
     else
-      printOp apt update
-      if [[ -z "${NOOP}" ]]; then
-        apt update
-      fi
+      runOp apt update
       if [[ "${PACK_UP_NAMES}" ]]; then
-        printOp apt install $PACK_UP_NAMES
-        if [[ -z "${NOOP}" ]]; then
-          apt install $PACK_UP_NAMES
-        fi
+        runOp apt install $PACK_UP_NAMES
       else
-        printOp apt full-upgrade
-        if [[ -z "${NOOP}" ]]; then
-          apt full-upgrade
-        fi
+        runOp apt full-upgrade
       fi
     fi
   fi
@@ -46,24 +28,15 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt-get' ]] && type apt-get 
   elif [[ "${YES}" ]]; then
     yn='y'
   else
-    read yn?'> up packages with apt-get [system]? (y/N) '
+    read yn?'? up packages with apt-get [system] (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      printOp sudo apt-get update
-      if [[ -z "${NOOP}" ]]; then
-        sudo apt-get update
-      fi
+      runOp sudo apt-get update
       if [[ "${PACK_UP_NAMES}" ]]; then
-        printOp sudo apt-get install $PACK_UP_NAMES
-        if [[ -z "${NOOP}" ]]; then
-          sudo apt-get install $PACK_UP_NAMES
-        fi
+        runOp sudo apt-get install $PACK_UP_NAMES
       else
-        printOp sudo apt-get dist-upgrade
-        if [[ -z "${NOOP}" ]]; then
-          sudo apt-get dist-upgrade
-        fi
+        runOp sudo apt-get dist-upgrade
       fi
     fi
   fi
@@ -73,23 +46,14 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'brew' ]] && type brew > /dev
   if [[ "${YES}" ]]; then
     yn='y'
   else
-    read yn?'> up packages with brew [system]? (y/N) '
+    read yn?'? up packages with brew [system] (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
-    printOp brew update
-    if [[ -z "${NOOP}" ]]; then
-      brew update
-    fi
+    runOp brew update
     if [[ "${PACK_UP_NAMES}" ]]; then
-      printOp brew upgrade --greedy $PACK_UP_NAMES
-      if [[ -z "${NOOP}" ]]; then
-        brew upgrade --greedy $PACK_UP_NAMES
-      fi
+      runOp brew upgrade --greedy $PACK_UP_NAMES
     else
-      printOp brew upgrade --greedy
-      if [[ -z "${NOOP}" ]]; then
-        brew upgrade --greedy
-      fi
+      runOp brew upgrade --greedy
     fi
   fi
 fi
@@ -98,24 +62,15 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'dnf' ]] && type dnf > /dev/n
   if [[ "${YES}" ]]; then
     yn='y'
   else
-    read yn?'> up packages with dnf [system]? (y/N) '
+    read yn?'? up packages with dnf [system] (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      printOp sudo dnf check-update
-      if [[ -z "${NOOP}" ]]; then
-        sudo dnf check-update
-      fi
+      runOp sudo dnf check-update
       if [[ "${PACK_UP_NAMES}" ]]; then
-        printOp sudo dnf upgrade $PACK_UP_NAMES
-        if [[ -z "${NOOP}" ]]; then
-          sudo dnf upgrade $PACK_UP_NAMES
-        fi
+        runOp sudo dnf upgrade $PACK_UP_NAMES
       else
-        printOp sudo dnf distro-sync
-        if [[ -z "${NOOP}" ]]; then
-          sudo dnf distro-sync
-        fi
+        runOp sudo dnf distro-sync
       fi
     fi
   fi
@@ -125,23 +80,14 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'yay' ]] && type yay > /dev/n
   if [[ "${YES}" ]]; then
     yn='y'
   else
-    read yn?'> up packages with yay [system]? (y/N) '
+    read yn?'? up packages with yay [system] (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
-    printOp yay --sync --refresh
-    if [[ -z "${NOOP}" ]]; then
-      yay --sync --refresh
-    fi
+    runOp yay --sync --refresh
     if [[ "${PACK_UP_NAMES}" ]]; then
-      printOp yay --sync --needed $PACK_UP_NAMES
-      if [[ -z "${NOOP}" ]]; then
-        yay --sync --needed $PACK_UP_NAMES
-      fi
+      runOp yay --sync --needed $PACK_UP_NAMES
     else
-      printOp yay --sync --sysupgrade
-      if [[ -z "${NOOP}" ]]; then
-        yay --sync --sysupgrade
-      fi
+      runOp yay --sync --sysupgrade
     fi
   fi
 fi
@@ -151,40 +97,22 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > 
   elif [[ "${YES}" ]]; then
     yn='y'
   else
-    read yn?'> up packages with pacman [system]? (y/N) '
+    read yn?'? up packages with pacman [system] (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      printOp sudo pacman --sync --refresh
-      if [[ -z "${NOOP}" ]]; then
-        sudo pacman --sync --refresh
-      fi
+      runOp sudo pacman --sync --refresh
       if [[ "${PACK_UP_NAMES}" ]]; then
-        printOp sudo pacman --sync --needed $PACK_UP_NAMES
-        if [[ -z "${NOOP}" ]]; then
-          sudo pacman --sync --needed $PACK_UP_NAMES
-        fi
+        runOp sudo pacman --sync --needed $PACK_UP_NAMES
       else
-        printOp sudo pacman --sync --sysupgrade
-        if [[ -z "${NOOP}" ]]; then
-          sudo pacman --sync --sysupgrade
-        fi
+        runOp sudo pacman --sync --sysupgrade
       fi
     else
-      printOp pacman --sync --refresh
-      if [[ -z "${NOOP}" ]]; then
-        pacman --sync --refresh
-      fi
+      runOp pacman --sync --refresh
       if [[ "${PACK_UP_NAMES}" ]]; then
-        printOp pacman --sync --needed $PACK_UP_NAMES
-        if [[ -z "${NOOP}" ]]; then
-          pacman --sync --needed $PACK_UP_NAMES
-        fi
+        runOp pacman --sync --needed $PACK_UP_NAMES
       else
-        printOp pacman --sync --sysupgrade
-        if [[ -z "${NOOP}" ]]; then
-          pacman --sync --sysupgrade
-        fi
+        runOp pacman --sync --sysupgrade
       fi
     fi
   fi

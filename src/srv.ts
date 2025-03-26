@@ -2,8 +2,10 @@ import pkg from '../package.json' with { type: 'json' }
 
 import { type Cmd, CmdBase } from './lib/cmd'
 import { PackCmd } from './lib/cmd/pack'
-import { getSp } from './lib/ctx'
+import { getCtx } from './lib/ctx'
 import { Fmt } from './lib/seri'
+import { Pwsh } from './lib/sh/pwsh'
+import { Zsh } from './lib/sh/zsh'
 
 function expandParts(parts: Array<string>) {
   const expandedParts: Array<string> = []
@@ -49,15 +51,26 @@ class SrvCmd extends CmdBase implements Cmd {
 async function runSrv(req: Request) {
   try {
     const cmd = new SrvCmd()
-    const url = new URL(req.url)
+    const url = new URL(req.url.endsWith('/') ? req.url.slice(0, -1) : req.url)
     const usp = new URLSearchParams(url.search)
     const parts = expandParts(url.pathname.split('/').filter(p => p.length > 0))
 
-    if (!getSp(usp, 'sysSh')) {
-      throw new Error('url param missing: sysSh')
+    const shell = (parts[0] === 'pwsh' ? new Pwsh() : new Zsh())
+      .withSetVar('url'.toUpperCase(), url.toString())
+      .withLoadFilePath('sys', 'ver')
+      .withLoadFilePath('sys', 'env')
+      .withLoadFilePath('sys', 'print')
+      .withLoadFilePath('sys', 'run')
+
+    const context = getCtx(usp)
+
+    if (!context.sys?.cpu?.arch) {
+      return new Response(await shell.withLoadFilePath('cli').build())
     }
 
-    return new Response(await cmd.process(url, usp, parts))
+    return new Response(
+      await cmd.process(url, usp, parts.slice(1), shell, context),
+    )
   } catch (err) {
     const lines: Array<string> = []
     lines.push('error:')

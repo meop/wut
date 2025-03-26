@@ -19,26 +19,15 @@ MacOS
 ```zsh
 #!/usr/bin/env zsh
 
-verMajor=5
-verMinor=9
-
-autoload is-at-least
-if ! is-at-least "${verMajor}.${verMinor}"; then
-  echo "zsh must be >= '${verMajor}.${verMinor}' .. found '${ZSH_VERSION}' .. aborting" >&2
-  exit 1
-fi
-
-export URL='http://yard.lan:9000'
+export WUT_URL='http://yard.lan:9000'
 
 alias wut='wut_wrap'
-
 function wut_wrap {
   (
-    URL=$(echo "${URL}" | sed 's:/*$::')
-    URL=$(echo "${URL}" "$@" | sed 's/ /\//g' | sed 's:/*$::')
-    URL="${URL}/?sysSh=zsh"
-
-    source <( curl --fail --location --show-error --silent --url "${URL}" )
+    url=$(echo "${WUT_URL}" | sed 's:/*$::')
+    url="${url}/zsh"
+    url=$(echo "${url}" "$@" | sed 's/ /\//g' | sed 's:/*$::')
+    source <( curl --fail --location --show-error --silent --url "${url}" )
   )
 }
 ```
@@ -52,26 +41,15 @@ Windows
 ```pwsh
 #requires -PSEdition Core
 
-$verMajor = 7
-$verMinor = 5
-
-if ($PSVersionTable.PSVersion.Major -lt ${verMajor} ||
-    $PSVersionTable.PSVersion.Minor -lt ${verMinor}) {
-  Write-Error "pwsh must be >= '${verMajor}.${verMinor}' .. found '$($PSVersionTable.PSVersion)' .. aborting"
-  exit 1
-}
-
-${env:URL} = 'http://yard.lan:9000'
+${env:WUT_URL} = 'http://yard.lan:9000'
 
 Set-Alias -Name wut -Value 'wut_wrap'
-
 function wut_wrap {
   pwsh -nologo -noprofile -command {
-    $URL = ${env:URL}.TrimEnd('/')
-    $URL += "/$($args -join '/')".TrimEnd('/')
-    $URL += '/?sysSh=pwsh'
-
-    Invoke-RestMethod -Uri "${URL}" | Invoke-Expression
+    $url = "${env:WUT_URL}".TrimEnd('/')
+    $url = "${url}/pwsh"
+    $url += "/$($args -Join '/')".TrimEnd('/')
+    Invoke-RestMethod -Uri "${url}" | Invoke-Expression
   } -args $args
 }
 ```

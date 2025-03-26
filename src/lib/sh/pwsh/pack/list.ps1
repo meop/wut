@@ -2,19 +2,13 @@ if ((-not "${PACK_MANAGER}" -or "${PACK_MANAGER}" -eq 'winget') -and (Get-Comman
   if ("${YES}") {
     $yn = 'y'
   } else {
-    $yn = Read-Host '> list packages with winget [system]? (y/N)'
+    $yn = Read-Host '? list packages with winget [system] (y/N)'
   }
   if ("${yn}" -eq 'y') {
     if ("${PACK_LIST_NAMES}") {
-      printOp winget list '|' Select-String -Pattern $PACK_LIST_NAMES
-      if (-not "${NOOP}") {
-        winget list | Select-String -Pattern $PACK_LIST_NAMES
-      }
+      runOp winget list '|' Select-String -Pattern $PACK_LIST_NAMES
     } else {
-      printOp winget list
-      if (-not "${NOOP}") {
-        winget list
-      }
+      runOp winget list
     }
   }
 }
@@ -23,19 +17,13 @@ if ((-not "${PACK_MANAGER}" -or "${PACK_MANAGER}" -eq 'scoop') -and (Get-Command
   if ("${YES}") {
     $yn = 'y'
   } else {
-    $yn = Read-Host '> list packages with scoop [user]? (y/N)'
+    $yn = Read-Host '? list packages with scoop [user] (y/N)'
   }
   if ("${yn}" -eq 'y') {
     if ("${PACK_LIST_NAMES}") {
-      printOp scoop list '|' Select-String -Pattern $PACK_LIST_NAMES
-      if (-not "${NOOP}") {
-        scoop list | Select-String -Pattern $PACK_LIST_NAMES
-      }
+      runOp scoop list '|' Select-String -Pattern $PACK_LIST_NAMES
     } else {
-      printOp scoop list
-      if (-not "${NOOP}") {
-        scoop list
-      }
+      runOp scoop list
     }
   }
 }
