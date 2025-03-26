@@ -5,7 +5,7 @@ if type fzf > /dev/null; then
 
     output="${FZF_HOME}/colors.zsh"
     uri='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/fzf/tokyonight_storm.sh'
-    logOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+    printOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
     if [[ -z "${NOOP}" ]]; then
       curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
     fi

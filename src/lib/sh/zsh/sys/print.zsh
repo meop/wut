@@ -1,10 +1,10 @@
-function log {
+function print {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
   echo $@
 }
-function logErr {
+function printErr {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
@@ -16,7 +16,7 @@ function logErr {
   echo -n $@ >&2
   echo '\033[0m' >&2
 }
-function logSucc {
+function printSucc {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
@@ -28,7 +28,7 @@ function logSucc {
   echo -n $@
   echo '\033[0m'
 }
-function logWarn {
+function printWarn {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
@@ -40,7 +40,7 @@ function logWarn {
   echo -n $@
   echo '\033[0m'
 }
-function logInfo {
+function printInfo {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
@@ -52,7 +52,7 @@ function logInfo {
   echo -n $@
   echo '\033[0m'
 }
-function logOp {
+function printOp {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi

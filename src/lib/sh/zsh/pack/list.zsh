@@ -7,24 +7,24 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt' ]] && type apt > /dev/n
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
       if [[ "${PACK_LIST_NAMES}" ]]; then
-        logOp sudo apt list --installed '|' grep --ignore-case $PACK_LIST_NAMES
+        printOp sudo apt list --installed '|' grep --ignore-case $PACK_LIST_NAMES
         if [[ -z "${NOOP}" ]]; then
           sudo apt list --installed | grep --ignore-case $PACK_LIST_NAMES
         fi
       else
-        logOp sudo apt list --installed
+        printOp sudo apt list --installed
         if [[ -z "${NOOP}" ]]; then
           sudo apt list --installed
         fi
       fi
     else
       if [[ "${PACK_LIST_NAMES}" ]]; then
-        logOp apt list --installed '|' grep --ignore-case $PACK_LIST_NAMES
+        printOp apt list --installed '|' grep --ignore-case $PACK_LIST_NAMES
         if [[ -z "${NOOP}" ]]; then
           apt list --installed | grep --ignore-case $PACK_LIST_NAMES
         fi
       else
-        logOp apt list --installed
+        printOp apt list --installed
         if [[ -z "${NOOP}" ]]; then
           apt list --installed
         fi
@@ -43,12 +43,12 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt-get' ]] && type apt-get 
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
       if [[ "${PACK_LIST_NAMES}" ]]; then
-        logOp sudo apt-get list --installed '|' grep --ignore-case $PACK_LIST_NAMES
+        printOp sudo apt-get list --installed '|' grep --ignore-case $PACK_LIST_NAMES
         if [[ -z "${NOOP}" ]]; then
           sudo apt-get list --installed | grep --ignore-case $PACK_LIST_NAMES
         fi
       else
-        logOp sudo apt-get list --installed
+        printOp sudo apt-get list --installed
         if [[ -z "${NOOP}" ]]; then
           sudo apt-get list --installed
         fi
@@ -65,12 +65,12 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'brew' ]] && type brew > /dev
   fi
   if [[ "${yn}" == 'y' ]]; then
     if [[ "${PACK_LIST_NAMES}" ]]; then
-      logOp brew list '|' grep --ignore-case $PACK_LIST_NAMES
+      printOp brew list '|' grep --ignore-case $PACK_LIST_NAMES
       if [[ -z "${NOOP}" ]]; then
         brew list | grep --ignore-case $PACK_LIST_NAMES
       fi
     else
-      logOp brew list
+      printOp brew list
       if [[ -z "${NOOP}" ]]; then
         brew list
       fi
@@ -87,12 +87,12 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'dnf' ]] && type dnf > /dev/n
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
       if [[ "${PACK_LIST_NAMES}" ]]; then
-        logOp sudo dnf list --installed '|' grep --ignore-case $PACK_LIST_NAMES
+        printOp sudo dnf list --installed '|' grep --ignore-case $PACK_LIST_NAMES
         if [[ -z "${NOOP}" ]]; then
           sudo dnf list --installed | grep --ignore-case $PACK_LIST_NAMES
         fi
       else
-        logOp sudo dnf list --installed
+        printOp sudo dnf list --installed
         if [[ -z "${NOOP}" ]]; then
           sudo dnf list --installed
         fi
@@ -109,12 +109,12 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'yay' ]] && type yay > /dev/n
   fi
   if [[ "${yn}" == 'y' ]]; then
     if [[ "${PACK_LIST_NAMES}" ]]; then
-      logOp yay --query '|' grep --ignore-case $PACK_LIST_NAMES
+      printOp yay --query '|' grep --ignore-case $PACK_LIST_NAMES
       if [[ -z "${NOOP}" ]]; then
         yay --query | grep --ignore-case $PACK_LIST_NAMES
       fi
     else
-      logOp yay --query
+      printOp yay --query
       if [[ -z "${NOOP}" ]]; then
         yay --query
       fi
@@ -132,24 +132,24 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > 
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
       if [[ "${PACK_LIST_NAMES}" ]]; then
-        logOp sudo pacman --query '|' grep --ignore-case $PACK_LIST_NAMES
+        printOp sudo pacman --query '|' grep --ignore-case $PACK_LIST_NAMES
         if [[ -z "${NOOP}" ]]; then
           sudo pacman --query | grep --ignore-case $PACK_LIST_NAMES
         fi
       else
-        logOp sudo pacman --query
+        printOp sudo pacman --query
         if [[ -z "${NOOP}" ]]; then
           sudo pacman --query
         fi
       fi
     else
       if [[ "${PACK_LIST_NAMES}" ]]; then
-        logOp pacman --query '|' grep --ignore-case $PACK_LIST_NAMES
+        printOp pacman --query '|' grep --ignore-case $PACK_LIST_NAMES
         if [[ -z "${NOOP}" ]]; then
           pacman --query | grep --ignore-case $PACK_LIST_NAMES
         fi
       else
-        logOp pacman --query
+        printOp pacman --query
         if [[ -z "${NOOP}" ]]; then
           pacman --query
         fi

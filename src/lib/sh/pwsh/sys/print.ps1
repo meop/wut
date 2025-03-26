@@ -1,10 +1,10 @@
-function log {
+function print {
   if ("${SUCCINCT}") {
     return
   }
   [Console]::WriteLine($($args -Join ' '))
 }
-function logErr {
+function printErr {
   if ("${SUCCINCT}") {
     return
   }
@@ -16,7 +16,7 @@ function logErr {
   [Console]::Error.WriteLine($($args -Join ' '))
   [Console]::ResetColor()
 }
-function logSucc {
+function printSucc {
   if ("${SUCCINCT}") {
     return
   }
@@ -28,7 +28,7 @@ function logSucc {
   [Console]::WriteLine($($args -Join ' '))
   [Console]::ResetColor()
 }
-function logWarn {
+function printWarn {
   if ("${SUCCINCT}") {
     return
   }
@@ -40,7 +40,7 @@ function logWarn {
   [Console]::WriteLine($($args -Join ' '))
   [Console]::ResetColor()
 }
-function logInfo {
+function printInfo {
   if ("${SUCCINCT}") {
     return
   }
@@ -52,7 +52,7 @@ function logInfo {
   [Console]::WriteLine($($args -Join ' '))
   [Console]::ResetColor()
 }
-function logOp {
+function printOp {
   if ("${SUCCINCT}") {
     return
   }

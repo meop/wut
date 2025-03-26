@@ -6,33 +6,33 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt' ]] && type apt > /dev/n
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      logOp sudo apt update
+      printOp sudo apt update
       if [[ -z "${NOOP}" ]]; then
         sudo apt update
       fi
       if [[ "${PACK_OUT_NAMES}" ]]; then
-        logOp sudo apt list --upgradable '|' grep --ignore-case $PACK_OUT_NAMES
+        printOp sudo apt list --upgradable '|' grep --ignore-case $PACK_OUT_NAMES
         if [[ -z "${NOOP}" ]]; then
           sudo apt list --upgradable | grep --ignore-case $PACK_OUT_NAMES
         fi
       else
-        logOp sudo apt list --upgradable
+        printOp sudo apt list --upgradable
         if [[ -z "${NOOP}" ]]; then
           sudo apt list --upgradable
         fi
       fi
     else
-      logOp apt update
+      printOp apt update
       if [[ -z "${NOOP}" ]]; then
         apt update
       fi
       if [[ "${PACK_OUT_NAMES}" ]]; then
-        logOp apt list --upgradable '|' grep --ignore-case $PACK_OUT_NAMES
+        printOp apt list --upgradable '|' grep --ignore-case $PACK_OUT_NAMES
         if [[ -z "${NOOP}" ]]; then
           apt list --upgradable | grep --ignore-case $PACK_OUT_NAMES
         fi
       else
-        logOp apt list --upgradable
+        printOp apt list --upgradable
         if [[ -z "${NOOP}" ]]; then
           apt list --upgradable
         fi
@@ -50,17 +50,17 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt-get' ]] && type apt-get 
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      logOp sudo apt-get update
+      printOp sudo apt-get update
       if [[ -z "${NOOP}" ]]; then
         sudo apt-get update
       fi
       if [[ "${PACK_OUT_NAMES}" ]]; then
-        logOp sudo apt-get list --upgradable '|' grep --ignore-case $PACK_OUT_NAMES
+        printOp sudo apt-get list --upgradable '|' grep --ignore-case $PACK_OUT_NAMES
         if [[ -z "${NOOP}" ]]; then
           sudo apt-get list --upgradable | grep --ignore-case $PACK_OUT_NAMES
         fi
       else
-        logOp sudo apt-get list --upgradable
+        printOp sudo apt-get list --upgradable
         if [[ -z "${NOOP}" ]]; then
           sudo apt-get list --upgradable
         fi
@@ -76,17 +76,17 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'brew' ]] && type brew > /dev
     read yn?'> out packages with brew [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
-    logOp brew update
+    printOp brew update
     if [[ -z "${NOOP}" ]]; then
       brew update
     fi
     if [[ "${PACK_OUT_NAMES}" ]]; then
-      logOp brew outdated | grep --ignore-case $PACK_OUT_NAMES
+      printOp brew outdated | grep --ignore-case $PACK_OUT_NAMES
       if [[ -z "${NOOP}" ]]; then
         brew outdated | grep --ignore-case $PACK_OUT_NAMES
       fi
     else
-      logOp brew outdated
+      printOp brew outdated
       if [[ -z "${NOOP}" ]]; then
         brew outdated
       fi
@@ -102,17 +102,17 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'dnf' ]] && type dnf > /dev/n
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      logOp sudo dnf check-update
+      printOp sudo dnf check-update
       if [[ -z "${NOOP}" ]]; then
         sudo dnf check-update
       fi
       if [[ "${PACK_OUT_NAMES}" ]]; then
-        logOp sudo dnf list --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
+        printOp sudo dnf list --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
         if [[ -z "${NOOP}" ]]; then
           sudo dnf list --upgrades | grep --ignore-case $PACK_OUT_NAMES
         fi
       else
-        logOp sudo dnf list --upgrades
+        printOp sudo dnf list --upgrades
         if [[ -z "${NOOP}" ]]; then
           sudo dnf list --upgrades
         fi
@@ -128,17 +128,17 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'yay' ]] && type yay > /dev/n
     read yn?'> out packages with yay [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
-    logOp yay --sync --refresh
+    printOp yay --sync --refresh
     if [[ -z "${NOOP}" ]]; then
       yay --sync --refresh
     fi
     if [[ "${PACK_OUT_NAMES}" ]]; then
-      logOp yay --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
+      printOp yay --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
       if [[ -z "${NOOP}" ]]; then
         yay --query --upgrades | grep --ignore-case $PACK_OUT_NAMES
       fi
     else
-      logOp yay --query --upgrades
+      printOp yay --query --upgrades
       if [[ -z "${NOOP}" ]]; then
         yay --query --upgrades
       fi
@@ -155,33 +155,33 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > 
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      logOp sudo pacman --sync --refresh
+      printOp sudo pacman --sync --refresh
       if [[ -z "${NOOP}" ]]; then
         sudo pacman --sync --refresh
       fi
       if [[ "${PACK_OUT_NAMES}" ]]; then
-        logOp sudo pacman --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
+        printOp sudo pacman --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
         if [[ -z "${NOOP}" ]]; then
           sudo pacman --query --upgrades | grep --ignore-case $PACK_OUT_NAMES
         fi
       else
-        logOp sudo pacman --query --upgrades
+        printOp sudo pacman --query --upgrades
         if [[ -z "${NOOP}" ]]; then
           sudo pacman --query --upgrades
         fi
       fi
     else
-      logOp pacman --sync --refresh
+      printOp pacman --sync --refresh
       if [[ -z "${NOOP}" ]]; then
         pacman --sync --refresh
       fi
       if [[ "${PACK_OUT_NAMES}" ]]; then
-        logOp pacman --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
+        printOp pacman --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
         if [[ -z "${NOOP}" ]]; then
           pacman --query --upgrades | grep --ignore-case $PACK_OUT_NAMES
         fi
       else
-        logOp pacman --query --upgrades
+        printOp pacman --query --upgrades
         if [[ -z "${NOOP}" ]]; then
           pacman --query --upgrades
         fi

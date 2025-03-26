@@ -5,11 +5,16 @@ if ((-not "${PACK_MANAGER}" -or "${PACK_MANAGER}" -eq 'winget') -and (Get-Comman
     $yn = Read-Host '> del packages with winget [system]? (y/N)'
   }
   if ("${yn}" -eq 'y') {
-    logOp winget uninstall $PACK_DEL_NAMES
+    printOp winget uninstall $PACK_DEL_NAMES
     if (-not "${NOOP}") {
       winget uninstall $PACK_DEL_NAMES
     }
-    $PACK_MANAGER = 'winget'
+    if ("${PACK_DEL_PRESET}") {
+      printOp Invoke-Expression $PACK_DEL_PRESET
+      if (-not "${NOOP}") {
+        Invoke-Expression $PACK_DEL_PRESET
+      }
+    }
   }
 }
 
@@ -20,10 +25,15 @@ if ((-not "${PACK_MANAGER}" -or "${PACK_MANAGER}" -eq 'scoop') -and (Get-Command
     $yn = Read-Host '> del packages with scoop [user]? (y/N)'
   }
   if ("${yn}" -eq 'y') {
-    logOp scoop uninstall $PACK_DEL_NAMES
+    printOp scoop uninstall $PACK_DEL_NAMES
     if (-not "${NOOP}") {
       scoop uninstall $PACK_DEL_NAMES
     }
-    $PACK_MANAGER = 'scoop'
+    if ("${PACK_DEL_PRESET}") {
+      printOp Invoke-Expression $PACK_DEL_PRESET
+      if (-not "${NOOP}") {
+        Invoke-Expression $PACK_DEL_PRESET
+      }
+    }
   }
 }

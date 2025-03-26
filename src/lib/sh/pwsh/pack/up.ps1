@@ -6,12 +6,12 @@ if ((-not "${PACK_MANAGER}" -or "${PACK_MANAGER}" -eq 'winget') -and (Get-Comman
   }
   if ("${yn}" -eq 'y') {
     if ("${PACK_UP_NAMES}") {
-      logOp winget upgrade $PACK_UP_NAMES
+      printOp winget upgrade $PACK_UP_NAMES
       if (-not "${NOOP}") {
         winget upgrade $PACK_UP_NAMES
       }
     } else {
-      logOp winget upgrade --all
+      printOp winget upgrade --all
       if (-not "${NOOP}") {
         winget upgrade --all
       }
@@ -26,17 +26,17 @@ if ((-not "${PACK_MANAGER}" -or "${PACK_MANAGER}" -eq 'scoop') -and (Get-Command
     $yn = Read-Host '> up packages with scoop [user]? (y/N)'
   }
   if ("${yn}" -eq 'y') {
-    logOp scoop update
+    printOp scoop update
     if (-not "${NOOP}") {
       scoop update
     }
     if ("${PACK_UP_NAMES}") {
-      logOp scoop update $PACK_UP_NAMES
+      printOp scoop update $PACK_UP_NAMES
       if (-not "${NOOP}") {
         scoop update $PACK_UP_NAMES
       }
     } else {
-      logOp scoop update --all
+      printOp scoop update --all
       if (-not "${NOOP}") {
         scoop update --all
       }

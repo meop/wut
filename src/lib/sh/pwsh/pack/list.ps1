@@ -6,12 +6,12 @@ if ((-not "${PACK_MANAGER}" -or "${PACK_MANAGER}" -eq 'winget') -and (Get-Comman
   }
   if ("${yn}" -eq 'y') {
     if ("${PACK_LIST_NAMES}") {
-      logOp winget list '|' Select-String -Pattern $PACK_LIST_NAMES
+      printOp winget list '|' Select-String -Pattern $PACK_LIST_NAMES
       if (-not "${NOOP}") {
         winget list | Select-String -Pattern $PACK_LIST_NAMES
       }
     } else {
-      logOp winget list
+      printOp winget list
       if (-not "${NOOP}") {
         winget list
       }
@@ -27,12 +27,12 @@ if ((-not "${PACK_MANAGER}" -or "${PACK_MANAGER}" -eq 'scoop') -and (Get-Command
   }
   if ("${yn}" -eq 'y') {
     if ("${PACK_LIST_NAMES}") {
-      logOp scoop list '|' Select-String -Pattern $PACK_LIST_NAMES
+      printOp scoop list '|' Select-String -Pattern $PACK_LIST_NAMES
       if (-not "${NOOP}") {
         scoop list | Select-String -Pattern $PACK_LIST_NAMES
       }
     } else {
-      logOp scoop list
+      printOp scoop list
       if (-not "${NOOP}") {
         scoop list
       }

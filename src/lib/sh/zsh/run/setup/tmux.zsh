@@ -7,13 +7,13 @@ if type tmux > /dev/null; then
 
     output="${TMUX_PLUGINS_HOME}/tpm"
     if [[ -d "${output}" ]]; then
-      logOp git -C "${output}" pull --prune '>' /dev/null '2>&1'
+      printOp git -C "${output}" pull --prune '>' /dev/null '2>&1'
       if [[ -z "${NOOP}" ]]; then
         git -C "${output}" pull --prune > /dev/null 2>&1
       fi
     else
       uri='https://github.com/tmux-plugins/tpm.git'
-      logOp git clone -q --depth 1 "${uri}" "${output}"
+      printOp git clone -q --depth 1 "${uri}" "${output}"
       if [[ -z "${NOOP}" ]]; then
         git clone -q --depth 1 "${uri}" "${output}"
       fi
@@ -24,7 +24,7 @@ if type tmux > /dev/null; then
   if [[ "${yn}" == 'y' ]]; then
     output="${TMUX_HOME}/theme.tmux"
     uri='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/tmux/tokyonight_moon.tmux'
-    logOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+    printOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
     if [[ -z "${NOOP}" ]]; then
       curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
     fi

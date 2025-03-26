@@ -1,133 +1,141 @@
-import { getFilePath, getFilePaths } from "./path";
-
-export type ShValOpts = {
-	doubleQuote?: boolean;
-	singleQuote?: boolean;
-};
+import { getFilePath, getFilePaths } from './path'
 
 export interface Sh {
-	build(): Promise<string>;
+  build(): Promise<string>
 
-	with(lines: Array<string>): Sh;
-	withLoadDirPath(...parts: Array<string>): Sh;
-	withLoadFilePath(...parts: Array<string>): Sh;
-	withLog(lines: Array<string>, opts?: ShValOpts): Sh;
-	withLogErr(lines: Array<string>, opts?: ShValOpts): Sh;
-	withLogInfo(lines: Array<string>, opts?: ShValOpts): Sh;
-	withLogOp(lines: Array<string>, opts?: ShValOpts): Sh;
-	withLogSucc(lines: Array<string>, opts?: ShValOpts): Sh;
-	withLogWarn(lines: Array<string>, opts?: ShValOpts): Sh;
-	withSetVar(name: string, value: string, opts?: ShValOpts): Sh;
+  with(...lines: Array<string>): Sh
+  withEval(...lines: Array<string>): Sh
+
+  withPrint(...lines: Array<string>): Sh
+  withPrintErr(...lines: Array<string>): Sh
+  withPrintInfo(...lines: Array<string>): Sh
+  withPrintOp(...lines: Array<string>): Sh
+  withPrintSucc(...lines: Array<string>): Sh
+  withPrintWarn(...lines: Array<string>): Sh
+
+  withLoadDirPath(...parts: Array<string>): Sh
+  withLoadFilePath(...parts: Array<string>): Sh
+
+  withSetVar(name: string, value: string): Sh
+  withUnsetVar(name: string): Sh
+
+  withTrace(): Sh
 }
 
-export class ShBase implements Sh {
-	lineBuilders: (() => Promise<string>)[] = [];
-	shName: string;
-	shExt: string;
+export class ShBase {
+  lineBuilders: (() => Promise<string>)[] = []
+  shName: string
+  shExt: string
 
-	localParts(parts: Array<string>) {
-		return [import.meta.dir, "sh", this.shName, ...parts];
-	}
+  localParts(parts: Array<string>) {
+    return [import.meta.dir, 'sh', this.shName, ...parts]
+  }
 
-	constructor(shName: string, shExt: string) {
-		this.shName = shName;
-		this.shExt = shExt;
-	}
+  constructor(shName: string, shExt: string) {
+    this.shName = shName
+    this.shExt = shExt
+  }
 
-	async build() {
-		const lines: Array<string> = [];
-		for (const lineBuilder of this.lineBuilders) {
-			lines.push(await lineBuilder());
-			lines.push("");
-		}
-		return lines.join("\n");
-	}
+  async build() {
+    const lines: Array<string> = []
+    for (const lineBuilder of this.lineBuilders) {
+      lines.push(await lineBuilder())
+      lines.push('')
+    }
+    return lines.join('\n')
+  }
 
-	toVal(value: string, opts?: ShValOpts): string {
-		if (opts?.doubleQuote === true) {
-			return `"${value}"`;
-		}
-		if (opts?.singleQuote === true) {
-			return `'${value}'`;
-		}
-		return value;
-	}
+  toVal(value: string): string {
+    return `'${value}'`
+  }
 
-	with(lines: Array<string>): Sh {
-		for (const line of lines) {
-			this.lineBuilders.push(async () => line);
-		}
-		return this;
-	}
+  with(...lines: Array<string>): Sh {
+    for (const line of lines) {
+      this.lineBuilders.push(async () => line)
+    }
+    return this
+  }
 
-	withLoadDirPath(...parts: Array<string>): Sh {
-		this.lineBuilders.push(async () => {
-			const lines: Array<string> = [];
-			for (const filePath of await getFilePaths(this.localParts(parts))) {
-				lines.push(await Bun.file(filePath).text());
-			}
+  withEval(...lines: Array<string>): Sh {
+    throw new Error('not implemented')
+  }
 
-			return lines.join("\n");
-		});
-		this.lineBuilders.push(async () => "");
-		return this;
-	}
+  withPrint(...lines: Array<string>): Sh {
+    for (const line of lines) {
+      this.lineBuilders.push(async () => `print ${this.toVal(line)}`)
+    }
+    return this
+  }
 
-	withLoadFilePath(...parts: Array<string>): Sh {
-		this.lineBuilders.push(async () => {
-			return await Bun.file(
-				`${await getFilePath(this.localParts(parts))}.${this.shExt}`,
-			).text();
-		});
-		return this;
-	}
+  withPrintErr(...lines: Array<string>): Sh {
+    for (const line of lines) {
+      this.lineBuilders.push(async () => `printErr ${this.toVal(line)}`)
+    }
+    return this
+  }
 
-	withLog(lines: Array<string>, opts?: ShValOpts): Sh {
-		for (const line of lines) {
-			this.lineBuilders.push(async () => `log ${this.toVal(line, opts)}`);
-		}
-		return this;
-	}
+  withPrintInfo(...lines: Array<string>): Sh {
+    for (const line of lines) {
+      this.lineBuilders.push(async () => `printInfo ${this.toVal(line)}`)
+    }
+    return this
+  }
 
-	withLogErr(lines: Array<string>, opts?: ShValOpts): Sh {
-		for (const line of lines) {
-			this.lineBuilders.push(async () => `logErr ${this.toVal(line, opts)}`);
-		}
-		return this;
-	}
+  withPrintOp(...lines: Array<string>): Sh {
+    for (const line of lines) {
+      this.lineBuilders.push(async () => `printOp ${this.toVal(line)}`)
+    }
+    return this
+  }
 
-	withLogInfo(lines: Array<string>, opts?: ShValOpts): Sh {
-		for (const line of lines) {
-			this.lineBuilders.push(async () => `logInfo ${this.toVal(line, opts)}`);
-		}
-		return this;
-	}
+  withPrintSucc(...lines: Array<string>): Sh {
+    for (const line of lines) {
+      this.lineBuilders.push(async () => `printSucc ${this.toVal(line)}`)
+    }
+    return this
+  }
 
-	withLogOp(lines: Array<string>, opts?: ShValOpts): Sh {
-		for (const line of lines) {
-			this.lineBuilders.push(async () => `logOp ${this.toVal(line, opts)}`);
-		}
-		return this;
-	}
+  withPrintWarn(...lines: Array<string>): Sh {
+    for (const line of lines) {
+      this.lineBuilders.push(async () => `printWarn ${this.toVal(line)}`)
+    }
+    return this
+  }
 
-	withLogSucc(lines: Array<string>, opts?: ShValOpts): Sh {
-		for (const line of lines) {
-			this.lineBuilders.push(async () => `logSucc ${this.toVal(line, opts)}`);
-		}
-		return this;
-	}
+  withLoadDirPath(...parts: Array<string>): Sh {
+    this.lineBuilders.push(async () => {
+      const lines: Array<string> = []
+      for (const filePath of await getFilePaths(this.localParts(parts))) {
+        lines.push(await Bun.file(filePath).text())
+      }
 
-	withLogWarn(lines: Array<string>, opts?: ShValOpts): Sh {
-		for (const line of lines) {
-			this.lineBuilders.push(async () => `logWarn ${this.toVal(line, opts)}`);
-		}
-		return this;
-	}
+      return lines.join('\n')
+    })
+    this.lineBuilders.push(async () => '')
+    return this
+  }
 
-	withSetVar(name: string, value: string, opts?: ShValOpts): Sh {
-		this.lineBuilders.push(async () => {
-			return `${name}=${this.toVal(value, opts)}`;
-		});
-		return this;
-	}
+  withLoadFilePath(...parts: Array<string>): Sh {
+    this.lineBuilders.push(async () => {
+      return await Bun.file(
+        `${getFilePath(this.localParts(parts))}.${this.shExt}`,
+      ).text()
+    })
+    return this
+  }
+
+  withSetVar(name: string, value: string): Sh {
+    this.lineBuilders.push(async () => {
+      return `${name}=${this.toVal(value)}`
+    })
+    return this
+  }
+
+  withUnsetVar(name: string): Sh {
+    throw new Error('not implemented')
+  }
+
+  withTrace(): Sh {
+    throw new Error('not implemented')
+  }
 }

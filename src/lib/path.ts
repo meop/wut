@@ -23,7 +23,7 @@ export async function getPathStat(p: string) {
   }
 }
 
-export async function getFilePath(parts: Array<string>) {
+export function getFilePath(parts: Array<string>) {
   return fmtPath(path.join(...parts))
 }
 
@@ -31,7 +31,7 @@ export async function getFilePaths(
   parts: Array<string>,
   filters?: Array<string>,
 ) {
-  return getFilePathsInPath(await getFilePath(parts), filters)
+  return getFilePathsInPath(getFilePath(parts), filters)
 }
 
 export async function getFilePathsInPath(

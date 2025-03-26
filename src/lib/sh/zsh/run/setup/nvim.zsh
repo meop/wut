@@ -6,7 +6,7 @@ if type nvim > /dev/null; then
 
     output="${NVIM_DATA}/site/autoload/plug.vim"
     uri='https://raw.githubusercontent.com/junegunn/vim-plug/HEAD/plug.vim'
-    logOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+    printOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
     if [[ -z "${NOOP}" ]]; then
       curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
     fi

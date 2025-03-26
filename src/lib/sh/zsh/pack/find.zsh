@@ -6,20 +6,20 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt' ]] && type apt > /dev/n
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      logOp sudo apt update
+      printOp sudo apt update
       if [[ -z "${NOOP}" ]]; then
         sudo apt update
       fi
-      logOp sudo apt search $PACK_FIND_NAMES
+      printOp sudo apt search $PACK_FIND_NAMES
       if [[ -z "${NOOP}" ]]; then
         sudo apt search $PACK_FIND_NAMES
       fi
     else
-      logOp apt update
+      printOp apt update
       if [[ -z "${NOOP}" ]]; then
         apt update
       fi
-      logOp apt search $PACK_FIND_NAMES
+      printOp apt search $PACK_FIND_NAMES
       if [[ -z "${NOOP}" ]]; then
         apt search $PACK_FIND_NAMES
       fi
@@ -36,11 +36,11 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt-get' ]] && type apt-get 
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      logOp sudo apt-get update
+      printOp sudo apt-get update
       if [[ -z "${NOOP}" ]]; then
         sudo apt-get update
       fi
-      logOp sudo apt-cache search $PACK_FIND_NAMES
+      printOp sudo apt-cache search $PACK_FIND_NAMES
       if [[ -z "${NOOP}" ]]; then
         sudo apt-cache search $PACK_FIND_NAMES
       fi
@@ -55,7 +55,7 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'brew' ]] && type brew > /dev
     read yn?'> find packages with brew [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
-    logOp brew search $PACK_FIND_NAMES
+    printOp brew search $PACK_FIND_NAMES
     if [[ -z "${NOOP}" ]]; then
       brew search $PACK_FIND_NAMES
     fi
@@ -70,11 +70,11 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'dnf' ]] && type dnf > /dev/n
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      logOp sudo dnf check-update
+      printOp sudo dnf check-update
       if [[ -z "${NOOP}" ]]; then
         sudo dnf check-update
       fi
-      logOp sudo dnf search $PACK_FIND_NAMES
+      printOp sudo dnf search $PACK_FIND_NAMES
       if [[ -z "${NOOP}" ]]; then
         sudo dnf search $PACK_FIND_NAMES
       fi
@@ -89,11 +89,11 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'yay' ]] && type yay > /dev/n
     read yn?'> find packages with yay [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
-    logOp yay --sync --refresh
+    printOp yay --sync --refresh
     if [[ -z "${NOOP}" ]]; then
       yay --sync --refresh
     fi
-    logOp yay --sync --search $PACK_FIND_NAMES
+    printOp yay --sync --search $PACK_FIND_NAMES
     if [[ -z "${NOOP}" ]]; then
       yay --sync --search $PACK_FIND_NAMES
     fi
@@ -109,20 +109,20 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > 
   fi
   if [[ "${yn}" == 'y' ]]; then
     if type sudo > /dev/null; then
-      logOp sudo pacman --sync --refresh
+      printOp sudo pacman --sync --refresh
       if [[ -z "${NOOP}" ]]; then
         sudo pacman --sync --refresh
       fi
-      logOp sudo pacman --sync --search $PACK_FIND_NAMES
+      printOp sudo pacman --sync --search $PACK_FIND_NAMES
       if [[ -z "${NOOP}" ]]; then
         sudo pacman --sync --search $PACK_FIND_NAMES
       fi
     else
-      logOp pacman --sync --refresh
+      printOp pacman --sync --refresh
       if [[ -z "${NOOP}" ]]; then
         pacman --sync --refresh
       fi
-      logOp pacman --sync --search $PACK_FIND_NAMES
+      printOp pacman --sync --search $PACK_FIND_NAMES
       if [[ -z "${NOOP}" ]]; then
         pacman --sync --search $PACK_FIND_NAMES
       fi

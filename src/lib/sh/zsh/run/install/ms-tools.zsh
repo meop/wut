@@ -11,15 +11,15 @@ if [[ "${SYS_CPU_ARCH}" == 'x86_64' ]]; then
         if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep -v '^#' | grep -v '^$' | grep '^.*packages.*microsoft.*com.*$' > /dev/null; then
           output="${HOME}/packages-microsoft-prod.deb"
           uri="https://packages.microsoft.com/config/${SYS_OS_DIST}/${SYS_OS_VER}/packages-microsoft-prod.deb"
-          logOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
+          printOp curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
           if [[ -z "${NOOP}" ]]; then
             curl --fail --location --show-error --silent --url "${uri}" --create-dirs --output "${output}"
           fi
-          logOp sudo dpkg -i "${output}"
+          printOp sudo dpkg -i "${output}"
           if [[ -z "${NOOP}" ]]; then
             sudo dpkg -i "${output}"
           fi
-          logOp rm "${output}"
+          printOp rm "${output}"
           if [[ -z "${NOOP}" ]]; then
             rm "${output}"
           fi
@@ -29,11 +29,11 @@ if [[ "${SYS_CPU_ARCH}" == 'x86_64' ]]; then
       read yn?'> install dotnet sdk [system]? (y/N) '
       if [[ "${yn}" == 'y' ]]; then
         install_packages_microsoft_repo
-        logOp sudo apt update
+        printOp sudo apt update
         if [[ -z "${NOOP}" ]]; then
           sudo apt update
         fi
-        logOp sudo apt install dotnet-sdk-${DOTNET_VERSION}
+        printOp sudo apt install dotnet-sdk-${DOTNET_VERSION}
         if [[ -z "${NOOP}" ]]; then
           sudo apt install dotnet-sdk-${DOTNET_VERSION}
         fi
@@ -42,11 +42,11 @@ if [[ "${SYS_CPU_ARCH}" == 'x86_64' ]]; then
       read yn?'> install pwsh [system]? (y/N) '
       if [[ "${yn}" == 'y' ]]; then
         install_packages_microsoft_repo
-        logOp sudo apt update
+        printOp sudo apt update
         if [[ -z "${NOOP}" ]]; then
           sudo apt update
         fi
-        logOp sudo apt install powershell
+        printOp sudo apt install powershell
         if [[ -z "${NOOP}" ]]; then
           sudo apt install powershell
         fi

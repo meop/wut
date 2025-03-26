@@ -5,21 +5,27 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt' ]] && type apt > /dev/n
     read yn?'> add packages with apt [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
+    if [[ $PACK_ADD_PRESET ]]; then
+      printOp eval $PACK_ADD_PRESET
+      if [[ -z "${NOOP}" ]]; then
+        eval $PACK_ADD_PRESET
+      fi
+    fi
     if type sudo > /dev/null; then
-      logOp sudo apt update
+      printOp sudo apt update
       if [[ -z "${NOOP}" ]]; then
         sudo apt update
       fi
-      logOp sudo apt install $PACK_ADD_NAMES
+      printOp sudo apt install $PACK_ADD_NAMES
       if [[ -z "${NOOP}" ]]; then
         sudo apt install $PACK_ADD_NAMES
       fi
     else
-      logOp apt update
+      printOp apt update
       if [[ -z "${NOOP}" ]]; then
         apt update
       fi
-      logOp apt install $PACK_ADD_NAMES
+      printOp apt install $PACK_ADD_NAMES
       if [[ -z "${NOOP}" ]]; then
         apt install $PACK_ADD_NAMES
       fi
@@ -35,12 +41,18 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt-get' ]] && type apt-get 
     read yn?'> add packages with apt-get [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
+    if [[ $PACK_ADD_PRESET ]]; then
+      printOp eval $PACK_ADD_PRESET
+      if [[ -z "${NOOP}" ]]; then
+        eval $PACK_ADD_PRESET
+      fi
+    fi
     if type sudo > /dev/null; then
-      logOp sudo apt-get update
+      printOp sudo apt-get update
       if [[ -z "${NOOP}" ]]; then
         sudo apt-get update
       fi
-      logOp sudo apt-get install $PACK_ADD_NAMES
+      printOp sudo apt-get install $PACK_ADD_NAMES
       if [[ -z "${NOOP}" ]]; then
         sudo apt-get install $PACK_ADD_NAMES
       fi
@@ -55,11 +67,17 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'brew' ]] && type brew > /dev
     read yn?'> add packages with brew [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
-    logOp brew update
+    if [[ $PACK_ADD_PRESET ]]; then
+      printOp eval $PACK_ADD_PRESET
+      if [[ -z "${NOOP}" ]]; then
+        eval $PACK_ADD_PRESET
+      fi
+    fi
+    printOp brew update
     if [[ -z "${NOOP}" ]]; then
       brew update
     fi
-    logOp brew install $PACK_ADD_NAMES
+    printOp brew install $PACK_ADD_NAMES
     if [[ -z "${NOOP}" ]]; then
       brew install $PACK_ADD_NAMES
     fi
@@ -73,12 +91,18 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'dnf' ]] && type dnf > /dev/n
     read yn?'> add packages with dnf [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
+    if [[ $PACK_ADD_PRESET ]]; then
+      printOp eval $PACK_ADD_PRESET
+      if [[ -z "${NOOP}" ]]; then
+        eval $PACK_ADD_PRESET
+      fi
+    fi
     if type sudo > /dev/null; then
-      logOp sudo dnf check-update
+      printOp sudo dnf check-update
       if [[ -z "${NOOP}" ]]; then
         sudo dnf check-update
       fi
-      logOp sudo dnf install $PACK_ADD_NAMES
+      printOp sudo dnf install $PACK_ADD_NAMES
       if [[ -z "${NOOP}" ]]; then
         sudo dnf install $PACK_ADD_NAMES
       fi
@@ -93,11 +117,17 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'yay' ]] &&type yay > /dev/nu
     read yn?'> add packages with yay [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
-    logOp yay --sync --refresh
+    if [[ $PACK_ADD_PRESET ]]; then
+      printOp eval $PACK_ADD_PRESET
+      if [[ -z "${NOOP}" ]]; then
+        eval $PACK_ADD_PRESET
+      fi
+    fi
+    printOp yay --sync --refresh
     if [[ -z "${NOOP}" ]]; then
       yay --sync --refresh
     fi
-    logOp yay --sync --needed $PACK_ADD_NAMES
+    printOp yay --sync --needed $PACK_ADD_NAMES
     if [[ -z "${NOOP}" ]]; then
       yay --sync --needed $PACK_ADD_NAMES
     fi
@@ -112,21 +142,27 @@ if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > 
     read yn?'> add packages with pacman [system]? (y/N) '
   fi
   if [[ "${yn}" == 'y' ]]; then
+    if [[ $PACK_ADD_PRESET ]]; then
+      printOp eval $PACK_ADD_PRESET
+      if [[ -z "${NOOP}" ]]; then
+        eval $PACK_ADD_PRESET
+      fi
+    fi
     if type sudo > /dev/null; then
-      logOp sudo pacman --sync --refresh
+      printOp sudo pacman --sync --refresh
       if [[ -z "${NOOP}" ]]; then
         sudo pacman --sync --refresh
       fi
-      logOp sudo pacman --sync --needed $PACK_ADD_NAMES
+      printOp sudo pacman --sync --needed $PACK_ADD_NAMES
       if [[ -z "${NOOP}" ]]; then
         sudo pacman --sync --needed $PACK_ADD_NAMES
       fi
     else
-      logOp pacman --sync --refresh
+      printOp pacman --sync --refresh
       if [[ -z "${NOOP}" ]]; then
         pacman --sync --refresh
       fi
-      logOp pacman --sync --needed $PACK_ADD_NAMES
+      printOp pacman --sync --needed $PACK_ADD_NAMES
       if [[ -z "${NOOP}" ]]; then
         pacman --sync --needed $PACK_ADD_NAMES
       fi
