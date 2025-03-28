@@ -1,8 +1,8 @@
 function () {
   local yn
 
-  if [[ "$OSTYPE" == 'linux'* ]]; then
-    read yn?'? setup nerd fonts [local] (y/N) '
+  if [[ "${sys_os_plat}" == 'linux' ]]; then
+    read yn?'? setup nerd fonts (local) [y/N] '
     if [[ "${yn}" == 'y' ]]; then
       local share="${XDG_DATA_HOME:-$HOME/.local/share}"
       local fonts="${share}/fonts"

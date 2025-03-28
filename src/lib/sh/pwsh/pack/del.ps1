@@ -3,7 +3,7 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? del packages with winget [system] (y/N)'
+      $yn = Read-Host '? del packages with winget (system) [y/N]'
     }
     if ("${yn}" -eq 'y') {
       runOp winget uninstall $PACK_DEL_NAMES
@@ -17,7 +17,7 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? del packages with scoop [user] (y/N)'
+      $yn = Read-Host '? del packages with scoop (user) [y/N]'
     }
     if ("${yn}" -eq 'y') {
       runOp scoop uninstall $PACK_DEL_NAMES

@@ -5,7 +5,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? add packages with apt [system] (y/N) '
+      read yn?'? add packages with apt (system) [y/N] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if [[ $PACK_ADD_PRESET ]]; then
@@ -26,7 +26,7 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? add packages with apt-get [system] (y/N) '
+      read yn?'? add packages with apt-get (system) [y/N] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if [[ $PACK_ADD_PRESET ]]; then
@@ -43,7 +43,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? add packages with brew [system] (y/N) '
+      read yn?'? add packages with brew (system) [y/N] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if [[ $PACK_ADD_PRESET ]]; then
@@ -58,7 +58,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? add packages with dnf [system] (y/N) '
+      read yn?'? add packages with dnf (system) [y/N] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if [[ $PACK_ADD_PRESET ]]; then
@@ -75,7 +75,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? add packages with yay [system] (y/N) '
+      read yn?'? add packages with yay (system) [y/N] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if [[ $PACK_ADD_PRESET ]]; then
@@ -91,7 +91,7 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? add packages with pacman [system] (y/N) '
+      read yn?'? add packages with pacman (system) [y/N] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if [[ $PACK_ADD_PRESET ]]; then

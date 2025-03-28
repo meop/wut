@@ -2,7 +2,7 @@ function () {
   local yn
 
   if type nvim > /dev/null; then
-    read yn?'? setup nvim plugin manager [local] (y/N) '
+    read yn?'? setup nvim plugin manager (local) [y/N] '
     if [[ "${yn}" == 'y' ]]; then
       local share="${XDG_DATA_HOME:-$HOME/.local/share}"
       local nvim="${share}/nvim"

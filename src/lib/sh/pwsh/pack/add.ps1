@@ -3,7 +3,7 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? add packages with winget [system] (y/N)'
+      $yn = Read-Host '? add packages with winget (system) [y/N]'
     }
     if ("${yn}" -eq 'y') {
       if ($PACK_ADD_PRESET) {
@@ -17,7 +17,7 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? add packages with scoop [user] (y/N)'
+      $yn = Read-Host '? add packages with scoop (user) [y/N]'
     }
     if ("${yn}" -eq 'y') {
       if ($PACK_ADD_PRESET) {

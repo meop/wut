@@ -5,7 +5,7 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? tidy packages with scoop [user] (y/N)'
+      $yn = Read-Host '? tidy packages with scoop (user) [y/N]'
     }
     if ("${yn}" -eq 'y') {
       runOp scoop cleanup --all --cache

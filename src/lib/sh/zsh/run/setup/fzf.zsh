@@ -2,7 +2,7 @@ function () {
   local yn
 
   if type fzf > /dev/null; then
-    read yn?'? setup fzf theme [user] (y/N) '
+    read yn?'? setup fzf theme (user) [y/N] '
     if [[ "${yn}" == 'y' ]]; then
       local fzf="${HOME}/.fzf"
 

@@ -2,7 +2,7 @@ function () {
   local yn
 
   if [[ "${sys_cpu_arch}" == 'x86_64' ]]; then
-    if [[ "$(sys_os_plat)" == 'Linux' ]]; then
+    if [[ "$(sys_os_plat)" == 'linux' ]]; then
       if [[ "${sys_os_dist}" == 'debian' ]]; then
         # dotnet-sdk: <https://learn.microsoft.com/en-us/dotnet/core/install/linux-debian>
         # pwsh (amd64): <https://learn.microsoft.com/en-us/powershell/scripting/install/install-debian>
@@ -21,7 +21,7 @@ function () {
         function () {
           local version=9.0
 
-          read yn?'? install dotnet sdk [system] (y/N) '
+          read yn?'? install dotnet sdk (system) [y/N] '
           if [[ "${yn}" == 'y' ]]; then
             install_packages_microsoft_repo
             runOp sudo apt update
@@ -29,7 +29,7 @@ function () {
           fi
         }
 
-        read yn?'? install pwsh [system] (y/N) '
+        read yn?'? install pwsh (system) [y/N] '
         if [[ "${yn}" == 'y' ]]; then
           install_packages_microsoft_repo
           runOp sudo apt update
