@@ -1,5 +1,9 @@
-read yn?'? install bun [user] (y/N) '
-if [[ "${yn}" == 'y' ]]; then
-  _url='https://bun.sh/install'
-  runOp curl --fail --location --show-error --silent --url "${_url}" '|' bash
-fi
+function () {
+  local yn
+
+  read yn?'? install bun [user] (y/N) '
+  if [[ "${yn}" == 'y' ]]; then
+    local url='https://bun.sh/install'
+    runOp bash -c '"$(' curl --fail --location --show-error --silent --url "${url}" ')"'
+  fi
+}

@@ -1,97 +1,101 @@
-if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt' ]] &&type apt > /dev/null; then
-  if [[ "${YES}" ]]; then
-    yn='y'
-  else
-    read yn?'? del packages with apt [system] (y/N) '
-  fi
-  if [[ "${yn}" == 'y' ]]; then
-    if type sudo > /dev/null; then
-      runOp sudo apt purge $PACK_DEL_NAMES
+function () {
+  local yn
+
+  if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt' ]] &&type apt > /dev/null; then
+    if [[ "${YES}" ]]; then
+      yn='y'
     else
-      runOp apt purge $PACK_DEL_NAMES
+      read yn?'? del packages with apt [system] (y/N) '
     fi
-    if [[ $PACK_DEL_PRESET ]]; then
-      runOp $PACK_DEL_PRESET
-    fi
-  fi
-fi
-if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt-get' ]] && type apt-get > /dev/null; then
-  if [[ -z "${PACK_MANAGER}" ]] && type apt > /dev/null; then
-    yn='n'
-  elif [[ "${YES}" ]]; then
-    yn='y'
-  else
-    read yn?'? del packages with apt-get [system] (y/N) '
-  fi
-  if [[ "${yn}" == 'y' ]]; then
-    if type sudo > /dev/null; then
-      runOp sudo apt-get purge $PACK_DEL_NAMES
-    fi
-    if [[ $PACK_DEL_PRESET ]]; then
-      runOp $PACK_DEL_PRESET
+    if [[ "${yn}" == 'y' ]]; then
+      if type sudo > /dev/null; then
+        runOp sudo apt purge $PACK_DEL_NAMES
+      else
+        runOp apt purge $PACK_DEL_NAMES
+      fi
+      if [[ $PACK_DEL_PRESET ]]; then
+        runOp $PACK_DEL_PRESET
+      fi
     fi
   fi
-fi
-
-if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'brew' ]] && type brew > /dev/null; then
-  if [[ "${YES}" ]]; then
-    yn='y'
-  else
-    read yn?'? del packages with brew [system] (y/N) '
-  fi
-  if [[ "${yn}" == 'y' ]]; then
-    runOp brew uninstall $PACK_DEL_NAMES
-    if [[ $PACK_DEL_PRESET ]]; then
-      runOp $PACK_DEL_PRESET
-    fi
-  fi
-fi
-
-if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'dnf' ]] && type dnf > /dev/null; then
-  if [[ "${YES}" ]]; then
-    yn='y'
-  else
-    read yn?'? del packages with dnf [system] (y/N) '
-  fi
-  if [[ "${yn}" == 'y' ]]; then
-    if type sudo > /dev/null; then
-      runOp sudo dnf remove $PACK_DEL_NAMES
-    fi
-    if [[ $PACK_DEL_PRESET ]]; then
-      runOp $PACK_DEL_PRESET
-    fi
-  fi
-fi
-
-if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'yay' ]] && type yay > /dev/null; then
-  if [[ "${YES}" ]]; then
-    yn='y'
-  else
-    read yn?'? del packages with yay [system] (y/N) '
-  fi
-  if [[ "${yn}" == 'y' ]]; then
-    runOp yay --remove --recursive --nosave $PACK_DEL_NAMES
-    if [[ $PACK_DEL_PRESET ]]; then
-      runOp $PACK_DEL_PRESET
-    fi
-  fi
-fi
-if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > /dev/null; then
-  if [[ -z "${PACK_MANAGER}" ]] && type yay > /dev/null; then
-    yn='n'
-  elif [[ "${YES}" ]]; then
-    yn='y'
-  else
-    read yn?'? del packages with pacman [system] (y/N) '
-  fi
-  if [[ "${yn}" == 'y' ]]; then
-    if type sudo > /dev/null; then
-      runOp sudo pacman --remove --recursive --nosave $PACK_DEL_NAMES
+  if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt-get' ]] && type apt-get > /dev/null; then
+    if [[ -z "${PACK_MANAGER}" ]] && type apt > /dev/null; then
+      yn='n'
+    elif [[ "${YES}" ]]; then
+      yn='y'
     else
-      runOp pacman --remove --recursive --nosave $PACK_DEL_NAMES
+      read yn?'? del packages with apt-get [system] (y/N) '
     fi
-    if [[ $PACK_DEL_PRESET ]]; then
-      runOp $PACK_DEL_PRESET
+    if [[ "${yn}" == 'y' ]]; then
+      if type sudo > /dev/null; then
+        runOp sudo apt-get purge $PACK_DEL_NAMES
+      fi
+      if [[ $PACK_DEL_PRESET ]]; then
+        runOp $PACK_DEL_PRESET
+      fi
     fi
   fi
-fi
+
+  if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'brew' ]] && type brew > /dev/null; then
+    if [[ "${YES}" ]]; then
+      yn='y'
+    else
+      read yn?'? del packages with brew [system] (y/N) '
+    fi
+    if [[ "${yn}" == 'y' ]]; then
+      runOp brew uninstall $PACK_DEL_NAMES
+      if [[ $PACK_DEL_PRESET ]]; then
+        runOp $PACK_DEL_PRESET
+      fi
+    fi
+  fi
+
+  if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'dnf' ]] && type dnf > /dev/null; then
+    if [[ "${YES}" ]]; then
+      yn='y'
+    else
+      read yn?'? del packages with dnf [system] (y/N) '
+    fi
+    if [[ "${yn}" == 'y' ]]; then
+      if type sudo > /dev/null; then
+        runOp sudo dnf remove $PACK_DEL_NAMES
+      fi
+      if [[ $PACK_DEL_PRESET ]]; then
+        runOp $PACK_DEL_PRESET
+      fi
+    fi
+  fi
+
+  if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'yay' ]] && type yay > /dev/null; then
+    if [[ "${YES}" ]]; then
+      yn='y'
+    else
+      read yn?'? del packages with yay [system] (y/N) '
+    fi
+    if [[ "${yn}" == 'y' ]]; then
+      runOp yay --remove --recursive --nosave $PACK_DEL_NAMES
+      if [[ $PACK_DEL_PRESET ]]; then
+        runOp $PACK_DEL_PRESET
+      fi
+    fi
+  fi
+  if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > /dev/null; then
+    if [[ -z "${PACK_MANAGER}" ]] && type yay > /dev/null; then
+      yn='n'
+    elif [[ "${YES}" ]]; then
+      yn='y'
+    else
+      read yn?'? del packages with pacman [system] (y/N) '
+    fi
+    if [[ "${yn}" == 'y' ]]; then
+      if type sudo > /dev/null; then
+        runOp sudo pacman --remove --recursive --nosave $PACK_DEL_NAMES
+      else
+        runOp pacman --remove --recursive --nosave $PACK_DEL_NAMES
+      fi
+      if [[ $PACK_DEL_PRESET ]]; then
+        runOp $PACK_DEL_PRESET
+      fi
+    fi
+  fi
+}

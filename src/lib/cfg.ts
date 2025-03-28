@@ -1,5 +1,5 @@
 import { getPathContents, getPathStat, getFilePath, getFilePaths } from './path'
-import { cfgObj } from './seri'
+import { fromConfig } from './serde'
 
 function cfgParts(parts: Array<string>) {
   return [import.meta.dir, '..', '..', '..', 'wut-config', ...parts]
@@ -21,5 +21,5 @@ export async function loadCfgFileContents(fsPath: string) {
     return {}
   }
 
-  return cfgObj(await getPathContents(fsPath))
+  return fromConfig(await getPathContents(fsPath))
 }

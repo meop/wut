@@ -3,7 +3,7 @@ import pkg from '../package.json' with { type: 'json' }
 import { type Cmd, CmdBase } from './lib/cmd'
 import { PackCmd } from './lib/cmd/pack'
 import { getCtx } from './lib/ctx'
-import { Fmt } from './lib/seri'
+import { Fmt } from './lib/serde'
 import { Pwsh } from './lib/sh/pwsh'
 import { Zsh } from './lib/sh/zsh'
 
@@ -57,10 +57,9 @@ async function runSrv(req: Request) {
 
     const shell = (parts[0] === 'pwsh' ? new Pwsh() : new Zsh())
       .withSetVar('url'.toUpperCase(), url.toString())
-      .withLoadFilePath('sys', 'ver')
-      .withLoadFilePath('sys', 'env')
-      .withLoadFilePath('sys', 'print')
-      .withLoadFilePath('sys', 'run')
+      .withLoadFilePath('lib', 'print')
+      .withLoadFilePath('vers')
+      .withLoadFilePath('env')
 
     const context = getCtx(usp)
 
@@ -69,7 +68,13 @@ async function runSrv(req: Request) {
     }
 
     return new Response(
-      await cmd.process(url, usp, parts.slice(1), shell, context),
+      await cmd.process(
+        url,
+        usp,
+        parts.slice(1),
+        shell.withLoadFilePath('lib', 'run'),
+        context,
+      ),
     )
   } catch (err) {
     const lines: Array<string> = []

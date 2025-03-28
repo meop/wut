@@ -5,7 +5,7 @@ import { type Cmd, CmdBase } from '../cmd'
 import type { Ctx } from '../ctx'
 import type { Env } from '../env'
 import type { Sh } from '../sh'
-import { consStr } from '../seri'
+import { toConsole } from '../serde'
 
 export class PackCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -34,9 +34,9 @@ async function workPreset(
   op: string,
 ) {
   const packKey = 'pack'
-  const packManagerKey = 'PACK_MANAGER'
-  const packNamesKey = `PACK_${op.toUpperCase()}_NAMES`
-  const packPresetKey = `PACK_${op.toUpperCase()}_PRESET`
+  const packManagerKey = 'pack_manager'.toUpperCase()
+  const packNamesKey = `pack_${op}_names`.toUpperCase()
+  const packPresetKey = `pack_${op}_preset`.toUpperCase()
 
   let _shell = shell
 
@@ -54,30 +54,37 @@ async function workPreset(
       )
       if (presetFile) {
         const contents = await loadCfgFileContents(presetFile)
-        for (const key of Object.keys(contents)) {
-          if (manager && key !== manager) {
-            continue
-          }
 
-          const value = contents[key]
-          if (value[op]) {
-            _shell = _shell.withSetVar(packPresetKey, value[op].join(';'))
-          } else {
-            _shell = _shell.withUnsetVar(packPresetKey)
+        if (op === 'find') {
+          _shell = _shell.withPrintInfo(`${name}:`)
+          _shell = _shell.withPrint(toConsole(contents))
+        } else {
+          for (const key of Object.keys(contents)) {
+            if (manager && key !== manager) {
+              continue
+            }
+            const value = contents[key]
+            if (value[op]) {
+              _shell = _shell.withSetVar(packPresetKey, value[op].join(';'))
+            } else {
+              _shell = _shell.withUnsetVar(packPresetKey)
+            }
+            _shell = _shell.withSetVar(packManagerKey, key)
+            _shell = _shell.withSetVar(packNamesKey, value.names.join(' '))
+            _shell = _shell.withLoadFilePath(packKey, op)
           }
-          _shell = _shell.withSetVar(packManagerKey, key)
-          _shell = _shell.withSetVar(packNamesKey, value.names.join(' '))
-          _shell = _shell.withLoadFilePath(packKey, op)
         }
 
         foundNames.push(name)
       }
     }
 
-    _shell = _shell.withUnsetVar(packPresetKey)
-    _shell = _shell.withUnsetVar(packManagerKey)
-    if (manager) {
-      _shell = _shell.withSetVar(packManagerKey, manager)
+    if (op !== 'find') {
+      _shell = _shell.withUnsetVar(packPresetKey)
+      _shell = _shell.withUnsetVar(packManagerKey)
+      if (manager) {
+        _shell = _shell.withSetVar(packManagerKey, manager)
+      }
     }
   }
 
@@ -131,44 +138,8 @@ export class PackCmdFind extends CmdBase implements Cmd {
     this.switches = [{ keys: ['-p', '--preset'], desc: 'check for preset' }]
     this.scopes = [...scopes, this.name]
   }
-  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    const op = 'find'
-
-    const packKey = 'pack'
-    const packNamesKey = `PACK_${op.toUpperCase()}_NAMES`
-    const packPresetKey = `PACK_${op.toUpperCase()}_PRESET`
-
-    let _shell = shell
-
-    const requestedNames = environment[packNamesKey].split(' ')
-    const foundNames: Array<string> = []
-
-    if (environment[packPresetKey]) {
-      const presetFiles = await getCfgFilePaths([packKey])
-
-      for (const name of requestedNames) {
-        const presetFile = presetFiles.find(
-          f => path.basename(f, '.yaml') === name,
-        )
-        if (presetFile) {
-          const contents = await loadCfgFileContents(presetFile)
-
-          _shell = _shell.withPrintInfo(`${name}:`)
-          _shell = _shell.withPrint(consStr(contents))
-
-          foundNames.push(name)
-        }
-      }
-    }
-
-    const remainingNames = requestedNames.filter(n => !foundNames.includes(n))
-
-    if (remainingNames.length) {
-      _shell = _shell.withSetVar(packNamesKey, remainingNames.join(' '))
-      _shell = _shell.withLoadFilePath(packKey, op)
-    }
-
-    return _shell.build()
+  work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
+    return workPreset(context, environment, shell, 'find')
   }
 }
 

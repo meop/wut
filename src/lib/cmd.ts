@@ -1,6 +1,6 @@
 import type { Ctx } from './ctx'
 import type { Env } from './env'
-import { type Fmt, consStr } from './seri'
+import { type Fmt, toConsole } from './serde'
 import type { Sh } from './sh'
 
 export interface Cmd {
@@ -111,12 +111,12 @@ export class CmdBase {
         const formatEnv = _environment['format'.toUpperCase()]
         const format = formatEnv ? (formatEnv as Fmt) : undefined
 
-        _shell = _shell.withPrintSucc('url:')
-        _shell = _shell.withPrint(consStr(url.toString(), format))
-        _shell = _shell.withPrintSucc('context:')
-        _shell = _shell.withPrint(consStr(_context, format))
-        _shell = _shell.withPrintSucc('environment:')
-        _shell = _shell.withPrint(consStr(_environment, format))
+        _shell = _shell.withPrintSucc('url')
+        _shell = _shell.withPrint(toConsole(url.toString(), format))
+        _shell = _shell.withPrintSucc('context')
+        _shell = _shell.withPrint(toConsole(_context, format))
+        _shell = _shell.withPrintSucc('environment')
+        _shell = _shell.withPrint(toConsole(_environment, format))
       }
 
       if (_environment['trace'.toUpperCase()]) {

@@ -4,6 +4,7 @@ function print {
   fi
   echo $@
 }
+
 function printErr {
   if [[ "${SUCCINCT}" ]]; then
     return
@@ -16,6 +17,7 @@ function printErr {
   echo -n $@ >&2
   echo '\033[0m' >&2
 }
+
 function printSucc {
   if [[ "${SUCCINCT}" ]]; then
     return
@@ -28,6 +30,7 @@ function printSucc {
   echo -n $@
   echo '\033[0m'
 }
+
 function printWarn {
   if [[ "${SUCCINCT}" ]]; then
     return
@@ -40,6 +43,7 @@ function printWarn {
   echo -n $@
   echo '\033[0m'
 }
+
 function printInfo {
   if [[ "${SUCCINCT}" ]]; then
     return
@@ -52,6 +56,7 @@ function printInfo {
   echo -n $@
   echo '\033[0m'
 }
+
 function printOp {
   if [[ "${SUCCINCT}" ]]; then
     return

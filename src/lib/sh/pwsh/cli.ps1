@@ -1,1 +1,1 @@
-Invoke-RestMethod -Uri "${url}" | Invoke-Expression
+Invoke-Expression (&{ Invoke-RestMethod -Uri "${url}" })

@@ -4,6 +4,7 @@ function print {
   }
   [Console]::WriteLine($($args -Join ' '))
 }
+
 function printErr {
   if ("${SUCCINCT}") {
     return
@@ -16,6 +17,7 @@ function printErr {
   [Console]::Error.WriteLine($($args -Join ' '))
   [Console]::ResetColor()
 }
+
 function printSucc {
   if ("${SUCCINCT}") {
     return
@@ -28,6 +30,7 @@ function printSucc {
   [Console]::WriteLine($($args -Join ' '))
   [Console]::ResetColor()
 }
+
 function printWarn {
   if ("${SUCCINCT}") {
     return
@@ -40,6 +43,7 @@ function printWarn {
   [Console]::WriteLine($($args -Join ' '))
   [Console]::ResetColor()
 }
+
 function printInfo {
   if ("${SUCCINCT}") {
     return
@@ -52,6 +56,7 @@ function printInfo {
   [Console]::WriteLine($($args -Join ' '))
   [Console]::ResetColor()
 }
+
 function printOp {
   if ("${SUCCINCT}") {
     return
