@@ -13,7 +13,7 @@ function () {
         runOp git -C "${output}" pull --prune '>' /dev/null '2>&1'
       else
         local url='https://github.com/tmux-plugins/tpm.git'
-        runOp git clone -q --depth 1 "${url}" "${output}"
+        runOp git clone --depth 1 --quiet "${url}" "${output}"
       fi
     fi
 
@@ -21,7 +21,7 @@ function () {
     if [[ "${yn}" == 'y' ]]; then
       local output="${tmux}/theme.tmux"
       local url='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/tmux/tokyonight_moon.tmux'
-      runOp curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
+      runOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
     fi
   fi
 }

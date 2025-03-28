@@ -4,6 +4,6 @@ function () {
   read yn?'? install uv [user] (y/N) '
   if [[ "${yn}" == 'y' ]]; then
     local url='https://astral.sh/uv/install.sh'
-    runOp sh -c '"$(' curl --fail --location --show-error --silent --url "${url}" ')"'
+    runOp sh -c '"$(' curl --location --silent --url "${url}" ')"'
   fi
 }

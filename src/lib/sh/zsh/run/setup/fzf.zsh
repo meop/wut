@@ -8,7 +8,7 @@ function () {
 
       local output="${fzf}/colors.zsh"
       local url='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/fzf/tokyonight_storm.sh'
-      runOp curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
+      runOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
     fi
   fi
 }

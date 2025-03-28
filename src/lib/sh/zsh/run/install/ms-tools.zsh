@@ -12,7 +12,7 @@ function () {
           if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep -v '^#' | grep -v '^$' | grep '^.*packages.*microsoft.*com.*$' > /dev/null; then
             local output="${HOME}/packages-microsoft-prod.deb"
             local url="https://packages.microsoft.com/config/${sys_os_dist}/${sys_os_ver}/packages-microsoft-prod.deb"
-            runOp curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
+            runOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
             runOp sudo dpkg -i "${output}"
             runOp rm "${output}"
           fi

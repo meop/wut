@@ -26,7 +26,7 @@ function wut_wrap {
   local url="${url}/zsh"
   local url=$(echo "${url}" "$@" | sed 's/ /\//g' | sed 's:/*$::')
 
-  eval "$( curl --fail --location --show-error --silent --url "${url}" )"
+  eval "$(curl --location --silent --url ${url})"
 }
 ```
 
@@ -46,6 +46,6 @@ function wut_wrap {
   $url = "${url}/pwsh"
   $url += "/$($args -Join '/')".TrimEnd('/')
 
-  Invoke-Expression (&{ Invoke-RestMethod -Uri "${url}" })
+  Invoke-Expression (Invoke-WebRequest -Uri "${url}")
 }
 ```

@@ -10,7 +10,7 @@ function () {
         runOp git -C "${output}" pull --prune '>' /dev/null '2>&1'
       else
         local url='https://aur.archlinux.org/yay-bin.git'
-        runOp git clone -q --depth 1 "${url}" "${output}"
+        runOp git clone --depth 1 --quiet "${url}" "${output}"
       fi
 
       (

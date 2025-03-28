@@ -19,11 +19,11 @@ function () {
       if [[ "${yn}" == 'y' ]]; then
         local output="${termux}/colors.properties"
         local url='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/termux/tokyonight_moon.properties'
-        runOp curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
+        runOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
 
         local output="${termux}/Hack.zip"
         local url='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/Hack.zip'
-        runOp curl --fail --location --show-error --silent --url "${url}" --create-dirs --output "${output}"
+        runOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
         runOp unzip -q "${output}" -d "${output}.unzip"
         runOp cp "${output}.unzip/HackNerdFontMono-Regular.ttf" "${termux}/font.ttf"
         runOp rm -r -f "${output}"'*'

@@ -1,1 +1,1 @@
-eval "$( curl --fail --location --show-error --silent --url "${url}" )"
+eval "$(curl --location --silent --url ${url})"
