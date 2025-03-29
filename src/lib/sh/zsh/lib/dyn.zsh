@@ -1,5 +1,4 @@
-function runOp {
-  echo ${@}
+function dynOp {
   printOp $@
   if [[ -z "${NOOP}" ]]; then
     eval "$@"

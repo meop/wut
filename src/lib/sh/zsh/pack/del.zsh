@@ -9,14 +9,14 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo apt purge $PACK_DEL_NAMES
+        dynOp sudo apt purge $PACK_DEL_NAMES
       else
-        runOp apt purge $PACK_DEL_NAMES
+        dynOp apt purge $PACK_DEL_NAMES
       fi
       if [[ $PACK_DEL_PRESETS ]]; then
         for preset in "${PACK_DEL_PRESETS[@]}"; do
           presetSplit=(${(s: :)preset})
-          runOp "${presetSplit[@]}"
+          dynOp "${presetSplit[@]}"
         done
       fi
     fi
@@ -31,12 +31,12 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo apt-get purge $PACK_DEL_NAMES
+        dynOp sudo apt-get purge $PACK_DEL_NAMES
       fi
       if [[ $PACK_DEL_PRESETS ]]; then
         for preset in "${PACK_DEL_PRESETS[@]}"; do
           presetSplit=(${(s: :)preset})
-          runOp "${presetSplit[@]}"
+          dynOp "${presetSplit[@]}"
         done
       fi
     fi
@@ -49,11 +49,11 @@ function () {
       read yn?'? del packages with brew (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      runOp brew uninstall $PACK_DEL_NAMES
+      dynOp brew uninstall $PACK_DEL_NAMES
       if [[ $PACK_DEL_PRESETS ]]; then
         for preset in "${PACK_DEL_PRESETS[@]}"; do
           presetSplit=(${(s: :)preset})
-          runOp "${presetSplit[@]}"
+          dynOp "${presetSplit[@]}"
         done
       fi
     fi
@@ -67,12 +67,12 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo dnf remove $PACK_DEL_NAMES
+        dynOp sudo dnf remove $PACK_DEL_NAMES
       fi
       if [[ $PACK_DEL_PRESETS ]]; then
         for preset in "${PACK_DEL_PRESETS[@]}"; do
           presetSplit=(${(s: :)preset})
-          runOp "${presetSplit[@]}"
+          dynOp "${presetSplit[@]}"
         done
       fi
     fi
@@ -85,11 +85,11 @@ function () {
       read yn?'? del packages with yay (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      runOp yay --remove --recursive --nosave $PACK_DEL_NAMES
+      dynOp yay --remove --recursive --nosave $PACK_DEL_NAMES
       if [[ $PACK_DEL_PRESETS ]]; then
         for preset in "${PACK_DEL_PRESETS[@]}"; do
           presetSplit=(${(s: :)preset})
-          runOp "${presetSplit[@]}"
+          dynOp "${presetSplit[@]}"
         done
       fi
     fi
@@ -104,14 +104,14 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo pacman --remove --recursive --nosave $PACK_DEL_NAMES
+        dynOp sudo pacman --remove --recursive --nosave $PACK_DEL_NAMES
       else
-        runOp pacman --remove --recursive --nosave $PACK_DEL_NAMES
+        dynOp pacman --remove --recursive --nosave $PACK_DEL_NAMES
       fi
       if [[ $PACK_DEL_PRESETS ]]; then
         for preset in "${PACK_DEL_PRESETS[@]}"; do
           presetSplit=(${(s: :)preset})
-          runOp "${presetSplit[@]}"
+          dynOp "${presetSplit[@]}"
         done
       fi
     fi

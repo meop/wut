@@ -1,10 +1,14 @@
-import { getFilePath, getFilePaths } from './path'
+import { buildFilePath, getFilePaths, getFileText } from './path'
 
 export interface Sh {
   build(): Promise<string>
 
   with(...lines: Array<string>): Sh
   withEval(...lines: Array<string>): Sh
+
+  withFsDirList(...parts: Array<string>): Sh
+  withFsDirLoad(...parts: Array<string>): Sh
+  withFsFileLoad(...parts: Array<string>): Sh
 
   withPrint(...lines: Array<string>): Sh
   withPrintErr(...lines: Array<string>): Sh
@@ -13,12 +17,9 @@ export interface Sh {
   withPrintSucc(...lines: Array<string>): Sh
   withPrintWarn(...lines: Array<string>): Sh
 
-  withLoadDirPath(...parts: Array<string>): Sh
-  withLoadFilePath(...parts: Array<string>): Sh
-
-  withSetVar(name: string, value: string): Sh
-  withSetArrayVar(name: string, value: Array<string>): Sh
-  withUnsetVar(name: string): Sh
+  withVarArrSet(name: string, values: Array<string>): Sh
+  withVarSet(name: string, value: string): Sh
+  withVarUnset(name: string): Sh
 
   withTrace(): Sh
 }
@@ -61,83 +62,82 @@ export class ShBase {
     throw new Error('not implemented')
   }
 
-  withPrint(...lines: Array<string>): Sh {
-    for (const line of lines) {
-      this.lineBuilders.push(async () => `print ${this.toVal(line)}`)
-    }
+  withFsDirList(...parts: Array<string>): Sh {
+    this.lineBuilders.push(async () => {
+      const filter = parts.pop()
+      const dirPath = buildFilePath(this.localParts(parts))
+      const filePaths = await getFilePaths(
+        dirPath,
+        this.shExt,
+        filter ? [filter] : undefined,
+      )
+
+      return filePaths.map(f => this.toVal(f.replace(f, ''))).join('\n')
+    })
     return this
+  }
+
+  withFsDirLoad(...parts: Array<string>): Sh {
+    this.lineBuilders.push(async () => {
+      const filter = parts.pop()
+      const dirPath = buildFilePath(this.localParts(parts))
+      const filePaths = await getFilePaths(
+        dirPath,
+        this.shExt,
+        filter ? [filter] : undefined,
+      )
+
+      return (await Promise.all(filePaths.map(f => getFileText(f)))).join('\n')
+    })
+    return this
+  }
+
+  withFsFileLoad(...parts: Array<string>): Sh {
+    this.lineBuilders.push(async () => {
+      const filePath = `${buildFilePath(this.localParts(parts))}.${this.shExt}`
+
+      return await getFileText(filePath)
+    })
+    return this
+  }
+
+  withPrint(...lines: Array<string>): Sh {
+    return this.with(...lines.map(l => `print ${this.toVal(l)}`))
   }
 
   withPrintErr(...lines: Array<string>): Sh {
-    for (const line of lines) {
-      this.lineBuilders.push(async () => `printErr ${this.toVal(line)}`)
-    }
-    return this
+    return this.with(...lines.map(l => `printErr ${this.toVal(l)}`))
   }
 
   withPrintInfo(...lines: Array<string>): Sh {
-    for (const line of lines) {
-      this.lineBuilders.push(async () => `printInfo ${this.toVal(line)}`)
-    }
-    return this
+    return this.with(...lines.map(l => `printInfo ${this.toVal(l)}`))
   }
 
   withPrintOp(...lines: Array<string>): Sh {
-    for (const line of lines) {
-      this.lineBuilders.push(async () => `printOp ${this.toVal(line)}`)
-    }
-    return this
+    return this.with(...lines.map(l => `printOp ${this.toVal(l)}`))
   }
 
   withPrintSucc(...lines: Array<string>): Sh {
-    for (const line of lines) {
-      this.lineBuilders.push(async () => `printSucc ${this.toVal(line)}`)
-    }
-    return this
+    return this.with(...lines.map(l => `printSucc ${this.toVal(l)}`))
   }
 
   withPrintWarn(...lines: Array<string>): Sh {
-    for (const line of lines) {
-      this.lineBuilders.push(async () => `printWarn ${this.toVal(line)}`)
-    }
-    return this
-  }
-
-  withLoadDirPath(...parts: Array<string>): Sh {
-    this.lineBuilders.push(async () => {
-      const lines: Array<string> = []
-      for (const filePath of await getFilePaths(this.localParts(parts))) {
-        lines.push(await Bun.file(filePath).text())
-      }
-
-      return lines.join('\n')
-    })
-    this.lineBuilders.push(async () => '')
-    return this
-  }
-
-  withLoadFilePath(...parts: Array<string>): Sh {
-    this.lineBuilders.push(async () => {
-      return await Bun.file(
-        `${getFilePath(this.localParts(parts))}.${this.shExt}`,
-      ).text()
-    })
-    return this
-  }
-
-  withSetVar(name: string, value: string): Sh {
-    throw new Error('not implemented')
-  }
-
-  withSetArrayVar(name: string, value: Array<string>): Sh {
-    throw new Error('not implemented')
-  }
-
-  withUnsetVar(name: string): Sh {
-    throw new Error('not implemented')
+    return this.with(...lines.map(l => `printWarn ${this.toVal(l)}`))
   }
 
   withTrace(): Sh {
+    throw new Error('not implemented')
+  }
+
+  withVarArrSet(name: string, value: Array<string>): Sh {
+    throw new Error('not implemented')
+  }
+
+  withVarSet(name: string, value: string): Sh {
+    throw new Error('not implemented')
+  }
+
+  withVarUnset(name: string): Sh {
     throw new Error('not implemented')
   }
 }

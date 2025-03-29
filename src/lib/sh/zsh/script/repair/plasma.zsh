@@ -11,13 +11,13 @@ function () {
   if [[ -f "${HOME}/.config/globalshortcutsrc" ]]; then
     read yn?'? repair plasma global shortcuts (user) [[y]/n] '
     if [[ "${yn}" == 'y' ]]; then
-      runOp rm "${HOME}/.config/globalshortcutsrc"
+      dynOp rm "${HOME}/.config/globalshortcutsrc"
     fi
   fi
   if [[ -f "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc" ]]; then
     read yn?'? repair plasma panel applets (user) [[y]/n] '
     if [[ "${yn}" == 'y' ]]; then
-      runOp rm "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc"
+      dynOp rm "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc"
     fi
   fi
 }

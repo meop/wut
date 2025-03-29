@@ -3,17 +3,17 @@
     $yn = Read-Host '? repair rtc utc (system) [[y]/n]'
     if ("${yn}" -eq 'y') {
       pwsh -nologo -noprofile -command {
-        runOp Set-Location HKLM:
+        dynOp Set-Location HKLM:
 
         $path = '\System\CurrentControlSet\Control\TimeZoneInformation'
 
         if (-not (Get-ItemProperty $path).RealTimeIsUniversal) {
-          runOp New-ItemProperty $path -Name RealTimeIsUniversal -Value 1 -PropertyType QWord
+          dynOp New-ItemProperty $path -Name RealTimeIsUniversal -Value 1 -PropertyType QWord
         } else {
-          runOp Set-ItemProperty $path -Name RealTimeIsUniversal -Value 1
+          dynOp Set-ItemProperty $path -Name RealTimeIsUniversal -Value 1
         }
 
-        runOp Write-Output $path RealTimeIsUniversal (Get-ItemProperty $path).RealTimeIsUniversal
+        dynOp Write-Output $path RealTimeIsUniversal (Get-ItemProperty $path).RealTimeIsUniversal
       }
     }
   }

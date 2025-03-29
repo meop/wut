@@ -10,15 +10,15 @@ function () {
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
         if [[ "${PACK_LIST_NAMES}" ]]; then
-          runOp sudo apt list --installed '|' grep --ignore-case $PACK_LIST_NAMES
+          dynOp sudo apt list --installed '2>' /dev/null '|' grep --ignore-case $PACK_LIST_NAMES
         else
-          runOp sudo apt list --installed
+          dynOp sudo apt list --installed '2>' /dev/null
         fi
       else
         if [[ "${PACK_LIST_NAMES}" ]]; then
-          runOp apt list --installed '|' grep --ignore-case $PACK_LIST_NAMES
+          dynOp apt list --installed '2>' /dev/null '|' grep --ignore-case $PACK_LIST_NAMES
         else
-          runOp apt list --installed
+          dynOp apt list --installed '2>' /dev/null
         fi
       fi
     fi
@@ -34,9 +34,9 @@ function () {
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
         if [[ "${PACK_LIST_NAMES}" ]]; then
-          runOp sudo apt-get list --installed '|' grep --ignore-case $PACK_LIST_NAMES
+          dynOp sudo apt-get list --installed '|' grep --ignore-case $PACK_LIST_NAMES
         else
-          runOp sudo apt-get list --installed
+          dynOp sudo apt-get list --installed
         fi
       fi
     fi
@@ -50,9 +50,9 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if [[ "${PACK_LIST_NAMES}" ]]; then
-        runOp brew list '|' grep --ignore-case $PACK_LIST_NAMES
+        dynOp brew list '|' grep --ignore-case $PACK_LIST_NAMES
       else
-        runOp brew list
+        dynOp brew list
       fi
     fi
   fi
@@ -66,9 +66,9 @@ function () {
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
         if [[ "${PACK_LIST_NAMES}" ]]; then
-          runOp sudo dnf list --installed '|' grep --ignore-case $PACK_LIST_NAMES
+          dynOp sudo dnf list --installed '|' grep --ignore-case $PACK_LIST_NAMES
         else
-          runOp sudo dnf list --installed
+          dynOp sudo dnf list --installed
         fi
       fi
     fi
@@ -82,9 +82,9 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if [[ "${PACK_LIST_NAMES}" ]]; then
-        runOp yay --query '|' grep --ignore-case $PACK_LIST_NAMES
+        dynOp yay --query '|' grep --ignore-case $PACK_LIST_NAMES
       else
-        runOp yay --query
+        dynOp yay --query
       fi
     fi
   fi
@@ -99,15 +99,15 @@ function () {
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
         if [[ "${PACK_LIST_NAMES}" ]]; then
-          runOp sudo pacman --query '|' grep --ignore-case $PACK_LIST_NAMES
+          dynOp sudo pacman --query '|' grep --ignore-case $PACK_LIST_NAMES
         else
-          runOp sudo pacman --query
+          dynOp sudo pacman --query
         fi
       else
         if [[ "${PACK_LIST_NAMES}" ]]; then
-          runOp pacman --query '|' grep --ignore-case $PACK_LIST_NAMES
+          dynOp pacman --query '|' grep --ignore-case $PACK_LIST_NAMES
         else
-          runOp pacman --query
+          dynOp pacman --query
         fi
       fi
     fi

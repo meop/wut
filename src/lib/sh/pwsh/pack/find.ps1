@@ -6,7 +6,7 @@
       $yn = Read-Host '? find packages with winget (system) [[y]/n]'
     }
     if ("${yn}" -eq 'y') {
-      runOp winget search $PACK_FIND_NAMES
+      dynOp winget search $PACK_FIND_NAMES
     }
   }
 
@@ -17,8 +17,8 @@
       $yn = Read-Host '? find packages with scoop (user) [[y]/n]'
     }
     if ("${yn}" -eq 'y') {
-      runOp scoop update
-      runOp scoop search $PACK_FIND_NAMES
+      dynOp scoop update
+      dynOp scoop search $PACK_FIND_NAMES
     }
   }
 }

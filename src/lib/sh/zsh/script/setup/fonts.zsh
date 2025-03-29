@@ -7,21 +7,21 @@ function () {
       local share="${XDG_DATA_HOME:-${HOME}/.local/share}"
       local fonts="${share}/fonts"
 
-      runOp mkdir -p "${fonts}" '>' /dev/null '2>&1'
+      dynOp mkdir -p "${fonts}" '>' /dev/null '2>&1'
 
       local output="${HOME}/Hack.zip"
       local url='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/Hack.zip'
-      runOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
-      runOp unzip -q "${output}" -d "${output}.unzip"
-      runOp cp "${output}.unzip"'/*.ttf' "${fonts}"
-      runOp rm -r -f "${output}"'*'
+      dynOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
+      dynOp unzip -q "${output}" -d "${output}.unzip"
+      dynOp cp "${output}.unzip"'/*.ttf' "${fonts}"
+      dynOp rm -r -f "${output}"'*'
 
       local output="${HOME}/FiraCode.zip"
       local url='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/FiraCode.zip'
-      runOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
-      runOp unzip -q "${output}" -d "${output}.unzip"
-      runOp cp "${output}.unzip"'/*.ttf' "${fonts}"
-      runOp rm -r -f "${output}"'*'
+      dynOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
+      dynOp unzip -q "${output}" -d "${output}.unzip"
+      dynOp cp "${output}.unzip"'/*.ttf' "${fonts}"
+      dynOp rm -r -f "${output}"'*'
     fi
   fi
 }

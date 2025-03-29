@@ -9,11 +9,11 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo apt autoclean
-        runOp sudo apt autoremove
+        dynOp sudo apt autoclean
+        dynOp sudo apt autoremove
       else
-        runOp apt autoclean
-        runOp apt autoremove
+        dynOp apt autoclean
+        dynOp apt autoremove
       fi
     fi
   fi
@@ -27,8 +27,8 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo apt-get autoclean
-        runOp sudo apt-get autoremove
+        dynOp sudo apt-get autoclean
+        dynOp sudo apt-get autoremove
       fi
     fi
   fi
@@ -40,7 +40,7 @@ function () {
       read yn?'? tidy packages with brew (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      runOp brew cleanup --prune=all
+      dynOp brew cleanup --prune=all
     fi
   fi
 
@@ -52,8 +52,8 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo dnf clean dbcache
-        runOp sudo dnf autoremove
+        dynOp sudo dnf clean dbcache
+        dynOp sudo dnf autoremove
       fi
     fi
   fi
@@ -65,7 +65,7 @@ function () {
       read yn?'? tidy packages with yay (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      runOp yay --sync --clean
+      dynOp yay --sync --clean
     fi
   fi
   if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > /dev/null; then
@@ -78,9 +78,9 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo pacman --sync --clean
+        dynOp sudo pacman --sync --clean
       else
-        runOp pacman --sync --clean
+        dynOp pacman --sync --clean
       fi
     fi
   fi

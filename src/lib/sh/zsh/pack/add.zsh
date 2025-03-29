@@ -11,15 +11,15 @@ function () {
       if [[ $PACK_ADD_PRESETS ]]; then
         for preset in "${PACK_ADD_PRESETS[@]}"; do
           presetSplit=(${(s: :)preset})
-          runOp "${presetSplit[@]}"
+          dynOp "${presetSplit[@]}"
         done
       fi
       if type sudo > /dev/null; then
-        runOp sudo apt update
-        runOp sudo apt install $PACK_ADD_NAMES
+        dynOp sudo apt update
+        dynOp sudo apt install $PACK_ADD_NAMES
       else
-        runOp apt update
-        runOp apt install $PACK_ADD_NAMES
+        dynOp apt update
+        dynOp apt install $PACK_ADD_NAMES
       fi
     fi
   fi
@@ -35,12 +35,12 @@ function () {
       if [[ $PACK_ADD_PRESETS ]]; then
         for preset in "${PACK_ADD_PRESETS[@]}"; do
           presetSplit=(${(s: :)preset})
-          runOp "${presetSplit[@]}"
+          dynOp "${presetSplit[@]}"
         done
       fi
       if type sudo > /dev/null; then
-        runOp sudo apt-get update
-        runOp sudo apt-get install $PACK_ADD_NAMES
+        dynOp sudo apt-get update
+        dynOp sudo apt-get install $PACK_ADD_NAMES
       fi
     fi
   fi
@@ -55,11 +55,11 @@ function () {
       if [[ $PACK_ADD_PRESETS ]]; then
         for preset in "${PACK_ADD_PRESETS[@]}"; do
           presetSplit=(${(s: :)preset})
-          runOp "${presetSplit[@]}"
+          dynOp "${presetSplit[@]}"
         done
       fi
-      runOp brew update
-      runOp brew install $PACK_ADD_NAMES
+      dynOp brew update
+      dynOp brew install $PACK_ADD_NAMES
     fi
   fi
 
@@ -73,12 +73,12 @@ function () {
       if [[ $PACK_ADD_PRESETS ]]; then
         for preset in "${PACK_ADD_PRESETS[@]}"; do
           presetSplit=(${(s: :)preset})
-          runOp "${presetSplit[@]}"
+          dynOp "${presetSplit[@]}"
         done
       fi
       if type sudo > /dev/null; then
-        runOp sudo dnf check-update
-        runOp sudo dnf install $PACK_ADD_NAMES
+        dynOp sudo dnf check-update
+        dynOp sudo dnf install $PACK_ADD_NAMES
       fi
     fi
   fi
@@ -93,11 +93,11 @@ function () {
       if [[ $PACK_ADD_PRESETS ]]; then
         for preset in "${PACK_ADD_PRESETS[@]}"; do
           presetSplit=(${(s: :)preset})
-          runOp "${presetSplit[@]}"
+          dynOp "${presetSplit[@]}"
         done
       fi
-      runOp yay --sync --refresh
-      runOp yay --sync --needed $PACK_ADD_NAMES
+      dynOp yay --sync --refresh
+      dynOp yay --sync --needed $PACK_ADD_NAMES
     fi
   fi
   if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > /dev/null; then
@@ -112,15 +112,15 @@ function () {
       if [[ $PACK_ADD_PRESETS ]]; then
         for preset in "${PACK_ADD_PRESETS[@]}"; do
           presetSplit=(${(s: :)preset})
-          runOp "${presetSplit[@]}"
+          dynOp "${presetSplit[@]}"
         done
       fi
       if type sudo > /dev/null; then
-        runOp sudo pacman --sync --refresh
-        runOp sudo pacman --sync --needed $PACK_ADD_NAMES
+        dynOp sudo pacman --sync --refresh
+        dynOp sudo pacman --sync --needed $PACK_ADD_NAMES
       else
-        runOp pacman --sync --refresh
-        runOp pacman --sync --needed $PACK_ADD_NAMES
+        dynOp pacman --sync --refresh
+        dynOp pacman --sync --needed $PACK_ADD_NAMES
       fi
     fi
   fi

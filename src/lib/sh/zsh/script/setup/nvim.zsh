@@ -9,7 +9,7 @@ function () {
 
       local output="${nvim}/site/autoload/plug.vim"
       local url='https://raw.githubusercontent.com/junegunn/vim-plug/HEAD/plug.vim'
-      runOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
+      dynOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
     fi
   fi
 }

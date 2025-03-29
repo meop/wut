@@ -7,28 +7,28 @@ function () {
 
       read yn?'? setup termux mirrors (system) [[y]/n] '
       if [[ "${yn}" == 'y' ]]; then
-        runOp termux-change-mirror
+        dynOp termux-change-mirror
       fi
 
       read yn?'? setup termux storage (system) [[y]/n] '
       if [[ "${yn}" == 'y' ]]; then
-        runOp termux-setup-storage
+        dynOp termux-setup-storage
       fi
 
       read yn?'? setup termux theme (user) [[y]/n] '
       if [[ "${yn}" == 'y' ]]; then
         local output="${termux}/colors.properties"
         local url='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/termux/tokyonight_moon.properties'
-        runOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
+        dynOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
 
         local output="${termux}/Hack.zip"
         local url='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/Hack.zip'
-        runOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
-        runOp unzip -q "${output}" -d "${output}.unzip"
-        runOp cp "${output}.unzip/HackNerdFontMono-Regular.ttf" "${termux}/font.ttf"
-        runOp rm -r -f "${output}"'*'
+        dynOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
+        dynOp unzip -q "${output}" -d "${output}.unzip"
+        dynOp cp "${output}.unzip/HackNerdFontMono-Regular.ttf" "${termux}/font.ttf"
+        dynOp rm -r -f "${output}"'*'
 
-        runOp termux-reload-settings
+        dynOp termux-reload-settings
       fi
     fi
   fi

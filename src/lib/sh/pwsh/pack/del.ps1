@@ -6,11 +6,11 @@
       $yn = Read-Host '? del packages with winget (system) [[y]/n]'
     }
     if ("${yn}" -eq 'y') {
-      runOp winget uninstall $PACK_DEL_NAMES
+      dynOp winget uninstall $PACK_DEL_NAMES
       if ("${PACK_DEL_PRESETS}") {
         foreach ($preset in ${PACK_DEL_PRESETS}) {
           $presetSplit = ${preset} -Split ' '
-          runOp @presetSplit
+          dynOp @presetSplit
         }
       }
     }
@@ -23,11 +23,11 @@
       $yn = Read-Host '? del packages with scoop (user) [[y]/n]'
     }
     if ("${yn}" -eq 'y') {
-      runOp scoop uninstall $PACK_DEL_NAMES
+      dynOp scoop uninstall $PACK_DEL_NAMES
       if ("${PACK_DEL_PRESETS}") {
         foreach ($preset in ${PACK_DEL_PRESETS}) {
           $presetSplit = ${preset} -Split ' '
-          runOp @presetSplit
+          dynOp @presetSplit
         }
       }
     }

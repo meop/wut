@@ -7,9 +7,9 @@
     }
     if ("${yn}" -eq 'y') {
       if ("${PACK_UP_NAMES}") {
-        runOp winget upgrade $PACK_UP_NAMES
+        dynOp winget upgrade $PACK_UP_NAMES
       } else {
-        runOp winget upgrade --all
+        dynOp winget upgrade --all
       }
     }
   }
@@ -21,11 +21,11 @@
       $yn = Read-Host '? up packages with scoop (user) [[y]/n]'
     }
     if ("${yn}" -eq 'y') {
-      runOp scoop update
+      dynOp scoop update
       if ("${PACK_UP_NAMES}") {
-        runOp scoop update $PACK_UP_NAMES
+        dynOp scoop update $PACK_UP_NAMES
       } else {
-        runOp scoop update --all
+        dynOp scoop update --all
       }
     }
   }

@@ -3,7 +3,7 @@
     $yn = Read-Host '? repair gpu msi properties (system) [[y]/n]'
     if ("${yn}" -eq 'y') {
       pwsh -nologo -noprofile -command {
-        runOp Set-Location HKLM:
+        dynOp Set-Location HKLM:
 
         $root_path = '\SYSTEM\CurrentControlSet\Enum\PCI'
         $root_pci_base_id = '10DE' # nvidia
@@ -14,16 +14,16 @@
               $path = Join-Path $key 'Device Parameters' 'Interrupt Management' 'MessageSignaledInterruptProperties'
 
               if (-not (Test-Path $path)) {
-                runOp New-Item $path -ItemType Directory
+                dynOp New-Item $path -ItemType Directory
               }
 
               if (-not (Get-ItemProperty $path).MSISupported) {
-                runOp New-ItemProperty $path -Name MSISupported -Value 1 -PropertyType DWord
+                dynOp New-ItemProperty $path -Name MSISupported -Value 1 -PropertyType DWord
               } else {
-                runOp Set-ItemProperty $path -Name MSISupported -Value 1
+                dynOp Set-ItemProperty $path -Name MSISupported -Value 1
               }
 
-              runOp Write-Output $path MSISupported (Get-ItemProperty $path).MSISupported
+              dynOp Write-Output $path MSISupported (Get-ItemProperty $path).MSISupported
             }
           }
         }

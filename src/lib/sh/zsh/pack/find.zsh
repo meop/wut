@@ -9,11 +9,11 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo apt update
-        runOp sudo apt search $PACK_FIND_NAMES
+        dynOp sudo apt update
+        dynOp sudo apt search $PACK_FIND_NAMES
       else
-        runOp apt update
-        runOp apt search $PACK_FIND_NAMES
+        dynOp apt update
+        dynOp apt search $PACK_FIND_NAMES
       fi
     fi
   fi
@@ -27,8 +27,8 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo apt-get update
-        runOp sudo apt-cache search $PACK_FIND_NAMES
+        dynOp sudo apt-get update
+        dynOp sudo apt-cache search $PACK_FIND_NAMES
       fi
     fi
   fi
@@ -40,7 +40,7 @@ function () {
       read yn?'? find packages with brew (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      runOp brew search $PACK_FIND_NAMES
+      dynOp brew search $PACK_FIND_NAMES
     fi
   fi
 
@@ -52,8 +52,8 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo dnf check-update
-        runOp sudo dnf search $PACK_FIND_NAMES
+        dynOp sudo dnf check-update
+        dynOp sudo dnf search $PACK_FIND_NAMES
       fi
     fi
   fi
@@ -65,8 +65,8 @@ function () {
       read yn?'? find packages with yay (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      runOp yay --sync --refresh
-      runOp yay --sync --search $PACK_FIND_NAMES
+      dynOp yay --sync --refresh
+      dynOp yay --sync --search $PACK_FIND_NAMES
     fi
   fi
   if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > /dev/null; then
@@ -79,11 +79,11 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo pacman --sync --refresh
-        runOp sudo pacman --sync --search $PACK_FIND_NAMES
+        dynOp sudo pacman --sync --refresh
+        dynOp sudo pacman --sync --search $PACK_FIND_NAMES
       else
-        runOp pacman --sync --refresh
-        runOp pacman --sync --search $PACK_FIND_NAMES
+        dynOp pacman --sync --refresh
+        dynOp pacman --sync --search $PACK_FIND_NAMES
       fi
     fi
   fi

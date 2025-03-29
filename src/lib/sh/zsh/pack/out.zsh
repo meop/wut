@@ -9,18 +9,18 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo apt update
+        dynOp sudo apt update
         if [[ "${PACK_OUT_NAMES}" ]]; then
-          runOp sudo apt list --upgradable '|' grep --ignore-case $PACK_OUT_NAMES
+          dynOp sudo apt list --upgradable '2>' /dev/null '|' grep --ignore-case $PACK_OUT_NAMES
         else
-          runOp sudo apt list --upgradable
+          dynOp sudo apt list --upgradable '2>' /dev/null
         fi
       else
-        runOp apt update
+        dynOp apt update
         if [[ "${PACK_OUT_NAMES}" ]]; then
-          runOp apt list --upgradable '|' grep --ignore-case $PACK_OUT_NAMES
+          dynOp apt list --upgradable '2>' /dev/null '|' grep --ignore-case $PACK_OUT_NAMES
         else
-          runOp apt list --upgradable
+          dynOp apt list --upgradable '2>' /dev/null
         fi
       fi
     fi
@@ -35,11 +35,11 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo apt-get update
+        dynOp sudo apt-get update
         if [[ "${PACK_OUT_NAMES}" ]]; then
-          runOp sudo apt-get list --upgradable '|' grep --ignore-case $PACK_OUT_NAMES
+          dynOp sudo apt-get list --upgradable '|' grep --ignore-case $PACK_OUT_NAMES
         else
-          runOp sudo apt-get list --upgradable
+          dynOp sudo apt-get list --upgradable
         fi
       fi
     fi
@@ -52,11 +52,11 @@ function () {
       read yn?'? out packages with brew (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      runOp brew update
+      dynOp brew update
       if [[ "${PACK_OUT_NAMES}" ]]; then
-        runOp brew outdated | grep --ignore-case $PACK_OUT_NAMES
+        dynOp brew outdated | grep --ignore-case $PACK_OUT_NAMES
       else
-        runOp brew outdated
+        dynOp brew outdated
       fi
     fi
   fi
@@ -69,11 +69,11 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo dnf check-update
+        dynOp sudo dnf check-update
         if [[ "${PACK_OUT_NAMES}" ]]; then
-          runOp sudo dnf list --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
+          dynOp sudo dnf list --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
         else
-          runOp sudo dnf list --upgrades
+          dynOp sudo dnf list --upgrades
         fi
       fi
     fi
@@ -86,11 +86,11 @@ function () {
       read yn?'? out packages with yay (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      runOp yay --sync --refresh
+      dynOp yay --sync --refresh
       if [[ "${PACK_OUT_NAMES}" ]]; then
-        runOp yay --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
+        dynOp yay --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
       else
-        runOp yay --query --upgrades
+        dynOp yay --query --upgrades
       fi
     fi
   fi
@@ -104,18 +104,18 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo pacman --sync --refresh
+        dynOp sudo pacman --sync --refresh
         if [[ "${PACK_OUT_NAMES}" ]]; then
-          runOp sudo pacman --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
+          dynOp sudo pacman --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
         else
-          runOp sudo pacman --query --upgrades
+          dynOp sudo pacman --query --upgrades
         fi
       else
-        runOp pacman --sync --refresh
+        dynOp pacman --sync --refresh
         if [[ "${PACK_OUT_NAMES}" ]]; then
-          runOp pacman --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
+          dynOp pacman --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
         else
-          runOp pacman --query --upgrades
+          dynOp pacman --query --upgrades
         fi
       fi
     fi

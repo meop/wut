@@ -7,12 +7,12 @@ function () {
     read yn?'? repair brew file perms (system) [[y]/n] '
     if [[ "${yn}" == 'y' ]]; then
       local brew_prefix=$(brew --prefix)
-      runOp sudo chown -R $(user) ${brew_prefix}/bin
-      runOp sudo chmod u+w ${brew_prefix}/bin
-      runOp sudo chown -R $(user) ${brew_prefix}/lib
-      runOp sudo chmod u+w ${brew_prefix}/lib
-      runOp sudo chown -R $(user) ${brew_prefix}/sbin
-      runOp sudo chmod u+w ${brew_prefix}/sbin
+      dynOp sudo chown -R $(user) ${brew_prefix}/bin
+      dynOp sudo chmod u+w ${brew_prefix}/bin
+      dynOp sudo chown -R $(user) ${brew_prefix}/lib
+      dynOp sudo chmod u+w ${brew_prefix}/lib
+      dynOp sudo chown -R $(user) ${brew_prefix}/sbin
+      dynOp sudo chmod u+w ${brew_prefix}/sbin
     fi
   fi
 }

@@ -1,18 +1,19 @@
 import path from 'node:path'
 
-import { getCfgFilePaths, loadCfgFileContents } from '../cfg'
+import { buildCfgFilePath, loadCfgFileContents } from '../cfg'
 import { type Cmd, CmdBase } from '../cmd'
 import type { Ctx } from '../ctx'
 import type { Env } from '../env'
 import type { Sh } from '../sh'
 import { toConsole, toFmt } from '../serde'
+import { getFilePaths } from '../path'
 
 export class PackCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super()
     this.name = 'pack'
     this.desc = 'package ops'
-    this.aliases = ['p', 'package']
+    this.aliases = ['p', 'package', 'pk', 'pkg']
     this.options = [{ keys: ['-m', '--manager'], desc: 'package manager' }]
     this.scopes = [...scopes, this.name]
     this.commands = [
@@ -46,11 +47,12 @@ async function workPreset(
   const manager = environment[packManagerKey]
 
   if (environment[packPresetsKey]) {
-    const presetFiles = await getCfgFilePaths([packKey])
+    const dirPath = buildCfgFilePath([packKey])
+    const presetFiles = await getFilePaths(dirPath, 'yaml')
 
     for (const name of requestedNames) {
-      const presetFile = presetFiles.find(
-        f => path.basename(f, '.yaml') === name,
+      const presetFile = presetFiles.find(f =>
+        path.basename(f, '.yaml').includes(name),
       )
       if (presetFile) {
         const contents = await loadCfgFileContents(presetFile)
@@ -62,13 +64,13 @@ async function workPreset(
             }
             const value = contents[key]
             if (value[op]) {
-              _shell = _shell.withSetArrayVar(packPresetsKey, value[op])
+              _shell = _shell.withVarArrSet(packPresetsKey, value[op])
             } else {
-              _shell = _shell.withUnsetVar(packPresetsKey)
+              _shell = _shell.withVarUnset(packPresetsKey)
             }
-            _shell = _shell.withSetVar(packManagerKey, key)
-            _shell = _shell.withSetVar(packNamesKey, value.names.join(' '))
-            _shell = _shell.withLoadFilePath(packKey, op)
+            _shell = _shell.withVarSet(packManagerKey, key)
+            _shell = _shell.withVarSet(packNamesKey, value.names.join(' '))
+            _shell = _shell.withFsFileLoad(packKey, op)
           }
         } else {
           _shell = _shell.withPrint(
@@ -86,10 +88,10 @@ async function workPreset(
     }
 
     if (op !== 'find') {
-      _shell = _shell.withUnsetVar(packPresetsKey)
-      _shell = _shell.withUnsetVar(packManagerKey)
+      _shell = _shell.withVarUnset(packPresetsKey)
+      _shell = _shell.withVarUnset(packManagerKey)
       if (manager) {
-        _shell = _shell.withSetVar(packManagerKey, manager)
+        _shell = _shell.withVarSet(packManagerKey, manager)
       }
     }
   }
@@ -97,8 +99,8 @@ async function workPreset(
   const remainingNames = requestedNames.filter(n => !foundNames.includes(n))
 
   if (remainingNames.length) {
-    _shell = _shell.withSetVar(packNamesKey, remainingNames.join(' '))
-    _shell = _shell.withLoadFilePath(packKey, op)
+    _shell = _shell.withVarSet(packNamesKey, remainingNames.join(' '))
+    _shell = _shell.withFsFileLoad(packKey, op)
   }
 
   return _shell.build()
@@ -159,7 +161,7 @@ export class PackCmdList extends CmdBase implements Cmd {
     this.scopes = [...scopes, this.name]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return shell.withLoadFilePath('pack', 'list').build()
+    return shell.withFsFileLoad('pack', 'list').build()
   }
 }
 
@@ -173,7 +175,7 @@ export class PackCmdOut extends CmdBase implements Cmd {
     this.scopes = [...scopes, this.name]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return shell.withLoadFilePath('pack', 'out').build()
+    return shell.withFsFileLoad('pack', 'out').build()
   }
 }
 
@@ -186,7 +188,7 @@ export class PackCmdTidy extends CmdBase implements Cmd {
     this.scopes = [...scopes, this.name]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return shell.withLoadFilePath('pack', 'tidy').build()
+    return shell.withFsFileLoad('pack', 'tidy').build()
   }
 }
 
@@ -200,6 +202,6 @@ export class PackCmdUp extends CmdBase implements Cmd {
     this.scopes = [...scopes, this.name]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return shell.withLoadFilePath('pack', 'up').build()
+    return shell.withFsFileLoad('pack', 'up').build()
   }
 }

@@ -8,7 +8,7 @@
       $yn = Read-Host '? tidy packages with scoop (user) [[y]/n]'
     }
     if ("${yn}" -eq 'y') {
-      runOp scoop cleanup --all --cache
+      dynOp scoop cleanup --all --cache
     }
   }
 }

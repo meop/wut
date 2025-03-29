@@ -1,28 +1,28 @@
-import { type Sh, ShBase } from '../sh'
+import { type Sh, ShBase } from "../sh";
 
 export class Zsh extends ShBase implements Sh {
-  constructor() {
-    super('zsh', 'zsh')
-  }
+	constructor() {
+		super("zsh", "zsh");
+	}
 
-  withEval(...lines: Array<string>): Sh {
-    return super.with(...lines.map(l => `eval "${l}"`))
-  }
+	withEval(...lines: Array<string>): Sh {
+		return this.with(...lines.map((l) => `eval "${l}"`));
+	}
 
-  withSetVar(name: string, value: string): Sh {
-    return super.with(`${name}=${this.toVal(value)}`)
-  }
+	withTrace(): Sh {
+		return this.with("set -x");
+	}
 
-  withSetArrayVar(name: string, value: Array<string>): Sh {
-    const splatValues = `( ${value.map(v => this.toVal(v)).join(' ')} )`
-    return super.with(`${name}=${splatValues}`)
-  }
+	withVarArrSet(name: string, values: Array<string>): Sh {
+		const valuesExpanded = `( ${values.map((v) => this.toVal(v)).join(" ")} )`;
+		return this.with(`${name}=${valuesExpanded}`);
+	}
 
-  withUnsetVar(name: string): Sh {
-    return super.with(`unset ${name}`)
-  }
+	withVarSet(name: string, value: string): Sh {
+		return this.with(`${name}=${this.toVal(value)}`);
+	}
 
-  withTrace(): Sh {
-    return super.with('set -x')
-  }
+	withVarUnset(name: string): Sh {
+		return this.with(`unset ${name}`);
+	}
 }

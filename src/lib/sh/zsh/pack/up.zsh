@@ -9,18 +9,18 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo apt update
+        dynOp sudo apt update
         if [[ "${PACK_UP_NAMES}" ]]; then
-          runOp sudo apt install $PACK_UP_NAMES
+          dynOp sudo apt install $PACK_UP_NAMES
         else
-          runOp sudo apt full-upgrade
+          dynOp sudo apt full-upgrade
         fi
       else
-        runOp apt update
+        dynOp apt update
         if [[ "${PACK_UP_NAMES}" ]]; then
-          runOp apt install $PACK_UP_NAMES
+          dynOp apt install $PACK_UP_NAMES
         else
-          runOp apt full-upgrade
+          dynOp apt full-upgrade
         fi
       fi
     fi
@@ -35,11 +35,11 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo apt-get update
+        dynOp sudo apt-get update
         if [[ "${PACK_UP_NAMES}" ]]; then
-          runOp sudo apt-get install $PACK_UP_NAMES
+          dynOp sudo apt-get install $PACK_UP_NAMES
         else
-          runOp sudo apt-get dist-upgrade
+          dynOp sudo apt-get dist-upgrade
         fi
       fi
     fi
@@ -52,11 +52,11 @@ function () {
       read yn?'? up packages with brew (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      runOp brew update
+      dynOp brew update
       if [[ "${PACK_UP_NAMES}" ]]; then
-        runOp brew upgrade --greedy $PACK_UP_NAMES
+        dynOp brew upgrade --greedy $PACK_UP_NAMES
       else
-        runOp brew upgrade --greedy
+        dynOp brew upgrade --greedy
       fi
     fi
   fi
@@ -69,11 +69,11 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo dnf check-update
+        dynOp sudo dnf check-update
         if [[ "${PACK_UP_NAMES}" ]]; then
-          runOp sudo dnf upgrade $PACK_UP_NAMES
+          dynOp sudo dnf upgrade $PACK_UP_NAMES
         else
-          runOp sudo dnf distro-sync
+          dynOp sudo dnf distro-sync
         fi
       fi
     fi
@@ -86,11 +86,11 @@ function () {
       read yn?'? up packages with yay (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      runOp yay --sync --refresh
+      dynOp yay --sync --refresh
       if [[ "${PACK_UP_NAMES}" ]]; then
-        runOp yay --sync --needed $PACK_UP_NAMES
+        dynOp yay --sync --needed $PACK_UP_NAMES
       else
-        runOp yay --sync --sysupgrade
+        dynOp yay --sync --sysupgrade
       fi
     fi
   fi
@@ -104,18 +104,18 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        runOp sudo pacman --sync --refresh
+        dynOp sudo pacman --sync --refresh
         if [[ "${PACK_UP_NAMES}" ]]; then
-          runOp sudo pacman --sync --needed $PACK_UP_NAMES
+          dynOp sudo pacman --sync --needed $PACK_UP_NAMES
         else
-          runOp sudo pacman --sync --sysupgrade
+          dynOp sudo pacman --sync --sysupgrade
         fi
       else
-        runOp pacman --sync --refresh
+        dynOp pacman --sync --refresh
         if [[ "${PACK_UP_NAMES}" ]]; then
-          runOp pacman --sync --needed $PACK_UP_NAMES
+          dynOp pacman --sync --needed $PACK_UP_NAMES
         else
-          runOp pacman --sync --sysupgrade
+          dynOp pacman --sync --sysupgrade
         fi
       fi
     fi

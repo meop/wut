@@ -9,10 +9,10 @@
       if ("${PACK_ADD_PRESETS}") {
         foreach ($preset in ${PACK_ADD_PRESETS}) {
           $presetSplit = ${preset} -Split ' '
-          runOp @presetSplit
+          dynOp @presetSplit
         }
       }
-      runOp winget install $PACK_ADD_NAMES
+      dynOp winget install $PACK_ADD_NAMES
     }
   }
 
@@ -26,11 +26,11 @@
       if ("${PACK_ADD_PRESETS}") {
         foreach ($preset in ${PACK_ADD_PRESETS}) {
           $presetSplit = ${preset} -Split ' '
-          runOp @presetSplit
+          dynOp @presetSplit
         }
       }
-      runOp scoop update
-      runOp scoop install $PACK_ADD_NAMES
+      dynOp scoop update
+      dynOp scoop install $PACK_ADD_NAMES
     }
   }
 }

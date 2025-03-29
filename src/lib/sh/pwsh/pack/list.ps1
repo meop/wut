@@ -7,9 +7,9 @@
     }
     if ("${yn}" -eq 'y') {
       if ("${PACK_LIST_NAMES}") {
-        runOp winget list '6>' '|' Select-String $PACK_LIST_NAMES
+        dynOp winget list '6>&1' '|' Select-String $PACK_LIST_NAMES
       } else {
-        runOp winget list
+        dynOp winget list
       }
     }
   }
@@ -22,9 +22,9 @@
     }
     if ("${yn}" -eq 'y') {
       if ("${PACK_LIST_NAMES}") {
-        runOp scoop list '6>' '|' Select-String $PACK_LIST_NAMES
+        dynOp scoop list '6>&1' '|' Select-String $PACK_LIST_NAMES
       } else {
-        runOp scoop list
+        dynOp scoop list
       }
     }
   }

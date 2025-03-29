@@ -7,16 +7,16 @@ function () {
       local output="${HOME}/.yay-bin"
 
       if [[ -d "${output}" ]]; then
-        runOp git -C "${output}" pull --prune '>' /dev/null '2>&1'
+        dynOp git -C "${output}" pull --prune '>' /dev/null '2>&1'
       else
         local url='https://aur.archlinux.org/yay-bin.git'
-        runOp git clone --depth 1 --quiet "${url}" "${output}"
+        dynOp git clone --depth 1 --quiet "${url}" "${output}"
       fi
 
       (
-        runOp pushd "${output}"
-        runOp makepkg --install --syncdeps
-        runOp popd
+        dynOp pushd "${output}"
+        dynOp makepkg --install --syncdeps
+        dynOp popd
       )
     fi
   fi

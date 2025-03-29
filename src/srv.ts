@@ -2,7 +2,7 @@ import pkg from '../package.json' with { type: 'json' }
 
 import { type Cmd, CmdBase } from './lib/cmd'
 import { PackCmd } from './lib/cmd/pack'
-import { RunCmd } from './lib/cm/run'
+import { ScriptCmd } from './lib/cmd/script'
 import { getCtx } from './lib/ctx'
 import { Fmt, toConsole } from './lib/serde'
 import { Pwsh } from './lib/sh/pwsh'
@@ -45,7 +45,7 @@ class SrvCmd extends CmdBase implements Cmd {
       { keys: ['-v', '--verbose'], desc: 'print extra' },
       { keys: ['-y', '--yes'], desc: 'no prompt' },
     ]
-    this.commands = [new PackCmd(this.scopes)]
+    this.commands = [new PackCmd(this.scopes), new ScriptCmd(this.scopes)]
   }
 }
 
@@ -57,15 +57,15 @@ async function runSrv(req: Request) {
     const parts = expandParts(url.pathname.split('/').filter(p => p.length > 0))
 
     const shell = (parts[0] === 'pwsh' ? new Pwsh() : new Zsh())
-      .withSetVar('url'.toUpperCase(), url.toString())
-      .withLoadFilePath('lib', 'print')
-      .withLoadFilePath('vers')
-      .withLoadFilePath('env')
+      .withVarSet('url'.toUpperCase(), url.toString())
+      .withFsFileLoad('lib', 'print')
+      .withFsFileLoad('vers')
+      .withFsFileLoad('env')
 
     const context = getCtx(usp)
 
     if (!context.sys?.cpu?.arch) {
-      return new Response(await shell.withLoadFilePath('cli').build())
+      return new Response(await shell.withFsFileLoad('cli').build())
     }
 
     return new Response(
@@ -73,7 +73,7 @@ async function runSrv(req: Request) {
         url,
         usp,
         parts.slice(1),
-        shell.withLoadFilePath('lib', 'run'),
+        shell.withFsFileLoad('lib', 'dyn'),
         context,
       ),
     )
@@ -88,8 +88,14 @@ async function runSrv(req: Request) {
       errObj.object = String(err)
     }
 
-    const body = `${toConsole(errObj, Fmt.json).trimEnd()}\n`
-    console.error(body)
+    const json = toConsole(errObj, Fmt.json).trimEnd()
+    console.error(json)
+
+    const body = `${json
+      .split('\n')
+      // .map(l => `echo '${l.replaceAll("'", "'\\''")}'`)
+      .map(l => `echo '${l.replaceAll("'", "'\\''")}'`) // zsh
+      .join('\n')}\n`
 
     return new Response(body, { status: 400 })
   }
