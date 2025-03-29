@@ -9,7 +9,10 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if [[ $PACK_ADD_PRESETS ]]; then
-        runOp $PACK_ADD_PRESETS
+        for preset in "${PACK_ADD_PRESETS[@]}"; do
+          presetSplit=(${(s: :)preset})
+          runOp "${presetSplit[@]}"
+        done
       fi
       if type sudo > /dev/null; then
         runOp sudo apt update
@@ -30,7 +33,10 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if [[ $PACK_ADD_PRESETS ]]; then
-        runOp $PACK_ADD_PRESETS
+        for preset in "${PACK_ADD_PRESETS[@]}"; do
+          presetSplit=(${(s: :)preset})
+          runOp "${presetSplit[@]}"
+        done
       fi
       if type sudo > /dev/null; then
         runOp sudo apt-get update
@@ -47,7 +53,10 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if [[ $PACK_ADD_PRESETS ]]; then
-        runOp $PACK_ADD_PRESETS
+        for preset in "${PACK_ADD_PRESETS[@]}"; do
+          presetSplit=(${(s: :)preset})
+          runOp "${presetSplit[@]}"
+        done
       fi
       runOp brew update
       runOp brew install $PACK_ADD_NAMES
@@ -62,7 +71,10 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if [[ $PACK_ADD_PRESETS ]]; then
-        runOp $PACK_ADD_PRESETS
+        for preset in "${PACK_ADD_PRESETS[@]}"; do
+          presetSplit=(${(s: :)preset})
+          runOp "${presetSplit[@]}"
+        done
       fi
       if type sudo > /dev/null; then
         runOp sudo dnf check-update
@@ -71,7 +83,7 @@ function () {
     fi
   fi
 
-  if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'yay' ]] &&type yay > /dev/null; then
+  if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'yay' ]] && type yay > /dev/null; then
     if [[ "${YES}" ]]; then
       yn='y'
     else
@@ -79,7 +91,10 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if [[ $PACK_ADD_PRESETS ]]; then
-        runOp $PACK_ADD_PRESETS
+        for preset in "${PACK_ADD_PRESETS[@]}"; do
+          presetSplit=(${(s: :)preset})
+          runOp "${presetSplit[@]}"
+        done
       fi
       runOp yay --sync --refresh
       runOp yay --sync --needed $PACK_ADD_NAMES
@@ -95,7 +110,10 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if [[ $PACK_ADD_PRESETS ]]; then
-        runOp $PACK_ADD_PRESETS
+        for preset in "${PACK_ADD_PRESETS[@]}"; do
+          presetSplit=(${(s: :)preset})
+          runOp "${presetSplit[@]}"
+        done
       fi
       if type sudo > /dev/null; then
         runOp sudo pacman --sync --refresh

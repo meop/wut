@@ -1,7 +1,7 @@
 function () {
   local yn
 
-  if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt' ]] &&type apt > /dev/null; then
+  if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'apt' ]] && type apt > /dev/null; then
     if [[ "${YES}" ]]; then
       yn='y'
     else
@@ -14,7 +14,10 @@ function () {
         runOp apt purge $PACK_DEL_NAMES
       fi
       if [[ $PACK_DEL_PRESETS ]]; then
-        runOp $PACK_DEL_PRESETS
+        for preset in "${PACK_DEL_PRESETS[@]}"; do
+          presetSplit=(${(s: :)preset})
+          runOp "${presetSplit[@]}"
+        done
       fi
     fi
   fi
@@ -31,7 +34,10 @@ function () {
         runOp sudo apt-get purge $PACK_DEL_NAMES
       fi
       if [[ $PACK_DEL_PRESETS ]]; then
-        runOp $PACK_DEL_PRESETS
+        for preset in "${PACK_DEL_PRESETS[@]}"; do
+          presetSplit=(${(s: :)preset})
+          runOp "${presetSplit[@]}"
+        done
       fi
     fi
   fi
@@ -45,7 +51,10 @@ function () {
     if [[ "${yn}" == 'y' ]]; then
       runOp brew uninstall $PACK_DEL_NAMES
       if [[ $PACK_DEL_PRESETS ]]; then
-        runOp $PACK_DEL_PRESETS
+        for preset in "${PACK_DEL_PRESETS[@]}"; do
+          presetSplit=(${(s: :)preset})
+          runOp "${presetSplit[@]}"
+        done
       fi
     fi
   fi
@@ -61,7 +70,10 @@ function () {
         runOp sudo dnf remove $PACK_DEL_NAMES
       fi
       if [[ $PACK_DEL_PRESETS ]]; then
-        runOp $PACK_DEL_PRESETS
+        for preset in "${PACK_DEL_PRESETS[@]}"; do
+          presetSplit=(${(s: :)preset})
+          runOp "${presetSplit[@]}"
+        done
       fi
     fi
   fi
@@ -75,7 +87,10 @@ function () {
     if [[ "${yn}" == 'y' ]]; then
       runOp yay --remove --recursive --nosave $PACK_DEL_NAMES
       if [[ $PACK_DEL_PRESETS ]]; then
-        runOp $PACK_DEL_PRESETS
+        for preset in "${PACK_DEL_PRESETS[@]}"; do
+          presetSplit=(${(s: :)preset})
+          runOp "${presetSplit[@]}"
+        done
       fi
     fi
   fi
@@ -94,7 +109,10 @@ function () {
         runOp pacman --remove --recursive --nosave $PACK_DEL_NAMES
       fi
       if [[ $PACK_DEL_PRESETS ]]; then
-        runOp $PACK_DEL_PRESETS
+        for preset in "${PACK_DEL_PRESETS[@]}"; do
+          presetSplit=(${(s: :)preset})
+          runOp "${presetSplit[@]}"
+        done
       fi
     fi
   fi

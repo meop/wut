@@ -168,7 +168,7 @@ export class PackCmdOut extends CmdBase implements Cmd {
     super()
     this.name = 'out'
     this.desc = 'out of sync from local'
-    this.aliases = ['o', 'ou', 'outdated', 'ob', 'obsolete', 'ol', 'old']
+    this.aliases = ['o', 'ou', 'outdated', 'ob', 'obs', 'obsolete', 'ol', 'old']
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
     this.scopes = [...scopes, this.name]
   }
