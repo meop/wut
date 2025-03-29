@@ -3,7 +3,7 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? find packages with winget (system) [y/N]'
+      $yn = Read-Host '? find packages with winget (system) [[y]/n]'
     }
     if ("${yn}" -eq 'y') {
       runOp winget search $PACK_FIND_NAMES
@@ -14,7 +14,7 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? find packages with scoop (user) [y/N]'
+      $yn = Read-Host '? find packages with scoop (user) [[y]/n]'
     }
     if ("${yn}" -eq 'y') {
       runOp scoop update

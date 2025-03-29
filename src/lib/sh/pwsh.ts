@@ -10,7 +10,12 @@ export class Pwsh extends ShBase implements Sh {
   }
 
   withSetVar(name: string, value: string): Sh {
-    return super.withSetVar(`$${name}`, value.replaceAll("'", "''"))
+    return super.with(`$${name} = ${this.toVal(value)}`)
+  }
+
+  withSetArrayVar(name: string, value: Array<string>): Sh {
+    const splatValues = `@( ${value.map(v => this.toVal(v)).join(', ')} )`
+    return super.with(`$${name} = ${splatValues}`)
   }
 
   withUnsetVar(name: string): Sh {

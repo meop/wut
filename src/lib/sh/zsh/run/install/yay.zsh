@@ -2,7 +2,7 @@ function () {
   local yn
 
   if type pacman > /dev/null; then
-    read yn?'? install yay (user) [y/N] '
+    read yn?'? install yay (user) [[y]/n] '
     if [[ "${yn}" == 'y' ]]; then
       local output="${HOME}/.yay-bin"
 

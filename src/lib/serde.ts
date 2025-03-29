@@ -1,8 +1,15 @@
 import YAML from 'yaml'
 
 export enum Fmt {
-  json = 'json',
   yaml = 'yaml',
+  json = 'json',
+}
+
+export function toFmt(input: string) {
+  if (input === 'json') {
+    return Fmt.json
+  }
+  return Fmt.yaml
 }
 
 function fromJson(input: string) {
@@ -22,10 +29,10 @@ function toYaml<T>(input: T) {
 }
 
 export function toConsole<T>(input: T, format: Fmt = Fmt.yaml) {
-  if (format === Fmt.yaml) {
-    return toYaml(input)
+  if (format === Fmt.json) {
+    return toJson(input)
   }
-  return toJson(input)
+  return toYaml(input)
 }
 
 export function fromConfig(input: string, format: Fmt = Fmt.yaml) {

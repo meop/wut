@@ -3,11 +3,14 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? add packages with winget (system) [y/N]'
+      $yn = Read-Host '? add packages with winget (system) [[y]/n]'
     }
     if ("${yn}" -eq 'y') {
-      if ($PACK_ADD_PRESET) {
-        runOp $PACK_ADD_PRESET
+      if ("${PACK_ADD_PRESETS}") {
+        foreach ($preset in ${PACK_ADD_PRESETS}) {
+          $presetSplit = ${preset} -Split ' '
+          runOp @presetSplit
+        }
       }
       runOp winget install $PACK_ADD_NAMES
     }
@@ -17,11 +20,14 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? add packages with scoop (user) [y/N]'
+      $yn = Read-Host '? add packages with scoop (user) [[y]/n]'
     }
     if ("${yn}" -eq 'y') {
-      if ($PACK_ADD_PRESET) {
-        runOp $PACK_ADD_PRESET
+      if ("${PACK_ADD_PRESETS}") {
+        foreach ($preset in ${PACK_ADD_PRESETS}) {
+          $presetSplit = ${preset} -Split ' '
+          runOp @presetSplit
+        }
       }
       runOp scoop update
       runOp scoop install $PACK_ADD_NAMES

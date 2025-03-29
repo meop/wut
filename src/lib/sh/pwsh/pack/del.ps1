@@ -3,12 +3,15 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? del packages with winget (system) [y/N]'
+      $yn = Read-Host '? del packages with winget (system) [[y]/n]'
     }
     if ("${yn}" -eq 'y') {
       runOp winget uninstall $PACK_DEL_NAMES
-      if ("${PACK_DEL_PRESET}") {
-        runOp $PACK_DEL_PRESET
+      if ("${PACK_DEL_PRESETS}") {
+        foreach ($preset in ${PACK_DEL_PRESETS}) {
+          $presetSplit = ${preset} -Split ' '
+          runOp @presetSplit
+        }
       }
     }
   }
@@ -17,12 +20,15 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? del packages with scoop (user) [y/N]'
+      $yn = Read-Host '? del packages with scoop (user) [[y]/n]'
     }
     if ("${yn}" -eq 'y') {
       runOp scoop uninstall $PACK_DEL_NAMES
-      if ("${PACK_DEL_PRESET}") {
-        runOp $PACK_DEL_PRESET
+      if ("${PACK_DEL_PRESETS}") {
+        foreach ($preset in ${PACK_DEL_PRESETS}) {
+          $presetSplit = ${preset} -Split ' '
+          runOp @presetSplit
+        }
       }
     }
   }

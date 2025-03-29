@@ -17,6 +17,7 @@ export interface Sh {
   withLoadFilePath(...parts: Array<string>): Sh
 
   withSetVar(name: string, value: string): Sh
+  withSetArrayVar(name: string, value: Array<string>): Sh
   withUnsetVar(name: string): Sh
 
   withTrace(): Sh
@@ -125,10 +126,11 @@ export class ShBase {
   }
 
   withSetVar(name: string, value: string): Sh {
-    this.lineBuilders.push(async () => {
-      return `${name}=${this.toVal(value)}`
-    })
-    return this
+    throw new Error('not implemented')
+  }
+
+  withSetArrayVar(name: string, value: Array<string>): Sh {
+    throw new Error('not implemented')
   }
 
   withUnsetVar(name: string): Sh {

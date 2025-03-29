@@ -5,7 +5,7 @@ import { type Cmd, CmdBase } from '../cmd'
 import type { Ctx } from '../ctx'
 import type { Env } from '../env'
 import type { Sh } from '../sh'
-import { toConsole } from '../serde'
+import { toConsole, toFmt } from '../serde'
 
 export class PackCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -36,7 +36,7 @@ async function workPreset(
   const packKey = 'pack'
   const packManagerKey = 'pack_manager'.toUpperCase()
   const packNamesKey = `pack_${op}_names`.toUpperCase()
-  const packPresetKey = `pack_${op}_preset`.toUpperCase()
+  const packPresetsKey = `pack_${op}_presets`.toUpperCase()
 
   let _shell = shell
 
@@ -45,7 +45,7 @@ async function workPreset(
 
   const manager = environment[packManagerKey]
 
-  if (environment[packPresetKey]) {
+  if (environment[packPresetsKey]) {
     const presetFiles = await getCfgFilePaths([packKey])
 
     for (const name of requestedNames) {
@@ -55,24 +55,30 @@ async function workPreset(
       if (presetFile) {
         const contents = await loadCfgFileContents(presetFile)
 
-        if (op === 'find') {
-          _shell = _shell.withPrintInfo(`${name}:`)
-          _shell = _shell.withPrint(toConsole(contents))
-        } else {
+        if (op !== 'find') {
           for (const key of Object.keys(contents)) {
             if (manager && key !== manager) {
               continue
             }
             const value = contents[key]
             if (value[op]) {
-              _shell = _shell.withSetVar(packPresetKey, value[op].join(';'))
+              _shell = _shell.withSetArrayVar(packPresetsKey, value[op])
             } else {
-              _shell = _shell.withUnsetVar(packPresetKey)
+              _shell = _shell.withUnsetVar(packPresetsKey)
             }
             _shell = _shell.withSetVar(packManagerKey, key)
             _shell = _shell.withSetVar(packNamesKey, value.names.join(' '))
             _shell = _shell.withLoadFilePath(packKey, op)
           }
+        } else {
+          _shell = _shell.withPrint(
+            toConsole(
+              {
+                [name]: contents,
+              },
+              toFmt(environment['format'.toUpperCase()]),
+            ),
+          )
         }
 
         foundNames.push(name)
@@ -80,7 +86,7 @@ async function workPreset(
     }
 
     if (op !== 'find') {
-      _shell = _shell.withUnsetVar(packPresetKey)
+      _shell = _shell.withUnsetVar(packPresetsKey)
       _shell = _shell.withUnsetVar(packManagerKey)
       if (manager) {
         _shell = _shell.withSetVar(packManagerKey, manager)
@@ -105,7 +111,7 @@ export class PackCmdAdd extends CmdBase implements Cmd {
     this.desc = 'add from web'
     this.aliases = ['a', 'in', 'install']
     this.arguments = [{ name: 'names', desc: 'name(s) to match', req: true }]
-    this.switches = [{ keys: ['-p', '--preset'], desc: 'check for preset' }]
+    this.switches = [{ keys: ['-p', '--presets'], desc: 'check for presets' }]
     this.scopes = [...scopes, this.name]
   }
   work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
@@ -120,7 +126,7 @@ export class PackCmdDel extends CmdBase implements Cmd {
     this.desc = 'delete from local'
     this.aliases = ['d', 'delete', 'rm', 'rem', 'remove', 'un', 'uninstall']
     this.arguments = [{ name: 'names', desc: 'name(s) to match', req: true }]
-    this.switches = [{ keys: ['-p', '--preset'], desc: 'check for preset' }]
+    this.switches = [{ keys: ['-p', '--presets'], desc: 'check for presets' }]
     this.scopes = [...scopes, this.name]
   }
   work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
@@ -135,7 +141,7 @@ export class PackCmdFind extends CmdBase implements Cmd {
     this.desc = 'find from web'
     this.aliases = ['f', 'fi', 'se', 'search']
     this.arguments = [{ name: 'names', desc: 'name(s) to match', req: true }]
-    this.switches = [{ keys: ['-p', '--preset'], desc: 'check for preset' }]
+    this.switches = [{ keys: ['-p', '--presets'], desc: 'check for presets' }]
     this.scopes = [...scopes, this.name]
   }
   work(context: Ctx, environment: Env, shell: Sh): Promise<string> {

@@ -1,7 +1,7 @@
 &{
   if ($IsWindows) {
     if (Get-Command nvim -ErrorAction Ignore) {
-      $yn = Read-Host '? setup nvim plugin manager (local) [y/N]'
+      $yn = Read-Host '? setup nvim plugin manager (local) [[y]/n]'
       if ("${yn}" -eq 'y') {
         $share = "$(@(${env:XDG_DATA_HOME}, ${env:LOCALAPPDATA})[-not ${env:XDG_DATA_HOME}])"
         $nvim = "${share}/nvim-data"

@@ -21,7 +21,7 @@ function () {
         function () {
           local version=9.0
 
-          read yn?'? install dotnet sdk (system) [y/N] '
+          read yn?'? install dotnet sdk (system) [[y]/n] '
           if [[ "${yn}" == 'y' ]]; then
             install_packages_microsoft_repo
             runOp sudo apt update
@@ -29,7 +29,7 @@ function () {
           fi
         }
 
-        read yn?'? install pwsh (system) [y/N] '
+        read yn?'? install pwsh (system) [[y]/n] '
         if [[ "${yn}" == 'y' ]]; then
           install_packages_microsoft_repo
           runOp sudo apt update

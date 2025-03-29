@@ -5,7 +5,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? del packages with apt (system) [y/N] '
+      read yn?'? del packages with apt (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
@@ -13,8 +13,8 @@ function () {
       else
         runOp apt purge $PACK_DEL_NAMES
       fi
-      if [[ $PACK_DEL_PRESET ]]; then
-        runOp $PACK_DEL_PRESET
+      if [[ $PACK_DEL_PRESETS ]]; then
+        runOp $PACK_DEL_PRESETS
       fi
     fi
   fi
@@ -24,14 +24,14 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? del packages with apt-get (system) [y/N] '
+      read yn?'? del packages with apt-get (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
         runOp sudo apt-get purge $PACK_DEL_NAMES
       fi
-      if [[ $PACK_DEL_PRESET ]]; then
-        runOp $PACK_DEL_PRESET
+      if [[ $PACK_DEL_PRESETS ]]; then
+        runOp $PACK_DEL_PRESETS
       fi
     fi
   fi
@@ -40,12 +40,12 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? del packages with brew (system) [y/N] '
+      read yn?'? del packages with brew (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       runOp brew uninstall $PACK_DEL_NAMES
-      if [[ $PACK_DEL_PRESET ]]; then
-        runOp $PACK_DEL_PRESET
+      if [[ $PACK_DEL_PRESETS ]]; then
+        runOp $PACK_DEL_PRESETS
       fi
     fi
   fi
@@ -54,14 +54,14 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? del packages with dnf (system) [y/N] '
+      read yn?'? del packages with dnf (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
         runOp sudo dnf remove $PACK_DEL_NAMES
       fi
-      if [[ $PACK_DEL_PRESET ]]; then
-        runOp $PACK_DEL_PRESET
+      if [[ $PACK_DEL_PRESETS ]]; then
+        runOp $PACK_DEL_PRESETS
       fi
     fi
   fi
@@ -70,12 +70,12 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? del packages with yay (system) [y/N] '
+      read yn?'? del packages with yay (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       runOp yay --remove --recursive --nosave $PACK_DEL_NAMES
-      if [[ $PACK_DEL_PRESET ]]; then
-        runOp $PACK_DEL_PRESET
+      if [[ $PACK_DEL_PRESETS ]]; then
+        runOp $PACK_DEL_PRESETS
       fi
     fi
   fi
@@ -85,7 +85,7 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? del packages with pacman (system) [y/N] '
+      read yn?'? del packages with pacman (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
@@ -93,8 +93,8 @@ function () {
       else
         runOp pacman --remove --recursive --nosave $PACK_DEL_NAMES
       fi
-      if [[ $PACK_DEL_PRESET ]]; then
-        runOp $PACK_DEL_PRESET
+      if [[ $PACK_DEL_PRESETS ]]; then
+        runOp $PACK_DEL_PRESETS
       fi
     fi
   fi

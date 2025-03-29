@@ -1,1 +1,1 @@
-eval "$(curl --location --silent --url "${url}")"
+eval "( $(curl --location --silent --url "${url}") )"

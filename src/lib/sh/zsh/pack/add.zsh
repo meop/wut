@@ -5,11 +5,11 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? add packages with apt (system) [y/N] '
+      read yn?'? add packages with apt (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      if [[ $PACK_ADD_PRESET ]]; then
-        runOp $PACK_ADD_PRESET
+      if [[ $PACK_ADD_PRESETS ]]; then
+        runOp $PACK_ADD_PRESETS
       fi
       if type sudo > /dev/null; then
         runOp sudo apt update
@@ -26,11 +26,11 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? add packages with apt-get (system) [y/N] '
+      read yn?'? add packages with apt-get (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      if [[ $PACK_ADD_PRESET ]]; then
-        runOp $PACK_ADD_PRESET
+      if [[ $PACK_ADD_PRESETS ]]; then
+        runOp $PACK_ADD_PRESETS
       fi
       if type sudo > /dev/null; then
         runOp sudo apt-get update
@@ -43,11 +43,11 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? add packages with brew (system) [y/N] '
+      read yn?'? add packages with brew (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      if [[ $PACK_ADD_PRESET ]]; then
-        runOp $PACK_ADD_PRESET
+      if [[ $PACK_ADD_PRESETS ]]; then
+        runOp $PACK_ADD_PRESETS
       fi
       runOp brew update
       runOp brew install $PACK_ADD_NAMES
@@ -58,11 +58,11 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? add packages with dnf (system) [y/N] '
+      read yn?'? add packages with dnf (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      if [[ $PACK_ADD_PRESET ]]; then
-        runOp $PACK_ADD_PRESET
+      if [[ $PACK_ADD_PRESETS ]]; then
+        runOp $PACK_ADD_PRESETS
       fi
       if type sudo > /dev/null; then
         runOp sudo dnf check-update
@@ -75,11 +75,11 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? add packages with yay (system) [y/N] '
+      read yn?'? add packages with yay (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      if [[ $PACK_ADD_PRESET ]]; then
-        runOp $PACK_ADD_PRESET
+      if [[ $PACK_ADD_PRESETS ]]; then
+        runOp $PACK_ADD_PRESETS
       fi
       runOp yay --sync --refresh
       runOp yay --sync --needed $PACK_ADD_NAMES
@@ -91,11 +91,11 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? add packages with pacman (system) [y/N] '
+      read yn?'? add packages with pacman (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      if [[ $PACK_ADD_PRESET ]]; then
-        runOp $PACK_ADD_PRESET
+      if [[ $PACK_ADD_PRESETS ]]; then
+        runOp $PACK_ADD_PRESETS
       fi
       if type sudo > /dev/null; then
         runOp sudo pacman --sync --refresh

@@ -1,7 +1,7 @@
 function () {
   local yn
 
-  read yn?'? install starship (user) [y/N] '
+  read yn?'? install starship (user) [[y]/n] '
   if [[ "${yn}" == 'y' ]]; then
     local output="${HOME}/install-starship.sh"
     local url='https://starship.rs/install.sh'
