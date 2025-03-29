@@ -9,10 +9,10 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo apt update
+        dynOp sudo apt update '2>&1' '|' '>' /dev/null
         dynOp sudo apt search $PACK_FIND_NAMES
       else
-        dynOp apt update
+        dynOp apt update '2>&1' '|' '>' /dev/null
         dynOp apt search $PACK_FIND_NAMES
       fi
     fi
@@ -27,7 +27,7 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo apt-get update
+        dynOp sudo apt-get update '2>&1' '|' '>' /dev/null
         dynOp sudo apt-cache search $PACK_FIND_NAMES
       fi
     fi
@@ -52,7 +52,7 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo dnf check-update
+        dynOp sudo dnf check-update '2>&1' '|' '>' /dev/null
         dynOp sudo dnf search $PACK_FIND_NAMES
       fi
     fi
@@ -65,7 +65,7 @@ function () {
       read yn?'? find packages with yay (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      dynOp yay --sync --refresh
+      dynOp yay --sync --refresh '2>&1' '|' '>' /dev/null
       dynOp yay --sync --search $PACK_FIND_NAMES
     fi
   fi
@@ -79,10 +79,10 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo pacman --sync --refresh
+        dynOp sudo pacman --sync --refresh '2>&1' '|' '>' /dev/null
         dynOp sudo pacman --sync --search $PACK_FIND_NAMES
       else
-        dynOp pacman --sync --refresh
+        dynOp pacman --sync --refresh '2>&1' '|' '>' /dev/null
         dynOp pacman --sync --search $PACK_FIND_NAMES
       fi
     fi

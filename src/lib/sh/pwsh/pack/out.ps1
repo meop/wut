@@ -7,7 +7,7 @@
     }
     if ("${yn}" -eq 'y') {
       if ("${PACK_OUT_NAMES}") {
-        dynOp winget upgrade '6>&1' '|' Select-String $PACK_OUT_NAMES
+        dynOp winget upgrade '|' Select-String $PACK_OUT_NAMES | ForEach-Object {$_.Line}
       } else {
         dynOp winget upgrade
       }
@@ -21,9 +21,9 @@
       $yn = Read-Host '? out packages with scoop (user) [[y]/n]'
     }
     if ("${yn}" -eq 'y') {
-      dynOp scoop update
+      dynOp scoop update '2>&1' '3>&1' '4>&1' '5>&1' '6>&1' '|' Out-Null
       if ("${PACK_OUT_NAMES}") {
-        dynOp scoop status '6>&1' '|' Select-String $PACK_OUT_NAMES
+        dynOp scoop status '2>&1' '3>&1' '4>&1' '5>&1' '6>&1' '|' Select-String $PACK_OUT_NAMES | ForEach-Object {$_.Line}
       } else {
         dynOp scoop status
       }

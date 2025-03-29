@@ -7,7 +7,7 @@
     }
     if ("${yn}" -eq 'y') {
       if ("${PACK_LIST_NAMES}") {
-        dynOp winget list '6>&1' '|' Select-String $PACK_LIST_NAMES
+        dynOp winget list '|' Select-String $PACK_LIST_NAMES | ForEach-Object {$_.Line}
       } else {
         dynOp winget list
       }
@@ -22,7 +22,7 @@
     }
     if ("${yn}" -eq 'y') {
       if ("${PACK_LIST_NAMES}") {
-        dynOp scoop list '6>&1' '|' Select-String $PACK_LIST_NAMES
+        dynOp scoop list '2>&1' '3>&1' '4>&1' '5>&1' '6>&1' '|' Select-String $PACK_LIST_NAMES | ForEach-Object {$_.Line}
       } else {
         dynOp scoop list
       }

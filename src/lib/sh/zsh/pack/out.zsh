@@ -9,14 +9,14 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo apt update
+        dynOp sudo apt update '2>&1' '|' '>' /dev/null
         if [[ "${PACK_OUT_NAMES}" ]]; then
           dynOp sudo apt list --upgradable '2>' /dev/null '|' grep --ignore-case $PACK_OUT_NAMES
         else
           dynOp sudo apt list --upgradable '2>' /dev/null
         fi
       else
-        dynOp apt update
+        dynOp apt update '2>&1' '|' '>' /dev/null
         if [[ "${PACK_OUT_NAMES}" ]]; then
           dynOp apt list --upgradable '2>' /dev/null '|' grep --ignore-case $PACK_OUT_NAMES
         else
@@ -35,7 +35,7 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo apt-get update
+        dynOp sudo apt-get update '2>&1' '|' '>' /dev/null
         if [[ "${PACK_OUT_NAMES}" ]]; then
           dynOp sudo apt-get list --upgradable '|' grep --ignore-case $PACK_OUT_NAMES
         else
@@ -52,7 +52,7 @@ function () {
       read yn?'? out packages with brew (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      dynOp brew update
+      dynOp brew update '2>&1' '|' '>' /dev/null
       if [[ "${PACK_OUT_NAMES}" ]]; then
         dynOp brew outdated | grep --ignore-case $PACK_OUT_NAMES
       else
@@ -69,7 +69,7 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo dnf check-update
+        dynOp sudo dnf check-update '2>&1' '|' '>' /dev/null
         if [[ "${PACK_OUT_NAMES}" ]]; then
           dynOp sudo dnf list --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
         else
@@ -86,7 +86,7 @@ function () {
       read yn?'? out packages with yay (system) [[y]/n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      dynOp yay --sync --refresh
+      dynOp yay --sync --refresh '2>&1' '|' '>' /dev/null
       if [[ "${PACK_OUT_NAMES}" ]]; then
         dynOp yay --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
       else
@@ -104,14 +104,14 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo pacman --sync --refresh
+        dynOp sudo pacman --sync --refresh '2>&1' '|' '>' /dev/null
         if [[ "${PACK_OUT_NAMES}" ]]; then
           dynOp sudo pacman --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
         else
           dynOp sudo pacman --query --upgrades
         fi
       else
-        dynOp pacman --sync --refresh
+        dynOp pacman --sync --refresh '2>&1' '|' '>' /dev/null
         if [[ "${PACK_OUT_NAMES}" ]]; then
           dynOp pacman --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
         else
