@@ -3,7 +3,7 @@ import { type Cmd, CmdBase } from '../cmd'
 import type { Ctx } from '../ctx'
 import type { Env } from '../env'
 import type { Sh } from '../sh'
-import { toConsole, toFmt } from '../serde'
+import { toCon, toFmt } from '../serde'
 
 export class PackCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -78,7 +78,7 @@ async function workPreset(
           }
         } else {
           _shell = _shell.withPrint(
-            toConsole(
+            toCon(
               {
                 [name]: contents,
               },

@@ -28,14 +28,14 @@ function toYaml<T>(input: T) {
   return YAML.stringify(input).trim()
 }
 
-export function toConsole<T>(input: T, format: Fmt = Fmt.yaml) {
+export function toCon<T>(input: T, format: Fmt = Fmt.yaml) {
   if (format === Fmt.json) {
     return toJson(input)
   }
   return toYaml(input)
 }
 
-export function fromConfig(input: string, format: Fmt = Fmt.yaml) {
+export function fromCfg(input: string, format: Fmt = Fmt.yaml) {
   if (format === Fmt.json) {
     return fromJson(input)
   }

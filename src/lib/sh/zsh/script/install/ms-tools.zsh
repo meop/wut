@@ -12,7 +12,7 @@ function () {
           if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep --invert-match '^#' | grep --invert-match '^$' | grep '^.*packages.*microsoft.*com.*$' > /dev/null; then
             local output="${HOME}/packages-microsoft-prod.deb"
             local url="https://packages.microsoft.com/config/${sys_os_dist}/${sys_os_ver}/packages-microsoft-prod.deb"
-            dynOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
+            dynOp curl --fail-with-body --location --silent --url "${url}" --create-dirs --output "${output}"
             dynOp sudo dpkg --install "${output}"
             dynOp rm "${output}"
           fi

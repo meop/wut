@@ -1,6 +1,6 @@
 import type { Ctx } from './ctx'
 import type { Env } from './env'
-import { toConsole, toFmt } from './serde'
+import { toCon, toFmt } from './serde'
 import type { Sh } from './sh'
 
 export interface Cmd {
@@ -83,7 +83,7 @@ export class CmdBase {
   help(context: Ctx, environment: Env, shell: Sh): Promise<string> {
     return shell
       .withPrintInfo(
-        toConsole(this.getHelp(), toFmt(environment['format'.toUpperCase()])),
+        toCon(this.getHelp(), toFmt(environment['format'.toUpperCase()])),
       )
       .build()
   }
@@ -105,7 +105,10 @@ export class CmdBase {
     const _environment = environment ? environment : {}
 
     const setEnv = (key: string, value: string, append = false) => {
-      const fullKey = [...this.scopes.slice(1), key].join('_').toUpperCase()
+      const fullKey = [...this.scopes, this.name, key]
+        .slice(1)
+        .join('_')
+        .toUpperCase()
       if (append && _environment[fullKey]) {
         _environment[fullKey] += ` ${value}`
       } else {
@@ -120,7 +123,7 @@ export class CmdBase {
 
       if (_environment['debug'.toUpperCase()]) {
         _shell = _shell.withPrint(
-          toConsole(
+          toCon(
             {
               debug: {
                 url: url.toString(),

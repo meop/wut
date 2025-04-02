@@ -1,5 +1,5 @@
 import { buildFilePath, getFileText } from './path'
-import { Fmt, fromConfig } from './serde'
+import { Fmt, fromCfg } from './serde'
 
 function cfgParts(...parts: Array<string>) {
   return [import.meta.dir, '..', '..', '..', 'wut-config', ...parts]
@@ -13,5 +13,5 @@ export async function loadCfgFileContents(
   filePath: string,
   format: Fmt = Fmt.yaml,
 ) {
-  return fromConfig(await getFileText(filePath), format)
+  return fromCfg(await getFileText(filePath), format)
 }

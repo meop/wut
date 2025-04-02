@@ -11,14 +11,14 @@ function () {
 
       local output="${HOME}/Hack.zip"
       local url='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/Hack.zip'
-      dynOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
+      dynOp curl --fail-with-body --location --silent --url "${url}" --create-dirs --output "${output}"
       dynOp unzip -q "${output}" -d "${output}.unzip"
       dynOp cp "${output}.unzip"'/*.ttf' "${fonts}"
       dynOp rm -r -f "${output}"'*'
 
       local output="${HOME}/FiraCode.zip"
       local url='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/FiraCode.zip'
-      dynOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
+      dynOp curl --fail-with-body --location --silent --url "${url}" --create-dirs --output "${output}"
       dynOp unzip -q "${output}" -d "${output}.unzip"
       dynOp cp "${output}.unzip"'/*.ttf' "${fonts}"
       dynOp rm -r -f "${output}"'*'

@@ -4,7 +4,8 @@ import { type Cmd, CmdBase } from './lib/cmd'
 import { PackCmd } from './lib/cmd/pack'
 import { ScriptCmd } from './lib/cmd/script'
 import { getCtx } from './lib/ctx'
-import { Fmt, toConsole } from './lib/serde'
+import { Fmt, toCon } from './lib/serde'
+import type { Sh } from './lib/sh'
 import { Pwsh } from './lib/sh/pwsh'
 import { Zsh } from './lib/sh/zsh'
 
@@ -65,42 +66,60 @@ async function runSrv(req: Request) {
     const url = new URL(req.url.endsWith('/') ? req.url.slice(0, -1) : req.url)
     const usp = new URLSearchParams(url.search)
     const parts = expandParts(url.pathname.split('/').filter(p => p.length > 0))
+    const sh = parts[0]
 
-    const shell = (parts[0] === 'pwsh' ? new Pwsh() : new Zsh())
-      .withVarSet('url'.toUpperCase(), url.toString())
-      .withFsFileLoad('lib', 'print')
-      .withFsFileLoad('vers')
-      .withFsFileLoad('env')
+    if (sh !== 'zsh' && sh !== 'pwsh') {
+      return new Response(`echo "unsupported shell: ${sh}"`, { status: 404 })
+    }
 
     const context = getCtx(usp)
+    let shell: Sh = sh === 'pwsh' ? new Pwsh() : new Zsh()
 
-    if (!context.sys?.cpu?.arch) {
-      return new Response(await shell.withFsFileLoad('cli').build())
-    }
+    try {
+      shell = shell
+        .withVarSet('url'.toUpperCase(), url.toString())
+        .withFsFileLoad('ver')
+        .withFsFileLoad('env')
+        .withFsFileLoad('lib', 'print')
 
-    return new Response(
-      await cmd.process(
-        url,
-        usp,
-        parts.slice(1),
-        shell.withFsFileLoad('lib', 'dyn'),
-        context,
-      ),
-    )
-  } catch (err) {
-    const errObj: { [key: string]: string } = {}
-    if (err instanceof Error) {
-      if (err.stack) {
-        errObj.stack = err.stack
+      if (!context.sys?.cpu?.arch) {
+        return new Response(await shell.withFsFileLoad('cli').build())
       }
-      errObj.message = err.message
-    } else {
-      errObj.object = String(err)
+
+      return new Response(
+        await cmd.process(
+          url,
+          usp,
+          parts.slice(1),
+          shell.withFsFileLoad('lib', 'dyn'),
+          context,
+        ),
+      )
+    } catch (err) {
+      const errObj: {
+        error: {
+          message?: string
+          stack?: string
+        }
+      } = { error: {} }
+      if (err instanceof Error) {
+        errObj.error.message = err.message
+        if (err.stack) {
+          errObj.error.stack = err.stack
+        }
+      } else {
+        errObj.error.message = String(err)
+      }
+
+      const body = await shell
+        .withPrintErr(toCon(errObj, Fmt.json).trimEnd())
+        .build()
+      console.error(body)
+
+      return new Response(body, { status: 200 })
     }
-
-    const body = `${toConsole(errObj, Fmt.json).trimEnd()}\n`
-    console.error(body)
-
+  } catch (err) {
+    const body = `echo "unexpected error: ${err.message.replaceAll('\\', '')}"`
     return new Response(body, { status: 400 })
   }
 }

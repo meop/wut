@@ -10,7 +10,7 @@ function printErr {
     return
   }
   if ("${GRAYSCALE}") {
-    [Console]::Error.WriteLine($args)
+    [Console]::Error.WriteLine($($args -Join ' '))
     return
   }
   [Console]::ForegroundColor = 'Red'

@@ -6,7 +6,7 @@ export class Pwsh extends ShBase implements Sh {
   }
 
   toVal(value: string): string {
-    return `'${value.replaceAll("'", "`''")}'`
+    return `'${value.replaceAll("'", "''")}'`
   }
 
   withEval(...lines: Array<string>): Sh {

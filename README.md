@@ -26,7 +26,7 @@ function wut_wrap {
   local url="${url}/zsh"
   local url="$(echo "${url}" "$@" | sed 's/ /\//g' | sed 's:/*$::')"
 
-  eval "( $(curl --location --silent --url "${url}") )"
+  eval "( $(curl --fail-with-body --location --silent --url "${url}") )"
 }
 ```
 

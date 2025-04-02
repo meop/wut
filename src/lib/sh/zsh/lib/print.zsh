@@ -2,7 +2,7 @@ function print {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
-  echo $@
+  echo -E $@
 }
 
 function printErr {
@@ -10,11 +10,11 @@ function printErr {
     return
   fi
   if [[ "${GRAYSCALE}" ]]; then
-    echo $@ >&2
+    echo -E $@ >&2
     return
   fi
   echo -n '\033[0;31m' >&2
-  echo -n $@ >&2
+  echo -n -E $@ >&2
   echo '\033[0m' >&2
 }
 
@@ -23,11 +23,11 @@ function printSucc {
     return
   fi
   if [[ "${GRAYSCALE}" ]]; then
-    echo $@
+    echo -E $@
     return
   fi
   echo -n '\033[0;32m'
-  echo -n $@
+  echo -n -E $@
   echo '\033[0m'
 }
 
@@ -36,11 +36,11 @@ function printWarn {
     return
   fi
   if [[ "${GRAYSCALE}" ]]; then
-    echo $@
+    echo -E $@
     return
   fi
   echo -n '\033[0;33m'
-  echo -n $@
+  echo -n -E $@
   echo '\033[0m'
 }
 
@@ -49,11 +49,11 @@ function printInfo {
     return
   fi
   if [[ "${GRAYSCALE}" ]]; then
-    echo $@
+    echo -E $@
     return
   fi
   echo -n '\033[0;34m'
-  echo -n $@
+  echo -n -E $@
   echo '\033[0m'
 }
 
@@ -62,16 +62,16 @@ function printOp {
     return
   fi
   if [[ "${GRAYSCALE}" ]]; then
-    echo $@
+    echo -E $@
     return
   fi
   echo -n '\033[0;35m'
-  echo -n $1
+  echo -n -E $1
   shift 1
   if [[ "$@" ]]; then
-    echo -n ' '
-    echo -n '\033[0;36m'
-    echo -n $@
+    echo -n -E ' '
+    echo '\033[0;36m'
+    echo -n -E $@
   fi
   echo '\033[0m'
 }

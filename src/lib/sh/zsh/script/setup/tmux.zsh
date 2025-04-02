@@ -21,7 +21,7 @@ function () {
     if [[ "${yn}" == 'y' ]]; then
       local output="${tmux}/theme.tmux"
       local url='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/tmux/tokyonight_moon.tmux'
-      dynOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
+      dynOp curl --fail-with-body --location --silent --url "${url}" --create-dirs --output "${output}"
     fi
   fi
 }

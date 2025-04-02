@@ -5,7 +5,7 @@ function () {
   if [[ "${yn}" == 'y' ]]; then
     local output="${HOME}/install-starship.sh"
     local url='https://starship.rs/install.sh'
-    dynOp curl --location --silent --url "${url}" --create-dirs --output "${output}"
+    dynOp curl --fail-with-body --location --silent --url "${url}" --create-dirs --output "${output}"
     dynOp sh "${output}" -b "${HOME}/.local/bin"
     dynOp rm -r -f "${output}"'*'
   fi
