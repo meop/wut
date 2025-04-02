@@ -29,13 +29,13 @@ export class ShBase {
   shName: string
   shExt: string
 
-  localParts(parts: Array<string>) {
-    return [import.meta.dir, 'sh', this.shName, ...parts]
-  }
+  dirPath: string
 
   constructor(shName: string, shExt: string) {
     this.shName = shName
     this.shExt = shExt
+
+    this.dirPath = buildFilePath(import.meta.dir, 'sh', this.shName)
   }
 
   async build() {
@@ -64,28 +64,34 @@ export class ShBase {
 
   withFsDirList(...parts: Array<string>): Sh {
     this.lineBuilders.push(async () => {
-      const filter = parts.pop()
-      const dirPath = buildFilePath(this.localParts(parts))
-      const filePaths = await getFilePaths(
-        dirPath,
-        this.shExt,
-        filter ? [filter] : undefined,
-      )
+      const filePaths = await getFilePaths(this.dirPath, {
+        extension: this.shExt,
+        filters: parts,
+      })
 
-      return filePaths.map(f => this.toVal(f.replace(f, ''))).join('\n')
+      return filePaths
+        .map(f => {
+          const fileParts = this.toVal(
+            f
+              .replaceAll(this.dirPath, '')
+              .replaceAll('/', ' ')
+              .replaceAll(`.${this.shExt}`, '')
+              .trim(),
+          )
+          return `printInfo ${fileParts}`
+        })
+        .sort()
+        .join('\n')
     })
     return this
   }
 
   withFsDirLoad(...parts: Array<string>): Sh {
     this.lineBuilders.push(async () => {
-      const filter = parts.pop()
-      const dirPath = buildFilePath(this.localParts(parts))
-      const filePaths = await getFilePaths(
-        dirPath,
-        this.shExt,
-        filter ? [filter] : undefined,
-      )
+      const filePaths = await getFilePaths(this.dirPath, {
+        extension: this.shExt,
+        filters: parts,
+      })
 
       return (await Promise.all(filePaths.map(f => getFileText(f)))).join('\n')
     })
@@ -94,7 +100,7 @@ export class ShBase {
 
   withFsFileLoad(...parts: Array<string>): Sh {
     this.lineBuilders.push(async () => {
-      const filePath = `${buildFilePath(this.localParts(parts))}.${this.shExt}`
+      const filePath = `${buildFilePath(this.dirPath, ...parts)}.${this.shExt}`
 
       return await getFileText(filePath)
     })

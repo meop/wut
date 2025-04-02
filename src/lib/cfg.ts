@@ -1,12 +1,12 @@
 import { buildFilePath, getFileText } from './path'
 import { Fmt, fromConfig } from './serde'
 
-function cfgParts(parts: Array<string>) {
+function cfgParts(...parts: Array<string>) {
   return [import.meta.dir, '..', '..', '..', 'wut-config', ...parts]
 }
 
-export function buildCfgFilePath(parts: Array<string>) {
-  return buildFilePath(cfgParts(parts))
+export function buildCfgFilePath(...parts: Array<string>) {
+  return buildFilePath(...cfgParts(...parts))
 }
 
 export async function loadCfgFileContents(

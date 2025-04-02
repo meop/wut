@@ -42,9 +42,12 @@ export class ScriptCmdList extends CmdBase implements Cmd {
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
     const parts = ['script']
-    if ('script_parts'.toUpperCase() in environment) {
-      parts.push(environment['script_parts'.toUpperCase()])
+    const filters: Array<string> = []
+    const scriptListPartsKey = 'script_list_parts'.toUpperCase()
+    if (scriptListPartsKey in environment) {
+      filters.push(...environment[scriptListPartsKey].split(' '))
     }
-    return shell.withFsDirList(...parts).build()
+
+    return shell.withFsDirList(...parts, ...filters).build()
   }
 }

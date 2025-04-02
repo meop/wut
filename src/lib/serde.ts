@@ -17,7 +17,7 @@ function fromJson(input: string) {
 }
 
 function toJson<T>(input: T) {
-  return JSON.stringify(input, null, 2)
+  return JSON.stringify(input, null, 2).trim()
 }
 
 function fromYaml(input: string) {
@@ -25,7 +25,7 @@ function fromYaml(input: string) {
 }
 
 function toYaml<T>(input: T) {
-  return YAML.stringify(input)
+  return YAML.stringify(input).trim()
 }
 
 export function toConsole<T>(input: T, format: Fmt = Fmt.yaml) {

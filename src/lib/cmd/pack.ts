@@ -47,12 +47,12 @@ async function workPreset(
   const manager = environment[packManagerKey]
 
   if (environment[packPresetsKey]) {
-    const dirPath = buildCfgFilePath([packKey])
-    const presetFiles = await getFilePaths(dirPath, 'yaml')
+    const dirPath = buildCfgFilePath(packKey)
+    const presetFiles = await getFilePaths(dirPath, { extension: 'yaml' })
 
     for (const name of requestedNames) {
-      const presetFile = presetFiles.find(f =>
-        path.basename(f, '.yaml').includes(name),
+      const presetFile = presetFiles.find(
+        f => path.basename(f, '.yaml') === name,
       )
       if (presetFile) {
         const contents = await loadCfgFileContents(presetFile)
