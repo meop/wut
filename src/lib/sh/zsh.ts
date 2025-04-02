@@ -5,6 +5,10 @@ export class Zsh extends ShBase implements Sh {
     super('zsh', 'zsh')
   }
 
+  toVal(value: string): string {
+    return `'${value.replaceAll("'", "'\\''")}'`
+  }
+
   withEval(...lines: Array<string>): Sh {
     return this.with(...lines.map(l => `eval "${l}"`))
   }

@@ -22,9 +22,9 @@ export WUT_URL='http://yard.lan:9000'
 alias wut='wut_wrap'
 
 function wut_wrap {
-  local url="$(echo "${WUT_URL}" | sed "s:/*$::")"
+  local url="$(echo "${WUT_URL}" | sed 's:/*$::')"
   local url="${url}/zsh"
-  local url="$(echo "${url}" "$@" | sed "s/ /\//g" | sed "s:/*$::")"
+  local url="$(echo "${url}" "$@" | sed 's/ /\//g' | sed 's:/*$::')"
 
   eval "( $(curl --location --silent --url "${url}") )"
 }

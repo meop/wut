@@ -5,7 +5,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? up packages with apt (system) [[y]/n] '
+      read yn?'? up packages with apt (system) [n/[y]] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
@@ -31,7 +31,7 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? up packages with apt-get (system) [[y]/n] '
+      read yn?'? up packages with apt-get (system) [n/[y]] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
@@ -49,7 +49,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? up packages with brew (system) [[y]/n] '
+      read yn?'? up packages with brew (system) [n/[y]] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       dynOp brew update '2>&1' '|' '>' /dev/null
@@ -65,7 +65,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? up packages with dnf (system) [[y]/n] '
+      read yn?'? up packages with dnf (system) [n/[y]] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
@@ -83,7 +83,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? up packages with yay (system) [[y]/n] '
+      read yn?'? up packages with yay (system) [n/[y]] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       dynOp yay --sync --refresh '2>&1' '|' '>' /dev/null
@@ -100,7 +100,7 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? up packages with pacman (system) [[y]/n] '
+      read yn?'? up packages with pacman (system) [n/[y]] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then

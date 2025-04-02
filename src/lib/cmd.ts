@@ -25,6 +25,15 @@ export interface Cmd {
   ): Promise<string>
 }
 
+type CmdPrintable = {
+  id: string
+  aliases?: string
+  arguments?: Array<string>
+  options?: Array<string>
+  switches?: Array<string>
+  commands?: string
+}
+
 export class CmdBase {
   name = ''
   desc = ''
@@ -37,48 +46,50 @@ export class CmdBase {
   commands: Array<Cmd> = []
   scopes: Array<string> = []
 
-  help(shell: Sh): Promise<string> {
-    const contents: Array<string> = []
+  getHelp(): CmdPrintable {
+    const content: CmdPrintable = {
+      id: `${[...this.scopes, this.name].join(' ')} | ${this.desc}`,
+    }
 
-    contents.push(`${[...this.scopes].join(' ')} | ${this.desc}`)
     if (this.aliases.length) {
-      contents.push('aliases:')
-      contents.push(`  ${this.aliases.join(', ')}`)
+      content.aliases = this.aliases.join(', ')
     }
 
     if (this.arguments.length) {
-      contents.push('arguments:')
-      for (const arg of this.arguments) {
-        contents.push(
-          `  ${arg.req ? '<' : '['}${arg.name}${arg.req ? '>' : ']'} | ${arg.desc}`,
-        )
-      }
+      content.arguments = this.arguments.map(
+        a => `${a.req ? '<' : '['}${a.name}${a.req ? '>' : ']'} | ${a.desc}`,
+      )
     }
 
     if (this.options.length) {
-      contents.push('options:')
-      for (const opt of this.options) {
-        contents.push(`  ${opt.keys.join(', ')} | ${opt.desc}`)
-      }
+      content.options = this.options.map(
+        opt => `${opt.keys.join(', ')} | ${opt.desc}`,
+      )
     }
 
     if (this.switches.length) {
-      contents.push('switches:')
-      for (const swt of this.switches) {
-        contents.push(`  ${swt.keys.join(', ')} | ${swt.desc}`)
-      }
+      content.switches = this.switches.map(
+        swt => `${swt.keys.join(', ')} | ${swt.desc}`,
+      )
     }
 
     if (this.commands.length) {
-      contents.push('commands:')
-      contents.push(`  ${this.commands.map(s => s.name).join(', ')}`)
+      content.commands = this.commands.map(c => c.name).join(', ')
     }
 
-    return shell.withPrintInfo(...contents).build()
+    return content
+  }
+
+  help(context: Ctx, environment: Env, shell: Sh): Promise<string> {
+    return shell
+      .withPrintInfo(
+        toConsole(this.getHelp(), toFmt(environment['format'.toUpperCase()])),
+      )
+      .build()
   }
 
   work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return this.help(shell)
+    return this.help(context, environment, shell)
   }
 
   process(
@@ -148,7 +159,7 @@ export class CmdBase {
         const _option = this.options.find(o => o.keys.includes(part))
         if (_option && partsIndex + 1 < parts.length) {
           if (parts[partsIndex + 1].startsWith('-')) {
-            return processShEnv(() => this.help(_shell))
+            return processShEnv(() => this.help(_context, _environment, _shell))
           }
           setEnv(
             _option.keys.find(k => k.startsWith('--'))?.split('--')[1] ?? '',
@@ -158,7 +169,7 @@ export class CmdBase {
           continue
         }
 
-        return processShEnv(() => this.help(_shell))
+        return processShEnv(() => this.help(_context, _environment, _shell))
       }
 
       if (this.commands.length) {
@@ -191,12 +202,12 @@ export class CmdBase {
         continue
       }
 
-      return processShEnv(() => this.help(_shell))
+      return processShEnv(() => this.help(_context, _environment, _shell))
     }
 
     while (argumentIndex < this.arguments.length) {
       if (this.arguments[argumentIndex].req) {
-        return processShEnv(() => this.help(_shell))
+        return processShEnv(() => this.help(_context, _environment, _shell))
       }
       argumentIndex += 1
     }

@@ -48,7 +48,7 @@ export class ShBase {
   }
 
   toVal(value: string): string {
-    return `'${value}'`
+    throw new Error('not implemented')
   }
 
   with(...lines: Array<string>): Sh {
@@ -80,7 +80,6 @@ export class ShBase {
           )
           return `printInfo ${fileParts}`
         })
-        .sort()
         .join('\n')
     })
     return this

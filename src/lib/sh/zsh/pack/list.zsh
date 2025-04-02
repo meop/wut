@@ -5,7 +5,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? list packages with apt (system) [[y]/n] '
+      read yn?'? list packages with apt (system) [n/[y]] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
@@ -29,7 +29,7 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? list packages with apt-get (system) [[y]/n] '
+      read yn?'? list packages with apt-get (system) [n/[y]] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
@@ -46,7 +46,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? list packages with brew (system) [[y]/n] '
+      read yn?'? list packages with brew (system) [n/[y]] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if [[ "${PACK_LIST_NAMES}" ]]; then
@@ -61,7 +61,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? list packages with dnf (system) [[y]/n] '
+      read yn?'? list packages with dnf (system) [n/[y]] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
@@ -78,7 +78,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? list packages with yay (system) [[y]/n] '
+      read yn?'? list packages with yay (system) [n/[y]] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if [[ "${PACK_LIST_NAMES}" ]]; then
@@ -94,7 +94,7 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? list packages with pacman (system) [[y]/n] '
+      read yn?'? list packages with pacman (system) [n/[y]] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then

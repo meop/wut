@@ -1,7 +1,7 @@
 &{
   if ($IsWindows) {
     if (Get-Command fzf -ErrorAction Ignore) {
-      $yn = Read-Host '? setup fzf theme (user) [[y]/n]'
+      $yn = Read-Host '? setup fzf theme (user) [n/[y]]'
       if ("${yn}" -eq 'y') {
         $fzf = "${HOME}/.fzf"
 

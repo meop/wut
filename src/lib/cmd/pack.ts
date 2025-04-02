@@ -1,12 +1,9 @@
-import path from 'node:path'
-
 import { buildCfgFilePath, loadCfgFileContents } from '../cfg'
 import { type Cmd, CmdBase } from '../cmd'
 import type { Ctx } from '../ctx'
 import type { Env } from '../env'
 import type { Sh } from '../sh'
 import { toConsole, toFmt } from '../serde'
-import { getFilePaths } from '../path'
 
 export class PackCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -15,15 +12,15 @@ export class PackCmd extends CmdBase implements Cmd {
     this.desc = 'package ops'
     this.aliases = ['p', 'package', 'pk', 'pkg']
     this.options = [{ keys: ['-m', '--manager'], desc: 'package manager' }]
-    this.scopes = [...scopes, this.name]
+    this.scopes = scopes
     this.commands = [
-      new PackCmdAdd(this.scopes),
-      new PackCmdDel(this.scopes),
-      new PackCmdFind(this.scopes),
-      new PackCmdList(this.scopes),
-      new PackCmdOut(this.scopes),
-      new PackCmdTidy(this.scopes),
-      new PackCmdUp(this.scopes),
+      new PackCmdAdd([...this.scopes, this.name]),
+      new PackCmdDel([...this.scopes, this.name]),
+      new PackCmdFind([...this.scopes, this.name]),
+      new PackCmdList([...this.scopes, this.name]),
+      new PackCmdOut([...this.scopes, this.name]),
+      new PackCmdTidy([...this.scopes, this.name]),
+      new PackCmdUp([...this.scopes, this.name]),
     ]
   }
 }
@@ -47,30 +44,37 @@ async function workPreset(
   const manager = environment[packManagerKey]
 
   if (environment[packPresetsKey]) {
-    const dirPath = buildCfgFilePath(packKey)
-    const presetFiles = await getFilePaths(dirPath, { extension: 'yaml' })
+    _shell = _shell.withVarUnset(packPresetsKey)
 
     for (const name of requestedNames) {
-      const presetFile = presetFiles.find(
-        f => path.basename(f, '.yaml') === name,
-      )
-      if (presetFile) {
-        const contents = await loadCfgFileContents(presetFile)
+      const filePath = `${buildCfgFilePath(packKey, name)}.yaml`
 
+      if (await Bun.file(filePath).exists()) {
+        const contents = await loadCfgFileContents(filePath)
         if (op !== 'find') {
           for (const key of Object.keys(contents)) {
             if (manager && key !== manager) {
               continue
             }
             const value = contents[key]
+
+            if (!manager) {
+              _shell = _shell.withVarSet(packManagerKey, key)
+            }
             if (value[op]) {
               _shell = _shell.withVarArrSet(packPresetsKey, value[op])
-            } else {
+            }
+            if (value?.names?.length) {
+              _shell = _shell.withVarSet(packNamesKey, value.names.join(' '))
+            }
+            _shell = _shell.withFsFileLoad(packKey, op)
+            if (value[op]) {
               _shell = _shell.withVarUnset(packPresetsKey)
             }
-            _shell = _shell.withVarSet(packManagerKey, key)
-            _shell = _shell.withVarSet(packNamesKey, value.names.join(' '))
-            _shell = _shell.withFsFileLoad(packKey, op)
+            if (!manager) {
+              _shell = _shell.withVarUnset(packManagerKey)
+            }
+            foundNames.push(name)
           }
         } else {
           _shell = _shell.withPrint(
@@ -82,16 +86,6 @@ async function workPreset(
             ),
           )
         }
-
-        foundNames.push(name)
-      }
-    }
-
-    if (op !== 'find') {
-      _shell = _shell.withVarUnset(packPresetsKey)
-      _shell = _shell.withVarUnset(packManagerKey)
-      if (manager) {
-        _shell = _shell.withVarSet(packManagerKey, manager)
       }
     }
   }

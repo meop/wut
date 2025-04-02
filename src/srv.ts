@@ -29,11 +29,18 @@ class SrvCmd extends CmdBase implements Cmd {
     super()
     this.name = pkg.name.toLowerCase()
     this.desc = pkg.description.toLowerCase()
-    this.scopes = [this.name]
+    this.scopes = []
+    const fmtKeys = Object.keys(Fmt).map((k, i) => {
+      if (i === 0) {
+        return k
+      }
+      return `[${k}]`
+    })
+
     this.options = [
       {
         keys: ['-f', '--format'],
-        desc: `print format: ${Object.keys(Fmt).join(', ')}`,
+        desc: `print format (${fmtKeys.join(', ')})`,
       },
     ]
     this.switches = [
@@ -45,7 +52,10 @@ class SrvCmd extends CmdBase implements Cmd {
       { keys: ['-v', '--verbose'], desc: 'print extra' },
       { keys: ['-y', '--yes'], desc: 'no prompt' },
     ]
-    this.commands = [new PackCmd(this.scopes), new ScriptCmd(this.scopes)]
+    this.commands = [
+      new PackCmd([...this.scopes, this.name]),
+      new ScriptCmd([...this.scopes, this.name]),
+    ]
   }
 }
 
@@ -88,14 +98,8 @@ async function runSrv(req: Request) {
       errObj.object = String(err)
     }
 
-    const json = toConsole(errObj, Fmt.json).trimEnd()
-    console.error(json)
-
-    const body = `${json
-      .split('\n')
-      // .map(l => `echo '${l.replaceAll("'", "'\\''")}'`)
-      .map(l => `echo '${l.replaceAll("'", "'\\''")}'`) // zsh
-      .join('\n')}\n`
+    const body = `${toConsole(errObj, Fmt.json).trimEnd()}\n`
+    console.error(body)
 
     return new Response(body, { status: 400 })
   }

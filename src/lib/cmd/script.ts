@@ -9,10 +9,10 @@ export class ScriptCmd extends CmdBase implements Cmd {
     this.name = 'script'
     this.desc = 'script ops'
     this.aliases = ['s', 'sc', 'scr', 'script']
-    this.scopes = [...scopes, this.name]
+    this.scopes = scopes
     this.commands = [
-      new ScriptCmdExec(this.scopes),
-      new ScriptCmdList(this.scopes),
+      new ScriptCmdExec([...this.scopes, this.name]),
+      new ScriptCmdList([...this.scopes, this.name]),
     ]
   }
 }
@@ -24,7 +24,7 @@ export class ScriptCmdExec extends CmdBase implements Cmd {
     this.desc = 'exec from local'
     this.aliases = ['e', 'ex', 'exe', 'exec', 'execute']
     this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
-    this.scopes = [...scopes, this.name]
+    this.scopes = scopes
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
     return ''

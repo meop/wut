@@ -3,7 +3,7 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? list packages with winget (system) [[y]/n]'
+      $yn = Read-Host '? list packages with winget (system) [n/[y]]'
     }
     if ("${yn}" -eq 'y') {
       if ("${PACK_LIST_NAMES}") {
@@ -18,7 +18,7 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? list packages with scoop (user) [[y]/n]'
+      $yn = Read-Host '? list packages with scoop (user) [n/[y]]'
     }
     if ("${yn}" -eq 'y') {
       if ("${PACK_LIST_NAMES}") {

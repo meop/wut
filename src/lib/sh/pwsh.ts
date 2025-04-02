@@ -5,6 +5,10 @@ export class Pwsh extends ShBase implements Sh {
     super('pwsh', 'ps1')
   }
 
+  toVal(value: string): string {
+    return `'${value.replaceAll("'", "`''")}'`
+  }
+
   withEval(...lines: Array<string>): Sh {
     return this.with(...lines.map(l => `Invoke-Expression "${l}"`))
   }
