@@ -5,7 +5,7 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? tidy packages with scoop (user) [n/[y]]'
+      $yn = Read-Host '? tidy packages with scoop (user) [[y], n]'
     }
     if ("${yn}" -eq 'y') {
       dynOp scoop cleanup --all --cache

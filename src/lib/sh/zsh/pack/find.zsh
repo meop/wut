@@ -5,7 +5,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? find packages with apt (system) [n/[y]] '
+      read yn?'? find packages with apt (system) [[y], n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
@@ -23,7 +23,7 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? find packages with apt-get (system) [n/[y]] '
+      read yn?'? find packages with apt-get (system) [[y], n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
@@ -37,7 +37,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? find packages with brew (system) [n/[y]] '
+      read yn?'? find packages with brew (system) [[y], n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       dynOp brew search $PACK_FIND_NAMES
@@ -48,7 +48,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? find packages with dnf (system) [n/[y]] '
+      read yn?'? find packages with dnf (system) [[y], n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
@@ -62,7 +62,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? find packages with yay (system) [n/[y]] '
+      read yn?'? find packages with yay (system) [[y], n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       dynOp yay --sync --refresh '2>&1' '|' '>' /dev/null
@@ -75,7 +75,7 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? find packages with pacman (system) [n/[y]] '
+      read yn?'? find packages with pacman (system) [[y], n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then

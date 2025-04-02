@@ -1,6 +1,6 @@
 &{
   if ($IsWindows) {
-    $yn = Read-Host '? repair gpu msi properties (system) [n/[y]]'
+    $yn = Read-Host '? repair gpu msi properties (system) [[y], n]'
     if ("${yn}" -eq 'y') {
       pwsh -nologo -noprofile -command {
         dynOp Set-Location HKLM:

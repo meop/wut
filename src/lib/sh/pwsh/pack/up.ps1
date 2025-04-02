@@ -3,7 +3,7 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? up packages with winget (system) [n/[y]]'
+      $yn = Read-Host '? up packages with winget (system) [[y], n]'
     }
     if ("${yn}" -eq 'y') {
       if ("${PACK_UP_NAMES}") {
@@ -18,7 +18,7 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? up packages with scoop (user) [n/[y]]'
+      $yn = Read-Host '? up packages with scoop (user) [[y], n]'
     }
     if ("${yn}" -eq 'y') {
       dynOp scoop update '2>&1' '3>&1' '4>&1' '5>&1' '6>&1' '|' Out-Null

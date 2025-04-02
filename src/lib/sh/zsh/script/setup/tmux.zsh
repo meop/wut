@@ -4,7 +4,7 @@ function () {
   if type tmux > /dev/null; then
     local tmux="${HOME}/.tmux"
 
-    read yn?'? setup tmux plugin manager (user) [n/[y]] '
+    read yn?'? setup tmux plugin manager (user) [[y], n] '
     if [[ "${yn}" == 'y' ]]; then
       local tmux_plugins="${HOME}/.tmux-plugins"
 
@@ -17,7 +17,7 @@ function () {
       fi
     fi
 
-    read yn?'? setup tmux theme (user) [n/[y]] '
+    read yn?'? setup tmux theme (user) [[y], n] '
     if [[ "${yn}" == 'y' ]]; then
       local output="${tmux}/theme.tmux"
       local url='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/tmux/tokyonight_moon.tmux'

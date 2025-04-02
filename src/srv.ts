@@ -27,21 +27,22 @@ function expandParts(parts: Array<string>) {
 
 class SrvCmd extends CmdBase implements Cmd {
   constructor() {
-    super()
+    super([])
     this.name = pkg.name.toLowerCase()
     this.desc = pkg.description.toLowerCase()
-    this.scopes = []
-    const fmtKeys = Object.keys(Fmt).map((k, i) => {
-      if (i === 0) {
-        return k
-      }
-      return `[${k}]`
-    })
+    const fmtKeys = Object.keys(Fmt)
+      .map((k, i) => {
+        if (i === 0) {
+          return k
+        }
+        return `[${k}]`
+      })
+      .reverse()
 
     this.options = [
       {
         keys: ['-f', '--format'],
-        desc: `print format (${fmtKeys.join(', ')})`,
+        desc: `print format <${fmtKeys.join(', ')}>`,
       },
     ]
     this.switches = [
@@ -53,10 +54,7 @@ class SrvCmd extends CmdBase implements Cmd {
       { keys: ['-v', '--verbose'], desc: 'print extra' },
       { keys: ['-y', '--yes'], desc: 'no prompt' },
     ]
-    this.commands = [
-      new PackCmd([...this.scopes, this.name]),
-      new ScriptCmd([...this.scopes, this.name]),
-    ]
+    this.commands = [new PackCmd([this.name]), new ScriptCmd([this.name])]
   }
 }
 

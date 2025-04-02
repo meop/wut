@@ -70,7 +70,7 @@ function printOp {
   shift 1
   if [[ "$@" ]]; then
     echo -n -E ' '
-    echo '\033[0;36m'
+    echo -n '\033[0;36m'
     echo -n -E $@
   fi
   echo '\033[0m'

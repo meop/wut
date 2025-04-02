@@ -5,17 +5,17 @@ function () {
     if [[ ! -f /etc/os-release ]]; then
       local termux="${HOME}/.termux"
 
-      read yn?'? setup termux mirrors (system) [n/[y]] '
+      read yn?'? setup termux mirrors (system) [[y], n] '
       if [[ "${yn}" == 'y' ]]; then
         dynOp termux-change-mirror
       fi
 
-      read yn?'? setup termux storage (system) [n/[y]] '
+      read yn?'? setup termux storage (system) [[y], n] '
       if [[ "${yn}" == 'y' ]]; then
         dynOp termux-setup-storage
       fi
 
-      read yn?'? setup termux theme (user) [n/[y]] '
+      read yn?'? setup termux theme (user) [[y], n] '
       if [[ "${yn}" == 'y' ]]; then
         local output="${termux}/colors.properties"
         local url='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/termux/tokyonight_moon.properties'

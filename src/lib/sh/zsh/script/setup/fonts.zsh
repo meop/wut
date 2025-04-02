@@ -2,7 +2,7 @@ function () {
   local yn
 
   if [[ "${sys_os_plat}" == 'linux' ]]; then
-    read yn?'? setup nerd fonts (local) [n/[y]] '
+    read yn?'? setup nerd fonts (local) [[y], n] '
     if [[ "${yn}" == 'y' ]]; then
       local share="${XDG_DATA_HOME:-${HOME}/.local/share}"
       local fonts="${share}/fonts"

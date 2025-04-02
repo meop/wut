@@ -12,14 +12,14 @@ function () {
         fi
       }
 
-      read yn?'? install node js (system) [n/[y]] '
+      read yn?'? install node js (system) [[y], n] '
       if [[ "${yn}" == 'y' ]]; then
         install_nodesource_repo
         dynOp sudo apt update
         dynOp sudo apt install nodejs
       fi
 
-      read yn?'? install npm (system) [n/[y]] '
+      read yn?'? install npm (system) [[y], n] '
       if [[ "${yn}" == 'y' ]]; then
         install_nodesource_repo
         dynOp sudo apt update

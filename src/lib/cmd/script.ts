@@ -5,11 +5,10 @@ import type { Sh } from '../sh'
 
 export class ScriptCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
-    super()
+    super(scopes)
     this.name = 'script'
     this.desc = 'script ops'
     this.aliases = ['s', 'sc', 'scr', 'script']
-    this.scopes = scopes
     this.commands = [
       new ScriptCmdExec([...this.scopes, this.name]),
       new ScriptCmdList([...this.scopes, this.name]),
@@ -19,12 +18,11 @@ export class ScriptCmd extends CmdBase implements Cmd {
 
 export class ScriptCmdExec extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
-    super()
+    super(scopes)
     this.name = 'exec'
     this.desc = 'exec from local'
     this.aliases = ['e', 'ex', 'exe', 'exec', 'execute']
     this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
-    this.scopes = scopes
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
     return ''
@@ -33,12 +31,11 @@ export class ScriptCmdExec extends CmdBase implements Cmd {
 
 export class ScriptCmdList extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
-    super()
+    super(scopes)
     this.name = 'list'
     this.desc = 'list from local'
     this.aliases = ['l', 'li', 'ls', 'qu', 'query']
     this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
-    this.scopes = [...scopes, this.name]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
     const parts = ['script']
