@@ -62,14 +62,19 @@ export class ShBase {
     throw new Error('not implemented')
   }
 
+  async getFsFiles(parts: Array<string>, filters?: Array<string>) {
+    const dirPath = buildFilePath(...[this.dirPath, ...parts])
+    return await getFilePaths(dirPath, {
+      extension: this.shExt,
+      filters: filters,
+    })
+  }
+
   withFsDirList(parts: Array<string>, filters?: Array<string>): Sh {
     this.lineBuilders.push(async () => {
-      const dirPath = buildFilePath(...[this.dirPath, ...parts])
-      const filePaths = await getFilePaths(dirPath, {
-        extension: this.shExt,
-        filters: filters,
-      })
+      const filePaths = await this.getFsFiles(parts, filters)
 
+      const dirPath = buildFilePath(...[this.dirPath, ...parts])
       return filePaths
         .map(f => {
           const fileParts = this.toVal(
@@ -88,10 +93,7 @@ export class ShBase {
 
   withFsDirLoad(parts: Array<string>, filters?: Array<string>): Sh {
     this.lineBuilders.push(async () => {
-      const filePaths = await getFilePaths(this.dirPath, {
-        extension: this.shExt,
-        filters: parts,
-      })
+      const filePaths = await this.getFsFiles(parts, filters)
 
       return (await Promise.all(filePaths.map(f => getFileText(f)))).join('\n')
     })

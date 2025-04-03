@@ -19,7 +19,6 @@ export async function getFilePaths(
   const globs: Array<Glob> = []
 
   const addGlob = (pattern: string) => {
-    console.log(pattern)
     globs.push(new Glob(pattern))
   }
 

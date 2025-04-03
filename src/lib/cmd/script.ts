@@ -25,7 +25,14 @@ export class ScriptCmdExec extends CmdBase implements Cmd {
     this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return ''
+    const parts = ['script']
+    const filters: Array<string> = []
+    const scriptExecPartsKey = 'script_exec_parts'.toUpperCase()
+    if (scriptExecPartsKey in environment) {
+      filters.push(...environment[scriptExecPartsKey].split(' '))
+    }
+
+    return shell.withFsDirLoad(parts, filters).build()
   }
 }
 
