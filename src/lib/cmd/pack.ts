@@ -9,8 +9,8 @@ export class PackCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'pack'
-    this.desc = 'package ops'
-    this.aliases = ['p', 'package', 'pk', 'pkg']
+    this.desc = 'package manager ops'
+    this.aliases = ['p', 'pa', 'package', 'pk', 'pkg']
     this.options = [{ keys: ['-m', '--manager'], desc: 'package manager' }]
     this.commands = [
       new PackCmdAdd([...this.scopes, this.name]),
@@ -105,7 +105,7 @@ export class PackCmdAdd extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'add'
     this.desc = 'add from web'
-    this.aliases = ['a', 'in', 'install']
+    this.aliases = ['a', 'ad', 'in', 'install']
     this.arguments = [{ name: 'names', desc: 'name(s) to match', req: true }]
     this.switches = [{ keys: ['-p', '--presets'], desc: 'check for presets' }]
   }
@@ -119,7 +119,16 @@ export class PackCmdDel extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'del'
     this.desc = 'delete from local'
-    this.aliases = ['d', 'delete', 'rm', 'rem', 'remove', 'un', 'uninstall']
+    this.aliases = [
+      'd',
+      'de',
+      'delete',
+      'rm',
+      'rem',
+      'remove',
+      'un',
+      'uninstall',
+    ]
     this.arguments = [{ name: 'names', desc: 'name(s) to match', req: true }]
     this.switches = [{ keys: ['-p', '--presets'], desc: 'check for presets' }]
   }

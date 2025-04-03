@@ -3,6 +3,7 @@ import pkg from '../package.json' with { type: 'json' }
 import { type Cmd, CmdBase } from './lib/cmd'
 import { PackCmd } from './lib/cmd/pack'
 import { ScriptCmd } from './lib/cmd/script'
+import { VirtCmd } from './lib/cmd/virt'
 import { getCtx } from './lib/ctx'
 import { Fmt, toCon } from './lib/serde'
 import type { Sh } from './lib/sh'
@@ -54,7 +55,11 @@ class SrvCmd extends CmdBase implements Cmd {
       { keys: ['-v', '--verbose'], desc: 'print extra' },
       { keys: ['-y', '--yes'], desc: 'no prompt' },
     ]
-    this.commands = [new PackCmd([this.name]), new ScriptCmd([this.name])]
+    this.commands = [
+      new PackCmd([this.name]),
+      new ScriptCmd([this.name]),
+      new VirtCmd([this.name]),
+    ]
   }
 }
 

@@ -5,10 +5,14 @@ export type Ctx = {
     cpu?: {
       arch?: string
     }
+    host?: string
     os?: {
       plat?: string
       dist?: string
-      ver?: string
+      ver?: {
+        id?: string
+        code?: string
+      }
     }
     user?: string
   }
@@ -22,13 +26,17 @@ export function getCtx(usp: URLSearchParams): Ctx {
   const spSysCpuArch = getSp(usp, 'sysCpuArch')
   const spSysOsPlat = getSp(usp, 'sysOsPlat')
   const spSysOsDist = getSp(usp, 'sysOsDist')
-  const spSysOsVer = getSp(usp, 'sysOsVer')
+  const spSysOsVerId = getSp(usp, 'sysOsVerId')
+  const spSysOsVerCode = getSp(usp, 'sysOsVerCode')
+  const spSysHost = getSp(usp, 'sysHost')
   const spSysUser = getSp(usp, 'sysUser')
 
   const sysCpuArch = spSysCpuArch ? getCpuArch(spSysCpuArch) : undefined
   const sysOsPlat = spSysOsPlat ? getOsPlat(spSysOsPlat) : undefined
   const sysOsDist = spSysOsDist
-  const sysOsVer = spSysOsVer
+  const sysOsVerId = spSysOsVerId
+  const sysOsVerCode = spSysOsVerCode
+  const sysHost = spSysHost
   const sysUser = spSysUser
 
   return {
@@ -36,10 +44,14 @@ export function getCtx(usp: URLSearchParams): Ctx {
       cpu: {
         arch: sysCpuArch,
       },
+      host: sysHost,
       os: {
         plat: sysOsPlat,
         dist: sysOsDist,
-        ver: sysOsVer,
+        ver: {
+          id: sysOsVerId,
+          code: sysOsVerCode,
+        },
       },
       user: sysUser,
     },

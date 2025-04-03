@@ -7,29 +7,29 @@ export class ScriptCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'script'
-    this.desc = 'script ops'
+    this.desc = 'shell script ops'
     this.aliases = ['s', 'sc', 'scr', 'script']
     this.commands = [
-      new ScriptCmdExec([...this.scopes, this.name]),
+      new ScriptCmdRun([...this.scopes, this.name]),
       new ScriptCmdList([...this.scopes, this.name]),
     ]
   }
 }
 
-export class ScriptCmdExec extends CmdBase implements Cmd {
+export class ScriptCmdRun extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
-    this.name = 'exec'
-    this.desc = 'exec from local'
-    this.aliases = ['e', 'ex', 'exe', 'exec', 'execute']
+    this.name = 'run'
+    this.desc = 'run from local'
+    this.aliases = ['r', 'ex', 'exe', 'exec', 'execute']
     this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
     const parts = ['script']
     const filters: Array<string> = []
-    const scriptExecPartsKey = 'script_exec_parts'.toUpperCase()
-    if (scriptExecPartsKey in environment) {
-      filters.push(...environment[scriptExecPartsKey].split(' '))
+    const scriptRunPartsKey = 'script_run_parts'.toUpperCase()
+    if (scriptRunPartsKey in environment) {
+      filters.push(...environment[scriptRunPartsKey].split(' '))
     }
 
     return shell.withFsDirLoad(parts, filters).build()

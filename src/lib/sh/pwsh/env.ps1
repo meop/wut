@@ -25,18 +25,36 @@ if (-not "${sys_os_plat}") {
 if ("${sys_os_plat}" -eq 'linux') {
   if (Test-Path /etc/os-release) {
     if (-not "${sys_os_dist}") {
-      $sys_os_dist = "$(grep --only-matching --perl-regexp '^ID=\K[a-zA-Z0-9._-]+' /etc/os-release)".ToLower()
+      $sys_os_dist = "$(grep '^ID=' /etc/os-release | cut -d '=' -f 2 | tr -d '"')".ToLower()
       if ("${sys_os_dist}") {
         $url = "${url}&sysOsDist=${sys_os_dist}"
       }
     }
 
-    if (-not "${sys_os_ver}") {
-      $sys_os_ver = "$(grep '^VERSION_ID=' /etc/os-release | cut -d '=' -f 2 | tr -d '"')".ToLower()
-      if ("${sys_os_ver}") {
-        $url = "${url}&sysOsVer=${sys_os_ver}"
+    if (-not "${sys_os_ver_id}") {
+      $sys_os_ver_id = "$(grep '^VERSION_ID=' /etc/os-release | cut -d '=' -f 2 | tr -d '"')".ToLower()
+      if ("${sys_os_ver_id}") {
+        $url = "${url}&sysOsVerId=${sys_os_ver_id}"
       }
     }
+
+    if (-not "${sys_os_ver_code}") {
+      $sys_os_ver_code = "$(grep '^VERSION_CODENAME=' /etc/os-release | cut -d '=' -f 2 | tr -d '"')".ToLower()
+      if ("${sys_os_ver_code}") {
+        $url = "${url}&sysOsVerCode=${sys_os_ver_code}"
+      }
+    }
+  }
+}
+
+if (-not "${sys_host}") {
+  if ($IsWindows) {
+    $sys_host = "${env:COMPUTERNAME}".ToLower()
+  } else {
+    $sys_host = "$(hostname)".ToLower()
+  }
+  if ("${sys_host}") {
+    $url = "${url}&sysHost=${sys_host}"
   }
 }
 

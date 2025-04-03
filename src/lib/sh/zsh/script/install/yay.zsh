@@ -14,9 +14,9 @@ function () {
       fi
 
       (
-        dynOp pushd "${output}"
+        dynOp pushd "${output}" '>' /dev/null '2>&1'
         dynOp makepkg --install --syncdeps
-        dynOp popd
+        dynOp popd '>' /dev/null '2>&1'
       )
     fi
   fi

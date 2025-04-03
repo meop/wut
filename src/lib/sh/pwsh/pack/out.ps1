@@ -21,7 +21,7 @@
       $yn = Read-Host '? out packages with scoop (user) [[y], n]'
     }
     if ("${yn}" -eq 'y') {
-      dynOp scoop update '2>&1' '3>&1' '4>&1' '5>&1' '6>&1' '|' Out-Null
+      dynOp scoop update '2>&1' '3>&1' '4>&1' '5>&1' '6>&1' '>' $null
       if ("${PACK_OUT_NAMES}") {
         dynOp scoop status '2>&1' '3>&1' '4>&1' '5>&1' '6>&1' '|' Select-String $PACK_OUT_NAMES | ForEach-Object {$_.Line}
       } else {

@@ -9,14 +9,14 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo apt update '2>&1' '|' '>' /dev/null
+        dynOp sudo apt update '>' /dev/null '2>&1'
         if [[ "${PACK_UP_NAMES}" ]]; then
           dynOp sudo apt install $PACK_UP_NAMES
         else
           dynOp sudo apt full-upgrade
         fi
       else
-        dynOp apt update '2>&1' '|' '>' /dev/null
+        dynOp apt update '>' /dev/null '2>&1'
         if [[ "${PACK_UP_NAMES}" ]]; then
           dynOp apt install $PACK_UP_NAMES
         else
@@ -35,7 +35,7 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo apt-get update '2>&1' '|' '>' /dev/null
+        dynOp sudo apt-get update '>' /dev/null '2>&1'
         if [[ "${PACK_UP_NAMES}" ]]; then
           dynOp sudo apt-get install $PACK_UP_NAMES
         else
@@ -52,7 +52,7 @@ function () {
       read yn?'? up packages with brew (system) [[y], n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      dynOp brew update '2>&1' '|' '>' /dev/null
+      dynOp brew update '>' /dev/null '2>&1'
       if [[ "${PACK_UP_NAMES}" ]]; then
         dynOp brew upgrade --greedy $PACK_UP_NAMES
       else
@@ -69,7 +69,7 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo dnf check-update '2>&1' '|' '>' /dev/null
+        dynOp sudo dnf check-update '>' /dev/null '2>&1'
         if [[ "${PACK_UP_NAMES}" ]]; then
           dynOp sudo dnf upgrade $PACK_UP_NAMES
         else
@@ -86,7 +86,7 @@ function () {
       read yn?'? up packages with yay (system) [[y], n] '
     fi
     if [[ "${yn}" == 'y' ]]; then
-      dynOp yay --sync --refresh '2>&1' '|' '>' /dev/null
+      dynOp yay --sync --refresh '>' /dev/null '2>&1'
       if [[ "${PACK_UP_NAMES}" ]]; then
         dynOp yay --sync --needed $PACK_UP_NAMES
       else
@@ -104,14 +104,14 @@ function () {
     fi
     if [[ "${yn}" == 'y' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo pacman --sync --refresh '2>&1' '|' '>' /dev/null
+        dynOp sudo pacman --sync --refresh '>' /dev/null '2>&1'
         if [[ "${PACK_UP_NAMES}" ]]; then
           dynOp sudo pacman --sync --needed $PACK_UP_NAMES
         else
           dynOp sudo pacman --sync --sysupgrade
         fi
       else
-        dynOp pacman --sync --refresh '2>&1' '|' '>' /dev/null
+        dynOp pacman --sync --refresh '>' /dev/null '2>&1'
         if [[ "${PACK_UP_NAMES}" ]]; then
           dynOp pacman --sync --needed $PACK_UP_NAMES
         else

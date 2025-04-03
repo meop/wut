@@ -6,7 +6,7 @@ function () {
       local node_version=23
 
       function install_nodesource_repo {
-        if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep -v '^#' | grep -v '^$' | grep '^.*nodesource.*com.*$' > /dev/null; then
+        if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep --invert-match '^#' | grep --invert-match '^$' | grep '^.*deb.*nodesource.*com.*$' > /dev/null; then
           local url="https://deb.nodesource.com/setup_${node_version}.x"
           dynOp sudo -E bash -c '"$(' curl --fail-with-body --location --silent --url "${url}" ')"'
         fi

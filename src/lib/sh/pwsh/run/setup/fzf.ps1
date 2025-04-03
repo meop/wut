@@ -8,7 +8,7 @@
         $output = "${fzf}/colors.ps1"
         $outputTmp = "${fzf}/colors.zsh"
         $url = 'https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/fzf/tokyonight_storm.sh'
-        dynOp Invoke-WebRequest -Uri "${url}" '|' New-Item "${outputTmp}" -Force '|' Out-Null
+        dynOp Invoke-WebRequest -Uri "${url}" '|' New-Item "${outputTmp}" -Force '>' $null
         dynOp Set-Content "${output}" '${env:FZF_DEFAULT_OPTS} = "${env:FZF_DEFAULT_OPTS} "+'
 
         foreach ($line in Get-Content "${outputTmp}") {

@@ -15,18 +15,32 @@ fi
 if [[ "${sys_os_plat}" == 'linux' ]]; then
   if [[ -f /etc/os-release ]]; then
     if [[ -z "${sys_os_dist}" ]]; then
-      sys_os_dist="${(L)$(grep --only-matching --perl-regexp '^ID=\K[a-zA-Z0-9._-]+' /etc/os-release)}"
+      sys_os_dist="${(L)$(grep '^ID=' /etc/os-release | cut -d '=' -f 2 | tr -d '"')}"
       if [[ "${sys_os_dist}" ]]; then
         url="${url}&sysOsDist=${sys_os_dist}"
       fi
     fi
 
-    if [[ -z "${sys_os_ver}" ]]; then
-      sys_os_ver="${(L)$(grep '^VERSION_ID=' /etc/os-release | cut -d '=' -f 2 | tr -d '"')}"
-      if [[ "${sys_os_ver}" ]]; then
-        url="${url}&sysOsVer=${sys_os_ver}"
+    if [[ -z "${sys_os_ver_id}" ]]; then
+      sys_os_ver_id="${(L)$(grep '^VERSION_ID=' /etc/os-release | cut -d '=' -f 2 | tr -d '"')}"
+      if [[ "${sys_os_ver_id}" ]]; then
+        url="${url}&sysOsVerId=${sys_os_ver_id}"
       fi
     fi
+
+    if [[ -z "${sys_os_ver_code}" ]]; then
+      sys_os_ver_code="${(L)$(grep '^VERSION_CODENAME=' /etc/os-release | cut -d '=' -f 2 | tr -d '"')}"
+      if [[ "${sys_os_ver_code}" ]]; then
+        url="${url}&sysOsVerCode=${sys_os_ver_code}"
+      fi
+    fi
+  fi
+fi
+
+if [[ -z "${sys_host}" ]]; then
+  sys_host="${(L)$(hostname)}"
+  if [[ "${sys_host}" ]]; then
+    url="${url}&sysHost=${sys_host}"
   fi
 fi
 

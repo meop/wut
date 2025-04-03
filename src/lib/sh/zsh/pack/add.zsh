@@ -15,10 +15,10 @@ function () {
         done
       fi
       if type sudo > /dev/null; then
-        dynOp sudo apt update '2>&1' '|' '>' /dev/null
+        dynOp sudo apt update '>' /dev/null '2>&1'
         dynOp sudo apt install $PACK_ADD_NAMES
       else
-        dynOp apt update '2>&1' '|' '>' /dev/null
+        dynOp apt update '>' /dev/null '2>&1'
         dynOp apt install $PACK_ADD_NAMES
       fi
     fi
@@ -39,7 +39,7 @@ function () {
         done
       fi
       if type sudo > /dev/null; then
-        dynOp sudo apt-get update '2>&1' '|' '>' /dev/null
+        dynOp sudo apt-get update '>' /dev/null '2>&1'
         dynOp sudo apt-get install $PACK_ADD_NAMES
       fi
     fi
@@ -58,7 +58,7 @@ function () {
           dynOp "${presetSplit[@]}"
         done
       fi
-      dynOp brew update '2>&1' '|' '>' /dev/null
+      dynOp brew update '>' /dev/null '2>&1'
       dynOp brew install $PACK_ADD_NAMES
     fi
   fi
@@ -77,7 +77,7 @@ function () {
         done
       fi
       if type sudo > /dev/null; then
-        dynOp sudo dnf check-update '2>&1' '|' '>' /dev/null
+        dynOp sudo dnf check-update '>' /dev/null '2>&1'
         dynOp sudo dnf install $PACK_ADD_NAMES
       fi
     fi
@@ -96,7 +96,7 @@ function () {
           dynOp "${presetSplit[@]}"
         done
       fi
-      dynOp yay --sync --refresh '2>&1' '|' '>' /dev/null
+      dynOp yay --sync --refresh '>' /dev/null '2>&1'
       dynOp yay --sync --needed $PACK_ADD_NAMES
     fi
   fi
@@ -116,10 +116,10 @@ function () {
         done
       fi
       if type sudo > /dev/null; then
-        dynOp sudo pacman --sync --refresh '2>&1' '|' '>' /dev/null
+        dynOp sudo pacman --sync --refresh '>' /dev/null '2>&1'
         dynOp sudo pacman --sync --needed $PACK_ADD_NAMES
       else
-        dynOp pacman --sync --refresh '2>&1' '|' '>' /dev/null
+        dynOp pacman --sync --refresh '>' /dev/null '2>&1'
         dynOp pacman --sync --needed $PACK_ADD_NAMES
       fi
     fi

@@ -2,7 +2,7 @@ function () {
   local yn
 
   if [[ "${sys_cpu_arch}" == 'x86_64' ]]; then
-    if [[ "$(sys_os_plat)" == 'linux' ]]; then
+    if [[ "${sys_os_plat}" == 'linux' ]]; then
       if [[ "${sys_os_dist}" == 'debian' ]]; then
         # dotnet-sdk: <https://learn.microsoft.com/en-us/dotnet/core/install/linux-debian>
         # pwsh (amd64): <https://learn.microsoft.com/en-us/powershell/scripting/install/install-debian>
@@ -11,7 +11,7 @@ function () {
         function install_packages_microsoft_repo {
           if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep --invert-match '^#' | grep --invert-match '^$' | grep '^.*packages.*microsoft.*com.*$' > /dev/null; then
             local output="${HOME}/packages-microsoft-prod.deb"
-            local url="https://packages.microsoft.com/config/${sys_os_dist}/${sys_os_ver}/packages-microsoft-prod.deb"
+            local url="https://packages.microsoft.com/config/${sys_os_dist}/${sys_os_ver_id}/packages-microsoft-prod.deb"
             dynOp curl --fail-with-body --location --silent --url "${url}" --create-dirs --output "${output}"
             dynOp sudo dpkg --install "${output}"
             dynOp rm "${output}"
