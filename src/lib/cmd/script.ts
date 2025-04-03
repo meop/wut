@@ -45,6 +45,6 @@ export class ScriptCmdList extends CmdBase implements Cmd {
       filters.push(...environment[scriptListPartsKey].split(' '))
     }
 
-    return shell.withFsDirList(...parts, ...filters).build()
+    return shell.withFsDirList(parts, filters).build()
   }
 }

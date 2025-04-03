@@ -6,9 +6,9 @@ export interface Sh {
   with(...lines: Array<string>): Sh
   withEval(...lines: Array<string>): Sh
 
-  withFsDirList(...parts: Array<string>): Sh
-  withFsDirLoad(...parts: Array<string>): Sh
-  withFsFileLoad(...parts: Array<string>): Sh
+  withFsDirList(parts: Array<string>, filters?: Array<string>): Sh
+  withFsDirLoad(parts: Array<string>, filters?: Array<string>): Sh
+  withFsFileLoad(parts: Array<string>): Sh
 
   withPrint(...lines: Array<string>): Sh
   withPrintErr(...lines: Array<string>): Sh
@@ -62,18 +62,19 @@ export class ShBase {
     throw new Error('not implemented')
   }
 
-  withFsDirList(...parts: Array<string>): Sh {
+  withFsDirList(parts: Array<string>, filters?: Array<string>): Sh {
     this.lineBuilders.push(async () => {
-      const filePaths = await getFilePaths(this.dirPath, {
+      const dirPath = buildFilePath(...[this.dirPath, ...parts])
+      const filePaths = await getFilePaths(dirPath, {
         extension: this.shExt,
-        filters: parts,
+        filters: filters,
       })
 
       return filePaths
         .map(f => {
           const fileParts = this.toVal(
             f
-              .replaceAll(this.dirPath, '')
+              .replaceAll(dirPath, '')
               .replaceAll('/', ' ')
               .replaceAll(`.${this.shExt}`, '')
               .trim(),
@@ -85,7 +86,7 @@ export class ShBase {
     return this
   }
 
-  withFsDirLoad(...parts: Array<string>): Sh {
+  withFsDirLoad(parts: Array<string>, filters?: Array<string>): Sh {
     this.lineBuilders.push(async () => {
       const filePaths = await getFilePaths(this.dirPath, {
         extension: this.shExt,
@@ -97,9 +98,9 @@ export class ShBase {
     return this
   }
 
-  withFsFileLoad(...parts: Array<string>): Sh {
+  withFsFileLoad(parts: Array<string>): Sh {
     this.lineBuilders.push(async () => {
-      const filePath = `${buildFilePath(this.dirPath, ...parts)}.${this.shExt}`
+      const filePath = `${buildFilePath(...[this.dirPath, ...parts])}.${this.shExt}`
 
       return await getFileText(filePath)
     })

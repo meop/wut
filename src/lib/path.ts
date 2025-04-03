@@ -16,33 +16,42 @@ export async function getFilePaths(
     filters?: Array<string>
   },
 ) {
-  const parts: Array<string> = []
-  if (options?.filters?.length) {
-    for (const f of options.filters) {
-      parts.push(
-        `${f.startsWith('*') ? '' : '*'}${f}${f.endsWith('*') ? '' : '*'}`,
-      )
-    }
-  } else {
-    parts.push('*')
+  const globs: Array<Glob> = []
+
+  const addGlob = (pattern: string) => {
+    console.log(pattern)
+    globs.push(new Glob(pattern))
   }
 
-  const pattern = parts.join('/')
+  if (options?.filters?.length) {
+    const filterPattern = options.filters.map(f => `${f}*`).join('/')
 
-  const glob = new Glob(pattern)
+    if (options?.extension) {
+      addGlob(`${filterPattern}/*.${options.extension}`)
+      addGlob(`${filterPattern}.${options.extension}`)
+    } else {
+      addGlob(`${filterPattern}/**`)
+      addGlob(filterPattern)
+    }
+  } else {
+    if (options?.extension) {
+      addGlob(`**/*.${options.extension}`)
+      addGlob(`*.${options.extension}`)
+    } else {
+      addGlob('**')
+      addGlob('*')
+    }
+  }
 
   const filePaths: Array<string> = []
-  for await (const file of glob.scan({
-    absolute: true,
-    cwd: dirPath,
-    onlyFiles: true,
-  })) {
-    if (options?.extension) {
-      if (!file.endsWith(`.${options.extension}`)) {
-        continue
-      }
+  for (const glob of globs) {
+    for await (const file of glob.scan({
+      absolute: true,
+      cwd: dirPath,
+      onlyFiles: true,
+    })) {
+      filePaths.push(file)
     }
-    filePaths.push(file)
   }
 
   return filePaths.sort()

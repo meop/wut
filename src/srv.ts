@@ -58,6 +58,15 @@ class SrvCmd extends CmdBase implements Cmd {
   }
 }
 
+function getErr(err: Error) {
+  return {
+    error: {
+      message: err.message,
+      stack: err.stack,
+    },
+  }
+}
+
 async function runSrv(req: Request) {
   try {
     const cmd = new SrvCmd()
@@ -67,7 +76,9 @@ async function runSrv(req: Request) {
     const sh = parts[0]
 
     if (sh !== 'zsh' && sh !== 'pwsh') {
-      return new Response(`echo "unsupported shell: ${sh}"`, { status: 404 })
+      return new Response(`echo "client error; unsupported shell: ${sh}"`, {
+        status: 400,
+      })
     }
 
     const context = getCtx(usp)
@@ -76,12 +87,12 @@ async function runSrv(req: Request) {
     try {
       shell = shell
         .withVarSet('url'.toUpperCase(), url.toString())
-        .withFsFileLoad('ver')
-        .withFsFileLoad('env')
-        .withFsFileLoad('lib', 'print')
+        .withFsFileLoad(['ver'])
+        .withFsFileLoad(['env'])
+        .withFsFileLoad(['lib', 'print'])
 
       if (!context.sys?.cpu?.arch) {
-        return new Response(await shell.withFsFileLoad('cli').build())
+        return new Response(await shell.withFsFileLoad(['cli']).build())
       }
 
       return new Response(
@@ -89,36 +100,30 @@ async function runSrv(req: Request) {
           url,
           usp,
           parts.slice(1),
-          shell.withFsFileLoad('lib', 'dyn'),
+          shell.withFsFileLoad(['lib', 'dyn']),
           context,
         ),
       )
     } catch (err) {
-      const errObj: {
-        error: {
-          message?: string
-          stack?: string
-        }
-      } = { error: {} }
+      let errStr = String(err)
       if (err instanceof Error) {
-        errObj.error.message = err.message
-        if (err.stack) {
-          errObj.error.stack = err.stack
-        }
-      } else {
-        errObj.error.message = String(err)
+        errStr = toCon(getErr(err), Fmt.json).trimEnd()
       }
-
-      const body = await shell
-        .withPrintErr(toCon(errObj, Fmt.json).trimEnd())
-        .build()
+      const body = await shell.withPrintErr(errStr).build()
       console.error(body)
 
       return new Response(body, { status: 200 })
     }
   } catch (err) {
-    const body = `echo "unexpected error: ${err.message.replaceAll('\\', '')}"`
-    return new Response(body, { status: 400 })
+    let errStr = String(err)
+    if (err instanceof Error) {
+      errStr = JSON.stringify(getErr(err), null, 2)
+        .replaceAll('\\', '')
+        .trimEnd()
+    }
+    console.error(errStr)
+    const body = `echo "server error; check logs"`
+    return new Response(body, { status: 500 })
   }
 }
 

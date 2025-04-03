@@ -67,7 +67,7 @@ async function workPreset(
               _shell = _shell.withVarArrSet(packPresetsKey, value[op])
             }
             _shell = _shell.withVarSet(packNamesKey, value.names.join(' '))
-            _shell = _shell.withFsFileLoad(packKey, op)
+            _shell = _shell.withFsFileLoad([packKey, op])
             if (value[op]) {
               _shell = _shell.withVarUnset(packPresetsKey)
             }
@@ -94,7 +94,7 @@ async function workPreset(
 
   if (remainingNames.length) {
     _shell = _shell.withVarSet(packNamesKey, remainingNames.join(' '))
-    _shell = _shell.withFsFileLoad(packKey, op)
+    _shell = _shell.withFsFileLoad([packKey, op])
   }
 
   return _shell.build()
@@ -151,7 +151,7 @@ export class PackCmdList extends CmdBase implements Cmd {
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return shell.withFsFileLoad('pack', 'list').build()
+    return shell.withFsFileLoad(['pack', 'list']).build()
   }
 }
 
@@ -164,7 +164,7 @@ export class PackCmdOut extends CmdBase implements Cmd {
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return shell.withFsFileLoad('pack', 'out').build()
+    return shell.withFsFileLoad(['pack', 'out']).build()
   }
 }
 
@@ -176,7 +176,7 @@ export class PackCmdTidy extends CmdBase implements Cmd {
     this.aliases = ['t', 'ti', 'cl', 'clean', 'pr', 'prune', 'pu', 'purge']
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return shell.withFsFileLoad('pack', 'tidy').build()
+    return shell.withFsFileLoad(['pack', 'tidy']).build()
   }
 }
 
@@ -189,6 +189,6 @@ export class PackCmdUp extends CmdBase implements Cmd {
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return shell.withFsFileLoad('pack', 'up').build()
+    return shell.withFsFileLoad(['pack', 'up']).build()
   }
 }
