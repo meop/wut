@@ -25,14 +25,18 @@ export class ScriptCmdRun extends CmdBase implements Cmd {
     this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    const parts = ['script']
     const filters: Array<string> = []
     const scriptRunPartsKey = 'script_run_parts'.toUpperCase()
     if (scriptRunPartsKey in environment) {
       filters.push(...environment[scriptRunPartsKey].split(' '))
     }
 
-    return shell.withFsDirLoad(parts, filters).build()
+    return shell
+      .withFsDirLoad(
+        async () => ['script'],
+        async () => filters,
+      )
+      .build()
   }
 }
 
@@ -45,13 +49,17 @@ export class ScriptCmdList extends CmdBase implements Cmd {
     this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    const parts = ['script']
     const filters: Array<string> = []
     const scriptListPartsKey = 'script_list_parts'.toUpperCase()
     if (scriptListPartsKey in environment) {
       filters.push(...environment[scriptListPartsKey].split(' '))
     }
 
-    return shell.withFsDirList(parts, filters).build()
+    return shell
+      .withFsDirList(
+        async () => ['script'],
+        async () => filters,
+      )
+      .build()
   }
 }

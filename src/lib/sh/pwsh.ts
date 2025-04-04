@@ -9,24 +9,34 @@ export class Pwsh extends ShBase implements Sh {
     return `'${value.replaceAll("'", "''")}'`
   }
 
-  withEval(...lines: Array<string>): Sh {
-    return this.with(...lines.map(l => `Invoke-Expression "${l}"`))
+  withEval(lines: () => Promise<Array<string>>): Sh {
+    return this.with(async () =>
+      (await lines()).map(l => `Invoke-Expression "${l}"`),
+    )
   }
 
   withTrace(): Sh {
-    return this.with('Set-PSDebug -Trace 1')
+    return this.with(async () => ['Set-PSDebug -Trace 1'])
   }
 
-  withVarArrSet(name: string, values: Array<string>): Sh {
-    const valuesExpanded = `@( ${values.map(v => this.toVal(v)).join(', ')} )`
-    return this.with(`$${name} = ${valuesExpanded}`)
+  withVarArrSet(
+    name: () => Promise<string>,
+    values: () => Promise<Array<string>>,
+  ): Sh {
+    return this.with(async () => [
+      `$${await name()} = ${`@( ${(await values()).map(v => this.toVal(v)).join(', ')} )`}`,
+    ])
   }
 
-  withVarSet(name: string, value: string): Sh {
-    return this.with(`$${name} = ${this.toVal(value)}`)
+  withVarSet(name: () => Promise<string>, value: () => Promise<string>): Sh {
+    return this.with(async () => [
+      `$${await name()} = ${this.toVal(await value())}`,
+    ])
   }
 
-  withVarUnset(name: string): Sh {
-    return this.with(`Remove-Variable ${name} -ErrorAction SilentlyContinue`)
+  withVarUnset(name: () => Promise<string>): Sh {
+    return this.with(async () => [
+      `Remove-Variable ${await name()} -ErrorAction SilentlyContinue`,
+    ])
   }
 }

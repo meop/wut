@@ -1,4 +1,9 @@
+import { buildCfgFilePath } from '../cfg'
 import { type Cmd, CmdBase } from '../cmd'
+import type { Ctx } from '../ctx'
+import type { Env } from '../env'
+import { getFilePaths } from '../path'
+import type { Sh } from '../sh'
 
 export class VirtCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -17,6 +22,13 @@ export class VirtCmd extends CmdBase implements Cmd {
   }
 }
 
+async function getFsFiles(dirPath: string, filters?: Array<string>) {
+  return await getFilePaths(dirPath, {
+    extension: 'yaml',
+    filters,
+  })
+}
+
 export class VirtCmdDown extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
@@ -24,6 +36,9 @@ export class VirtCmdDown extends CmdBase implements Cmd {
     this.desc = 'tear down from local'
     this.aliases = ['d', 'do', 'down']
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
+  }
+  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
+    return shell.withFsFileLoad(async () => ['virt', 'down']).build()
   }
 }
 
@@ -34,6 +49,16 @@ export class VirtCmdList extends CmdBase implements Cmd {
     this.desc = 'list from local'
     this.aliases = ['l', 'li', 'ls', 'qu', 'query']
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
+  }
+  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
+    const dirPath = buildCfgFilePath('virt')
+    const filePaths = await getFsFiles(dirPath, ['*', context.sys?.host ?? ''])
+    return shell
+      .withFsDirList(
+        async () => ['virt'],
+        async () => ['*', context.sys?.host ?? ''],
+      )
+      .build()
   }
 }
 

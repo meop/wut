@@ -8,7 +8,7 @@
 
         $output = "${nvim}/site/autoload/plug.vim"
         $url = 'https://raw.githubusercontent.com/junegunn/vim-plug/HEAD/plug.vim'
-        dynOp Invoke-WebRequest -Uri "${url}" '|' New-Item "${output}" -Force '>' $null
+        dynOp Invoke-WebRequest -Uri "${url}" '|' New-Item "${output}" -Force '>' '$null'
       }
     }
   }

@@ -23,7 +23,7 @@ alias wut='wut_wrap'
 
 function wut_wrap {
   local url="$(echo "${WUT_URL}" | sed 's:/*$::')"
-  local url="${url}/zsh"
+  local url="${url}/sh/zsh"
   local url="$(echo "${url}" "$@" | sed 's/ /\//g' | sed 's:/*$::')"
 
   eval "( $(curl --fail-with-body --location --silent --url "${url}") )"
@@ -43,7 +43,7 @@ Set-Alias wut 'wut_wrap'
 
 function wut_wrap {
   $url = "${env:WUT_URL}".TrimEnd('/')
-  $url = "${url}/pwsh"
+  $url = "${url}/sh/pwsh"
   $url = "${url}/$($args -Join '/')".TrimEnd('/')
 
   Invoke-Expression (Invoke-WebRequest -Uri "${url}")

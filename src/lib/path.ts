@@ -24,6 +24,8 @@ export async function getFilePaths(
 
   if (options?.filters?.length) {
     const filterPattern = options.filters.map(f => `${f}*`).join('/')
+    console.log(dirPath)
+    console.log(filterPattern)
 
     if (options?.extension) {
       addGlob(`${filterPattern}/*.${options.extension}`)

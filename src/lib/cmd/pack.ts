@@ -43,7 +43,7 @@ async function workPreset(
   const manager = environment[packManagerKey]
 
   if (environment[packPresetsKey]) {
-    _shell = _shell.withVarUnset(packPresetsKey)
+    _shell = _shell.withVarUnset(async () => packPresetsKey)
 
     for (const name of requestedNames) {
       const filePath = `${buildCfgFilePath(packKey, name)}.yaml`
@@ -61,29 +61,38 @@ async function workPreset(
             }
 
             if (!manager) {
-              _shell = _shell.withVarSet(packManagerKey, key)
+              _shell = _shell.withVarSet(
+                async () => packManagerKey,
+                async () => key,
+              )
             }
             if (value[op]) {
-              _shell = _shell.withVarArrSet(packPresetsKey, value[op])
+              _shell = _shell.withVarArrSet(
+                async () => packPresetsKey,
+                async () => value[op],
+              )
             }
-            _shell = _shell.withVarSet(packNamesKey, value.names.join(' '))
-            _shell = _shell.withFsFileLoad([packKey, op])
+            _shell = _shell.withVarSet(
+              async () => packNamesKey,
+              async () => value.names.join(' '),
+            )
+            _shell = _shell.withFsFileLoad(async () => [packKey, op])
             if (value[op]) {
-              _shell = _shell.withVarUnset(packPresetsKey)
+              _shell = _shell.withVarUnset(async () => packPresetsKey)
             }
             if (!manager) {
-              _shell = _shell.withVarUnset(packManagerKey)
+              _shell = _shell.withVarUnset(async () => packManagerKey)
             }
           }
         } else {
-          _shell = _shell.withPrint(
+          _shell = _shell.withPrint(async () => [
             toCon(
               {
                 [name]: contents,
               },
               toFmt(environment['format'.toUpperCase()]),
             ),
-          )
+          ])
         }
         foundNames.push(name)
       }
@@ -93,8 +102,11 @@ async function workPreset(
   const remainingNames = requestedNames.filter(n => !foundNames.includes(n))
 
   if (remainingNames.length) {
-    _shell = _shell.withVarSet(packNamesKey, remainingNames.join(' '))
-    _shell = _shell.withFsFileLoad([packKey, op])
+    _shell = _shell.withVarSet(
+      async () => packNamesKey,
+      async () => remainingNames.join(' '),
+    )
+    _shell = _shell.withFsFileLoad(async () => [packKey, op])
   }
 
   return _shell.build()
@@ -160,7 +172,7 @@ export class PackCmdList extends CmdBase implements Cmd {
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return shell.withFsFileLoad(['pack', 'list']).build()
+    return shell.withFsFileLoad(async () => ['pack', 'list']).build()
   }
 }
 
@@ -173,7 +185,7 @@ export class PackCmdOut extends CmdBase implements Cmd {
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return shell.withFsFileLoad(['pack', 'out']).build()
+    return shell.withFsFileLoad(async () => ['pack', 'out']).build()
   }
 }
 
@@ -185,7 +197,7 @@ export class PackCmdTidy extends CmdBase implements Cmd {
     this.aliases = ['t', 'ti', 'cl', 'clean', 'pr', 'prune', 'pu', 'purge']
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return shell.withFsFileLoad(['pack', 'tidy']).build()
+    return shell.withFsFileLoad(async () => ['pack', 'tidy']).build()
   }
 }
 
@@ -198,6 +210,6 @@ export class PackCmdUp extends CmdBase implements Cmd {
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return shell.withFsFileLoad(['pack', 'up']).build()
+    return shell.withFsFileLoad(async () => ['pack', 'up']).build()
   }
 }

@@ -16,8 +16,6 @@ export interface Cmd {
   scopes: Array<string>
 
   process(
-    url: URL,
-    usp: URLSearchParams,
     parts: Array<string>,
     shell: Sh,
     context: Ctx,
@@ -86,9 +84,9 @@ export class CmdBase {
 
   help(context: Ctx, environment: Env, shell: Sh): Promise<string> {
     return shell
-      .withPrintInfo(
+      .withPrintInfo(async () => [
         toCon(this.getHelp(), toFmt(environment['format'.toUpperCase()])),
-      )
+      ])
       .build()
   }
 
@@ -97,8 +95,6 @@ export class CmdBase {
   }
 
   process(
-    url: URL,
-    usp: URLSearchParams,
     parts: Array<string>,
     shell: Sh,
     context: Ctx,
@@ -122,22 +118,24 @@ export class CmdBase {
 
     const processShEnv = (func: () => Promise<string>) => {
       for (const [key, value] of Object.entries(_environment)) {
-        _shell = _shell.withVarSet(key, value)
+        _shell = _shell.withVarSet(
+          async () => key,
+          async () => value,
+        )
       }
 
       if (_environment['debug'.toUpperCase()]) {
-        _shell = _shell.withPrint(
+        _shell = _shell.withPrint(async () => [
           toCon(
             {
               debug: {
-                url: url.toString(),
-                environment: _environment,
                 context: _context,
+                environment: _environment,
               },
             },
             toFmt(_environment['format'.toUpperCase()]),
           ),
-        )
+        ])
       }
 
       if (_environment['trace'.toUpperCase()]) {
@@ -185,8 +183,6 @@ export class CmdBase {
         )
         if (_command) {
           return _command.process(
-            url,
-            usp,
             parts.slice(partsIndex + 1),
             _shell,
             _context,

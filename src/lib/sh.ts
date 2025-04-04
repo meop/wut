@@ -3,29 +3,44 @@ import { buildFilePath, getFilePaths, getFileText } from './path'
 export interface Sh {
   build(): Promise<string>
 
-  with(...lines: Array<string>): Sh
-  withEval(...lines: Array<string>): Sh
+  with(lines: () => Promise<Array<string>>): Sh
 
-  withFsDirList(parts: Array<string>, filters?: Array<string>): Sh
-  withFsDirLoad(parts: Array<string>, filters?: Array<string>): Sh
-  withFsFileLoad(parts: Array<string>): Sh
+  withEval(lines: () => Promise<Array<string>>): Sh
 
-  withPrint(...lines: Array<string>): Sh
-  withPrintErr(...lines: Array<string>): Sh
-  withPrintInfo(...lines: Array<string>): Sh
-  withPrintOp(...lines: Array<string>): Sh
-  withPrintSucc(...lines: Array<string>): Sh
-  withPrintWarn(...lines: Array<string>): Sh
+  withFsDirList(
+    parts: () => Promise<Array<string>>,
+    filters?: () => Promise<Array<string>>,
+  ): Sh
+  withFsDirLoad(
+    parts: () => Promise<Array<string>>,
+    filters?: () => Promise<Array<string>>,
+  ): Sh
+  withFsFileLoad(parts: () => Promise<Array<string>>): Sh
 
-  withVarArrSet(name: string, values: Array<string>): Sh
-  withVarSet(name: string, value: string): Sh
-  withVarUnset(name: string): Sh
+  withPathsPrintInfo(
+    dirPath: () => Promise<string>,
+    filePaths: () => Promise<Array<string>>,
+  ): Sh
+
+  withPrint(lines: () => Promise<Array<string>>): Sh
+  withPrintErr(lines: () => Promise<Array<string>>): Sh
+  withPrintInfo(lines: () => Promise<Array<string>>): Sh
+  withPrintOp(lines: () => Promise<Array<string>>): Sh
+  withPrintSucc(lines: () => Promise<Array<string>>): Sh
+  withPrintWarn(lines: () => Promise<Array<string>>): Sh
 
   withTrace(): Sh
+
+  withVarArrSet(
+    name: () => Promise<string>,
+    values: () => Promise<Array<string>>,
+  ): Sh
+  withVarSet(name: () => Promise<string>, value: () => Promise<string>): Sh
+  withVarUnset(name: () => Promise<string>): Sh
 }
 
 export class ShBase {
-  lineBuilders: (() => Promise<string>)[] = []
+  lineBuilders: Array<() => Promise<string>> = []
   shName: string
   shExt: string
 
@@ -51,101 +66,128 @@ export class ShBase {
     throw new Error('not implemented')
   }
 
-  with(...lines: Array<string>): Sh {
-    for (const line of lines) {
-      this.lineBuilders.push(async () => line)
-    }
+  with(lines: () => Promise<Array<string>>): Sh {
+    this.lineBuilders.push(async () => (await lines()).join('\n'))
     return this
   }
 
-  withEval(...lines: Array<string>): Sh {
+  withEval(lines: () => Promise<Array<string>>): Sh {
     throw new Error('not implemented')
   }
 
-  async getFsFiles(parts: Array<string>, filters?: Array<string>) {
-    const dirPath = buildFilePath(...[this.dirPath, ...parts])
+  localDirPath(parts: Array<string>) {
+    return buildFilePath(...[this.dirPath, ...parts])
+  }
+
+  async getFsFiles(dirPath: string, filters?: Array<string>) {
     return await getFilePaths(dirPath, {
       extension: this.shExt,
-      filters: filters,
+      filters,
     })
   }
 
-  withFsDirList(parts: Array<string>, filters?: Array<string>): Sh {
-    this.lineBuilders.push(async () => {
-      const filePaths = await this.getFsFiles(parts, filters)
-
-      const dirPath = buildFilePath(...[this.dirPath, ...parts])
-      return filePaths
-        .map(f => {
-          const fileParts = this.toVal(
-            f
-              .replaceAll(dirPath, '')
-              .replaceAll('/', ' ')
-              .replaceAll(`.${this.shExt}`, '')
-              .trim(),
-          )
-          return `printInfo ${fileParts}`
-        })
-        .join('\n')
-    })
-    return this
+  withFsDirList(
+    parts: () => Promise<Array<string>>,
+    filters?: () => Promise<Array<string>>,
+  ): Sh {
+    const dirPath = async () => this.localDirPath(await parts())
+    return this.withPathsPrintInfo(dirPath, async () =>
+      this.getFsFiles(await dirPath(), filters ? await filters() : undefined),
+    )
   }
 
-  withFsDirLoad(parts: Array<string>, filters?: Array<string>): Sh {
+  withFsDirLoad(
+    parts: () => Promise<Array<string>>,
+    filters?: () => Promise<Array<string>>,
+  ): Sh {
+    const dirPath = async () => this.localDirPath(await parts())
     this.lineBuilders.push(async () => {
-      const filePaths = await this.getFsFiles(parts, filters)
+      const filePaths = await this.getFsFiles(
+        await dirPath(),
+        filters ? await filters() : undefined,
+      )
 
       return (await Promise.all(filePaths.map(f => getFileText(f)))).join('\n')
     })
     return this
   }
 
-  withFsFileLoad(parts: Array<string>): Sh {
-    this.lineBuilders.push(async () => {
-      const filePath = `${buildFilePath(...[this.dirPath, ...parts])}.${this.shExt}`
-
-      return await getFileText(filePath)
-    })
+  withFsFileLoad(parts: () => Promise<Array<string>>): Sh {
+    const dirPath = async () => this.localDirPath(await parts())
+    this.lineBuilders.push(async () =>
+      getFileText(`${await dirPath()}.${this.shExt}`),
+    )
     return this
   }
 
-  withPrint(...lines: Array<string>): Sh {
-    return this.with(...lines.map(l => `print ${this.toVal(l)}`))
+  withPathsPrintInfo(
+    dirPath: () => Promise<string>,
+    filePaths: () => Promise<Array<string>>,
+  ): Sh {
+    return this.withPrintInfo(async () => {
+      const dir = await dirPath()
+      const files = await filePaths()
+      return files.map(f =>
+        f
+          .replaceAll(dir, '')
+          .replaceAll('/', ' ')
+          .replaceAll(`.${this.shExt}`, ''),
+      )
+    })
   }
 
-  withPrintErr(...lines: Array<string>): Sh {
-    return this.with(...lines.map(l => `printErr ${this.toVal(l)}`))
+  withPrint(lines: () => Promise<Array<string>>): Sh {
+    return this.with(async () =>
+      (await lines()).map(l => `print ${this.toVal(l)}`),
+    )
   }
 
-  withPrintInfo(...lines: Array<string>): Sh {
-    return this.with(...lines.map(l => `printInfo ${this.toVal(l)}`))
+  withPrintErr(lines: () => Promise<Array<string>>): Sh {
+    return this.with(async () =>
+      (await lines()).map(l => `printErr ${this.toVal(l)}`),
+    )
   }
 
-  withPrintOp(...lines: Array<string>): Sh {
-    return this.with(...lines.map(l => `printOp ${this.toVal(l)}`))
+  withPrintInfo(lines: () => Promise<Array<string>>): Sh {
+    return this.with(async () =>
+      (await lines()).map(l => `printInfo ${this.toVal(l)}`),
+    )
   }
 
-  withPrintSucc(...lines: Array<string>): Sh {
-    return this.with(...lines.map(l => `printSucc ${this.toVal(l)}`))
+  withPrintOp(lines: () => Promise<Array<string>>): Sh {
+    return this.with(async () =>
+      (await lines()).map(l => `printOp ${this.toVal(l)}`),
+    )
   }
 
-  withPrintWarn(...lines: Array<string>): Sh {
-    return this.with(...lines.map(l => `printWarn ${this.toVal(l)}`))
+  withPrintSucc(lines: () => Promise<Array<string>>): Sh {
+    return this.with(async () =>
+      (await lines()).map(l => `printSucc ${this.toVal(l)}`),
+    )
+  }
+
+  withPrintWarn(lines: () => Promise<Array<string>>): Sh {
+    return this.with(async () =>
+      (await lines()).map(l => `printWarn ${this.toVal(l)}`),
+    )
   }
 
   withTrace(): Sh {
     throw new Error('not implemented')
   }
 
-  withVarArrSet(name: string, value: Array<string>): Sh {
+  withVarArrSet(
+    name: () => Promise<string>,
+    values: () => Promise<Array<string>>,
+  ): Sh {
     throw new Error('not implemented')
   }
 
-  withVarSet(name: string, value: string): Sh {
+  withVarSet(name: () => Promise<string>, value: () => Promise<string>): Sh {
     throw new Error('not implemented')
   }
 
-  withVarUnset(name: string): Sh {
+  withVarUnset(name: () => Promise<string>): Sh {
     throw new Error('not implemented')
   }
 }

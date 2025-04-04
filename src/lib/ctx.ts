@@ -1,6 +1,11 @@
 import { getCpuArch, getOsPlat } from './os'
 
 export type Ctx = {
+  req: {
+    orig: string
+    path: string
+    srch: string
+  }
   sys?: {
     cpu?: {
       arch?: string
@@ -22,7 +27,10 @@ export function getSp(usp: URLSearchParams, key: string) {
   return usp.has(key) ? (usp.get(key) ?? '') : undefined
 }
 
-export function getCtx(usp: URLSearchParams): Ctx {
+export function getCtx(req: Request): Ctx {
+  const url = new URL(req.url.endsWith('/') ? req.url.slice(0, -1) : req.url)
+  const usp = new URLSearchParams(url.search)
+
   const spSysCpuArch = getSp(usp, 'sysCpuArch')
   const spSysOsPlat = getSp(usp, 'sysOsPlat')
   const spSysOsDist = getSp(usp, 'sysOsDist')
@@ -40,6 +48,11 @@ export function getCtx(usp: URLSearchParams): Ctx {
   const sysUser = spSysUser
 
   return {
+    req: {
+      orig: url.origin,
+      path: url.pathname,
+      srch: url.search,
+    },
     sys: {
       cpu: {
         arch: sysCpuArch,

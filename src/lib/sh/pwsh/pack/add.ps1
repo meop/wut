@@ -29,7 +29,7 @@
           dynOp @presetSplit
         }
       }
-      dynOp scoop update '2>&1' '3>&1' '4>&1' '5>&1' '6>&1' '>' $null
+      dynOp scoop update '>' '$null' '2>&1' '3>&1' '4>&1' '5>&1' '6>&1'
       dynOp scoop install $PACK_ADD_NAMES
     }
   }
