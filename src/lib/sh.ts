@@ -130,7 +130,7 @@ export class ShBase {
           lines.push(await getFileContent(filePath))
         }
       }
-      return lines
+      return lines.map(l => l.trimEnd())
     })
   }
 
@@ -159,7 +159,7 @@ export class ShBase {
       if (options?.content) {
         lines.push(await getFileContent(filePath))
       }
-      return lines
+      return lines.map(l => l.trimEnd())
     })
   }
 

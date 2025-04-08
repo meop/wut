@@ -55,7 +55,6 @@ export async function getCfgFsDirPrint(
   const filePaths = await getFilePaths(dirPath, {
     filters: options?.filters ? await options.filters() : undefined,
   })
-  console.log(filePaths)
   const lines: Array<string> = []
   for (const filePath of filePaths) {
     if (options?.name) {
@@ -65,7 +64,7 @@ export async function getCfgFsDirPrint(
       lines.push(toCon(await fromFilePath(filePath), options?.format))
     }
   }
-  return lines
+  return lines.map(l => l.trimEnd())
 }
 
 export async function getCfgFsFileLoad(
@@ -93,5 +92,5 @@ export async function getCfgFsFilePrint(
   if (options?.content) {
     lines.push(toCon(await fromFilePath(filePath), options?.format))
   }
-  return lines
+  return lines.map(l => l.trimEnd())
 }

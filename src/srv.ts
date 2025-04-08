@@ -198,7 +198,7 @@ async function runSrv(req: Request) {
     } catch (err) {
       let errStr = String(err)
       if (err instanceof Error) {
-        errStr = toCon(getErr(err), Fmt.json).trimEnd()
+        errStr = toCon(getErr(err), Fmt.json)
       }
       console.error(errStr)
       const body = await shell.withPrintErr(async () => [errStr]).build()
