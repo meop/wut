@@ -1,6 +1,6 @@
 import pkg from '../package.json' with { type: 'json' }
 
-import { buildCfgFilePath, loadCfgFileContents } from './lib/cfg'
+import { getCfgFsFileLoad } from './lib/cfg'
 import { type Cmd, CmdBase } from './lib/cmd'
 import { PackCmd } from './lib/cmd/pack'
 import { ScriptCmd } from './lib/cmd/script'
@@ -32,14 +32,12 @@ class SrvCmd extends CmdBase implements Cmd {
     super([])
     this.name = pkg.name.toLowerCase()
     this.desc = pkg.description.toLowerCase()
-    const fmtKeys = Object.keys(Fmt)
-      .map((k, i) => {
-        if (i === 0) {
-          return k
-        }
-        return `[${k}]`
-      })
-      .reverse()
+    const fmtKeys = Object.keys(Fmt).map((k, i) => {
+      if (i === 0) {
+        return k
+      }
+      return `[${k}]`
+    })
 
     this.options = [
       {
@@ -83,9 +81,15 @@ async function runSrv(req: Request) {
     const context = getCtx(req)
     const cmd = new SrvCmd()
 
-    const parts = expandParts(
-      context.req.path.split('/').filter(p => p.length > 0),
-    )
+    let path = context.req.path
+    let ext: string | undefined
+    const extIndex = path.lastIndexOf('.')
+    if (extIndex !== -1) {
+      path = path.substring(0, extIndex)
+      ext = path.substring(extIndex + 1)
+    }
+
+    const parts = expandParts(path.split('/').filter(p => p.length > 0))
 
     if (!parts.length) {
       return new Response(`echo "client error; missing op"`, {
@@ -95,8 +99,8 @@ async function runSrv(req: Request) {
 
     const op = parts[0]
     if (op === Op.cfg) {
-      const config = buildCfgFilePath(...parts.slice(1))
-      if (!(await Bun.file(config).exists())) {
+      const config = await getCfgFsFileLoad(async () => parts.slice(1), ext)
+      if (!config.length) {
         return new Response(
           `echo "client error; config not found: ${config}"`,
           {
@@ -104,7 +108,7 @@ async function runSrv(req: Request) {
           },
         )
       }
-      return new Response(await Bun.file(config).text())
+      return new Response(config)
     }
 
     if (!(parts.length > 1)) {
@@ -187,7 +191,7 @@ async function runSrv(req: Request) {
       return new Response(
         await cmd.process(
           parts.slice(2),
-          shell.withFsFileLoad(async () => ['dyn']),
+          shell.withFsFileLoad(async () => ['run']),
           context,
         ),
       )

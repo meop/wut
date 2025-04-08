@@ -1,4 +1,4 @@
-import { buildFilePath, getFilePaths, getFileText } from './path'
+import { buildFilePath, getFilePaths, getFileContent, toRelParts } from './path'
 
 export interface Sh {
   build(): Promise<string>
@@ -7,19 +7,27 @@ export interface Sh {
 
   withEval(lines: () => Promise<Array<string>>): Sh
 
-  withFsDirList(
-    parts: () => Promise<Array<string>>,
-    filters?: () => Promise<Array<string>>,
-  ): Sh
   withFsDirLoad(
     parts: () => Promise<Array<string>>,
-    filters?: () => Promise<Array<string>>,
+    options?: {
+      filters?: () => Promise<Array<string>>
+    },
+  ): Sh
+  withFsDirPrint(
+    parts: () => Promise<Array<string>>,
+    options?: {
+      content?: boolean
+      filters?: () => Promise<Array<string>>
+      name?: boolean
+    },
   ): Sh
   withFsFileLoad(parts: () => Promise<Array<string>>): Sh
-
-  withPathsPrintInfo(
-    dirPath: () => Promise<string>,
-    filePaths: () => Promise<Array<string>>,
+  withFsFilePrint(
+    parts: () => Promise<Array<string>>,
+    options?: {
+      content?: boolean
+      name?: boolean
+    },
   ): Sh
 
   withPrint(lines: () => Promise<Array<string>>): Sh
@@ -79,60 +87,79 @@ export class ShBase {
     return buildFilePath(...[this.dirPath, ...parts])
   }
 
-  async getFsFiles(dirPath: string, filters?: Array<string>) {
-    return await getFilePaths(dirPath, {
-      extension: this.shExt,
-      filters,
-    })
-  }
-
-  withFsDirList(
-    parts: () => Promise<Array<string>>,
-    filters?: () => Promise<Array<string>>,
-  ): Sh {
-    const dirPath = async () => this.localDirPath(await parts())
-    return this.withPathsPrintInfo(dirPath, async () =>
-      this.getFsFiles(await dirPath(), filters ? await filters() : undefined),
-    )
-  }
-
   withFsDirLoad(
     parts: () => Promise<Array<string>>,
-    filters?: () => Promise<Array<string>>,
+    options?: {
+      filters?: () => Promise<Array<string>>
+    },
   ): Sh {
-    const dirPath = async () => this.localDirPath(await parts())
-    this.lineBuilders.push(async () => {
-      const filePaths = await this.getFsFiles(
-        await dirPath(),
-        filters ? await filters() : undefined,
-      )
-
-      return (await Promise.all(filePaths.map(f => getFileText(f)))).join('\n')
+    return this.with(async () => {
+      const dirPath = this.localDirPath(await parts())
+      const filePaths = await getFilePaths(dirPath, {
+        extension: this.shExt,
+        filters: options?.filters ? await options.filters() : undefined,
+      })
+      const lines: Array<string> = []
+      for (const path of filePaths) {
+        lines.push(await getFileContent(path))
+      }
+      return lines
     })
-    return this
+  }
+
+  withFsDirPrint(
+    parts: () => Promise<Array<string>>,
+    options?: {
+      content?: boolean
+      filters?: () => Promise<Array<string>>
+      name?: boolean
+    },
+  ): Sh {
+    return this.withPrint(async () => {
+      const dirPath = this.localDirPath(await parts())
+      const filePaths = await getFilePaths(dirPath, {
+        extension: this.shExt,
+        filters: options?.filters ? await options.filters() : undefined,
+      })
+      const lines: Array<string> = []
+      for (const filePath of filePaths) {
+        if (options?.name) {
+          lines.push(toRelParts(dirPath, filePath).join(' '))
+        }
+        if (options?.content) {
+          lines.push(await getFileContent(filePath))
+        }
+      }
+      return lines
+    })
   }
 
   withFsFileLoad(parts: () => Promise<Array<string>>): Sh {
-    const dirPath = async () => this.localDirPath(await parts())
-    this.lineBuilders.push(async () =>
-      getFileText(`${await dirPath()}.${this.shExt}`),
-    )
-    return this
+    return this.with(async () => {
+      const path = `${this.localDirPath(await parts())}.${this.shExt}`
+      const lines: Array<string> = []
+      lines.push(await getFileContent(path))
+      return lines
+    })
   }
 
-  withPathsPrintInfo(
-    dirPath: () => Promise<string>,
-    filePaths: () => Promise<Array<string>>,
+  withFsFilePrint(
+    parts: () => Promise<Array<string>>,
+    options?: {
+      content?: boolean
+      name?: boolean
+    },
   ): Sh {
-    return this.withPrintInfo(async () => {
-      const dir = await dirPath()
-      const files = await filePaths()
-      return files.map(f =>
-        f
-          .replaceAll(dir, '')
-          .replaceAll('/', ' ')
-          .replaceAll(`.${this.shExt}`, ''),
-      )
+    return this.withPrint(async () => {
+      const filePath = `${this.localDirPath(await parts())}.${this.shExt}`
+      const lines: Array<string> = []
+      if (options?.name) {
+        lines.push(toRelParts(this.dirPath, filePath).join(' '))
+      }
+      if (options?.content) {
+        lines.push(await getFileContent(filePath))
+      }
+      return lines
     })
   }
 

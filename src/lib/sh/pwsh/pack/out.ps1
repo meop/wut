@@ -3,13 +3,13 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? out packages with winget (system) [[y], n]'
+      $yn = Read-Host '? out packages with winget (system) [y, [n]]'
     }
-    if ("${yn}" -eq 'y') {
+    if ("${yn}" -ne 'n') {
       if ("${PACK_OUT_NAMES}") {
-        dynOp winget upgrade '|' Select-String $PACK_OUT_NAMES | ForEach-Object {$_.Line}
+        runOpCond winget upgrade '|' Select-String $PACK_OUT_NAMES | ForEach-Object {$_.Line}
       } else {
-        dynOp winget upgrade
+        runOpCond winget upgrade
       }
     }
   }
@@ -18,14 +18,14 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? out packages with scoop (user) [[y], n]'
+      $yn = Read-Host '? out packages with scoop (user) [y, [n]]'
     }
-    if ("${yn}" -eq 'y') {
-      dynOp scoop update '>' '$null' '2>&1' '3>&1' '4>&1' '5>&1' '6>&1'
+    if ("${yn}" -ne 'n') {
+      runOpCond scoop update '>' '$null' '2>&1' '3>&1' '4>&1' '5>&1' '6>&1'
       if ("${PACK_OUT_NAMES}") {
-        dynOp scoop status '2>&1' '3>&1' '4>&1' '5>&1' '6>&1' '|' Select-String $PACK_OUT_NAMES | ForEach-Object {$_.Line}
+        runOpCond scoop status '2>&1' '3>&1' '4>&1' '5>&1' '6>&1' '|' Select-String $PACK_OUT_NAMES | ForEach-Object {$_.Line}
       } else {
-        dynOp scoop status
+        runOpCond scoop status
       }
     }
   }

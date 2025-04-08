@@ -1,7 +1,7 @@
-import { buildCfgFilePath, loadCfgFileContents } from '../cfg'
+import { getCfgFsFileLoad } from '../cfg'
 import { type Cmd, CmdBase } from '../cmd'
 import type { Ctx } from '../ctx'
-import type { Env } from '../env'
+import { type Env, toEnvKey } from '../env'
 import { toCon, toFmt } from '../serde'
 import type { Sh } from '../sh'
 
@@ -10,106 +10,103 @@ export class PackCmd extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'pack'
     this.desc = 'package manager ops'
-    this.aliases = ['p', 'pa', 'package', 'pk', 'pkg']
+    this.aliases = ['p', 'pa', 'pac', 'package']
     this.options = [{ keys: ['-m', '--manager'], desc: 'package manager' }]
     this.commands = [
       new PackCmdAdd([...this.scopes, this.name]),
-      new PackCmdDel([...this.scopes, this.name]),
       new PackCmdFind([...this.scopes, this.name]),
       new PackCmdList([...this.scopes, this.name]),
       new PackCmdOut([...this.scopes, this.name]),
+      new PackCmdRem([...this.scopes, this.name]),
+      new PackCmdSync([...this.scopes, this.name]),
       new PackCmdTidy([...this.scopes, this.name]),
-      new PackCmdUp([...this.scopes, this.name]),
     ]
   }
 }
 
-async function workPreset(
-  context: Ctx,
-  environment: Env,
-  shell: Sh,
-  op: string,
-) {
+async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
   const packKey = 'pack'
-  const packManagerKey = 'pack_manager'.toUpperCase()
-  const packNamesKey = `pack_${op}_names`.toUpperCase()
-  const packPresetsKey = `pack_${op}_presets`.toUpperCase()
+  const packManagerKey = toEnvKey(packKey, 'manager')
+  const packNamesKey = toEnvKey(packKey, op, 'names')
+  const packContentsKey = toEnvKey(packKey, op, 'contents')
+  const packGroupsKey = toEnvKey(packKey, op, 'groups')
 
+  const manager = environment[packManagerKey]
   let _shell = shell
 
   const requestedNames = environment[packNamesKey].split(' ')
   const foundNames: Array<string> = []
 
-  const manager = environment[packManagerKey]
-
-  if (environment[packPresetsKey]) {
-    _shell = _shell.withVarUnset(async () => packPresetsKey)
+  if (environment[packGroupsKey]) {
+    _shell = _shell.withVarUnset(async () => packGroupsKey)
 
     for (const name of requestedNames) {
-      const filePath = `${buildCfgFilePath(packKey, name)}.yaml`
+      const contents = await getCfgFsFileLoad(
+        async () => [packKey, name],
+        'yaml',
+      )
+      if (!contents.length) {
+        continue
+      }
 
-      if (await Bun.file(filePath).exists()) {
-        const contents = await loadCfgFileContents(filePath)
-        if (op !== 'find') {
-          for (const key of Object.keys(contents)) {
-            if (manager && key !== manager) {
-              continue
-            }
-            const value = contents[key]
-            if (!value?.names?.length) {
-              continue
-            }
-
-            if (!manager) {
-              _shell = _shell.withVarSet(
-                async () => packManagerKey,
-                async () => key,
-              )
-            }
-            if (value[op]) {
-              _shell = _shell.withVarArrSet(
-                async () => packPresetsKey,
-                async () => value[op],
-              )
-            }
-            _shell = _shell.withVarSet(
-              async () => packNamesKey,
-              async () => value.names.join(' '),
-            )
-            _shell = _shell.withFsFileLoad(async () => [packKey, op])
-            if (value[op]) {
-              _shell = _shell.withVarUnset(async () => packPresetsKey)
-            }
-            if (!manager) {
-              _shell = _shell.withVarUnset(async () => packManagerKey)
-            }
-          }
-        } else {
+      if (op === 'find') {
+        _shell = _shell.withPrint(async () => [name])
+        if (environment[packContentsKey]) {
           _shell = _shell.withPrint(async () => [
-            toCon(
-              {
-                [name]: contents,
-              },
-              toFmt(environment['format'.toUpperCase()]),
-            ),
+            toCon(contents, toFmt(environment[toEnvKey('format')])),
           ])
         }
-        foundNames.push(name)
+      } else {
+        for (const key of Object.keys(contents)) {
+          if (manager && key !== manager) {
+            continue
+          }
+          const value = contents[key]
+          if (!value?.names?.length) {
+            continue
+          }
+
+          if (!manager) {
+            _shell = _shell.withVarSet(
+              async () => packManagerKey,
+              async () => key,
+            )
+          }
+          if (value[op]) {
+            _shell = _shell.withVarArrSet(
+              async () => packGroupsKey,
+              async () => value[op],
+            )
+          }
+          _shell = _shell.withVarSet(
+            async () => packNamesKey,
+            async () => value.names.join(' '),
+          )
+          _shell = _shell.withFsFileLoad(async () => [packKey, op])
+          if (value[op]) {
+            _shell = _shell.withVarUnset(async () => packGroupsKey)
+          }
+          if (!manager) {
+            _shell = _shell.withVarUnset(async () => packManagerKey)
+          }
+        }
       }
+      foundNames.push(name)
     }
   }
 
   const remainingNames = requestedNames.filter(n => !foundNames.includes(n))
 
   if (remainingNames.length) {
-    _shell = _shell.withVarSet(
-      async () => packNamesKey,
-      async () => remainingNames.join(' '),
-    )
-    _shell = _shell.withFsFileLoad(async () => [packKey, op])
+    _shell = _shell
+      .withVarSet(
+        async () => packNamesKey,
+        async () => remainingNames.join(' '),
+      )
+      .withFsFileLoad(async () => [packKey, op])
   }
 
-  return _shell.build()
+  return await _shell.build()
 }
 
 export class PackCmdAdd extends CmdBase implements Cmd {
@@ -119,33 +116,10 @@ export class PackCmdAdd extends CmdBase implements Cmd {
     this.desc = 'add from web'
     this.aliases = ['a', 'ad', 'in', 'install']
     this.arguments = [{ name: 'names', desc: 'name(s) to match', req: true }]
-    this.switches = [{ keys: ['-p', '--presets'], desc: 'check for presets' }]
+    this.switches = [{ keys: ['-g', '--groups'], desc: 'check groups' }]
   }
-  work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return workPreset(context, environment, shell, 'add')
-  }
-}
-
-export class PackCmdDel extends CmdBase implements Cmd {
-  constructor(scopes: Array<string>) {
-    super(scopes)
-    this.name = 'del'
-    this.desc = 'delete from local'
-    this.aliases = [
-      'd',
-      'de',
-      'delete',
-      'rm',
-      'rem',
-      'remove',
-      'un',
-      'uninstall',
-    ]
-    this.arguments = [{ name: 'names', desc: 'name(s) to match', req: true }]
-    this.switches = [{ keys: ['-p', '--presets'], desc: 'check for presets' }]
-  }
-  work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return workPreset(context, environment, shell, 'del')
+  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
+    return await workOp(context, environment, shell, 'add')
   }
 }
 
@@ -154,12 +128,15 @@ export class PackCmdFind extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'find'
     this.desc = 'find from web'
-    this.aliases = ['f', 'fi', 'se', 'search']
+    this.aliases = ['f', 'fi']
     this.arguments = [{ name: 'names', desc: 'name(s) to match', req: true }]
-    this.switches = [{ keys: ['-p', '--presets'], desc: 'check for presets' }]
+    this.switches = [
+      { keys: ['-c', '--contents'], desc: 'print contents' },
+      { keys: ['-g', '--groups'], desc: 'check groups' },
+    ]
   }
-  work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return workPreset(context, environment, shell, 'find')
+  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
+    return await workOp(context, environment, shell, 'find')
   }
 }
 
@@ -168,11 +145,11 @@ export class PackCmdList extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'list'
     this.desc = 'list from local'
-    this.aliases = ['l', 'li', 'ls', 'qu', 'query']
+    this.aliases = ['l', 'li', 'ls']
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return shell.withFsFileLoad(async () => ['pack', 'list']).build()
+    return await shell.withFsFileLoad(async () => ['pack', 'list']).build()
   }
 }
 
@@ -180,12 +157,43 @@ export class PackCmdOut extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'out'
-    this.desc = 'out of sync from local'
-    this.aliases = ['o', 'ou', 'outdated', 'ob', 'obs', 'obsolete', 'ol', 'old']
+    this.desc = 'list out of sync from local'
+    this.aliases = ['o', 'ou']
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return shell.withFsFileLoad(async () => ['pack', 'out']).build()
+    return await shell.withFsFileLoad(async () => ['pack', 'out']).build()
+  }
+}
+
+export class PackCmdRem extends CmdBase implements Cmd {
+  constructor(scopes: Array<string>) {
+    super(scopes)
+    this.name = 'rem'
+    this.desc = 'remove from local'
+    this.aliases = ['r', 'rm', 'rem', 'remove', 'un', 'uninstall']
+    this.arguments = [{ name: 'names', desc: 'name(s) to match', req: true }]
+    this.switches = [{ keys: ['-g', '--groups'], desc: 'check groups' }]
+  }
+  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
+    return await workOp(context, environment, shell, 'rem')
+  }
+}
+
+export class PackCmdSync extends CmdBase implements Cmd {
+  constructor(scopes: Array<string>) {
+    super(scopes)
+    this.name = 'sync'
+    this.desc = 'sync from web'
+    this.aliases = ['s', 'sy']
+    this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
+  }
+  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
+    let _shell = shell.withFsFileLoad(async () => ['pack', 'sync'])
+    if (toEnvKey('pack', 'sync', 'tidy') in environment) {
+      _shell = shell.withFsFileLoad(async () => ['pack', 'tidy'])
+    }
+    return await _shell.build()
   }
 }
 
@@ -194,22 +202,9 @@ export class PackCmdTidy extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'tidy'
     this.desc = 'tidy from local'
-    this.aliases = ['t', 'ti', 'cl', 'clean', 'pr', 'prune', 'pu', 'purge']
+    this.aliases = ['t', 'ti']
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return shell.withFsFileLoad(async () => ['pack', 'tidy']).build()
-  }
-}
-
-export class PackCmdUp extends CmdBase implements Cmd {
-  constructor(scopes: Array<string>) {
-    super(scopes)
-    this.name = 'up'
-    this.desc = 'sync up from web'
-    this.aliases = ['u', 'update', 'upgrade', 'sy', 'sync']
-    this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
-  }
-  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return shell.withFsFileLoad(async () => ['pack', 'up']).build()
+    return await shell.withFsFileLoad(async () => ['pack', 'tidy']).build()
   }
 }

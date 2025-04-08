@@ -1,19 +1,19 @@
 &{
   if ($IsWindows) {
-    $yn = Read-Host '? repair rtc utc (system) [[y], n]'
-    if ("${yn}" -eq 'y') {
+    $yn = Read-Host '? repair rtc utc (system) [y, [n]]'
+    if ("${yn}" -ne 'n') {
       pwsh -nologo -noprofile -command {
-        dynOp Set-Location HKLM:
+        runOpCond Set-Location HKLM:
 
         $path = '\System\CurrentControlSet\Control\TimeZoneInformation'
 
         if (-not (Get-ItemProperty $path).RealTimeIsUniversal) {
-          dynOp New-ItemProperty $path -Name RealTimeIsUniversal -Value 1 -PropertyType QWord
+          runOpCond New-ItemProperty $path -Name RealTimeIsUniversal -Value 1 -PropertyType QWord
         } else {
-          dynOp Set-ItemProperty $path -Name RealTimeIsUniversal -Value 1
+          runOpCond Set-ItemProperty $path -Name RealTimeIsUniversal -Value 1
         }
 
-        dynOp Write-Output $path RealTimeIsUniversal (Get-ItemProperty $path).RealTimeIsUniversal
+        runOpCond Write-Output $path RealTimeIsUniversal (Get-ItemProperty $path).RealTimeIsUniversal
       }
     }
   }

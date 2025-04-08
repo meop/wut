@@ -1,9 +1,9 @@
 &{
   if ($IsWindows) {
-    $yn = Read-Host '? install bun (user) [[y], n]'
-    if ("${yn}" -eq 'y') {
+    $yn = Read-Host '? install bun (user) [y, [n]]'
+    if ("${yn}" -ne 'n') {
       $url = 'https://bun.sh/install.ps1'
-      dynOp pwsh -c '"Invoke-Expression' '(Invoke-WebRequest' -Uri "${url}" ')"'
+      runOpCond pwsh -c '"Invoke-Expression' '(Invoke-WebRequest' -Uri "${url}" ')"'
     }
   }
 }

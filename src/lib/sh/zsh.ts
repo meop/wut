@@ -22,7 +22,7 @@ export class Zsh extends ShBase implements Sh {
     values: () => Promise<Array<string>>,
   ): Sh {
     return this.with(async () => [
-      `${await name()}=${(await values()).map(v => this.toVal(v)).join(' ')}`,
+      `${await name()}=(${(await values()).map(v => this.toVal(v)).join(' ')})`,
     ])
   }
 

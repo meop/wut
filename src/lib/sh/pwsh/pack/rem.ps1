@@ -3,16 +3,16 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? add packages with winget (system) [y, [n]]'
+      $yn = Read-Host '? rem packages with winget (system) [y, [n]]'
     }
     if ("${yn}" -ne 'n') {
-      if ("${PACK_ADD_GROUPS}") {
-        foreach ($preset in ${PACK_ADD_GROUPS}) {
+      runOpCond winget uninstall $PACK_DEL_NAMES
+      if ("${PACK_DEL_GROUPS}") {
+        foreach ($preset in ${PACK_DEL_GROUPS}) {
           $presetSplit = ${preset} -Split ' '
           runOpCond @presetSplit
         }
       }
-      runOpCond winget install $PACK_ADD_NAMES
     }
   }
 
@@ -20,17 +20,16 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? add packages with scoop (user) [y, [n]]'
+      $yn = Read-Host '? rem packages with scoop (user) [y, [n]]'
     }
     if ("${yn}" -ne 'n') {
-      if ("${PACK_ADD_GROUPS}") {
-        foreach ($preset in ${PACK_ADD_GROUPS}) {
+      runOpCond scoop uninstall $PACK_DEL_NAMES
+      if ("${PACK_DEL_GROUPS}") {
+        foreach ($preset in ${PACK_DEL_GROUPS}) {
           $presetSplit = ${preset} -Split ' '
           runOpCond @presetSplit
         }
       }
-      runOpCond scoop update '>' '$null' '2>&1' '3>&1' '4>&1' '5>&1' '6>&1'
-      runOpCond scoop install $PACK_ADD_NAMES
     }
   }
 }

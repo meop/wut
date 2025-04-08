@@ -9,15 +9,15 @@ function () {
   # the only workaround to reset this behavior is to start over by erasing these
   # files and setting up new panels
   if [[ -f "${HOME}/.config/globalshortcutsrc" ]]; then
-    read yn?'? repair plasma global shortcuts (user) [[y], n] '
-    if [[ "${yn}" == 'y' ]]; then
-      dynOp rm "${HOME}/.config/globalshortcutsrc"
+    read yn?'? repair plasma global shortcuts (user) [y, [n]] '
+    if [[ "${yn}" != 'n' ]]; then
+      runOpCond rm "${HOME}/.config/globalshortcutsrc"
     fi
   fi
   if [[ -f "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc" ]]; then
-    read yn?'? repair plasma panel applets (user) [[y], n] '
-    if [[ "${yn}" == 'y' ]]; then
-      dynOp rm "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc"
+    read yn?'? repair plasma panel applets (user) [y, [n]] '
+    if [[ "${yn}" != 'n' ]]; then
+      runOpCond rm "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc"
     fi
   fi
 }

@@ -3,10 +3,10 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? find packages with winget (system) [[y], n]'
+      $yn = Read-Host '? find packages with winget (system) [y, [n]]'
     }
-    if ("${yn}" -eq 'y') {
-      dynOp winget search $PACK_FIND_NAMES
+    if ("${yn}" -ne 'n') {
+      runOpCond winget search $PACK_FIND_NAMES
     }
   }
 
@@ -14,11 +14,11 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? find packages with scoop (user) [[y], n]'
+      $yn = Read-Host '? find packages with scoop (user) [y, [n]]'
     }
-    if ("${yn}" -eq 'y') {
-      dynOp scoop update '>' '$null' '2>&1' '3>&1' '4>&1' '5>&1' '6>&1'
-      dynOp scoop search $PACK_FIND_NAMES
+    if ("${yn}" -ne 'n') {
+      runOpCond scoop update '>' '$null' '2>&1' '3>&1' '4>&1' '5>&1' '6>&1'
+      runOpCond scoop search $PACK_FIND_NAMES
     }
   }
 }

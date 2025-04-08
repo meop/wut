@@ -3,13 +3,13 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? up packages with winget (system) [[y], n]'
+      $yn = Read-Host '? sync packages with winget (system) [y, [n]]'
     }
-    if ("${yn}" -eq 'y') {
+    if ("${yn}" -ne 'n') {
       if ("${PACK_UP_NAMES}") {
-        dynOp winget upgrade $PACK_UP_NAMES
+        runOpCond winget upgrade $PACK_UP_NAMES
       } else {
-        dynOp winget upgrade --all
+        runOpCond winget upgrade --all
       }
     }
   }
@@ -18,14 +18,14 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? up packages with scoop (user) [[y], n]'
+      $yn = Read-Host '? sync packages with scoop (user) [y, [n]]'
     }
-    if ("${yn}" -eq 'y') {
-      dynOp scoop update '>' '$null' '2>&1' '3>&1' '4>&1' '5>&1' '6>&1'
+    if ("${yn}" -ne 'n') {
+      runOpCond scoop update '>' '$null' '2>&1' '3>&1' '4>&1' '5>&1' '6>&1'
       if ("${PACK_UP_NAMES}") {
-        dynOp scoop update $PACK_UP_NAMES
+        runOpCond scoop update $PACK_UP_NAMES
       } else {
-        dynOp scoop update --all
+        runOpCond scoop update --all
       }
     }
   }

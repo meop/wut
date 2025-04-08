@@ -12,28 +12,28 @@ function () {
           if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep --invert-match '^#' | grep --invert-match '^$' | grep '^.*packages.*microsoft.*com.*$' > /dev/null; then
             local output="${HOME}/packages-microsoft-prod.deb"
             local url="https://packages.microsoft.com/config/${sys_os_dist}/${sys_os_ver_id}/packages-microsoft-prod.deb"
-            dynOp curl --fail-with-body --location --silent --url "${url}" --create-dirs --output "${output}"
-            dynOp sudo dpkg --install "${output}"
-            dynOp rm "${output}"
+            runOpCond curl --fail-with-body --location --silent --url "${url}" --create-dirs --output "${output}"
+            runOpCond sudo dpkg --install "${output}"
+            runOpCond rm "${output}"
           fi
         }
 
         function () {
           local version=9.0
 
-          read yn?'? install dotnet sdk (system) [[y], n] '
-          if [[ "${yn}" == 'y' ]]; then
+          read yn?'? install dotnet sdk (system) [y, [n]] '
+          if [[ "${yn}" != 'n' ]]; then
             install_packages_microsoft_repo
-            dynOp sudo apt update
-            dynOp sudo apt install dotnet-sdk-"${version}"
+            runOpCond sudo apt update
+            runOpCond sudo apt install dotnet-sdk-"${version}"
           fi
         }
 
-        read yn?'? install pwsh (system) [[y], n] '
-        if [[ "${yn}" == 'y' ]]; then
+        read yn?'? install pwsh (system) [y, [n]] '
+        if [[ "${yn}" != 'n' ]]; then
           install_packages_microsoft_repo
-          dynOp sudo apt update
-          dynOp sudo apt install powershell
+          runOpCond sudo apt update
+          runOpCond sudo apt install powershell
         fi
       fi
     fi

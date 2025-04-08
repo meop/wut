@@ -5,30 +5,30 @@ function () {
     if [[ ! -f /etc/os-release ]]; then
       local termux="${HOME}/.termux"
 
-      read yn?'? setup termux mirrors (system) [[y], n] '
-      if [[ "${yn}" == 'y' ]]; then
-        dynOp termux-change-mirror
+      read yn?'? setup termux mirrors (system) [y, [n]] '
+      if [[ "${yn}" != 'n' ]]; then
+        runOpCond termux-change-mirror
       fi
 
-      read yn?'? setup termux storage (system) [[y], n] '
-      if [[ "${yn}" == 'y' ]]; then
-        dynOp termux-setup-storage
+      read yn?'? setup termux storage (system) [y, [n]] '
+      if [[ "${yn}" != 'n' ]]; then
+        runOpCond termux-setup-storage
       fi
 
-      read yn?'? setup termux theme (user) [[y], n] '
-      if [[ "${yn}" == 'y' ]]; then
+      read yn?'? setup termux theme (user) [y, [n]] '
+      if [[ "${yn}" != 'n' ]]; then
         local output="${termux}/colors.properties"
         local url='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/termux/tokyonight_moon.properties'
-        dynOp curl --fail-with-body --location --silent --url "${url}" --create-dirs --output "${output}"
+        runOpCond curl --fail-with-body --location --silent --url "${url}" --create-dirs --output "${output}"
 
         local output="${termux}/Hack.zip"
         local url='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/Hack.zip'
-        dynOp curl --fail-with-body --location --silent --url "${url}" --create-dirs --output "${output}"
-        dynOp unzip -q "${output}" -d "${output}.unzip"
-        dynOp cp "${output}.unzip/HackNerdFontMono-Regular.ttf" "${termux}/font.ttf"
-        dynOp rm -r -f "${output}"'*'
+        runOpCond curl --fail-with-body --location --silent --url "${url}" --create-dirs --output "${output}"
+        runOpCond unzip -q "${output}" -d "${output}.unzip"
+        runOpCond cp "${output}.unzip/HackNerdFontMono-Regular.ttf" "${termux}/font.ttf"
+        runOpCond rm -r -f "${output}"'*'
 
-        dynOp termux-reload-settings
+        runOpCond termux-reload-settings
       fi
     fi
   fi

@@ -1,5 +1,5 @@
 import type { Ctx } from './ctx'
-import type { Env } from './env'
+import { type Env, toEnvKey } from './env'
 import { toCon, toFmt } from './serde'
 import type { Sh } from './sh'
 
@@ -85,7 +85,7 @@ export class CmdBase {
   help(context: Ctx, environment: Env, shell: Sh): Promise<string> {
     return shell
       .withPrintInfo(async () => [
-        toCon(this.getHelp(), toFmt(environment['format'.toUpperCase()])),
+        toCon(this.getHelp(), toFmt(environment[toEnvKey('format')])),
       ])
       .build()
   }
@@ -105,10 +105,7 @@ export class CmdBase {
     const _environment = environment ? environment : {}
 
     const setEnv = (key: string, value: string, append = false) => {
-      const fullKey = [...this.scopes, this.name, key]
-        .slice(1)
-        .join('_')
-        .toUpperCase()
+      const fullKey = toEnvKey(...[...this.scopes, this.name, key].slice(1))
       if (append && _environment[fullKey]) {
         _environment[fullKey] += ` ${value}`
       } else {
@@ -124,7 +121,7 @@ export class CmdBase {
         )
       }
 
-      if (_environment['debug'.toUpperCase()]) {
+      if (_environment[toEnvKey('debug')]) {
         _shell = _shell.withPrint(async () => [
           toCon(
             {
@@ -133,12 +130,12 @@ export class CmdBase {
                 environment: _environment,
               },
             },
-            toFmt(_environment['format'.toUpperCase()]),
+            toFmt(_environment[toEnvKey('format')]),
           ),
         ])
       }
 
-      if (_environment['trace'.toUpperCase()]) {
+      if (_environment[toEnvKey('trace')]) {
         _shell = _shell.withTrace()
       }
 

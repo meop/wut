@@ -1,12 +1,30 @@
 import { Glob } from 'bun'
+import { promises as fs } from 'node:fs'
 import PATH from 'node:path'
 
 export function buildFilePath(...parts: Array<string>) {
   return PATH.join(...parts)
 }
 
-export function getFileText(filePath: string) {
-  return Bun.file(filePath).text()
+export async function isDir(dirPath: string) {
+  try {
+    const stat = await fs.stat(dirPath)
+    return stat.isDirectory()
+  } catch {
+    return false
+  }
+}
+
+export async function isFile(filePath: string) {
+  return await Bun.file(filePath).exists()
+}
+
+export async function getFileContent(filePath: string) {
+  if (!(await isFile(filePath))) {
+    return ''
+  }
+
+  return await Bun.file(filePath).text()
 }
 
 export async function getFilePaths(
@@ -16,6 +34,10 @@ export async function getFilePaths(
     filters?: Array<string>
   },
 ) {
+  if (!(await isDir(dirPath))) {
+    return []
+  }
+
   const globs: Array<Glob> = []
 
   const addGlob = (pattern: string) => {
@@ -24,9 +46,6 @@ export async function getFilePaths(
 
   if (options?.filters?.length) {
     const filterPattern = options.filters.map(f => `${f}*`).join('/')
-    console.log(dirPath)
-    console.log(filterPattern)
-
     if (options?.extension) {
       addGlob(`${filterPattern}/*.${options.extension}`)
       addGlob(`${filterPattern}.${options.extension}`)
@@ -56,4 +75,17 @@ export async function getFilePaths(
   }
 
   return filePaths.sort()
+}
+
+export function stripExt(filePath: string) {
+  const path = PATH.parse(filePath)
+  return PATH.join(path.dir, path.name)
+}
+
+export function toRelParts(dirPath: string, filePath: string) {
+  const dir = dirPath ? `${dirPath}${PATH.sep}` : ''
+  return stripExt(filePath)
+    .replace(dir, '')
+    .split(PATH.sep)
+    .filter(f => f)
 }

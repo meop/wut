@@ -3,13 +3,13 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? list packages with winget (system) [[y], n]'
+      $yn = Read-Host '? list packages with winget (system) [y, [n]]'
     }
-    if ("${yn}" -eq 'y') {
+    if ("${yn}" -ne 'n') {
       if ("${PACK_LIST_NAMES}") {
-        dynOp winget list '|' Select-String $PACK_LIST_NAMES | ForEach-Object {$_.Line}
+        runOpCond winget list '|' Select-String $PACK_LIST_NAMES | ForEach-Object {$_.Line}
       } else {
-        dynOp winget list
+        runOpCond winget list
       }
     }
   }
@@ -18,13 +18,13 @@
     if ("${YES}") {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? list packages with scoop (user) [[y], n]'
+      $yn = Read-Host '? list packages with scoop (user) [y, [n]]'
     }
-    if ("${yn}" -eq 'y') {
+    if ("${yn}" -ne 'n') {
       if ("${PACK_LIST_NAMES}") {
-        dynOp scoop list '2>&1' '3>&1' '4>&1' '5>&1' '6>&1' '|' Select-String $PACK_LIST_NAMES | ForEach-Object {$_.Line}
+        runOpCond scoop list '2>&1' '3>&1' '4>&1' '5>&1' '6>&1' '|' Select-String $PACK_LIST_NAMES | ForEach-Object {$_.Line}
       } else {
-        dynOp scoop list
+        runOpCond scoop list
       }
     }
   }

@@ -5,15 +5,15 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? find packages with apt (system) [[y], n] '
+      read yn?'? find packages with apt (system) [y, [n]] '
     fi
-    if [[ "${yn}" == 'y' ]]; then
+    if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo apt update '>' /dev/null '2>&1'
-        dynOp sudo apt search $PACK_FIND_NAMES
+        runOpCond sudo apt update '>' /dev/null '2>&1'
+        runOpCond sudo apt search $PACK_FIND_NAMES
       else
-        dynOp apt update '>' /dev/null '2>&1'
-        dynOp apt search $PACK_FIND_NAMES
+        runOpCond apt update '>' /dev/null '2>&1'
+        runOpCond apt search $PACK_FIND_NAMES
       fi
     fi
   fi
@@ -23,12 +23,12 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? find packages with apt-get (system) [[y], n] '
+      read yn?'? find packages with apt-get (system) [y, [n]] '
     fi
-    if [[ "${yn}" == 'y' ]]; then
+    if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo apt-get update '>' /dev/null '2>&1'
-        dynOp sudo apt-cache search $PACK_FIND_NAMES
+        runOpCond sudo apt-get update '>' /dev/null '2>&1'
+        runOpCond sudo apt-cache search $PACK_FIND_NAMES
       fi
     fi
   fi
@@ -37,10 +37,10 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? find packages with brew (system) [[y], n] '
+      read yn?'? find packages with brew (system) [y, [n]] '
     fi
-    if [[ "${yn}" == 'y' ]]; then
-      dynOp brew search $PACK_FIND_NAMES
+    if [[ "${yn}" != 'n' ]]; then
+      runOpCond brew search $PACK_FIND_NAMES
     fi
   fi
 
@@ -48,12 +48,12 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? find packages with dnf (system) [[y], n] '
+      read yn?'? find packages with dnf (system) [y, [n]] '
     fi
-    if [[ "${yn}" == 'y' ]]; then
+    if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo dnf check-update '>' /dev/null '2>&1'
-        dynOp sudo dnf search $PACK_FIND_NAMES
+        runOpCond sudo dnf check-update '>' /dev/null '2>&1'
+        runOpCond sudo dnf search $PACK_FIND_NAMES
       fi
     fi
   fi
@@ -62,11 +62,11 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? find packages with yay (system) [[y], n] '
+      read yn?'? find packages with yay (system) [y, [n]] '
     fi
-    if [[ "${yn}" == 'y' ]]; then
-      dynOp yay --sync --refresh '>' /dev/null '2>&1'
-      dynOp yay --sync --search $PACK_FIND_NAMES
+    if [[ "${yn}" != 'n' ]]; then
+      runOpCond yay --sync --refresh '>' /dev/null '2>&1'
+      runOpCond yay --sync --search $PACK_FIND_NAMES
     fi
   fi
   if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > /dev/null; then
@@ -75,15 +75,15 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? find packages with pacman (system) [[y], n] '
+      read yn?'? find packages with pacman (system) [y, [n]] '
     fi
-    if [[ "${yn}" == 'y' ]]; then
+    if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo pacman --sync --refresh '>' /dev/null '2>&1'
-        dynOp sudo pacman --sync --search $PACK_FIND_NAMES
+        runOpCond sudo pacman --sync --refresh '>' /dev/null '2>&1'
+        runOpCond sudo pacman --sync --search $PACK_FIND_NAMES
       else
-        dynOp pacman --sync --refresh '>' /dev/null '2>&1'
-        dynOp pacman --sync --search $PACK_FIND_NAMES
+        runOpCond pacman --sync --refresh '>' /dev/null '2>&1'
+        runOpCond pacman --sync --search $PACK_FIND_NAMES
       fi
     fi
   fi

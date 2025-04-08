@@ -5,15 +5,15 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? tidy packages with apt (system) [[y], n] '
+      read yn?'? tidy packages with apt (system) [y, [n]] '
     fi
-    if [[ "${yn}" == 'y' ]]; then
+    if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo apt autoclean
-        dynOp sudo apt autoremove
+        runOpCond sudo apt autoclean
+        runOpCond sudo apt autoremove
       else
-        dynOp apt autoclean
-        dynOp apt autoremove
+        runOpCond apt autoclean
+        runOpCond apt autoremove
       fi
     fi
   fi
@@ -23,12 +23,12 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? tidy packages with apt-get (system) [[y], n] '
+      read yn?'? tidy packages with apt-get (system) [y, [n]] '
     fi
-    if [[ "${yn}" == 'y' ]]; then
+    if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo apt-get autoclean
-        dynOp sudo apt-get autoremove
+        runOpCond sudo apt-get autoclean
+        runOpCond sudo apt-get autoremove
       fi
     fi
   fi
@@ -37,10 +37,10 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? tidy packages with brew (system) [[y], n] '
+      read yn?'? tidy packages with brew (system) [y, [n]] '
     fi
-    if [[ "${yn}" == 'y' ]]; then
-      dynOp brew cleanup --prune=all
+    if [[ "${yn}" != 'n' ]]; then
+      runOpCond brew cleanup --prune=all
     fi
   fi
 
@@ -48,12 +48,12 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? tidy packages with dnf (system) [[y], n] '
+      read yn?'? tidy packages with dnf (system) [y, [n]] '
     fi
-    if [[ "${yn}" == 'y' ]]; then
+    if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo dnf clean dbcache
-        dynOp sudo dnf autoremove
+        runOpCond sudo dnf clean dbcache
+        runOpCond sudo dnf autoremove
       fi
     fi
   fi
@@ -62,10 +62,10 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? tidy packages with yay (system) [[y], n] '
+      read yn?'? tidy packages with yay (system) [y, [n]] '
     fi
-    if [[ "${yn}" == 'y' ]]; then
-      dynOp yay --sync --clean
+    if [[ "${yn}" != 'n' ]]; then
+      runOpCond yay --sync --clean
     fi
   fi
   if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > /dev/null; then
@@ -74,13 +74,13 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? tidy packages with pacman (system) [[y], n] '
+      read yn?'? tidy packages with pacman (system) [y, [n]] '
     fi
-    if [[ "${yn}" == 'y' ]]; then
+    if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        dynOp sudo pacman --sync --clean
+        runOpCond sudo pacman --sync --clean
       else
-        dynOp pacman --sync --clean
+        runOpCond pacman --sync --clean
       fi
     fi
   fi
