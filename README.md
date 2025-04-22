@@ -8,13 +8,7 @@ Some operations cannot work over SSH because they are installing GUI tools
 
 Some operations create dynamic prompts for the user and cannot be scripted
 
-## unix
-
-Linux
-
-MacOS
-
-### cli
+## zsh
 
 ```zsh
 export WUT_URL='http://yard.lan:9000'
@@ -26,15 +20,28 @@ function wut_wrap {
   local url="${url}/sh/zsh"
   local url="$(echo "${url}" "$@" | sed 's/ /\//g' | sed 's:/*$::')"
 
-  eval "( $(curl --fail-with-body --location --silent --url "${url}") )"
+  zsh -c "$(curl --fail-with-body --location --silent --url ${url})"
 }
 ```
 
-## winnt
+## nu
 
-Windows
+```nu
+$env.WUT_URL = 'http://yard.lan:9000'
 
-### cli
+alias wut = wut_wrap
+
+def wut_wrap [...args] {
+  mut url = $"($env.WUT_URL | str trim --right --char '/')"
+  mut url = $"($url)/sh/nu"
+  mut url = $"( $"($url)/($args | str join '/')" | str trim --right --char '/' )"
+
+  nu -c $"(curl --fail-with-body --location --silent --url $url)"
+}
+
+```
+
+## pwsh
 
 ```pwsh
 $env:WUT_URL = 'http://yard.lan:9000'
@@ -46,6 +53,6 @@ function wut_wrap {
   $url = "${url}/sh/pwsh"
   $url = "${url}/$($args -Join '/')".TrimEnd('/')
 
-  Invoke-Expression (Invoke-WebRequest -Uri "${url}")
+  pwsh -c "$(Invoke-WebRequest -ErrorAction Stop -ProgressAction SilentlyContinue -Uri ${url})"
 }
 ```

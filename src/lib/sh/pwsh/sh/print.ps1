@@ -1,15 +1,15 @@
-function print {
-  if ("${SUCCINCT}") {
+function shPrint {
+  if ("${env:SUCCINCT}") {
     return
   }
   [Console]::WriteLine($($args -Join ' '))
 }
 
-function printErr {
-  if ("${SUCCINCT}") {
+function shPrintErr {
+  if ("${env:SUCCINCT}") {
     return
   }
-  if ("${GRAYSCALE}") {
+  if ("${env:GRAYSCALE}") {
     [Console]::Error.WriteLine($($args -Join ' '))
     return
   }
@@ -18,11 +18,11 @@ function printErr {
   [Console]::ResetColor()
 }
 
-function printSucc {
-  if ("${SUCCINCT}") {
+function shPrintSucc {
+  if ("${env:SUCCINCT}") {
     return
   }
-  if ("${GRAYSCALE}") {
+  if ("${env:GRAYSCALE}") {
     [Console]::WriteLine($($args -Join ' '))
     return
   }
@@ -31,11 +31,11 @@ function printSucc {
   [Console]::ResetColor()
 }
 
-function printWarn {
-  if ("${SUCCINCT}") {
+function shPrintWarn {
+  if ("${env:SUCCINCT}") {
     return
   }
-  if ("${GRAYSCALE}") {
+  if ("${env:GRAYSCALE}") {
     [Console]::WriteLine($($args -Join ' '))
     return
   }
@@ -44,11 +44,11 @@ function printWarn {
   [Console]::ResetColor()
 }
 
-function printInfo {
-  if ("${SUCCINCT}") {
+function shPrintInfo {
+  if ("${env:SUCCINCT}") {
     return
   }
-  if ("${GRAYSCALE}") {
+  if ("${env:GRAYSCALE}") {
     [Console]::WriteLine($($args -Join ' '))
     return
   }
@@ -57,11 +57,11 @@ function printInfo {
   [Console]::ResetColor()
 }
 
-function printOp {
-  if ("${SUCCINCT}") {
+function shPrintOp {
+  if ("${env:SUCCINCT}") {
     return
   }
-  if ("${GRAYSCALE}") {
+  if ("${env:GRAYSCALE}") {
     [Console]::WriteLine($($args -Join ' '))
     return
   }

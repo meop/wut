@@ -5,6 +5,7 @@ export interface Sh {
 
   with(lines: () => Promise<Array<string>>): Sh
 
+  withEnvVarSet(name: () => Promise<string>, value: () => Promise<string>): Sh
   withEval(lines: () => Promise<Array<string>>): Sh
 
   withFsDirLoad(
@@ -79,6 +80,10 @@ export class ShBase {
     return this
   }
 
+  withEnvVarSet(name: () => Promise<string>, value: () => Promise<string>): Sh {
+    throw new Error('not implemented')
+  }
+
   withEval(lines: () => Promise<Array<string>>): Sh {
     throw new Error('not implemented')
   }
@@ -137,9 +142,7 @@ export class ShBase {
   withFsFileLoad(parts: () => Promise<Array<string>>): Sh {
     return this.with(async () => {
       const path = `${this.localDirPath(await parts())}.${this.shExt}`
-      const lines: Array<string> = []
-      lines.push(await getFileContent(path))
-      return lines
+      return [await getFileContent(path)]
     })
   }
 
@@ -165,37 +168,37 @@ export class ShBase {
 
   withPrint(lines: () => Promise<Array<string>>): Sh {
     return this.with(async () =>
-      (await lines()).map(l => `print ${this.toVal(l)}`),
+      (await lines()).map(l => `shPrint ${this.toVal(l)}`),
     )
   }
 
   withPrintErr(lines: () => Promise<Array<string>>): Sh {
     return this.with(async () =>
-      (await lines()).map(l => `printErr ${this.toVal(l)}`),
+      (await lines()).map(l => `shPrintErr ${this.toVal(l)}`),
     )
   }
 
   withPrintInfo(lines: () => Promise<Array<string>>): Sh {
     return this.with(async () =>
-      (await lines()).map(l => `printInfo ${this.toVal(l)}`),
+      (await lines()).map(l => `shPrintInfo ${this.toVal(l)}`),
     )
   }
 
   withPrintOp(lines: () => Promise<Array<string>>): Sh {
     return this.with(async () =>
-      (await lines()).map(l => `printOp ${this.toVal(l)}`),
+      (await lines()).map(l => `shPrintOp ${this.toVal(l)}`),
     )
   }
 
   withPrintSucc(lines: () => Promise<Array<string>>): Sh {
     return this.with(async () =>
-      (await lines()).map(l => `printSucc ${this.toVal(l)}`),
+      (await lines()).map(l => `shPrintSucc ${this.toVal(l)}`),
     )
   }
 
   withPrintWarn(lines: () => Promise<Array<string>>): Sh {
     return this.with(async () =>
-      (await lines()).map(l => `printWarn ${this.toVal(l)}`),
+      (await lines()).map(l => `shPrintWarn ${this.toVal(l)}`),
     )
   }
 

@@ -1,9 +1,13 @@
 function () {
   local yn
 
-  read yn?'? install uv (user) [y, [n]] '
+  if [[ "${YES}" ]]; then
+    yn='y'
+  else
+    read yn?'? install uv (user) [y, [n]] '
+  fi
   if [[ "${yn}" != 'n' ]]; then
     local url='https://astral.sh/uv/install.sh'
-    runOpCond sh -c '"$(' curl --fail-with-body --location --silent --url "${url}" ')"'
+    shRunOpCond sh -c '"$(' curl --fail-with-body --location --silent --url "${url}" ')"'
   fi
 }

@@ -115,7 +115,7 @@ export class CmdBase {
 
     const processShEnv = (func: () => Promise<string>) => {
       for (const [key, value] of Object.entries(_environment)) {
-        _shell = _shell.withVarSet(
+        _shell = _shell.withEnvVarSet(
           async () => key,
           async () => value,
         )

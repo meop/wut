@@ -1,9 +1,13 @@
 function () {
   local yn
 
-  read yn?'? install bun (user) [y, [n]] '
+  if [[ "${YES}" ]]; then
+    yn='y'
+  else
+    read yn?'? install bun (user) [y, [n]] '
+  fi
   if [[ "${yn}" != 'n' ]]; then
     local url='https://bun.sh/install'
-    runOpCond bash -c '"$(' curl --fail-with-body --location --silent --url "${url}" ')"'
+    shRunOpCond bash -c '"$(' curl --fail-with-body --location --silent --url "${url}" ')"'
   fi
 }

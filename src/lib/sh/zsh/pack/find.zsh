@@ -9,11 +9,11 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        runOpCond sudo apt update '>' /dev/null '2>&1'
-        runOpCond sudo apt search $PACK_FIND_NAMES
+        shRunOpCond sudo apt update '>' /dev/null '2>&1'
+        shRunOpCond sudo apt search $PACK_FIND_NAMES
       else
-        runOpCond apt update '>' /dev/null '2>&1'
-        runOpCond apt search $PACK_FIND_NAMES
+        shRunOpCond apt update '>' /dev/null '2>&1'
+        shRunOpCond apt search $PACK_FIND_NAMES
       fi
     fi
   fi
@@ -27,8 +27,8 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        runOpCond sudo apt-get update '>' /dev/null '2>&1'
-        runOpCond sudo apt-cache search $PACK_FIND_NAMES
+        shRunOpCond sudo apt-get update '>' /dev/null '2>&1'
+        shRunOpCond sudo apt-cache search $PACK_FIND_NAMES
       fi
     fi
   fi
@@ -40,7 +40,7 @@ function () {
       read yn?'? find packages with brew (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
-      runOpCond brew search $PACK_FIND_NAMES
+      shRunOpCond brew search $PACK_FIND_NAMES
     fi
   fi
 
@@ -52,8 +52,8 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        runOpCond sudo dnf check-update '>' /dev/null '2>&1'
-        runOpCond sudo dnf search $PACK_FIND_NAMES
+        shRunOpCond sudo dnf check-update '>' /dev/null '2>&1'
+        shRunOpCond sudo dnf search $PACK_FIND_NAMES
       fi
     fi
   fi
@@ -65,8 +65,8 @@ function () {
       read yn?'? find packages with yay (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
-      runOpCond yay --sync --refresh '>' /dev/null '2>&1'
-      runOpCond yay --sync --search $PACK_FIND_NAMES
+      shRunOpCond yay --sync --refresh '>' /dev/null '2>&1'
+      shRunOpCond yay --sync --search $PACK_FIND_NAMES
     fi
   fi
   if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > /dev/null; then
@@ -79,11 +79,11 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        runOpCond sudo pacman --sync --refresh '>' /dev/null '2>&1'
-        runOpCond sudo pacman --sync --search $PACK_FIND_NAMES
+        shRunOpCond sudo pacman --sync --refresh '>' /dev/null '2>&1'
+        shRunOpCond sudo pacman --sync --search $PACK_FIND_NAMES
       else
-        runOpCond pacman --sync --refresh '>' /dev/null '2>&1'
-        runOpCond pacman --sync --search $PACK_FIND_NAMES
+        shRunOpCond pacman --sync --refresh '>' /dev/null '2>&1'
+        shRunOpCond pacman --sync --search $PACK_FIND_NAMES
       fi
     fi
   fi

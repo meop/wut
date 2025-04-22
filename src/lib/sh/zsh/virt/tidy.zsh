@@ -8,7 +8,7 @@ function () {
       read yn?'? tidy instances of docker (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
-      runOpCond docker system prune --all --volumes
+      shRunOpCond docker system prune --all --volumes
     fi
   fi
 

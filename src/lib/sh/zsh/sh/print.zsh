@@ -1,11 +1,11 @@
-function print {
+function shPrint {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
   echo -E $@
 }
 
-function printErr {
+function shPrintErr {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
@@ -18,7 +18,7 @@ function printErr {
   echo '\033[0m' >&2
 }
 
-function printSucc {
+function shPrintSucc {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
@@ -31,7 +31,7 @@ function printSucc {
   echo '\033[0m'
 }
 
-function printWarn {
+function shPrintWarn {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
@@ -44,7 +44,7 @@ function printWarn {
   echo '\033[0m'
 }
 
-function printInfo {
+function shPrintInfo {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
@@ -57,7 +57,7 @@ function printInfo {
   echo '\033[0m'
 }
 
-function printOp {
+function shPrintOp {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi

@@ -1,33 +1,33 @@
 &{
-  if ((-not "${PACK_MANAGER}" -or "${PACK_MANAGER}" -eq 'winget') -and (Get-Command winget -ErrorAction Ignore)) {
-    if ("${YES}") {
+  if ((-not "${env:PACK_MANAGER}" -or "${env:PACK_MANAGER}" -eq 'winget') -and (Get-Command winget -ErrorAction Ignore)) {
+    if ("${env:YES}") {
       $yn = 'y'
     } else {
       $yn = Read-Host '? rem packages with winget (system) [y, [n]]'
     }
     if ("${yn}" -ne 'n') {
-      runOpCond winget uninstall $PACK_DEL_NAMES
-      if ("${PACK_DEL_GROUPS}") {
-        foreach ($preset in ${PACK_DEL_GROUPS}) {
+      shRunOpCond winget uninstall $env:PACK_DEL_NAMES
+      if ("${env:PACK_DEL_GROUPS}") {
+        foreach ($preset in ${env:PACK_DEL_GROUPS}) {
           $presetSplit = ${preset} -Split ' '
-          runOpCond @presetSplit
+          shRunOpCond @presetSplit
         }
       }
     }
   }
 
-  if ((-not "${PACK_MANAGER}" -or "${PACK_MANAGER}" -eq 'scoop') -and (Get-Command scoop -ErrorAction Ignore)) {
-    if ("${YES}") {
+  if ((-not "${env:PACK_MANAGER}" -or "${env:PACK_MANAGER}" -eq 'scoop') -and (Get-Command scoop -ErrorAction Ignore)) {
+    if ("${env:YES}") {
       $yn = 'y'
     } else {
       $yn = Read-Host '? rem packages with scoop (user) [y, [n]]'
     }
     if ("${yn}" -ne 'n') {
-      runOpCond scoop uninstall $PACK_DEL_NAMES
-      if ("${PACK_DEL_GROUPS}") {
-        foreach ($preset in ${PACK_DEL_GROUPS}) {
+      shRunOpCond scoop uninstall $env:PACK_DEL_NAMES
+      if ("${env:PACK_DEL_GROUPS}") {
+        foreach ($preset in ${env:PACK_DEL_GROUPS}) {
           $presetSplit = ${preset} -Split ' '
-          runOpCond @presetSplit
+          shRunOpCond @presetSplit
         }
       }
     }

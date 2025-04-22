@@ -1,26 +1,26 @@
 import { type Sh, ShBase } from '../sh'
 
-export class Zshell extends ShBase implements Sh {
+export class Nushell extends ShBase implements Sh {
   constructor() {
-    super('zsh', 'zsh')
+    super('nu', 'nu')
   }
 
   toVal(value: string): string {
-    return `'${value.replaceAll("'", "'\\''")}'`
+    return `'${value}'`
   }
 
   withEnvVarSet(name: () => Promise<string>, value: () => Promise<string>): Sh {
     return this.with(async () => [
-      `export ${await name()}=${this.toVal(await value())}`,
+      `$env.${await name()} = ${this.toVal(await value())}`,
     ])
   }
 
   withEval(lines: () => Promise<Array<string>>): Sh {
-    return this.with(async () => (await lines()).map(l => `eval "${l}"`))
+    return this.with(async () => (await lines()).map(l => `nu -c "${l}"`))
   }
 
   withTrace(): Sh {
-    return this.with(async () => ['set -x'])
+    return this.with(async () => []) // no direct equivalent
   }
 
   withVarArrSet(
@@ -28,17 +28,17 @@ export class Zshell extends ShBase implements Sh {
     values: () => Promise<Array<string>>,
   ): Sh {
     return this.with(async () => [
-      `${await name()}=( ${(await values()).map(v => this.toVal(v)).join(' ')} )`,
+      `mut ${await name()} = [ ${(await values()).map(v => this.toVal(v)).join(', ')} ]`,
     ])
   }
 
   withVarSet(name: () => Promise<string>, value: () => Promise<string>): Sh {
     return this.with(async () => [
-      `${await name()}=${this.toVal(await value())}`,
+      `mut ${await name()} = ${this.toVal(await value())}`,
     ])
   }
 
   withVarUnset(name: () => Promise<string>): Sh {
-    return this.with(async () => [`unset ${await name()}`])
+    return this.with(async () => [`mut ${await name()} = null`])
   }
 }

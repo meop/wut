@@ -8,8 +8,9 @@ import { VirtCmd } from './lib/cmd/virt'
 import { getCtx } from './lib/ctx'
 import { Fmt, toCon } from './lib/serde'
 import type { Sh } from './lib/sh'
-import { Pwsh } from './lib/sh/pwsh'
-import { Zsh } from './lib/sh/zsh'
+import { Nushell } from './lib/sh/nu'
+import { Powershell } from './lib/sh/pwsh'
+import { Zshell } from './lib/sh/zsh'
 
 function expandParts(parts: Array<string>) {
   const expandedParts: Array<string> = []
@@ -81,18 +82,18 @@ async function runSrv(req: Request) {
     const context = getCtx(req)
     const cmd = new SrvCmd()
 
-    let path = context.req.path
     let ext: string | undefined
+    let path = context.req.path
     const extIndex = path.lastIndexOf('.')
     if (extIndex !== -1) {
-      path = path.substring(0, extIndex)
       ext = path.substring(extIndex + 1)
+      path = path.substring(0, extIndex)
     }
 
     const parts = expandParts(path.split('/').filter(p => p.length > 0))
 
     if (!parts.length) {
-      return new Response(`echo "client error; missing op"`, {
+      return new Response(`echo "missing op"`, {
         status: 400,
       })
     }
@@ -101,100 +102,55 @@ async function runSrv(req: Request) {
     if (op === Op.cfg) {
       const config = await getCfgFsFileLoad(async () => parts.slice(1), ext)
       if (!config.length) {
-        return new Response(
-          `echo "client error; config not found: ${config}"`,
-          {
-            status: 404,
-          },
-        )
+        return new Response(`echo "config not found: ${config}"`, {
+          status: 404,
+        })
       }
       return new Response(config)
     }
 
     if (!(parts.length > 1)) {
-      return new Response(`echo "client error; missing shell"`, {
+      return new Response(`echo "missing shell"`, {
         status: 400,
       })
     }
 
     const sh = parts[1]
-    if (sh !== 'zsh' && sh !== 'pwsh') {
-      return new Response(`echo "client error; unsupported shell: ${sh}"`, {
+    if (sh !== 'pwsh' && sh !== 'nu' && sh !== 'zsh') {
+      return new Response(`echo "unsupported shell: ${sh}"`, {
         status: 404,
       })
     }
 
-    let shell: Sh = (sh === 'pwsh' ? new Pwsh() : new Zsh())
-      .withVarSet(
-        async () => 'req_url_cfg',
+    const shell: Sh = (
+      sh === 'pwsh'
+        ? new Powershell()
+        : sh === 'nu'
+          ? new Nushell()
+          : new Zshell()
+    )
+      .withEnvVarSet(
+        async () => 'REQ_URL_CFG',
         async () => [context.req.orig, Op.cfg].join('/'),
       )
-      .withVarSet(
-        async () => 'req_url_sh',
+      .withEnvVarSet(
+        async () => 'REQ_URL_SH',
         async () =>
           [context.req.orig, context.req.path, context.req.srch].join(''),
       )
-      .withFsFileLoad(async () => ['print'])
-      .withFsFileLoad(async () => ['ver'])
+      .withFsFileLoad(async () => ['sh', 'print'])
+      .withFsFileLoad(async () => ['sh', 'run'])
+      .withFsFileLoad(async () => ['sh', 'ver'])
+      .withFsFileLoad(async () => ['sh', 'env'])
 
     if (!context.sys?.cpu?.arch) {
-      shell = shell.withFsFileLoad(async () => ['env'])
       return new Response(
-        await shell.withFsFileLoad(async () => ['sh']).build(),
-      )
-    }
-
-    if (context.sys?.cpu?.arch) {
-      shell = shell.withVarSet(
-        async () => 'sys_cpu_arch',
-        async () => context.sys?.cpu?.arch ?? '',
-      )
-    }
-    if (context.sys?.os?.plat) {
-      shell = shell.withVarSet(
-        async () => 'sys_os_plat',
-        async () => context.sys?.os?.plat ?? '',
-      )
-    }
-    if (context.sys?.os?.dist) {
-      shell = shell.withVarSet(
-        async () => 'sys_os_dist',
-        async () => context.sys?.os?.dist ?? '',
-      )
-    }
-    if (context.sys?.os?.ver?.id) {
-      shell = shell.withVarSet(
-        async () => 'sys_os_ver_id',
-        async () => context.sys?.os?.ver?.id ?? '',
-      )
-    }
-    if (context.sys?.os?.ver?.code) {
-      shell = shell.withVarSet(
-        async () => 'sys_os_ver_code',
-        async () => context.sys?.os?.ver?.code ?? '',
-      )
-    }
-    if (context.sys?.host) {
-      shell = shell.withVarSet(
-        async () => 'sys_host',
-        async () => context.sys?.host ?? '',
-      )
-    }
-    if (context.sys?.user) {
-      shell = shell.withVarSet(
-        async () => 'sys_user',
-        async () => context.sys?.user ?? '',
+        await shell.withFsFileLoad(async () => ['sh', 'dyn']).build(),
       )
     }
 
     try {
-      return new Response(
-        await cmd.process(
-          parts.slice(2),
-          shell.withFsFileLoad(async () => ['run']),
-          context,
-        ),
-      )
+      return new Response(await cmd.process(parts.slice(2), shell, context))
     } catch (err) {
       let errStr = String(err)
       if (err instanceof Error) {

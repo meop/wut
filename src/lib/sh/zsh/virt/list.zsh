@@ -9,7 +9,7 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       for instance in "${VIRT_INSTANCES[@]}"; do
-        runOpCond docker container ls '|' grep --ignore-case "${instance}"
+        shRunOpCond docker container ls '|' grep --ignore-case "${instance}"
       done
     fi
   fi
@@ -22,7 +22,7 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       for instance in "${VIRT_INSTANCES[@]}"; do
-        runOpCond pgrep --ignore-ancestors --full --list-full qemu'.*'"${instance}" '||' echo -n ''\'''\'
+        shRunOpCond pgrep --ignore-ancestors --full --list-full qemu'.*'"${instance}" '||' echo -n ''\'''\'
       done
     fi
   fi

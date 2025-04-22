@@ -9,11 +9,14 @@ export type Ctx = {
   sys?: {
     cpu?: {
       arch?: string
+      ven?: {
+        id?: string
+      }
     }
     host?: string
     os?: {
+      id?: string
       plat?: string
-      dist?: string
       ver?: {
         id?: string
         code?: string
@@ -32,16 +35,18 @@ export function getCtx(req: Request): Ctx {
   const usp = new URLSearchParams(url.search)
 
   const spSysCpuArch = getSp(usp, 'sysCpuArch')
+  const spSysCpuVenId = getSp(usp, 'sysCpuVenId')
+  const spSysOsId = getSp(usp, 'sysOsId')
   const spSysOsPlat = getSp(usp, 'sysOsPlat')
-  const spSysOsDist = getSp(usp, 'sysOsDist')
   const spSysOsVerId = getSp(usp, 'sysOsVerId')
   const spSysOsVerCode = getSp(usp, 'sysOsVerCode')
   const spSysHost = getSp(usp, 'sysHost')
   const spSysUser = getSp(usp, 'sysUser')
 
   const sysCpuArch = spSysCpuArch ? getCpuArch(spSysCpuArch) : undefined
+  const sysCpuVenId = spSysCpuVenId
+  const sysOsId = spSysOsId
   const sysOsPlat = spSysOsPlat ? getOsPlat(spSysOsPlat) : undefined
-  const sysOsDist = spSysOsDist
   const sysOsVerId = spSysOsVerId
   const sysOsVerCode = spSysOsVerCode
   const sysHost = spSysHost
@@ -56,11 +61,14 @@ export function getCtx(req: Request): Ctx {
     sys: {
       cpu: {
         arch: sysCpuArch,
+        ven: {
+          id: sysCpuVenId,
+        },
       },
       host: sysHost,
       os: {
+        id: sysOsId,
         plat: sysOsPlat,
-        dist: sysOsDist,
         ver: {
           id: sysOsVerId,
           code: sysOsVerCode,

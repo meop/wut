@@ -10,16 +10,16 @@ function () {
     if [[ "${yn}" != 'n' ]]; then
       if [[ $PACK_ADD_GROUPS ]]; then
         for preset in "${PACK_ADD_GROUPS[@]}"; do
-          presetSplit=(${(s: :)preset})
-          runOpCond "${presetSplit[@]}"
+          presetSplit=( ${(s: :)preset} )
+          shRunOpCond "${presetSplit[@]}"
         done
       fi
       if type sudo > /dev/null; then
-        runOpCond sudo apt update '>' /dev/null '2>&1'
-        runOpCond sudo apt install $PACK_ADD_NAMES
+        shRunOpCond sudo apt update '>' /dev/null '2>&1'
+        shRunOpCond sudo apt install $PACK_ADD_NAMES
       else
-        runOpCond apt update '>' /dev/null '2>&1'
-        runOpCond apt install $PACK_ADD_NAMES
+        shRunOpCond apt update '>' /dev/null '2>&1'
+        shRunOpCond apt install $PACK_ADD_NAMES
       fi
     fi
   fi
@@ -34,13 +34,13 @@ function () {
     if [[ "${yn}" != 'n' ]]; then
       if [[ $PACK_ADD_GROUPS ]]; then
         for preset in "${PACK_ADD_GROUPS[@]}"; do
-          presetSplit=(${(s: :)preset})
-          runOpCond "${presetSplit[@]}"
+          presetSplit=( ${(s: :)preset} )
+          shRunOpCond "${presetSplit[@]}"
         done
       fi
       if type sudo > /dev/null; then
-        runOpCond sudo apt-get update '>' /dev/null '2>&1'
-        runOpCond sudo apt-get install $PACK_ADD_NAMES
+        shRunOpCond sudo apt-get update '>' /dev/null '2>&1'
+        shRunOpCond sudo apt-get install $PACK_ADD_NAMES
       fi
     fi
   fi
@@ -54,12 +54,12 @@ function () {
     if [[ "${yn}" != 'n' ]]; then
       if [[ $PACK_ADD_GROUPS ]]; then
         for preset in "${PACK_ADD_GROUPS[@]}"; do
-          presetSplit=(${(s: :)preset})
-          runOpCond "${presetSplit[@]}"
+          presetSplit=( ${(s: :)preset} )
+          shRunOpCond "${presetSplit[@]}"
         done
       fi
-      runOpCond brew update '>' /dev/null '2>&1'
-      runOpCond brew install $PACK_ADD_NAMES
+      shRunOpCond brew update '>' /dev/null '2>&1'
+      shRunOpCond brew install $PACK_ADD_NAMES
     fi
   fi
 
@@ -72,13 +72,13 @@ function () {
     if [[ "${yn}" != 'n' ]]; then
       if [[ $PACK_ADD_GROUPS ]]; then
         for preset in "${PACK_ADD_GROUPS[@]}"; do
-          presetSplit=(${(s: :)preset})
-          runOpCond "${presetSplit[@]}"
+          presetSplit=( ${(s: :)preset} )
+          shRunOpCond "${presetSplit[@]}"
         done
       fi
       if type sudo > /dev/null; then
-        runOpCond sudo dnf check-update '>' /dev/null '2>&1'
-        runOpCond sudo dnf install $PACK_ADD_NAMES
+        shRunOpCond sudo dnf check-update '>' /dev/null '2>&1'
+        shRunOpCond sudo dnf install $PACK_ADD_NAMES
       fi
     fi
   fi
@@ -92,12 +92,12 @@ function () {
     if [[ "${yn}" != 'n' ]]; then
       if [[ $PACK_ADD_GROUPS ]]; then
         for preset in "${PACK_ADD_GROUPS[@]}"; do
-          presetSplit=(${(s: :)preset})
-          runOpCond "${presetSplit[@]}"
+          presetSplit=( ${(s: :)preset} )
+          shRunOpCond "${presetSplit[@]}"
         done
       fi
-      runOpCond yay --sync --refresh '>' /dev/null '2>&1'
-      runOpCond yay --sync --needed $PACK_ADD_NAMES
+      shRunOpCond yay --sync --refresh '>' /dev/null '2>&1'
+      shRunOpCond yay --sync --needed $PACK_ADD_NAMES
     fi
   fi
   if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > /dev/null; then
@@ -111,16 +111,16 @@ function () {
     if [[ "${yn}" != 'n' ]]; then
       if [[ $PACK_ADD_GROUPS ]]; then
         for preset in "${PACK_ADD_GROUPS[@]}"; do
-          presetSplit=(${(s: :)preset})
-          runOpCond "${presetSplit[@]}"
+          presetSplit=( ${(s: :)preset} )
+          shRunOpCond "${presetSplit[@]}"
         done
       fi
       if type sudo > /dev/null; then
-        runOpCond sudo pacman --sync --refresh '>' /dev/null '2>&1'
-        runOpCond sudo pacman --sync --needed $PACK_ADD_NAMES
+        shRunOpCond sudo pacman --sync --refresh '>' /dev/null '2>&1'
+        shRunOpCond sudo pacman --sync --needed $PACK_ADD_NAMES
       else
-        runOpCond pacman --sync --refresh '>' /dev/null '2>&1'
-        runOpCond pacman --sync --needed $PACK_ADD_NAMES
+        shRunOpCond pacman --sync --refresh '>' /dev/null '2>&1'
+        shRunOpCond pacman --sync --needed $PACK_ADD_NAMES
       fi
     fi
   fi

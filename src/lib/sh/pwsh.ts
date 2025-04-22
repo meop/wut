@@ -1,12 +1,18 @@
 import { type Sh, ShBase } from '../sh'
 
-export class Pwsh extends ShBase implements Sh {
+export class Powershell extends ShBase implements Sh {
   constructor() {
     super('pwsh', 'ps1')
   }
 
   toVal(value: string): string {
     return `'${value.replaceAll("'", "''")}'`
+  }
+
+  withEnvVarSet(name: () => Promise<string>, value: () => Promise<string>): Sh {
+    return this.with(async () => [
+      `$env:${await name()} = ${this.toVal(await value())}`,
+    ])
   }
 
   withEval(lines: () => Promise<Array<string>>): Sh {

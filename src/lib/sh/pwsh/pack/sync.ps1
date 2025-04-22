@@ -1,31 +1,31 @@
 &{
-  if ((-not "${PACK_MANAGER}" -or "${PACK_MANAGER}" -eq 'winget') -and (Get-Command winget -ErrorAction Ignore)) {
-    if ("${YES}") {
+  if ((-not "${env:PACK_MANAGER}" -or "${env:PACK_MANAGER}" -eq 'winget') -and (Get-Command winget -ErrorAction Ignore)) {
+    if ("${env:YES}") {
       $yn = 'y'
     } else {
       $yn = Read-Host '? sync packages with winget (system) [y, [n]]'
     }
     if ("${yn}" -ne 'n') {
-      if ("${PACK_UP_NAMES}") {
-        runOpCond winget upgrade $PACK_UP_NAMES
+      if ("${env:PACK_UP_NAMES}") {
+        shRunOpCond winget upgrade $env:PACK_UP_NAMES
       } else {
-        runOpCond winget upgrade --all
+        shRunOpCond winget upgrade --all
       }
     }
   }
 
-  if ((-not "${PACK_MANAGER}" -or "${PACK_MANAGER}" -eq 'scoop') -and (Get-Command scoop -ErrorAction Ignore)) {
-    if ("${YES}") {
+  if ((-not "${env:PACK_MANAGER}" -or "${env:PACK_MANAGER}" -eq 'scoop') -and (Get-Command scoop -ErrorAction Ignore)) {
+    if ("${env:YES}") {
       $yn = 'y'
     } else {
       $yn = Read-Host '? sync packages with scoop (user) [y, [n]]'
     }
     if ("${yn}" -ne 'n') {
-      runOpCond scoop update '>' '$null' '2>&1' '3>&1' '4>&1' '5>&1' '6>&1'
-      if ("${PACK_UP_NAMES}") {
-        runOpCond scoop update $PACK_UP_NAMES
+      shRunOpCond scoop update '>' '$null' '2>&1' '3>&1' '4>&1' '5>&1' '6>&1'
+      if ("${env:PACK_UP_NAMES}") {
+        shRunOpCond scoop update $env:PACK_UP_NAMES
       } else {
-        runOpCond scoop update --all
+        shRunOpCond scoop update --all
       }
     }
   }

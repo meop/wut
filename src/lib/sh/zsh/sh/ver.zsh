@@ -4,7 +4,7 @@ function () {
 
   autoload is-at-least
   if ! is-at-least "${sh_version_major}.${sh_version_minor}"; then
-    printErr "zsh must be >= '${sh_version_major}.${sh_version_minor}' .. found '${ZSH_VERSION}' .. aborting"
+    shPrintErr "zsh must be >= '${sh_version_major}.${sh_version_minor}' .. found '${ZSH_VERSION}' .. aborting"
     exit 1
   fi
 }
