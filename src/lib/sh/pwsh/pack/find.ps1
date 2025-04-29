@@ -6,7 +6,7 @@
       $yn = Read-Host '? find packages with winget (system) [y, [n]]'
     }
     if ("${yn}" -ne 'n') {
-      shRunOpCond winget search $env:PACK_FIND_NAMES
+      opPrintRunCmd winget search $env:PACK_FIND_NAMES
     }
   }
 
@@ -17,8 +17,8 @@
       $yn = Read-Host '? find packages with scoop (user) [y, [n]]'
     }
     if ("${yn}" -ne 'n') {
-      shRunOpCond scoop update '>' '$null' '2>&1' '3>&1' '4>&1' '5>&1' '6>&1'
-      shRunOpCond scoop search $env:PACK_FIND_NAMES
+      opPrintRunCmd scoop update '>' '$null' '2>&1' '3>&1' '4>&1' '5>&1' '6>&1'
+      opPrintRunCmd scoop search $env:PACK_FIND_NAMES
     }
   }
 }

@@ -12,9 +12,9 @@ function () {
         if docker container ls | grep --ignore-case "${instance}" > /dev/null; then
           local output="${HOME}/docker-compose-${instance}.yaml"
           local url="${REQ_URL_CFG}/virt/${SYS_HOST}/docker/${instance}.yaml"
-          shRunOpCond curl --fail-with-body --location --no-progress-meter --url "${url}" --output "${output}"
-          shRunOpCond docker compose --file ${output} down
-          shRunOpCond rm "${output}"
+          opPrintRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --output "${output}"
+          opPrintRunCmd docker compose --file ${output} down
+          opPrintRunCmd rm "${output}"
         fi
       done
     fi
@@ -29,7 +29,7 @@ function () {
     if [[ "${yn}" != 'n' ]]; then
       for instance in "${VIRT_INSTANCES[@]}"; do
         if pgrep --ignore-ancestors --full --list-full qemu.*"${instance}" > /dev/null; then
-          shRunOpCond sudo -E sh -c '"'pkill -f qemu'.*'"${instance}"'"'
+          opPrintRunCmd sudo -E sh -c '"'pkill -f qemu'.*'"${instance}"'"'
         fi
       done
     fi

@@ -11,15 +11,15 @@ function () {
       if [[ $PACK_ADD_GROUPS ]]; then
         for preset in "${PACK_ADD_GROUPS[@]}"; do
           presetSplit=( ${(s: :)preset} )
-          shRunOpCond "${presetSplit[@]}"
+          opPrintRunCmd "${presetSplit[@]}"
         done
       fi
       if type sudo > /dev/null; then
-        shRunOpCond sudo apt update '>' /dev/null '2>&1'
-        shRunOpCond sudo apt install $PACK_ADD_NAMES
+        opPrintRunCmd sudo apt update '>' /dev/null '2>&1'
+        opPrintRunCmd sudo apt install $PACK_ADD_NAMES
       else
-        shRunOpCond apt update '>' /dev/null '2>&1'
-        shRunOpCond apt install $PACK_ADD_NAMES
+        opPrintRunCmd apt update '>' /dev/null '2>&1'
+        opPrintRunCmd apt install $PACK_ADD_NAMES
       fi
     fi
   fi
@@ -35,12 +35,12 @@ function () {
       if [[ $PACK_ADD_GROUPS ]]; then
         for preset in "${PACK_ADD_GROUPS[@]}"; do
           presetSplit=( ${(s: :)preset} )
-          shRunOpCond "${presetSplit[@]}"
+          opPrintRunCmd "${presetSplit[@]}"
         done
       fi
       if type sudo > /dev/null; then
-        shRunOpCond sudo apt-get update '>' /dev/null '2>&1'
-        shRunOpCond sudo apt-get install $PACK_ADD_NAMES
+        opPrintRunCmd sudo apt-get update '>' /dev/null '2>&1'
+        opPrintRunCmd sudo apt-get install $PACK_ADD_NAMES
       fi
     fi
   fi
@@ -55,11 +55,11 @@ function () {
       if [[ $PACK_ADD_GROUPS ]]; then
         for preset in "${PACK_ADD_GROUPS[@]}"; do
           presetSplit=( ${(s: :)preset} )
-          shRunOpCond "${presetSplit[@]}"
+          opPrintRunCmd "${presetSplit[@]}"
         done
       fi
-      shRunOpCond brew update '>' /dev/null '2>&1'
-      shRunOpCond brew install $PACK_ADD_NAMES
+      opPrintRunCmd brew update '>' /dev/null '2>&1'
+      opPrintRunCmd brew install $PACK_ADD_NAMES
     fi
   fi
 
@@ -73,12 +73,12 @@ function () {
       if [[ $PACK_ADD_GROUPS ]]; then
         for preset in "${PACK_ADD_GROUPS[@]}"; do
           presetSplit=( ${(s: :)preset} )
-          shRunOpCond "${presetSplit[@]}"
+          opPrintRunCmd "${presetSplit[@]}"
         done
       fi
       if type sudo > /dev/null; then
-        shRunOpCond sudo dnf check-update '>' /dev/null '2>&1'
-        shRunOpCond sudo dnf install $PACK_ADD_NAMES
+        opPrintRunCmd sudo dnf check-update '>' /dev/null '2>&1'
+        opPrintRunCmd sudo dnf install $PACK_ADD_NAMES
       fi
     fi
   fi
@@ -93,11 +93,11 @@ function () {
       if [[ $PACK_ADD_GROUPS ]]; then
         for preset in "${PACK_ADD_GROUPS[@]}"; do
           presetSplit=( ${(s: :)preset} )
-          shRunOpCond "${presetSplit[@]}"
+          opPrintRunCmd "${presetSplit[@]}"
         done
       fi
-      shRunOpCond yay --sync --refresh '>' /dev/null '2>&1'
-      shRunOpCond yay --sync --needed $PACK_ADD_NAMES
+      opPrintRunCmd yay --sync --refresh '>' /dev/null '2>&1'
+      opPrintRunCmd yay --sync --needed $PACK_ADD_NAMES
     fi
   fi
   if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > /dev/null; then
@@ -112,15 +112,15 @@ function () {
       if [[ $PACK_ADD_GROUPS ]]; then
         for preset in "${PACK_ADD_GROUPS[@]}"; do
           presetSplit=( ${(s: :)preset} )
-          shRunOpCond "${presetSplit[@]}"
+          opPrintRunCmd "${presetSplit[@]}"
         done
       fi
       if type sudo > /dev/null; then
-        shRunOpCond sudo pacman --sync --refresh '>' /dev/null '2>&1'
-        shRunOpCond sudo pacman --sync --needed $PACK_ADD_NAMES
+        opPrintRunCmd sudo pacman --sync --refresh '>' /dev/null '2>&1'
+        opPrintRunCmd sudo pacman --sync --needed $PACK_ADD_NAMES
       else
-        shRunOpCond pacman --sync --refresh '>' /dev/null '2>&1'
-        shRunOpCond pacman --sync --needed $PACK_ADD_NAMES
+        opPrintRunCmd pacman --sync --refresh '>' /dev/null '2>&1'
+        opPrintRunCmd pacman --sync --needed $PACK_ADD_NAMES
       fi
     fi
   fi

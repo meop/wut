@@ -1,11 +1,11 @@
-function shPrint {
+function opPrint {
   if ("${env:SUCCINCT}") {
     return
   }
   [Console]::WriteLine($($args -Join ' '))
 }
 
-function shPrintErr {
+function opPrintErr {
   if ("${env:SUCCINCT}") {
     return
   }
@@ -18,7 +18,7 @@ function shPrintErr {
   [Console]::ResetColor()
 }
 
-function shPrintSucc {
+function opPrintSucc {
   if ("${env:SUCCINCT}") {
     return
   }
@@ -31,7 +31,7 @@ function shPrintSucc {
   [Console]::ResetColor()
 }
 
-function shPrintWarn {
+function opPrintWarn {
   if ("${env:SUCCINCT}") {
     return
   }
@@ -44,7 +44,7 @@ function shPrintWarn {
   [Console]::ResetColor()
 }
 
-function shPrintInfo {
+function opPrintInfo {
   if ("${env:SUCCINCT}") {
     return
   }
@@ -57,7 +57,7 @@ function shPrintInfo {
   [Console]::ResetColor()
 }
 
-function shPrintOp {
+function opPrintCmd {
   if ("${env:SUCCINCT}") {
     return
   }
@@ -73,5 +73,16 @@ function shPrintOp {
     [Console]::ForegroundColor = 'Cyan'
     [Console]::WriteLine($($($args | Select-Object -Skip 1) -Join ' '))
     [Console]::ResetColor()
+  }
+}
+
+function opRunCmd {
+  Invoke-Expression ($args -Join ' ')
+}
+
+function opPrintRunCmd {
+  opPrintCmd @args
+  if (-not "${env:NOOP}") {
+    opRunCmd @args
   }
 }

@@ -6,11 +6,11 @@
       $yn = Read-Host '? rem packages with winget (system) [y, [n]]'
     }
     if ("${yn}" -ne 'n') {
-      shRunOpCond winget uninstall $env:PACK_DEL_NAMES
+      opPrintRunCmd winget uninstall $env:PACK_DEL_NAMES
       if ("${env:PACK_DEL_GROUPS}") {
         foreach ($preset in ${env:PACK_DEL_GROUPS}) {
           $presetSplit = ${preset} -Split ' '
-          shRunOpCond @presetSplit
+          opPrintRunCmd @presetSplit
         }
       }
     }
@@ -23,11 +23,11 @@
       $yn = Read-Host '? rem packages with scoop (user) [y, [n]]'
     }
     if ("${yn}" -ne 'n') {
-      shRunOpCond scoop uninstall $env:PACK_DEL_NAMES
+      opPrintRunCmd scoop uninstall $env:PACK_DEL_NAMES
       if ("${env:PACK_DEL_GROUPS}") {
         foreach ($preset in ${env:PACK_DEL_GROUPS}) {
           $presetSplit = ${preset} -Split ' '
-          shRunOpCond @presetSplit
+          opPrintRunCmd @presetSplit
         }
       }
     }

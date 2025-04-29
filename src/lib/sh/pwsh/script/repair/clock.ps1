@@ -7,17 +7,17 @@
     }
     if ("${yn}" -ne 'n') {
       pwsh -nologo -noprofile -command {
-        shRunOpCond Set-Location HKLM:
+        opPrintRunCmd Set-Location HKLM:
 
         $path = '\System\CurrentControlSet\Control\TimeZoneInformation'
 
         if (-not (Get-ItemProperty $path).RealTimeIsUniversal) {
-          shRunOpCond New-ItemProperty $path -Name RealTimeIsUniversal -Value 1 -PropertyType QWord
+          opPrintRunCmd New-ItemProperty $path -Name RealTimeIsUniversal -Value 1 -PropertyType QWord
         } else {
-          shRunOpCond Set-ItemProperty $path -Name RealTimeIsUniversal -Value 1
+          opPrintRunCmd Set-ItemProperty $path -Name RealTimeIsUniversal -Value 1
         }
 
-        shRunOpCond Write-Output $path RealTimeIsUniversal (Get-ItemProperty $path).RealTimeIsUniversal
+        opPrintRunCmd Write-Output $path RealTimeIsUniversal (Get-ItemProperty $path).RealTimeIsUniversal
       }
     }
   }

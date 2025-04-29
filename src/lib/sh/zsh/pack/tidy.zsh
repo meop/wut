@@ -9,11 +9,11 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        shRunOpCond sudo apt autoclean
-        shRunOpCond sudo apt autoremove
+        opPrintRunCmd sudo apt autoclean
+        opPrintRunCmd sudo apt autoremove
       else
-        shRunOpCond apt autoclean
-        shRunOpCond apt autoremove
+        opPrintRunCmd apt autoclean
+        opPrintRunCmd apt autoremove
       fi
     fi
   fi
@@ -27,8 +27,8 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        shRunOpCond sudo apt-get autoclean
-        shRunOpCond sudo apt-get autoremove
+        opPrintRunCmd sudo apt-get autoclean
+        opPrintRunCmd sudo apt-get autoremove
       fi
     fi
   fi
@@ -40,7 +40,7 @@ function () {
       read 'yn?? tidy packages with brew (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
-      shRunOpCond brew cleanup --prune=all
+      opPrintRunCmd brew cleanup --prune=all
     fi
   fi
 
@@ -52,8 +52,8 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        shRunOpCond sudo dnf clean dbcache
-        shRunOpCond sudo dnf autoremove
+        opPrintRunCmd sudo dnf clean dbcache
+        opPrintRunCmd sudo dnf autoremove
       fi
     fi
   fi
@@ -65,7 +65,7 @@ function () {
       read 'yn?? tidy packages with yay (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
-      shRunOpCond yay --sync --clean
+      opPrintRunCmd yay --sync --clean
     fi
   fi
   if [[ -z "${PACK_MANAGER}" || "${PACK_MANAGER}" == 'pacman' ]] && type pacman > /dev/null; then
@@ -78,9 +78,9 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        shRunOpCond sudo pacman --sync --clean
+        opPrintRunCmd sudo pacman --sync --clean
       else
-        shRunOpCond pacman --sync --clean
+        opPrintRunCmd pacman --sync --clean
       fi
     fi
   fi

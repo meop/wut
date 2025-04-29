@@ -10,15 +10,15 @@ function () {
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
         if [[ "${PACK_LIST_NAMES}" ]]; then
-          shRunOpCond sudo apt list --installed '2>' /dev/null '|' grep --ignore-case $PACK_LIST_NAMES
+          opPrintRunCmd sudo apt list --installed '2>' /dev/null '|' grep --ignore-case $PACK_LIST_NAMES
         else
-          shRunOpCond sudo apt list --installed '2>' /dev/null
+          opPrintRunCmd sudo apt list --installed '2>' /dev/null
         fi
       else
         if [[ "${PACK_LIST_NAMES}" ]]; then
-          shRunOpCond apt list --installed '2>' /dev/null '|' grep --ignore-case $PACK_LIST_NAMES
+          opPrintRunCmd apt list --installed '2>' /dev/null '|' grep --ignore-case $PACK_LIST_NAMES
         else
-          shRunOpCond apt list --installed '2>' /dev/null
+          opPrintRunCmd apt list --installed '2>' /dev/null
         fi
       fi
     fi
@@ -34,9 +34,9 @@ function () {
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
         if [[ "${PACK_LIST_NAMES}" ]]; then
-          shRunOpCond sudo apt-get list --installed '|' grep --ignore-case $PACK_LIST_NAMES
+          opPrintRunCmd sudo apt-get list --installed '|' grep --ignore-case $PACK_LIST_NAMES
         else
-          shRunOpCond sudo apt-get list --installed
+          opPrintRunCmd sudo apt-get list --installed
         fi
       fi
     fi
@@ -50,9 +50,9 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if [[ "${PACK_LIST_NAMES}" ]]; then
-        shRunOpCond brew list '|' grep --ignore-case $PACK_LIST_NAMES
+        opPrintRunCmd brew list '|' grep --ignore-case $PACK_LIST_NAMES
       else
-        shRunOpCond brew list
+        opPrintRunCmd brew list
       fi
     fi
   fi
@@ -66,9 +66,9 @@ function () {
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
         if [[ "${PACK_LIST_NAMES}" ]]; then
-          shRunOpCond sudo dnf list --installed '|' grep --ignore-case $PACK_LIST_NAMES
+          opPrintRunCmd sudo dnf list --installed '|' grep --ignore-case $PACK_LIST_NAMES
         else
-          shRunOpCond sudo dnf list --installed
+          opPrintRunCmd sudo dnf list --installed
         fi
       fi
     fi
@@ -82,9 +82,9 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if [[ "${PACK_LIST_NAMES}" ]]; then
-        shRunOpCond yay --query '|' grep --ignore-case $PACK_LIST_NAMES
+        opPrintRunCmd yay --query '|' grep --ignore-case $PACK_LIST_NAMES
       else
-        shRunOpCond yay --query
+        opPrintRunCmd yay --query
       fi
     fi
   fi
@@ -99,15 +99,15 @@ function () {
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
         if [[ "${PACK_LIST_NAMES}" ]]; then
-          shRunOpCond sudo pacman --query '|' grep --ignore-case $PACK_LIST_NAMES
+          opPrintRunCmd sudo pacman --query '|' grep --ignore-case $PACK_LIST_NAMES
         else
-          shRunOpCond sudo pacman --query
+          opPrintRunCmd sudo pacman --query
         fi
       else
         if [[ "${PACK_LIST_NAMES}" ]]; then
-          shRunOpCond pacman --query '|' grep --ignore-case $PACK_LIST_NAMES
+          opPrintRunCmd pacman --query '|' grep --ignore-case $PACK_LIST_NAMES
         else
-          shRunOpCond pacman --query
+          opPrintRunCmd pacman --query
         fi
       fi
     fi

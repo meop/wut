@@ -11,21 +11,21 @@ function () {
       local share="${XDG_DATA_HOME:-${HOME}/.local/share}"
       local fonts="${share}/fonts"
 
-      shRunOpCond mkdir -p "${fonts}" '>' /dev/null '2>&1'
+      opPrintRunCmd mkdir -p "${fonts}" '>' /dev/null '2>&1'
 
       local output="${HOME}/Hack.zip"
       local url='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/Hack.zip'
-      shRunOpCond curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
-      shRunOpCond unzip -q "${output}" -d "${output}.unzip"
-      shRunOpCond cp "${output}.unzip"'/*.ttf' "${fonts}"
-      shRunOpCond rm -r -f "${output}"'*'
+      opPrintRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
+      opPrintRunCmd unzip -q "${output}" -d "${output}.unzip"
+      opPrintRunCmd cp "${output}.unzip"'/*.ttf' "${fonts}"
+      opPrintRunCmd rm -r -f "${output}"'*'
 
       local output="${HOME}/FiraCode.zip"
       local url='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/FiraCode.zip'
-      shRunOpCond curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
-      shRunOpCond unzip -q "${output}" -d "${output}.unzip"
-      shRunOpCond cp "${output}.unzip"'/*.ttf' "${fonts}"
-      shRunOpCond rm -r -f "${output}"'*'
+      opPrintRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
+      opPrintRunCmd unzip -q "${output}" -d "${output}.unzip"
+      opPrintRunCmd cp "${output}.unzip"'/*.ttf' "${fonts}"
+      opPrintRunCmd rm -r -f "${output}"'*'
     fi
   fi
 }

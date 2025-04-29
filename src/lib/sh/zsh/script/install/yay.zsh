@@ -11,16 +11,16 @@ function () {
       local output="${HOME}/.yay-bin"
 
       if [[ -d "${output}" ]]; then
-        shRunOpCond git -C "${output}" pull --prune '>' /dev/null '2>&1'
+        opPrintRunCmd git -C "${output}" pull --prune '>' /dev/null '2>&1'
       else
         local url='https://aur.archlinux.org/yay-bin.git'
-        shRunOpCond git clone --depth 1 --quiet "${url}" "${output}"
+        opPrintRunCmd git clone --depth 1 --quiet "${url}" "${output}"
       fi
 
       (
-        shRunOpCond pushd "${output}" '>' /dev/null '2>&1'
-        shRunOpCond makepkg --install --syncdeps
-        shRunOpCond popd '>' /dev/null '2>&1'
+        opPrintRunCmd pushd "${output}" '>' /dev/null '2>&1'
+        opPrintRunCmd makepkg --install --syncdeps
+        opPrintRunCmd popd '>' /dev/null '2>&1'
       )
     fi
   fi

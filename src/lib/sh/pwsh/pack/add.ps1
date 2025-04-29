@@ -9,10 +9,10 @@
       if ("${env:PACK_ADD_GROUPS}") {
         foreach ($preset in ${env:PACK_ADD_GROUPS}) {
           $presetSplit = ${preset} -Split ' '
-          shRunOpCond @presetSplit
+          opPrintRunCmd @presetSplit
         }
       }
-      shRunOpCond winget install $env:PACK_ADD_NAMES
+      opPrintRunCmd winget install $env:PACK_ADD_NAMES
     }
   }
 
@@ -26,11 +26,11 @@
       if ("${env:PACK_ADD_GROUPS}") {
         foreach ($preset in ${env:PACK_ADD_GROUPS}) {
           $presetSplit = ${preset} -Split ' '
-          shRunOpCond @presetSplit
+          opPrintRunCmd @presetSplit
         }
       }
-      shRunOpCond scoop update '>' '$null' '2>&1' '3>&1' '4>&1' '5>&1' '6>&1'
-      shRunOpCond scoop install $env:PACK_ADD_NAMES
+      opPrintRunCmd scoop update '>' '$null' '2>&1' '3>&1' '4>&1' '5>&1' '6>&1'
+      opPrintRunCmd scoop install $env:PACK_ADD_NAMES
     }
   }
 }

@@ -9,14 +9,14 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        shRunOpCond sudo apt purge $PACK_DEL_NAMES
+        opPrintRunCmd sudo apt purge $PACK_DEL_NAMES
       else
-        shRunOpCond apt purge $PACK_DEL_NAMES
+        opPrintRunCmd apt purge $PACK_DEL_NAMES
       fi
       if [[ $PACK_DEL_GROUPS ]]; then
         for preset in "${PACK_DEL_GROUPS[@]}"; do
           presetSplit=( ${(s: :)preset} )
-          shRunOpCond "${presetSplit[@]}"
+          opPrintRunCmd "${presetSplit[@]}"
         done
       fi
     fi
@@ -31,12 +31,12 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        shRunOpCond sudo apt-get purge $PACK_DEL_NAMES
+        opPrintRunCmd sudo apt-get purge $PACK_DEL_NAMES
       fi
       if [[ $PACK_DEL_GROUPS ]]; then
         for preset in "${PACK_DEL_GROUPS[@]}"; do
           presetSplit=( ${(s: :)preset} )
-          shRunOpCond "${presetSplit[@]}"
+          opPrintRunCmd "${presetSplit[@]}"
         done
       fi
     fi
@@ -49,11 +49,11 @@ function () {
       read 'yn?? rem packages with brew (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
-      shRunOpCond brew uninstall $PACK_DEL_NAMES
+      opPrintRunCmd brew uninstall $PACK_DEL_NAMES
       if [[ $PACK_DEL_GROUPS ]]; then
         for preset in "${PACK_DEL_GROUPS[@]}"; do
           presetSplit=( ${(s: :)preset} )
-          shRunOpCond "${presetSplit[@]}"
+          opPrintRunCmd "${presetSplit[@]}"
         done
       fi
     fi
@@ -67,12 +67,12 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        shRunOpCond sudo dnf remove $PACK_DEL_NAMES
+        opPrintRunCmd sudo dnf remove $PACK_DEL_NAMES
       fi
       if [[ $PACK_DEL_GROUPS ]]; then
         for preset in "${PACK_DEL_GROUPS[@]}"; do
           presetSplit=( ${(s: :)preset} )
-          shRunOpCond "${presetSplit[@]}"
+          opPrintRunCmd "${presetSplit[@]}"
         done
       fi
     fi
@@ -85,11 +85,11 @@ function () {
       read 'yn?? rem packages with yay (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
-      shRunOpCond yay --remove --recursive --nosave $PACK_DEL_NAMES
+      opPrintRunCmd yay --remove --recursive --nosave $PACK_DEL_NAMES
       if [[ $PACK_DEL_GROUPS ]]; then
         for preset in "${PACK_DEL_GROUPS[@]}"; do
           presetSplit=( ${(s: :)preset} )
-          shRunOpCond "${presetSplit[@]}"
+          opPrintRunCmd "${presetSplit[@]}"
         done
       fi
     fi
@@ -104,14 +104,14 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        shRunOpCond sudo pacman --remove --recursive --nosave $PACK_DEL_NAMES
+        opPrintRunCmd sudo pacman --remove --recursive --nosave $PACK_DEL_NAMES
       else
-        shRunOpCond pacman --remove --recursive --nosave $PACK_DEL_NAMES
+        opPrintRunCmd pacman --remove --recursive --nosave $PACK_DEL_NAMES
       fi
       if [[ $PACK_DEL_GROUPS ]]; then
         for preset in "${PACK_DEL_GROUPS[@]}"; do
           presetSplit=( ${(s: :)preset} )
-          shRunOpCond "${presetSplit[@]}"
+          opPrintRunCmd "${presetSplit[@]}"
         done
       fi
     fi

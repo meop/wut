@@ -8,7 +8,7 @@ function () {
       function install_nodesource_repo {
         if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep --invert-match '^#' | grep --invert-match '^$' | grep '^.*deb.*nodesource.*com.*$' > /dev/null; then
           local url="https://deb.nodesource.com/setup_${node_version}.x"
-          shRunOpCond sudo -E bash -c '"$(' curl --fail-with-body --location --no-progress-meter --url "${url}" ')"'
+          opPrintRunCmd sudo -E bash -c '"$(' curl --fail-with-body --location --no-progress-meter --url "${url}" ')"'
         fi
       }
 
@@ -19,8 +19,8 @@ function () {
       fi
       if [[ "${yn}" != 'n' ]]; then
         install_nodesource_repo
-        shRunOpCond sudo apt update
-        shRunOpCond sudo apt install nodejs
+        opPrintRunCmd sudo apt update
+        opPrintRunCmd sudo apt install nodejs
       fi
 
       if [[ "${YES}" ]]; then
@@ -30,8 +30,8 @@ function () {
       fi
       if [[ "${yn}" != 'n' ]]; then
         install_nodesource_repo
-        shRunOpCond sudo apt update
-        shRunOpCond sudo apt install npm
+        opPrintRunCmd sudo apt update
+        opPrintRunCmd sudo apt install npm
       fi
     fi
   fi

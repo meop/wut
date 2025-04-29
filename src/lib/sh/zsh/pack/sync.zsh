@@ -9,18 +9,18 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        shRunOpCond sudo apt update '>' /dev/null '2>&1'
+        opPrintRunCmd sudo apt update '>' /dev/null '2>&1'
         if [[ "${PACK_UP_NAMES}" ]]; then
-          shRunOpCond sudo apt install $PACK_UP_NAMES
+          opPrintRunCmd sudo apt install $PACK_UP_NAMES
         else
-          shRunOpCond sudo apt full-upgrade
+          opPrintRunCmd sudo apt full-upgrade
         fi
       else
-        shRunOpCond apt update '>' /dev/null '2>&1'
+        opPrintRunCmd apt update '>' /dev/null '2>&1'
         if [[ "${PACK_UP_NAMES}" ]]; then
-          shRunOpCond apt install $PACK_UP_NAMES
+          opPrintRunCmd apt install $PACK_UP_NAMES
         else
-          shRunOpCond apt full-upgrade
+          opPrintRunCmd apt full-upgrade
         fi
       fi
     fi
@@ -35,11 +35,11 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        shRunOpCond sudo apt-get update '>' /dev/null '2>&1'
+        opPrintRunCmd sudo apt-get update '>' /dev/null '2>&1'
         if [[ "${PACK_UP_NAMES}" ]]; then
-          shRunOpCond sudo apt-get install $PACK_UP_NAMES
+          opPrintRunCmd sudo apt-get install $PACK_UP_NAMES
         else
-          shRunOpCond sudo apt-get dist-upgrade
+          opPrintRunCmd sudo apt-get dist-upgrade
         fi
       fi
     fi
@@ -52,11 +52,11 @@ function () {
       read 'yn?? sync packages with brew (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
-      shRunOpCond brew update '>' /dev/null '2>&1'
+      opPrintRunCmd brew update '>' /dev/null '2>&1'
       if [[ "${PACK_UP_NAMES}" ]]; then
-        shRunOpCond brew upgrade --greedy $PACK_UP_NAMES
+        opPrintRunCmd brew upgrade --greedy $PACK_UP_NAMES
       else
-        shRunOpCond brew upgrade --greedy
+        opPrintRunCmd brew upgrade --greedy
       fi
     fi
   fi
@@ -69,11 +69,11 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        shRunOpCond sudo dnf check-update '>' /dev/null '2>&1'
+        opPrintRunCmd sudo dnf check-update '>' /dev/null '2>&1'
         if [[ "${PACK_UP_NAMES}" ]]; then
-          shRunOpCond sudo dnf upgrade $PACK_UP_NAMES
+          opPrintRunCmd sudo dnf upgrade $PACK_UP_NAMES
         else
-          shRunOpCond sudo dnf distro-sync
+          opPrintRunCmd sudo dnf distro-sync
         fi
       fi
     fi
@@ -86,11 +86,11 @@ function () {
       read 'yn?? sync packages with yay (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
-      shRunOpCond yay --sync --refresh '>' /dev/null '2>&1'
+      opPrintRunCmd yay --sync --refresh '>' /dev/null '2>&1'
       if [[ "${PACK_UP_NAMES}" ]]; then
-        shRunOpCond yay --sync --needed $PACK_UP_NAMES
+        opPrintRunCmd yay --sync --needed $PACK_UP_NAMES
       else
-        shRunOpCond yay --sync --sysupgrade
+        opPrintRunCmd yay --sync --sysupgrade
       fi
     fi
   fi
@@ -104,18 +104,18 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        shRunOpCond sudo pacman --sync --refresh '>' /dev/null '2>&1'
+        opPrintRunCmd sudo pacman --sync --refresh '>' /dev/null '2>&1'
         if [[ "${PACK_UP_NAMES}" ]]; then
-          shRunOpCond sudo pacman --sync --needed $PACK_UP_NAMES
+          opPrintRunCmd sudo pacman --sync --needed $PACK_UP_NAMES
         else
-          shRunOpCond sudo pacman --sync --sysupgrade
+          opPrintRunCmd sudo pacman --sync --sysupgrade
         fi
       else
-        shRunOpCond pacman --sync --refresh '>' /dev/null '2>&1'
+        opPrintRunCmd pacman --sync --refresh '>' /dev/null '2>&1'
         if [[ "${PACK_UP_NAMES}" ]]; then
-          shRunOpCond pacman --sync --needed $PACK_UP_NAMES
+          opPrintRunCmd pacman --sync --needed $PACK_UP_NAMES
         else
-          shRunOpCond pacman --sync --sysupgrade
+          opPrintRunCmd pacman --sync --sysupgrade
         fi
       fi
     fi

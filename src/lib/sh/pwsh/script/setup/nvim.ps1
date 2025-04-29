@@ -12,7 +12,7 @@
 
         $output = "${nvim}/site/autoload/plug.vim"
         $url = 'https://raw.githubusercontent.com/junegunn/vim-plug/HEAD/plug.vim'
-        shRunOpCond Invoke-WebRequest -Uri "${url}" '|' New-Item "${output}" -Force '>' '$null'
+        opPrintRunCmd Invoke-WebRequest -Uri "${url}" '|' New-Item "${output}" -Force '>' '$null'
       }
     }
   }

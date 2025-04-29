@@ -138,14 +138,13 @@ async function runSrv(req: Request) {
         async () =>
           [context.req.orig, context.req.path, context.req.srch].join(''),
       )
-      .withFsFileLoad(async () => ['sh', 'print'])
-      .withFsFileLoad(async () => ['sh', 'run'])
+      .withFsFileLoad(async () => ['sh', 'op'])
       .withFsFileLoad(async () => ['sh', 'ver'])
-      .withFsFileLoad(async () => ['sh', 'env'])
+      .withFsFileLoad(async () => ['sh', 'sys'])
 
     if (!context.sys?.cpu?.arch) {
       return new Response(
-        await shell.withFsFileLoad(async () => ['sh', 'sub']).build(),
+        await shell.withFsFileLoad(async () => ['sh', 'get']).build(),
       )
     }
 

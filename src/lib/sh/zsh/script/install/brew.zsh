@@ -8,6 +8,6 @@ function () {
   fi
   if [[ "${yn}" != 'n' ]]; then
     local url='https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh'
-    shRunOpCond bash -c '"$(' curl --fail-with-body --location --no-progress-meter --url "${url}" ')"'
+    opPrintRunCmd bash -c '"$(' curl --fail-with-body --location --no-progress-meter --url "${url}" ')"'
   fi
 }

@@ -9,18 +9,18 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        shRunOpCond sudo apt update '>' /dev/null '2>&1'
+        opPrintRunCmd sudo apt update '>' /dev/null '2>&1'
         if [[ "${PACK_OUT_NAMES}" ]]; then
-          shRunOpCond sudo apt list --upgradable '2>' /dev/null '|' grep --ignore-case $PACK_OUT_NAMES
+          opPrintRunCmd sudo apt list --upgradable '2>' /dev/null '|' grep --ignore-case $PACK_OUT_NAMES
         else
-          shRunOpCond sudo apt list --upgradable '2>' /dev/null
+          opPrintRunCmd sudo apt list --upgradable '2>' /dev/null
         fi
       else
-        shRunOpCond apt update '>' /dev/null '2>&1'
+        opPrintRunCmd apt update '>' /dev/null '2>&1'
         if [[ "${PACK_OUT_NAMES}" ]]; then
-          shRunOpCond apt list --upgradable '2>' /dev/null '|' grep --ignore-case $PACK_OUT_NAMES
+          opPrintRunCmd apt list --upgradable '2>' /dev/null '|' grep --ignore-case $PACK_OUT_NAMES
         else
-          shRunOpCond apt list --upgradable '2>' /dev/null
+          opPrintRunCmd apt list --upgradable '2>' /dev/null
         fi
       fi
     fi
@@ -35,11 +35,11 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        shRunOpCond sudo apt-get update '>' /dev/null '2>&1'
+        opPrintRunCmd sudo apt-get update '>' /dev/null '2>&1'
         if [[ "${PACK_OUT_NAMES}" ]]; then
-          shRunOpCond sudo apt-get list --upgradable '|' grep --ignore-case $PACK_OUT_NAMES
+          opPrintRunCmd sudo apt-get list --upgradable '|' grep --ignore-case $PACK_OUT_NAMES
         else
-          shRunOpCond sudo apt-get list --upgradable
+          opPrintRunCmd sudo apt-get list --upgradable
         fi
       fi
     fi
@@ -52,11 +52,11 @@ function () {
       read 'yn?? out packages with brew (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
-      shRunOpCond brew update '>' /dev/null '2>&1'
+      opPrintRunCmd brew update '>' /dev/null '2>&1'
       if [[ "${PACK_OUT_NAMES}" ]]; then
-        shRunOpCond brew outdated | grep --ignore-case $PACK_OUT_NAMES
+        opPrintRunCmd brew outdated | grep --ignore-case $PACK_OUT_NAMES
       else
-        shRunOpCond brew outdated
+        opPrintRunCmd brew outdated
       fi
     fi
   fi
@@ -69,11 +69,11 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        shRunOpCond sudo dnf check-update '>' /dev/null '2>&1'
+        opPrintRunCmd sudo dnf check-update '>' /dev/null '2>&1'
         if [[ "${PACK_OUT_NAMES}" ]]; then
-          shRunOpCond sudo dnf list --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
+          opPrintRunCmd sudo dnf list --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
         else
-          shRunOpCond sudo dnf list --upgrades
+          opPrintRunCmd sudo dnf list --upgrades
         fi
       fi
     fi
@@ -86,11 +86,11 @@ function () {
       read 'yn?? out packages with yay (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
-      shRunOpCond yay --sync --refresh '>' /dev/null '2>&1'
+      opPrintRunCmd yay --sync --refresh '>' /dev/null '2>&1'
       if [[ "${PACK_OUT_NAMES}" ]]; then
-        shRunOpCond yay --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
+        opPrintRunCmd yay --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
       else
-        shRunOpCond yay --query --upgrades
+        opPrintRunCmd yay --query --upgrades
       fi
     fi
   fi
@@ -104,18 +104,18 @@ function () {
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
-        shRunOpCond sudo pacman --sync --refresh '>' /dev/null '2>&1'
+        opPrintRunCmd sudo pacman --sync --refresh '>' /dev/null '2>&1'
         if [[ "${PACK_OUT_NAMES}" ]]; then
-          shRunOpCond sudo pacman --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
+          opPrintRunCmd sudo pacman --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
         else
-          shRunOpCond sudo pacman --query --upgrades
+          opPrintRunCmd sudo pacman --query --upgrades
         fi
       else
-        shRunOpCond pacman --sync --refresh '>' /dev/null '2>&1'
+        opPrintRunCmd pacman --sync --refresh '>' /dev/null '2>&1'
         if [[ "${PACK_OUT_NAMES}" ]]; then
-          shRunOpCond pacman --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
+          opPrintRunCmd pacman --query --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
         else
-          shRunOpCond pacman --query --upgrades
+          opPrintRunCmd pacman --query --upgrades
         fi
       fi
     fi

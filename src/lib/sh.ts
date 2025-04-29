@@ -163,37 +163,37 @@ export class ShBase {
 
   withPrint(lines: () => Promise<Array<string>>): Sh {
     return this.with(async () =>
-      (await lines()).map(l => `shPrint ${this.toVal(l)}`),
+      (await lines()).map(l => `opPrint ${this.toVal(l)}`),
     )
   }
 
   withPrintErr(lines: () => Promise<Array<string>>): Sh {
     return this.with(async () =>
-      (await lines()).map(l => `shPrintErr ${this.toVal(l)}`),
+      (await lines()).map(l => `opPrintErr ${this.toVal(l)}`),
     )
   }
 
   withPrintInfo(lines: () => Promise<Array<string>>): Sh {
     return this.with(async () =>
-      (await lines()).map(l => `shPrintInfo ${this.toVal(l)}`),
+      (await lines()).map(l => `opPrintInfo ${this.toVal(l)}`),
     )
   }
 
   withPrintOp(lines: () => Promise<Array<string>>): Sh {
     return this.with(async () =>
-      (await lines()).map(l => `shPrintOp ${this.toVal(l)}`),
+      (await lines()).map(l => `opPrintCmd ${this.toVal(l)}`),
     )
   }
 
   withPrintSucc(lines: () => Promise<Array<string>>): Sh {
     return this.with(async () =>
-      (await lines()).map(l => `shPrintSucc ${this.toVal(l)}`),
+      (await lines()).map(l => `opPrintSucc ${this.toVal(l)}`),
     )
   }
 
   withPrintWarn(lines: () => Promise<Array<string>>): Sh {
     return this.with(async () =>
-      (await lines()).map(l => `shPrintWarn ${this.toVal(l)}`),
+      (await lines()).map(l => `opPrintWarn ${this.toVal(l)}`),
     )
   }
 

@@ -1,11 +1,11 @@
-function shPrint {
+function opPrint {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
   printf "%s\n" "$*"
 }
 
-function shPrintErr {
+function opPrintErr {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
@@ -16,7 +16,7 @@ function shPrintErr {
   printf "\033[0;31m%s\033[0m\n" "$*" >&2
 }
 
-function shPrintSucc {
+function opPrintSucc {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
@@ -27,7 +27,7 @@ function shPrintSucc {
   printf "\033[0;32m%s\033[0m\n" "$*"
 }
 
-function shPrintWarn {
+function opPrintWarn {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
@@ -38,7 +38,7 @@ function shPrintWarn {
   printf "\033[0;33m%s\033[0m\n" "$*"
 }
 
-function shPrintInfo {
+function opPrintInfo {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
@@ -49,7 +49,7 @@ function shPrintInfo {
   printf "\033[0;34m%s\033[0m\n" "$*"
 }
 
-function shPrintOp {
+function opPrintCmd {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
@@ -61,5 +61,16 @@ function shPrintOp {
   shift 1
   if [[ "$*" ]]; then
     printf " \033[0;36m%s\033[0m\n" "$*"
+  fi
+}
+
+function opRunCmd {
+  eval "$*"
+}
+
+function opPrintRunCmd {
+  opPrintCmd "$@"
+  if [[ -z "${NOOP}" ]]; then
+    opRunCmd "$@"
   fi
 }

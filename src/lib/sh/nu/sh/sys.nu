@@ -1,5 +1,5 @@
 if 'SYS_CPU_ARCH' not-in $env {
-  $env.SYS_CPU_ARCH = $nu.os-info.arch | str downcase
+  $env.SYS_CPU_ARCH = uname | get machine | str downcase
   if ($env.SYS_CPU_ARCH | is-not-empty) {
     $env.REQ_URL_SH = $"($env.REQ_URL_SH)?sysCpuArch=($env.SYS_CPU_ARCH)"
   }
@@ -20,14 +20,14 @@ if 'SYS_HOST' not-in $env {
 }
 
 if 'SYS_OS_PLAT' not-in $env {
-  $env.SYS_OS_PLAT = $nu.os-info.name | str downcase
+  $env.SYS_OS_PLAT = uname | get kernel-name | str downcase
   if ($env.SYS_OS_PLAT | is-not-empty) {
     $env.REQ_URL_SH = $"($env.REQ_URL_SH)&sysOsPlat=($env.SYS_OS_PLAT)"
   }
 }
 
 if $env.SYS_OS_PLAT == 'linux' {
-  if (('/etc/os-release' | path type) == dir) {
+  if ('/etc/os-release' | path exists) {
     if 'SYS_OS_ID' not-in $env {
       $env.SYS_OS_ID = (grep '^ID=' /etc/os-release | cut -d '=' -f 2 | xargs | tr -d '"') | str downcase
       if ($env.SYS_OS_ID | is-not-empty) {

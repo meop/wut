@@ -38,9 +38,9 @@ if (-not "${env:SYS_HOST}") {
 
 if (-not "${env:SYS_OS_PLAT}") {
   if ($IsWindows) {
-    $env:SYS_OS_PLAT = 'windows'
+    $env:SYS_OS_PLAT = 'winnt'
   } elseif ($IsMacOS) {
-    $env:SYS_OS_PLAT = 'macos'
+    $env:SYS_OS_PLAT = 'darwin'
   } elseif ($IsLinux) {
     $env:SYS_OS_PLAT = 'linux'
   }

@@ -22,8 +22,9 @@ export function getOsPlat(osPlat: string) {
     case 'macos':
       return 'macos'
     case 'win32':
-    case 'winnt':
     case 'windows':
+    case 'windows_nt':
+    case 'winnt':
       return 'windows'
     default:
       throw new Error(`unsupported os platform: ${osPlatLower}`)

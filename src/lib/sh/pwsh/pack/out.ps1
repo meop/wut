@@ -7,9 +7,9 @@
     }
     if ("${yn}" -ne 'n') {
       if ("${env:PACK_OUT_NAMES}") {
-        shRunOpCond winget upgrade '|' Select-String $env:PACK_OUT_NAMES | ForEach-Object {$_.Line}
+        opPrintRunCmd winget upgrade '|' Select-String $env:PACK_OUT_NAMES | ForEach-Object {$_.Line}
       } else {
-        shRunOpCond winget upgrade
+        opPrintRunCmd winget upgrade
       }
     }
   }
@@ -21,11 +21,11 @@
       $yn = Read-Host '? out packages with scoop (user) [y, [n]]'
     }
     if ("${yn}" -ne 'n') {
-      shRunOpCond scoop update '>' '$null' '2>&1' '3>&1' '4>&1' '5>&1' '6>&1'
+      opPrintRunCmd scoop update '>' '$null' '2>&1' '3>&1' '4>&1' '5>&1' '6>&1'
       if ("${env:PACK_OUT_NAMES}") {
-        shRunOpCond scoop status '2>&1' '3>&1' '4>&1' '5>&1' '6>&1' '|' Select-String $env:PACK_OUT_NAMES | ForEach-Object {$_.Line}
+        opPrintRunCmd scoop status '2>&1' '3>&1' '4>&1' '5>&1' '6>&1' '|' Select-String $env:PACK_OUT_NAMES | ForEach-Object {$_.Line}
       } else {
-        shRunOpCond scoop status
+        opPrintRunCmd scoop status
       }
     }
   }

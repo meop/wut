@@ -7,9 +7,9 @@
     }
     if ("${yn}" -ne 'n') {
       if ("${env:PACK_LIST_NAMES}") {
-        shRunOpCond winget list '|' Select-String $env:PACK_LIST_NAMES | ForEach-Object {$_.Line}
+        opPrintRunCmd winget list '|' Select-String $env:PACK_LIST_NAMES | ForEach-Object {$_.Line}
       } else {
-        shRunOpCond winget list
+        opPrintRunCmd winget list
       }
     }
   }
@@ -22,9 +22,9 @@
     }
     if ("${yn}" -ne 'n') {
       if ("${env:PACK_LIST_NAMES}") {
-        shRunOpCond scoop list '2>&1' '3>&1' '4>&1' '5>&1' '6>&1' '|' Select-String $env:PACK_LIST_NAMES | ForEach-Object {$_.Line}
+        opPrintRunCmd scoop list '2>&1' '3>&1' '4>&1' '5>&1' '6>&1' '|' Select-String $env:PACK_LIST_NAMES | ForEach-Object {$_.Line}
       } else {
-        shRunOpCond scoop list
+        opPrintRunCmd scoop list
       }
     }
   }

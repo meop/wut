@@ -11,7 +11,7 @@ function () {
         read 'yn?? setup termux mirrors (system) [y, [n]] '
       fi
       if [[ "${yn}" != 'n' ]]; then
-        shRunOpCond termux-change-mirror
+        opPrintRunCmd termux-change-mirror
       fi
 
       if [[ "${YES}" ]]; then
@@ -20,7 +20,7 @@ function () {
         read 'yn?? setup termux storage (system) [y, [n]] '
       fi
       if [[ "${yn}" != 'n' ]]; then
-        shRunOpCond termux-setup-storage
+        opPrintRunCmd termux-setup-storage
       fi
 
       if [[ "${YES}" ]]; then
@@ -31,16 +31,16 @@ function () {
       if [[ "${yn}" != 'n' ]]; then
         local output="${termux}/colors.properties"
         local url='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/termux/tokyonight_moon.properties'
-        shRunOpCond curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
+        opPrintRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
 
         local output="${termux}/Hack.zip"
         local url='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/Hack.zip'
-        shRunOpCond curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
-        shRunOpCond unzip -q "${output}" -d "${output}.unzip"
-        shRunOpCond cp "${output}.unzip/HackNerdFontMono-Regular.ttf" "${termux}/font.ttf"
-        shRunOpCond rm -r -f "${output}"'*'
+        opPrintRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
+        opPrintRunCmd unzip -q "${output}" -d "${output}.unzip"
+        opPrintRunCmd cp "${output}.unzip/HackNerdFontMono-Regular.ttf" "${termux}/font.ttf"
+        opPrintRunCmd rm -r -f "${output}"'*'
 
-        shRunOpCond termux-reload-settings
+        opPrintRunCmd termux-reload-settings
       fi
     fi
   fi

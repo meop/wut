@@ -7,7 +7,7 @@
     }
     if ("${yn}" -ne 'n') {
       $url = 'https://get.scoop.sh'
-      shRunOpCond pwsh -c '"$(Invoke-WebRequest' -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "${url}"')"'
+      opPrintRunCmd pwsh -c '"$(Invoke-WebRequest' -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "${url}"')"'
     }
   }
 }

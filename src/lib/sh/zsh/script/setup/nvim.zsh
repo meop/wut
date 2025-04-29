@@ -13,7 +13,7 @@ function () {
 
       local output="${nvim}/site/autoload/plug.vim"
       local url='https://raw.githubusercontent.com/junegunn/vim-plug/HEAD/plug.vim'
-      shRunOpCond curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
+      opPrintRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
     fi
   fi
 }
