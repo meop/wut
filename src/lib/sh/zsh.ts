@@ -15,10 +15,6 @@ export class Zshell extends ShBase implements Sh {
     ])
   }
 
-  withEval(lines: () => Promise<Array<string>>): Sh {
-    return this.with(async () => (await lines()).map(l => `eval "${l}"`))
-  }
-
   withTrace(): Sh {
     return this.with(async () => ['set -x'])
   }

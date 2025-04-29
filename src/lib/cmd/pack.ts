@@ -106,7 +106,13 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
       .withFsFileLoad(async () => [packKey, op])
   }
 
-  return await _shell.build()
+  const body = await _shell.build()
+
+  if (environment[toEnvKey('log')]) {
+    console.log(body)
+  }
+
+  return body
 }
 
 export class PackCmdAdd extends CmdBase implements Cmd {
@@ -149,7 +155,15 @@ export class PackCmdList extends CmdBase implements Cmd {
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await shell.withFsFileLoad(async () => ['pack', 'list']).build()
+    const body = await shell
+      .withFsFileLoad(async () => ['pack', 'list'])
+      .build()
+
+    if (environment[toEnvKey('log')]) {
+      console.log(body)
+    }
+
+    return body
   }
 }
 
@@ -162,7 +176,13 @@ export class PackCmdOut extends CmdBase implements Cmd {
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await shell.withFsFileLoad(async () => ['pack', 'out']).build()
+    const body = await shell.withFsFileLoad(async () => ['pack', 'out']).build()
+
+    if (environment[toEnvKey('log')]) {
+      console.log(body)
+    }
+
+    return body
   }
 }
 
@@ -193,7 +213,13 @@ export class PackCmdSync extends CmdBase implements Cmd {
     if (toEnvKey('pack', 'sync', 'tidy') in environment) {
       _shell = shell.withFsFileLoad(async () => ['pack', 'tidy'])
     }
-    return await _shell.build()
+    const body = await _shell.build()
+
+    if (environment[toEnvKey('log')]) {
+      console.log(body)
+    }
+
+    return body
   }
 }
 
@@ -205,6 +231,14 @@ export class PackCmdTidy extends CmdBase implements Cmd {
     this.aliases = ['t', 'ti']
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await shell.withFsFileLoad(async () => ['pack', 'tidy']).build()
+    const body = await shell
+      .withFsFileLoad(async () => ['pack', 'tidy'])
+      .build()
+
+    if (environment[toEnvKey('log')]) {
+      console.log(body)
+    }
+
+    return body
   }
 }

@@ -35,10 +35,10 @@ if $env.SYS_OS_PLAT == 'linux' {
       }
     }
 
-    if 'sys_os_ver_id' not-in $env {
-      $env.sys_os_ver_id = (grep '^VERSION_ID=' /etc/os-release | cut -d '=' -f 2 | xargs | tr -d '"') | str downcase
-      if ($env.sys_os_ver_id | is-not-empty) {
-        $env.REQ_URL_SH = $"($env.REQ_URL_SH)&sysOsVerId=($env.sys_os_ver_id)"
+    if 'SYS_OS_VER_ID' not-in $env {
+      $env.SYS_OS_VER_ID = (grep '^VERSION_ID=' /etc/os-release | cut -d '=' -f 2 | xargs | tr -d '"') | str downcase
+      if ($env.SYS_OS_VER_ID | is-not-empty) {
+        $env.REQ_URL_SH = $"($env.REQ_URL_SH)&sysOsVerId=($env.SYS_OS_VER_ID)"
       }
     }
 

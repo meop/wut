@@ -5,7 +5,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? list instances of docker (system) [y, [n]] '
+      read 'yn?? list instances of docker (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       for instance in "${VIRT_INSTANCES[@]}"; do
@@ -18,7 +18,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? list instances of qemu (system) [y, [n]] '
+      read 'yn?? list instances of qemu (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       for instance in "${VIRT_INSTANCES[@]}"; do

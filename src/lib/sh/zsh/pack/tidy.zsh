@@ -5,7 +5,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? tidy packages with apt (system) [y, [n]] '
+      read 'yn?? tidy packages with apt (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
@@ -23,7 +23,7 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? tidy packages with apt-get (system) [y, [n]] '
+      read 'yn?? tidy packages with apt-get (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
@@ -37,7 +37,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? tidy packages with brew (system) [y, [n]] '
+      read 'yn?? tidy packages with brew (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       shRunOpCond brew cleanup --prune=all
@@ -48,7 +48,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? tidy packages with dnf (system) [y, [n]] '
+      read 'yn?? tidy packages with dnf (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
@@ -62,7 +62,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? tidy packages with yay (system) [y, [n]] '
+      read 'yn?? tidy packages with yay (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       shRunOpCond yay --sync --clean
@@ -74,7 +74,7 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? tidy packages with pacman (system) [y, [n]] '
+      read 'yn?? tidy packages with pacman (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then

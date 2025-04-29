@@ -15,10 +15,6 @@ export class Nushell extends ShBase implements Sh {
     ])
   }
 
-  withEval(lines: () => Promise<Array<string>>): Sh {
-    return this.with(async () => (await lines()).map(l => `nu -c "${l}"`))
-  }
-
   withTrace(): Sh {
     return this.with(async () => []) // no direct equivalent
   }

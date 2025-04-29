@@ -1,10 +1,10 @@
 function shRunOp {
-  eval "$@"
+  eval "$*"
 }
 
 function shRunOpCond {
-  shPrintOp $@
+  shPrintOp "$@"
   if [[ -z "${NOOP}" ]]; then
-    shRunOp $@
+    shRunOp "$@"
   fi
 }

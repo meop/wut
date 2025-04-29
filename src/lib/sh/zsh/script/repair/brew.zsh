@@ -7,7 +7,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? repair brew file perms (system) [y, [n]] '
+      read 'yn?? repair brew file perms (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       local brew_prefix=$(brew --prefix)

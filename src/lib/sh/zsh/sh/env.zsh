@@ -42,10 +42,10 @@ if [[ "${SYS_OS_PLAT}" == 'linux' ]]; then
       fi
     fi
 
-    if [[ -z "${sys_os_ver_id}" ]]; then
-      export sys_os_ver_id="${(L)$(grep '^VERSION_ID=' /etc/os-release | cut -d '=' -f 2 | xargs | tr -d '"')}"
-      if [[ "${sys_os_ver_id}" ]]; then
-        export REQ_URL_SH="${REQ_URL_SH}&sysOsVerId=${sys_os_ver_id}"
+    if [[ -z "${SYS_OS_VER_ID}" ]]; then
+      export SYS_OS_VER_ID="${(L)$(grep '^VERSION_ID=' /etc/os-release | cut -d '=' -f 2 | xargs | tr -d '"')}"
+      if [[ "${SYS_OS_VER_ID}" ]]; then
+        export REQ_URL_SH="${REQ_URL_SH}&sysOsVerId=${SYS_OS_VER_ID}"
       fi
     fi
 

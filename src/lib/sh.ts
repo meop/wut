@@ -6,7 +6,6 @@ export interface Sh {
   with(lines: () => Promise<Array<string>>): Sh
 
   withEnvVarSet(name: () => Promise<string>, value: () => Promise<string>): Sh
-  withEval(lines: () => Promise<Array<string>>): Sh
 
   withFsDirLoad(
     parts: () => Promise<Array<string>>,
@@ -81,10 +80,6 @@ export class ShBase {
   }
 
   withEnvVarSet(name: () => Promise<string>, value: () => Promise<string>): Sh {
-    throw new Error('not implemented')
-  }
-
-  withEval(lines: () => Promise<Array<string>>): Sh {
     throw new Error('not implemented')
   }
 

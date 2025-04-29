@@ -5,7 +5,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? rem packages with apt (system) [y, [n]] '
+      read 'yn?? rem packages with apt (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
@@ -27,7 +27,7 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? rem packages with apt-get (system) [y, [n]] '
+      read 'yn?? rem packages with apt-get (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
@@ -46,7 +46,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? rem packages with brew (system) [y, [n]] '
+      read 'yn?? rem packages with brew (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       shRunOpCond brew uninstall $PACK_DEL_NAMES
@@ -63,7 +63,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? rem packages with dnf (system) [y, [n]] '
+      read 'yn?? rem packages with dnf (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
@@ -82,7 +82,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? rem packages with yay (system) [y, [n]] '
+      read 'yn?? rem packages with yay (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       shRunOpCond yay --remove --recursive --nosave $PACK_DEL_NAMES
@@ -100,7 +100,7 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? rem packages with pacman (system) [y, [n]] '
+      read 'yn?? rem packages with pacman (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then

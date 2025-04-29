@@ -2,7 +2,7 @@ function shPrint {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
-  echo -E $@
+  printf "%s\n" "$*"
 }
 
 function shPrintErr {
@@ -10,12 +10,10 @@ function shPrintErr {
     return
   fi
   if [[ "${GRAYSCALE}" ]]; then
-    echo -E $@ >&2
+    printf "%s\n" "$*" >&2
     return
   fi
-  echo -n '\033[0;31m' >&2
-  echo -n -E $@ >&2
-  echo '\033[0m' >&2
+  printf "\033[0;31m%s\033[0m\n" "$*" >&2
 }
 
 function shPrintSucc {
@@ -23,12 +21,10 @@ function shPrintSucc {
     return
   fi
   if [[ "${GRAYSCALE}" ]]; then
-    echo -E $@
+    printf "%s\n" "$*"
     return
   fi
-  echo -n '\033[0;32m'
-  echo -n -E $@
-  echo '\033[0m'
+  printf "\033[0;32m%s\033[0m\n" "$*"
 }
 
 function shPrintWarn {
@@ -36,12 +32,10 @@ function shPrintWarn {
     return
   fi
   if [[ "${GRAYSCALE}" ]]; then
-    echo -E $@
+    printf "%s\n" "$*"
     return
   fi
-  echo -n '\033[0;33m'
-  echo -n -E $@
-  echo '\033[0m'
+  printf "\033[0;33m%s\033[0m\n" "$*"
 }
 
 function shPrintInfo {
@@ -49,12 +43,10 @@ function shPrintInfo {
     return
   fi
   if [[ "${GRAYSCALE}" ]]; then
-    echo -E $@
+    printf "%s\n" "$*"
     return
   fi
-  echo -n '\033[0;34m'
-  echo -n -E $@
-  echo '\033[0m'
+  printf "\033[0;34m%s\033[0m\n" "$*"
 }
 
 function shPrintOp {
@@ -62,16 +54,12 @@ function shPrintOp {
     return
   fi
   if [[ "${GRAYSCALE}" ]]; then
-    echo -E $@
+    printf "%s\n" "$*"
     return
   fi
-  echo -n '\033[0;35m'
-  echo -n -E $1
+  printf "\033[0;35m%s\033[0m" "$1"
   shift 1
-  if [[ "$@" ]]; then
-    echo -n -E ' '
-    echo -n '\033[0;36m'
-    echo -n -E $@
+  if [[ "$*" ]]; then
+    printf " \033[0;36m%s\033[0m\n" "$*"
   fi
-  echo '\033[0m'
 }

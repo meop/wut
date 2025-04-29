@@ -34,13 +34,19 @@ export class ScriptCmdFind extends CmdBase implements Cmd {
       filters.push(...environment[scriptFindPartsKey].split(' '))
     }
 
-    return await shell
+    const body = await shell
       .withFsDirPrint(async () => ['script'], {
         filters: async () => filters,
         content: scriptFindContentsKey in environment,
         name: true,
       })
       .build()
+
+    if (environment[toEnvKey('log')]) {
+      console.log(body)
+    }
+
+    return body
   }
 }
 
@@ -59,10 +65,16 @@ export class ScriptCmdRun extends CmdBase implements Cmd {
       filters.push(...environment[scriptRunPartsKey].split(' '))
     }
 
-    return await shell
+    const body = await shell
       .withFsDirLoad(async () => ['script'], {
         filters: async () => filters,
       })
       .build()
+
+    if (environment[toEnvKey('log')]) {
+      console.log(body)
+    }
+
+    return body
   }
 }

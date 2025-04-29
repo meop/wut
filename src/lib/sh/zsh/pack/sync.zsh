@@ -5,7 +5,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? sync packages with apt (system) [y, [n]] '
+      read 'yn?? sync packages with apt (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
@@ -31,7 +31,7 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? sync packages with apt-get (system) [y, [n]] '
+      read 'yn?? sync packages with apt-get (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
@@ -49,7 +49,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? sync packages with brew (system) [y, [n]] '
+      read 'yn?? sync packages with brew (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       shRunOpCond brew update '>' /dev/null '2>&1'
@@ -65,7 +65,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? sync packages with dnf (system) [y, [n]] '
+      read 'yn?? sync packages with dnf (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then
@@ -83,7 +83,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? sync packages with yay (system) [y, [n]] '
+      read 'yn?? sync packages with yay (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       shRunOpCond yay --sync --refresh '>' /dev/null '2>&1'
@@ -100,7 +100,7 @@ function () {
     elif [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? sync packages with pacman (system) [y, [n]] '
+      read 'yn?? sync packages with pacman (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       if type sudo > /dev/null; then

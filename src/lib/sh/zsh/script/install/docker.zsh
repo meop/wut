@@ -2,7 +2,7 @@ function () {
   local yn
 
   if [[ "${SYS_OS_PLAT}" == 'linux' ]]; then
-    if [[ "${sys_os}" == 'debian' ]]; then
+    if [[ "${SYS_OS_ID}" == 'debian' ]]; then
       # docker: <https://docs.docker.com/engine/install/debian/#install-using-the-repository>
 
       function install_docker_repo {
@@ -13,7 +13,7 @@ function () {
           shRunOpCond sudo apt-get update
           shRunOpCond sudo apt-get install ca-certificates curl
           shRunOpCond sudo install -m 0755 -d /etc/apt/keyrings
-          shRunOpCond sudo curl --fail-with-body --location --silent "${url}"/gpg --output "${output_key}"
+          shRunOpCond sudo curl --fail-with-body --location --no-progress-meter "${url}"/gpg --output "${output_key}"
           shRunOpCond sudo chmod a+r "${output_key}"
 
           local output="/etc/apt/sources.list.d/docker.list"
@@ -26,7 +26,7 @@ function () {
       if [[ "${YES}" ]]; then
         yn='y'
       else
-        read yn?'? install docker (system) [y, [n]] '
+        read 'yn?? install docker (system) [y, [n]] '
       fi
       if [[ "${yn}" != 'n' ]]; then
         install_docker_repo

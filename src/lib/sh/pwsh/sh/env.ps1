@@ -58,10 +58,10 @@ if ("${env:SYS_OS_PLAT}" -eq 'linux') {
       }
     }
 
-    if (-not "${env:sys_os_ver_id}") {
-      $env:sys_os_ver_id = "$(grep '^VERSION_ID=' /etc/os-release | cut -d '=' -f 2 | xargs | tr -d '"')".ToLower()
-      if ("${env:sys_os_ver_id}") {
-        $env:REQ_URL_SH = "${env:REQ_URL_SH}&sysOsVerId=${env:sys_os_ver_id}"
+    if (-not "${env:SYS_OS_VER_ID}") {
+      $env:SYS_OS_VER_ID = "$(grep '^VERSION_ID=' /etc/os-release | cut -d '=' -f 2 | xargs | tr -d '"')".ToLower()
+      if ("${env:SYS_OS_VER_ID}") {
+        $env:REQ_URL_SH = "${env:REQ_URL_SH}&sysOsVerId=${env:SYS_OS_VER_ID}"
       }
     }
 

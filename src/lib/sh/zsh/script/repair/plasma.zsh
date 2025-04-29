@@ -12,7 +12,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? repair plasma global shortcuts (user) [y, [n]] '
+      read 'yn?? repair plasma global shortcuts (user) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       shRunOpCond rm "${HOME}/.config/globalshortcutsrc"
@@ -22,7 +22,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? repair plasma panel applets (user) [y, [n]] '
+      read 'yn?? repair plasma panel applets (user) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       shRunOpCond rm "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc"

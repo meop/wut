@@ -5,7 +5,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? tidy instances of docker (system) [y, [n]] '
+      read 'yn?? tidy instances of docker (system) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       shRunOpCond docker system prune --all --volumes

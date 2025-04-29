@@ -15,12 +15,6 @@ export class Powershell extends ShBase implements Sh {
     ])
   }
 
-  withEval(lines: () => Promise<Array<string>>): Sh {
-    return this.with(async () =>
-      (await lines()).map(l => `Invoke-Expression "${l}"`),
-    )
-  }
-
   withTrace(): Sh {
     return this.with(async () => ['Set-PSDebug -Trace 1'])
   }

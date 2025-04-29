@@ -82,12 +82,18 @@ export class CmdBase {
     return content
   }
 
-  help(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return shell
+  async help(context: Ctx, environment: Env, shell: Sh): Promise<string> {
+    const body = await shell
       .withPrintInfo(async () => [
         toCon(this.getHelp(), toFmt(environment[toEnvKey('format')])),
       ])
       .build()
+
+    if (environment[toEnvKey('log')]) {
+      console.log(body)
+    }
+
+    return body
   }
 
   work(context: Ctx, environment: Env, shell: Sh): Promise<string> {

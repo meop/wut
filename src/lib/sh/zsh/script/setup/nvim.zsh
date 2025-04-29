@@ -5,7 +5,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? setup nvim plugin manager (local) [y, [n]] '
+      read 'yn?? setup nvim plugin manager (local) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       local share="${XDG_DATA_HOME:-${HOME}/.local/share}"
@@ -13,7 +13,7 @@ function () {
 
       local output="${nvim}/site/autoload/plug.vim"
       local url='https://raw.githubusercontent.com/junegunn/vim-plug/HEAD/plug.vim'
-      shRunOpCond curl --fail-with-body --location --silent --url "${url}" --create-dirs --output "${output}"
+      shRunOpCond curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
     fi
   fi
 }

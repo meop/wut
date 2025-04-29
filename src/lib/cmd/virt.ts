@@ -88,7 +88,13 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
     }
   }
 
-  return await _shell.build()
+  const body = await _shell.build()
+
+  if (environment[toEnvKey('log')]) {
+    console.log(body)
+  }
+
+  return body
 }
 
 export class VirtCmdDown extends CmdBase implements Cmd {
@@ -121,7 +127,8 @@ export class VirtCmdFind extends CmdBase implements Cmd {
       environment,
       'find',
     )
-    return await shell
+
+    const body = await shell
       .withPrint(
         async () =>
           await getCfgFsDirPrint(async () => dirParts, {
@@ -132,6 +139,12 @@ export class VirtCmdFind extends CmdBase implements Cmd {
           }),
       )
       .build()
+
+    if (environment[toEnvKey('log')]) {
+      console.log(body)
+    }
+
+    return body
   }
 }
 
@@ -169,7 +182,15 @@ export class VirtCmdTidy extends CmdBase implements Cmd {
     this.aliases = ['t', 'ti']
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await shell.withFsFileLoad(async () => ['virt', 'tidy']).build()
+    const body = await shell
+      .withFsFileLoad(async () => ['virt', 'tidy'])
+      .build()
+
+    if (environment[toEnvKey('log')]) {
+      console.log(body)
+    }
+
+    return body
   }
 }
 

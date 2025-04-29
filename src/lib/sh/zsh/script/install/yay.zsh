@@ -5,7 +5,7 @@ function () {
     if [[ "${YES}" ]]; then
       yn='y'
     else
-      read yn?'? install yay (user) [y, [n]] '
+      read 'yn?? install yay (user) [y, [n]] '
     fi
     if [[ "${yn}" != 'n' ]]; then
       local output="${HOME}/.yay-bin"

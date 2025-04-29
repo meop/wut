@@ -49,10 +49,10 @@ class SrvCmd extends CmdBase implements Cmd {
     this.switches = [
       { keys: ['-d', '--debug'], desc: 'print debug' },
       { keys: ['-g', '--grayscale'], desc: 'print no color' },
+      { keys: ['-l', '--log'], desc: 'log on server' },
       { keys: ['-n', '--noop'], desc: 'print but no op' },
       { keys: ['-s', '--succinct'], desc: 'no print' },
       { keys: ['-t', '--trace'], desc: 'print trace' },
-      { keys: ['-v', '--verbose'], desc: 'print extra' },
       { keys: ['-y', '--yes'], desc: 'no prompt' },
     ]
     this.commands = [
@@ -145,7 +145,7 @@ async function runSrv(req: Request) {
 
     if (!context.sys?.cpu?.arch) {
       return new Response(
-        await shell.withFsFileLoad(async () => ['sh', 'dyn']).build(),
+        await shell.withFsFileLoad(async () => ['sh', 'sub']).build(),
       )
     }
 

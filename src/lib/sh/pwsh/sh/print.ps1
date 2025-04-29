@@ -67,10 +67,11 @@ function shPrintOp {
   }
   [Console]::ForegroundColor = 'Magenta'
   [Console]::Write($args[0])
+  [Console]::ResetColor()
   if ($args.Length -gt 1) {
     [Console]::Write(' ')
     [Console]::ForegroundColor = 'Cyan'
     [Console]::WriteLine($($($args | Select-Object -Skip 1) -Join ' '))
+    [Console]::ResetColor()
   }
-  [Console]::ResetColor()
 }
