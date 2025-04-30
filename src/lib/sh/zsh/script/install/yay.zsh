@@ -2,12 +2,12 @@ function () {
   local yn
 
   if type pacman > /dev/null; then
-    if [[ "${YES}" ]]; then
+    if [[ $YES ]]; then
       yn='y'
     else
       read 'yn?? install yay (user) [y, [n]] '
     fi
-    if [[ "${yn}" != 'n' ]]; then
+    if [[ $yn != 'n' ]]; then
       local output="${HOME}/.yay-bin"
 
       if [[ -d "${output}" ]]; then

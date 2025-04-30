@@ -5,8 +5,6 @@ export interface Sh {
 
   with(lines: () => Promise<Array<string>>): Sh
 
-  withEnvVarSet(name: () => Promise<string>, value: () => Promise<string>): Sh
-
   withFsDirLoad(
     parts: () => Promise<Array<string>>,
     options?: {
@@ -49,8 +47,8 @@ export interface Sh {
 
 export class ShBase {
   lineBuilders: Array<() => Promise<string>> = []
-  shName: string
   shExt: string
+  shName: string
 
   dirPath: string
 
@@ -77,10 +75,6 @@ export class ShBase {
   with(lines: () => Promise<Array<string>>): Sh {
     this.lineBuilders.push(async () => (await lines()).join('\n'))
     return this
-  }
-
-  withEnvVarSet(name: () => Promise<string>, value: () => Promise<string>): Sh {
-    throw new Error('not implemented')
   }
 
   localDirPath(parts: Array<string>) {
@@ -127,7 +121,9 @@ export class ShBase {
           lines.push(toRelParts(dirPath, filePath).join(' '))
         }
         if (options?.content) {
+          lines.push('>>>>>>>>>')
           lines.push(await getFileContent(filePath))
+          lines.push('<<<<<<<<<')
         }
       }
       return lines.map(l => l.trimEnd())
@@ -155,7 +151,9 @@ export class ShBase {
         lines.push(toRelParts(this.dirPath, filePath).join(' '))
       }
       if (options?.content) {
+        lines.push('>>>>>>>>>')
         lines.push(await getFileContent(filePath))
+        lines.push('<<<<<<<<<')
       }
       return lines.map(l => l.trimEnd())
     })

@@ -14,12 +14,12 @@ function () {
         fi
       }
 
-      if [[ "${YES}" ]]; then
+      if [[ $YES ]]; then
         yn='y'
       else
         read 'yn?? install nu (system) [y, [n]] '
       fi
-      if [[ "${yn}" != 'n' ]]; then
+      if [[ $yn != 'n' ]]; then
         install_nu_repo
         opPrintRunCmd sudo apt update
         opPrintRunCmd sudo apt install nushell

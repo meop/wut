@@ -9,12 +9,6 @@ export class Zshell extends ShBase implements Sh {
     return `'${value.replaceAll("'", "'\\''")}'`
   }
 
-  withEnvVarSet(name: () => Promise<string>, value: () => Promise<string>): Sh {
-    return this.with(async () => [
-      `export ${await name()}=${this.toVal(await value())}`,
-    ])
-  }
-
   withTrace(): Sh {
     return this.with(async () => ['set -x'])
   }

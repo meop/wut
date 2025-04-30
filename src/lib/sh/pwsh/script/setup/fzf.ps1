@@ -1,12 +1,12 @@
 &{
   if ($IsWindows) {
     if (Get-Command fzf -ErrorAction Ignore) {
-      if ("${env:YES}") {
+      if ($YES) {
         $yn = 'y'
       } else {
         $yn = Read-Host '? setup fzf theme (user) [y, [n]]'
       }
-      if ("${yn}" -ne 'n') {
+      if ($yn -ne 'n') {
         $fzf = "${HOME}/.fzf"
 
         $output = "${fzf}/colors.ps1"

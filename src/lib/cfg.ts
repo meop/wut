@@ -13,25 +13,12 @@ function localCfgDir(parts: Array<string>) {
   return `${buildFilePath(...[cfgDirPath, ...parts])}`
 }
 
-export async function getCfgFsDirLoad(
-  parts: () => Promise<Array<string>>,
-  options?: {
-    filters?: () => Promise<Array<string>>
-  },
-): Promise<Array<string>> {
-  const dirPath = localCfgDir(await parts())
-  const filePaths = await getFilePaths(dirPath, {
-    filters: options?.filters ? await options.filters() : undefined,
-  })
-  const lines: Array<string> = []
-  for (const path of filePaths) {
-    lines.push(await getFileContent(path))
-  }
-  return lines
-}
-
 async function fromFilePath(filePath: string) {
   const content = await getFileContent(filePath)
+  if (!content) {
+    return null
+  }
+
   return fromCfg(
     content,
     filePath.endsWith(Fmt.yaml)
@@ -42,7 +29,7 @@ async function fromFilePath(filePath: string) {
   )
 }
 
-export async function getCfgFsDirPrint(
+export async function getCfgFsDirDump(
   parts: () => Promise<Array<string>>,
   options?: {
     content?: boolean
@@ -50,7 +37,7 @@ export async function getCfgFsDirPrint(
     format?: Fmt
     name?: boolean
   },
-): Promise<Array<string>> {
+) {
   const dirPath = localCfgDir(await parts())
   const filePaths = await getFilePaths(dirPath, {
     filters: options?.filters ? await options.filters() : undefined,
@@ -61,21 +48,15 @@ export async function getCfgFsDirPrint(
       lines.push(toRelParts(dirPath, filePath).join(' '))
     }
     if (options?.content) {
+      lines.push('>>>>>>>>>')
       lines.push(toCon(await fromFilePath(filePath), options?.format))
+      lines.push('<<<<<<<<<')
     }
   }
   return lines.map(l => l.trimEnd())
 }
 
-export async function getCfgFsFileLoad(
-  parts: () => Promise<Array<string>>,
-  ext?: string,
-): Promise<string> {
-  const filePath = `${localCfgDir(await parts())}${ext ? `.${ext}` : ''}`
-  return await getFileContent(filePath)
-}
-
-export async function getCfgFsFilePrint(
+export async function getCfgFsFileDump(
   parts: () => Promise<Array<string>>,
   ext?: string,
   options?: {
@@ -83,14 +64,24 @@ export async function getCfgFsFilePrint(
     format?: Fmt
     name?: boolean
   },
-): Promise<Array<string>> {
-  const filePath = `${localCfgDir(await parts())}.${ext ? `.${ext}` : ''}`
+) {
+  const filePath = `${localCfgDir(await parts())}${ext ? `.${ext}` : ''}`
   const lines: Array<string> = []
   if (options?.name) {
-    lines.push(toRelParts(cfgDirPath, filePath).join(' '))
+    lines.push(toRelParts(cfgDirPath, filePath).pop() ?? '')
   }
   if (options?.content) {
+    lines.push('>>>>>>>>>')
     lines.push(toCon(await fromFilePath(filePath), options?.format))
+    lines.push('<<<<<<<<<')
   }
   return lines.map(l => l.trimEnd())
+}
+
+export async function getCfgFsFileLoad(
+  parts: () => Promise<Array<string>>,
+  ext?: string,
+) {
+  const filePath = `${localCfgDir(await parts())}${ext ? `.${ext}` : ''}`
+  return await fromFilePath(filePath)
 }

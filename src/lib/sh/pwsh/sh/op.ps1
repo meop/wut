@@ -1,15 +1,15 @@
 function opPrint {
-  if ("${env:SUCCINCT}") {
+  if ($SUCCINCT) {
     return
   }
   [Console]::WriteLine($($args -Join ' '))
 }
 
 function opPrintErr {
-  if ("${env:SUCCINCT}") {
+  if ($SUCCINCT) {
     return
   }
-  if ("${env:GRAYSCALE}") {
+  if ($GRAYSCALE) {
     [Console]::Error.WriteLine($($args -Join ' '))
     return
   }
@@ -19,10 +19,10 @@ function opPrintErr {
 }
 
 function opPrintSucc {
-  if ("${env:SUCCINCT}") {
+  if ($SUCCINCT) {
     return
   }
-  if ("${env:GRAYSCALE}") {
+  if ($GRAYSCALE) {
     [Console]::WriteLine($($args -Join ' '))
     return
   }
@@ -32,10 +32,10 @@ function opPrintSucc {
 }
 
 function opPrintWarn {
-  if ("${env:SUCCINCT}") {
+  if ($SUCCINCT) {
     return
   }
-  if ("${env:GRAYSCALE}") {
+  if ($GRAYSCALE) {
     [Console]::WriteLine($($args -Join ' '))
     return
   }
@@ -45,10 +45,10 @@ function opPrintWarn {
 }
 
 function opPrintInfo {
-  if ("${env:SUCCINCT}") {
+  if ($SUCCINCT) {
     return
   }
-  if ("${env:GRAYSCALE}") {
+  if ($GRAYSCALE) {
     [Console]::WriteLine($($args -Join ' '))
     return
   }
@@ -58,10 +58,10 @@ function opPrintInfo {
 }
 
 function opPrintCmd {
-  if ("${env:SUCCINCT}") {
+  if ($SUCCINCT) {
     return
   }
-  if ("${env:GRAYSCALE}") {
+  if ($GRAYSCALE) {
     [Console]::WriteLine($($args -Join ' '))
     return
   }
@@ -82,7 +82,7 @@ function opRunCmd {
 
 function opPrintRunCmd {
   opPrintCmd @args
-  if (-not "${env:NOOP}") {
+  if (-not $NOOP) {
     opRunCmd @args
   }
 }

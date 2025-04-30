@@ -5,30 +5,30 @@ function () {
     if [[ ! -f /etc/os-release ]]; then
       local termux="${HOME}/.termux"
 
-      if [[ "${YES}" ]]; then
+      if [[ $YES ]]; then
         yn='y'
       else
         read 'yn?? setup termux mirrors (system) [y, [n]] '
       fi
-      if [[ "${yn}" != 'n' ]]; then
+      if [[ $yn != 'n' ]]; then
         opPrintRunCmd termux-change-mirror
       fi
 
-      if [[ "${YES}" ]]; then
+      if [[ $YES ]]; then
         yn='y'
       else
         read 'yn?? setup termux storage (system) [y, [n]] '
       fi
-      if [[ "${yn}" != 'n' ]]; then
+      if [[ $yn != 'n' ]]; then
         opPrintRunCmd termux-setup-storage
       fi
 
-      if [[ "${YES}" ]]; then
+      if [[ $YES ]]; then
         yn='y'
       else
         read 'yn?? setup termux theme (user) [y, [n]] '
       fi
-      if [[ "${yn}" != 'n' ]]; then
+      if [[ $yn != 'n' ]]; then
         local output="${termux}/colors.properties"
         local url='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/termux/tokyonight_moon.properties'
         opPrintRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"

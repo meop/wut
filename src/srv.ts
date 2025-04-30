@@ -29,7 +29,7 @@ function expandParts(parts: Array<string>) {
 }
 
 class SrvCmd extends CmdBase implements Cmd {
-  constructor() {
+  constructor(sh: string) {
     super([])
     this.name = pkg.name.toLowerCase()
     this.desc = pkg.description.toLowerCase()
@@ -55,11 +55,13 @@ class SrvCmd extends CmdBase implements Cmd {
       { keys: ['-t', '--trace'], desc: 'print trace' },
       { keys: ['-y', '--yes'], desc: 'no prompt' },
     ]
-    this.commands = [
-      new PackCmd([this.name]),
-      new ScriptCmd([this.name]),
-      new VirtCmd([this.name]),
-    ]
+    this.commands.push(new PackCmd([this.name]))
+    if (sh === 'pwsh' || sh === 'zsh') {
+      this.commands.push(new ScriptCmd([this.name]))
+    }
+    if (sh === 'nu') {
+      this.commands.push(new VirtCmd([this.name]))
+    }
   }
 }
 
@@ -80,7 +82,6 @@ enum Op {
 async function runSrv(req: Request) {
   try {
     const context = getCtx(req)
-    const cmd = new SrvCmd()
 
     let ext: string | undefined
     let path = context.req.path
@@ -116,7 +117,7 @@ async function runSrv(req: Request) {
     }
 
     const sh = parts[1]
-    if (sh !== 'pwsh' && sh !== 'nu' && sh !== 'zsh') {
+    if (!['pwsh', 'nu', 'zsh'].includes(sh)) {
       return new Response(`echo "unsupported shell: ${sh}"`, {
         status: 404,
       })
@@ -129,11 +130,11 @@ async function runSrv(req: Request) {
           ? new Nushell()
           : new Zshell()
     )
-      .withEnvVarSet(
+      .withVarSet(
         async () => 'REQ_URL_CFG',
         async () => [context.req.orig, Op.cfg].join('/'),
       )
-      .withEnvVarSet(
+      .withVarSet(
         async () => 'REQ_URL_SH',
         async () =>
           [context.req.orig, context.req.path, context.req.srch].join(''),
@@ -149,6 +150,7 @@ async function runSrv(req: Request) {
     }
 
     try {
+      const cmd = new SrvCmd(sh)
       return new Response(await cmd.process(parts.slice(2), shell, context))
     } catch (err) {
       let errStr = String(err)

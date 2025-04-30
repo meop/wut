@@ -1,12 +1,12 @@
 function () {
   local yn
 
-  if [[ "${YES}" ]]; then
+  if [[ $YES ]]; then
     yn='y'
   else
     read 'yn?? install starship (user) [y, [n]] '
   fi
-  if [[ "${yn}" != 'n' ]]; then
+  if [[ $yn != 'n' ]]; then
     local output="${HOME}/install-starship.sh"
     local url='https://starship.rs/install.sh'
     opPrintRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"

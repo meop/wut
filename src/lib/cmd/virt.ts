@@ -1,4 +1,4 @@
-import { getCfgFsDirPrint } from '../cfg'
+import { getCfgFsDirDump } from '../cfg'
 import { type Cmd, CmdBase } from '../cmd'
 import type { Ctx } from '../ctx'
 import { type Env, toEnvKey } from '../env'
@@ -51,7 +51,7 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
     environment,
     op,
   )
-  const relParts = await getCfgFsDirPrint(async () => dirParts, {
+  const relParts = await getCfgFsDirDump(async () => dirParts, {
     filters: async () => filters,
     name: true,
   })
@@ -131,7 +131,7 @@ export class VirtCmdFind extends CmdBase implements Cmd {
     const body = await shell
       .withPrint(
         async () =>
-          await getCfgFsDirPrint(async () => dirParts, {
+          await getCfgFsDirDump(async () => dirParts, {
             content: !!environment[packContentsKey],
             filters: async () => filters,
             format: toFmt(environment[toEnvKey('format')]),

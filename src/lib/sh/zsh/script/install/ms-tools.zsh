@@ -22,19 +22,19 @@ function () {
           local version=9.0
 
           read 'yn?? install dotnet sdk (system) [y, [n]] '
-          if [[ "${yn}" != 'n' ]]; then
+          if [[ $yn != 'n' ]]; then
             install_packages_microsoft_repo
             opPrintRunCmd sudo apt update
             opPrintRunCmd sudo apt install dotnet-sdk-"${version}"
           fi
         }
 
-        if [[ "${YES}" ]]; then
+        if [[ $YES ]]; then
           yn='y'
         else
           read 'yn?? install pwsh (system) [y, [n]] '
         fi
-        if [[ "${yn}" != 'n' ]]; then
+        if [[ $yn != 'n' ]]; then
           install_packages_microsoft_repo
           opPrintRunCmd sudo apt update
           opPrintRunCmd sudo apt install powershell

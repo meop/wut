@@ -12,23 +12,23 @@ function () {
         fi
       }
 
-      if [[ "${YES}" ]]; then
+      if [[ $YES ]]; then
         yn='y'
       else
         read 'yn?? install node js (system) [y, [n]] '
       fi
-      if [[ "${yn}" != 'n' ]]; then
+      if [[ $yn != 'n' ]]; then
         install_nodesource_repo
         opPrintRunCmd sudo apt update
         opPrintRunCmd sudo apt install nodejs
       fi
 
-      if [[ "${YES}" ]]; then
+      if [[ $YES ]]; then
         yn='y'
       else
         read 'yn?? install npm (system) [y, [n]] '
       fi
-      if [[ "${yn}" != 'n' ]]; then
+      if [[ $yn != 'n' ]]; then
         install_nodesource_repo
         opPrintRunCmd sudo apt update
         opPrintRunCmd sudo apt install npm

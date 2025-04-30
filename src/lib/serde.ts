@@ -29,7 +29,9 @@ function toJson<T>(input: T) {
 
 export function toCon<T>(input: T, format: Fmt = Fmt.yaml) {
   let output: string
-  if (format === Fmt.yaml) {
+  if (!input) {
+    output = ''
+  } else if (format === Fmt.yaml) {
     output = toYaml(input)
   } else if (format === Fmt.json) {
     output = toJson(input)
@@ -40,13 +42,11 @@ export function toCon<T>(input: T, format: Fmt = Fmt.yaml) {
 }
 
 export function fromCfg(input: string, format: Fmt = Fmt.yaml) {
-  let output: string
   if (format === Fmt.yaml) {
-    output = fromYaml(input)
-  } else if (format === Fmt.json) {
-    output = fromJson(input)
-  } else {
-    output = input
+    return fromYaml(input)
   }
-  return output
+  if (format === Fmt.json) {
+    return fromJson(input)
+  }
+  return input
 }

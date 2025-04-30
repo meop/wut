@@ -1,11 +1,11 @@
 &{
   if ($IsWindows) {
-    if ("${env:YES}") {
+    if ($YES) {
       $yn = 'y'
     } else {
       $yn = Read-Host '? repair rtc utc (system) [y, [n]]'
     }
-    if ("${yn}" -ne 'n') {
+    if ($yn -ne 'n') {
       pwsh -nologo -noprofile -command {
         opPrintRunCmd Set-Location HKLM:
 

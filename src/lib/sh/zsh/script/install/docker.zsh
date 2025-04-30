@@ -23,12 +23,12 @@ function () {
         fi
       }
 
-      if [[ "${YES}" ]]; then
+      if [[ $YES ]]; then
         yn='y'
       else
         read 'yn?? install docker (system) [y, [n]] '
       fi
-      if [[ "${yn}" != 'n' ]]; then
+      if [[ $yn != 'n' ]]; then
         install_docker_repo
         opPrintRunCmd sudo apt-get update
         opPrintRunCmd sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
