@@ -18,10 +18,10 @@ def packApt [] {
             |pg| { opPrintRunCmd ...($pg | split words) }
           }
         }
-        opPrintRunCmd $cmd update '|' complete
+        opPrintRunCmd $cmd update '|' complete '|' ignore
         opPrintRunCmd $cmd install $env.PACK_ADD_NAMES
       } else if $env.PACK_OP == 'find' {
-        opPrintRunCmd $cmd update '|' complete
+        opPrintRunCmd $cmd update '|' complete '|' ignore
         opPrintRunCmd $cmd search $env.PACK_FIND_NAMES
       } else if $env.PACK_OP == 'list' {
         if 'PACK_LIST_NAMES' in $env {
@@ -30,7 +30,7 @@ def packApt [] {
           opPrintRunCmd $cmd list --installed
         }
       } else if $env.PACK_OP == 'out' {
-        opPrintRunCmd $cmd update '|' complete
+        opPrintRunCmd $cmd update '|' complete '|' ignore
         if 'PACK_OUT_NAMES' in $env {
           opPrintRunCmd $cmd list --upgradable '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case $env.PACK_OUT_NAMES
         } else {
@@ -44,7 +44,7 @@ def packApt [] {
           }
         }
       } else if $env.PACK_OP == 'sync' {
-        opPrintRunCmd $cmd update '|' complete
+        opPrintRunCmd $cmd update '|' complete '|' ignore
         if 'PACK_SYNC_NAMES' in $env {
           opPrintRunCmd $cmd install $env.PACK_SYNC_NAMES
         } else {

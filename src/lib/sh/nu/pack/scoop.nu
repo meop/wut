@@ -15,10 +15,10 @@ def packScoop [] {
             |pg| { opPrintRunCmd ...($pg | split words) }
           }
         }
-        opPrintRunCmd $cmd update '|' complete
+        opPrintRunCmd $cmd update '|' complete '|' ignore
         opPrintRunCmd $cmd install $env.PACK_ADD_NAMES
       } else if $env.PACK_OP == 'find' {
-        opPrintRunCmd $cmd update '|' complete
+        opPrintRunCmd $cmd update '|' complete '|' ignore
         opPrintRunCmd $cmd search $env.PACK_FIND_NAMES
       } else if $env.PACK_OP == 'list' {
         if 'PACK_LIST_NAMES' in $env {
@@ -27,7 +27,7 @@ def packScoop [] {
           opPrintRunCmd $cmd list
         }
       } else if $env.PACK_OP == 'out' {
-        opPrintRunCmd $cmd update '|' complete
+        opPrintRunCmd $cmd update '|' complete '|' ignore
         if 'PACK_OUT_NAMES' in $env {
           opPrintRunCmd $cmd status '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case $env.PACK_OUT_NAMES
         } else {
@@ -41,7 +41,7 @@ def packScoop [] {
           }
         }
       } else if $env.PACK_OP == 'sync' {
-        opPrintRunCmd $cmd update '|' complete
+        opPrintRunCmd $cmd update '|' complete '|' ignore
         if 'PACK_SYNC_NAMES' in $env {
           opPrintRunCmd $cmd update $env.PACK_SYNC_NAMES
         } else {

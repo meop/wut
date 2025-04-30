@@ -15,7 +15,7 @@ def packBrew [] {
             |pg| { opPrintRunCmd ...($pg | split words) }
           }
         }
-        opPrintRunCmd $cmd update '|' complete
+        opPrintRunCmd $cmd update '|' complete '|' ignore
         opPrintRunCmd $cmd install $env.PACK_ADD_NAMES
       } else if $env.PACK_OP == 'find' {
         opPrintRunCmd $cmd search $env.PACK_FIND_NAMES
@@ -26,7 +26,7 @@ def packBrew [] {
           opPrintRunCmd $cmd list
         }
       } else if $env.PACK_OP == 'out' {
-        opPrintRunCmd $cmd update '|' complete
+        opPrintRunCmd $cmd update '|' complete '|' ignore
         if 'PACK_OUT_NAMES' in $env {
           opPrintRunCmd $cmd outdated '|' find --ignore-case $env.PACK_OUT_NAMES
         } else {
@@ -40,7 +40,7 @@ def packBrew [] {
           }
         }
       } else if $env.PACK_OP == 'sync' {
-        opPrintRunCmd $cmd update '|' complete
+        opPrintRunCmd $cmd update '|' complete '|' ignore
         if 'PACK_SYNC_NAMES' in $env {
           opPrintRunCmd $cmd upgrade --greedy $env.PACK_SYNC_NAMES
         } else {

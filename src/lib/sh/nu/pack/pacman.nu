@@ -20,10 +20,10 @@ def packPacman [] {
             |pg| { opPrintRunCmd ...($pg | split words) }
           }
         }
-        opPrintRunCmd $cmd --sync --refresh '|' complete
+        opPrintRunCmd $cmd --sync --refresh '|' complete '|' ignore
         opPrintRunCmd $cmd --sync --needed $env.PACK_ADD_NAMES
       } else if $env.PACK_OP == 'find' {
-        opPrintRunCmd $cmd --sync --refresh '|' complete
+        opPrintRunCmd $cmd --sync --refresh '|' complete '|' ignore
         opPrintRunCmd $cmd --sync --search $env.PACK_FIND_NAMES
       } else if $env.PACK_OP == 'list' {
         if 'PACK_LIST_NAMES' in $env {
@@ -32,7 +32,7 @@ def packPacman [] {
           opPrintRunCmd $cmd --query
         }
       } else if $env.PACK_OP == 'out' {
-        opPrintRunCmd $cmd --sync --refresh '|' complete
+        opPrintRunCmd $cmd --sync --refresh '|' complete '|' ignore
         if 'PACK_OUT_NAMES' in $env {
           opPrintRunCmd $cmd --query --upgrades '|' find --ignore-case $env.PACK_OUT_NAMES
         } else {
@@ -46,7 +46,7 @@ def packPacman [] {
           }
         }
       } else if $env.PACK_OP == 'sync' {
-        opPrintRunCmd $cmd --sync --refresh '|' complete
+        opPrintRunCmd $cmd --sync --refresh '|' complete '|' ignore
         if 'PACK_SYNC_NAMES' in $env {
           opPrintRunCmd $cmd --sync --needed $env.PACK_SYNC_NAMES
         } else {

@@ -18,10 +18,10 @@ def packDnf [] {
             |pg| { opPrintRunCmd ...($pg | split words) }
           }
         }
-        opPrintRunCmd $cmd check-update '|' complete
+        opPrintRunCmd $cmd check-update '|' complete '|' ignore
         opPrintRunCmd $cmd install $env.PACK_ADD_NAMES
       } else if $env.PACK_OP == 'find' {
-        opPrintRunCmd $cmd check-update '|' complete
+        opPrintRunCmd $cmd check-update '|' complete '|' ignore
         opPrintRunCmd $cmd search $env.PACK_FIND_NAMES
       } else if $env.PACK_OP == 'list' {
         if 'PACK_LIST_NAMES' in $env {
@@ -30,7 +30,7 @@ def packDnf [] {
           opPrintRunCmd $cmd list --installed
         }
       } else if $env.PACK_OP == 'out' {
-        opPrintRunCmd $cmd check-update '|' complete
+        opPrintRunCmd $cmd check-update '|' complete '|' ignore
         if 'PACK_OUT_NAMES' in $env {
           opPrintRunCmd $cmd list --upgrades '|' find --ignore-case $env.PACK_OUT_NAMES
         } else {
@@ -44,7 +44,7 @@ def packDnf [] {
           }
         }
       } else if $env.PACK_OP == 'sync' {
-        opPrintRunCmd $cmd check-update '|' complete
+        opPrintRunCmd $cmd check-update '|' complete '|' ignore
         if 'PACK_SYNC_NAMES' in $env {
           opPrintRunCmd $cmd upgrade $env.PACK_SYNC_NAMES
         } else {
