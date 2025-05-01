@@ -19,7 +19,7 @@ function () {
           local output="/etc/apt/sources.list.d/docker.list"
           local arch="$(dpkg --print-architecture)"
 
-          opPrintRunCmd sudo -E bash -c '"'echo ''\'deb '['arch="${arch}" signed-by="${output_key}"']' "${url}" "${SYS_OS_VER_CODE}" stable''\' '>' "${output}"'"'
+          opPrintRunCmd sudo --preserve-env bash -c '"'echo ''\'deb '['arch="${arch}" signed-by="${output_key}"']' "${url}" "${SYS_OS_VER_CODE}" stable''\' '>' "${output}"'"'
         fi
       }
 

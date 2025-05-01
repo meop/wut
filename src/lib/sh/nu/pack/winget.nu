@@ -44,7 +44,7 @@ def packWinget [] {
           opPrintRunCmd $cmd upgrade --all
         }
       } else if $env.PACK_OP == 'tidy' {
-        # not available
+        # not applicable
       }
     }
   }

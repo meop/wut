@@ -24,39 +24,54 @@ export class PackCmd extends CmdBase implements Cmd {
   }
 }
 
-const osPlatToPackManager = {
+const osPlatToManager = {
   linux: ['apt', 'apt-get', 'dnf', 'pacman', 'yay'],
   macos: ['brew'],
   windows: ['scoop', 'winget'],
 }
 
-const osIdToPackManager = {
+const osIdToManager = {
   arch: ['pacman', 'yay'],
   archarm: ['pacman', 'yay'],
   debian: ['apt', 'apt-get'],
   raspbian: ['apt', 'apt-get'],
 }
 
-function getSupportedManagers(context: Ctx, manager?: string) {
+const cfgExt = 'yaml'
+
+const formatKey = 'format'
+const logKey = 'log'
+
+const packKey = 'pack'
+const packManagerKey = toEnvKey(packKey, 'manager')
+const packOpNamesKey = (op: string) => toEnvKey(packKey, op, 'names')
+const packOpContentsKey = (op: string) => toEnvKey(packKey, op, 'contents')
+const packOpGroupsKey = (op: string) => toEnvKey(packKey, op, 'groups')
+const packOpGroupNamesKey = (op: string) =>
+  toEnvKey(packKey, op, 'group', 'names')
+
+const packOpKey = toEnvKey(packKey, 'op')
+
+function getSupportedManagers(context: Ctx, environment: Env) {
   let managers: Array<string> = []
 
   const osPlat = context.sys?.os?.plat
   const osId = context.sys?.os?.id
 
   if (osPlat) {
-    managers.push(...osPlatToPackManager[osPlat])
+    managers.push(...osPlatToManager[osPlat])
   }
   if (osId) {
-    managers = managers.filter(p => osIdToPackManager[osId].includes(p))
+    managers = managers.filter(p => osIdToManager[osId].includes(p))
   }
-  if (manager) {
-    managers = managers.filter(p => p === manager)
+  if (environment[packManagerKey]) {
+    managers = managers.filter(p => p === environment[packManagerKey])
   }
 
   return managers
 }
 
-function getManagerFuncName(manager: string) {
+function getManagerFuncName(manager: string, prefix = packKey) {
   if (!manager) {
     return ''
   }
@@ -67,7 +82,7 @@ function getManagerFuncName(manager: string) {
     .replaceAll('_', '')
     .toLowerCase()
 
-  return `pack${first}${rest}`
+  return `${prefix}${first}${rest}`
 }
 
 async function workAddFindRem(
@@ -76,27 +91,18 @@ async function workAddFindRem(
   shell: Sh,
   op: string,
 ) {
-  const packKey = 'pack'
-  const packManagerKey = toEnvKey(packKey, 'manager')
-  const packNamesKey = toEnvKey(packKey, op, 'names')
-  const packContentsKey = toEnvKey(packKey, op, 'contents')
-  const packGroupsKey = toEnvKey(packKey, op, 'groups')
-  const packGroupNamesKey = toEnvKey(packKey, op, 'group', 'names')
-  const cfgExt = 'yaml'
-
   let _shell = shell
-  const supportedManagers = getSupportedManagers(
-    context,
-    environment[packManagerKey],
-  )
+
+  const supportedManagers = getSupportedManagers(context, environment)
+
   for (const supportedManager of supportedManagers) {
     _shell = _shell.withFsFileLoad(async () => [packKey, supportedManager])
   }
 
-  const requestedNames = environment[packNamesKey].split(' ')
+  const requestedNames = environment[packOpNamesKey(op)].split(' ')
   const foundNames: Array<string> = []
 
-  if (environment[packGroupsKey]) {
+  if (environment[packOpGroupsKey(op)]) {
     for (const name of requestedNames) {
       const content = await getCfgFsFileLoad(
         async () => [packKey, name],
@@ -111,8 +117,8 @@ async function workAddFindRem(
         _shell = _shell.withPrint(
           async () =>
             await getCfgFsFileDump(async () => [packKey, name], cfgExt, {
-              content: !!environment[packContentsKey],
-              format: toFmt(environment[toEnvKey('format')]),
+              content: !!environment[packOpContentsKey(op)],
+              format: toFmt(environment[formatKey]),
               name: true,
             }),
         )
@@ -134,21 +140,21 @@ async function workAddFindRem(
           }
           if (value[op]) {
             _shell = _shell.withVarArrSet(
-              async () => packGroupNamesKey,
+              async () => packOpGroupNamesKey(op),
               async () => value[op],
             )
           }
           _shell = _shell.withVarSet(
-            async () => packNamesKey,
+            async () => packOpNamesKey(op),
             async () => value.names.join(' '),
           )
           _shell = _shell.withVarSet(
-            async () => toEnvKey(packKey, 'op'),
+            async () => packOpKey,
             async () => op,
           )
           _shell = _shell.with(async () => [getManagerFuncName(key)])
           if (value[op]) {
-            _shell = _shell.withVarUnset(async () => packGroupNamesKey)
+            _shell = _shell.withVarUnset(async () => packOpGroupNamesKey(op))
           }
           if (supportedManagers.length > 1) {
             _shell = _shell.withVarUnset(async () => packManagerKey)
@@ -164,11 +170,11 @@ async function workAddFindRem(
   if (remainingNames.length) {
     _shell = _shell
       .withVarSet(
-        async () => packNamesKey,
+        async () => packOpNamesKey(op),
         async () => remainingNames.join(' '),
       )
       .withVarSet(
-        async () => toEnvKey(packKey, 'op'),
+        async () => packOpKey,
         async () => op,
       )
       .with(async () => supportedManagers.map(m => getManagerFuncName(m)))
@@ -176,7 +182,7 @@ async function workAddFindRem(
 
   const body = await _shell.build()
 
-  if (environment[toEnvKey('log')]) {
+  if (environment[logKey]) {
     console.log(body)
   }
 
@@ -189,25 +195,22 @@ async function workListOutSyncTidy(
   shell: Sh,
   op: string,
 ) {
-  const supportedManagers = getSupportedManagers(
-    context,
-    environment[toEnvKey('pack', 'manager')],
-  )
+  const supportedManagers = getSupportedManagers(context, environment)
 
   let _shell = shell
   for (const supportedManager of supportedManagers) {
-    _shell = _shell.withFsFileLoad(async () => ['pack', supportedManager])
+    _shell = _shell.withFsFileLoad(async () => [packKey, supportedManager])
   }
 
   const body = await _shell
     .withVarSet(
-      async () => toEnvKey('pack', 'op'),
+      async () => packOpKey,
       async () => op,
     )
     .with(async () => supportedManagers.map(m => getManagerFuncName(m)))
     .build()
 
-  if (environment[toEnvKey('log')]) {
+  if (environment[logKey]) {
     console.log(body)
   }
 

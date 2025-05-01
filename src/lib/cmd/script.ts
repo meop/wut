@@ -16,6 +16,12 @@ export class ScriptCmd extends CmdBase implements Cmd {
   }
 }
 
+const logKey = 'log'
+
+const scriptKey = 'script'
+const scriptOpPartsKey = (op: string) => toEnvKey('script', op, 'parts')
+const scriptOpContentsKey = (op: string) => toEnvKey('script', op, 'contents')
+
 export class ScriptCmdFind extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
@@ -27,22 +33,21 @@ export class ScriptCmdFind extends CmdBase implements Cmd {
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
     const filters: Array<string> = []
-    const scriptFindPartsKey = toEnvKey('script', 'find', 'parts')
-    const scriptFindContentsKey = toEnvKey('script', 'find', 'contents')
+    const op = 'find'
 
-    if (scriptFindPartsKey in environment) {
-      filters.push(...environment[scriptFindPartsKey].split(' '))
+    if (scriptOpPartsKey(op) in environment) {
+      filters.push(...environment[scriptOpPartsKey(op)].split(' '))
     }
 
     const body = await shell
-      .withFsDirPrint(async () => ['script'], {
+      .withFsDirPrint(async () => [scriptKey], {
         filters: async () => filters,
-        content: scriptFindContentsKey in environment,
+        content: scriptOpContentsKey(op) in environment,
         name: true,
       })
       .build()
 
-    if (environment[toEnvKey('log')]) {
+    if (environment[logKey]) {
       console.log(body)
     }
 
@@ -60,18 +65,19 @@ export class ScriptCmdRun extends CmdBase implements Cmd {
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
     const filters: Array<string> = []
-    const scriptRunPartsKey = toEnvKey('script', 'run', 'parts')
-    if (scriptRunPartsKey in environment) {
-      filters.push(...environment[scriptRunPartsKey].split(' '))
+    const op = 'run'
+
+    if (scriptOpPartsKey(op) in environment) {
+      filters.push(...environment[scriptOpPartsKey(op)].split(' '))
     }
 
     const body = await shell
-      .withFsDirLoad(async () => ['script'], {
+      .withFsDirLoad(async () => [scriptKey], {
         filters: async () => filters,
       })
       .build()
 
-    if (environment[toEnvKey('log')]) {
+    if (environment[logKey]) {
       console.log(body)
     }
 

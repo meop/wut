@@ -18,7 +18,7 @@ def wut --wrapped [...args] {
   mut url = $"($url)/sh/nu"
   mut url = $"($url)/($args | str join '/')" | str trim --right --char '/'
 
-  nu -c $"(http get --redirect-mode follow $"($url)")"
+  nu -c $"(http get --raw --redirect-mode follow $"($url)")"
 }
 ```
 

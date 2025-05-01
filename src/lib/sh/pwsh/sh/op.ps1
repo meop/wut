@@ -77,7 +77,7 @@ function opPrintCmd {
 }
 
 function opRunCmd {
-  Invoke-Expression ($args -Join ' ')
+  Invoke-Expression "$($args -Join ' ')"
 }
 
 function opPrintRunCmd {

@@ -8,7 +8,7 @@ function () {
       function install_nodesource_repo {
         if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep --invert-match '^#' | grep --invert-match '^$' | grep '^.*deb.*nodesource.*com.*$' > /dev/null; then
           local url="https://deb.nodesource.com/setup_${node_version}.x"
-          opPrintRunCmd sudo -E bash -c '"$(' curl --fail-with-body --location --no-progress-meter --url "${url}" ')"'
+          opPrintRunCmd sudo --preserve-env bash -c '"$(' curl --fail-with-body --location --no-progress-meter --url "${url}" ')"'
         fi
       }
 

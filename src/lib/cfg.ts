@@ -9,7 +9,7 @@ const cfgDirPath = buildFilePath(
   'wut-config',
 )
 
-function localCfgDir(parts: Array<string>) {
+function localCfgPath(parts: Array<string>) {
   return `${buildFilePath(...[cfgDirPath, ...parts])}`
 }
 
@@ -38,7 +38,7 @@ export async function getCfgFsDirDump(
     name?: boolean
   },
 ) {
-  const dirPath = localCfgDir(await parts())
+  const dirPath = localCfgPath(await parts())
   const filePaths = await getFilePaths(dirPath, {
     filters: options?.filters ? await options.filters() : undefined,
   })
@@ -65,7 +65,7 @@ export async function getCfgFsFileDump(
     name?: boolean
   },
 ) {
-  const filePath = `${localCfgDir(await parts())}${ext ? `.${ext}` : ''}`
+  const filePath = `${localCfgPath(await parts())}${ext ? `.${ext}` : ''}`
   const lines: Array<string> = []
   if (options?.name) {
     lines.push(toRelParts(cfgDirPath, filePath).pop() ?? '')
@@ -78,10 +78,20 @@ export async function getCfgFsFileDump(
   return lines.map(l => l.trimEnd())
 }
 
+export async function getCfgFsFileContent(
+  parts: () => Promise<Array<string>>,
+  ext?: string,
+) {
+  return await getFileContent(
+    `${localCfgPath(await parts())}${ext ? `.${ext}` : ''}`,
+  )
+}
+
 export async function getCfgFsFileLoad(
   parts: () => Promise<Array<string>>,
   ext?: string,
 ) {
-  const filePath = `${localCfgDir(await parts())}${ext ? `.${ext}` : ''}`
-  return await fromFilePath(filePath)
+  return await fromFilePath(
+    `${localCfgPath(await parts())}${ext ? `.${ext}` : ''}`,
+  )
 }

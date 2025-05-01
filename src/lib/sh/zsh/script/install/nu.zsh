@@ -9,8 +9,8 @@ function () {
         local output="/etc/apt/sources.list.d/fury-nushell.list"
         if [[ ! -f "${output}" ]]; then
           local url="https://apt.fury.io/nushell"
-          opPrintRunCmd sudo -E bash -c '"'curl --fail-with-body --location --no-progress-meter --url "${url}/gpg.key" '|' gpg --dearmor -o /etc/apt/trusted.gpg.d/fury-nushell.gpg'"'
-          opPrintRunCmd sudo -E bash -c '"'echo ''\'deb "${url}/" /''\' '>' "${output}"'"'
+          opPrintRunCmd sudo --preserve-env bash -c '"'curl --fail-with-body --location --no-progress-meter --url "${url}/gpg.key" '|' gpg --dearmor -o /etc/apt/trusted.gpg.d/fury-nushell.gpg'"'
+          opPrintRunCmd sudo --preserve-env bash -c '"'echo ''\'deb "${url}/" /''\' '>' "${output}"'"'
         fi
       }
 

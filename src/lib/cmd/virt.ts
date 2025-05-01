@@ -23,28 +23,72 @@ export class VirtCmd extends CmdBase implements Cmd {
   }
 }
 
+const osPlatToManager = {
+  linux: ['docker', 'qemu'],
+  macos: ['docker'],
+  windows: ['docker'],
+}
+
+const formatKey = 'format'
+const logKey = 'log'
+
+const virtKey = 'virt'
+const virtManagerKey = toEnvKey(virtKey, 'manager')
+const virtOpPartsKey = (op: string) => toEnvKey(virtKey, op, 'parts')
+const virtOpContentsKey = (op: string) => toEnvKey(virtKey, op, 'contents')
+
+const virtOpKey = toEnvKey(virtKey, 'op')
+const virtInstancesKey = toEnvKey(virtKey, 'instances')
+
 async function getDirPartsAndFilters(
   context: Ctx,
   environment: Env,
-  envPartsKey: string,
+  op: string,
 ) {
-  const dirParts = ['virt', context.sys?.host ?? '']
+  const dirParts = [virtKey, context.sys?.host ?? '']
   const filters: Array<string> = []
-  const virtPartsKey = toEnvKey('virt', envPartsKey, 'parts')
-  if (virtPartsKey in environment) {
-    filters.push(...environment[virtPartsKey].split(' '))
+  if (virtOpPartsKey(op) in environment) {
+    filters.push(...environment[virtOpPartsKey(op)].split(' '))
   }
 
   return { dirParts, filters }
 }
 
-async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
-  const virtKey = 'virt'
-  const virtManagerKey = toEnvKey(virtKey, 'manager')
-  const virtInstancesKey = toEnvKey(virtKey, 'instances')
+function getSupportedManagers(context: Ctx, environment: Env) {
+  let managers: Array<string> = []
 
-  const manager = environment[virtManagerKey]
+  const osPlat = context.sys?.os?.plat
+
+  if (osPlat) {
+    managers.push(...osPlatToManager[osPlat])
+  }
+  if (environment[virtManagerKey]) {
+    managers = managers.filter(p => p === environment[virtManagerKey])
+  }
+
+  return managers
+}
+
+function getManagerFuncName(manager: string, prefix = virtKey) {
+  if (!manager) {
+    return ''
+  }
+  const first = manager[0].toUpperCase()
+  const rest = manager
+    .slice(1)
+    .replaceAll('-', '')
+    .replaceAll('_', '')
+    .toLowerCase()
+
+  return `${prefix}${first}${rest}`
+}
+
+async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
   let _shell = shell
+  const supportedManagers = getSupportedManagers(context, environment)
+  for (const supportedManager of supportedManagers) {
+    _shell = _shell.withFsFileLoad(async () => [virtKey, supportedManager])
+  }
 
   const { dirParts, filters } = await getDirPartsAndFilters(
     context,
@@ -68,10 +112,10 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
   }
 
   for (const key of Object.keys(virtMap)) {
-    if (manager && key !== manager) {
+    if (!supportedManagers.includes(key)) {
       continue
     }
-    if (!manager) {
+    if (supportedManagers.length > 1) {
       _shell = _shell.withVarSet(
         async () => virtManagerKey,
         async () => key,
@@ -82,15 +126,19 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
         async () => virtInstancesKey,
         async () => virtMap[key],
       )
-      .withFsFileLoad(async () => [virtKey, op])
-    if (!manager) {
+      .withVarSet(
+        async () => virtOpKey,
+        async () => op,
+      )
+      .with(async () => [getManagerFuncName(key)])
+    if (supportedManagers.length > 1) {
       _shell = _shell.withVarUnset(async () => virtManagerKey)
     }
   }
 
   const body = await _shell.build()
 
-  if (environment[toEnvKey('log')]) {
+  if (environment[logKey]) {
     console.log(body)
   }
 
@@ -120,27 +168,32 @@ export class VirtCmdFind extends CmdBase implements Cmd {
     this.switches = [{ keys: ['-c', '--contents'], desc: 'print contents' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    const packContentsKey = toEnvKey('virt', 'find', 'contents')
+    const op = 'find'
+
+    const supportedManagers = getSupportedManagers(context, environment)
 
     const { dirParts, filters } = await getDirPartsAndFilters(
       context,
       environment,
-      'find',
+      op,
     )
 
-    const body = await shell
-      .withPrint(
+    let _shell = shell
+    for (const supportedManager of supportedManagers) {
+      _shell = _shell.withPrint(
         async () =>
           await getCfgFsDirDump(async () => dirParts, {
-            content: !!environment[packContentsKey],
-            filters: async () => filters,
-            format: toFmt(environment[toEnvKey('format')]),
+            content: !!environment[virtOpContentsKey(op)],
+            filters: async () => [supportedManager, ...filters],
+            format: toFmt(environment[formatKey]),
             name: true,
           }),
       )
-      .build()
+    }
 
-    if (environment[toEnvKey('log')]) {
+    const body = await shell.build()
+
+    if (environment[logKey]) {
       console.log(body)
     }
 
@@ -182,15 +235,7 @@ export class VirtCmdTidy extends CmdBase implements Cmd {
     this.aliases = ['t', 'ti']
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    const body = await shell
-      .withFsFileLoad(async () => ['virt', 'tidy'])
-      .build()
-
-    if (environment[toEnvKey('log')]) {
-      console.log(body)
-    }
-
-    return body
+    return await workOp(context, environment, shell, 'tidy')
   }
 }
 

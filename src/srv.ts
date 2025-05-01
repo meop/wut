@@ -1,6 +1,6 @@
 import pkg from '../package.json' with { type: 'json' }
 
-import { getCfgFsFileLoad } from './lib/cfg'
+import { getCfgFsFileContent } from './lib/cfg'
 import { type Cmd, CmdBase } from './lib/cmd'
 import { PackCmd } from './lib/cmd/pack'
 import { ScriptCmd } from './lib/cmd/script'
@@ -82,15 +82,7 @@ enum Op {
 async function runSrv(req: Request) {
   try {
     const context = getCtx(req)
-
-    let ext: string | undefined
-    let path = context.req.path
-    const extIndex = path.lastIndexOf('.')
-    if (extIndex !== -1) {
-      ext = path.substring(extIndex + 1)
-      path = path.substring(0, extIndex)
-    }
-
+    const path = context.req.path
     const parts = expandParts(path.split('/').filter(p => p.length > 0))
 
     if (!parts.length) {
@@ -101,7 +93,7 @@ async function runSrv(req: Request) {
 
     const op = parts[0]
     if (op === Op.cfg) {
-      const config = await getCfgFsFileLoad(async () => parts.slice(1), ext)
+      const config = await getCfgFsFileContent(async () => parts.slice(1))
       if (!config.length) {
         return new Response(`echo "config not found: ${config}"`, {
           status: 404,
