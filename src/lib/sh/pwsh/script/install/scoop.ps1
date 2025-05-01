@@ -7,7 +7,7 @@
     }
     if ($yn -ne 'n') {
       $url = 'https://get.scoop.sh'
-      opPrintRunCmd Invoke-Expression '(' Invoke-WebRequest -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "${url}" ')'
+      opPrintRunCmd Invoke-Expression '"$(' Invoke-WebRequest -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "${url}" ')"'
     }
   }
 }

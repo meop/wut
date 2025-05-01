@@ -1,1 +1,1 @@
-Invoke-Expression (Invoke-WebRequest -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "${REQ_URL_SH}")
+Invoke-Expression "$(Invoke-WebRequest -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "${REQ_URL_SH}")"
