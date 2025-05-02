@@ -48,9 +48,9 @@ export async function getCfgFsDirDump(
       lines.push(toRelParts(dirPath, filePath).join(' '))
     }
     if (options?.content) {
-      lines.push('>>>>>>>>>')
+      lines.push('<<<<<<<')
       lines.push(toCon(await fromFilePath(filePath), options?.format))
-      lines.push('<<<<<<<<<')
+      lines.push('>>>>>>>')
     }
   }
   return lines.map(l => l.trimEnd())
@@ -71,9 +71,9 @@ export async function getCfgFsFileDump(
     lines.push(toRelParts(cfgDirPath, filePath).pop() ?? '')
   }
   if (options?.content) {
-    lines.push('>>>>>>>>>')
+    lines.push('<<<<<<<')
     lines.push(toCon(await fromFilePath(filePath), options?.format))
-    lines.push('<<<<<<<<<')
+    lines.push('>>>>>>>')
   }
   return lines.map(l => l.trimEnd())
 }
