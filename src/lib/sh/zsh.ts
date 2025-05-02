@@ -1,34 +1,34 @@
-import { type Sh, ShBase } from '../sh'
+import { type Sh, ShBase } from "../sh";
 
 export class Zshell extends ShBase implements Sh {
-  constructor() {
-    super('zsh', 'zsh')
-  }
+	constructor() {
+		super("zsh", "zsh");
+	}
 
-  toVal(value: string): string {
-    return `'${value.replaceAll("'", "'\\''")}'`
-  }
+	toRawStr(value: string): string {
+		return `'${value.replaceAll("'", "'\\''")}'`;
+	}
 
-  withTrace(): Sh {
-    return this.with(async () => ['set -x'])
-  }
+	withTrace(): Sh {
+		return this.with(async () => ["set -x"]);
+	}
 
-  withVarArrSet(
-    name: () => Promise<string>,
-    values: () => Promise<Array<string>>,
-  ): Sh {
-    return this.with(async () => [
-      `${await name()}=( ${(await values()).map(v => this.toVal(v)).join(' ')} )`,
-    ])
-  }
+	withVarArrSet(
+		name: () => Promise<string>,
+		values: () => Promise<Array<string>>,
+	): Sh {
+		return this.with(async () => [
+			`${await name()}=( ${(await values()).map((v) => this.toRawStr(v)).join(" ")} )`,
+		]);
+	}
 
-  withVarSet(name: () => Promise<string>, value: () => Promise<string>): Sh {
-    return this.with(async () => [
-      `${await name()}=${this.toVal(await value())}`,
-    ])
-  }
+	withVarSet(name: () => Promise<string>, value: () => Promise<string>): Sh {
+		return this.with(async () => [
+			`${await name()}=${this.toRawStr(await value())}`,
+		]);
+	}
 
-  withVarUnset(name: () => Promise<string>): Sh {
-    return this.with(async () => [`unset ${await name()}`])
-  }
+	withVarUnset(name: () => Promise<string>): Sh {
+		return this.with(async () => [`unset ${await name()}`]);
+	}
 }
