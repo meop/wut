@@ -16,11 +16,11 @@ export class ScriptCmd extends CmdBase implements Cmd {
   }
 }
 
-const logKey = 'log'
+const logKey = toEnvKey('log')
 
-const scriptKey = 'script'
-const scriptOpPartsKey = (op: string) => toEnvKey('script', op, 'parts')
-const scriptOpContentsKey = (op: string) => toEnvKey('script', op, 'contents')
+const script = 'script'
+const scriptOpPartsKey = (op: string) => toEnvKey(script, op, 'parts')
+const scriptOpContentsKey = (op: string) => toEnvKey(script, op, 'contents')
 
 export class ScriptCmdFind extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -40,7 +40,7 @@ export class ScriptCmdFind extends CmdBase implements Cmd {
     }
 
     const body = await shell
-      .withFsDirPrint(async () => [scriptKey], {
+      .withFsDirPrint(async () => [script], {
         filters: async () => filters,
         content: scriptOpContentsKey(op) in environment,
         name: true,
@@ -72,7 +72,7 @@ export class ScriptCmdRun extends CmdBase implements Cmd {
     }
 
     const body = await shell
-      .withFsDirLoad(async () => [scriptKey], {
+      .withFsDirLoad(async () => [script], {
         filters: async () => filters,
       })
       .build()

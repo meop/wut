@@ -1,6 +1,6 @@
 def packApt [] {
   mut yn = ''
-  mut cmd = 'apt'
+  let cmd = 'apt'
 
   if ('PACK_MANAGER' not-in $env or $env.PACK_MANAGER == $cmd) and (which $cmd | is-not-empty) {
     if 'YES' in $env {
@@ -9,9 +9,7 @@ def packApt [] {
       $yn = input $"? ($env.PACK_OP) packages with ($cmd) \(system\) [y, [n]] "
     }
     if $yn != 'n' {
-      if (which sudo | is-not-empty) {
-        $cmd = $"sudo ($cmd)"
-      }
+      let cmd = if (which sudo | is-not-empty) { $"sudo ($cmd)" } else { $"($cmd)" }
       if $env.PACK_OP == 'add' {
         if 'PACK_ADD_GROUP_NAMES' in $env {
           $env.PACK_ADD_GROUP_NAMES | each {

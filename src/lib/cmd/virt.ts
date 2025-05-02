@@ -29,23 +29,23 @@ const osPlatToManager = {
   windows: ['docker'],
 }
 
-const formatKey = 'format'
-const logKey = 'log'
+const formatKey = toEnvKey('format')
+const logKey = toEnvKey('log')
 
-const virtKey = 'virt'
-const virtManagerKey = toEnvKey(virtKey, 'manager')
-const virtOpPartsKey = (op: string) => toEnvKey(virtKey, op, 'parts')
-const virtOpContentsKey = (op: string) => toEnvKey(virtKey, op, 'contents')
+const virt = 'virt'
+const virtManagerKey = toEnvKey(virt, 'manager')
+const virtOpPartsKey = (op: string) => toEnvKey(virt, op, 'parts')
+const virtOpContentsKey = (op: string) => toEnvKey(virt, op, 'contents')
 
-const virtOpKey = toEnvKey(virtKey, 'op')
-const virtInstancesKey = toEnvKey(virtKey, 'instances')
+const virtOpKey = toEnvKey(virt, 'op')
+const virtInstancesKey = toEnvKey(virt, 'instances')
 
 async function getDirPartsAndFilters(
   context: Ctx,
   environment: Env,
   op: string,
 ) {
-  const dirParts = [virtKey, context.sys?.host ?? '']
+  const dirParts = [virt, context.sys?.host ?? '']
   const filters: Array<string> = []
   if (virtOpPartsKey(op) in environment) {
     filters.push(...environment[virtOpPartsKey(op)].split(' '))
@@ -69,7 +69,7 @@ function getSupportedManagers(context: Ctx, environment: Env) {
   return managers
 }
 
-function getManagerFuncName(manager: string, prefix = virtKey) {
+function getManagerFuncName(manager: string, prefix = virt) {
   if (!manager) {
     return ''
   }
@@ -87,7 +87,7 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
   let _shell = shell
   const supportedManagers = getSupportedManagers(context, environment)
   for (const supportedManager of supportedManagers) {
-    _shell = _shell.withFsFileLoad(async () => [virtKey, supportedManager])
+    _shell = _shell.withFsFileLoad(async () => [virt, supportedManager])
   }
 
   const { dirParts, filters } = await getDirPartsAndFilters(
@@ -192,6 +192,8 @@ export class VirtCmdFind extends CmdBase implements Cmd {
     }
 
     const body = await shell.build()
+
+    console.log(JSON.stringify(environment, null, 2))
 
     if (environment[logKey]) {
       console.log(body)

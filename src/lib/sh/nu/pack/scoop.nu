@@ -1,6 +1,6 @@
 def packScoop [] {
   mut yn = ''
-  mut cmd = 'scoop'
+  let cmd = 'scoop'
 
   if ('PACK_MANAGER' not-in $env or $env.PACK_MANAGER == $cmd) and (which $cmd | is-not-empty) {
     if 'YES' in $env {

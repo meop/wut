@@ -1,5 +1,5 @@
 function () {
-  local yn
+  local yn=''
 
   if type pacman > /dev/null; then
     if [[ $YES ]]; then

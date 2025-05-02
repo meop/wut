@@ -1,5 +1,5 @@
 function () {
-  local yn
+  local yn=''
 
   if [[ $YES ]]; then
     yn='y'

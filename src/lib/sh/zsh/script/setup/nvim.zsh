@@ -1,5 +1,5 @@
 function () {
-  local yn
+  local yn=''
 
   if type nvim > /dev/null; then
     if [[ $YES ]]; then

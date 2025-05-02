@@ -1,5 +1,5 @@
 function () {
-  local yn
+  local yn=''
 
   # note: plasma has a long-time bug with multiple panels
   # where the keyboard shortcut keys get conflicted when saved

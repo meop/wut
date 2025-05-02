@@ -1,6 +1,6 @@
 def packBrew [] {
   mut yn = ''
-  mut cmd = 'brew'
+  let cmd = 'brew'
 
   if ('PACK_MANAGER' not-in $env or $env.PACK_MANAGER == $cmd) and (which $cmd | is-not-empty) {
     if 'YES' in $env {

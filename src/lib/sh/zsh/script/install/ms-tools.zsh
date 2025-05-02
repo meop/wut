@@ -1,5 +1,5 @@
 function () {
-  local yn
+  local yn=''
 
   if [[ "${SYS_CPU_ARCH}" == 'x86_64' ]]; then
     if [[ "${SYS_OS_PLAT}" == 'linux' ]]; then

@@ -11,9 +11,7 @@ function packAptget {
       read "yn?? ${PACK_OP} packages with ${cmd} (system) [y, [n]] "
     fi
     if [[ $yn != 'n' ]]; then
-      if type sudo > /dev/null; then
-        cmd="sudo ${cmd}"
-      fi
+      local cmd=$(if type sudo > /dev/null; then "sudo ${cmd}"; else "${cmd}"; fi)
       if [[ $PACK_OP == 'add' ]]; then
         if [[ $PACK_ADD_GROUP_NAMES ]]; then
           for group in "${PACK_ADD_GROUP_NAMES[@]}"; do
@@ -25,11 +23,8 @@ function packAptget {
         opPrintRunCmd $cmd install $PACK_ADD_NAMES
       elif [[ $PACK_OP == 'find' ]]; then
         opPrintRunCmd $cmd update '>' /dev/null '2>&1'
-        local cacheCmd='apt-cache'
-        if type sudo > /dev/null; then
-          cacheCmd="sudo ${cacheCmd}"
-        fi
-        opPrintRunCmd $"{cacheCmd}" search $PACK_FIND_NAMES
+        local cacheCmd=$(if type sudo > /dev/null; then 'sudo apt-cache'; else 'apt-cache'; fi)
+        opPrintRunCmd $cacheCmd search $PACK_FIND_NAMES
       elif [[ $PACK_OP == 'list' ]]; then
         if [[ $PACK_LIST_NAMES ]]; then
           opPrintRunCmd $cmd list --installed '2>' /dev/null '|' grep --ignore-case $PACK_LIST_NAMES

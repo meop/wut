@@ -1,6 +1,6 @@
 def packYay [] {
   mut yn = ''
-  mut cmd = 'yay'
+  let cmd = 'yay'
 
   if ('PACK_MANAGER' not-in $env or $env.PACK_MANAGER == $cmd) and (which $cmd | is-not-empty) {
     if 'YES' in $env {

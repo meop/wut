@@ -1,5 +1,5 @@
 function () {
-  local yn
+  local yn=''
 
   if [[ "${SYS_OS_PLAT}" == 'linux' ]]; then
     if [[ $YES ]]; then

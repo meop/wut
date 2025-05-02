@@ -39,14 +39,11 @@ class SrvCmd extends CmdBase implements Cmd {
       }
       return `[${k}]`
     })
-
-    this.options = [
-      {
-        keys: ['-f', '--format'],
-        desc: `print format <${fmtKeys.join(', ')}>`,
-      },
-    ]
-    this.switches = [
+    this.options.push({
+      keys: ['-f', '--format'],
+      desc: `print format <${fmtKeys.join(', ')}>`,
+    })
+    this.switches.push(
       { keys: ['-d', '--debug'], desc: 'print debug' },
       { keys: ['-g', '--grayscale'], desc: 'print no color' },
       { keys: ['-l', '--log'], desc: 'log on server' },
@@ -54,11 +51,8 @@ class SrvCmd extends CmdBase implements Cmd {
       { keys: ['-s', '--succinct'], desc: 'no print' },
       { keys: ['-t', '--trace'], desc: 'print trace' },
       { keys: ['-y', '--yes'], desc: 'no prompt' },
-    ]
-    this.commands.push(new PackCmd([this.name]))
-    if (sh === 'pwsh' || sh === 'zsh') {
-      this.commands.push(new ScriptCmd([this.name]))
-    }
+    )
+    this.commands.push(new PackCmd([this.name]), new ScriptCmd([this.name]))
     if (sh === 'nu') {
       this.commands.push(new VirtCmd([this.name]))
     }

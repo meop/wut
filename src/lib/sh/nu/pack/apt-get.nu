@@ -1,6 +1,6 @@
 def packAptget [] {
   mut yn = ''
-  mut cmd = 'apt-get'
+  let cmd = 'apt-get'
 
   if ('PACK_MANAGER' not-in $env or $env.PACK_MANAGER == $cmd) and (which $cmd | is-not-empty) {
     if ('PACK_MANAGER' not-in $env and (which apt | is-not-empty)) {
@@ -11,9 +11,7 @@ def packAptget [] {
       $yn = input $"? ($env.PACK_OP) packages with ($cmd) \(system\) [y, [n]] "
     }
     if $yn != 'n' {
-      if (which sudo | is-not-empty) {
-        $cmd = $"sudo ($cmd)"
-      }
+      let cmd = if (which sudo | is-not-empty) { $"sudo ($cmd)" } else { $"($cmd)" }
       if $env.PACK_OP == 'add' {
         if 'PACK_ADD_GROUP_NAMES' in $env {
           $env.PACK_ADD_GROUP_NAMES | each {
@@ -24,10 +22,7 @@ def packAptget [] {
         opPrintRunCmd $cmd install $env.PACK_ADD_NAMES
       } else if $env.PACK_OP == 'find' {
         opPrintRunCmd $cmd update '|' complete '|' ignore
-        mut cacheCmd = 'apt-cache'
-        if (which sudo | is-not-empty) {
-          $cacheCmd = $"sudo ($cacheCmd)"
-        }
+        let cacheCmd = if (which sudo | is-not-empty) { 'sudo apt-cache' } else { 'apt-cache' }
         opPrintRunCmd $cacheCmd search $env.PACK_FIND_NAMES
       } else if $env.PACK_OP == 'list' {
         if 'PACK_LIST_NAMES' in $env {

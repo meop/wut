@@ -39,18 +39,17 @@ const osIdToManager = {
 
 const cfgExt = 'yaml'
 
-const formatKey = 'format'
-const logKey = 'log'
+const formatKey = toEnvKey('format')
+const logKey = toEnvKey('log')
 
-const packKey = 'pack'
-const packManagerKey = toEnvKey(packKey, 'manager')
-const packOpNamesKey = (op: string) => toEnvKey(packKey, op, 'names')
-const packOpContentsKey = (op: string) => toEnvKey(packKey, op, 'contents')
-const packOpGroupsKey = (op: string) => toEnvKey(packKey, op, 'groups')
-const packOpGroupNamesKey = (op: string) =>
-  toEnvKey(packKey, op, 'group', 'names')
+const pack = 'pack'
+const packManagerKey = toEnvKey(pack, 'manager')
+const packOpNamesKey = (op: string) => toEnvKey(pack, op, 'names')
+const packOpContentsKey = (op: string) => toEnvKey(pack, op, 'contents')
+const packOpGroupsKey = (op: string) => toEnvKey(pack, op, 'groups')
+const packOpGroupNamesKey = (op: string) => toEnvKey(pack, op, 'group', 'names')
 
-const packOpKey = toEnvKey(packKey, 'op')
+const packOpKey = toEnvKey(pack, 'op')
 
 function getSupportedManagers(context: Ctx, environment: Env) {
   let managers: Array<string> = []
@@ -71,7 +70,7 @@ function getSupportedManagers(context: Ctx, environment: Env) {
   return managers
 }
 
-function getManagerFuncName(manager: string, prefix = packKey) {
+function getManagerFuncName(manager: string, prefix = pack) {
   if (!manager) {
     return ''
   }
@@ -96,7 +95,7 @@ async function workAddFindRem(
   const supportedManagers = getSupportedManagers(context, environment)
 
   for (const supportedManager of supportedManagers) {
-    _shell = _shell.withFsFileLoad(async () => [packKey, supportedManager])
+    _shell = _shell.withFsFileLoad(async () => [pack, supportedManager])
   }
 
   const requestedNames = environment[packOpNamesKey(op)].split(' ')
@@ -104,10 +103,7 @@ async function workAddFindRem(
 
   if (environment[packOpGroupsKey(op)]) {
     for (const name of requestedNames) {
-      const content = await getCfgFsFileLoad(
-        async () => [packKey, name],
-        cfgExt,
-      )
+      const content = await getCfgFsFileLoad(async () => [pack, name], cfgExt)
 
       if (!content) {
         continue
@@ -116,7 +112,7 @@ async function workAddFindRem(
       if (op === 'find') {
         _shell = _shell.withPrint(
           async () =>
-            await getCfgFsFileDump(async () => [packKey, name], cfgExt, {
+            await getCfgFsFileDump(async () => [pack, name], cfgExt, {
               content: !!environment[packOpContentsKey(op)],
               format: toFmt(environment[formatKey]),
               name: true,
@@ -199,7 +195,7 @@ async function workListOutSyncTidy(
 
   let _shell = shell
   for (const supportedManager of supportedManagers) {
-    _shell = _shell.withFsFileLoad(async () => [packKey, supportedManager])
+    _shell = _shell.withFsFileLoad(async () => [pack, supportedManager])
   }
 
   const body = await _shell

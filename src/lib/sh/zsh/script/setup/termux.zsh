@@ -1,5 +1,5 @@
 function () {
-  local yn
+  local yn=''
 
   if type termux-reload-settings > /dev/null; then
     if [[ ! -f /etc/os-release ]]; then

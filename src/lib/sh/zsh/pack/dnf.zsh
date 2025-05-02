@@ -9,9 +9,7 @@ function packDnf {
       read "yn?? ${PACK_OP} packages with ${cmd} (system) [y, [n]] "
     fi
     if [[ $yn != 'n' ]]; then
-      if type sudo > /dev/null; then
-        cmd="sudo ${cmd}"
-      fi
+      local cmd=$(if type sudo > /dev/null; then "sudo ${cmd}"; else "${cmd}"; fi)
       if [[ $PACK_OP == 'add' ]]; then
         if [[ $PACK_ADD_GROUP_NAMES ]]; then
           for group in "${PACK_ADD_GROUP_NAMES[@]}"; do

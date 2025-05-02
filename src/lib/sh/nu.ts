@@ -6,7 +6,7 @@ export class Nushell extends ShBase implements Sh {
   }
 
   toVal(value: string): string {
-    return `'${value}'`
+    return `r#'${value}'#`
   }
 
   withTrace(): Sh {

@@ -1,5 +1,5 @@
 function () {
-  local yn
+  local yn=''
 
   # note: some systems keep changing the owner of these files
   # back to root, so we sometimes need to fix that

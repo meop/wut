@@ -1,5 +1,5 @@
 function () {
-  local yn
+  local yn=''
 
   if type tmux > /dev/null; then
     local tmux="${HOME}/.tmux"

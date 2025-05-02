@@ -2,7 +2,7 @@ function opPrint {
   if [[ "${SUCCINCT}" ]]; then
     return
   fi
-  printf "%s\n" "$*"
+  print "$*"
 }
 
 function opPrintErr {
@@ -10,10 +10,10 @@ function opPrintErr {
     return
   fi
   if [[ "${GRAYSCALE}" ]]; then
-    printf "%s\n" "$*" >&2
+    print "$*" >&2
     return
   fi
-  printf "\033[0;31m%s\033[0m\n" "$*" >&2
+  print "\033[0;31m$*\033[0m" >&2
 }
 
 function opPrintSucc {
@@ -21,10 +21,10 @@ function opPrintSucc {
     return
   fi
   if [[ "${GRAYSCALE}" ]]; then
-    printf "%s\n" "$*"
+    print "$*"
     return
   fi
-  printf "\033[0;32m%s\033[0m\n" "$*"
+  print "\033[0;32m$*\033[0m"
 }
 
 function opPrintWarn {
@@ -32,10 +32,10 @@ function opPrintWarn {
     return
   fi
   if [[ "${GRAYSCALE}" ]]; then
-    printf "%s\n" "$*"
+    print "$*"
     return
   fi
-  printf "\033[0;33m%s\033[0m\n" "$*"
+  print "\033[0;33m$*\033[0m"
 }
 
 function opPrintInfo {
@@ -43,10 +43,10 @@ function opPrintInfo {
     return
   fi
   if [[ "${GRAYSCALE}" ]]; then
-    printf "%s\n" "$*"
+    print "$*"
     return
   fi
-  printf "\033[0;34m%s\033[0m\n" "$*"
+  print "\033[0;34m$*\033[0m"
 }
 
 function opPrintCmd {
@@ -54,13 +54,13 @@ function opPrintCmd {
     return
   fi
   if [[ "${GRAYSCALE}" ]]; then
-    printf "%s\n" "$*"
+    print "$*"
     return
   fi
-  printf "\033[0;35m%s\033[0m" "$1"
+  print -n "\033[0;35m$1\033[0m"
   shift 1
   if [[ "$*" ]]; then
-    printf " \033[0;36m%s\033[0m\n" "$*"
+    print " \033[0;36m$*\033[0m"
   fi
 }
 
