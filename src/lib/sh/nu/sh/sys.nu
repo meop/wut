@@ -1,30 +1,14 @@
-if 'SYS_CPU_ARCH' not-in $env {
-  $env.SYS_CPU_ARCH = uname | get machine | str downcase
-  if ($env.SYS_CPU_ARCH | is-not-empty) {
-    $env.REQ_URL_SH = $"($env.REQ_URL_SH)?sysCpuArch=($env.SYS_CPU_ARCH)"
-  }
-}
+$env.SYS_CPU_ARCH = uname | get machine | str downcase
+$env.REQ_URL_SH = $"($env.REQ_URL_SH)?sysCpuArch=($env.SYS_CPU_ARCH)"
 
-if 'SYS_CPU_VEN_ID' not-in $env {
-  $env.SYS_CPU_VEN_ID = sys cpu | first | get vendor_id | str downcase
-  if ($env.SYS_CPU_VEN_ID | is-not-empty) {
-    $env.REQ_URL_SH = $"($env.REQ_URL_SH)&sysCpuVenId=($env.SYS_CPU_VEN_ID)"
-  }
-}
+$env.SYS_CPU_VEN_ID = sys cpu | first | get vendor_id | str downcase
+$env.REQ_URL_SH = $"($env.REQ_URL_SH)&sysCpuVenId=($env.SYS_CPU_VEN_ID)"
 
-if 'SYS_HOST' not-in $env {
-  $env.SYS_HOST = sys host | get hostname | str downcase
-  if ($env.SYS_HOST | is-not-empty) {
-    $env.REQ_URL_SH = $"($env.REQ_URL_SH)&sysHost=($env.SYS_HOST)"
-  }
-}
+$env.SYS_HOST = sys host | get hostname | str downcase
+$env.REQ_URL_SH = $"($env.REQ_URL_SH)&sysHost=($env.SYS_HOST)"
 
-if 'SYS_OS_PLAT' not-in $env {
-  $env.SYS_OS_PLAT = uname | get kernel-name | str downcase
-  if ($env.SYS_OS_PLAT | is-not-empty) {
-    $env.REQ_URL_SH = $"($env.REQ_URL_SH)&sysOsPlat=($env.SYS_OS_PLAT)"
-  }
-}
+$env.SYS_OS_PLAT = uname | get kernel-name | str downcase
+$env.REQ_URL_SH = $"($env.REQ_URL_SH)&sysOsPlat=($env.SYS_OS_PLAT)"
 
 if $env.SYS_OS_PLAT == 'linux' {
   if ('/etc/os-release' | path exists) {
@@ -51,9 +35,5 @@ if $env.SYS_OS_PLAT == 'linux' {
   }
 }
 
-if 'SYS_USER' not-in $env {
-  $env.SYS_USER = whoami | str downcase
-  if ($env.SYS_USER | is-not-empty) {
-    $env.REQ_URL_SH = $"($env.REQ_URL_SH)&sysUser=($env.SYS_USER)"
-  }
-}
+$env.SYS_USER = whoami | str downcase
+$env.REQ_URL_SH = $"($env.REQ_URL_SH)&sysUser=($env.SYS_USER)"

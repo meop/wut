@@ -54,8 +54,8 @@ const packOpKey = toEnvKey(pack, 'op')
 function getSupportedManagers(context: Ctx, environment: Env) {
   let managers: Array<string> = []
 
-  const osPlat = context.sys?.os?.plat
-  const osId = context.sys?.os?.id
+  const osPlat = context.sys_os_plat
+  const osId = context.sys_os_id
 
   if (osPlat) {
     managers.push(...osPlatToManager[osPlat])
@@ -91,9 +91,7 @@ async function workAddFindRem(
   op: string,
 ) {
   let _shell = shell
-
   const supportedManagers = getSupportedManagers(context, environment)
-
   for (const supportedManager of supportedManagers) {
     _shell = _shell.withFsFileLoad(async () => [pack, supportedManager])
   }

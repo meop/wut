@@ -9,8 +9,8 @@ function () {
   if [[ $yn != 'n' ]]; then
     local output="${HOME}/install-starship.sh"
     local url='https://starship.rs/install.sh'
-    opPrintRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
-    opPrintRunCmd sh "${output}" -b "${HOME}/.local/bin"
-    opPrintRunCmd rm -r -f "${output}"'*'
+    opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
+    opPrintMaybeRunCmd sh "${output}" -b "${HOME}/.local/bin"
+    opPrintMaybeRunCmd rm -r -f "${output}"'*'
   fi
 }

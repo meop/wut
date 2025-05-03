@@ -1,16 +1,16 @@
 function () {
   local yn=''
 
-  if [[ "${SYS_OS_PLAT}" == 'linux' ]]; then
-    if [[ "${SYS_OS_ID}" == 'debian' ]]; then
+  if [[ $SYS_OS_PLAT == 'linux' ]]; then
+    if [[ $SYS_OS_ID == 'debian' ]]; then
       # https://www.nushell.sh/book/installation.html#pre-built-binaries
 
       function install_nu_repo {
         local output="/etc/apt/sources.list.d/fury-nushell.list"
         if [[ ! -f "${output}" ]]; then
           local url="https://apt.fury.io/nushell"
-          opPrintRunCmd sudo --preserve-env bash -c '"'curl --fail-with-body --location --no-progress-meter --url "${url}/gpg.key" '|' gpg --dearmor -o /etc/apt/trusted.gpg.d/fury-nushell.gpg'"'
-          opPrintRunCmd sudo --preserve-env bash -c '"'echo ''\'deb "${url}/" /''\' '>' "${output}"'"'
+          opPrintMaybeRunCmd sudo --preserve-env bash -c '"'curl --fail-with-body --location --no-progress-meter --url "${url}/gpg.key" '|' gpg --dearmor -o /etc/apt/trusted.gpg.d/fury-nushell.gpg'"'
+          opPrintMaybeRunCmd sudo --preserve-env bash -c '"'echo ''\'deb "${url}/" /''\' '>' "${output}"'"'
         fi
       }
 
@@ -21,8 +21,8 @@ function () {
       fi
       if [[ $yn != 'n' ]]; then
         install_nu_repo
-        opPrintRunCmd sudo apt update
-        opPrintRunCmd sudo apt install nushell
+        opPrintMaybeRunCmd sudo apt update
+        opPrintMaybeRunCmd sudo apt install nushell
       fi
     fi
   fi

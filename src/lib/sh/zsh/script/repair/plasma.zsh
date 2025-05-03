@@ -15,7 +15,7 @@ function () {
       read 'yn?? repair plasma global shortcuts (user) [y, [n]] '
     fi
     if [[ $yn != 'n' ]]; then
-      opPrintRunCmd rm "${HOME}/.config/globalshortcutsrc"
+      opPrintMaybeRunCmd rm "${HOME}/.config/globalshortcutsrc"
     fi
   fi
   if [[ -f "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc" ]]; then
@@ -25,7 +25,7 @@ function () {
       read 'yn?? repair plasma panel applets (user) [y, [n]] '
     fi
     if [[ $yn != 'n' ]]; then
-      opPrintRunCmd rm "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc"
+      opPrintMaybeRunCmd rm "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc"
     fi
   fi
 }

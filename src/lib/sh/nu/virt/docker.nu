@@ -14,32 +14,32 @@ def virtDocker [] {
           if (^$cmd container ls | find --ignore-case $instance | is-not-empty) {
             let output = mktemp --suffix $".($cmd).($instance).yaml" --tmpdir
             let url = $"($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml"
-            opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"'($url)'" ')"' '|' save --force $"'($output)'"
-            opPrintRunCmd $cmd compose --file $"'($output)'" down
-            opPrintRunCmd rm $"'($output)'"
+            opPrintMaybeRunCmd '$"(' http get --raw --redirect-mode follow $"'($url)'" ')"' '|' save --force $output
+            opPrintMaybeRunCmd $cmd compose --file $"'($output)'" down
+            opPrintMaybeRunCmd rm $output
           }
         }
       } else if $env.VIRT_OP == 'list' {
         for instance in $env.VIRT_INSTANCES {
-          opPrintRunCmd $cmd container ls '|' find --ignore-case $instance
+          opPrintMaybeRunCmd $cmd container ls '|' find --ignore-case $instance
         }
       } else if $env.VIRT_OP == 'sync' {
         for instance in $env.VIRT_INSTANCES {
           let output = mktemp --suffix $".($cmd).($instance).yaml" --tmpdir
           let url = $"($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml"
-          opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"'($url)'" ')"' '|' save --force $"'($output)'"
-          opPrintRunCmd $cmd compose --file $"'($output)'" pull
-          opPrintRunCmd rm $"'($output)'"
+          opPrintMaybeRunCmd '$"(' http get --raw --redirect-mode follow $"'($url)'" ')"' '|' save --force $output
+          opPrintMaybeRunCmd $cmd compose --file $"'($output)'" pull
+          opPrintMaybeRunCmd rm $output
         }
       } else if $env.VIRT_OP == 'tidy' {
-        opPrintRunCmd $cmd system prune --all --volumes
+        opPrintMaybeRunCmd $cmd system prune --all --volumes
       } else if $env.VIRT_OP == 'up' {
         for instance in $env.VIRT_INSTANCES {
           let output = mktemp --suffix $".($cmd).($instance).yaml" --tmpdir
           let url = $"($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml"
-          opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"'($url)'" ')"' '|' save --force $"'($output)'"
-          opPrintRunCmd $cmd compose --file $"'($output)'" up --detach
-          opPrintRunCmd rm $"'($output)'"
+          opPrintMaybeRunCmd '$"(' http get --raw --redirect-mode follow $"'($url)'" ')"' '|' save --force $output
+          opPrintMaybeRunCmd $cmd compose --file $"'($output)'" up --detach
+          opPrintMaybeRunCmd rm $output
         }
       }
     }

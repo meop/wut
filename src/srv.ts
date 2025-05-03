@@ -76,7 +76,7 @@ enum Op {
 async function runSrv(req: Request) {
   try {
     const context = getCtx(req)
-    const path = context.req.path
+    const path = context.req_path
     const parts = expandParts(path.split('/').filter(p => p.length > 0))
 
     if (!parts.length) {
@@ -109,7 +109,7 @@ async function runSrv(req: Request) {
       })
     }
 
-    const shell: Sh = (
+    let shell: Sh = (
       sh === 'pwsh'
         ? new Powershell()
         : sh === 'nu'
@@ -118,20 +118,32 @@ async function runSrv(req: Request) {
     )
       .withVarSet(
         async () => 'REQ_URL_CFG',
-        async () => [context.req.orig, Op.cfg].join('/'),
+        async () => [context.req_orig, Op.cfg].join('/'),
       )
       .withVarSet(
         async () => 'REQ_URL_SH',
         async () =>
-          [context.req.orig, context.req.path, context.req.srch].join(''),
+          [context.req_orig, context.req_path, context.req_srch].join(''),
       )
       .withFsFileLoad(async () => ['sh', 'op'])
-      .withFsFileLoad(async () => ['sh', 'ver'])
-      .withFsFileLoad(async () => ['sh', 'sys'])
 
-    if (!context.sys?.cpu?.arch) {
+    if (!context.sys_cpu_arch) {
       return new Response(
-        await shell.withFsFileLoad(async () => ['sh', 'get']).build(),
+        await shell
+          .withFsFileLoad(async () => ['sh', 'ver'])
+          .withFsFileLoad(async () => ['sh', 'sys'])
+          .withFsFileLoad(async () => ['sh', 'get'])
+          .build(),
+      )
+    }
+
+    for (const e of Object.entries(context)) {
+      if (!e[1]) {
+        continue
+      }
+      shell = shell.withVarSet(
+        async () => e[0],
+        async () => e[1],
       )
     }
 

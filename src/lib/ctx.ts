@@ -1,29 +1,17 @@
 import { getCpuArch, getOsPlat } from './os'
 
 export type Ctx = {
-  req: {
-    orig: string
-    path: string
-    srch: string
-  }
-  sys?: {
-    cpu?: {
-      arch?: string
-      ven?: {
-        id?: string
-      }
-    }
-    host?: string
-    os?: {
-      id?: string
-      plat?: string
-      ver?: {
-        id?: string
-        code?: string
-      }
-    }
-    user?: string
-  }
+  req_orig: string
+  req_path: string
+  req_srch: string
+  sys_cpu_arch?: string
+  sys_cpu_ven_id?: string
+  sys_host?: string
+  sys_os_id?: string
+  sys_os_plat?: string
+  sys_os_ver_id?: string
+  sys_os_ver_code?: string
+  sys_user?: string
 }
 
 export function getSp(usp: URLSearchParams, key: string) {
@@ -53,28 +41,16 @@ export function getCtx(req: Request): Ctx {
   const sysUser = spSysUser
 
   return {
-    req: {
-      orig: url.origin,
-      path: url.pathname,
-      srch: url.search,
-    },
-    sys: {
-      cpu: {
-        arch: sysCpuArch,
-        ven: {
-          id: sysCpuVenId,
-        },
-      },
-      host: sysHost,
-      os: {
-        id: sysOsId,
-        plat: sysOsPlat,
-        ver: {
-          id: sysOsVerId,
-          code: sysOsVerCode,
-        },
-      },
-      user: sysUser,
-    },
+    req_orig: url.origin,
+    req_path: url.pathname,
+    req_srch: url.search,
+    sys_cpu_arch: sysCpuArch,
+    sys_cpu_ven_id: sysCpuVenId,
+    sys_host: sysHost,
+    sys_os_id: sysOsId,
+    sys_os_plat: sysOsPlat,
+    sys_os_ver_id: sysOsVerId,
+    sys_os_ver_code: sysOsVerCode,
+    sys_user: sysUser,
   }
 }

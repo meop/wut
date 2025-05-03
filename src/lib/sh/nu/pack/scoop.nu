@@ -12,43 +12,43 @@ def packScoop [] {
       if $env.PACK_OP == 'add' {
         if 'PACK_ADD_GROUP_NAMES' in $env {
           $env.PACK_ADD_GROUP_NAMES | each {
-            |pg| { opPrintRunCmd ...($pg | split words) }
+            |pg| { opPrintMaybeRunCmd ...($pg | split words) }
           }
         }
-        opPrintRunCmd $cmd update '|' complete '|' ignore
-        opPrintRunCmd $cmd install $env.PACK_ADD_NAMES
+        opPrintMaybeRunCmd $cmd update '|' complete '|' ignore
+        opPrintMaybeRunCmd $cmd install $env.PACK_ADD_NAMES
       } else if $env.PACK_OP == 'find' {
-        opPrintRunCmd $cmd update '|' complete '|' ignore
-        opPrintRunCmd $cmd search $env.PACK_FIND_NAMES
+        opPrintMaybeRunCmd $cmd update '|' complete '|' ignore
+        opPrintMaybeRunCmd $cmd search $env.PACK_FIND_NAMES
       } else if $env.PACK_OP == 'list' {
         if 'PACK_LIST_NAMES' in $env {
-          opPrintRunCmd $cmd list '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case $env.PACK_LIST_NAMES
+          opPrintMaybeRunCmd $cmd list '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case $env.PACK_LIST_NAMES
         } else {
-          opPrintRunCmd $cmd list
+          opPrintMaybeRunCmd $cmd list
         }
       } else if $env.PACK_OP == 'out' {
-        opPrintRunCmd $cmd update '|' complete '|' ignore
+        opPrintMaybeRunCmd $cmd update '|' complete '|' ignore
         if 'PACK_OUT_NAMES' in $env {
-          opPrintRunCmd $cmd status '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case $env.PACK_OUT_NAMES
+          opPrintMaybeRunCmd $cmd status '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case $env.PACK_OUT_NAMES
         } else {
-          opPrintRunCmd $cmd status
+          opPrintMaybeRunCmd $cmd status
         }
       } else if $env.PACK_OP == 'rem' {
-        opPrintRunCmd $cmd uninstall $env.PACK_REM_NAMES
+        opPrintMaybeRunCmd $cmd uninstall $env.PACK_REM_NAMES
         if 'PACK_REM_GROUP_NAMES' in $env {
           $env.PACK_REM_GROUP_NAMES | each {
-            |pg| { opPrintRunCmd ...($pg | split words) }
+            |pg| { opPrintMaybeRunCmd ...($pg | split words) }
           }
         }
       } else if $env.PACK_OP == 'sync' {
-        opPrintRunCmd $cmd update '|' complete '|' ignore
+        opPrintMaybeRunCmd $cmd update '|' complete '|' ignore
         if 'PACK_SYNC_NAMES' in $env {
-          opPrintRunCmd $cmd update $env.PACK_SYNC_NAMES
+          opPrintMaybeRunCmd $cmd update $env.PACK_SYNC_NAMES
         } else {
-          opPrintRunCmd $cmd update --all
+          opPrintMaybeRunCmd $cmd update --all
         }
       } else if $env.PACK_OP == 'tidy' {
-        opPrintRunCmd $cmd cleanup --all --cache
+        opPrintMaybeRunCmd $cmd cleanup --all --cache
       }
     }
   }

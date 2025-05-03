@@ -18,44 +18,44 @@ function packPacman {
         if ($PACK_ADD_GROUP_NAMES) {
           foreach ($pg in $PACK_ADD_GROUP_NAMES) {
             $pgSplit = $pg -Split ' '
-            opPrintRunCmd @pgSplit
+            opPrintMaybeRunCmd @pgSplit
           }
         }
-        opPrintRunCmd $cmd --sync --refresh '>' '$null' '2>&1'
-        opPrintRunCmd $cmd --sync --needed $PACK_ADD_NAMES
+        opPrintMaybeRunCmd $cmd --sync --refresh '>' '$null' '2>&1'
+        opPrintMaybeRunCmd $cmd --sync --needed $PACK_ADD_NAMES
       } elseif ($PACK_OP -eq 'find') {
-        opPrintRunCmd $cmd --sync --refresh '>' '$null' '2>&1'
-        opPrintRunCmd $cmd --sync --search $PACK_FIND_NAMES
+        opPrintMaybeRunCmd $cmd --sync --refresh '>' '$null' '2>&1'
+        opPrintMaybeRunCmd $cmd --sync --search $PACK_FIND_NAMES
       } elseif ($PACK_OP -eq 'list') {
         if ($PACK_LIST_NAMES) {
-          opPrintRunCmd $cmd --query '|' Select-String $PACK_LIST_NAMES '|' Select-Object -ExpandProperty Line
+          opPrintMaybeRunCmd $cmd --query '|' Select-String $PACK_LIST_NAMES '|' Select-Object -ExpandProperty Line
         } else {
-          opPrintRunCmd $cmd --query
+          opPrintMaybeRunCmd $cmd --query
         }
       } elseif ($PACK_OP -eq 'out') {
-        opPrintRunCmd $cmd --sync --refresh '>' '$null' '2>&1'
+        opPrintMaybeRunCmd $cmd --sync --refresh '>' '$null' '2>&1'
         if ($PACK_OUT_NAMES) {
-          opPrintRunCmd $cmd --query --upgrades '|' Select-String $PACK_OUT_NAMES '|' Select-Object -ExpandProperty Line
+          opPrintMaybeRunCmd $cmd --query --upgrades '|' Select-String $PACK_OUT_NAMES '|' Select-Object -ExpandProperty Line
         } else {
-          opPrintRunCmd $cmd --query --upgrades
+          opPrintMaybeRunCmd $cmd --query --upgrades
         }
       } elseif ($PACK_OP -eq 'rem') {
-        opPrintRunCmd $cmd --remove --recursive --nosave $PACK_REM_NAMES
+        opPrintMaybeRunCmd $cmd --remove --recursive --nosave $PACK_REM_NAMES
         if ($PACK_REM_GROUP_NAMES) {
           foreach ($pg in $PACK_REM_GROUP_NAMES) {
             $pgSplit = $pg -Split ' '
-            opPrintRunCmd @pgSplit
+            opPrintMaybeRunCmd @pgSplit
           }
         }
       } elseif ($PACK_OP -eq 'sync') {
-        opPrintRunCmd $cmd --sync --refresh '>' '$null' '2>&1'
+        opPrintMaybeRunCmd $cmd --sync --refresh '>' '$null' '2>&1'
         if ($PACK_SYNC_NAMES) {
-          opPrintRunCmd $cmd --sync --needed $PACK_SYNC_NAMES
+          opPrintMaybeRunCmd $cmd --sync --needed $PACK_SYNC_NAMES
         } else {
-          opPrintRunCmd $cmd --sync --sysupgrade
+          opPrintMaybeRunCmd $cmd --sync --sysupgrade
         }
       } elseif ($PACK_OP -eq 'tidy') {
-        opPrintRunCmd $cmd --sync --clean
+        opPrintMaybeRunCmd $cmd --sync --clean
       }
     }
   }

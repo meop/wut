@@ -12,18 +12,18 @@
         $output = "${fzf}/colors.ps1"
         $outputTmp = "${fzf}/colors.zsh"
         $url = 'https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/fzf/tokyonight_storm.sh'
-        opPrintRunCmd Invoke-WebRequest -Uri "${url}" '|' New-Item "${outputTmp}" -Force '>' '$null'
-        opPrintRunCmd Set-Content "${output}" '${env:FZF_DEFAULT_OPTS} = "${env:FZF_DEFAULT_OPTS} "+'
+        opPrintMaybeRunCmd Invoke-WebRequest -Uri "${url}" '|' New-Item "${outputTmp}" -Force '>' '$null'
+        opPrintMaybeRunCmd Set-Content "${output}" '${env:FZF_DEFAULT_OPTS} = "${env:FZF_DEFAULT_OPTS} "+'
 
         foreach ($line in Get-Content "${outputTmp}") {
           $formattedLine = ($line -replace '\\', '').Trim()
           if ($line.Trim().StartsWith('--')) {
-            opPrintRunCmd Add-Content "${output}" "  `'${formattedLine} `'+"
+            opPrintMaybeRunCmd Add-Content "${output}" "  `'${formattedLine} `'+"
           }
         }
 
-        opPrintRunCmd Add-Content "${output}" "  ''"
-        opPrintRunCmd Remove-Item "${outputTmp}"
+        opPrintMaybeRunCmd Add-Content "${output}" "  ''"
+        opPrintMaybeRunCmd Remove-Item "${outputTmp}"
       }
     }
   }

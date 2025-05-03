@@ -1,53 +1,37 @@
-if (-not $SYS_CPU_ARCH) {
-  if ($IsWindows) {
-    $SYS_CPU_ARCH = "${env:PROCESSOR_ARCHITECTURE}".ToLower()
-  } else {
-    $SYS_CPU_ARCH = "$(uname -m)".ToLower()
-  }
-  if ($SYS_CPU_ARCH) {
-    $REQ_URL_SH = "${REQ_URL_SH}?sysCpuArch=${SYS_CPU_ARCH}"
-  }
+if ($IsWindows) {
+  $SYS_CPU_ARCH = "${env:PROCESSOR_ARCHITECTURE}".ToLower()
+} else {
+  $SYS_CPU_ARCH = "$(uname -m)".ToLower()
 }
+$REQ_URL_SH = "${REQ_URL_SH}?sysCpuArch=${SYS_CPU_ARCH}"
 
-if (-not $SYS_CPU_VEN_ID) {
-  if ($IsWindows) {
-    $SYS_CPU_VEN_ID = "${env:PROCESSOR_ARCHITECTURE}".ToLower()
-  } elseif ($IsLinux) {
-    $SYS_CPU_VEN_ID = "$(lscpu | grep --ignore-case vendor | cut -d ':' -f 2 | xargs)".ToLower()
-  } else {
-    $SYS_CPU_VEN_ID = "$(sysctl machdep.cpu.vendor 2> /dev/null | cut -d ':' -f 2 | xargs)".ToLower()
-    if (-not $SYS_CPU_VEN_ID) {
-      $SYS_CPU_VEN_ID = 'Apple'.ToLower()
-    }
-  }
-  if ($SYS_CPU_VEN_ID) {
-    $REQ_URL_SH = "${REQ_URL_SH}&sysCpuVenId=${SYS_CPU_VEN_ID}"
+if ($IsWindows) {
+  $SYS_CPU_VEN_ID = "${env:PROCESSOR_ARCHITECTURE}".ToLower()
+} elseif ($IsLinux) {
+  $SYS_CPU_VEN_ID = "$(lscpu | grep --ignore-case vendor | cut -d ':' -f 2 | xargs)".ToLower()
+} else {
+  $SYS_CPU_VEN_ID = "$(sysctl machdep.cpu.vendor 2> /dev/null | cut -d ':' -f 2 | xargs)".ToLower()
+  if (-not $SYS_CPU_VEN_ID) {
+    $SYS_CPU_VEN_ID = 'Apple'.ToLower()
   }
 }
+$REQ_URL_SH = "${REQ_URL_SH}&sysCpuVenId=${SYS_CPU_VEN_ID}"
 
-if (-not $SYS_HOST) {
-  if ($IsWindows) {
-    $SYS_HOST = "${env:COMPUTERNAME}".ToLower()
-  } else {
-    $SYS_HOST = "$(hostname)".ToLower()
-  }
-  if ($SYS_HOST) {
-    $REQ_URL_SH = "${REQ_URL_SH}&sysHost=${SYS_HOST}"
-  }
+if ($IsWindows) {
+  $SYS_HOST = "${env:COMPUTERNAME}".ToLower()
+} else {
+  $SYS_HOST = "$(hostname)".ToLower()
 }
+$REQ_URL_SH = "${REQ_URL_SH}&sysHost=${SYS_HOST}"
 
-if (-not $SYS_OS_PLAT) {
-  if ($IsWindows) {
-    $SYS_OS_PLAT = 'winnt'
-  } elseif ($IsMacOS) {
-    $SYS_OS_PLAT = 'darwin'
-  } elseif ($IsLinux) {
-    $SYS_OS_PLAT = 'linux'
-  }
-  if ($SYS_OS_PLAT) {
-    $REQ_URL_SH = "${REQ_URL_SH}&sysOsPlat=${SYS_OS_PLAT}"
-  }
+if ($IsWindows) {
+  $SYS_OS_PLAT = 'winnt'
+} elseif ($IsMacOS) {
+  $SYS_OS_PLAT = 'darwin'
+} elseif ($IsLinux) {
+  $SYS_OS_PLAT = 'linux'
 }
+$REQ_URL_SH = "${REQ_URL_SH}&sysOsPlat=${SYS_OS_PLAT}"
 
 if ($SYS_OS_PLAT -eq 'linux') {
   if (Test-Path /etc/os-release) {
@@ -74,9 +58,5 @@ if ($SYS_OS_PLAT -eq 'linux') {
   }
 }
 
-if (-not $SYS_USER) {
-  $SYS_USER = "${USER}".ToLower()
-  if ($SYS_USER) {
-    $REQ_URL_SH = "${REQ_URL_SH}&sysUser=${SYS_USER}"
-  }
-}
+$SYS_USER = "${USER}".ToLower()
+$REQ_URL_SH = "${REQ_URL_SH}&sysUser=${SYS_USER}"

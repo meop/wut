@@ -82,6 +82,11 @@ function opRunCmd {
 
 function opPrintRunCmd {
   opPrintCmd @args
+  opRunCmd @args
+}
+
+function opPrintMaybeRunCmd {
+  opPrintCmd @args
   if (-not $NOOP) {
     opRunCmd @args
   }

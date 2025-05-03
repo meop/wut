@@ -12,42 +12,42 @@ def packBrew [] {
       if $env.PACK_OP == 'add' {
         if 'PACK_ADD_GROUP_NAMES' in $env {
           $env.PACK_ADD_GROUP_NAMES | each {
-            |pg| { opPrintRunCmd ...($pg | split words) }
+            |pg| { opPrintMaybeRunCmd ...($pg | split words) }
           }
         }
-        opPrintRunCmd $cmd update '|' complete '|' ignore
-        opPrintRunCmd $cmd install $env.PACK_ADD_NAMES
+        opPrintMaybeRunCmd $cmd update '|' complete '|' ignore
+        opPrintMaybeRunCmd $cmd install $env.PACK_ADD_NAMES
       } else if $env.PACK_OP == 'find' {
-        opPrintRunCmd $cmd search $env.PACK_FIND_NAMES
+        opPrintMaybeRunCmd $cmd search $env.PACK_FIND_NAMES
       } else if $env.PACK_OP == 'list' {
         if 'PACK_LIST_NAMES' in $env {
-          opPrintRunCmd $cmd list '|' find --ignore-case $env.PACK_LIST_NAMES
+          opPrintMaybeRunCmd $cmd list '|' find --ignore-case $env.PACK_LIST_NAMES
         } else {
-          opPrintRunCmd $cmd list
+          opPrintMaybeRunCmd $cmd list
         }
       } else if $env.PACK_OP == 'out' {
-        opPrintRunCmd $cmd update '|' complete '|' ignore
+        opPrintMaybeRunCmd $cmd update '|' complete '|' ignore
         if 'PACK_OUT_NAMES' in $env {
-          opPrintRunCmd $cmd outdated '|' find --ignore-case $env.PACK_OUT_NAMES
+          opPrintMaybeRunCmd $cmd outdated '|' find --ignore-case $env.PACK_OUT_NAMES
         } else {
-          opPrintRunCmd $cmd outdated
+          opPrintMaybeRunCmd $cmd outdated
         }
       } else if $env.PACK_OP == 'rem' {
-        opPrintRunCmd $cmd uninstall $env.PACK_REM_NAMES
+        opPrintMaybeRunCmd $cmd uninstall $env.PACK_REM_NAMES
         if 'PACK_REM_GROUP_NAMES' in $env {
           $env.PACK_REM_GROUP_NAMES | each {
-            |pg| { opPrintRunCmd ...($pg | split words) }
+            |pg| { opPrintMaybeRunCmd ...($pg | split words) }
           }
         }
       } else if $env.PACK_OP == 'sync' {
-        opPrintRunCmd $cmd update '|' complete '|' ignore
+        opPrintMaybeRunCmd $cmd update '|' complete '|' ignore
         if 'PACK_SYNC_NAMES' in $env {
-          opPrintRunCmd $cmd upgrade --greedy $env.PACK_SYNC_NAMES
+          opPrintMaybeRunCmd $cmd upgrade --greedy $env.PACK_SYNC_NAMES
         } else {
-          opPrintRunCmd $cmd upgrade --greedy
+          opPrintMaybeRunCmd $cmd upgrade --greedy
         }
       } else if $env.PACK_OP == 'tidy' {
-        opPrintRunCmd $cmd cleanup --prune=all
+        opPrintMaybeRunCmd $cmd cleanup --prune=all
       }
     }
   }

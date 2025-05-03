@@ -11,12 +11,12 @@ function () {
     fi
     if [[ $yn != 'n' ]]; then
       local brew_prefix=$(brew --prefix)
-      opPrintRunCmd sudo chown -R $(user) ${brew_prefix}/bin
-      opPrintRunCmd sudo chmod u+w ${brew_prefix}/bin
-      opPrintRunCmd sudo chown -R $(user) ${brew_prefix}/lib
-      opPrintRunCmd sudo chmod u+w ${brew_prefix}/lib
-      opPrintRunCmd sudo chown -R $(user) ${brew_prefix}/sbin
-      opPrintRunCmd sudo chmod u+w ${brew_prefix}/sbin
+      opPrintMaybeRunCmd sudo chown -R $(user) ${brew_prefix}/bin
+      opPrintMaybeRunCmd sudo chmod u+w ${brew_prefix}/bin
+      opPrintMaybeRunCmd sudo chown -R $(user) ${brew_prefix}/lib
+      opPrintMaybeRunCmd sudo chmod u+w ${brew_prefix}/lib
+      opPrintMaybeRunCmd sudo chown -R $(user) ${brew_prefix}/sbin
+      opPrintMaybeRunCmd sudo chmod u+w ${brew_prefix}/sbin
     fi
   fi
 }

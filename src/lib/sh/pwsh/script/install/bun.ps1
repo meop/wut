@@ -7,7 +7,7 @@
     }
     if ($yn -ne 'n') {
       $url = 'https://bun.sh/install.ps1'
-      opPrintRunCmd Invoke-Expression '"$(' Invoke-WebRequest -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "${url}" ')"'
+      opPrintMaybeRunCmd Invoke-Expression '"$(' Invoke-WebRequest -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "${url}" ')"'
     }
   }
 }

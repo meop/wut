@@ -14,10 +14,10 @@ function () {
 
       local output="${tmux_plugins}/tpm"
       if [[ -d "${output}" ]]; then
-        opPrintRunCmd git -C "${output}" pull --prune '>' /dev/null '2>&1'
+        opPrintMaybeRunCmd git -C "${output}" pull --prune '>' /dev/null '2>&1'
       else
         local url='https://github.com/tmux-plugins/tpm.git'
-        opPrintRunCmd git clone --depth 1 --quiet "${url}" "${output}"
+        opPrintMaybeRunCmd git clone --depth 1 --quiet "${url}" "${output}"
       fi
     fi
 
@@ -29,7 +29,7 @@ function () {
     if [[ $yn != 'n' ]]; then
       local output="${tmux}/theme.tmux"
       local url='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/tmux/tokyonight_moon.tmux'
-      opPrintRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
+      opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
     fi
   fi
 }

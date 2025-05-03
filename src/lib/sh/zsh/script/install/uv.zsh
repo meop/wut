@@ -8,6 +8,6 @@ function () {
   fi
   if [[ $yn != 'n' ]]; then
     local url='https://astral.sh/uv/install.sh'
-    opPrintRunCmd sh -c '"$(' curl --fail-with-body --location --no-progress-meter --url "${url}" ')"'
+    opPrintMaybeRunCmd sh -c '"$(' curl --fail-with-body --location --no-progress-meter --url "${url}" ')"'
   fi
 }

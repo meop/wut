@@ -16,45 +16,45 @@ function packDnf {
         if ($PACK_ADD_GROUP_NAMES) {
           foreach ($pg in $PACK_ADD_GROUP_NAMES) {
             $pgSplit = $pg -Split ' '
-            opPrintRunCmd @pgSplit
+            opPrintMaybeRunCmd @pgSplit
           }
         }
-        opPrintRunCmd $cmd check-update '>' '$null' '2>&1'
-        opPrintRunCmd $cmd install $PACK_ADD_NAMES
+        opPrintMaybeRunCmd $cmd check-update '>' '$null' '2>&1'
+        opPrintMaybeRunCmd $cmd install $PACK_ADD_NAMES
       } elseif ($PACK_OP -eq 'find') {
-        opPrintRunCmd $cmd check-update '>' '$null' '2>&1'
-        opPrintRunCmd $cmd search $PACK_FIND_NAMES
+        opPrintMaybeRunCmd $cmd check-update '>' '$null' '2>&1'
+        opPrintMaybeRunCmd $cmd search $PACK_FIND_NAMES
       } elseif ($PACK_OP -eq 'list') {
         if ($PACK_LIST_NAMES) {
-          opPrintRunCmd $cmd list --installed '|' Select-String $PACK_LIST_NAMES '|' Select-Object -ExpandProperty Line
+          opPrintMaybeRunCmd $cmd list --installed '|' Select-String $PACK_LIST_NAMES '|' Select-Object -ExpandProperty Line
         } else {
-          opPrintRunCmd $cmd list --installed
+          opPrintMaybeRunCmd $cmd list --installed
         }
       } elseif ($PACK_OP -eq 'out') {
-        opPrintRunCmd $cmd check-update '>' '$null' '2>&1'
+        opPrintMaybeRunCmd $cmd check-update '>' '$null' '2>&1'
         if ($PACK_OUT_NAMES) {
-          opPrintRunCmd $cmd list --upgrades '|' Select-String $PACK_OUT_NAMES '|' Select-Object -ExpandProperty Line
+          opPrintMaybeRunCmd $cmd list --upgrades '|' Select-String $PACK_OUT_NAMES '|' Select-Object -ExpandProperty Line
         } else {
-          opPrintRunCmd $cmd list --upgrades
+          opPrintMaybeRunCmd $cmd list --upgrades
         }
       } elseif ($PACK_OP -eq 'rem') {
-        opPrintRunCmd $cmd remove $PACK_REM_NAMES
+        opPrintMaybeRunCmd $cmd remove $PACK_REM_NAMES
         if ($PACK_REM_GROUP_NAMES) {
           foreach ($pg in $PACK_REM_GROUP_NAMES) {
             $pgSplit = $pg -Split ' '
-            opPrintRunCmd @pgSplit
+            opPrintMaybeRunCmd @pgSplit
           }
         }
       } elseif ($PACK_OP -eq 'sync') {
-        opPrintRunCmd $cmd check-update '>' '$null' '2>&1'
+        opPrintMaybeRunCmd $cmd check-update '>' '$null' '2>&1'
         if ($PACK_SYNC_NAMES) {
-          opPrintRunCmd $cmd upgrade $PACK_SYNC_NAMES
+          opPrintMaybeRunCmd $cmd upgrade $PACK_SYNC_NAMES
         } else {
-          opPrintRunCmd $cmd distro-sync
+          opPrintMaybeRunCmd $cmd distro-sync
         }
       } elseif ($PACK_OP -eq 'tidy') {
-        opPrintRunCmd $cmd clean dbcache
-        opPrintRunCmd $cmd autoremove
+        opPrintMaybeRunCmd $cmd clean dbcache
+        opPrintMaybeRunCmd $cmd autoremove
       }
     }
   }

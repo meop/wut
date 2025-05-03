@@ -14,45 +14,45 @@ function packDnf {
         if [[ $PACK_ADD_GROUP_NAMES ]]; then
           for group in "${PACK_ADD_GROUP_NAMES[@]}"; do
             groupSplit=( ${(s: :)group} )
-            opPrintRunCmd "${groupSplit[@]}"
+            opPrintMaybeRunCmd "${groupSplit[@]}"
           done
         fi
-        opPrintRunCmd $cmd check-update '>' /dev/null '2>&1'
-        opPrintRunCmd $cmd install $PACK_ADD_NAMES
+        opPrintMaybeRunCmd $cmd check-update '>' /dev/null '2>&1'
+        opPrintMaybeRunCmd $cmd install $PACK_ADD_NAMES
       elif [[ $PACK_OP == 'find' ]]; then
-        opPrintRunCmd $cmd check-update '>' /dev/null '2>&1'
-        opPrintRunCmd $cmd search $PACK_FIND_NAMES
+        opPrintMaybeRunCmd $cmd check-update '>' /dev/null '2>&1'
+        opPrintMaybeRunCmd $cmd search $PACK_FIND_NAMES
       elif [[ $PACK_OP == 'list' ]]; then
         if [[ $PACK_LIST_NAMES ]]; then
-          opPrintRunCmd $cmd list --installed '|' grep --ignore-case $PACK_LIST_NAMES
+          opPrintMaybeRunCmd $cmd list --installed '|' grep --ignore-case $PACK_LIST_NAMES
         else
-          opPrintRunCmd $cmd list --installed
+          opPrintMaybeRunCmd $cmd list --installed
         fi
       elif [[ $PACK_OP == 'out' ]]; then
-        opPrintRunCmd $cmd check-update '>' /dev/null '2>&1'
+        opPrintMaybeRunCmd $cmd check-update '>' /dev/null '2>&1'
         if [[ $PACK_OUT_NAMES ]]; then
-          opPrintRunCmd $cmd list --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
+          opPrintMaybeRunCmd $cmd list --upgrades '|' grep --ignore-case $PACK_OUT_NAMES
         else
-          opPrintRunCmd $cmd list --upgrades
+          opPrintMaybeRunCmd $cmd list --upgrades
         fi
       elif [[ $PACK_OP == 'rem' ]]; then
-        opPrintRunCmd $cmd remove $PACK_REM_NAMES
+        opPrintMaybeRunCmd $cmd remove $PACK_REM_NAMES
         if [[ $PACK_REM_GROUP_NAMES ]]; then
           for group in "${PACK_REM_GROUP_NAMES[@]}"; do
             groupSplit=( ${(s: :)group} )
-            opPrintRunCmd "${groupSplit[@]}"
+            opPrintMaybeRunCmd "${groupSplit[@]}"
           done
         fi
       elif [[ $PACK_OP == 'sync' ]]; then
-        opPrintRunCmd $cmd check-update '>' /dev/null '2>&1'
+        opPrintMaybeRunCmd $cmd check-update '>' /dev/null '2>&1'
         if [[ $PACK_SYNC_NAMES ]]; then
-          opPrintRunCmd $cmd upgrade $PACK_SYNC_NAMES
+          opPrintMaybeRunCmd $cmd upgrade $PACK_SYNC_NAMES
         else
-          opPrintRunCmd $cmd distro-sync
+          opPrintMaybeRunCmd $cmd distro-sync
         fi
       elif [[ $PACK_OP == 'tidy' ]]; then
-        opPrintRunCmd $cmd clean dbcache
-        opPrintRunCmd $cmd autoremove
+        opPrintMaybeRunCmd $cmd clean dbcache
+        opPrintMaybeRunCmd $cmd autoremove
       fi
     fi
   fi

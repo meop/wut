@@ -1,15 +1,15 @@
 function opPrint {
-  if [[ "${SUCCINCT}" ]]; then
+  if [[ $SUCCINCT ]]; then
     return
   fi
   print "$*"
 }
 
 function opPrintErr {
-  if [[ "${SUCCINCT}" ]]; then
+  if [[ $SUCCINCT ]]; then
     return
   fi
-  if [[ "${GRAYSCALE}" ]]; then
+  if [[ $GRAYSCALE ]]; then
     print "$*" >&2
     return
   fi
@@ -17,10 +17,10 @@ function opPrintErr {
 }
 
 function opPrintSucc {
-  if [[ "${SUCCINCT}" ]]; then
+  if [[ $SUCCINCT ]]; then
     return
   fi
-  if [[ "${GRAYSCALE}" ]]; then
+  if [[ $GRAYSCALE ]]; then
     print "$*"
     return
   fi
@@ -28,10 +28,10 @@ function opPrintSucc {
 }
 
 function opPrintWarn {
-  if [[ "${SUCCINCT}" ]]; then
+  if [[ $SUCCINCT ]]; then
     return
   fi
-  if [[ "${GRAYSCALE}" ]]; then
+  if [[ $GRAYSCALE ]]; then
     print "$*"
     return
   fi
@@ -39,10 +39,10 @@ function opPrintWarn {
 }
 
 function opPrintInfo {
-  if [[ "${SUCCINCT}" ]]; then
+  if [[ $SUCCINCT ]]; then
     return
   fi
-  if [[ "${GRAYSCALE}" ]]; then
+  if [[ $GRAYSCALE ]]; then
     print "$*"
     return
   fi
@@ -50,16 +50,16 @@ function opPrintInfo {
 }
 
 function opPrintCmd {
-  if [[ "${SUCCINCT}" ]]; then
+  if [[ $SUCCINCT ]]; then
     return
   fi
-  if [[ "${GRAYSCALE}" ]]; then
+  if [[ $GRAYSCALE ]]; then
     print "$*"
     return
   fi
   print -n "\033[0;35m$1\033[0m"
   shift 1
-  if [[ "$*" ]]; then
+  if [[ $* ]]; then
     print " \033[0;36m$*\033[0m"
   fi
 }
@@ -70,7 +70,12 @@ function opRunCmd {
 
 function opPrintRunCmd {
   opPrintCmd "$@"
-  if [[ -z "${NOOP}" ]]; then
+  opRunCmd "$@"
+}
+
+function opPrintMaybeRunCmd {
+  opPrintCmd "$@"
+  if [[ -z $NOOP ]]; then
     opRunCmd "$@"
   fi
 }

@@ -15,43 +15,43 @@ def packPacman [] {
       if $env.PACK_OP == 'add' {
         if 'PACK_ADD_GROUP_NAMES' in $env {
           $env.PACK_ADD_GROUP_NAMES | each {
-            |pg| { opPrintRunCmd ...($pg | split words) }
+            |pg| { opPrintMaybeRunCmd ...($pg | split words) }
           }
         }
-        opPrintRunCmd $cmd --sync --refresh '|' complete '|' ignore
-        opPrintRunCmd $cmd --sync --needed $env.PACK_ADD_NAMES
+        opPrintMaybeRunCmd $cmd --sync --refresh '|' complete '|' ignore
+        opPrintMaybeRunCmd $cmd --sync --needed $env.PACK_ADD_NAMES
       } else if $env.PACK_OP == 'find' {
-        opPrintRunCmd $cmd --sync --refresh '|' complete '|' ignore
-        opPrintRunCmd $cmd --sync --search $env.PACK_FIND_NAMES
+        opPrintMaybeRunCmd $cmd --sync --refresh '|' complete '|' ignore
+        opPrintMaybeRunCmd $cmd --sync --search $env.PACK_FIND_NAMES
       } else if $env.PACK_OP == 'list' {
         if 'PACK_LIST_NAMES' in $env {
-          opPrintRunCmd $cmd --query '|' find --ignore-case $env.PACK_LIST_NAMES
+          opPrintMaybeRunCmd $cmd --query '|' find --ignore-case $env.PACK_LIST_NAMES
         } else {
-          opPrintRunCmd $cmd --query
+          opPrintMaybeRunCmd $cmd --query
         }
       } else if $env.PACK_OP == 'out' {
-        opPrintRunCmd $cmd --sync --refresh '|' complete '|' ignore
+        opPrintMaybeRunCmd $cmd --sync --refresh '|' complete '|' ignore
         if 'PACK_OUT_NAMES' in $env {
-          opPrintRunCmd $cmd --query --upgrades '|' find --ignore-case $env.PACK_OUT_NAMES
+          opPrintMaybeRunCmd $cmd --query --upgrades '|' find --ignore-case $env.PACK_OUT_NAMES
         } else {
-          opPrintRunCmd $cmd --query --upgrades
+          opPrintMaybeRunCmd $cmd --query --upgrades
         }
       } else if $env.PACK_OP == 'rem' {
-        opPrintRunCmd $cmd --remove --recursive --nosave $env.PACK_REM_NAMES
+        opPrintMaybeRunCmd $cmd --remove --recursive --nosave $env.PACK_REM_NAMES
         if 'PACK_REM_GROUP_NAMES' in $env {
           $env.PACK_REM_GROUP_NAMES | each {
-            |pg| { opPrintRunCmd ...($pg | split words) }
+            |pg| { opPrintMaybeRunCmd ...($pg | split words) }
           }
         }
       } else if $env.PACK_OP == 'sync' {
-        opPrintRunCmd $cmd --sync --refresh '|' complete '|' ignore
+        opPrintMaybeRunCmd $cmd --sync --refresh '|' complete '|' ignore
         if 'PACK_SYNC_NAMES' in $env {
-          opPrintRunCmd $cmd --sync --needed $env.PACK_SYNC_NAMES
+          opPrintMaybeRunCmd $cmd --sync --needed $env.PACK_SYNC_NAMES
         } else {
-          opPrintRunCmd $cmd --sync --sysupgrade
+          opPrintMaybeRunCmd $cmd --sync --sysupgrade
         }
       } else if $env.PACK_OP == 'tidy' {
-        opPrintRunCmd $cmd --sync --clean
+        opPrintMaybeRunCmd $cmd --sync --clean
       }
     }
   }

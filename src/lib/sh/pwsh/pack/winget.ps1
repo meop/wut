@@ -13,37 +13,37 @@ function packWinget {
         if ($PACK_ADD_GROUP_NAMES) {
           foreach ($pg in $PACK_ADD_GROUP_NAMES) {
             $pgSplit = $pg -Split ' '
-            opPrintRunCmd @pgSplit
+            opPrintMaybeRunCmd @pgSplit
           }
         }
-        opPrintRunCmd $cmd install $PACK_ADD_NAMES
+        opPrintMaybeRunCmd $cmd install $PACK_ADD_NAMES
       } elseif ($PACK_OP -eq 'find') {
-        opPrintRunCmd $cmd search $PACK_FIND_NAMES
+        opPrintMaybeRunCmd $cmd search $PACK_FIND_NAMES
       } elseif ($PACK_OP -eq 'list') {
         if ($PACK_LIST_NAMES) {
-          opPrintRunCmd $cmd list '|' Select-String $PACK_LIST_NAMES '|' Select-Object -ExpandProperty Line
+          opPrintMaybeRunCmd $cmd list '|' Select-String $PACK_LIST_NAMES '|' Select-Object -ExpandProperty Line
         } else {
-          opPrintRunCmd $cmd list
+          opPrintMaybeRunCmd $cmd list
         }
       } elseif ($PACK_OP -eq 'out') {
         if ($PACK_OUT_NAMES) {
-          opPrintRunCmd $cmd upgrade '|' Select-String $PACK_OUT_NAMES '|' Select-Object -ExpandProperty Line
+          opPrintMaybeRunCmd $cmd upgrade '|' Select-String $PACK_OUT_NAMES '|' Select-Object -ExpandProperty Line
         } else {
-          opPrintRunCmd $cmd upgrade
+          opPrintMaybeRunCmd $cmd upgrade
         }
       } elseif ($PACK_OP -eq 'rem') {
-        opPrintRunCmd $cmd uninstall $PACK_REM_NAMES
+        opPrintMaybeRunCmd $cmd uninstall $PACK_REM_NAMES
         if ($PACK_REM_GROUP_NAMES) {
           foreach ($pg in $PACK_REM_GROUP_NAMES) {
             $pgSplit = $pg -Split ' '
-            opPrintRunCmd @pgSplit
+            opPrintMaybeRunCmd @pgSplit
           }
         }
       } elseif ($PACK_OP -eq 'sync') {
         if ($PACK_SYNC_NAMES) {
-          opPrintRunCmd $cmd upgrade $PACK_SYNC_NAMES
+          opPrintMaybeRunCmd $cmd upgrade $PACK_SYNC_NAMES
         } else {
-          opPrintRunCmd $cmd upgrade --all
+          opPrintMaybeRunCmd $cmd upgrade --all
         }
       } elseif ($PACK_OP -eq 'tidy') {
         # not available

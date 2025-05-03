@@ -18,49 +18,49 @@ function packAptget {
         if ($PACK_ADD_GROUP_NAMES) {
           foreach ($pg in $PACK_ADD_GROUP_NAMES) {
             $pgSplit = $pg -Split ' '
-            opPrintRunCmd @pgSplit
+            opPrintMaybeRunCmd @pgSplit
           }
         }
-        opPrintRunCmd $cmd update '>' '$null' '2>&1'
-        opPrintRunCmd $cmd install $PACK_ADD_NAMES
+        opPrintMaybeRunCmd $cmd update '>' '$null' '2>&1'
+        opPrintMaybeRunCmd $cmd install $PACK_ADD_NAMES
       } elseif ($PACK_OP -eq 'find') {
-        opPrintRunCmd $cmd update '>' '$null' '2>&1'
+        opPrintMaybeRunCmd $cmd update '>' '$null' '2>&1'
         $cacheCmd = 'apt-cache'
         if (Get-Command sudo -ErrorAction Ignore) {
           $cacheCmd = "sudo ${cacheCmd}"
         }
-        opPrintRunCmd $cacheCmd search $PACK_FIND_NAMES
+        opPrintMaybeRunCmd $cacheCmd search $PACK_FIND_NAMES
       } elseif ($PACK_OP -eq 'list') {
         if ($PACK_LIST_NAMES) {
-          opPrintRunCmd $cmd list --installed '2>' '$null' '|' Select-String $PACK_LIST_NAMES '|' Select-Object -ExpandProperty Line
+          opPrintMaybeRunCmd $cmd list --installed '2>' '$null' '|' Select-String $PACK_LIST_NAMES '|' Select-Object -ExpandProperty Line
         } else {
-          opPrintRunCmd $cmd list --installed
+          opPrintMaybeRunCmd $cmd list --installed
         }
       } elseif ($PACK_OP -eq 'out') {
-        opPrintRunCmd $cmd update '>' '$null' '2>&1'
+        opPrintMaybeRunCmd $cmd update '>' '$null' '2>&1'
         if ($PACK_OUT_NAMES) {
-          opPrintRunCmd $cmd list --upgradable '2>' '$null' '|' Select-String $PACK_OUT_NAMES '|' Select-Object -ExpandProperty Line
+          opPrintMaybeRunCmd $cmd list --upgradable '2>' '$null' '|' Select-String $PACK_OUT_NAMES '|' Select-Object -ExpandProperty Line
         } else {
-          opPrintRunCmd $cmd list --upgradable
+          opPrintMaybeRunCmd $cmd list --upgradable
         }
       } elseif ($PACK_OP -eq 'rem') {
-        opPrintRunCmd $cmd purge $PACK_REM_NAMES
+        opPrintMaybeRunCmd $cmd purge $PACK_REM_NAMES
         if ($PACK_REM_GROUP_NAMES) {
           foreach ($pg in $PACK_REM_GROUP_NAMES) {
             $pgSplit = $pg -Split ' '
-            opPrintRunCmd @pgSplit
+            opPrintMaybeRunCmd @pgSplit
           }
         }
       } elseif ($PACK_OP -eq 'sync') {
-        opPrintRunCmd $cmd update '>' '$null' '2>&1'
+        opPrintMaybeRunCmd $cmd update '>' '$null' '2>&1'
         if ($PACK_SYNC_NAMES) {
-          opPrintRunCmd $cmd install $PACK_SYNC_NAMES
+          opPrintMaybeRunCmd $cmd install $PACK_SYNC_NAMES
         } else {
-          opPrintRunCmd $cmd dist-upgrade
+          opPrintMaybeRunCmd $cmd dist-upgrade
         }
       } elseif ($PACK_OP -eq 'tidy') {
-        opPrintRunCmd $cmd autoclean
-        opPrintRunCmd $cmd autoremove
+        opPrintMaybeRunCmd $cmd autoclean
+        opPrintMaybeRunCmd $cmd autoremove
       }
     }
   }

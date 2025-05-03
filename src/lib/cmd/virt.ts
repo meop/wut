@@ -45,7 +45,7 @@ async function getDirPartsAndFilters(
   environment: Env,
   op: string,
 ) {
-  const dirParts = [virt, context.sys?.host ?? '']
+  const dirParts = [virt, context.sys_host ?? '']
   const filters: Array<string> = []
   if (virtOpPartsKey(op) in environment) {
     filters.push(...environment[virtOpPartsKey(op)].split(' '))
@@ -57,7 +57,7 @@ async function getDirPartsAndFilters(
 function getSupportedManagers(context: Ctx, environment: Env) {
   let managers: Array<string> = []
 
-  const osPlat = context.sys?.os?.plat
+  const osPlat = context.sys_os_plat
 
   if (osPlat) {
     managers.push(...osPlatToManager[osPlat])
@@ -86,53 +86,67 @@ function getManagerFuncName(manager: string, prefix = virt) {
 async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
   let _shell = shell
   const supportedManagers = getSupportedManagers(context, environment)
-  for (const supportedManager of supportedManagers) {
-    _shell = _shell.withFsFileLoad(async () => [virt, supportedManager])
-  }
-
   const { dirParts, filters } = await getDirPartsAndFilters(
     context,
     environment,
     op,
   )
-  const relParts = await getCfgFsDirDump(async () => dirParts, {
-    filters: async () => filters,
-    name: true,
-  })
 
-  const virtMap: { [key: string]: Array<string> } = {}
-
-  for (const relPart of relParts) {
-    const parts = relPart.split(' ')
-    if (parts[0] in virtMap) {
-      virtMap[parts[0]].push(parts[1])
-    } else {
-      virtMap[parts[0]] = [parts[1]]
-    }
-  }
-
-  for (const key of Object.keys(virtMap)) {
-    if (!supportedManagers.includes(key)) {
-      continue
-    }
-    if (supportedManagers.length > 1) {
-      _shell = _shell.withVarSet(
-        async () => virtManagerKey,
-        async () => key,
+  if (op === 'find') {
+    for (const supportedManager of supportedManagers) {
+      _shell = _shell.withPrint(
+        async () =>
+          await getCfgFsDirDump(async () => dirParts, {
+            content: !!environment[virtOpContentsKey(op)],
+            filters: async () => [supportedManager, ...filters],
+            format: toFmt(environment[formatKey]),
+            name: true,
+          }),
       )
     }
-    _shell = _shell
-      .withVarArrSet(
-        async () => virtInstancesKey,
-        async () => virtMap[key],
-      )
-      .withVarSet(
-        async () => virtOpKey,
-        async () => op,
-      )
-      .with(async () => [getManagerFuncName(key)])
-    if (supportedManagers.length > 1) {
-      _shell = _shell.withVarUnset(async () => virtManagerKey)
+  } else {
+    for (const supportedManager of supportedManagers) {
+      _shell = _shell.withFsFileLoad(async () => [virt, supportedManager])
+    }
+    const relParts = await getCfgFsDirDump(async () => dirParts, {
+      filters: async () => filters,
+      name: true,
+    })
+
+    const virtMap: { [key: string]: Array<string> } = {}
+
+    for (const relPart of relParts) {
+      const parts = relPart.split(' ')
+      if (parts[0] in virtMap) {
+        virtMap[parts[0]].push(parts[1])
+      } else {
+        virtMap[parts[0]] = [parts[1]]
+      }
+    }
+
+    for (const key of Object.keys(virtMap)) {
+      if (!supportedManagers.includes(key)) {
+        continue
+      }
+      if (supportedManagers.length > 1) {
+        _shell = _shell.withVarSet(
+          async () => virtManagerKey,
+          async () => key,
+        )
+      }
+      _shell = _shell
+        .withVarArrSet(
+          async () => virtInstancesKey,
+          async () => virtMap[key],
+        )
+        .withVarSet(
+          async () => virtOpKey,
+          async () => op,
+        )
+        .with(async () => [getManagerFuncName(key)])
+      if (supportedManagers.length > 1) {
+        _shell = _shell.withVarUnset(async () => virtManagerKey)
+      }
     }
   }
 
@@ -168,38 +182,7 @@ export class VirtCmdFind extends CmdBase implements Cmd {
     this.switches = [{ keys: ['-c', '--contents'], desc: 'print contents' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    const op = 'find'
-
-    const supportedManagers = getSupportedManagers(context, environment)
-
-    const { dirParts, filters } = await getDirPartsAndFilters(
-      context,
-      environment,
-      op,
-    )
-
-    let _shell = shell
-    for (const supportedManager of supportedManagers) {
-      _shell = _shell.withPrint(
-        async () =>
-          await getCfgFsDirDump(async () => dirParts, {
-            content: !!environment[virtOpContentsKey(op)],
-            filters: async () => [supportedManager, ...filters],
-            format: toFmt(environment[formatKey]),
-            name: true,
-          }),
-      )
-    }
-
-    const body = await shell.build()
-
-    console.log(JSON.stringify(environment, null, 2))
-
-    if (environment[logKey]) {
-      console.log(body)
-    }
-
-    return body
+    return await workOp(context, environment, shell, 'find')
   }
 }
 

@@ -7,7 +7,7 @@
     }
     if ($yn -ne 'n') {
       pwsh -nologo -noprofile -command {
-        opPrintRunCmd Set-Location HKLM:
+        opPrintMaybeRunCmd Set-Location HKLM:
 
         $root_path = '\SYSTEM\CurrentControlSet\Enum\PCI'
         $root_pci_base_id = '10DE' # nvidia
@@ -18,16 +18,16 @@
               $path = Join-Path $key 'Device Parameters' 'Interrupt Management' 'MessageSignaledInterruptProperties'
 
               if (-not (Test-Path $path)) {
-                opPrintRunCmd New-Item $path -ItemType Directory
+                opPrintMaybeRunCmd New-Item $path -ItemType Directory
               }
 
               if (-not (Get-ItemProperty $path).MSISupported) {
-                opPrintRunCmd New-ItemProperty $path -Name MSISupported -Value 1 -PropertyType DWord
+                opPrintMaybeRunCmd New-ItemProperty $path -Name MSISupported -Value 1 -PropertyType DWord
               } else {
-                opPrintRunCmd Set-ItemProperty $path -Name MSISupported -Value 1
+                opPrintMaybeRunCmd Set-ItemProperty $path -Name MSISupported -Value 1
               }
 
-              opPrintRunCmd Write-Output $path MSISupported (Get-ItemProperty $path).MSISupported
+              opPrintMaybeRunCmd Write-Output $path MSISupported (Get-ItemProperty $path).MSISupported
             }
           }
         }
