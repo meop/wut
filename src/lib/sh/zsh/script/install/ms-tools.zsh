@@ -5,8 +5,8 @@ function () {
     if [[ $SYS_OS_PLAT == 'linux' ]]; then
       if [[ $SYS_OS_ID == 'debian' ]]; then
         # dotnet-sdk: <https://learn.microsoft.com/en-us/dotnet/core/install/linux-debian>
-        # pwsh (amd64): <https://learn.microsoft.com/en-us/powershell/scripting/install/install-debian>
-        # pwsh (arm64): <https://learn.microsoft.com/en-us/powershell/scripting/install/community-support>
+        # pwsh (x86_64): <https://learn.microsoft.com/en-us/powershell/scripting/install/install-debian>
+        # pwsh (aarch64): <https://learn.microsoft.com/en-us/powershell/scripting/install/community-support>
 
         function install_packages_microsoft_repo {
           if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep --invert-match '^#' | grep --invert-match '^$' | grep '^.*packages.*microsoft.*com.*$' > /dev/null; then

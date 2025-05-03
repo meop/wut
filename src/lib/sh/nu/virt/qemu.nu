@@ -67,9 +67,9 @@ def virtQemuRun [qemuConfig, qemuConfigVm] {
 def virtQemu [] {
   mut yn = ''
   let cmd = 'qemu'
-  let cmdArch = $"($cmd)-system-($env.SYS_CPU_ARCH)"
+  let cmdSysArch = $"($cmd)-system-($env.SYS_CPU_ARCH)"
 
-  if ('VIRT_MANAGER' not-in $env or $env.VIRT_MANAGER == $cmd) and (which $cmdArch | is-not-empty) {
+  if ('VIRT_MANAGER' not-in $env or $env.VIRT_MANAGER == $cmd) and (which $cmdSysArch | is-not-empty) {
     if 'YES' in $env {
       $yn = 'y'
     } else {
@@ -78,15 +78,15 @@ def virtQemu [] {
     if $yn != 'n' {
       if $env.VIRT_OP == 'down' {
         for instance in $env.VIRT_INSTANCES {
-          if (do --ignore-errors { ^pgrep --ignore-ancestors --full --list-full $"($cmd).*($instance)" } | is-not-empty) {
-            opPrintMaybeRunCmd sudo --preserve-env sh -c '"' pkill --full $"($cmd)"'.*'$"($instance)" '"'
+          if (opPrintRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full $"($cmd).*($instance)" '}' '|' is-not-empty) {
+            opPrintMaybeRunCmd sudo --preserve-env sh -c '"' pkill --full $"($cmd).*($instance)" '"'
             continue
           }
           opPrintWarn $"($cmd) instance ($instance) is already down"
         }
       } else if $env.VIRT_OP == 'list' {
         for instance in $env.VIRT_INSTANCES {
-          opPrintMaybeRunCmd do --ignore-errors '{' pgrep --ignore-ancestors --full --list-full $"($cmd)"'.*'$"($instance)" '}'
+          opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full $"($cmd).*($instance)" '}'
         }
       } else if $env.VIRT_OP == 'sync' {
         # not applicable
@@ -94,7 +94,7 @@ def virtQemu [] {
         # not applicable
       } else if $env.VIRT_OP == 'up' {
         for instance in $env.VIRT_INSTANCES {
-          if (do --ignore-errors { ^pgrep --ignore-ancestors --full --list-full $"($cmd).*($instance)" } | is-not-empty) {
+          if (opPrintRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full $"($cmd).*($instance)" '}' '|' is-not-empty) {
             opPrintWarn $"($cmd) instance ($instance) is already up"
             continue
           }

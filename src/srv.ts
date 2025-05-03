@@ -142,7 +142,7 @@ async function runSrv(req: Request) {
         continue
       }
       shell = shell.withVarSet(
-        async () => e[0],
+        async () => e[0].toUpperCase(),
         async () => e[1],
       )
     }

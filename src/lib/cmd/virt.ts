@@ -25,8 +25,8 @@ export class VirtCmd extends CmdBase implements Cmd {
 
 const osPlatToManager = {
   linux: ['docker', 'qemu'],
-  macos: ['docker'],
-  windows: ['docker'],
+  darwin: ['docker'],
+  winnt: ['docker'],
 }
 
 const formatKey = toEnvKey('format')

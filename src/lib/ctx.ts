@@ -1,4 +1,4 @@
-import { getCpuArch, getOsPlat } from './os'
+import { getSysCpuArch, getSysCpuVenId, getSysOsId, getSysOsPlat } from './sys'
 
 export type Ctx = {
   req_orig: string
@@ -31,10 +31,10 @@ export function getCtx(req: Request): Ctx {
   const spSysHost = getSp(usp, 'sysHost')
   const spSysUser = getSp(usp, 'sysUser')
 
-  const sysCpuArch = spSysCpuArch ? getCpuArch(spSysCpuArch) : undefined
-  const sysCpuVenId = spSysCpuVenId
-  const sysOsId = spSysOsId
-  const sysOsPlat = spSysOsPlat ? getOsPlat(spSysOsPlat) : undefined
+  const sysCpuArch = spSysCpuArch ? getSysCpuArch(spSysCpuArch) : undefined
+  const sysCpuVenId = spSysCpuVenId ? getSysCpuVenId(spSysCpuVenId) : undefined
+  const sysOsId = spSysOsId ? getSysOsId(spSysOsId) : undefined
+  const sysOsPlat = spSysOsPlat ? getSysOsPlat(spSysOsPlat) : undefined
   const sysOsVerId = spSysOsVerId
   const sysOsVerCode = spSysOsVerCode
   const sysHost = spSysHost

@@ -26,15 +26,13 @@ export class PackCmd extends CmdBase implements Cmd {
 
 const osPlatToManager = {
   linux: ['apt', 'apt-get', 'dnf', 'pacman', 'yay'],
-  macos: ['brew'],
-  windows: ['scoop', 'winget'],
+  darwin: ['brew'],
+  winnt: ['scoop', 'winget'],
 }
 
 const osIdToManager = {
   arch: ['pacman', 'yay'],
-  archarm: ['pacman', 'yay'],
   debian: ['apt', 'apt-get'],
-  raspbian: ['apt', 'apt-get'],
 }
 
 const cfgExt = 'yaml'
