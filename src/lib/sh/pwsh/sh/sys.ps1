@@ -6,7 +6,7 @@ if ($IsWindows) {
 $REQ_URL_SH = "${REQ_URL_SH}?sysCpuArch=${SYS_CPU_ARCH}"
 
 if ($IsWindows) {
-  $SYS_CPU_VEN_ID = "${env:PROCESSOR_ARCHITECTURE}".ToLower()
+  $SYS_CPU_VEN_ID = "$(Get-WmiObject -Class Win32_Processor | Select-Object -ExpandProperty Manufacturer)".ToLower()
 } elseif ($IsLinux) {
   $SYS_CPU_VEN_ID = "$(lscpu | grep --ignore-case vendor | cut -d ':' -f 2 | xargs)".ToLower()
 } else {

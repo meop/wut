@@ -1,8 +1,8 @@
 function packWinget {
-  $yn = ''
+  $cmd = 'winget'
 
   if ((-not $PACK_MANAGER -or $PACK_MANAGER -eq $cmd) -and (Get-Command $cmd -ErrorAction Ignore)) {
-    $cmd = 'winget'
+    $yn = ''
     if ($YES) {
       $yn = 'y'
     } else {
