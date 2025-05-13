@@ -27,7 +27,7 @@ function packPacman {
       read "yn?? use ${cmd} (system) [y, [n]] "
     fi
     if [[ $yn != 'n' ]]; then
-      local cmd=$(if type sudo > /dev/null; then "sudo ${cmd}"; else "${cmd}"; fi)
+      local cmd=$(if type sudo > /dev/null; then echo "sudo ${cmd}"; else echo "${cmd}"; fi)
       packPacmanOp "$cmd"
     fi
   fi
