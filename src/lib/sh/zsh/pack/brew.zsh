@@ -1,56 +1,15 @@
 function packBrew {
-  local yn=''
   local cmd='brew'
 
   if [[ -z $PACK_MANAGER || $PACK_MANAGER == $cmd ]] && type $cmd > /dev/null; then
+    local yn=''
     if [[ $YES ]]; then
       yn='y'
     else
-      read "yn?? ${PACK_OP} packages with ${cmd} (system) [y, [n]] "
+      read "yn?? use ${cmd} (system) [y, [n]] "
     fi
     if [[ $yn != 'n' ]]; then
-      if [[ $PACK_OP == 'add' ]]; then
-        if [[ $PACK_ADD_GROUP_NAMES ]]; then
-          for group in "${PACK_ADD_GROUP_NAMES[@]}"; do
-            groupSplit=( ${(s: :)group} )
-            opPrintMaybeRunCmd "${groupSplit[@]}"
-          done
-        fi
-        opPrintMaybeRunCmd $cmd update '>' /dev/null '2>&1'
-        opPrintMaybeRunCmd $cmd install $PACK_ADD_NAMES
-      elif [[ $PACK_OP == 'find' ]]; then
-        opPrintMaybeRunCmd $cmd search $PACK_FIND_NAMES
-      elif [[ $PACK_OP == 'list' ]]; then
-        if [[ $PACK_LIST_NAMES ]]; then
-          opPrintMaybeRunCmd $cmd list '|' grep --ignore-case $PACK_LIST_NAMES
-        else
-          opPrintMaybeRunCmd $cmd list
-        fi
-      elif [[ $PACK_OP == 'out' ]]; then
-        opPrintMaybeRunCmd $cmd update '>' /dev/null '2>&1'
-        if [[ $PACK_OUT_NAMES ]]; then
-          opPrintMaybeRunCmd $cmd outdated | grep --ignore-case $PACK_OUT_NAMES
-        else
-          opPrintMaybeRunCmd $cmd outdated
-        fi
-      elif [[ $PACK_OP == 'rem' ]]; then
-        opPrintMaybeRunCmd $cmd uninstall $PACK_REM_NAMES
-        if [[ $PACK_REM_GROUP_NAMES ]]; then
-          for group in "${PACK_REM_GROUP_NAMES[@]}"; do
-            groupSplit=( ${(s: :)group} )
-            opPrintMaybeRunCmd "${groupSplit[@]}"
-          done
-        fi
-      elif [[ $PACK_OP == 'sync' ]]; then
-        opPrintMaybeRunCmd $cmd update '>' /dev/null '2>&1'
-        if [[ $PACK_SYNC_NAMES ]]; then
-          opPrintMaybeRunCmd $cmd upgrade --greedy $PACK_SYNC_NAMES
-        else
-          opPrintMaybeRunCmd $cmd upgrade --greedy
-        fi
-      elif [[ $PACK_OP == 'tidy' ]]; then
-        opPrintMaybeRunCmd $cmd cleanup --prune=all
-      fi
+      packBrewOp "$cmd"
     fi
   fi
 }

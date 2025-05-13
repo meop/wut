@@ -24,15 +24,15 @@ export class PackCmd extends CmdBase implements Cmd {
   }
 }
 
-const osPlatToManager = {
-  linux: ['apt', 'apt-get', 'dnf', 'pacman', 'yay'],
+const osPlatToManagers = {
+  linux: ['apt', 'dnf', 'yay', 'pacman'],
   darwin: ['brew'],
   winnt: ['scoop', 'winget'],
 }
 
-const osIdToManager = {
-  arch: ['pacman', 'yay'],
-  debian: ['apt', 'apt-get'],
+const osIdToManagers = {
+  arch: ['yay', 'pacman'],
+  debian: ['apt'],
 }
 
 const cfgExt = 'yaml'
@@ -47,8 +47,6 @@ const packOpContentsKey = (op: string) => toEnvKey(pack, op, 'contents')
 const packOpGroupsKey = (op: string) => toEnvKey(pack, op, 'groups')
 const packOpGroupNamesKey = (op: string) => toEnvKey(pack, op, 'group', 'names')
 
-const packOpKey = toEnvKey(pack, 'op')
-
 function getSupportedManagers(context: Ctx, environment: Env) {
   let managers: Array<string> = []
 
@@ -56,10 +54,10 @@ function getSupportedManagers(context: Ctx, environment: Env) {
   const osId = context.sys_os_id
 
   if (osPlat) {
-    managers.push(...osPlatToManager[osPlat])
+    managers.push(...osPlatToManagers[osPlat])
   }
   if (osId) {
-    managers = managers.filter(p => osIdToManager[osId].includes(p))
+    managers = managers.filter(p => osIdToManagers[osId].includes(p))
   }
   if (environment[packManagerKey]) {
     managers = managers.filter(p => p === environment[packManagerKey])
@@ -91,7 +89,9 @@ async function workAddFindRem(
   let _shell = shell
   const supportedManagers = getSupportedManagers(context, environment)
   for (const supportedManager of supportedManagers) {
-    _shell = _shell.withFsFileLoad(async () => [pack, supportedManager])
+    _shell = _shell
+      .withFsFileLoad(async () => [pack, supportedManager, op])
+      .withFsFileLoad(async () => [pack, supportedManager])
   }
 
   const requestedNames = environment[packOpNamesKey(op)].split(' ')
@@ -123,7 +123,6 @@ async function workAddFindRem(
           if (!value?.names?.length) {
             continue
           }
-
           if (supportedManagers.length > 1) {
             _shell = _shell.withVarSet(
               async () => packManagerKey,
@@ -139,10 +138,6 @@ async function workAddFindRem(
           _shell = _shell.withVarSet(
             async () => packOpNamesKey(op),
             async () => value.names.join(' '),
-          )
-          _shell = _shell.withVarSet(
-            async () => packOpKey,
-            async () => op,
           )
           _shell = _shell.with(async () => [getManagerFuncName(key)])
           if (value[op]) {
@@ -164,10 +159,6 @@ async function workAddFindRem(
       .withVarSet(
         async () => packOpNamesKey(op),
         async () => remainingNames.join(' '),
-      )
-      .withVarSet(
-        async () => packOpKey,
-        async () => op,
       )
       .with(async () => supportedManagers.map(m => getManagerFuncName(m)))
   }
@@ -191,14 +182,12 @@ async function workListOutSyncTidy(
 
   let _shell = shell
   for (const supportedManager of supportedManagers) {
-    _shell = _shell.withFsFileLoad(async () => [pack, supportedManager])
+    _shell = _shell
+      .withFsFileLoad(async () => [pack, supportedManager, op])
+      .withFsFileLoad(async () => [pack, supportedManager])
   }
 
   const body = await _shell
-    .withVarSet(
-      async () => packOpKey,
-      async () => op,
-    )
     .with(async () => supportedManagers.map(m => getManagerFuncName(m)))
     .build()
 

@@ -37,7 +37,6 @@ const virtManagerKey = toEnvKey(virt, 'manager')
 const virtOpPartsKey = (op: string) => toEnvKey(virt, op, 'parts')
 const virtOpContentsKey = (op: string) => toEnvKey(virt, op, 'contents')
 
-const virtOpKey = toEnvKey(virt, 'op')
 const virtInstancesKey = toEnvKey(virt, 'instances')
 
 async function getDirPartsAndFilters(
@@ -106,7 +105,9 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
     }
   } else {
     for (const supportedManager of supportedManagers) {
-      _shell = _shell.withFsFileLoad(async () => [virt, supportedManager])
+      _shell = _shell
+        .withFsFileLoad(async () => [virt, supportedManager, op])
+        .withFsFileLoad(async () => [virt, supportedManager])
     }
     const relParts = await getCfgFsDirDump(async () => dirParts, {
       filters: async () => filters,
@@ -138,10 +139,6 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
         .withVarArrSet(
           async () => virtInstancesKey,
           async () => virtMap[key],
-        )
-        .withVarSet(
-          async () => virtOpKey,
-          async () => op,
         )
         .with(async () => [getManagerFuncName(key)])
       if (supportedManagers.length > 1) {
