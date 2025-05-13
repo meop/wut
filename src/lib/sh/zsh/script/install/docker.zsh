@@ -10,8 +10,8 @@ function () {
           local output_key='/etc/apt/keyrings/docker.asc'
           local url='https://download.docker.com/linux/debian'
 
-          opPrintMaybeRunCmd sudo apt-get update
-          opPrintMaybeRunCmd sudo apt-get install ca-certificates curl
+          opPrintMaybeRunCmd sudo apt update '> /dev/null 2>&1'
+          opPrintMaybeRunCmd sudo apt install ca-certificates curl
           opPrintMaybeRunCmd sudo install -m 0755 -d /etc/apt/keyrings
           opPrintMaybeRunCmd sudo curl --fail-with-body --location --no-progress-meter "${url}"/gpg --output "${output_key}"
           opPrintMaybeRunCmd sudo chmod a+r "${output_key}"
@@ -30,8 +30,8 @@ function () {
       fi
       if [[ $yn != 'n' ]]; then
         install_docker_repo
-        opPrintMaybeRunCmd sudo apt-get update
-        opPrintMaybeRunCmd sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        opPrintMaybeRunCmd sudo apt update '> /dev/null 2>&1'
+        opPrintMaybeRunCmd sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
       fi
     fi
   fi

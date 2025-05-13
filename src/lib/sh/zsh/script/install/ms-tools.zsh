@@ -24,7 +24,7 @@ function () {
           read 'yn?? install dotnet sdk (system) [y, [n]] '
           if [[ $yn != 'n' ]]; then
             install_packages_microsoft_repo
-            opPrintMaybeRunCmd sudo apt update
+            opPrintMaybeRunCmd sudo apt update '>' /dev/null '2>&1'
             opPrintMaybeRunCmd sudo apt install dotnet-sdk-"${version}"
           fi
         }
@@ -36,7 +36,7 @@ function () {
         fi
         if [[ $yn != 'n' ]]; then
           install_packages_microsoft_repo
-          opPrintMaybeRunCmd sudo apt update
+          opPrintMaybeRunCmd sudo apt update '>' /dev/null '2>&1'
           opPrintMaybeRunCmd sudo apt install powershell
         fi
       fi

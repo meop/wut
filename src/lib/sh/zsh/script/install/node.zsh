@@ -19,7 +19,7 @@ function () {
       fi
       if [[ $yn != 'n' ]]; then
         install_nodesource_repo
-        opPrintMaybeRunCmd sudo apt update
+        opPrintMaybeRunCmd sudo apt update '> /dev/null 2>&1'
         opPrintMaybeRunCmd sudo apt install nodejs
       fi
 
@@ -30,7 +30,7 @@ function () {
       fi
       if [[ $yn != 'n' ]]; then
         install_nodesource_repo
-        opPrintMaybeRunCmd sudo apt update
+        opPrintMaybeRunCmd sudo apt update '> /dev/null 2>&1'
         opPrintMaybeRunCmd sudo apt install npm
       fi
     fi

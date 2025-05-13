@@ -21,7 +21,7 @@ function () {
       fi
       if [[ $yn != 'n' ]]; then
         install_nu_repo
-        opPrintMaybeRunCmd sudo apt update
+        opPrintMaybeRunCmd sudo apt update '>' /dev/null '2>&1'
         opPrintMaybeRunCmd sudo apt install nushell
       fi
     fi
