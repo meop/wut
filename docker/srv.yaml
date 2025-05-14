@@ -3,8 +3,8 @@ name: wut
 services:
   web:
     command: bun --hot run src/srv.ts
-    # command: '-f /dev/null'
-    # entrypoint: '/usr/bin/tail'
+    # command: -f /dev/null
+    # entrypoint: /usr/bin/tail
     # tty: true
     environment:
       - PORT=9000
