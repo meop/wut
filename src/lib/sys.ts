@@ -23,6 +23,7 @@ export function getSysCpuVenId(sysCpuVenId: string) {
     case 'arm':
       return 'arm'
     case 'apple':
+    case 'qemu':
       return 'apple'
     default:
       throw new Error(`unsupported cpu vendor: ${sysCpuVenId}`)
@@ -37,6 +38,10 @@ export function getSysOsId(sysOsId: string) {
     case 'debian':
     case 'raspbian':
       return 'debian'
+    case 'centos':
+    case 'fedora':
+    case 'redhat':
+      return 'centos'
     default:
       throw new Error(`unsupported os id: ${sysOsId}`)
   }

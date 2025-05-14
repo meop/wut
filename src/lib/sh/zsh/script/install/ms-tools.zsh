@@ -39,7 +39,13 @@ function () {
           opPrintMaybeRunCmd sudo apt update '>' /dev/null '2>&1'
           opPrintMaybeRunCmd sudo apt install powershell
         fi
+      else
+        echo 'script is for debian'
       fi
+    else
+      echo 'script is for linux'
     fi
+  else
+    echo 'script is for x86_64'
   fi
 }

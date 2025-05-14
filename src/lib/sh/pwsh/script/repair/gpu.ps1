@@ -1,5 +1,6 @@
 &{
   if ($IsWindows) {
+    $yn = ''
     if ($YES) {
       $yn = 'y'
     } else {
@@ -33,5 +34,7 @@
         }
       }
     }
+  } else {
+    Write-Host 'script is for winnt'
   }
 }

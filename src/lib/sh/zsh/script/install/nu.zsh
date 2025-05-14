@@ -24,6 +24,10 @@ function () {
         opPrintMaybeRunCmd sudo apt update '>' /dev/null '2>&1'
         opPrintMaybeRunCmd sudo apt install nushell
       fi
+    else
+      echo 'script is for debian'
     fi
+  else
+    echo 'script is for linux'
   fi
 }

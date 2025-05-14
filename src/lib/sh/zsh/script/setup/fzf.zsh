@@ -14,5 +14,7 @@ function () {
       local url='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/fzf/tokyonight_storm.sh'
       opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
     fi
+  else
+    echo 'fzf is not installed'
   fi
 }

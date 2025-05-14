@@ -32,6 +32,7 @@ const osPlatToManagers = {
 
 const osIdToManagers = {
   arch: ['yay', 'pacman'],
+  centos: ['dnf'],
   debian: ['apt'],
 }
 

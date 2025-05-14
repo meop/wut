@@ -27,5 +27,7 @@ function () {
       opPrintMaybeRunCmd cp "${output}.unzip"'/*.ttf' "${fonts}"
       opPrintMaybeRunCmd rm -r -f "${output}"'*'
     fi
+  else
+    echo 'script is for linux'
   fi
 }

@@ -1,5 +1,6 @@
 &{
   if ($IsWindows) {
+    $yn = ''
     if ($YES) {
       $yn = 'y'
     } else {
@@ -20,5 +21,7 @@
         opPrintMaybeRunCmd Write-Output $path RealTimeIsUniversal (Get-ItemProperty $path).RealTimeIsUniversal
       }
     }
+  } else {
+    Write-Host 'script is for winnt'
   }
 }

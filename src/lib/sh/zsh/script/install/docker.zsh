@@ -33,6 +33,10 @@ function () {
         opPrintMaybeRunCmd sudo apt update '> /dev/null 2>&1'
         opPrintMaybeRunCmd sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
       fi
+    else
+      echo 'script is for debian'
     fi
+  else
+    echo 'script is for linux'
   fi
 }

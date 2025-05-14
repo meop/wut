@@ -1,6 +1,7 @@
 &{
   if ($IsWindows) {
     if (Get-Command nvim -ErrorAction Ignore) {
+      $yn = ''
       if ($YES) {
         $yn = 'y'
       } else {
@@ -14,6 +15,10 @@
         $url = 'https://raw.githubusercontent.com/junegunn/vim-plug/HEAD/plug.vim'
         opPrintMaybeRunCmd Invoke-WebRequest -Uri "${url}" '|' New-Item "${output}" -Force '>' '$null'
       }
+    } else {
+      Write-Host 'nvim is not installed'
     }
+  } else {
+    Write-Host 'script is for winnt'
   }
 }

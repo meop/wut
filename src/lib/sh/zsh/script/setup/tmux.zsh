@@ -31,5 +31,7 @@ function () {
       local url='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/tmux/tokyonight_moon.tmux'
       opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
     fi
+  else
+    echo 'tmux is not installed'
   fi
 }

@@ -17,6 +17,8 @@ function () {
     if [[ $yn != 'n' ]]; then
       opPrintMaybeRunCmd rm "${HOME}/.config/globalshortcutsrc"
     fi
+  else
+    echo 'plasma global shortcuts not found'
   fi
   if [[ -f "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc" ]]; then
     if [[ $YES ]]; then
@@ -27,5 +29,7 @@ function () {
     if [[ $yn != 'n' ]]; then
       opPrintMaybeRunCmd rm "${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc"
     fi
+  else
+    echo 'plasma panel applets not found'
   fi
 }

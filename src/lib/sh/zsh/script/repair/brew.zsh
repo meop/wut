@@ -18,5 +18,7 @@ function () {
       opPrintMaybeRunCmd sudo chown -R $(user) ${brew_prefix}/sbin
       opPrintMaybeRunCmd sudo chmod u+w ${brew_prefix}/sbin
     fi
+  else
+    echo 'brew is not installed'
   fi
 }
