@@ -47,7 +47,7 @@ function () {
         opPrintMaybeRunCmd sudo dnf install nushell
       fi
     else
-      echo 'script is for centos or debian'
+      echo 'script is for debian or centos'
     fi
   else
     echo 'script is for linux'
