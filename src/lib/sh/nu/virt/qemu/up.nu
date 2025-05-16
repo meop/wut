@@ -35,7 +35,7 @@ def virtQemuRebindVfioPci [pciDevId] {
   }
 
   let cmds = [
-    $"echo ($driver) > /sys/bus/pci/drivers/($fullPciDevId)/driver_override",
+    $"echo ($driver) > /sys/bus/pci/devices/($fullPciDevId)/driver_override",
     $"echo ($fullPciDevId) > /sys/bus/pci/devices/($fullPciDevId)/driver/unbind",
     $"echo ($fullPciDevId) > /sys/bus/pci/drivers/($driver)/bind",
     $"echo > /sys/bus/pci/devices/($fullPciDevId)/driver_override",
