@@ -4,7 +4,7 @@
     if ($YES) {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? repair rtc utc (system) [y, [n]]'
+      $yn = Read-Host '? enable clock utc (system) [y, [n]]'
     }
     if ($yn -ne 'n') {
       pwsh -nologo -noprofile -command {
