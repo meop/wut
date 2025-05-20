@@ -38,15 +38,16 @@ const osIdToManagers = {
 
 const cfgExt = 'yaml'
 
-const formatKey = toEnvKey('format')
-const logKey = toEnvKey('log')
+const FORMAT_KEY = toEnvKey('format')
+const LOG_KEY = toEnvKey('log')
 
-const pack = 'pack'
-const packManagerKey = toEnvKey(pack, 'manager')
-const packOpNamesKey = (op: string) => toEnvKey(pack, op, 'names')
-const packOpContentsKey = (op: string) => toEnvKey(pack, op, 'contents')
-const packOpGroupsKey = (op: string) => toEnvKey(pack, op, 'groups')
-const packOpGroupNamesKey = (op: string) => toEnvKey(pack, op, 'group', 'names')
+const PACK_KEY = 'pack'
+const PACK_MANAGER_KEY = toEnvKey(PACK_KEY, 'manager')
+const PACK_OP_NAMES_KEY = (op: string) => toEnvKey(PACK_KEY, op, 'names')
+const PACK_OP_CONTENTS_KEY = (op: string) => toEnvKey(PACK_KEY, op, 'contents')
+const PACK_OP_GROUPS_KEY = (op: string) => toEnvKey(PACK_KEY, op, 'groups')
+const PACK_OP_GROUP_NAMES_KEY = (op: string) =>
+  toEnvKey(PACK_KEY, op, 'group', 'names')
 
 function getSupportedManagers(context: Ctx, environment: Env) {
   let managers: Array<string> = []
@@ -60,14 +61,14 @@ function getSupportedManagers(context: Ctx, environment: Env) {
   if (osId) {
     managers = managers.filter(p => osIdToManagers[osId].includes(p))
   }
-  if (environment[packManagerKey]) {
-    managers = managers.filter(p => p === environment[packManagerKey])
+  if (environment[PACK_MANAGER_KEY]) {
+    managers = managers.filter(p => p === environment[PACK_MANAGER_KEY])
   }
 
   return managers
 }
 
-function getManagerFuncName(manager: string, prefix = pack) {
+function getManagerFuncName(manager: string, prefix = PACK_KEY) {
   if (!manager) {
     return ''
   }
@@ -91,16 +92,19 @@ async function workAddFindRem(
   const supportedManagers = getSupportedManagers(context, environment)
   for (const supportedManager of supportedManagers) {
     _shell = _shell
-      .withFsFileLoad(async () => [pack, supportedManager, op])
-      .withFsFileLoad(async () => [pack, supportedManager])
+      .withFsFileLoad(async () => [PACK_KEY, supportedManager, op])
+      .withFsFileLoad(async () => [PACK_KEY, supportedManager])
   }
 
-  const requestedNames = environment[packOpNamesKey(op)].split(' ')
+  const requestedNames = environment[PACK_OP_NAMES_KEY(op)].split(' ')
   const foundNames: Array<string> = []
 
-  if (environment[packOpGroupsKey(op)]) {
+  if (environment[PACK_OP_GROUPS_KEY(op)]) {
     for (const name of requestedNames) {
-      const content = await getCfgFsFileLoad(async () => [pack, name], cfgExt)
+      const content = await getCfgFsFileLoad(
+        async () => [PACK_KEY, name],
+        cfgExt,
+      )
 
       if (!content) {
         continue
@@ -109,9 +113,9 @@ async function workAddFindRem(
       if (op === 'find') {
         _shell = _shell.withPrint(
           async () =>
-            await getCfgFsFileDump(async () => [pack, name], cfgExt, {
-              content: !!environment[packOpContentsKey(op)],
-              format: toFmt(environment[formatKey]),
+            await getCfgFsFileDump(async () => [PACK_KEY, name], cfgExt, {
+              content: !!environment[PACK_OP_CONTENTS_KEY(op)],
+              format: toFmt(environment[FORMAT_KEY]),
               name: true,
             }),
         )
@@ -126,26 +130,28 @@ async function workAddFindRem(
           }
           if (supportedManagers.length > 1) {
             _shell = _shell.withVarSet(
-              async () => packManagerKey,
+              async () => PACK_MANAGER_KEY,
               async () => key,
             )
           }
           if (value[op]) {
             _shell = _shell.withVarArrSet(
-              async () => packOpGroupNamesKey(op),
+              async () => PACK_OP_GROUP_NAMES_KEY(op),
               async () => value[op],
             )
           }
           _shell = _shell.withVarSet(
-            async () => packOpNamesKey(op),
+            async () => PACK_OP_NAMES_KEY(op),
             async () => value.names.join(' '),
           )
           _shell = _shell.with(async () => [getManagerFuncName(key)])
           if (value[op]) {
-            _shell = _shell.withVarUnset(async () => packOpGroupNamesKey(op))
+            _shell = _shell.withVarUnset(async () =>
+              PACK_OP_GROUP_NAMES_KEY(op),
+            )
           }
           if (supportedManagers.length > 1) {
-            _shell = _shell.withVarUnset(async () => packManagerKey)
+            _shell = _shell.withVarUnset(async () => PACK_MANAGER_KEY)
           }
         }
       }
@@ -158,7 +164,7 @@ async function workAddFindRem(
   if (remainingNames.length) {
     _shell = _shell
       .withVarSet(
-        async () => packOpNamesKey(op),
+        async () => PACK_OP_NAMES_KEY(op),
         async () => remainingNames.join(' '),
       )
       .with(async () => supportedManagers.map(m => getManagerFuncName(m)))
@@ -166,7 +172,7 @@ async function workAddFindRem(
 
   const body = await _shell.build()
 
-  if (environment[logKey]) {
+  if (environment[LOG_KEY]) {
     console.log(body)
   }
 
@@ -184,15 +190,15 @@ async function workListOutSyncTidy(
   let _shell = shell
   for (const supportedManager of supportedManagers) {
     _shell = _shell
-      .withFsFileLoad(async () => [pack, supportedManager, op])
-      .withFsFileLoad(async () => [pack, supportedManager])
+      .withFsFileLoad(async () => [PACK_KEY, supportedManager, op])
+      .withFsFileLoad(async () => [PACK_KEY, supportedManager])
   }
 
   const body = await _shell
     .with(async () => supportedManagers.map(m => getManagerFuncName(m)))
     .build()
 
-  if (environment[logKey]) {
+  if (environment[LOG_KEY]) {
     console.log(body)
   }
 
@@ -203,7 +209,7 @@ export class PackCmdAdd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'add'
-    this.desc = 'add from web'
+    this.desc = 'add on local'
     this.aliases = ['a', 'ad', 'in', 'install']
     this.arguments = [{ name: 'names', desc: 'name(s) to match', req: true }]
     this.switches = [{ keys: ['-g', '--groups'], desc: 'check groups' }]
@@ -217,7 +223,7 @@ export class PackCmdFind extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'find'
-    this.desc = 'find from web'
+    this.desc = 'find from remote'
     this.aliases = ['f', 'fi']
     this.arguments = [{ name: 'names', desc: 'name(s) to match', req: true }]
     this.switches = [
@@ -234,7 +240,7 @@ export class PackCmdList extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'list'
-    this.desc = 'list from local'
+    this.desc = 'list on local'
     this.aliases = ['l', 'li', 'ls']
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
   }
@@ -247,7 +253,7 @@ export class PackCmdOut extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'out'
-    this.desc = 'list out of sync from local'
+    this.desc = 'list out of sync on local'
     this.aliases = ['o', 'ou']
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
   }
@@ -260,7 +266,7 @@ export class PackCmdRem extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'rem'
-    this.desc = 'remove from local'
+    this.desc = 'remove on local'
     this.aliases = ['r', 'rm', 'rem', 'remove', 'un', 'uninstall']
     this.arguments = [{ name: 'names', desc: 'name(s) to match', req: true }]
     this.switches = [{ keys: ['-g', '--groups'], desc: 'check groups' }]
@@ -274,7 +280,7 @@ export class PackCmdSync extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'sync'
-    this.desc = 'sync from web'
+    this.desc = 'sync from remote'
     this.aliases = ['s', 'sy']
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
   }
@@ -287,7 +293,7 @@ export class PackCmdTidy extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'tidy'
-    this.desc = 'tidy from local'
+    this.desc = 'tidy on local'
     this.aliases = ['t', 'ti']
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {

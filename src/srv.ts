@@ -2,6 +2,7 @@ import pkg from '../package.json' with { type: 'json' }
 
 import { getCfgFsFileContent } from './lib/cfg'
 import { type Cmd, CmdBase } from './lib/cmd'
+import { FileCmd } from './lib/cmd/file'
 import { PackCmd } from './lib/cmd/pack'
 import { ScriptCmd } from './lib/cmd/script'
 import { VirtCmd } from './lib/cmd/virt'
@@ -54,6 +55,7 @@ class SrvCmd extends CmdBase implements Cmd {
     )
     this.commands.push(new PackCmd([this.name]), new ScriptCmd([this.name]))
     if (sh === 'nu') {
+      this.commands.push(new FileCmd([this.name]))
       this.commands.push(new VirtCmd([this.name]))
     }
   }
@@ -125,14 +127,14 @@ async function runSrv(req: Request) {
         async () =>
           [context.req_orig, context.req_path, context.req_srch].join(''),
       )
-      .withFsFileLoad(async () => ['sh', 'op'])
+      .withFsFileLoad(async () => ['op'])
 
     if (!context.sys_cpu_arch) {
       return new Response(
         await shell
-          .withFsFileLoad(async () => ['sh', 'ver'])
-          .withFsFileLoad(async () => ['sh', 'sys'])
-          .withFsFileLoad(async () => ['sh', 'get'])
+          .withFsFileLoad(async () => ['ver'])
+          .withFsFileLoad(async () => ['sys'])
+          .withFsFileLoad(async () => ['get'])
           .build(),
       )
     }

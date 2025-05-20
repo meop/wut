@@ -29,25 +29,25 @@ const osPlatToManager = {
   winnt: ['docker'],
 }
 
-const formatKey = toEnvKey('format')
-const logKey = toEnvKey('log')
+const FORMAT_KEY = toEnvKey('format')
+const LOG_KEY = toEnvKey('log')
 
-const virt = 'virt'
-const virtManagerKey = toEnvKey(virt, 'manager')
-const virtOpPartsKey = (op: string) => toEnvKey(virt, op, 'parts')
-const virtOpContentsKey = (op: string) => toEnvKey(virt, op, 'contents')
+const VIRT_KEY = 'virt'
+const VIRT_MANAGER_KEY = toEnvKey(VIRT_KEY, 'manager')
+const VIRT_OP_PARTS_KEY = (op: string) => toEnvKey(VIRT_KEY, op, 'parts')
+const VIRT_OP_CONTENTS_KEY = (op: string) => toEnvKey(VIRT_KEY, op, 'contents')
 
-const virtInstancesKey = toEnvKey(virt, 'instances')
+const VIRT_INSTANCES_KEY = toEnvKey(VIRT_KEY, 'instances')
 
 async function getDirPartsAndFilters(
   context: Ctx,
   environment: Env,
   op: string,
 ) {
-  const dirParts = [virt, context.sys_host ?? '']
+  const dirParts = [VIRT_KEY, context.sys_host ?? '']
   const filters: Array<string> = []
-  if (virtOpPartsKey(op) in environment) {
-    filters.push(...environment[virtOpPartsKey(op)].split(' '))
+  if (VIRT_OP_PARTS_KEY(op) in environment) {
+    filters.push(...environment[VIRT_OP_PARTS_KEY(op)].split(' '))
   }
 
   return { dirParts, filters }
@@ -61,14 +61,14 @@ function getSupportedManagers(context: Ctx, environment: Env) {
   if (osPlat) {
     managers.push(...osPlatToManager[osPlat])
   }
-  if (environment[virtManagerKey]) {
-    managers = managers.filter(p => p === environment[virtManagerKey])
+  if (environment[VIRT_MANAGER_KEY]) {
+    managers = managers.filter(p => p === environment[VIRT_MANAGER_KEY])
   }
 
   return managers
 }
 
-function getManagerFuncName(manager: string, prefix = virt) {
+function getManagerFuncName(manager: string, prefix = VIRT_KEY) {
   if (!manager) {
     return ''
   }
@@ -96,9 +96,9 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
       _shell = _shell.withPrint(
         async () =>
           await getCfgFsDirDump(async () => dirParts, {
-            content: !!environment[virtOpContentsKey(op)],
+            content: !!environment[VIRT_OP_CONTENTS_KEY(op)],
             filters: async () => [supportedManager, ...filters],
-            format: toFmt(environment[formatKey]),
+            format: toFmt(environment[FORMAT_KEY]),
             name: true,
           }),
       )
@@ -106,8 +106,8 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
   } else {
     for (const supportedManager of supportedManagers) {
       _shell = _shell
-        .withFsFileLoad(async () => [virt, supportedManager, op])
-        .withFsFileLoad(async () => [virt, supportedManager])
+        .withFsFileLoad(async () => [VIRT_KEY, supportedManager, op])
+        .withFsFileLoad(async () => [VIRT_KEY, supportedManager])
     }
     const relParts = await getCfgFsDirDump(async () => dirParts, {
       filters: async () => filters,
@@ -131,25 +131,25 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
       }
       if (supportedManagers.length > 1) {
         _shell = _shell.withVarSet(
-          async () => virtManagerKey,
+          async () => VIRT_MANAGER_KEY,
           async () => key,
         )
       }
       _shell = _shell
         .withVarArrSet(
-          async () => virtInstancesKey,
+          async () => VIRT_INSTANCES_KEY,
           async () => virtMap[key],
         )
         .with(async () => [getManagerFuncName(key)])
       if (supportedManagers.length > 1) {
-        _shell = _shell.withVarUnset(async () => virtManagerKey)
+        _shell = _shell.withVarUnset(async () => VIRT_MANAGER_KEY)
       }
     }
   }
 
   const body = await _shell.build()
 
-  if (environment[logKey]) {
+  if (environment[LOG_KEY]) {
     console.log(body)
   }
 
@@ -160,7 +160,7 @@ export class VirtCmdDown extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'down'
-    this.desc = 'down from local'
+    this.desc = 'down on local'
     this.aliases = ['d', 'do', 'down', 'stop']
     this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
   }
@@ -173,7 +173,7 @@ export class VirtCmdFind extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'find'
-    this.desc = 'find from local'
+    this.desc = 'find from remote'
     this.aliases = ['f', 'fi']
     this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
     this.switches = [{ keys: ['-c', '--contents'], desc: 'print contents' }]
@@ -187,7 +187,7 @@ export class VirtCmdList extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'list'
-    this.desc = 'list from local'
+    this.desc = 'list on local'
     this.aliases = ['l', 'li', 'ls']
     this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
   }
@@ -200,7 +200,7 @@ export class VirtCmdSync extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'sync'
-    this.desc = 'sync from web'
+    this.desc = 'sync from remote'
     this.aliases = ['s', 'sy']
     this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
   }
@@ -213,7 +213,7 @@ export class VirtCmdTidy extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'tidy'
-    this.desc = 'tidy from local'
+    this.desc = 'tidy on local'
     this.aliases = ['t', 'ti']
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
@@ -225,7 +225,7 @@ export class VirtCmdUp extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'up'
-    this.desc = 'up from local'
+    this.desc = 'up on local'
     this.aliases = ['u', 'start']
     this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
   }
