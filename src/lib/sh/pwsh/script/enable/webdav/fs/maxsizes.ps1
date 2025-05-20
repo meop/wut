@@ -4,7 +4,7 @@
     if ($YES) {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? enable webdav client max size (system) [y, [n]]'
+      $yn = Read-Host '? enable webdav client max sizes (system) [y, [n]]'
     }
     if ($yn -ne 'n') {
       pwsh -nologo -noprofile -command {
