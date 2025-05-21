@@ -5,7 +5,7 @@ def fileOp [] {
       if (which $dirParts.0 | is-empty) {
         continue
       }
-      opPrintMaybeRunCmd rm --force --permanent --recursive (envReplace $dirParts.1)
+      opPrintMaybeRunCmd rm --force --permanent --recursive (envReplace ($dirParts.1 | path expand))
     }
   }
 
@@ -17,7 +17,7 @@ def fileOp [] {
     }
 
     let src = $pairParts.1 | str trim --left --char '/'
-    let dst = envReplace $pairParts.2
+    let dst = envReplace $pairParts.2 | path expand
 
     let url = $"($env.REQ_URL_CFG)/file/($src)"
 
@@ -35,7 +35,7 @@ def fileOp [] {
       if (which $permParts.0 | is-empty) {
         continue
       }
-      opPrintMaybeRunCmd ...(envReplace $permParts.1 | split row ' ')
+      opPrintMaybeRunCmd ...((envReplace $permParts.1) | split row ' ')
     }
   }
 }

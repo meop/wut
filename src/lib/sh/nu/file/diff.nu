@@ -5,7 +5,7 @@ def fileOp [] {
       continue
     }
     let src = $pairParts.1 | str trim --left --char '/'
-    let dst = envReplace $pairParts.2
+    let dst = envReplace $pairParts.2 | path expand
 
     let url = $"($env.REQ_URL_CFG)/file/($src)"
     let fileNewTemp = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir

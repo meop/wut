@@ -157,6 +157,14 @@ function getFsAclWinntVal(perm: AclPerm, user: string) {
   return permBlocks.join(' ')
 }
 
+function toUnixPath(filePath: string) {
+  return filePath.replaceAll(PATH.win32.sep, PATH.posix.sep)
+}
+
+function toWinntPath(filePath: string) {
+  return filePath.replaceAll(PATH.posix.sep, PATH.win32.sep)
+}
+
 export function getPlatAclPermCmds(
   plat: string,
   fsPath: string,
@@ -166,11 +174,11 @@ export function getPlatAclPermCmds(
   switch (plat) {
     case 'linux':
     case 'darwin':
-      return [`chmod -R a-s,${getFsAclUnixVal(perm)} '${fsPath}'`]
+      return [`chmod -R a-s,${getFsAclUnixVal(perm)} '${toUnixPath(fsPath)}'`]
     case 'winnt':
       return [
-        `icacls "${fsPath}" /t /reset`,
-        `icacls "${fsPath}" /t /inheritance:r /grant ${getFsAclWinntVal(perm, user)}`,
+        `icacls '${toWinntPath(fsPath)}' /t /reset`,
+        `icacls '${toWinntPath(fsPath)}' /t /inheritance:r /grant ${getFsAclWinntVal(perm, user)}`,
       ]
     default:
       throw new Error(`unsupported os platform: ${plat}`)
