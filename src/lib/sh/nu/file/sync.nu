@@ -1,23 +1,41 @@
 def fileOp [] {
   if 'FILE_SYNC_CLEAR_DIRS' in $env {
     for dir in $env.FILE_SYNC_CLEAR_DIRS {
-      opPrintMaybeRunCmd rm --force --permanent --recursive (envReplace $dir)
+      let dirParts = $dir | split row '|'
+      if (which $dirParts.0 | is-empty) {
+        continue
+      }
+      opPrintMaybeRunCmd rm --force --permanent --recursive (envReplace $dirParts.1)
     }
   }
 
+  mut createdDirs = []
   for pair in $env.FILE_SYNC_PATH_PAIRS {
-    let parts = $pair | split row '='
-    let src = $parts.0 | str trim --left --char '/'
-    let dst = envReplace $parts.1
+    let pairParts = $pair | split row '|'
+    if (which $pairParts.0 | is-empty) {
+      continue
+    }
+
+    let src = $pairParts.1 | str trim --left --char '/'
+    let dst = envReplace $pairParts.2
 
     let url = $"($env.REQ_URL_CFG)/file/($src)"
-    opPrintMaybeRunCmd mkdir ($dst | path dirname)
+
+    let dstParent = $dst | path dirname
+    if ($dstParent not-in $createdDirs) {
+      $createdDirs = $createdDirs ++ [$dstParent]
+      opPrintMaybeRunCmd mkdir $dstParent
+    }
     opPrintMaybeRunCmd '$"(' http get --raw --redirect-mode follow $"'($url)'" ')"' '|' save --force $dst
   }
 
   if 'FILE_SYNC_PATH_PERMS' in $env {
     for perm in $env.FILE_SYNC_PATH_PERMS {
-      opPrintMaybeRunCmd ...(envReplace $perm | split row ' ')
+      let permParts = $perm | split row '|'
+      if (which $permParts.0 | is-empty) {
+        continue
+      }
+      opPrintMaybeRunCmd ...(envReplace $permParts.1 | split row ' ')
     }
   }
 }

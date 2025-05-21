@@ -38,10 +38,13 @@ type Sync = {
 }
 
 const CFG_EXT = 'yaml'
+const PARAM_SPLITTER = '|'
 
 const LOG_KEY = toEnvKey('log')
 
 const FILE_KEY = 'file'
+
+const FILE_OP_KEYS_KEY = (op: string) => toEnvKey(FILE_KEY, op, 'keys')
 const FILE_OP_PARTS_KEY = (op: string) => toEnvKey(FILE_KEY, op, 'parts')
 const FILE_OP_CLEAR_DIRS_KEY = (op: string) =>
   toEnvKey(FILE_KEY, op, 'clear', 'dirs')
@@ -70,13 +73,16 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
     }
   }
 
-  if (op === 'find') {
-    _shell = _shell.withPrint(async () => validKeys)
-  } else {
-    _shell = _shell
-      .withFsFileLoad(async () => [FILE_KEY, op])
-      .withFsFileLoad(async () => [FILE_KEY])
+  _shell = _shell
+    .withFsFileLoad(async () => [FILE_KEY, op])
+    .withFsFileLoad(async () => [FILE_KEY])
 
+  if (op === 'find') {
+    _shell = _shell.withVarArrSet(
+      async () => FILE_OP_KEYS_KEY(op),
+      async () => validKeys,
+    )
+  } else {
     const validClearDirs: Array<string> = []
     const validPairs: Array<string> = []
     const validPerms: Array<string> = []
@@ -85,27 +91,29 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
       for (const entry of content[key]) {
         const localDirPath = localCfgPath([FILE_KEY, key, entry.in])
         if (await isDir(localDirPath)) {
-          validClearDirs.push(entry.out[sys_os_plat])
+          validClearDirs.push(
+            `${key}${PARAM_SPLITTER}${entry.out[sys_os_plat]}`,
+          )
           for (const filePath of await getFilePaths(localDirPath)) {
             const filePathParts = toRelParts(localDirPath, filePath, false)
             validPairs.push(
-              `${[key, entry.in, ...filePathParts].join('/')}=${[entry.out[sys_os_plat], ...filePathParts].join('/')}`,
+              `${key}${PARAM_SPLITTER}${[key, entry.in, ...filePathParts].join('/')}${PARAM_SPLITTER}${[entry.out[sys_os_plat], ...filePathParts].join('/')}`,
             )
           }
         } else {
           validPairs.push(
-            `${[key, entry.in].join('/')}=${entry.out[sys_os_plat]}`,
+            `${key}${PARAM_SPLITTER}${[key, entry.in].join('/')}${PARAM_SPLITTER}${entry.out[sys_os_plat]}`,
           )
         }
         if (entry.perm) {
-          validPerms.push(
-            ...getPlatAclPermCmds(
-              sys_os_plat,
-              entry.out[sys_os_plat],
-              entry.perm,
-              context.sys_user ?? '',
-            ),
-          )
+          for (const permCmd of getPlatAclPermCmds(
+            sys_os_plat,
+            entry.out[sys_os_plat],
+            entry.perm,
+            context.sys_user ?? '',
+          )) {
+            validPerms.push(`${key}${PARAM_SPLITTER}${permCmd}`)
+          }
         }
       }
     }
@@ -130,9 +138,9 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
         )
       }
     }
-
-    _shell = _shell.with(async () => [FILE_KEY])
   }
+
+  _shell = _shell.with(async () => [FILE_KEY])
 
   const body = await _shell.build()
 
