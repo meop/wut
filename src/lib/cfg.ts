@@ -1,5 +1,5 @@
 import { buildFilePath, getFileContent, getFilePaths, toRelParts } from './path'
-import { Fmt, fromCfg, toCon } from './serde'
+import { Fmt, fromCfg } from './serde'
 
 const cfgDirPath = buildFilePath(
   import.meta.dir,
@@ -9,8 +9,41 @@ const cfgDirPath = buildFilePath(
   'wut-config',
 )
 
-function localCfgPath(parts: Array<string>) {
+export function localCfgPath(parts: Array<string>) {
   return `${buildFilePath(...[cfgDirPath, ...parts])}`
+}
+
+export async function getCfgFsDirDump(
+  parts: () => Promise<Array<string>>,
+  options?: {
+    filters?: () => Promise<Array<string>>
+  },
+) {
+  const dirPath = localCfgPath(await parts())
+  return (
+    await getFilePaths(dirPath, {
+      filters: options?.filters ? await options.filters() : undefined,
+    })
+  ).map(p => toRelParts(dirPath, p).map(l => l.trimEnd()))
+}
+
+export async function getCfgFsFileDump(
+  parts: () => Promise<Array<string>>,
+  ext?: string,
+) {
+  return toRelParts(
+    cfgDirPath,
+    `${localCfgPath(await parts())}${ext ? `.${ext}` : ''}`,
+  ).map(l => l.trimEnd())
+}
+
+export async function getCfgFsFileContent(
+  parts: () => Promise<Array<string>>,
+  ext?: string,
+) {
+  return await getFileContent(
+    `${localCfgPath(await parts())}${ext ? `.${ext}` : ''}`,
+  )
 }
 
 async function fromFilePath(filePath: string) {
@@ -26,64 +59,6 @@ async function fromFilePath(filePath: string) {
       : filePath.endsWith(Fmt.json)
         ? Fmt.json
         : Fmt.text,
-  )
-}
-
-export async function getCfgFsDirDump(
-  parts: () => Promise<Array<string>>,
-  options?: {
-    content?: boolean
-    filters?: () => Promise<Array<string>>
-    format?: Fmt
-    name?: boolean
-  },
-) {
-  const dirPath = localCfgPath(await parts())
-  const filePaths = await getFilePaths(dirPath, {
-    filters: options?.filters ? await options.filters() : undefined,
-  })
-  const lines: Array<string> = []
-  for (const filePath of filePaths) {
-    if (options?.name) {
-      lines.push(toRelParts(dirPath, filePath).join(' '))
-    }
-    if (options?.content) {
-      lines.push('<<<<<<<')
-      lines.push(toCon(await fromFilePath(filePath), options?.format))
-      lines.push('>>>>>>>')
-    }
-  }
-  return lines.map(l => l.trimEnd())
-}
-
-export async function getCfgFsFileDump(
-  parts: () => Promise<Array<string>>,
-  ext?: string,
-  options?: {
-    content?: boolean
-    format?: Fmt
-    name?: boolean
-  },
-) {
-  const filePath = `${localCfgPath(await parts())}${ext ? `.${ext}` : ''}`
-  const lines: Array<string> = []
-  if (options?.name) {
-    lines.push(toRelParts(cfgDirPath, filePath).pop() ?? '')
-  }
-  if (options?.content) {
-    lines.push('<<<<<<<')
-    lines.push(toCon(await fromFilePath(filePath), options?.format))
-    lines.push('>>>>>>>')
-  }
-  return lines.map(l => l.trimEnd())
-}
-
-export async function getCfgFsFileContent(
-  parts: () => Promise<Array<string>>,
-  ext?: string,
-) {
-  return await getFileContent(
-    `${localCfgPath(await parts())}${ext ? `.${ext}` : ''}`,
   )
 }
 

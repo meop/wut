@@ -86,21 +86,21 @@ def virtQemuRun [config, configVm] {
     }
   }
 
-  def envReplace [qEnv, args] {
-    let qemuEnvList = $qEnv | items { |key, value| [$key, $value] }
+  def envReplace [localEnv, lines] {
+    let localEnvItems = $localEnv | items { |key, value| [$key, $value] }
 
-    mut newArgs = []
-    for a in $args {
-      mut a = $a
-      if ($a | str contains '{') {
-        for e in $qemuEnvList {
-          $a = $a | str replace --all $"{($e.0)}" ($e.1)
+    mut linesX = []
+    for l in $lines {
+      mut l = $l
+      if ($l | str contains '{') {
+        for e in $localEnvItems {
+          $l = $l | str replace --all $"{($e.0)}" ($e.1)
         }
       }
-      $newArgs = $newArgs | append $a
+      $linesX = $linesX | append $l
     }
 
-    return $newArgs
+    return $linesX
   }
 
   def intoCellPath [...items] {

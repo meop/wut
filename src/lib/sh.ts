@@ -14,19 +14,11 @@ export interface Sh {
   withFsDirPrint(
     parts: () => Promise<Array<string>>,
     options?: {
-      content?: boolean
       filters?: () => Promise<Array<string>>
-      name?: boolean
     },
   ): Sh
   withFsFileLoad(parts: () => Promise<Array<string>>): Sh
-  withFsFilePrint(
-    parts: () => Promise<Array<string>>,
-    options?: {
-      content?: boolean
-      name?: boolean
-    },
-  ): Sh
+  withFsFilePrint(parts: () => Promise<Array<string>>): Sh
 
   withPrint(lines: () => Promise<Array<string>>): Sh
   withPrintErr(lines: () => Promise<Array<string>>): Sh
@@ -104,9 +96,7 @@ export class ShBase {
   withFsDirPrint(
     parts: () => Promise<Array<string>>,
     options?: {
-      content?: boolean
       filters?: () => Promise<Array<string>>
-      name?: boolean
     },
   ): Sh {
     return this.withPrint(async () => {
@@ -117,14 +107,7 @@ export class ShBase {
       })
       const lines: Array<string> = []
       for (const filePath of filePaths) {
-        if (options?.name) {
-          lines.push(toRelParts(dirPath, filePath).join(' '))
-        }
-        if (options?.content) {
-          lines.push('<<<<<<<')
-          lines.push(await getFileContent(filePath))
-          lines.push('>>>>>>>')
-        }
+        lines.push(toRelParts(dirPath, filePath).join(' '))
       }
       return lines.map(l => l.trimEnd())
     })
@@ -137,24 +120,11 @@ export class ShBase {
     })
   }
 
-  withFsFilePrint(
-    parts: () => Promise<Array<string>>,
-    options?: {
-      content?: boolean
-      name?: boolean
-    },
-  ): Sh {
+  withFsFilePrint(parts: () => Promise<Array<string>>): Sh {
     return this.withPrint(async () => {
       const filePath = `${this.localDirPath(await parts())}.${this.shExt}`
       const lines: Array<string> = []
-      if (options?.name) {
-        lines.push(toRelParts(this.dirPath, filePath).join(' '))
-      }
-      if (options?.content) {
-        lines.push('<<<<<<<')
-        lines.push(await getFileContent(filePath))
-        lines.push('>>>>>>>')
-      }
+      lines.push(toRelParts(this.dirPath, filePath).join(' '))
       return lines.map(l => l.trimEnd())
     })
   }

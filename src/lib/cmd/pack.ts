@@ -2,7 +2,6 @@ import { getCfgFsFileLoad, getCfgFsFileDump } from '../cfg'
 import { type Cmd, CmdBase } from '../cmd'
 import type { Ctx } from '../ctx'
 import { type Env, toEnvKey } from '../env'
-import { toFmt } from '../serde'
 import type { Sh } from '../sh'
 
 export class PackCmd extends CmdBase implements Cmd {
@@ -36,15 +35,13 @@ const osIdToManagers = {
   debian: ['apt'],
 }
 
-const cfgExt = 'yaml'
+const CFG_EXT = 'yaml'
 
-const FORMAT_KEY = toEnvKey('format')
 const LOG_KEY = toEnvKey('log')
 
 const PACK_KEY = 'pack'
 const PACK_MANAGER_KEY = toEnvKey(PACK_KEY, 'manager')
 const PACK_OP_NAMES_KEY = (op: string) => toEnvKey(PACK_KEY, op, 'names')
-const PACK_OP_CONTENTS_KEY = (op: string) => toEnvKey(PACK_KEY, op, 'contents')
 const PACK_OP_GROUPS_KEY = (op: string) => toEnvKey(PACK_KEY, op, 'groups')
 const PACK_OP_GROUP_NAMES_KEY = (op: string) =>
   toEnvKey(PACK_KEY, op, 'group', 'names')
@@ -103,7 +100,7 @@ async function workAddFindRem(
     for (const name of requestedNames) {
       const content = await getCfgFsFileLoad(
         async () => [PACK_KEY, name],
-        cfgExt,
+        CFG_EXT,
       )
 
       if (!content) {
@@ -111,14 +108,11 @@ async function workAddFindRem(
       }
 
       if (op === 'find') {
-        _shell = _shell.withPrint(
-          async () =>
-            await getCfgFsFileDump(async () => [PACK_KEY, name], cfgExt, {
-              content: !!environment[PACK_OP_CONTENTS_KEY(op)],
-              format: toFmt(environment[FORMAT_KEY]),
-              name: true,
-            }),
-        )
+        _shell = _shell.withPrint(async () => [
+          (
+            await getCfgFsFileDump(async () => [PACK_KEY, name], CFG_EXT)
+          ).pop() ?? '',
+        ])
       } else {
         for (const key of Object.keys(content)) {
           if (!supportedManagers.includes(key)) {
@@ -215,7 +209,7 @@ export class PackCmdAdd extends CmdBase implements Cmd {
     this.switches = [{ keys: ['-g', '--groups'], desc: 'check groups' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workAddFindRem(context, environment, shell, 'add')
+    return await workAddFindRem(context, environment, shell, this.name)
   }
 }
 
@@ -226,13 +220,10 @@ export class PackCmdFind extends CmdBase implements Cmd {
     this.desc = 'find from remote'
     this.aliases = ['f', 'fi']
     this.arguments = [{ name: 'names', desc: 'name(s) to match', req: true }]
-    this.switches = [
-      { keys: ['-c', '--contents'], desc: 'print contents' },
-      { keys: ['-g', '--groups'], desc: 'check groups' },
-    ]
+    this.switches = [{ keys: ['-g', '--groups'], desc: 'check groups' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workAddFindRem(context, environment, shell, 'find')
+    return await workAddFindRem(context, environment, shell, this.name)
   }
 }
 
@@ -245,7 +236,7 @@ export class PackCmdList extends CmdBase implements Cmd {
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workListOutSyncTidy(context, environment, shell, 'list')
+    return await workListOutSyncTidy(context, environment, shell, this.name)
   }
 }
 
@@ -258,7 +249,7 @@ export class PackCmdOut extends CmdBase implements Cmd {
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workListOutSyncTidy(context, environment, shell, 'out')
+    return await workListOutSyncTidy(context, environment, shell, this.name)
   }
 }
 
@@ -272,7 +263,7 @@ export class PackCmdRem extends CmdBase implements Cmd {
     this.switches = [{ keys: ['-g', '--groups'], desc: 'check groups' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workAddFindRem(context, environment, shell, 'rem')
+    return await workAddFindRem(context, environment, shell, this.name)
   }
 }
 
@@ -285,7 +276,7 @@ export class PackCmdSync extends CmdBase implements Cmd {
     this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workListOutSyncTidy(context, environment, shell, 'sync')
+    return await workListOutSyncTidy(context, environment, shell, this.name)
   }
 }
 
@@ -297,6 +288,6 @@ export class PackCmdTidy extends CmdBase implements Cmd {
     this.aliases = ['t', 'ti']
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workListOutSyncTidy(context, environment, shell, 'tidy')
+    return await workListOutSyncTidy(context, environment, shell, this.name)
   }
 }

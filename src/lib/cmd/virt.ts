@@ -2,7 +2,6 @@ import { getCfgFsDirDump } from '../cfg'
 import { type Cmd, CmdBase } from '../cmd'
 import type { Ctx } from '../ctx'
 import { type Env, toEnvKey } from '../env'
-import { toFmt } from '../serde'
 import type { Sh } from '../sh'
 
 export class VirtCmd extends CmdBase implements Cmd {
@@ -29,13 +28,11 @@ const osPlatToManager = {
   winnt: ['docker'],
 }
 
-const FORMAT_KEY = toEnvKey('format')
 const LOG_KEY = toEnvKey('log')
 
 const VIRT_KEY = 'virt'
 const VIRT_MANAGER_KEY = toEnvKey(VIRT_KEY, 'manager')
 const VIRT_OP_PARTS_KEY = (op: string) => toEnvKey(VIRT_KEY, op, 'parts')
-const VIRT_OP_CONTENTS_KEY = (op: string) => toEnvKey(VIRT_KEY, op, 'contents')
 
 const VIRT_INSTANCES_KEY = toEnvKey(VIRT_KEY, 'instances')
 
@@ -92,32 +89,28 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
   )
 
   if (op === 'find') {
-    for (const supportedManager of supportedManagers) {
-      _shell = _shell.withPrint(
-        async () =>
-          await getCfgFsDirDump(async () => dirParts, {
-            content: !!environment[VIRT_OP_CONTENTS_KEY(op)],
-            filters: async () => [supportedManager, ...filters],
-            format: toFmt(environment[FORMAT_KEY]),
-            name: true,
-          }),
+    _shell = _shell.withPrint(async () =>
+      (
+        await getCfgFsDirDump(async () => dirParts, {
+          filters: async () => filters,
+        })
       )
-    }
+        .filter(r => supportedManagers.includes(r[0]))
+        .map(r => r.join(' ')),
+    )
   } else {
     for (const supportedManager of supportedManagers) {
       _shell = _shell
         .withFsFileLoad(async () => [VIRT_KEY, supportedManager, op])
         .withFsFileLoad(async () => [VIRT_KEY, supportedManager])
     }
-    const relParts = await getCfgFsDirDump(async () => dirParts, {
+    const results = await getCfgFsDirDump(async () => dirParts, {
       filters: async () => filters,
-      name: true,
     })
 
     const virtMap: { [key: string]: Array<string> } = {}
 
-    for (const relPart of relParts) {
-      const parts = relPart.split(' ')
+    for (const parts of results) {
       if (parts[0] in virtMap) {
         virtMap[parts[0]].push(parts[1])
       } else {
@@ -165,7 +158,7 @@ export class VirtCmdDown extends CmdBase implements Cmd {
     this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workOp(context, environment, shell, 'down')
+    return await workOp(context, environment, shell, this.name)
   }
 }
 
@@ -176,10 +169,9 @@ export class VirtCmdFind extends CmdBase implements Cmd {
     this.desc = 'find from remote'
     this.aliases = ['f', 'fi']
     this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
-    this.switches = [{ keys: ['-c', '--contents'], desc: 'print contents' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workOp(context, environment, shell, 'find')
+    return await workOp(context, environment, shell, this.name)
   }
 }
 
@@ -192,7 +184,7 @@ export class VirtCmdList extends CmdBase implements Cmd {
     this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workOp(context, environment, shell, 'list')
+    return await workOp(context, environment, shell, this.name)
   }
 }
 
@@ -205,7 +197,7 @@ export class VirtCmdSync extends CmdBase implements Cmd {
     this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workOp(context, environment, shell, 'sync')
+    return await workOp(context, environment, shell, this.name)
   }
 }
 
@@ -217,7 +209,7 @@ export class VirtCmdTidy extends CmdBase implements Cmd {
     this.aliases = ['t', 'ti']
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workOp(context, environment, shell, 'tidy')
+    return await workOp(context, environment, shell, this.name)
   }
 }
 
@@ -230,6 +222,6 @@ export class VirtCmdUp extends CmdBase implements Cmd {
     this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
   }
   async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workOp(context, environment, shell, 'up')
+    return await workOp(context, environment, shell, this.name)
   }
 }

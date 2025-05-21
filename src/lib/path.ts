@@ -74,18 +74,105 @@ export async function getFilePaths(
     }
   }
 
-  return filePaths.sort()
+  return [...new Set(filePaths)].sort()
 }
 
-export function stripExt(filePath: string) {
+function withStripExt(filePath: string) {
   const path = PATH.parse(filePath)
   return PATH.join(path.dir, path.name)
 }
 
-export function toRelParts(dirPath: string, filePath: string) {
+export function toRelParts(dirPath: string, filePath: string, stripExt = true) {
   const dir = dirPath ? `${dirPath}${PATH.sep}` : ''
-  return stripExt(filePath)
+  const adjustedFilePath = stripExt ? withStripExt(filePath) : filePath
+  return adjustedFilePath
     .replace(dir, '')
     .split(PATH.sep)
     .filter(f => f)
+}
+
+export type AclPermScope = {
+  read?: boolean
+  write?: boolean
+  execute?: boolean
+}
+
+export type AclPerm = {
+  user?: AclPermScope
+  group?: AclPermScope
+  other?: AclPermScope
+}
+
+function getFsAclUnixSymVal(itemPerm?: AclPermScope) {
+  let symbols = ''
+  if (itemPerm?.read) {
+    symbols += 'r'
+  }
+  if (itemPerm?.write) {
+    symbols += 'w'
+  }
+  if (itemPerm?.execute) {
+    symbols += 'x'
+  }
+  return symbols
+}
+
+function getFsAclUnixVal(perm: AclPerm) {
+  const permBlocks: Array<string> = []
+  permBlocks.push(`u=${getFsAclUnixSymVal(perm.user)}`)
+  permBlocks.push(`g=${getFsAclUnixSymVal(perm.group)}`)
+  permBlocks.push(`o=${getFsAclUnixSymVal(perm.other)}`)
+  return permBlocks.join(',')
+}
+
+function getFsAclWinntSymVal(itemPerm?: AclPermScope) {
+  const symbols: Array<string> = []
+  if (itemPerm?.read) {
+    symbols.push('gr')
+  }
+  if (itemPerm?.write) {
+    symbols.push('gw')
+  }
+  if (itemPerm?.execute) {
+    symbols.push('ge')
+  }
+
+  return symbols.join(',')
+}
+
+function getFsAclWinntVal(perm: AclPerm, user: string) {
+  const permBlocks: Array<string> = []
+  const userPerms = getFsAclWinntSymVal(perm.user)
+  if (userPerms !== '') {
+    permBlocks.push(`"${user}:(${userPerms})"`)
+  }
+  const groupPerms = getFsAclWinntSymVal(perm.group)
+  if (groupPerms !== '') {
+    permBlocks.push(`"Administrators:(${groupPerms})"`)
+  }
+  const otherPerms = getFsAclWinntSymVal(perm.other)
+  if (otherPerms !== '') {
+    permBlocks.push(`"SYSTEM:(${otherPerms})"`)
+  }
+  return permBlocks.join(' ')
+}
+
+export function getPlatAclPermCmds(
+  plat: string,
+  fsPath: string,
+  perm: AclPerm,
+  user: string,
+) {
+  switch (plat) {
+    case 'linux':
+    case 'darwin':
+      return [`chmod -R a-s,${getFsAclUnixVal(perm)} '${fsPath}'`]
+    case 'winnt':
+      return [
+        `icacls "${fsPath}" /t /reset`,
+        `icacls "${fsPath}" /t /inheritance:r /grant ${getFsAclWinntVal(perm, user)}`,
+      ]
+    default:
+      throw new Error(`unsupported os platform: ${plat}`)
+  }
 }
