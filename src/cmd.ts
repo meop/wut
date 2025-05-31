@@ -1,23 +1,23 @@
+import type { Cli } from './cli'
 import type { Ctx } from './ctx'
 import { type Env, toEnvKey } from './env'
 import { toCon, toFmt } from './serde'
-import type { Sh } from './sh'
 
 export interface Cmd {
   name: string
-  desc: string
+  description: string
 
   aliases: Array<string>
-  arguments: Array<{ name: string; desc: string; req?: boolean }>
-  options: Array<{ keys: Array<string>; desc: string }>
-  switches: Array<{ keys: Array<string>; desc: string }>
+  arguments: Array<{ name: string; description: string; req?: boolean }>
+  options: Array<{ keys: Array<string>; description: string }>
+  switches: Array<{ keys: Array<string>; description: string }>
 
   commands: Array<Cmd>
   scopes: Array<string>
 
   process(
     parts: Array<string>,
-    shell: Sh,
+    client: Cli,
     context: Ctx,
     environment?: Env,
   ): Promise<string>
@@ -34,12 +34,12 @@ type CmdPrintable = {
 
 export class CmdBase {
   name = ''
-  desc = ''
+  description = ''
 
   aliases: Array<string> = []
-  arguments: Array<{ name: string; desc: string; req?: boolean }> = []
-  options: Array<{ keys: Array<string>; desc: string }> = []
-  switches: Array<{ keys: Array<string>; desc: string }> = []
+  arguments: Array<{ name: string; description: string; req?: boolean }> = []
+  options: Array<{ keys: Array<string>; description: string }> = []
+  switches: Array<{ keys: Array<string>; description: string }> = []
 
   commands: Array<Cmd> = []
   scopes: Array<string> = []
@@ -50,7 +50,7 @@ export class CmdBase {
 
   getHelp(): CmdPrintable {
     const content: CmdPrintable = {
-      id: `${[...this.scopes, this.name].join(' ')} | ${this.desc}`,
+      id: `${[...this.scopes, this.name].join(' ')} | ${this.description}`,
     }
 
     if (this.aliases.length) {
@@ -59,19 +59,20 @@ export class CmdBase {
 
     if (this.arguments.length) {
       content.arguments = this.arguments.map(
-        a => `${a.req ? '<' : '['}${a.name}${a.req ? '>' : ']'} | ${a.desc}`,
+        a =>
+          `${a.req ? '<' : '['}${a.name}${a.req ? '>' : ']'} | ${a.description}`,
       )
     }
 
     if (this.options.length) {
       content.options = this.options.map(
-        opt => `${opt.keys.join(', ')} | ${opt.desc}`,
+        opt => `${opt.keys.join(', ')} | ${opt.description}`,
       )
     }
 
     if (this.switches.length) {
       content.switches = this.switches.map(
-        swt => `${swt.keys.join(', ')} | ${swt.desc}`,
+        swt => `${swt.keys.join(', ')} | ${swt.description}`,
       )
     }
 
@@ -82,8 +83,8 @@ export class CmdBase {
     return content
   }
 
-  async help(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    const body = await shell
+  async help(client: Cli, context: Ctx, environment: Env): Promise<string> {
+    const body = await client
       .withPrintInfo(async () => [
         toCon(this.getHelp(), toFmt(environment[toEnvKey('format')])),
       ])
@@ -96,17 +97,17 @@ export class CmdBase {
     return body
   }
 
-  work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return this.help(context, environment, shell)
+  work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+    return this.help(client, context, environment)
   }
 
   process(
     parts: Array<string>,
-    shell: Sh,
+    client: Cli,
     context: Ctx,
     environment?: Env,
   ): Promise<string> {
-    let _shell = shell
+    let _client = client
     const _context = context
     const _environment = environment ? environment : {}
 
@@ -119,16 +120,16 @@ export class CmdBase {
       }
     }
 
-    const processShEnv = (func: () => Promise<string>) => {
+    const loadCliEnv = (func: () => Promise<string>) => {
       for (const [key, value] of Object.entries(_environment)) {
-        _shell = _shell.withVarSet(
+        _client = _client.withVarSet(
           async () => key,
           async () => value,
         )
       }
 
       if (_environment[toEnvKey('debug')]) {
-        _shell = _shell.withPrint(async () => [
+        _client = _client.withPrint(async () => [
           toCon(
             {
               debug: {
@@ -142,7 +143,7 @@ export class CmdBase {
       }
 
       if (_environment[toEnvKey('trace')]) {
-        _shell = _shell.withTrace()
+        _client = _client.withTrace()
       }
 
       return func()
@@ -167,7 +168,7 @@ export class CmdBase {
         const _option = this.options.find(o => o.keys.includes(part))
         if (_option && partsIndex + 1 < parts.length) {
           if (parts[partsIndex + 1].startsWith('-')) {
-            return processShEnv(() => this.help(_context, _environment, _shell))
+            return loadCliEnv(() => this.help(_client, _context, _environment))
           }
           setEnv(
             _option.keys.find(k => k.startsWith('--'))?.split('--')[1] ?? '',
@@ -177,7 +178,7 @@ export class CmdBase {
           continue
         }
 
-        return processShEnv(() => this.help(_context, _environment, _shell))
+        return loadCliEnv(() => this.help(_client, _context, _environment))
       }
 
       if (this.commands.length) {
@@ -187,7 +188,7 @@ export class CmdBase {
         if (_command) {
           return _command.process(
             parts.slice(partsIndex + 1),
-            _shell,
+            _client,
             _context,
             _environment,
           )
@@ -208,16 +209,16 @@ export class CmdBase {
         continue
       }
 
-      return processShEnv(() => this.help(_context, _environment, _shell))
+      return loadCliEnv(() => this.help(_client, _context, _environment))
     }
 
     while (argumentIndex < this.arguments.length) {
       if (this.arguments[argumentIndex].req) {
-        return processShEnv(() => this.help(_context, _environment, _shell))
+        return loadCliEnv(() => this.help(_client, _context, _environment))
       }
       argumentIndex += 1
     }
 
-    return processShEnv(() => this.work(_context, _environment, _shell))
+    return loadCliEnv(() => this.work(_client, _context, _environment))
   }
 }

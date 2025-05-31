@@ -1,6 +1,6 @@
-import { type Sh, ShBase } from '../sh'
+import { type Cli, CliBase } from '../cli'
 
-export class Powershell extends ShBase implements Sh {
+export class Powershell extends CliBase implements Cli {
   constructor() {
     super('pwsh', 'ps1')
   }
@@ -9,26 +9,26 @@ export class Powershell extends ShBase implements Sh {
     return `'${value.replaceAll("'", "''")}'`
   }
 
-  withTrace(): Sh {
+  withTrace(): Cli {
     return this.with(async () => ['Set-PSDebug -Trace 1'])
   }
 
   withVarArrSet(
     name: () => Promise<string>,
     values: () => Promise<Array<string>>,
-  ): Sh {
+  ): Cli {
     return this.with(async () => [
       `$${await name()} = ${`@( ${(await values()).map(v => this.toRawStr(v)).join(', ')} )`}`,
     ])
   }
 
-  withVarSet(name: () => Promise<string>, value: () => Promise<string>): Sh {
+  withVarSet(name: () => Promise<string>, value: () => Promise<string>): Cli {
     return this.with(async () => [
       `$${await name()} = ${this.toRawStr(await value())}`,
     ])
   }
 
-  withVarUnset(name: () => Promise<string>): Sh {
+  withVarUnset(name: () => Promise<string>): Cli {
     return this.with(async () => [
       `Remove-Variable ${await name()} -ErrorAction SilentlyContinue`,
     ])

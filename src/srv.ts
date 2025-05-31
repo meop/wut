@@ -1,17 +1,17 @@
 import pkg from '../package.json' with { type: 'json' }
 
-import { getCfgFsFileContent } from './lib/cfg'
-import { type Cmd, CmdBase } from './lib/cmd'
-import { FileCmd } from './lib/cmd/file'
-import { PackCmd } from './lib/cmd/pack'
-import { ScriptCmd } from './lib/cmd/script'
-import { VirtCmd } from './lib/cmd/virt'
-import { getCtx } from './lib/ctx'
-import { Fmt, toCon } from './lib/serde'
-import type { Sh } from './lib/sh'
-import { Nushell } from './lib/sh/nu'
-import { Powershell } from './lib/sh/pwsh'
-import { Zshell } from './lib/sh/zsh'
+import { getCfgFsFileContent } from './cfg'
+import type { Cli } from './cli'
+import { Nushell } from './cli/nu'
+import { Powershell } from './cli/pwsh'
+import { Zshell } from './cli/zsh'
+import { type Cmd, CmdBase } from './cmd'
+import { FileCmd } from './cmd/file'
+import { PackCmd } from './cmd/pack'
+import { ScriptCmd } from './cmd/script'
+import { VirtCmd } from './cmd/virt'
+import { getCtx } from './ctx'
+import { Fmt, toCon } from './serde'
 
 function expandParts(parts: Array<string>) {
   const expandedParts: Array<string> = []
@@ -30,10 +30,10 @@ function expandParts(parts: Array<string>) {
 }
 
 class SrvCmd extends CmdBase implements Cmd {
-  constructor(sh: string) {
+  constructor() {
     super([])
     this.name = pkg.name.toLowerCase()
-    this.desc = pkg.description.toLowerCase()
+    this.description = pkg.description.toLowerCase()
     const fmtKeys = Object.keys(Fmt).map((k, i) => {
       if (i === 0) {
         return k
@@ -42,22 +42,23 @@ class SrvCmd extends CmdBase implements Cmd {
     })
     this.options.push({
       keys: ['-f', '--format'],
-      desc: `print format <${fmtKeys.join(', ')}>`,
+      description: `print format <${fmtKeys.join(', ')}>`,
     })
     this.switches.push(
-      { keys: ['-d', '--debug'], desc: 'print debug' },
-      { keys: ['-g', '--grayscale'], desc: 'print no color' },
-      { keys: ['-l', '--log'], desc: 'log on server' },
-      { keys: ['-n', '--noop'], desc: 'print but no op' },
-      { keys: ['-s', '--succinct'], desc: 'no print' },
-      { keys: ['-t', '--trace'], desc: 'print trace' },
-      { keys: ['-y', '--yes'], desc: 'no prompt' },
+      { keys: ['-d', '--debug'], description: 'print debug' },
+      { keys: ['-g', '--grayscale'], description: 'print no color' },
+      { keys: ['-l', '--log'], description: 'log on server' },
+      { keys: ['-n', '--noop'], description: 'print but no op' },
+      { keys: ['-s', '--succinct'], description: 'no print' },
+      { keys: ['-t', '--trace'], description: 'print trace' },
+      { keys: ['-y', '--yes'], description: 'no prompt' },
     )
-    this.commands.push(new PackCmd([this.name]), new ScriptCmd([this.name]))
-    if (sh === 'nu') {
-      this.commands.push(new FileCmd([this.name]))
-      this.commands.push(new VirtCmd([this.name]))
-    }
+    this.commands.push(
+      new FileCmd([this.name]),
+      new PackCmd([this.name]),
+      new ScriptCmd([this.name]),
+      new VirtCmd([this.name]),
+    )
   }
 }
 
@@ -72,7 +73,7 @@ function getErr(err: Error) {
 
 enum Op {
   cfg = 'cfg',
-  sh = 'sh',
+  cli = 'cli',
 }
 
 async function runSrv(req: Request) {
@@ -82,7 +83,7 @@ async function runSrv(req: Request) {
     const parts = expandParts(path.split('/').filter(p => p.length > 0))
 
     if (!parts.length) {
-      return new Response(`echo "missing op"`, {
+      return new Response(`echo "missing operation"`, {
         status: 400,
       })
     }
@@ -99,31 +100,31 @@ async function runSrv(req: Request) {
     }
 
     if (!(parts.length > 1)) {
-      return new Response(`echo "missing shell"`, {
+      return new Response(`echo "missing client"`, {
         status: 400,
       })
     }
 
-    const sh = parts[1]
-    if (!['pwsh', 'nu', 'zsh'].includes(sh)) {
-      return new Response(`echo "unsupported shell: ${sh}"`, {
+    const cli = parts[1]
+    if (!['pwsh', 'nu', 'zsh'].includes(cli)) {
+      return new Response(`echo "unsupported client: ${cli}"`, {
         status: 404,
       })
     }
 
-    let shell: Sh = (
-      sh === 'pwsh'
+    let client: Cli = (
+      cli === 'pwsh'
         ? new Powershell()
-        : sh === 'nu'
-          ? new Nushell()
-          : new Zshell()
+        : cli === 'zsh'
+          ? new Zshell()
+          : new Nushell()
     )
       .withVarSet(
         async () => 'REQ_URL_CFG',
         async () => [context.req_orig, Op.cfg].join('/'),
       )
       .withVarSet(
-        async () => 'REQ_URL_SH',
+        async () => 'REQ_URL_CLI',
         async () =>
           [context.req_orig, context.req_path, context.req_srch].join(''),
       )
@@ -131,7 +132,7 @@ async function runSrv(req: Request) {
 
     if (!context.sys_cpu_arch) {
       return new Response(
-        await shell
+        await client
           .withFsFileLoad(async () => ['ver'])
           .withFsFileLoad(async () => ['sys'])
           .withFsFileLoad(async () => ['get'])
@@ -143,22 +144,22 @@ async function runSrv(req: Request) {
       if (!e[1]) {
         continue
       }
-      shell = shell.withVarSet(
+      client = client.withVarSet(
         async () => e[0].toUpperCase(),
         async () => e[1],
       )
     }
 
     try {
-      const cmd = new SrvCmd(sh)
-      return new Response(await cmd.process(parts.slice(2), shell, context))
+      const cmd = new SrvCmd()
+      return new Response(await cmd.process(parts.slice(2), client, context))
     } catch (err) {
       let errStr = String(err)
       if (err instanceof Error) {
         errStr = toCon(getErr(err), Fmt.json)
       }
       console.error(errStr)
-      const body = await shell.withPrintErr(async () => [errStr]).build()
+      const body = await client.withPrintErr(async () => [errStr]).build()
       return new Response(body)
     }
   } catch (err) {

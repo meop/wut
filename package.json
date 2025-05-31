@@ -3,15 +3,19 @@
   "description": "Web Update Tool",
   "type": "module",
   "dependencies": {
-    "yaml": "^2.7.1"
+    "yaml": "^2.8.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@types/bun": "^1.2.13",
-    "@types/node": "^22.15.17"
+    "@types/bun": "^1.2.15",
+    "@types/node": "^22.15.29"
   },
   "peerDependencies": {
     "typescript": "^5.8.3"
+  },
+  "scripts": {
+    "down": "docker compose --file docker/srv.yaml down",
+    "up": "docker compose --file docker/srv.yaml up --detach --pull always"
   },
   "trustedDependencies": ["@biomejs/biome"]
 }

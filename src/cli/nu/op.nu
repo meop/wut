@@ -69,7 +69,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opRunCmd --wrapped [...args] {
-  nu -c $"($args | str join ' ')"
+  nu --no-config-file -c $"($args | str join ' ')"
 }
 
 def opPrintRunCmd --wrapped [...args] {

@@ -1,6 +1,6 @@
-import { type Sh, ShBase } from '../sh'
+import { type Cli, CliBase } from '../cli'
 
-export class Nushell extends ShBase implements Sh {
+export class Nushell extends CliBase implements Cli {
   constructor() {
     super('nu', 'nu')
   }
@@ -9,26 +9,26 @@ export class Nushell extends ShBase implements Sh {
     return `r#'${value}'#`
   }
 
-  withTrace(): Sh {
+  withTrace(): Cli {
     return this.with(async () => []) // no direct equivalent
   }
 
   withVarArrSet(
     name: () => Promise<string>,
     values: () => Promise<Array<string>>,
-  ): Sh {
+  ): Cli {
     return this.with(async () => [
       `$env.${await name()} = [ ${(await values()).map(v => this.toRawStr(v)).join(', ')} ]`,
     ])
   }
 
-  withVarSet(name: () => Promise<string>, value: () => Promise<string>): Sh {
+  withVarSet(name: () => Promise<string>, value: () => Promise<string>): Cli {
     return this.with(async () => [
       `$env.${await name()} = ${this.toRawStr(await value())}`,
     ])
   }
 
-  withVarUnset(name: () => Promise<string>): Sh {
+  withVarUnset(name: () => Promise<string>): Cli {
     return this.with(async () => [`hide-env ${await name()}`])
   }
 }

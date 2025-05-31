@@ -1,16 +1,16 @@
 import { getCfgFsFileLoad, getCfgFsFileDump } from '../cfg'
+import type { Cli } from '../cli'
 import { type Cmd, CmdBase } from '../cmd'
 import type { Ctx } from '../ctx'
 import { type Env, toEnvKey } from '../env'
-import type { Sh } from '../sh'
 
 export class PackCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'pack'
-    this.desc = 'package manager ops'
+    this.description = 'package manager ops'
     this.aliases = ['p', 'pa', 'pac', 'package']
-    this.options = [{ keys: ['-m', '--manager'], desc: 'package manager' }]
+    this.options = [{ keys: ['-m', '--manager'], description: 'package manager' }]
     this.commands = [
       new PackCmdAdd([...this.scopes, this.name]),
       new PackCmdFind([...this.scopes, this.name]),
@@ -80,15 +80,15 @@ function getManagerFuncName(manager: string, prefix = PACK_KEY) {
 }
 
 async function workAddFindRem(
+  client: Cli,
   context: Ctx,
   environment: Env,
-  shell: Sh,
   op: string,
 ) {
-  let _shell = shell
+  let _client = client
   const supportedManagers = getSupportedManagers(context, environment)
   for (const supportedManager of supportedManagers) {
-    _shell = _shell
+    _client = _client
       .withFsFileLoad(async () => [PACK_KEY, supportedManager, op])
       .withFsFileLoad(async () => [PACK_KEY, supportedManager])
   }
@@ -108,7 +108,7 @@ async function workAddFindRem(
       }
 
       if (op === 'find') {
-        _shell = _shell.withPrint(async () => [
+        _client = _client.withPrint(async () => [
           (
             await getCfgFsFileDump(async () => [PACK_KEY, name], CFG_EXT)
           ).pop() ?? '',
@@ -123,29 +123,29 @@ async function workAddFindRem(
             continue
           }
           if (supportedManagers.length > 1) {
-            _shell = _shell.withVarSet(
+            _client = _client.withVarSet(
               async () => PACK_MANAGER_KEY,
               async () => key,
             )
           }
           if (value[op]) {
-            _shell = _shell.withVarArrSet(
+            _client = _client.withVarArrSet(
               async () => PACK_OP_GROUP_NAMES_KEY(op),
               async () => value[op],
             )
           }
-          _shell = _shell.withVarSet(
+          _client = _client.withVarSet(
             async () => PACK_OP_NAMES_KEY(op),
             async () => value.names.join(' '),
           )
-          _shell = _shell.with(async () => [getManagerFuncName(key)])
+          _client = _client.with(async () => [getManagerFuncName(key)])
           if (value[op]) {
-            _shell = _shell.withVarUnset(async () =>
+            _client = _client.withVarUnset(async () =>
               PACK_OP_GROUP_NAMES_KEY(op),
             )
           }
           if (supportedManagers.length > 1) {
-            _shell = _shell.withVarUnset(async () => PACK_MANAGER_KEY)
+            _client = _client.withVarUnset(async () => PACK_MANAGER_KEY)
           }
         }
       }
@@ -156,7 +156,7 @@ async function workAddFindRem(
   const remainingNames = requestedNames.filter(n => !foundNames.includes(n))
 
   if (remainingNames.length) {
-    _shell = _shell
+    _client = _client
       .withVarSet(
         async () => PACK_OP_NAMES_KEY(op),
         async () => remainingNames.join(' '),
@@ -164,7 +164,7 @@ async function workAddFindRem(
       .with(async () => supportedManagers.map(m => getManagerFuncName(m)))
   }
 
-  const body = await _shell.build()
+  const body = await _client.build()
 
   if (environment[LOG_KEY]) {
     console.log(body)
@@ -174,21 +174,21 @@ async function workAddFindRem(
 }
 
 async function workListOutSyncTidy(
+  client: Cli,
   context: Ctx,
   environment: Env,
-  shell: Sh,
   op: string,
 ) {
   const supportedManagers = getSupportedManagers(context, environment)
 
-  let _shell = shell
+  let _client = client
   for (const supportedManager of supportedManagers) {
-    _shell = _shell
+    _client = _client
       .withFsFileLoad(async () => [PACK_KEY, supportedManager, op])
       .withFsFileLoad(async () => [PACK_KEY, supportedManager])
   }
 
-  const body = await _shell
+  const body = await _client
     .with(async () => supportedManagers.map(m => getManagerFuncName(m)))
     .build()
 
@@ -203,13 +203,13 @@ export class PackCmdAdd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'add'
-    this.desc = 'add on local'
+    this.description = 'add on local'
     this.aliases = ['a', 'ad', 'in', 'install']
-    this.arguments = [{ name: 'names', desc: 'name(s) to match', req: true }]
-    this.switches = [{ keys: ['-g', '--groups'], desc: 'check groups' }]
+    this.arguments = [{ name: 'names', description: 'name(s) to match', req: true }]
+    this.switches = [{ keys: ['-g', '--groups'], description: 'check groups' }]
   }
-  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workAddFindRem(context, environment, shell, this.name)
+  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+    return await workAddFindRem(client, context, environment, this.name)
   }
 }
 
@@ -217,13 +217,13 @@ export class PackCmdFind extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'find'
-    this.desc = 'find from remote'
+    this.description = 'find from remote'
     this.aliases = ['f', 'fi']
-    this.arguments = [{ name: 'names', desc: 'name(s) to match', req: true }]
-    this.switches = [{ keys: ['-g', '--groups'], desc: 'check groups' }]
+    this.arguments = [{ name: 'names', description: 'name(s) to match', req: true }]
+    this.switches = [{ keys: ['-g', '--groups'], description: 'check groups' }]
   }
-  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workAddFindRem(context, environment, shell, this.name)
+  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+    return await workAddFindRem(client, context, environment, this.name)
   }
 }
 
@@ -231,12 +231,12 @@ export class PackCmdList extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'list'
-    this.desc = 'list on local'
+    this.description = 'list on local'
     this.aliases = ['l', 'li', 'ls']
-    this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
+    this.arguments = [{ name: 'names', description: 'name(s) to match' }]
   }
-  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workListOutSyncTidy(context, environment, shell, this.name)
+  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+    return await workListOutSyncTidy(client, context, environment, this.name)
   }
 }
 
@@ -244,12 +244,12 @@ export class PackCmdOut extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'out'
-    this.desc = 'list out of sync on local'
+    this.description = 'list out of sync on local'
     this.aliases = ['o', 'ou']
-    this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
+    this.arguments = [{ name: 'names', description: 'name(s) to match' }]
   }
-  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workListOutSyncTidy(context, environment, shell, this.name)
+  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+    return await workListOutSyncTidy(client, context, environment, this.name)
   }
 }
 
@@ -257,13 +257,13 @@ export class PackCmdRem extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'rem'
-    this.desc = 'remove on local'
+    this.description = 'remove on local'
     this.aliases = ['r', 'rm', 'rem', 'remove', 'un', 'uninstall']
-    this.arguments = [{ name: 'names', desc: 'name(s) to match', req: true }]
-    this.switches = [{ keys: ['-g', '--groups'], desc: 'check groups' }]
+    this.arguments = [{ name: 'names', description: 'name(s) to match', req: true }]
+    this.switches = [{ keys: ['-g', '--groups'], description: 'check groups' }]
   }
-  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workAddFindRem(context, environment, shell, this.name)
+  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+    return await workAddFindRem(client, context, environment, this.name)
   }
 }
 
@@ -271,12 +271,12 @@ export class PackCmdSync extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'sync'
-    this.desc = 'sync from remote'
+    this.description = 'sync from remote'
     this.aliases = ['s', 'sy']
-    this.arguments = [{ name: 'names', desc: 'name(s) to match' }]
+    this.arguments = [{ name: 'names', description: 'name(s) to match' }]
   }
-  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workListOutSyncTidy(context, environment, shell, this.name)
+  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+    return await workListOutSyncTidy(client, context, environment, this.name)
   }
 }
 
@@ -284,10 +284,10 @@ export class PackCmdTidy extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'tidy'
-    this.desc = 'tidy on local'
+    this.description = 'tidy on local'
     this.aliases = ['t', 'ti']
   }
-  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workListOutSyncTidy(context, environment, shell, this.name)
+  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+    return await workListOutSyncTidy(client, context, environment, this.name)
   }
 }

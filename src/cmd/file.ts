@@ -1,4 +1,5 @@
 import { getCfgFsFileLoad, localCfgPath } from '../cfg'
+import type { Cli } from '../cli'
 import { type Cmd, CmdBase } from '../cmd'
 import type { Ctx } from '../ctx'
 import { type Env, toEnvKey } from '../env'
@@ -9,13 +10,12 @@ import {
   isDir,
   toRelParts,
 } from '../path'
-import type { Sh } from '../sh'
 
 export class FileCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'file'
-    this.desc = 'dot file ops'
+    this.description = 'dot file ops'
     this.aliases = ['f', 'fi']
     this.commands = [
       new FileCmdDiff([...this.scopes, this.name]),
@@ -38,7 +38,7 @@ type Sync = {
 }
 
 const CFG_EXT = 'yaml'
-const PARAM_SPLITTER = '|'
+const PARAM_SPLIT = '|'
 
 const LOG_KEY = toEnvKey('log')
 
@@ -53,8 +53,17 @@ const FILE_OP_PATH_PAIRS_KEY = (op: string) =>
 const FILE_OP_PATH_PERMS_KEY = (op: string) =>
   toEnvKey(FILE_KEY, op, 'path', 'perms')
 
-async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
-  let _shell = shell
+async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
+  if (client.name !== 'nu') {
+    const url = [
+      context.req_orig,
+      context.req_path.replace(`/cli/${client.name}`, '/cli/nu'),
+      context.req_srch,
+    ].join('')
+    return `nu --no-config-file -c 'nu --no-config-file -c $"(http get --raw --redirect-mode follow $"${url}")"'`
+  }
+
+  let _client = client
   const filters: Array<string> = []
   if (FILE_OP_PARTS_KEY(op) in environment) {
     filters.push(...environment[FILE_OP_PARTS_KEY(op)].split(' '))
@@ -73,12 +82,12 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
     }
   }
 
-  _shell = _shell
+  _client = _client
     .withFsFileLoad(async () => [FILE_KEY, op])
     .withFsFileLoad(async () => [FILE_KEY])
 
   if (op === 'find') {
-    _shell = _shell.withVarArrSet(
+    _client = _client.withVarArrSet(
       async () => FILE_OP_KEYS_KEY(op),
       async () => validKeys,
     )
@@ -91,18 +100,16 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
       for (const entry of content[key]) {
         const localDirPath = localCfgPath([FILE_KEY, key, entry.in])
         if (await isDir(localDirPath)) {
-          validClearDirs.push(
-            `${key}${PARAM_SPLITTER}${entry.out[sys_os_plat]}`,
-          )
+          validClearDirs.push(`${key}${PARAM_SPLIT}${entry.out[sys_os_plat]}`)
           for (const filePath of await getFilePaths(localDirPath)) {
             const filePathParts = toRelParts(localDirPath, filePath, false)
             validPairs.push(
-              `${key}${PARAM_SPLITTER}${[key, entry.in, ...filePathParts].join('/')}${PARAM_SPLITTER}${[entry.out[sys_os_plat], ...filePathParts].join('/')}`,
+              `${key}${PARAM_SPLIT}${[key, entry.in, ...filePathParts].join('/')}${PARAM_SPLIT}${[entry.out[sys_os_plat], ...filePathParts].join('/')}`,
             )
           }
         } else {
           validPairs.push(
-            `${key}${PARAM_SPLITTER}${[key, entry.in].join('/')}${PARAM_SPLITTER}${entry.out[sys_os_plat]}`,
+            `${key}${PARAM_SPLIT}${[key, entry.in].join('/')}${PARAM_SPLIT}${entry.out[sys_os_plat]}`,
           )
         }
         if (entry.perm) {
@@ -112,27 +119,27 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
             entry.perm,
             context.sys_user ?? '',
           )) {
-            validPerms.push(`${key}${PARAM_SPLITTER}${permCmd}`)
+            validPerms.push(`${key}${PARAM_SPLIT}${permCmd}`)
           }
         }
       }
     }
 
-    _shell = _shell.withVarArrSet(
+    _client = _client.withVarArrSet(
       async () => FILE_OP_PATH_PAIRS_KEY(op),
       async () => validPairs,
     )
 
     if (op === 'sync') {
       if (validClearDirs.length) {
-        _shell = _shell.withVarArrSet(
+        _client = _client.withVarArrSet(
           async () => FILE_OP_CLEAR_DIRS_KEY(op),
           async () => validClearDirs,
         )
       }
 
       if (validPerms.length) {
-        _shell = _shell.withVarArrSet(
+        _client = _client.withVarArrSet(
           async () => FILE_OP_PATH_PERMS_KEY(op),
           async () => validPerms,
         )
@@ -140,9 +147,9 @@ async function workOp(context: Ctx, environment: Env, shell: Sh, op: string) {
     }
   }
 
-  _shell = _shell.with(async () => [FILE_KEY])
+  _client = _client.with(async () => [FILE_KEY])
 
-  const body = await _shell.build()
+  const body = await _client.build()
 
   if (environment[LOG_KEY]) {
     console.log(body)
@@ -155,13 +162,13 @@ export class FileCmdDiff extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'diff'
-    this.desc = 'diff on local'
+    this.description = 'diff on local'
     this.aliases = ['d', 'di']
-    this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
+    this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
 
-  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workOp(context, environment, shell, this.name)
+  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+    return await workOp(client, context, environment, this.name)
   }
 }
 
@@ -169,13 +176,13 @@ export class FileCmdFind extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'find'
-    this.desc = 'find from remote'
+    this.description = 'find from remote'
     this.aliases = ['f', 'fi']
-    this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
+    this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
 
-  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workOp(context, environment, shell, this.name)
+  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+    return await workOp(client, context, environment, this.name)
   }
 }
 
@@ -183,12 +190,12 @@ export class FileCmdSync extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'sync'
-    this.desc = 'sync from remote'
+    this.description = 'sync from remote'
     this.aliases = ['s', 'sy']
-    this.arguments = [{ name: 'parts', desc: 'path part(s) to match' }]
+    this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
 
-  async work(context: Ctx, environment: Env, shell: Sh): Promise<string> {
-    return await workOp(context, environment, shell, this.name)
+  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+    return await workOp(client, context, environment, this.name)
   }
 }
