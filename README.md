@@ -10,9 +10,9 @@ Some operations create dynamic prompts for the user and cannot be scripted
 
 ## nu
 
-Nushell is supported on Unix or Windows for basic commands (pack, script)
+Nushell is supported on Unix or Windows for SSR commands (pack, script)
 
-Nushell is supported on Unix or Windows for advanced commands (file, virt)
+Nushell is supported on Unix or Windows for CSR commands (file, virt)
 
 ```nu
 $env.WUT_URL = 'http://yard.lan:9000'
@@ -28,9 +28,9 @@ def wut --wrapped [...args] {
 
 ## zsh
 
-Zshell is supported on Unix for basic commands (pack, script)
+Zshell is supported on Unix for SSR commands (pack, script)
 
-Nushell will be invoked for any advanced commands (file, virt)
+Nushell will be invoked for CSR commands (file, virt)
 
 ```zsh
 export WUT_URL='http://yard.lan:9000'
@@ -46,9 +46,9 @@ function wut {
 
 ## pwsh
 
-Powershell is supported on Windows for basic commands (pack, script)
+Powershell is supported on Windows for SSR commands (pack, script)
 
-Nushell will be invoked for any advanced commands (file, virt)
+Nushell will be invoked for CSR commands (file, virt)
 
 ```pwsh
 $env:WUT_URL = 'http://yard.lan:9000'
