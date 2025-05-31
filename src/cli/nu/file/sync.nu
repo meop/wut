@@ -5,7 +5,7 @@ def fileOp [] {
       if (which $dirParts.0 | is-empty) {
         continue
       }
-      opPrintMaybeRunCmd rm --force --permanent --recursive (envReplace ($dirParts.1 | path expand))
+      opPrintMaybeRunCmd rm --force --permanent --recursive $"'(envReplace ($dirParts.1 | path expand))'"
     }
   }
 
@@ -26,7 +26,7 @@ def fileOp [] {
       $createdDirs = $createdDirs ++ [$dstParent]
       opPrintMaybeRunCmd mkdir $dstParent
     }
-    opPrintMaybeRunCmd '$"(' http get --raw --redirect-mode follow $"'($url)'" ')"' '|' save --force $dst
+    opPrintMaybeRunCmd '$"(' http get --raw --redirect-mode follow $"'($url)'" ')"' '|' save --force $"'($dst)'"
   }
 
   if 'FILE_SYNC_PATH_PERMS' in $env {

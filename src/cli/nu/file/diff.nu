@@ -9,16 +9,16 @@ def fileOp [] {
 
     let url = $"($env.REQ_URL_CFG)/file/($src)"
     let fileNewTemp = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
-    opPrintMaybeRunCmd '$"(' http get --raw --redirect-mode follow $"'($url)'" ')"' '|' save --force $fileNewTemp
+    opPrintMaybeRunCmd '$"(' http get --raw --redirect-mode follow $"'($url)'" ')"' '|' save --force $"'($fileNewTemp)'"
 
     let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
 
     if ($dst | path exists) {
-      opPrintMaybeRunCmd $diffCmd $dst $fileNewTemp '|' complete '|' get stdout '|' str trim --right
+      opPrintMaybeRunCmd $diffCmd $"'($dst)'" $"'($fileNewTemp)'" '|' complete '|' get stdout '|' str trim --right
     } else {
-      opPrintWarn $"($dst) does not exist"
+      opPrintWarn $"'($dst)' does not exist"
     }
 
-    opPrintRunCmd rm --force $fileNewTemp
+    opPrintRunCmd rm --force $"'($fileNewTemp)'"
   }
 }
