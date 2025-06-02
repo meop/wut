@@ -1,1 +1,1 @@
-eval "$(curl --fail-with-body --location --no-progress-meter --url "${REQ_URL_CLI}")"
+eval "$( curl --fail-with-body --location --no-progress-meter --url "${REQ_URL_CLI}" )"

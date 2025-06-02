@@ -60,7 +60,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
       context.req_path.replace(`/cli/${client.name}`, '/cli/nu'),
       context.req_srch,
     ].join('')
-    return `nu --no-config-file -c 'nu --no-config-file -c $"(http get --raw --redirect-mode follow $"${url}")"'`
+    return `nu --no-config-file -c 'nu --no-config-file -c $"( http get --raw --redirect-mode follow "${url}" )"'`
   }
 
   let _client = client
