@@ -112,21 +112,24 @@ async function runSrv(req: Request) {
       })
     }
 
-    let client: Cli = (
+    let client: Cli =
       cli === 'pwsh'
         ? new Powershell()
         : cli === 'zsh'
           ? new Zshell()
           : new Nushell()
-    )
+
+    client = client
       .withVarSet(
         async () => 'REQ_URL_CFG',
-        async () => [context.req_orig, Op.cfg].join('/'),
+        async () => client.toInnerStr([context.req_orig, Op.cfg].join('/')),
       )
       .withVarSet(
         async () => 'REQ_URL_CLI',
         async () =>
-          [context.req_orig, context.req_path, context.req_srch].join(''),
+          client.toInnerStr(
+            [context.req_orig, context.req_path, context.req_srch].join(''),
+          ),
       )
       .withFsFileLoad(async () => ['op'])
 
@@ -146,7 +149,7 @@ async function runSrv(req: Request) {
       }
       client = client.withVarSet(
         async () => e[0].toUpperCase(),
-        async () => e[1],
+        async () => client.toInnerStr(e[1]),
       )
     }
 

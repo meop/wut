@@ -5,6 +5,9 @@ export interface Cli {
   name: string
   extension: string
 
+  toInnerStr: (value: string) => string
+  toOuterStr: (value: string) => string
+
   with(lines: () => Promise<Array<string>>): Cli
 
   withFsDirLoad(
@@ -62,7 +65,11 @@ export class CliBase {
     return lines.join('\n')
   }
 
-  toRawStr(value: string): string {
+  toInnerStr(_value: string): string {
+    throw new Error('not implemented')
+  }
+
+  toOuterStr(_value: string): string {
     throw new Error('not implemented')
   }
 
@@ -133,37 +140,37 @@ export class CliBase {
 
   withPrint(lines: () => Promise<Array<string>>): Cli {
     return this.with(async () =>
-      (await lines()).map(l => `opPrint ${this.toRawStr(l)}`),
+      (await lines()).map(l => `opPrint ${this.toInnerStr(l)}`),
     )
   }
 
   withPrintErr(lines: () => Promise<Array<string>>): Cli {
     return this.with(async () =>
-      (await lines()).map(l => `opPrintErr ${this.toRawStr(l)}`),
+      (await lines()).map(l => `opPrintErr ${this.toInnerStr(l)}`),
     )
   }
 
   withPrintInfo(lines: () => Promise<Array<string>>): Cli {
     return this.with(async () =>
-      (await lines()).map(l => `opPrintInfo ${this.toRawStr(l)}`),
+      (await lines()).map(l => `opPrintInfo ${this.toInnerStr(l)}`),
     )
   }
 
   withPrintOp(lines: () => Promise<Array<string>>): Cli {
     return this.with(async () =>
-      (await lines()).map(l => `opPrintCmd ${this.toRawStr(l)}`),
+      (await lines()).map(l => `opPrintCmd ${this.toInnerStr(l)}`),
     )
   }
 
   withPrintSucc(lines: () => Promise<Array<string>>): Cli {
     return this.with(async () =>
-      (await lines()).map(l => `opPrintSucc ${this.toRawStr(l)}`),
+      (await lines()).map(l => `opPrintSucc ${this.toInnerStr(l)}`),
     )
   }
 
   withPrintWarn(lines: () => Promise<Array<string>>): Cli {
     return this.with(async () =>
-      (await lines()).map(l => `opPrintWarn ${this.toRawStr(l)}`),
+      (await lines()).map(l => `opPrintWarn ${this.toInnerStr(l)}`),
     )
   }
 
@@ -172,17 +179,17 @@ export class CliBase {
   }
 
   withVarArrSet(
-    name: () => Promise<string>,
-    values: () => Promise<Array<string>>,
+    _name: () => Promise<string>,
+    _values: () => Promise<Array<string>>,
   ): Cli {
     throw new Error('not implemented')
   }
 
-  withVarSet(name: () => Promise<string>, value: () => Promise<string>): Cli {
+  withVarSet(_name: () => Promise<string>, _value: () => Promise<string>): Cli {
     throw new Error('not implemented')
   }
 
-  withVarUnset(name: () => Promise<string>): Cli {
+  withVarUnset(_name: () => Promise<string>): Cli {
     throw new Error('not implemented')
   }
 }

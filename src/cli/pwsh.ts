@@ -5,8 +5,16 @@ export class Powershell extends CliBase implements Cli {
     super('pwsh', 'ps1')
   }
 
-  toRawStr(value: string): string {
+  static execStr(value: string): string {
+    return `pwsh -noprofile -c ${value}`
+  }
+
+  toInnerStr(value: string): string {
     return `'${value.replaceAll("'", "''")}'`
+  }
+
+  toOuterStr(value: string): string {
+    return `'${value}'`
   }
 
   withTrace(): Cli {
@@ -18,14 +26,12 @@ export class Powershell extends CliBase implements Cli {
     values: () => Promise<Array<string>>,
   ): Cli {
     return this.with(async () => [
-      `$${await name()} = ${`@( ${(await values()).map(v => this.toRawStr(v)).join(', ')} )`}`,
+      `$${await name()} = ${`@( ${(await values()).join(', ')} )`}`,
     ])
   }
 
   withVarSet(name: () => Promise<string>, value: () => Promise<string>): Cli {
-    return this.with(async () => [
-      `$${await name()} = ${this.toRawStr(await value())}`,
-    ])
+    return this.with(async () => [`$${await name()} = ${await value()}`])
   }
 
   withVarUnset(name: () => Promise<string>): Cli {

@@ -1,5 +1,7 @@
 import { getCfgFsFileLoad, localCfgPath } from '../cfg'
 import type { Cli } from '../cli'
+import { Powershell } from '../cli/pwsh'
+import { Zshell } from '../cli/zsh'
 import { type Cmd, CmdBase } from '../cmd'
 import type { Ctx } from '../ctx'
 import { type Env, toEnvKey } from '../env'
@@ -89,7 +91,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   if (op === 'find') {
     _client = _client.withVarArrSet(
       async () => FILE_OP_KEYS_KEY(op),
-      async () => validKeys,
+      async () => validKeys.map(v => _client.toInnerStr(v)),
     )
   } else {
     const validClearDirs: Array<string> = []
@@ -100,16 +102,30 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
       for (const entry of content[key]) {
         const localDirPath = localCfgPath([FILE_KEY, key, entry.in])
         if (await isDir(localDirPath)) {
-          validClearDirs.push(`${key}${PARAM_SPLIT}${entry.out[sys_os_plat]}`)
+          validClearDirs.push(
+            _client.toOuterStr(`${key}${PARAM_SPLIT}${entry.out[sys_os_plat]}`),
+          )
           for (const filePath of await getFilePaths(localDirPath)) {
             const filePathParts = toRelParts(localDirPath, filePath, false)
+            const srcFull = _client.toInnerStr(
+              [key, entry.in, ...filePathParts].join('/'),
+            )
+            const dstFull = _client.toInnerStr(
+              [entry.out[sys_os_plat], ...filePathParts].join('/'),
+            )
             validPairs.push(
-              `${key}${PARAM_SPLIT}${[key, entry.in, ...filePathParts].join('/')}${PARAM_SPLIT}${[entry.out[sys_os_plat], ...filePathParts].join('/')}`,
+              _client.toOuterStr(
+                `${key}${PARAM_SPLIT}${srcFull}${PARAM_SPLIT}${dstFull}`,
+              ),
             )
           }
         } else {
+          const srcFull = _client.toInnerStr([key, entry.in].join('/'))
+          const dstFull = _client.toInnerStr(entry.out[sys_os_plat])
           validPairs.push(
-            `${key}${PARAM_SPLIT}${[key, entry.in].join('/')}${PARAM_SPLIT}${entry.out[sys_os_plat]}`,
+            _client.toOuterStr(
+              `${key}${PARAM_SPLIT}${srcFull}${PARAM_SPLIT}${dstFull}`,
+            ),
           )
         }
         if (entry.perm) {
@@ -119,7 +135,13 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
             entry.perm,
             context.sys_user ?? '',
           )) {
-            validPerms.push(`${key}${PARAM_SPLIT}${permCmd}`)
+            const permCmdFull =
+              context.sys_os_plat === 'winnt'
+                ? Powershell.execStr(_client.toInnerStr(permCmd))
+                : Zshell.execStr(_client.toInnerStr(permCmd))
+            validPerms.push(
+              _client.toOuterStr(`${key}${PARAM_SPLIT}${permCmdFull}`),
+            )
           }
         }
       }

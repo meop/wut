@@ -1,13 +1,7 @@
 import { buildFilePath, getFileContent, getFilePaths, toRelParts } from './path'
 import { Fmt, fromCfg } from './serde'
 
-const cfgDirPath = buildFilePath(
-  import.meta.dir,
-  '..',
-  '..',
-  '..',
-  'wut-config',
-)
+const cfgDirPath = buildFilePath(import.meta.dir, '..', '..', 'wut-config')
 
 export function localCfgPath(parts: Array<string>) {
   return `${buildFilePath(...[cfgDirPath, ...parts])}`

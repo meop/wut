@@ -4,21 +4,22 @@ def fileOp [] {
     if (which $pairParts.0 | is-empty) {
       continue
     }
-    let src = $pairParts.1 | str trim --left --char '/'
-    let dst = envReplace $pairParts.2 | path expand
+    let src = rmInnerStr $pairParts.1 | str trim --left --char '/'
+    let dst = envReplace (rmInnerStr $pairParts.2) | path expand
 
     let url = $"($env.REQ_URL_CFG)/file/($src)"
+
     let fileNewTemp = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
-    opPrintMaybeRunCmd '$"(' http get --raw --redirect-mode follow $"'($url)'" ')"' '|' save --force $"'($fileNewTemp)'"
+    opPrintMaybeRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($url)'#" ')"' '|' save --force $"r#'($fileNewTemp)'#"
 
     let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
 
     if ($dst | path exists) {
-      opPrintMaybeRunCmd $diffCmd $"'($dst)'" $"'($fileNewTemp)'" '|' complete '|' get stdout '|' str trim --right
+      opPrintMaybeRunCmd $diffCmd $"r#'($dst)'#" $"r#'($fileNewTemp)'#" '|' complete '|' get stdout '|' str trim --right
     } else {
-      opPrintWarn $"'($dst)' does not exist"
+      opPrintWarn $"`($dst)` does not exist"
     }
 
-    opPrintRunCmd rm --force $"'($fileNewTemp)'"
+    opPrintRunCmd rm --force $"r#'($fileNewTemp)'#"
   }
 }

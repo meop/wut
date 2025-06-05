@@ -14,8 +14,9 @@
     "typescript": "^5.8.3"
   },
   "scripts": {
-    "down": "docker compose --file docker/srv.yaml down",
-    "up": "docker compose --file docker/srv.yaml up --detach --pull always"
+    "dev": "bun --hot run src/srv.ts",
+    "prod": "docker compose --file docker/srv.yaml up --detach --pull always",
+    "prod:down": "docker compose --file docker/srv.yaml down"
   },
   "trustedDependencies": ["@biomejs/biome"]
 }

@@ -122,8 +122,8 @@ def virtQemuRun [config, configVm] {
       }
     }
 
-    let swtpmFullCmd = $"($swtpmBin)(if ($swtpmArgs | length) > 0 { ' ' + ($swtpmArgs | str join ' ') } else { '' })"
-    opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($swtpmFullCmd)'#"
+    let swtpmCmd = $"($swtpmBin)(if ($swtpmArgs | length) > 0 { ' ' + ($swtpmArgs | str join ' ') } else { '' })"
+    opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($swtpmCmd)'#"
 
     if 'NOOP' not-in $env {
       sleep 2sec
@@ -159,8 +159,8 @@ def virtQemuRun [config, configVm] {
     let qEnv = $qemuEnv
     let qemuArgs = envReplace $qEnv ($configVm | get qemu.arguments? | default [])
 
-    let qemuFullCmd = $"($qemuBin)(if ($qemuArgs | length) > 0 { ' ' + ($qemuArgs | str join ' ') } else { '' })"
-    opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($qemuFullCmd)'#"
+    let qemuCmd = $"($qemuBin)(if ($qemuArgs | length) > 0 { ' ' + ($qemuArgs | str join ' ') } else { '' })"
+    opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($qemuCmd)'#"
 
     if 'NOOP' not-in $env {
       sleep 2sec
@@ -171,15 +171,15 @@ def virtQemuRun [config, configVm] {
 def virtQemuOp [cmd] {
   for instance in $env.VIRT_INSTANCES {
     if (opPrintRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full $"($cmd).*($instance)" '}' '|' is-not-empty) == 'true' {
-      opPrintWarn $"($cmd) instance ($instance) is already up"
+      opPrintWarn $"`($cmd)` instance `($instance)` is already up"
       continue
     }
 
-    let url = $"($env.REQ_URL_CFG)/virt/($cmd).yaml"
-    let config = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"'($url)'" ')"'
+    let urlConfig = $"($env.REQ_URL_CFG)/virt/($cmd).yaml"
+    let config = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($urlConfig)'#" ')"'
 
-    let urlVm = $"($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml"
-    let configVm = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"'($urlVm)'" ')"'
+    let urlConfigVm = $"($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml"
+    let configVm = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($urlConfigVm)'#" ')"'
 
     try {
       virtQemuUnbindEfiFb

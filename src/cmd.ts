@@ -124,7 +124,7 @@ export class CmdBase {
       for (const [key, value] of Object.entries(_environment)) {
         _client = _client.withVarSet(
           async () => key,
-          async () => value,
+          async () => _client.toInnerStr(value),
         )
       }
 

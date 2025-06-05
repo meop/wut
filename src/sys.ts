@@ -35,13 +35,13 @@ export function getSysOsId(sysOsId: string) {
     case 'arch':
     case 'archarm':
       return 'arch'
-    case 'debian':
-    case 'raspbian':
-      return 'debian'
     case 'centos':
     case 'fedora':
     case 'redhat':
       return 'centos'
+    case 'debian':
+    case 'raspbian':
+      return 'debian'
     default:
       throw new Error(`unsupported os id: ${sysOsId}`)
   }

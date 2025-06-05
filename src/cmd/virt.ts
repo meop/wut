@@ -136,7 +136,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
       if (supportedManagers.length > 1) {
         _client = _client.withVarSet(
           async () => VIRT_MANAGER_KEY,
-          async () => key,
+          async () => _client.toInnerStr(key),
         )
       }
       _client = _client

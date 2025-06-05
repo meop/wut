@@ -4,6 +4,6 @@ def virtQemuOp [cmd] {
       opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'pkill --full ($cmd).*($instance)'#"
       continue
     }
-    opPrintWarn $"($cmd) instance ($instance) is already down"
+    opPrintWarn $"`($cmd)` instance `($instance)` is already down"
   }
 }

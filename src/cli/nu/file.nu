@@ -1,3 +1,7 @@
+def rmInnerStr [value] {
+  return ($value | str trim --left --char 'r' | str trim --char '#' | str trim --char `'`)
+}
+
 def envReplace [line] {
   let envItems = $env | items { |key, value| [$key, $value] }
 

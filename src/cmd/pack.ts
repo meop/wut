@@ -1,5 +1,7 @@
 import { getCfgFsFileLoad, getCfgFsFileDump } from '../cfg'
 import type { Cli } from '../cli'
+import { Powershell } from '../cli/pwsh'
+import { Zshell } from '../cli/zsh'
 import { type Cmd, CmdBase } from '../cmd'
 import type { Ctx } from '../ctx'
 import { type Env, toEnvKey } from '../env'
@@ -10,7 +12,9 @@ export class PackCmd extends CmdBase implements Cmd {
     this.name = 'pack'
     this.description = 'package manager ops'
     this.aliases = ['p', 'pa', 'pac', 'package']
-    this.options = [{ keys: ['-m', '--manager'], description: 'package manager' }]
+    this.options = [
+      { keys: ['-m', '--manager'], description: 'package manager' },
+    ]
     this.commands = [
       new PackCmdAdd([...this.scopes, this.name]),
       new PackCmdFind([...this.scopes, this.name]),
@@ -125,18 +129,27 @@ async function workAddFindRem(
           if (supportedManagers.length > 1) {
             _client = _client.withVarSet(
               async () => PACK_MANAGER_KEY,
-              async () => key,
+              async () => _client.toInnerStr(key),
             )
           }
           if (value[op]) {
             _client = _client.withVarArrSet(
               async () => PACK_OP_GROUP_NAMES_KEY(op),
-              async () => value[op],
+              async () =>
+                value[op].map((v: string) =>
+                  _client.name === 'nu'
+                    ? _client.toOuterStr(
+                        context.sys_os_plat === 'winnt'
+                          ? Powershell.execStr(_client.toInnerStr(v))
+                          : Zshell.execStr(_client.toInnerStr(v)),
+                      )
+                    : _client.toInnerStr(v),
+                ),
             )
           }
           _client = _client.withVarSet(
             async () => PACK_OP_NAMES_KEY(op),
-            async () => value.names.join(' '),
+            async () => _client.toInnerStr(value.names.join(' ')),
           )
           _client = _client.with(async () => [getManagerFuncName(key)])
           if (value[op]) {
@@ -159,7 +172,7 @@ async function workAddFindRem(
     _client = _client
       .withVarSet(
         async () => PACK_OP_NAMES_KEY(op),
-        async () => remainingNames.join(' '),
+        async () => _client.toInnerStr(remainingNames.join(' ')),
       )
       .with(async () => supportedManagers.map(m => getManagerFuncName(m)))
   }
@@ -205,7 +218,9 @@ export class PackCmdAdd extends CmdBase implements Cmd {
     this.name = 'add'
     this.description = 'add on local'
     this.aliases = ['a', 'ad', 'in', 'install']
-    this.arguments = [{ name: 'names', description: 'name(s) to match', req: true }]
+    this.arguments = [
+      { name: 'names', description: 'name(s) to match', req: true },
+    ]
     this.switches = [{ keys: ['-g', '--groups'], description: 'check groups' }]
   }
   async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
@@ -219,7 +234,9 @@ export class PackCmdFind extends CmdBase implements Cmd {
     this.name = 'find'
     this.description = 'find from remote'
     this.aliases = ['f', 'fi']
-    this.arguments = [{ name: 'names', description: 'name(s) to match', req: true }]
+    this.arguments = [
+      { name: 'names', description: 'name(s) to match', req: true },
+    ]
     this.switches = [{ keys: ['-g', '--groups'], description: 'check groups' }]
   }
   async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
@@ -259,7 +276,9 @@ export class PackCmdRem extends CmdBase implements Cmd {
     this.name = 'rem'
     this.description = 'remove on local'
     this.aliases = ['r', 'rm', 'rem', 'remove', 'un', 'uninstall']
-    this.arguments = [{ name: 'names', description: 'name(s) to match', req: true }]
+    this.arguments = [
+      { name: 'names', description: 'name(s) to match', req: true },
+    ]
     this.switches = [{ keys: ['-g', '--groups'], description: 'check groups' }]
   }
   async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
