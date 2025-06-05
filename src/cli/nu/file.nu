@@ -1,5 +1,9 @@
 def rmInnerStr [value] {
-  return ($value | str trim --left --char 'r' | str trim --char '#' | str trim --char `'`)
+  mut value = $value
+  if ($value | str starts-with `r#'`) and ($value | str ends-with `'#`) {
+    return ($value | str substring 3..-3)
+  }
+  return $value
 }
 
 def envReplace [line] {

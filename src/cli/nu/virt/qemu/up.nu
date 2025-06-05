@@ -181,11 +181,7 @@ def virtQemuOp [cmd] {
     let urlConfigVm = $"($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml"
     let configVm = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($urlConfigVm)'#" ')"'
 
-    try {
-      virtQemuUnbindEfiFb
-      virtQemuRun ($config | from yaml) ($configVm | from yaml)
-    } catch {
-      |err| $err | print
-    }
+    virtQemuUnbindEfiFb
+    virtQemuRun ($config | from yaml) ($configVm | from yaml)
   }
 }
