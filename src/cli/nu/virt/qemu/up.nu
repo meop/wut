@@ -10,7 +10,7 @@ def virtQemuUnbindEfiFb [] {
     'echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/unbind',
   ]
   for cmd in $cmds {
-    opPrintMaybeRunCmd sudo --preserve-env sh -c $"'($cmd)'"
+    opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($cmd)'#"
   }
 
   if 'NOOP' not-in $env {
@@ -41,7 +41,7 @@ def virtQemuRebindVfioPci [pciDevId] {
     $"echo > /sys/bus/pci/devices/($fullPciDevId)/driver_override",
   ]
   for cmd in $cmds {
-    opPrintMaybeRunCmd sudo --preserve-env sh -c $"'($cmd)'"
+    opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($cmd)'#"
   }
 
   if 'NOOP' not-in $env {
@@ -123,7 +123,7 @@ def virtQemuRun [config, configVm] {
     }
 
     let swtpmFullCmd = $"($swtpmBin)(if ($swtpmArgs | length) > 0 { ' ' + ($swtpmArgs | str join ' ') } else { '' })"
-    opPrintMaybeRunCmd sudo --preserve-env sh -c $"'($swtpmFullCmd)'"
+    opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($swtpmFullCmd)'#"
 
     if 'NOOP' not-in $env {
       sleep 2sec
@@ -160,7 +160,7 @@ def virtQemuRun [config, configVm] {
     let qemuArgs = envReplace $qEnv ($configVm | get qemu.arguments? | default [])
 
     let qemuFullCmd = $"($qemuBin)(if ($qemuArgs | length) > 0 { ' ' + ($qemuArgs | str join ' ') } else { '' })"
-    opPrintMaybeRunCmd sudo --preserve-env sh -c $"'($qemuFullCmd)'"
+    opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($qemuFullCmd)'#"
 
     if 'NOOP' not-in $env {
       sleep 2sec
