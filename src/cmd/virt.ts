@@ -230,7 +230,7 @@ export class VirtCmdTidy extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'tidy'
     this.description = 'tidy on local'
-    this.aliases = ['t', 'ti']
+    this.aliases = ['t', 'ti', 'cl', 'clean']
   }
   async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
     return await workOp(client, context, environment, this.name)
