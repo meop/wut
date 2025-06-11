@@ -14,12 +14,12 @@ export class VirtCmd extends CmdBase implements Cmd {
       { keys: ['-m', '--manager'], description: 'virtual manager' },
     ]
     this.commands = [
-      new VirtCmdDown([...this.scopes, this.name]),
+      new VirtCmdAdd([...this.scopes, this.name]),
       new VirtCmdFind([...this.scopes, this.name]),
       new VirtCmdList([...this.scopes, this.name]),
+      new VirtCmdRem([...this.scopes, this.name]),
       new VirtCmdSync([...this.scopes, this.name]),
       new VirtCmdTidy([...this.scopes, this.name]),
-      new VirtCmdUp([...this.scopes, this.name]),
     ]
   }
 }
@@ -160,12 +160,12 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   return body
 }
 
-export class VirtCmdDown extends CmdBase implements Cmd {
+export class VirtCmdAdd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
-    this.name = 'down'
-    this.description = 'down on local'
-    this.aliases = ['d', 'do', 'down', 'stop']
+    this.name = 'add'
+    this.description = 'add on local'
+    this.aliases = ['a', 'ad', 'in', 'install']
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
   async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
@@ -178,7 +178,7 @@ export class VirtCmdFind extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'find'
     this.description = 'find from remote'
-    this.aliases = ['f', 'fi']
+    this.aliases = ['f', 'fi', 'se', 'search']
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
   async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
@@ -199,12 +199,25 @@ export class VirtCmdList extends CmdBase implements Cmd {
   }
 }
 
+export class VirtCmdRem extends CmdBase implements Cmd {
+  constructor(scopes: Array<string>) {
+    super(scopes)
+    this.name = 'rem'
+    this.description = 'remove on local'
+    this.aliases = ['r', 'rm', 'rem', 'remove', 'un', 'unin', 'uninstall']
+    this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
+  }
+  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+    return await workOp(client, context, environment, this.name)
+  }
+}
+
 export class VirtCmdSync extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'sync'
     this.description = 'sync from remote'
-    this.aliases = ['s', 'sy']
+    this.aliases = ['s', 'sy', 'up', 'update', 'upgrade']
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
   async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
@@ -218,19 +231,6 @@ export class VirtCmdTidy extends CmdBase implements Cmd {
     this.name = 'tidy'
     this.description = 'tidy on local'
     this.aliases = ['t', 'ti']
-  }
-  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
-    return await workOp(client, context, environment, this.name)
-  }
-}
-
-export class VirtCmdUp extends CmdBase implements Cmd {
-  constructor(scopes: Array<string>) {
-    super(scopes)
-    this.name = 'up'
-    this.description = 'up on local'
-    this.aliases = ['u', 'start']
-    this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
   async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
     return await workOp(client, context, environment, this.name)

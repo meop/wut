@@ -233,7 +233,7 @@ export class PackCmdFind extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'find'
     this.description = 'find from remote'
-    this.aliases = ['f', 'fi']
+    this.aliases = ['f', 'fi', 'se', 'search']
     this.arguments = [
       { name: 'names', description: 'name(s) to match', req: true },
     ]
@@ -275,7 +275,7 @@ export class PackCmdRem extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'rem'
     this.description = 'remove on local'
-    this.aliases = ['r', 'rm', 'rem', 'remove', 'un', 'uninstall']
+    this.aliases = ['r', 'rm', 'rem', 'remove', 'un', 'unin', 'uninstall']
     this.arguments = [
       { name: 'names', description: 'name(s) to match', req: true },
     ]
@@ -291,7 +291,7 @@ export class PackCmdSync extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'sync'
     this.description = 'sync from remote'
-    this.aliases = ['s', 'sy']
+    this.aliases = ['s', 'sy', 'up', 'update', 'upgrade']
     this.arguments = [{ name: 'names', description: 'name(s) to match' }]
   }
   async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
@@ -304,7 +304,7 @@ export class PackCmdTidy extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'tidy'
     this.description = 'tidy on local'
-    this.aliases = ['t', 'ti']
+    this.aliases = ['t', 'ti', 'cl', 'clean']
   }
   async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
     return await workListOutSyncTidy(client, context, environment, this.name)
