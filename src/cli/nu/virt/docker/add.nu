@@ -4,6 +4,6 @@ def virtDockerOp [cmd] {
       continue
     }
     let url = $"($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml"
-    opPrintMaybeRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($url)'#" ')"' '|' $cmd compose --file - up --pull always --detach
+    opPrintMaybeRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($url)'#" ')"' '|' $cmd compose --file - up --detach --pull always
   }
 }

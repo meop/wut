@@ -8,15 +8,15 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/bun": "^1.2.15",
-    "@types/node": "^22.15.29"
+    "@types/node": "^24.0.0"
   },
   "peerDependencies": {
     "typescript": "^5.8.3"
   },
   "scripts": {
-    "dev": "bun --hot run src/srv.ts",
-    "prod": "docker compose --file docker/srv.yaml up --detach --pull always",
-    "prod:down": "docker compose --file docker/srv.yaml down"
+    "hot": "bun --hot run src/srv.ts",
+    "up": "docker compose --file docker/srv.yaml up --detach --pull always",
+    "down": "docker compose --file docker/srv.yaml down"
   },
   "trustedDependencies": ["@biomejs/biome"]
 }
