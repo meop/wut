@@ -177,8 +177,6 @@ export class CmdBase {
           partsIndex += 2
           continue
         }
-
-        return loadCliEnv(() => this.help(_client, _context, _environment))
       }
 
       if (this.commands.length) {
