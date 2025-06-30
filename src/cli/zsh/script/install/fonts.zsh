@@ -5,7 +5,7 @@ function () {
     if [[ $YES ]]; then
       yn='y'
     else
-      read 'yn?? setup nerd fonts (local) [y, [n]] '
+      read 'yn?? install nerd fonts (local) [y, [n]] '
     fi
     if [[ $yn != 'n' ]]; then
       local share="${XDG_DATA_HOME:-${HOME}/.local/share}"
