@@ -14,14 +14,14 @@ function () {
       opPrintMaybeRunCmd mkdir -p "${fonts}" '>' /dev/null '2>&1'
 
       local output="${HOME}/Hack.zip"
-      local url='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/Hack.zip'
+      local url='https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Hack.zip'
       opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
       opPrintMaybeRunCmd unzip -q "${output}" -d "${output}.unzip"
       opPrintMaybeRunCmd cp "${output}.unzip"'/*.ttf' "${fonts}"
       opPrintMaybeRunCmd rm -r -f "${output}"'*'
 
       local output="${HOME}/FiraCode.zip"
-      local url='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/FiraCode.zip'
+      local url='https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip'
       opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
       opPrintMaybeRunCmd unzip -q "${output}" -d "${output}.unzip"
       opPrintMaybeRunCmd cp "${output}.unzip"'/*.ttf' "${fonts}"
