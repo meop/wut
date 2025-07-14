@@ -1,6 +1,5 @@
 function packYay {
   local cmd='yay'
-
   if [[ -z $PACK_MANAGER || $PACK_MANAGER == $cmd ]] && type $cmd > /dev/null; then
     local yn=''
     if [[ $YES ]]; then
@@ -13,10 +12,8 @@ function packYay {
     fi
   fi
 }
-
 function packPacman {
   local cmd='pacman'
-
   if [[ -z $PACK_MANAGER ]] && type yay > /dev/null; then
     # yay is a superset of pacman
   elif [[ -z $PACK_MANAGER || $PACK_MANAGER == $cmd ]] && type $cmd > /dev/null; then

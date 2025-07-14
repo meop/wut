@@ -1,6 +1,5 @@
 function packDnf {
   local cmd='dnf'
-
   if [[ -z $PACK_MANAGER || $PACK_MANAGER == $cmd ]] && type $cmd > /dev/null; then
     local yn=''
     if [[ $YES ]]; then

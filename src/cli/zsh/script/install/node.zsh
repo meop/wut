@@ -2,7 +2,7 @@ function () {
   local yn=''
   if [[ $SYS_OS_PLAT == 'linux' ]]; then
     if [[ $SYS_OS_ID == 'debian' || $SYS_OS_ID == 'ubuntu' ]]; then
-      local node_version=23
+      local node_version=24
       function install_nodesource_repo {
         if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep --invert-match '^#' | grep --invert-match '^$' | grep '^.*deb.*nodesource.*com.*$' > /dev/null; then
           local url="https://deb.nodesource.com/setup_${node_version}.x"

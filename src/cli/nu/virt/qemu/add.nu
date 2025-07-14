@@ -1,5 +1,6 @@
 def virtQemuUnbindEfiFb [] {
   let checkPath = '/sys/bus/platform/drivers/efi-framebuffer/efi-framebuffer.0'
+
   if not ($checkPath | path exists) {
     return
   }
@@ -9,6 +10,7 @@ def virtQemuUnbindEfiFb [] {
     'echo 0 > /sys/class/vtconsole/vtcon1/bind',
     'echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/unbind',
   ]
+
   for cmd in $cmds {
     opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($cmd)'#"
   }
@@ -17,12 +19,12 @@ def virtQemuUnbindEfiFb [] {
     sleep 2sec
   }
 }
-
 def virtQemuRebindVfioPci [pciDevId] {
   let driver = 'vfio-pci'
-  let fullPciDevId = $"0000:($pciDevId)"
 
+  let fullPciDevId = $"0000:($pciDevId)"
   let checkPath = $"/sys/bus/pci/devices/($fullPciDevId)/driver_override"
+
   if not ($checkPath | path exists) {
     return
   }
@@ -43,12 +45,10 @@ def virtQemuRebindVfioPci [pciDevId] {
   for cmd in $cmds {
     opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($cmd)'#"
   }
-
   if 'NOOP' not-in $env {
     sleep 2sec
   }
 }
-
 def virtQemuRun [config, configVm] {
   mut qemuEnv = {}
 
@@ -56,6 +56,7 @@ def virtQemuRun [config, configVm] {
     ...($config | get environment),
     ...($configVm | get environment),
   ]
+
   for key in $configEnv {
     let parts = $key | split row '='
     $qemuEnv = $qemuEnv| upsert $parts.0 $parts.1
