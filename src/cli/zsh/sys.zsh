@@ -2,7 +2,7 @@ export SYS_CPU_ARCH="${(L)$(uname -m)}"
 export REQ_URL_CLI="${REQ_URL_CLI}?sysCpuArch=${SYS_CPU_ARCH}"
 
 if type lscpu > /dev/null; then
-  export SYS_CPU_VEN_ID="${(L)$(lscpu | grep --ignore-case vendor | cut -d ':' -f 2 | xargs)}"
+  export SYS_CPU_VEN_ID="${(L)$(lscpu | grep --ignore-case 'vendor id' | cut -d ':' -f 2 | xargs)}"
 elif type sysctl > /dev/null; then
   export SYS_CPU_VEN_ID="${(L)$(sysctl machdep.cpu.vendor 2> /dev/null | cut -d ':' -f 2 | xargs)}"
   if [[ -z $SYS_CPU_VEN_ID ]]; then

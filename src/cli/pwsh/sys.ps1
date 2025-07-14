@@ -8,7 +8,7 @@ $REQ_URL_CLI = "${REQ_URL_CLI}?sysCpuArch=${SYS_CPU_ARCH}"
 if ($IsWindows) {
   $SYS_CPU_VEN_ID = "$(Get-WmiObject -Class Win32_Processor | Select-Object -ExpandProperty Manufacturer)".ToLower()
 } elseif ($IsLinux) {
-  $SYS_CPU_VEN_ID = "$(lscpu | grep --ignore-case vendor | cut -d ':' -f 2 | xargs)".ToLower()
+  $SYS_CPU_VEN_ID = "$(lscpu | grep --ignore-case 'vendor id' | cut -d ':' -f 2 | xargs)".ToLower()
 } else {
   $SYS_CPU_VEN_ID = "$(sysctl machdep.cpu.vendor 2> /dev/null | cut -d ':' -f 2 | xargs)".ToLower()
   if (-not $SYS_CPU_VEN_ID) {
