@@ -1,6 +1,6 @@
-import { Glob } from 'bun'
 import { promises as fs } from 'node:fs'
 import PATH from 'node:path'
+import { Glob } from 'bun'
 
 export function buildFilePath(...parts: Array<string>) {
   return PATH.join(...parts)

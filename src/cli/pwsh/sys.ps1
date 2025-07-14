@@ -58,5 +58,9 @@ if ($SYS_OS_PLAT -eq 'linux') {
   }
 }
 
-$SYS_USER = "${USER}".ToLower()
+if ($IsWindows) {
+  $SYS_USER = "${env:USERNAME}".ToLower()
+} else {
+  $SYS_USER = "$(whoami)".ToLower()
+}
 $REQ_URL_CLI = "${REQ_URL_CLI}&sysUser=${SYS_USER}"

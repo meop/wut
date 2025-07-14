@@ -3,10 +3,9 @@ function () {
 
   if [[ $SYS_CPU_ARCH == 'x86_64' ]]; then
     if [[ $SYS_OS_PLAT == 'linux' ]]; then
-      if [[ $SYS_OS_ID == 'debian' ]]; then
+      if [[ $SYS_OS_ID == 'debian' || $SYS_OS_ID == 'ubuntu' ]]; then
         # dotnet-sdk: <https://learn.microsoft.com/en-us/dotnet/core/install/linux-debian>
         # pwsh (x86_64): <https://learn.microsoft.com/en-us/powershell/scripting/install/install-debian>
-        # pwsh (aarch64): <https://learn.microsoft.com/en-us/powershell/scripting/install/community-support>
 
         function install_packages_microsoft_repo {
           if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep --invert-match '^#' | grep --invert-match '^$' | grep '^.*packages.*microsoft.*com.*$' > /dev/null; then
@@ -23,7 +22,11 @@ function () {
 
           read 'yn?? install dotnet sdk (system) [y, [n]] '
           if [[ $yn != 'n' ]]; then
-            install_packages_microsoft_repo
+            if [[ $SYS_OS_ID == 'debian' ]]; then
+              install_packages_microsoft_repo
+            elif [[ $SYS_OS_ID == 'ubuntu' ]]; then
+              opPrintMaybeRunCmd sudo add-apt-repository ppa:dotnet/backports
+            fi
             opPrintMaybeRunCmd sudo apt update '>' /dev/null '2>&1'
             opPrintMaybeRunCmd sudo apt install dotnet-sdk-"${version}"
           fi
@@ -40,7 +43,7 @@ function () {
           opPrintMaybeRunCmd sudo apt install powershell
         fi
       else
-        echo 'script is for debian'
+        echo 'script is for debian/ubuntu'
       fi
     else
       echo 'script is for linux'

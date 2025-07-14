@@ -42,5 +42,5 @@ if [[ $SYS_OS_PLAT == 'linux' ]]; then
   fi
 fi
 
-export SYS_USER="${(L)USER}"
+export SYS_USER="${(L)$(whoami)}"
 export REQ_URL_CLI="${REQ_URL_CLI}&sysUser=${SYS_USER}"
