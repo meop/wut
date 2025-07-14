@@ -4,7 +4,7 @@
     if ($YES) {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? repair gpu msi properties (system) [y, [n]]'
+      $yn = Read-Host '? repair gpu - set msi properties (system) [y, [n]]'
     }
     if ($yn -ne 'n') {
       opPrintMaybeRunCmd Push-Location 'HKLM:'

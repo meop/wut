@@ -4,7 +4,7 @@
     if ($YES) {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? enable webdav client max sizes (system) [y, [n]]'
+      $yn = Read-Host '? repair webdav - set client file size limit to max (system) [y, [n]]'
     }
     if ($yn -ne 'n') {
       opPrintMaybeRunCmd Push-Location 'HKLM:'

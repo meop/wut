@@ -7,10 +7,11 @@ function () {
     read 'yn?? install starship (user) [y, [n]] '
   fi
   if [[ $yn != 'n' ]]; then
+    opPrintMaybeRunCmd mkdir -p "${HOME}/.local/bin" '>' /dev/null '2>&1'
+
     local output="${HOME}/install-starship.sh"
     local url='https://starship.rs/install.sh'
     opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"
-    opPrintMaybeRunCmd mkdir -p "${HOME}/.local/bin"
     opPrintMaybeRunCmd sh "${output}" -b "${HOME}/.local/bin"
     opPrintMaybeRunCmd rm -r -f "${output}"'*'
   fi

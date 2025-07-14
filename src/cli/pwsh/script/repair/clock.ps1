@@ -4,7 +4,7 @@
     if ($YES) {
       $yn = 'y'
     } else {
-      $yn = Read-Host '? enable clock utc (system) [y, [n]]'
+      $yn = Read-Host '? repair clock - set rtc to utc (system) [y, [n]]'
     }
     if ($yn -ne 'n') {
       opPrintMaybeRunCmd Push-Location 'HKLM:'
