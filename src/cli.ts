@@ -96,7 +96,7 @@ export class CliBase {
       })
       const lines: Array<string> = []
       for (const path of filePaths) {
-        lines.push(await getFileContent(path))
+        lines.push((await getFileContent(path)) ?? '')
       }
       return lines
     })
@@ -125,7 +125,7 @@ export class CliBase {
   withFsFileLoad(parts: () => Promise<Array<string>>): Cli {
     return this.with(async () => {
       const path = `${this.localDirPath(await parts())}.${this.extension}`
-      return [await getFileContent(path)]
+      return [(await getFileContent(path)) ?? '']
     })
   }
 

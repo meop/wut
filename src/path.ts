@@ -21,7 +21,7 @@ export async function isFile(filePath: string) {
 
 export async function getFileContent(filePath: string) {
   if (!(await isFile(filePath))) {
-    return ''
+    return null
   }
 
   return await Bun.file(filePath).text()

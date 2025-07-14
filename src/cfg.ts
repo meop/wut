@@ -40,9 +40,14 @@ export async function getCfgFsFileContent(
   )
 }
 
-async function fromFilePath(filePath: string) {
+export async function getCfgFsFileLoad(
+  parts: () => Promise<Array<string>>,
+  ext?: string,
+) {
+  const filePath = `${localCfgPath(await parts())}${ext ? `.${ext}` : ''}`
+
   const content = await getFileContent(filePath)
-  if (!content) {
+  if (content == null) {
     return null
   }
 
@@ -53,14 +58,5 @@ async function fromFilePath(filePath: string) {
       : filePath.endsWith(Fmt.json)
         ? Fmt.json
         : Fmt.text,
-  )
-}
-
-export async function getCfgFsFileLoad(
-  parts: () => Promise<Array<string>>,
-  ext?: string,
-) {
-  return await fromFilePath(
-    `${localCfgPath(await parts())}${ext ? `.${ext}` : ''}`,
   )
 }

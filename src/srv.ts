@@ -91,7 +91,7 @@ async function runSrv(req: Request) {
     const op = parts[0]
     if (op === Op.cfg) {
       const config = await getCfgFsFileContent(async () => parts.slice(1))
-      if (!config.length) {
+      if (config == null) {
         return new Response(`echo "config not found: ${config}"`, {
           status: 404,
         })
