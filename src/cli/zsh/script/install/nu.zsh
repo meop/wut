@@ -2,7 +2,7 @@ function () {
   local yn=''
 
   if [[ $SYS_OS_PLAT == 'linux' ]]; then
-    if [[ $SYS_OS_ID == 'debian' ]]; then
+    if [[ $SYS_OS_ID == 'debian' || $SYS_OS_ID == 'ubuntu' ]]; then
       # https://www.nushell.sh/book/installation.html#pre-built-binaries
       function install_nu_repo {
         local output="/etc/apt/sources.list.d/fury-nushell.list"
@@ -22,7 +22,7 @@ function () {
         opPrintMaybeRunCmd sudo apt update '>' /dev/null '2>&1'
         opPrintMaybeRunCmd sudo apt install nushell
       fi
-    elif [[ $SYS_OS_ID == 'centos' ]]; then
+    elif [[ $SYS_OS_ID == 'rocky' || $SYS_OS_ID == 'fedora' ]]; then
       # https://www.nushell.sh/book/installation.html#pre-built-binaries
       function install_nu_repo {
         local output='/etc/yum.repos.d/fury-nushell.repo'
@@ -47,7 +47,7 @@ function () {
         opPrintMaybeRunCmd sudo dnf install nushell
       fi
     else
-      echo 'script is for debian or centos'
+      echo 'script is for debian/ubuntu or rocky/fedora'
     fi
   else
     echo 'script is for linux'

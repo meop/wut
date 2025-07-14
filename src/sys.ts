@@ -33,15 +33,15 @@ export function getSysCpuVenId(sysCpuVenId: string) {
 export function getSysOsId(sysOsId: string) {
   switch (sysOsId.toLowerCase()) {
     case 'arch':
-    case 'archarm':
       return 'arch'
-    case 'centos':
-    case 'fedora':
-    case 'redhat':
-      return 'centos'
     case 'debian':
-    case 'raspbian':
       return 'debian'
+    case 'ubuntu':
+      return 'ubuntu'
+    case 'rocky':
+      return 'rocky'
+    case 'fedora':
+      return 'fedora'
     default:
       throw new Error(`unsupported os id: ${sysOsId}`)
   }

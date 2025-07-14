@@ -1,4 +1,4 @@
-import { getCfgFsFileLoad, getCfgFsFileDump } from '../cfg'
+import { getCfgFsFileDump, getCfgFsFileLoad } from '../cfg'
 import type { Cli } from '../cli'
 import { Powershell } from '../cli/pwsh'
 import { Zshell } from '../cli/zsh'
@@ -35,8 +35,10 @@ const osPlatToManagers = {
 
 const osIdToManagers = {
   arch: ['yay', 'pacman'],
-  centos: ['dnf'],
   debian: ['apt'],
+  ubuntu: ['apt'],
+  rocky: ['dnf'],
+  fedora: ['dnf'],
 }
 
 const CFG_EXT = 'yaml'
