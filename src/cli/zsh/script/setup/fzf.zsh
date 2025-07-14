@@ -1,6 +1,5 @@
 function () {
   local yn=''
-
   if type fzf > /dev/null; then
     if [[ $YES ]]; then
       yn='y'
@@ -9,7 +8,6 @@ function () {
     fi
     if [[ $yn != 'n' ]]; then
       local fzf="${HOME}/.fzf"
-
       local output="${fzf}/colors.zsh"
       local url='https://raw.githubusercontent.com/folke/tokyonight.nvim/HEAD/extras/fzf/tokyonight_storm.sh'
       opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"

@@ -1,12 +1,10 @@
+# dotnet-sdk: <https://learn.microsoft.com/en-us/dotnet/core/install/>
+# pwsh: <https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell>
 function () {
   local yn=''
-
   if [[ $SYS_CPU_ARCH == 'x86_64' ]]; then
     if [[ $SYS_OS_PLAT == 'linux' ]]; then
       if [[ $SYS_OS_ID == 'debian' || $SYS_OS_ID == 'ubuntu' ]]; then
-        # dotnet-sdk: <https://learn.microsoft.com/en-us/dotnet/core/install/linux-debian>
-        # pwsh (x86_64): <https://learn.microsoft.com/en-us/powershell/scripting/install/install-debian>
-
         function install_packages_microsoft_repo {
           if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep --invert-match '^#' | grep --invert-match '^$' | grep '^.*packages.*microsoft.*com.*$' > /dev/null; then
             local output="${HOME}/packages-microsoft-prod.deb"
@@ -16,10 +14,8 @@ function () {
             opPrintMaybeRunCmd rm "${output}"
           fi
         }
-
         function () {
           local version=9.0
-
           read 'yn?? install dotnet sdk (system) [y, [n]] '
           if [[ $yn != 'n' ]]; then
             if [[ $SYS_OS_ID == 'debian' ]]; then
@@ -31,7 +27,6 @@ function () {
             opPrintMaybeRunCmd sudo apt install dotnet-sdk-"${version}"
           fi
         }
-
         if [[ $YES ]]; then
           yn='y'
         else

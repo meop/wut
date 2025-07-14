@@ -10,7 +10,6 @@ function () {
     if [[ $yn != 'n' ]]; then
       local share="${XDG_DATA_HOME:-${HOME}/.local/share}"
       local nvim="${share}/nvim"
-
       local output="${nvim}/site/autoload/plug.vim"
       local url='https://raw.githubusercontent.com/junegunn/vim-plug/HEAD/plug.vim'
       opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "${url}" --create-dirs --output "${output}"

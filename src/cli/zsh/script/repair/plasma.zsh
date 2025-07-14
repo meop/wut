@@ -1,6 +1,5 @@
 function () {
   local yn=''
-
   # note: plasma has a long-time bug with multiple panels
   # where the keyboard shortcut keys get conflicted when saved
   # so a panel specific shortcut like Meta key, which is usually tied to Alt-F1

@@ -1,9 +1,7 @@
 function () {
   local yn=''
-
   if type tmux > /dev/null; then
     local tmux="${HOME}/.tmux"
-
     if [[ $YES ]]; then
       yn='y'
     else
@@ -11,7 +9,6 @@ function () {
     fi
     if [[ $yn != 'n' ]]; then
       local tmux_plugins="${HOME}/.tmux-plugins"
-
       local output="${tmux_plugins}/tpm"
       if [[ -d "${output}" ]]; then
         opPrintMaybeRunCmd git -C "${output}" pull --prune '>' /dev/null '2>&1'
@@ -20,7 +17,6 @@ function () {
         opPrintMaybeRunCmd git clone --depth 1 --quiet "${url}" "${output}"
       fi
     fi
-
     if [[ $YES ]]; then
       yn='y'
     else

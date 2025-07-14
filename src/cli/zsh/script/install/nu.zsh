@@ -1,9 +1,8 @@
+# https://www.nushell.sh/book/installation.html#pre-built-binaries
 function () {
   local yn=''
-
   if [[ $SYS_OS_PLAT == 'linux' ]]; then
     if [[ $SYS_OS_ID == 'debian' || $SYS_OS_ID == 'ubuntu' ]]; then
-      # https://www.nushell.sh/book/installation.html#pre-built-binaries
       function install_nu_repo {
         local output="/etc/apt/sources.list.d/fury-nushell.list"
         if [[ ! -f "${output}" ]]; then
@@ -23,7 +22,6 @@ function () {
         opPrintMaybeRunCmd sudo apt install nushell
       fi
     elif [[ $SYS_OS_ID == 'rocky' || $SYS_OS_ID == 'fedora' ]]; then
-      # https://www.nushell.sh/book/installation.html#pre-built-binaries
       function install_nu_repo {
         local output='/etc/yum.repos.d/fury-nushell.repo'
         if [[ ! -f "${output}" ]]; then

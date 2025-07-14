@@ -1,9 +1,7 @@
 function () {
   local yn=''
-
   if [[ ! -f /etc/os-release ]] && type termux-reload-settings > /dev/null; then
     local termux="${HOME}/.termux"
-
     if [[ $YES ]]; then
       yn='y'
     else
@@ -12,7 +10,6 @@ function () {
     if [[ $yn != 'n' ]]; then
       opPrintMaybeRunCmd termux-change-mirror
     fi
-
     if [[ $YES ]]; then
       yn='y'
     else
@@ -21,7 +18,6 @@ function () {
     if [[ $yn != 'n' ]]; then
       opPrintMaybeRunCmd termux-setup-storage
     fi
-
     if [[ $YES ]]; then
       yn='y'
     else

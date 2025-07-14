@@ -1,17 +1,14 @@
 function () {
   local yn=''
-
   if [[ $SYS_OS_PLAT == 'linux' ]]; then
-    if [[ $SYS_OS_ID == 'debian' ]]; then
+    if [[ $SYS_OS_ID == 'debian' || $SYS_OS_ID == 'ubuntu' ]]; then
       local node_version=23
-
       function install_nodesource_repo {
         if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep --invert-match '^#' | grep --invert-match '^$' | grep '^.*deb.*nodesource.*com.*$' > /dev/null; then
           local url="https://deb.nodesource.com/setup_${node_version}.x"
           opPrintMaybeRunCmd sudo --preserve-env bash -c '"$(' curl --fail-with-body --location --no-progress-meter --url "${url}" ')"'
         fi
       }
-
       if [[ $YES ]]; then
         yn='y'
       else
@@ -22,7 +19,6 @@ function () {
         opPrintMaybeRunCmd sudo apt update '> /dev/null 2>&1'
         opPrintMaybeRunCmd sudo apt install nodejs
       fi
-
       if [[ $YES ]]; then
         yn='y'
       else
@@ -34,7 +30,7 @@ function () {
         opPrintMaybeRunCmd sudo apt install npm
       fi
     else
-      echo 'script is for debian'
+      echo 'script is for debian/ubuntu'
     fi
   else
     echo 'script is for linux'

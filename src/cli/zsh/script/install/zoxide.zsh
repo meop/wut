@@ -1,6 +1,5 @@
 function () {
   local yn=''
-
   if [[ $YES ]]; then
     yn='y'
   else
