@@ -5,7 +5,7 @@
       if ($YES) {
         $yn = 'y'
       } else {
-        $yn = Read-Host '? setup nvim plugin manager (local) [y, [n]]'
+        $yn = Read-Host '? setup nvim - install plugin manager (local) [y, [n]]'
       }
       if ($yn -ne 'n') {
         $share = "$(@(${env:XDG_DATA_HOME}, ${env:LOCALAPPDATA})[-not ${env:XDG_DATA_HOME}])"

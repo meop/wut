@@ -4,7 +4,7 @@ function () {
     if [[ $YES ]]; then
       yn='y'
     else
-      read 'yn?? setup fzf theme (user) [y, [n]] '
+      read 'yn?? setup fzf - install theme (user) [y, [n]] '
     fi
     if [[ $yn != 'n' ]]; then
       local fzf="${HOME}/.fzf"

@@ -5,7 +5,7 @@
       if ($YES) {
         $yn = 'y'
       } else {
-        $yn = Read-Host '? setup fzf theme (user) [y, [n]]'
+        $yn = Read-Host '? setup fzf - install theme (user) [y, [n]]'
       }
       if ($yn -ne 'n') {
         $fzf = "${HOME}/.fzf"

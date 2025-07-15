@@ -5,7 +5,7 @@ function () {
     if [[ $YES ]]; then
       yn='y'
     else
-      read 'yn?? setup termux mirrors (system) [y, [n]] '
+      read 'yn?? setup termux - change mirror (system) [y, [n]] '
     fi
     if [[ $yn != 'n' ]]; then
       opPrintMaybeRunCmd termux-change-mirror
@@ -13,7 +13,7 @@ function () {
     if [[ $YES ]]; then
       yn='y'
     else
-      read 'yn?? setup termux storage (system) [y, [n]] '
+      read 'yn?? setup termux - setup storage (system) [y, [n]] '
     fi
     if [[ $yn != 'n' ]]; then
       opPrintMaybeRunCmd termux-setup-storage
@@ -21,7 +21,7 @@ function () {
     if [[ $YES ]]; then
       yn='y'
     else
-      read 'yn?? setup termux theme (user) [y, [n]] '
+      read 'yn?? setup termux - install theme (user) [y, [n]] '
     fi
     if [[ $yn != 'n' ]]; then
       local output="${termux}/colors.properties"
@@ -38,6 +38,6 @@ function () {
       opPrintMaybeRunCmd termux-reload-settings
     fi
   else
-    echo 'termux is not installed'
+    echo 'termux is not found'
   fi
 }

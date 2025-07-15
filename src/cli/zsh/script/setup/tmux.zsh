@@ -5,7 +5,7 @@ function () {
     if [[ $YES ]]; then
       yn='y'
     else
-      read 'yn?? setup tmux plugin manager (user) [y, [n]] '
+      read 'yn?? setup tmux - install plugin manager (user) [y, [n]] '
     fi
     if [[ $yn != 'n' ]]; then
       local tmux_plugins="${HOME}/.tmux-plugins"
@@ -20,7 +20,7 @@ function () {
     if [[ $YES ]]; then
       yn='y'
     else
-      read 'yn?? setup tmux theme (user) [y, [n]] '
+      read 'yn?? setup tmux - install theme (user) [y, [n]] '
     fi
     if [[ $yn != 'n' ]]; then
       local output="${tmux}/theme.tmux"
