@@ -1,7 +1,9 @@
+import { getCfgFsDirDump, getCfgFsDirLoad, getCfgFsFileLoad } from '../cfg'
 import type { Cli } from '../cli'
 import { type Cmd, CmdBase } from '../cmd'
 import type { Ctx } from '../ctx'
 import { type Env, toEnvKey } from '../env'
+import { Fmt } from '../serde'
 
 export class ScriptCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -23,19 +25,39 @@ const SCRIPT_OP_PARTS_KEY = (op: string) => toEnvKey(SCRIPT_KEY, op, 'parts')
 
 async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   let _client = client
+
+  const dirParts = [SCRIPT_KEY, _client.name]
   const filters: Array<string> = []
   if (SCRIPT_OP_PARTS_KEY(op) in environment) {
     filters.push(...environment[SCRIPT_OP_PARTS_KEY(op)].split(' '))
   }
 
-  if (op === 'exec') {
-    _client = _client.withFsDirLoad(async () => [SCRIPT_KEY], {
-      filters: async () => filters,
-    })
-  } else if (op === 'find') {
-    _client = _client.withFsDirPrint(async () => [SCRIPT_KEY], {
-      filters: async () => filters,
-    })
+  const list = await getCfgFsFileLoad(async () => [SCRIPT_KEY], {
+    extension: Fmt.yaml,
+  })
+  const contextFilter = list[_client.name]
+
+  if (op === 'find') {
+    _client = _client.withPrint(async () =>
+      (
+        await getCfgFsDirDump(async () => dirParts, {
+          context,
+          contextFilter,
+          extension: _client.extension as Fmt,
+          filters: async () => filters,
+        })
+      ).map(p => p.join(' ')),
+    )
+  } else {
+    _client = _client.with(
+      async () =>
+        await getCfgFsDirLoad(async () => dirParts, {
+          context,
+          contextFilter,
+          extension: _client.extension as Fmt,
+          filters: async () => filters,
+        }),
+    )
   }
 
   const body = await client.build()

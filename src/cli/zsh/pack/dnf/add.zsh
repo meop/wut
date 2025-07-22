@@ -5,6 +5,6 @@ function packDnfOp {
       opPrintMaybeRunCmd "${groupSplit[@]}"
     done
   fi
-  opPrintMaybeRunCmd $1 check-update '>' /dev/null '2>&1'
+  opPrintMaybeRunCmd $1 check-upgrade '>' /dev/null '2>&1'
   opPrintMaybeRunCmd $1 install $PACK_ADD_NAMES
 }

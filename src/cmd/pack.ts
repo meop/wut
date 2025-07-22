@@ -5,6 +5,7 @@ import { Zshell } from '../cli/zsh'
 import { type Cmd, CmdBase } from '../cmd'
 import type { Ctx } from '../ctx'
 import { type Env, toEnvKey } from '../env'
+import { Fmt } from '../serde'
 
 export class PackCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -40,8 +41,6 @@ const osIdToManagers = {
   rocky: ['dnf'],
   fedora: ['dnf'],
 }
-
-const CFG_EXT = 'yaml'
 
 const LOG_KEY = toEnvKey('log')
 
@@ -104,19 +103,20 @@ async function workAddFindRem(
 
   if (environment[PACK_OP_GROUPS_KEY(op)]) {
     for (const name of requestedNames) {
-      const content = await getCfgFsFileLoad(
-        async () => [PACK_KEY, name],
-        CFG_EXT,
-      )
+      const content = await getCfgFsFileLoad(async () => [PACK_KEY, name], {
+        extension: Fmt.yaml,
+      })
 
-      if (!content) {
+      if (content == null) {
         continue
       }
 
       if (op === 'find') {
         _client = _client.withPrint(async () => [
           (
-            await getCfgFsFileDump(async () => [PACK_KEY, name], CFG_EXT)
+            await getCfgFsFileDump(async () => [PACK_KEY, name], {
+              extension: Fmt.yaml,
+            })
           ).pop() ?? '',
         ])
       } else {

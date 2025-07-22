@@ -3,7 +3,6 @@ import YAML from 'yaml'
 export enum Fmt {
   yaml = 'yaml',
   json = 'json',
-  text = 'text',
 }
 
 export function toFmt(input: string) {
@@ -27,21 +26,22 @@ function toJson<T>(input: T) {
   return JSON.stringify(input, null, 2)
 }
 
-export function toCon<T>(input: T, format: Fmt = Fmt.yaml) {
+export function toCon<T>(input: T, format: Fmt) {
   let output: string
   if (!input) {
     output = ''
   } else if (format === Fmt.yaml) {
     output = toYaml(input)
-  } else if (format === Fmt.json) {
-    output = toJson(input)
   } else {
-    output = String(input)
+    output = toJson(input)
   }
   return output.trimEnd()
 }
 
-export function fromCfg(input: string, format: Fmt = Fmt.yaml) {
+export function fromCfg(input: string, format: Fmt) {
+  if (!input) {
+    return null
+  }
   if (format === Fmt.yaml) {
     return fromYaml(input)
   }

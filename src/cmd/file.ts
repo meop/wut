@@ -12,6 +12,7 @@ import {
   isDir,
   toRelParts,
 } from '../path'
+import { Fmt } from '../serde'
 
 export class FileCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -39,7 +40,6 @@ type Sync = {
   ]
 }
 
-const CFG_EXT = 'yaml'
 const PARAM_SPLIT = '|'
 
 const LOG_KEY = toEnvKey('log')
@@ -71,7 +71,12 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     filters.push(...environment[FILE_OP_PARTS_KEY(op)].split(' '))
   }
 
-  const content: Sync = await getCfgFsFileLoad(async () => [FILE_KEY], CFG_EXT)
+  const content: Sync = await getCfgFsFileLoad(async () => [FILE_KEY], {
+    extension: Fmt.yaml,
+  })
+  if (content == null) {
+    throw new Error(`no cfg file found: ${FILE_KEY}.${Fmt.yaml}`)
+  }
 
   const sys_os_plat = context.sys_os_plat ?? ''
 

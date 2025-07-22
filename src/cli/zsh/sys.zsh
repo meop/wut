@@ -19,6 +19,13 @@ export REQ_URL_CLI="${REQ_URL_CLI}&sysOsPlat=${SYS_OS_PLAT}"
 
 if [[ $SYS_OS_PLAT == 'linux' ]]; then
   if [[ -f /etc/os-release ]]; then
+    if [[ -z $SYS_OS_DE_ID ]]; then
+      export SYS_OS_DE_ID="${(L)$(echo "${XDG_SESSION_DESKTOP}" | sed -E 's/[^a-zA-Z0-9].*//' | head -n 1)}"
+      if [[ $SYS_OS_DE_ID ]]; then
+        export REQ_URL_CLI="${REQ_URL_CLI}&sysOsDeId=${SYS_OS_DE_ID}"
+      fi
+    fi
+
     if [[ -z $SYS_OS_ID ]]; then
       export SYS_OS_ID="${(L)$(grep '^ID=' /etc/os-release | cut -d '=' -f 2 | xargs | tr -d '"')}"
       if [[ $SYS_OS_ID ]]; then

@@ -6,9 +6,9 @@
     "yaml": "^2.8.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.0.5",
-    "@types/bun": "^1.2.17",
-    "@types/node": "^24.0.4"
+    "@biomejs/biome": "^2.1.2",
+    "@types/bun": "^1.2.19",
+    "@types/node": "^24.0.15"
   },
   "peerDependencies": {
     "typescript": "^5.8.3"
@@ -18,5 +18,7 @@
     "up": "docker compose --file docker/srv.yaml up --detach --pull always",
     "down": "docker compose --file docker/srv.yaml down"
   },
-  "trustedDependencies": ["@biomejs/biome"]
+  "trustedDependencies": [
+    "@biomejs/biome"
+  ]
 }

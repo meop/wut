@@ -1,4 +1,4 @@
-import { buildFilePath, getFilePaths, getFileContent, toRelParts } from './path'
+import { buildFilePath, getFileContent } from './path'
 
 export interface Cli {
   build(): Promise<string>
@@ -10,20 +10,7 @@ export interface Cli {
 
   with(lines: () => Promise<Array<string>>): Cli
 
-  withFsDirLoad(
-    parts: () => Promise<Array<string>>,
-    options?: {
-      filters?: () => Promise<Array<string>>
-    },
-  ): Cli
-  withFsDirPrint(
-    parts: () => Promise<Array<string>>,
-    options?: {
-      filters?: () => Promise<Array<string>>
-    },
-  ): Cli
   withFsFileLoad(parts: () => Promise<Array<string>>): Cli
-  withFsFilePrint(parts: () => Promise<Array<string>>): Cli
 
   withPrint(lines: () => Promise<Array<string>>): Cli
   withPrintErr(lines: () => Promise<Array<string>>): Cli
@@ -82,59 +69,10 @@ export class CliBase {
     return buildFilePath(...[this.dirPath, ...parts])
   }
 
-  withFsDirLoad(
-    parts: () => Promise<Array<string>>,
-    options?: {
-      filters?: () => Promise<Array<string>>
-    },
-  ): Cli {
-    return this.with(async () => {
-      const dirPath = this.localDirPath(await parts())
-      const filePaths = await getFilePaths(dirPath, {
-        extension: this.extension,
-        filters: options?.filters ? await options.filters() : undefined,
-      })
-      const lines: Array<string> = []
-      for (const path of filePaths) {
-        lines.push((await getFileContent(path)) ?? '')
-      }
-      return lines
-    })
-  }
-
-  withFsDirPrint(
-    parts: () => Promise<Array<string>>,
-    options?: {
-      filters?: () => Promise<Array<string>>
-    },
-  ): Cli {
-    return this.withPrint(async () => {
-      const dirPath = this.localDirPath(await parts())
-      const filePaths = await getFilePaths(dirPath, {
-        extension: this.extension,
-        filters: options?.filters ? await options.filters() : undefined,
-      })
-      const lines: Array<string> = []
-      for (const filePath of filePaths) {
-        lines.push(toRelParts(dirPath, filePath).join(' '))
-      }
-      return lines.map(l => l.trimEnd())
-    })
-  }
-
   withFsFileLoad(parts: () => Promise<Array<string>>): Cli {
     return this.with(async () => {
       const path = `${this.localDirPath(await parts())}.${this.extension}`
       return [(await getFileContent(path)) ?? '']
-    })
-  }
-
-  withFsFilePrint(parts: () => Promise<Array<string>>): Cli {
-    return this.withPrint(async () => {
-      const filePath = `${this.localDirPath(await parts())}.${this.extension}`
-      const lines: Array<string> = []
-      lines.push(toRelParts(this.dirPath, filePath).join(' '))
-      return lines.map(l => l.trimEnd())
     })
   }
 

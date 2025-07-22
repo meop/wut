@@ -1,4 +1,4 @@
 def packDnfOp [cmd] {
-  opPrintMaybeRunCmd $cmd clean dbcache
+  # opPrintMaybeRunCmd $cmd clean packages
   opPrintMaybeRunCmd $cmd autoremove
 }

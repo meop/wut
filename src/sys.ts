@@ -30,6 +30,25 @@ export function getSysCpuVenId(sysCpuVenId: string) {
   }
 }
 
+export function getSysOsDeId(sysOsDeId: string) {
+  switch (sysOsDeId.toLowerCase()) {
+    case 'gnome':
+      return 'gnome'
+    case 'kde':
+    case 'plasma':
+      return 'plasma'
+    case 'lxde-pi-labwc':
+    case 'lxde':
+      return 'lxde'
+    case 'lxqt':
+      return 'lxqt'
+    case 'xfce':
+      return 'xfce'
+    default:
+      throw new Error(`unsupported os desktop id: ${sysOsDeId}`)
+  }
+}
+
 export function getSysOsId(sysOsId: string) {
   switch (sysOsId.toLowerCase()) {
     case 'arch':

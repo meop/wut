@@ -12,6 +12,13 @@ $env.REQ_URL_CLI = $"($env.REQ_URL_CLI)&sysOsPlat=($env.SYS_OS_PLAT)"
 
 if $env.SYS_OS_PLAT == 'linux' {
   if ('/etc/os-release' | path exists) {
+    if 'SYS_OS_DE_ID' not-in $env {
+      $env.SYS_OS_DE_ID = (echo $env.XDG_SESSION_DESKTOP | sed -E 's/[^a-zA-Z0-9].*//' | head -n 1) | str downcase
+      if ($env.SYS_OS_DE_ID | is-not-empty) {
+        $env.REQ_URL_CLI = $"($env.REQ_URL_CLI)&sysOsDeId=($env.SYS_OS_DE_ID)"
+      }
+    }
+
     if 'SYS_OS_ID' not-in $env {
       $env.SYS_OS_ID = (grep '^ID=' /etc/os-release | cut -d '=' -f 2 | xargs | tr -d '"') | str downcase
       if ($env.SYS_OS_ID | is-not-empty) {

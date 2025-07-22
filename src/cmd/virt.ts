@@ -3,6 +3,7 @@ import type { Cli } from '../cli'
 import { type Cmd, CmdBase } from '../cmd'
 import type { Ctx } from '../ctx'
 import { type Env, toEnvKey } from '../env'
+import { Fmt } from '../serde'
 
 export class VirtCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -37,20 +38,6 @@ const VIRT_MANAGER_KEY = toEnvKey(VIRT_KEY, 'manager')
 const VIRT_OP_PARTS_KEY = (op: string) => toEnvKey(VIRT_KEY, op, 'parts')
 
 const VIRT_INSTANCES_KEY = toEnvKey(VIRT_KEY, 'instances')
-
-async function getDirPartsAndFilters(
-  context: Ctx,
-  environment: Env,
-  op: string,
-) {
-  const dirParts = [VIRT_KEY, context.sys_host ?? '']
-  const filters: Array<string> = []
-  if (VIRT_OP_PARTS_KEY(op) in environment) {
-    filters.push(...environment[VIRT_OP_PARTS_KEY(op)].split(' '))
-  }
-
-  return { dirParts, filters }
-}
 
 function getSupportedManagers(context: Ctx, environment: Env) {
   let managers: Array<string> = []
@@ -93,16 +80,18 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
 
   let _client = client
   const supportedManagers = getSupportedManagers(context, environment)
-  const { dirParts, filters } = await getDirPartsAndFilters(
-    context,
-    environment,
-    op,
-  )
+
+  const dirParts = [VIRT_KEY, context.sys_host ?? '']
+  const filters: Array<string> = []
+  if (VIRT_OP_PARTS_KEY(op) in environment) {
+    filters.push(...environment[VIRT_OP_PARTS_KEY(op)].split(' '))
+  }
 
   if (op === 'find') {
     _client = _client.withPrint(async () =>
       (
         await getCfgFsDirDump(async () => dirParts, {
+          extension: Fmt.yaml,
           filters: async () => filters,
         })
       )
@@ -116,6 +105,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
         .withFsFileLoad(async () => [VIRT_KEY, supportedManager])
     }
     const results = await getCfgFsDirDump(async () => dirParts, {
+      extension: Fmt.yaml,
       filters: async () => filters,
     })
 

@@ -1,4 +1,10 @@
-import { getSysCpuArch, getSysCpuVenId, getSysOsId, getSysOsPlat } from './sys'
+import {
+  getSysCpuArch,
+  getSysCpuVenId,
+  getSysOsDeId,
+  getSysOsId,
+  getSysOsPlat,
+} from './sys'
 
 export type Ctx = {
   req_orig: string
@@ -7,6 +13,7 @@ export type Ctx = {
   sys_cpu_arch?: string
   sys_cpu_ven_id?: string
   sys_host?: string
+  sys_os_de_id?: string
   sys_os_id?: string
   sys_os_plat?: string
   sys_os_ver_id?: string
@@ -24,6 +31,7 @@ export function getCtx(req: Request): Ctx {
 
   const spSysCpuArch = getSp(usp, 'sysCpuArch')
   const spSysCpuVenId = getSp(usp, 'sysCpuVenId')
+  const spSysOsDeId = getSp(usp, 'sysOsDeId')
   const spSysOsId = getSp(usp, 'sysOsId')
   const spSysOsPlat = getSp(usp, 'sysOsPlat')
   const spSysOsVerId = getSp(usp, 'sysOsVerId')
@@ -33,6 +41,7 @@ export function getCtx(req: Request): Ctx {
 
   const sysCpuArch = spSysCpuArch ? getSysCpuArch(spSysCpuArch) : undefined
   const sysCpuVenId = spSysCpuVenId ? getSysCpuVenId(spSysCpuVenId) : undefined
+  const sysOsDeId = spSysOsDeId ? getSysOsDeId(spSysOsDeId) : undefined
   const sysOsId = spSysOsId ? getSysOsId(spSysOsId) : undefined
   const sysOsPlat = spSysOsPlat ? getSysOsPlat(spSysOsPlat) : undefined
   const sysOsVerId = spSysOsVerId
@@ -47,6 +56,7 @@ export function getCtx(req: Request): Ctx {
     sys_cpu_arch: sysCpuArch,
     sys_cpu_ven_id: sysCpuVenId,
     sys_host: sysHost,
+    sys_os_de_id: sysOsDeId,
     sys_os_id: sysOsId,
     sys_os_plat: sysOsPlat,
     sys_os_ver_id: sysOsVerId,
