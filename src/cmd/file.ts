@@ -105,6 +105,10 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
 
     for (const key of validKeys) {
       for (const entry of content[key]) {
+        if (!(sys_os_plat in entry.out)) {
+          continue
+        }
+
         const localDirPath = localCfgPath([FILE_KEY, key, entry.in])
         if (await isDir(localDirPath)) {
           validClearDirs.push(
