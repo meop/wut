@@ -9,7 +9,7 @@ def virtQemu [] {
       $yn = input $"? use ($cmd) \(system\) [y, [n]] "
     }
     if $yn != 'n' {
-      virtQemuOp $cmd
+      virtQemuOp $cmd $cmdSysArch
     }
   }
 }

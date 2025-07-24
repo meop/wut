@@ -1,3 +1,3 @@
-def virtQemuOp [cmd] {
+def virtQemuOp [cmd, cmdSysArch] {
   # not applicable
 }

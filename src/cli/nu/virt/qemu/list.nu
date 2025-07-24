@@ -1,3 +1,4 @@
-def virtQemuOp [cmd] {
-  opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full $"($cmd)" '}'
+def virtQemuOp [cmd, cmdSysArch] {
+  opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full $""^swtpm"" '}'
+  opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full $""^($cmdSysArch)"" '}'
 }
