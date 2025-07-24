@@ -89,6 +89,7 @@ export function toRelParts(dirPath: string, filePath: string, stripExt = true) {
     .replace(dir, '')
     .split(PATH.sep)
     .filter(f => f)
+    .map(f => f.trimEnd())
 }
 
 export type AclPermScope = {

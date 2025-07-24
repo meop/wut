@@ -36,7 +36,7 @@ export async function getCfgFsDirDump(
       extension: options?.extension,
       filters: options?.filters ? await options.filters() : undefined,
     })
-  ).map(p => toRelParts(dirPath, p).map(l => l.trimEnd()))
+  ).map(p => toRelParts(dirPath, p))
   if (options?.context && options.contextFilter) {
     const dirPartsFiltered: Array<Array<string>> = []
     for (const fileParts of dirParts) {
@@ -122,7 +122,7 @@ export async function getCfgFsFileDump(
   return toRelParts(
     cfgDirPath,
     `${localCfgPath(_parts)}${options?.extension ? `.${options.extension}` : ''}`,
-  ).map(l => l.trimEnd())
+  )
 }
 
 export async function getCfgFsFileLoad(
