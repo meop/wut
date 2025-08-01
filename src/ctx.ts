@@ -4,7 +4,7 @@ import {
   getSysOsDeId,
   getSysOsId,
   getSysOsPlat,
-} from './sys'
+} from './sys.ts'
 
 export type Ctx = {
   req_orig: string
@@ -19,6 +19,10 @@ export type Ctx = {
   sys_os_ver_id?: string
   sys_os_ver_code?: string
   sys_user?: string
+}
+
+export type CtxFilter = {
+  [key: string]: CtxFilter | Array<string>
 }
 
 export function getSp(usp: URLSearchParams, key: string) {

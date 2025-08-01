@@ -7,14 +7,13 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.1.2",
-    "@types/bun": "^1.2.19",
-    "@types/node": "^24.0.15"
+    "@types/node": "^24.1.0"
   },
   "peerDependencies": {
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.2"
   },
   "scripts": {
-    "hot": "bun --hot run src/srv.ts",
+    "hot": "deno run --allow-all --watch src/srv.ts",
     "up": "docker compose --file docker/srv.yaml up --detach --pull always",
     "down": "docker compose --file docker/srv.yaml down"
   },

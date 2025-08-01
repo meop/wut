@@ -1,7 +1,7 @@
-import type { Cli } from './cli'
-import type { Ctx } from './ctx'
-import { type Env, toEnvKey } from './env'
-import { toCon, toFmt } from './serde'
+import type { Cli } from './cli.ts'
+import type { Ctx } from './ctx.ts'
+import { type Env, toEnvKey } from './env.ts'
+import { toCon, toFmt } from './serde.ts'
 
 export interface Cmd {
   name: string
@@ -83,11 +83,13 @@ export class CmdBase {
     return content
   }
 
-  async help(client: Cli, context: Ctx, environment: Env): Promise<string> {
+  async help(client: Cli, _context: Ctx, environment: Env): Promise<string> {
     const body = await client
-      .withPrintInfo(async () => [
-        toCon(this.getHelp(), toFmt(environment[toEnvKey('format')])),
-      ])
+      .withPrintInfo(() =>
+        Promise.resolve([
+          toCon(this.getHelp(), toFmt(environment[toEnvKey('format')])),
+        ]),
+      )
       .build()
 
     if (environment[toEnvKey('log')]) {
@@ -123,23 +125,25 @@ export class CmdBase {
     const loadCliEnv = (func: () => Promise<string>) => {
       for (const [key, value] of Object.entries(_environment)) {
         _client = _client.withVarSet(
-          async () => key,
-          async () => _client.toInnerStr(value),
+          () => Promise.resolve(key),
+          () => Promise.resolve(_client.toInnerStr(value)),
         )
       }
 
       if (_environment[toEnvKey('debug')]) {
-        _client = _client.withPrint(async () => [
-          toCon(
-            {
-              debug: {
-                context: _context,
-                environment: _environment,
+        _client = _client.withPrint(() =>
+          Promise.resolve([
+            toCon(
+              {
+                debug: {
+                  context: _context,
+                  environment: _environment,
+                },
               },
-            },
-            toFmt(_environment[toEnvKey('format')]),
-          ),
-        ])
+              toFmt(_environment[toEnvKey('format')]),
+            ),
+          ]),
+        )
       }
 
       if (_environment[toEnvKey('trace')]) {

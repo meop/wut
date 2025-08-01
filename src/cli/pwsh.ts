@@ -1,4 +1,4 @@
-import { type Cli, CliBase } from '../cli'
+import { type Cli, CliBase } from '../cli.ts'
 
 export class Powershell extends CliBase implements Cli {
   constructor() {
@@ -9,19 +9,19 @@ export class Powershell extends CliBase implements Cli {
     return `pwsh -noprofile -c ${value}`
   }
 
-  toInnerStr(value: string): string {
+  override toInnerStr(value: string): string {
     return `'${value.replaceAll("'", "''")}'`
   }
 
-  toOuterStr(value: string): string {
+  override toOuterStr(value: string): string {
     return `'${value}'`
   }
 
-  withTrace(): Cli {
-    return this.with(async () => ['Set-PSDebug -Trace 1'])
+  override withTrace(): Cli {
+    return this.with(() => Promise.resolve(['Set-PSDebug -Trace 1']))
   }
 
-  withVarArrSet(
+  override withVarArrSet(
     name: () => Promise<string>,
     values: () => Promise<Array<string>>,
   ): Cli {
@@ -30,11 +30,14 @@ export class Powershell extends CliBase implements Cli {
     ])
   }
 
-  withVarSet(name: () => Promise<string>, value: () => Promise<string>): Cli {
+  override withVarSet(
+    name: () => Promise<string>,
+    value: () => Promise<string>,
+  ): Cli {
     return this.with(async () => [`$${await name()} = ${await value()}`])
   }
 
-  withVarUnset(name: () => Promise<string>): Cli {
+  override withVarUnset(name: () => Promise<string>): Cli {
     return this.with(async () => [
       `Remove-Variable ${await name()} -ErrorAction SilentlyContinue`,
     ])

@@ -2,16 +2,16 @@
 name: wut
 services:
   web:
-    command: bun --hot run src/srv.ts
+    command: deno run --allow-all --watch src/srv.ts
     # command: -f /dev/null
     # entrypoint: /usr/bin/tail
     # tty: true
     environment:
       - PORT=9000
     hostname: wut-srv
-    image: docker.io/oven/bun:latest
+    image: docker.io/denoland/deno:latest
     ports:
-      - '9000:9000/tcp'
+      - "9000:9000/tcp"
     restart: unless-stopped
     volumes:
       - type: bind

@@ -1,6 +1,5 @@
 import { promises as fs } from 'node:fs'
 import PATH from 'node:path'
-import { Glob } from 'bun'
 
 export function buildFilePath(...parts: Array<string>) {
   return PATH.join(...parts)
@@ -8,15 +7,18 @@ export function buildFilePath(...parts: Array<string>) {
 
 export async function isDir(dirPath: string) {
   try {
-    const stat = await fs.stat(dirPath)
-    return stat.isDirectory()
+    return (await fs.stat(dirPath)).isDirectory()
   } catch {
     return false
   }
 }
 
 export async function isFile(filePath: string) {
-  return await Bun.file(filePath).exists()
+  try {
+    return (await fs.stat(filePath)).isFile()
+  } catch {
+    return false
+  }
 }
 
 export async function getFileContent(filePath: string) {
@@ -24,7 +26,11 @@ export async function getFileContent(filePath: string) {
     return null
   }
 
-  return await Bun.file(filePath).text()
+  try {
+    return await fs.readFile(filePath, 'utf-8')
+  } catch {
+    return null
+  }
 }
 
 export async function getFilePaths(
@@ -38,39 +44,36 @@ export async function getFilePaths(
     return []
   }
 
-  const globs: Array<Glob> = []
-
-  const addGlob = (pattern: string) => {
-    globs.push(new Glob(pattern))
-  }
+  const patterns: Array<string> = []
 
   if (options?.filters?.length) {
     const filterPattern = options.filters.map(f => `${f}*`).join('/')
     if (options?.extension) {
-      addGlob(`${filterPattern}/*.${options.extension}`)
-      addGlob(`${filterPattern}.${options.extension}`)
+      patterns.push(`${filterPattern}/*.${options.extension}`)
+      patterns.push(`${filterPattern}.${options.extension}`)
     } else {
-      addGlob(`${filterPattern}/**`)
-      addGlob(filterPattern)
+      patterns.push(`${filterPattern}/**`)
+      patterns.push(filterPattern)
     }
   } else {
     if (options?.extension) {
-      addGlob(`**/*.${options.extension}`)
-      addGlob(`*.${options.extension}`)
+      patterns.push(`**/*.${options.extension}`)
+      patterns.push(`*.${options.extension}`)
     } else {
-      addGlob('**')
-      addGlob('*')
+      patterns.push('**')
+      patterns.push('*')
     }
   }
 
   const filePaths: Array<string> = []
-  for (const glob of globs) {
-    for await (const file of glob.scan({
-      absolute: true,
+  for (const pattern of patterns) {
+    for await (const match of fs.glob(pattern, {
       cwd: dirPath,
-      onlyFiles: true,
+      withFileTypes: true,
     })) {
-      filePaths.push(file)
+      if (match.isFile()) {
+        filePaths.push(PATH.join(match.parentPath, match.name))
+      }
     }
   }
 

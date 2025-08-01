@@ -1,18 +1,18 @@
-import { getCfgFsFileLoad, localCfgPath } from '../cfg'
-import type { Cli } from '../cli'
-import { Powershell } from '../cli/pwsh'
-import { Zshell } from '../cli/zsh'
-import { type Cmd, CmdBase } from '../cmd'
-import type { Ctx } from '../ctx'
-import { type Env, toEnvKey } from '../env'
+import { getCfgFsFileLoad, localCfgPath } from '../cfg.ts'
+import { Powershell } from '../cli/pwsh.ts'
+import { Zshell } from '../cli/zsh.ts'
+import type { Cli } from '../cli.ts'
+import { type Cmd, CmdBase } from '../cmd.ts'
+import type { Ctx } from '../ctx.ts'
+import { type Env, toEnvKey } from '../env.ts'
 import {
   type AclPerm,
   getFilePaths,
   getPlatAclPermCmds,
   isDir,
   toRelParts,
-} from '../path'
-import { Fmt } from '../serde'
+} from '../path.ts'
+import { Fmt } from '../serde.ts'
 
 export class FileCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -71,9 +71,12 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     filters.push(...environment[FILE_OP_PARTS_KEY(op)].split(' '))
   }
 
-  const content: Sync = await getCfgFsFileLoad(async () => [FILE_KEY], {
-    extension: Fmt.yaml,
-  })
+  const content: Sync = await getCfgFsFileLoad(
+    () => Promise.resolve([FILE_KEY]),
+    {
+      extension: Fmt.yaml,
+    },
+  )
   if (content == null) {
     throw new Error(`no cfg file found: ${FILE_KEY}.${Fmt.yaml}`)
   }
@@ -90,13 +93,13 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   }
 
   _client = _client
-    .withFsFileLoad(async () => [FILE_KEY, op])
-    .withFsFileLoad(async () => [FILE_KEY])
+    .withFsFileLoad(() => Promise.resolve([FILE_KEY, op]))
+    .withFsFileLoad(() => Promise.resolve([FILE_KEY]))
 
   if (op === 'find') {
     _client = _client.withVarArrSet(
-      async () => FILE_OP_KEYS_KEY(op),
-      async () => validKeys.map(v => _client.toInnerStr(v)),
+      () => Promise.resolve(FILE_OP_KEYS_KEY(op)),
+      () => Promise.resolve(validKeys.map(v => _client.toInnerStr(v))),
     )
   } else {
     const validClearDirs: Array<string> = []
@@ -157,28 +160,28 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     }
 
     _client = _client.withVarArrSet(
-      async () => FILE_OP_PATH_PAIRS_KEY(op),
-      async () => validPairs,
+      () => Promise.resolve(FILE_OP_PATH_PAIRS_KEY(op)),
+      () => Promise.resolve(validPairs),
     )
 
     if (op === 'sync') {
       if (validClearDirs.length) {
         _client = _client.withVarArrSet(
-          async () => FILE_OP_CLEAR_DIRS_KEY(op),
-          async () => validClearDirs,
+          () => Promise.resolve(FILE_OP_CLEAR_DIRS_KEY(op)),
+          () => Promise.resolve(validClearDirs),
         )
       }
 
       if (validPerms.length) {
         _client = _client.withVarArrSet(
-          async () => FILE_OP_PATH_PERMS_KEY(op),
-          async () => validPerms,
+          () => Promise.resolve(FILE_OP_PATH_PERMS_KEY(op)),
+          () => Promise.resolve(validPerms),
         )
       }
     }
   }
 
-  _client = _client.with(async () => [FILE_KEY])
+  _client = _client.with(() => Promise.resolve([FILE_KEY]))
 
   const body = await _client.build()
 
@@ -198,7 +201,11 @@ export class FileCmdDiff extends CmdBase implements Cmd {
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
 
-  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+  override async work(
+    client: Cli,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
     return await workOp(client, context, environment, this.name)
   }
 }
@@ -212,7 +219,11 @@ export class FileCmdFind extends CmdBase implements Cmd {
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
 
-  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+  override async work(
+    client: Cli,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
     return await workOp(client, context, environment, this.name)
   }
 }
@@ -226,7 +237,11 @@ export class FileCmdSync extends CmdBase implements Cmd {
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
 
-  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+  override async work(
+    client: Cli,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
     return await workOp(client, context, environment, this.name)
   }
 }

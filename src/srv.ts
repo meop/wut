@@ -1,17 +1,17 @@
 import pkg from '../package.json' with { type: 'json' }
 
-import { getCfgFsFileContent } from './cfg'
-import type { Cli } from './cli'
-import { Nushell } from './cli/nu'
-import { Powershell } from './cli/pwsh'
-import { Zshell } from './cli/zsh'
-import { type Cmd, CmdBase } from './cmd'
-import { FileCmd } from './cmd/file'
-import { PackCmd } from './cmd/pack'
-import { ScriptCmd } from './cmd/script'
-import { VirtCmd } from './cmd/virt'
-import { getCtx } from './ctx'
-import { Fmt, toCon } from './serde'
+import { getCfgFsFileContent } from './cfg.ts'
+import { Nushell } from './cli/nu.ts'
+import { Powershell } from './cli/pwsh.ts'
+import { Zshell } from './cli/zsh.ts'
+import type { Cli } from './cli.ts'
+import { FileCmd } from './cmd/file.ts'
+import { PackCmd } from './cmd/pack.ts'
+import { ScriptCmd } from './cmd/script.ts'
+import { VirtCmd } from './cmd/virt.ts'
+import { type Cmd, CmdBase } from './cmd.ts'
+import { getCtx } from './ctx.ts'
+import { Fmt, toCon } from './serde.ts'
 
 function expandParts(parts: Array<string>) {
   const expandedParts: Array<string> = []
@@ -90,7 +90,9 @@ async function runSrv(req: Request) {
 
     const op = parts[0]
     if (op === Op.cfg) {
-      const config = await getCfgFsFileContent(async () => parts.slice(1))
+      const config = await getCfgFsFileContent(() =>
+        Promise.resolve(parts.slice(1)),
+      )
       if (config == null) {
         return new Response(`echo "config not found: ${config}"`, {
           status: 404,
@@ -121,24 +123,29 @@ async function runSrv(req: Request) {
 
     client = client
       .withVarSet(
-        async () => 'REQ_URL_CFG',
-        async () => client.toInnerStr([context.req_orig, Op.cfg].join('/')),
-      )
-      .withVarSet(
-        async () => 'REQ_URL_CLI',
-        async () =>
-          client.toInnerStr(
-            [context.req_orig, context.req_path, context.req_srch].join(''),
+        () => Promise.resolve('REQ_URL_CFG'),
+        () =>
+          Promise.resolve(
+            client.toInnerStr([context.req_orig, Op.cfg].join('/')),
           ),
       )
-      .withFsFileLoad(async () => ['op'])
+      .withVarSet(
+        () => Promise.resolve('REQ_URL_CLI'),
+        () =>
+          Promise.resolve(
+            client.toInnerStr(
+              [context.req_orig, context.req_path, context.req_srch].join(''),
+            ),
+          ),
+      )
+      .withFsFileLoad(() => Promise.resolve(['op']))
 
     if (!context.sys_cpu_arch) {
       return new Response(
         await client
-          .withFsFileLoad(async () => ['ver'])
-          .withFsFileLoad(async () => ['sys'])
-          .withFsFileLoad(async () => ['get'])
+          .withFsFileLoad(() => Promise.resolve(['ver']))
+          .withFsFileLoad(() => Promise.resolve(['sys']))
+          .withFsFileLoad(() => Promise.resolve(['get']))
           .build(),
       )
     }
@@ -148,8 +155,8 @@ async function runSrv(req: Request) {
         continue
       }
       client = client.withVarSet(
-        async () => e[0].toUpperCase(),
-        async () => client.toInnerStr(e[1]),
+        () => Promise.resolve(e[0].toUpperCase()),
+        () => Promise.resolve(client.toInnerStr(e[1])),
       )
     }
 
@@ -162,7 +169,9 @@ async function runSrv(req: Request) {
         errStr = toCon(getErr(err), Fmt.json)
       }
       console.error(errStr)
-      const body = await client.withPrintErr(async () => [errStr]).build()
+      const body = await client
+        .withPrintErr(() => Promise.resolve([errStr]))
+        .build()
       return new Response(body)
     }
   } catch (err) {
@@ -178,16 +187,10 @@ async function runSrv(req: Request) {
   }
 }
 
-const server = Bun.serve({
-  hostname: process.env.hostname ?? '0.0.0.0',
-  port: process.env.port ?? 9000,
-  async fetch(req) {
-    return await runSrv(req)
+Deno.serve(
+  {
+    hostname: Deno.env.get('hostname') ?? '0.0.0.0',
+    port: Number(Deno.env.get('port') ?? '9000'),
   },
-})
-
-server.reload({
-  async fetch(req) {
-    return await runSrv(req)
-  },
-})
+  async req => await runSrv(req),
+)

@@ -26,24 +26,6 @@ def wut --wrapped [...args] {
 }
 ```
 
-## zsh
-
-Zshell is supported on Unix for SSR commands (pack, script)
-
-Nushell will be invoked for CSR commands (file, virt)
-
-```zsh
-export WUT_URL='http://yard.lan:9000'
-
-function wut {
-  local url=$(echo "${WUT_URL}" | sed 's:/*$::')
-  local url=$(echo "${url}/cli/zsh")
-  local url=$(echo "${url}/$(echo "$*" | sed 's/ /\//g')" | sed 's:/*$::')
-
-  zsh --no-rcs -c "$( curl --fail-with-body --location --no-progress-meter --url "${url}" )"
-}
-```
-
 ## pwsh
 
 Powershell is supported on Windows for SSR commands (pack, script)
@@ -59,5 +41,23 @@ function wut {
   $url = "${url}/$($args -Join '/')".TrimEnd('/')
 
   pwsh -noprofile -c "$( Invoke-WebRequest -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "${url}" )"
+}
+```
+
+## zsh
+
+Zshell is supported on Unix for SSR commands (pack, script)
+
+Nushell will be invoked for CSR commands (file, virt)
+
+```zsh
+export WUT_URL='http://yard.lan:9000'
+
+function wut {
+  local url=$(echo "${WUT_URL}" | sed 's:/*$::')
+  local url=$(echo "${url}/cli/zsh")
+  local url=$(echo "${url}/$(echo "$*" | sed 's/ /\//g')" | sed 's:/*$::')
+
+  zsh --no-rcs -c "$( curl --fail-with-body --location --no-progress-meter --url "${url}" )"
 }
 ```

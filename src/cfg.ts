@@ -1,15 +1,15 @@
-import type { Ctx } from './ctx'
+import type { Ctx, CtxFilter } from './ctx.ts'
 import {
   buildFilePath,
   getFileContent,
   getFilePaths,
   isDir,
   toRelParts,
-} from './path'
-import { Fmt, fromCfg } from './serde'
+} from './path.ts'
+import { Fmt, fromCfg } from './serde.ts'
 
 const cfgDirPath = buildFilePath(
-  import.meta.dir,
+  import.meta.dirname ?? '',
   '..',
   '..',
   'wut-config',
@@ -24,7 +24,7 @@ export async function getCfgFsDirDump(
   parts: () => Promise<Array<string>>,
   options?: {
     context?: Ctx
-    contextFilter?: unknown
+    contextFilter?: CtxFilter
     extension?: Fmt
     filters?: () => Promise<Array<string>>
   },
@@ -40,25 +40,28 @@ export async function getCfgFsDirDump(
   if (options?.context && options.contextFilter) {
     const dirPartsFiltered: Array<Array<string>> = []
     for (const fileParts of dirParts) {
-      let listPartsPtr = options.contextFilter
+      let contextFilterPtr = options.contextFilter
       let valid = true
       let found = true
       for (const key of fileParts) {
-        if (typeof listPartsPtr === 'object' && !(key in listPartsPtr)) {
+        if (
+          typeof contextFilterPtr === 'object' &&
+          !(key in contextFilterPtr)
+        ) {
           found = false
           break
         }
-        listPartsPtr = listPartsPtr[key]
+        contextFilterPtr = contextFilterPtr[key] as CtxFilter
       }
       if (!found) {
         dirPartsFiltered.push(fileParts)
         continue
       }
-      for (const key of Object.keys(listPartsPtr)) {
-        if (
-          !(key in options.context) ||
-          !listPartsPtr[key].includes(options.context[key])
-        ) {
+      for (const key of Object.keys(contextFilterPtr) as Array<keyof Ctx>) {
+        const contextKey = options.context[key]
+        const contextFilterValue = contextFilterPtr[key] as Array<string>
+
+        if (!contextKey || !contextFilterValue.includes(contextKey)) {
           valid = false
           break
         }
@@ -76,7 +79,7 @@ export async function getCfgFsDirLoad(
   parts: () => Promise<Array<string>>,
   options?: {
     context?: Ctx
-    contextFilter?: unknown
+    contextFilter?: CtxFilter
     extension?: Fmt
     filters?: () => Promise<Array<string>>
   },
@@ -90,7 +93,7 @@ export async function getCfgFsDirLoad(
   const dirParts = await getCfgFsDirDump(parts, options)
   for (const fileParts of dirParts) {
     const content = await getCfgFsFileLoad(
-      async () => [..._parts, ...fileParts],
+      () => Promise.resolve([..._parts, ...fileParts]),
       options,
     )
     if (content != null) {

@@ -1,6 +1,13 @@
 {
   "files": {
-    "includes": ["**", "!**/bun.lock", "!**/types/**/*.ts", "!**/*types.ts"]
+    "includes": [
+      "**",
+      "!**/bun.lock",
+      "!**/deno.lock",
+      "!**/package-lock.json",
+      "!**/types/**/*.ts",
+      "!**/*types.ts"
+    ]
   },
   "formatter": {
     "indentStyle": "space"
@@ -18,7 +25,11 @@
   },
   "overrides": [
     {
-      "includes": ["**/*.svelte", "**/*.astro", "**/*.vue"]
+      "includes": [
+        "**/*.astro",
+        "**/*.svelte",
+        "**/*.vue"
+      ]
     }
   ],
   "linter": {

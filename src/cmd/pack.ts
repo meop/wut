@@ -1,11 +1,11 @@
-import { getCfgFsFileDump, getCfgFsFileLoad } from '../cfg'
-import type { Cli } from '../cli'
-import { Powershell } from '../cli/pwsh'
-import { Zshell } from '../cli/zsh'
-import { type Cmd, CmdBase } from '../cmd'
-import type { Ctx } from '../ctx'
-import { type Env, toEnvKey } from '../env'
-import { Fmt } from '../serde'
+import { getCfgFsFileDump, getCfgFsFileLoad } from '../cfg.ts'
+import { Powershell } from '../cli/pwsh.ts'
+import { Zshell } from '../cli/zsh.ts'
+import type { Cli } from '../cli.ts'
+import { type Cmd, CmdBase } from '../cmd.ts'
+import type { Ctx } from '../ctx.ts'
+import { type Env, toEnvKey } from '../env.ts'
+import { Fmt } from '../serde.ts'
 
 export class PackCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -28,13 +28,13 @@ export class PackCmd extends CmdBase implements Cmd {
   }
 }
 
-const osPlatToManagers = {
+const osPlatToManagers: { [key: string]: Array<string> } = {
   linux: ['apt', 'dnf', 'yay', 'pacman'],
   darwin: ['brew'],
   winnt: ['scoop', 'winget'],
 }
 
-const osIdToManagers = {
+const osIdToManagers: { [key: string]: Array<string> } = {
   arch: ['yay', 'pacman'],
   debian: ['apt'],
   ubuntu: ['apt'],
@@ -94,8 +94,8 @@ async function workAddFindRem(
   const supportedManagers = getSupportedManagers(context, environment)
   for (const supportedManager of supportedManagers) {
     _client = _client
-      .withFsFileLoad(async () => [PACK_KEY, supportedManager, op])
-      .withFsFileLoad(async () => [PACK_KEY, supportedManager])
+      .withFsFileLoad(() => Promise.resolve([PACK_KEY, supportedManager, op]))
+      .withFsFileLoad(() => Promise.resolve([PACK_KEY, supportedManager]))
   }
 
   const requestedNames = environment[PACK_OP_NAMES_KEY(op)].split(' ')
@@ -103,9 +103,12 @@ async function workAddFindRem(
 
   if (environment[PACK_OP_GROUPS_KEY(op)]) {
     for (const name of requestedNames) {
-      const content = await getCfgFsFileLoad(async () => [PACK_KEY, name], {
-        extension: Fmt.yaml,
-      })
+      const content = await getCfgFsFileLoad(
+        () => Promise.resolve([PACK_KEY, name]),
+        {
+          extension: Fmt.yaml,
+        },
+      )
 
       if (content == null) {
         continue
@@ -114,7 +117,7 @@ async function workAddFindRem(
       if (op === 'find') {
         _client = _client.withPrint(async () => [
           (
-            await getCfgFsFileDump(async () => [PACK_KEY, name], {
+            await getCfgFsFileDump(() => Promise.resolve([PACK_KEY, name]), {
               extension: Fmt.yaml,
             })
           ).pop() ?? '',
@@ -130,37 +133,43 @@ async function workAddFindRem(
           }
           if (supportedManagers.length > 1) {
             _client = _client.withVarSet(
-              async () => PACK_MANAGER_KEY,
-              async () => _client.toInnerStr(key),
+              () => Promise.resolve(PACK_MANAGER_KEY),
+              () => Promise.resolve(_client.toInnerStr(key)),
             )
           }
           if (value[op]) {
             _client = _client.withVarArrSet(
-              async () => PACK_OP_GROUP_NAMES_KEY(op),
-              async () =>
-                value[op].map((v: string) =>
-                  _client.name === 'nu'
-                    ? _client.toOuterStr(
-                        context.sys_os_plat === 'winnt'
-                          ? Powershell.execStr(_client.toInnerStr(v))
-                          : Zshell.execStr(_client.toInnerStr(v)),
-                      )
-                    : _client.toInnerStr(v),
+              () => Promise.resolve(PACK_OP_GROUP_NAMES_KEY(op)),
+              () =>
+                Promise.resolve(
+                  value[op].map((v: string) =>
+                    _client.name === 'nu'
+                      ? _client.toOuterStr(
+                          context.sys_os_plat === 'winnt'
+                            ? Powershell.execStr(_client.toInnerStr(v))
+                            : Zshell.execStr(_client.toInnerStr(v)),
+                        )
+                      : _client.toInnerStr(v),
+                  ),
                 ),
             )
           }
           _client = _client.withVarSet(
-            async () => PACK_OP_NAMES_KEY(op),
-            async () => _client.toInnerStr(value.names.join(' ')),
+            () => Promise.resolve(PACK_OP_NAMES_KEY(op)),
+            () => Promise.resolve(_client.toInnerStr(value.names.join(' '))),
           )
-          _client = _client.with(async () => [getManagerFuncName(key)])
+          _client = _client.with(() =>
+            Promise.resolve([getManagerFuncName(key)]),
+          )
           if (value[op]) {
-            _client = _client.withVarUnset(async () =>
-              PACK_OP_GROUP_NAMES_KEY(op),
+            _client = _client.withVarUnset(() =>
+              Promise.resolve(PACK_OP_GROUP_NAMES_KEY(op)),
             )
           }
           if (supportedManagers.length > 1) {
-            _client = _client.withVarUnset(async () => PACK_MANAGER_KEY)
+            _client = _client.withVarUnset(() =>
+              Promise.resolve(PACK_MANAGER_KEY),
+            )
           }
         }
       }
@@ -173,10 +182,12 @@ async function workAddFindRem(
   if (remainingNames.length) {
     _client = _client
       .withVarSet(
-        async () => PACK_OP_NAMES_KEY(op),
-        async () => _client.toInnerStr(remainingNames.join(' ')),
+        () => Promise.resolve(PACK_OP_NAMES_KEY(op)),
+        () => Promise.resolve(_client.toInnerStr(remainingNames.join(' '))),
       )
-      .with(async () => supportedManagers.map(m => getManagerFuncName(m)))
+      .with(() =>
+        Promise.resolve(supportedManagers.map(m => getManagerFuncName(m))),
+      )
   }
 
   const body = await _client.build()
@@ -199,12 +210,14 @@ async function workListOutSyncTidy(
   let _client = client
   for (const supportedManager of supportedManagers) {
     _client = _client
-      .withFsFileLoad(async () => [PACK_KEY, supportedManager, op])
-      .withFsFileLoad(async () => [PACK_KEY, supportedManager])
+      .withFsFileLoad(() => Promise.resolve([PACK_KEY, supportedManager, op]))
+      .withFsFileLoad(() => Promise.resolve([PACK_KEY, supportedManager]))
   }
 
   const body = await _client
-    .with(async () => supportedManagers.map(m => getManagerFuncName(m)))
+    .with(() =>
+      Promise.resolve(supportedManagers.map(m => getManagerFuncName(m))),
+    )
     .build()
 
   if (environment[LOG_KEY]) {
@@ -225,7 +238,11 @@ export class PackCmdAdd extends CmdBase implements Cmd {
     ]
     this.switches = [{ keys: ['-g', '--groups'], description: 'check groups' }]
   }
-  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+  override async work(
+    client: Cli,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
     return await workAddFindRem(client, context, environment, this.name)
   }
 }
@@ -241,7 +258,11 @@ export class PackCmdFind extends CmdBase implements Cmd {
     ]
     this.switches = [{ keys: ['-g', '--groups'], description: 'check groups' }]
   }
-  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+  override async work(
+    client: Cli,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
     return await workAddFindRem(client, context, environment, this.name)
   }
 }
@@ -254,7 +275,11 @@ export class PackCmdList extends CmdBase implements Cmd {
     this.aliases = ['l', 'li', 'ls']
     this.arguments = [{ name: 'names', description: 'name(s) to match' }]
   }
-  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+  override async work(
+    client: Cli,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
     return await workListOutSyncTidy(client, context, environment, this.name)
   }
 }
@@ -267,7 +292,11 @@ export class PackCmdOut extends CmdBase implements Cmd {
     this.aliases = ['o', 'ou']
     this.arguments = [{ name: 'names', description: 'name(s) to match' }]
   }
-  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+  override async work(
+    client: Cli,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
     return await workListOutSyncTidy(client, context, environment, this.name)
   }
 }
@@ -283,7 +312,11 @@ export class PackCmdRem extends CmdBase implements Cmd {
     ]
     this.switches = [{ keys: ['-g', '--groups'], description: 'check groups' }]
   }
-  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+  override async work(
+    client: Cli,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
     return await workAddFindRem(client, context, environment, this.name)
   }
 }
@@ -296,7 +329,11 @@ export class PackCmdSync extends CmdBase implements Cmd {
     this.aliases = ['s', 'sy', 'up', 'update', 'upgrade']
     this.arguments = [{ name: 'names', description: 'name(s) to match' }]
   }
-  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+  override async work(
+    client: Cli,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
     return await workListOutSyncTidy(client, context, environment, this.name)
   }
 }
@@ -308,7 +345,11 @@ export class PackCmdTidy extends CmdBase implements Cmd {
     this.description = 'tidy on local'
     this.aliases = ['t', 'ti', 'cl', 'clean']
   }
-  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+  override async work(
+    client: Cli,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
     return await workListOutSyncTidy(client, context, environment, this.name)
   }
 }

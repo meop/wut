@@ -1,9 +1,9 @@
-import { getCfgFsDirDump, getCfgFsDirLoad, getCfgFsFileLoad } from '../cfg'
-import type { Cli } from '../cli'
-import { type Cmd, CmdBase } from '../cmd'
-import type { Ctx } from '../ctx'
-import { type Env, toEnvKey } from '../env'
-import { Fmt } from '../serde'
+import { getCfgFsDirDump, getCfgFsDirLoad, getCfgFsFileLoad } from '../cfg.ts'
+import type { Cli } from '../cli.ts'
+import { type Cmd, CmdBase } from '../cmd.ts'
+import type { Ctx } from '../ctx.ts'
+import { type Env, toEnvKey } from '../env.ts'
+import { Fmt } from '../serde.ts'
 
 export class ScriptCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -32,7 +32,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     filters.push(...environment[SCRIPT_OP_PARTS_KEY(op)].split(' '))
   }
 
-  const list = await getCfgFsFileLoad(async () => [SCRIPT_KEY], {
+  const list = await getCfgFsFileLoad(() => Promise.resolve([SCRIPT_KEY]), {
     extension: Fmt.yaml,
   })
   const contextFilter = list[_client.name]
@@ -40,22 +40,22 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   if (op === 'find') {
     _client = _client.withPrint(async () =>
       (
-        await getCfgFsDirDump(async () => dirParts, {
+        await getCfgFsDirDump(() => Promise.resolve(dirParts), {
           context,
           contextFilter,
           extension: _client.extension as Fmt,
-          filters: async () => filters,
+          filters: () => Promise.resolve(filters),
         })
       ).map(p => p.join(' ')),
     )
   } else {
     _client = _client.with(
       async () =>
-        await getCfgFsDirLoad(async () => dirParts, {
+        await getCfgFsDirLoad(() => Promise.resolve(dirParts), {
           context,
           contextFilter,
           extension: _client.extension as Fmt,
-          filters: async () => filters,
+          filters: () => Promise.resolve(filters),
         }),
     )
   }
@@ -77,7 +77,11 @@ export class ScriptCmdExec extends CmdBase implements Cmd {
     this.aliases = ['e', 'execute', 'ru', 'run']
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
-  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+  override async work(
+    client: Cli,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
     return await workOp(client, context, environment, this.name)
   }
 }
@@ -90,7 +94,11 @@ export class ScriptCmdFind extends CmdBase implements Cmd {
     this.aliases = ['f', 'fi', 'se', 'search']
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
-  async work(client: Cli, context: Ctx, environment: Env): Promise<string> {
+  override async work(
+    client: Cli,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
     return await workOp(client, context, environment, this.name)
   }
 }

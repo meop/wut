@@ -1,4 +1,4 @@
-import { buildFilePath, getFileContent } from './path'
+import { buildFilePath, getFileContent } from './path.ts'
 
 export interface Cli {
   build(): Promise<string>
@@ -40,7 +40,7 @@ export class CliBase {
     this.name = name
     this.extension = extension
 
-    this.dirPath = buildFilePath(import.meta.dir, 'cli', this.name)
+    this.dirPath = buildFilePath(import.meta.dirname ?? '', 'cli', this.name)
   }
 
   async build() {

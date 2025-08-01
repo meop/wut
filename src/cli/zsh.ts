@@ -1,4 +1,4 @@
-import { type Cli, CliBase } from '../cli'
+import { type Cli, CliBase } from '../cli.ts'
 
 export class Zshell extends CliBase implements Cli {
   constructor() {
@@ -9,19 +9,19 @@ export class Zshell extends CliBase implements Cli {
     return `zsh --no-rcs -c ${value}`
   }
 
-  toInnerStr(value: string): string {
+  override toInnerStr(value: string): string {
     return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "'\\''")}'`
   }
 
-  toOuterStr(value: string): string {
+  override toOuterStr(value: string): string {
     return `'${value}'`
   }
 
-  withTrace(): Cli {
-    return this.with(async () => ['set -x'])
+  override withTrace(): Cli {
+    return this.with(() => Promise.resolve(['set -x']))
   }
 
-  withVarArrSet(
+  override withVarArrSet(
     name: () => Promise<string>,
     values: () => Promise<Array<string>>,
   ): Cli {
@@ -30,11 +30,14 @@ export class Zshell extends CliBase implements Cli {
     ])
   }
 
-  withVarSet(name: () => Promise<string>, value: () => Promise<string>): Cli {
+  override withVarSet(
+    name: () => Promise<string>,
+    value: () => Promise<string>,
+  ): Cli {
     return this.with(async () => [`${await name()}=${await value()}`])
   }
 
-  withVarUnset(name: () => Promise<string>): Cli {
+  override withVarUnset(name: () => Promise<string>): Cli {
     return this.with(async () => [`unset ${await name()}`])
   }
 }
