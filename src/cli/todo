@@ -1,9 +1,5 @@
 script finding should go from zsh/nu or pwsh/zu, ie both should see eaech other
 
-typing --help (or -h) on the flags should be detected, like wut p l -g --help
-
-typing -h at all levels should work
-
 wut p f -g should print all the group ones.. and should respect partial match filters
 
 wut f should not prompt for y/n

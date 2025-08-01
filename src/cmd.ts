@@ -65,12 +65,18 @@ export class CmdBase {
     }
 
     if (this.options.length) {
+      this.options.sort((a, b) => a.keys[0].localeCompare(b.keys[0]))
       content.options = this.options.map(
         opt => `${opt.keys.join(', ')} | ${opt.description}`,
       )
     }
 
+    this.switches.push({
+      keys: ['-h', '--help'],
+      description: 'print help',
+    })
     if (this.switches.length) {
+      this.switches.sort((a, b) => a.keys[0].localeCompare(b.keys[0]))
       content.switches = this.switches.map(
         swt => `${swt.keys.join(', ')} | ${swt.description}`,
       )
@@ -160,6 +166,9 @@ export class CmdBase {
       const part = parts[partsIndex]
 
       if (part.startsWith('-') && part !== '--') {
+        if (part === '-h' || part === '--help') {
+          return loadCliEnv(() => this.help(_client, _context, _environment))
+        }
         const _switch = this.switches.find(s => s.keys.includes(part))
         if (_switch) {
           setEnv(
