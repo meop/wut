@@ -1,5 +1,3 @@
-script finding should go from zsh/nu or pwsh/zu, ie both should see eaech other
+script finding should go from zsh/nu or pwsh/zu, ie both should see each other
 
-wut p f -g should print all the group ones.. and should respect partial match filters
-
-wut f should not prompt for y/n
+nushell interrupts should not print errors

@@ -5,39 +5,47 @@ export class Nushell extends CliBase implements Cli {
     super('nu', 'nu')
   }
 
-  static execStr(value: string): string {
+  static execStr(value: string) {
     return `nu --no-config-file -c ${value}`
   }
 
-  override toInnerStr(value: string): string {
+  async gatedFunc(name: string, lines: Promise<Array<string>>) {
+    return [
+      'do {',
+      `  mut yn = ''`,
+      `  if 'YES' in $env {`,
+      `    $yn = 'y'`,
+      '  } else {',
+      `    $yn = input r#'? ${name} [y, [n]]: '#`,
+      '  }',
+      `  if $yn != 'n' {`,
+      ...(await lines),
+      '  }',
+      '}',
+    ]
+  }
+
+  override toInner(value: string) {
     return `r#'${value}'#`
   }
 
-  override toOuterStr(value: string): string {
+  override toOuter(value: string) {
     return `\`${value}\``
   }
 
-  override withTrace(): Cli {
-    return this.with(() => Promise.resolve([])) // no direct equivalent
+  trace() {
+    return '' // no direct equivalent
   }
 
-  override withVarArrSet(
-    name: () => Promise<string>,
-    values: () => Promise<Array<string>>,
-  ): Cli {
-    return this.with(async () => [
-      `$env.${await name()} = [ ${(await values()).join(', ')} ]`,
-    ])
+  async varArrSet(name: Promise<string>, values: Promise<Array<string>>) {
+    return `$env.${await name} = [ ${(await values).join(', ')} ]`
   }
 
-  override withVarSet(
-    name: () => Promise<string>,
-    value: () => Promise<string>,
-  ): Cli {
-    return this.with(async () => [`$env.${await name()} = ${await value()}`])
+  async varSet(name: Promise<string>, value: Promise<string>) {
+    return `$env.${await name} = ${await value}`
   }
 
-  override withVarUnset(name: () => Promise<string>): Cli {
-    return this.with(async () => [`hide-env ${await name()}`])
+  async varUnset(name: Promise<string>) {
+    return `hide-env ${await name}`
   }
 }

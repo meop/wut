@@ -71,12 +71,9 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     filters.push(...environment[FILE_OP_PARTS_KEY(op)].split(' '))
   }
 
-  const content: Sync = await getCfgFsFileLoad(
-    () => Promise.resolve([FILE_KEY]),
-    {
-      extension: Fmt.yaml,
-    },
-  )
+  const content: Sync = await getCfgFsFileLoad(Promise.resolve([FILE_KEY]), {
+    extension: Fmt.yaml,
+  })
   if (content == null) {
     throw new Error(`no cfg file found: ${FILE_KEY}.${Fmt.yaml}`)
   }
@@ -93,13 +90,15 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   }
 
   _client = _client
-    .withFsFileLoad(() => Promise.resolve([FILE_KEY, op]))
-    .withFsFileLoad(() => Promise.resolve([FILE_KEY]))
+    .with(_client.fsFileLoad(Promise.resolve([FILE_KEY, op])))
+    .with(_client.fsFileLoad(Promise.resolve([FILE_KEY])))
 
   if (op === 'find') {
-    _client = _client.withVarArrSet(
-      () => Promise.resolve(FILE_OP_KEYS_KEY(op)),
-      () => Promise.resolve(validKeys.map(v => _client.toInnerStr(v))),
+    _client = _client.with(
+      _client.varArrSet(
+        Promise.resolve(FILE_OP_KEYS_KEY(op)),
+        Promise.resolve(validKeys.map(x => _client.toInner(x))),
+      ),
     )
   } else {
     const validClearDirs: Array<string> = []
@@ -115,27 +114,27 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
         const localDirPath = localCfgPath([FILE_KEY, key, entry.in])
         if (await isDir(localDirPath)) {
           validClearDirs.push(
-            _client.toOuterStr(`${key}${PARAM_SPLIT}${entry.out[sys_os_plat]}`),
+            _client.toOuter(`${key}${PARAM_SPLIT}${entry.out[sys_os_plat]}`),
           )
           for (const filePath of await getFilePaths(localDirPath)) {
             const filePathParts = toRelParts(localDirPath, filePath, false)
-            const srcFull = _client.toInnerStr(
+            const srcFull = _client.toInner(
               [key, entry.in, ...filePathParts].join('/'),
             )
-            const dstFull = _client.toInnerStr(
+            const dstFull = _client.toInner(
               [entry.out[sys_os_plat], ...filePathParts].join('/'),
             )
             validPairs.push(
-              _client.toOuterStr(
+              _client.toOuter(
                 `${key}${PARAM_SPLIT}${srcFull}${PARAM_SPLIT}${dstFull}`,
               ),
             )
           }
         } else {
-          const srcFull = _client.toInnerStr([key, entry.in].join('/'))
-          const dstFull = _client.toInnerStr(entry.out[sys_os_plat])
+          const srcFull = _client.toInner([key, entry.in].join('/'))
+          const dstFull = _client.toInner(entry.out[sys_os_plat])
           validPairs.push(
-            _client.toOuterStr(
+            _client.toOuter(
               `${key}${PARAM_SPLIT}${srcFull}${PARAM_SPLIT}${dstFull}`,
             ),
           )
@@ -149,39 +148,45 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
           )) {
             const permCmdFull =
               context.sys_os_plat === 'winnt'
-                ? Powershell.execStr(_client.toInnerStr(permCmd))
-                : Zshell.execStr(_client.toInnerStr(permCmd))
+                ? Powershell.execStr(_client.toInner(permCmd))
+                : Zshell.execStr(_client.toInner(permCmd))
             validPerms.push(
-              _client.toOuterStr(`${key}${PARAM_SPLIT}${permCmdFull}`),
+              _client.toOuter(`${key}${PARAM_SPLIT}${permCmdFull}`),
             )
           }
         }
       }
     }
 
-    _client = _client.withVarArrSet(
-      () => Promise.resolve(FILE_OP_PATH_PAIRS_KEY(op)),
-      () => Promise.resolve(validPairs),
+    _client = _client.with(
+      _client.varArrSet(
+        Promise.resolve(FILE_OP_PATH_PAIRS_KEY(op)),
+        Promise.resolve(validPairs),
+      ),
     )
 
     if (op === 'sync') {
       if (validClearDirs.length) {
-        _client = _client.withVarArrSet(
-          () => Promise.resolve(FILE_OP_CLEAR_DIRS_KEY(op)),
-          () => Promise.resolve(validClearDirs),
+        _client = _client.with(
+          _client.varArrSet(
+            Promise.resolve(FILE_OP_CLEAR_DIRS_KEY(op)),
+            Promise.resolve(validClearDirs),
+          ),
         )
       }
 
       if (validPerms.length) {
-        _client = _client.withVarArrSet(
-          () => Promise.resolve(FILE_OP_PATH_PERMS_KEY(op)),
-          () => Promise.resolve(validPerms),
+        _client = _client.with(
+          _client.varArrSet(
+            Promise.resolve(FILE_OP_PATH_PERMS_KEY(op)),
+            Promise.resolve(validPerms),
+          ),
         )
       }
     }
   }
 
-  _client = _client.with(() => Promise.resolve([FILE_KEY]))
+  _client = _client.with(Promise.resolve([FILE_KEY]))
 
   const body = await _client.build()
 

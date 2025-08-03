@@ -88,25 +88,32 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   }
 
   if (op === 'find') {
-    _client = _client.withPrint(async () =>
-      (
-        await getCfgFsDirDump(() => Promise.resolve(dirParts), {
-          extension: Fmt.yaml,
-          filters: () => Promise.resolve(filters),
-        })
-      )
-        .filter(r => supportedManagers.includes(r[0]))
-        .map(r => r.join(' ')),
+    _client = _client.with(
+      _client.gatedFunc(
+        'use cfg (remote)',
+        _client.print(
+          getCfgFsDirDump(Promise.resolve(dirParts), {
+            extension: Fmt.yaml,
+            filters: Promise.resolve(filters),
+          }).then(x =>
+            x
+              .filter(r => supportedManagers.includes(r[0]))
+              .map(r => r.join(' ')),
+          ),
+        ),
+      ),
     )
   } else {
     for (const supportedManager of supportedManagers) {
       _client = _client
-        .withFsFileLoad(() => Promise.resolve([VIRT_KEY, supportedManager, op]))
-        .withFsFileLoad(() => Promise.resolve([VIRT_KEY, supportedManager]))
+        .with(
+          _client.fsFileLoad(Promise.resolve([VIRT_KEY, supportedManager, op])),
+        )
+        .with(_client.fsFileLoad(Promise.resolve([VIRT_KEY, supportedManager])))
     }
-    const results = await getCfgFsDirDump(() => Promise.resolve(dirParts), {
+    const results = await getCfgFsDirDump(Promise.resolve(dirParts), {
       extension: Fmt.yaml,
-      filters: () => Promise.resolve(filters),
+      filters: Promise.resolve(filters),
     })
 
     const virtMap: { [key: string]: Array<string> } = {}
@@ -124,19 +131,25 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
         continue
       }
       if (supportedManagers.length > 1) {
-        _client = _client.withVarSet(
-          () => Promise.resolve(VIRT_MANAGER_KEY),
-          () => Promise.resolve(_client.toInnerStr(key)),
+        _client = _client.with(
+          _client.varSet(
+            Promise.resolve(VIRT_MANAGER_KEY),
+            Promise.resolve(_client.toInner(key)),
+          ),
         )
       }
       _client = _client
-        .withVarArrSet(
-          () => Promise.resolve(VIRT_INSTANCES_KEY),
-          () => Promise.resolve(virtMap[key]),
+        .with(
+          _client.varArrSet(
+            Promise.resolve(VIRT_INSTANCES_KEY),
+            Promise.resolve(virtMap[key]),
+          ),
         )
-        .with(() => Promise.resolve([getManagerFuncName(key)]))
+        .with(Promise.resolve([getManagerFuncName(key)]))
       if (supportedManagers.length > 1) {
-        _client = _client.withVarUnset(() => Promise.resolve(VIRT_MANAGER_KEY))
+        _client = _client.with(
+          _client.varUnset(Promise.resolve(VIRT_MANAGER_KEY)),
+        )
       }
     }
   }

@@ -91,10 +91,12 @@ export class CmdBase {
 
   async help(client: Cli, _context: Ctx, environment: Env): Promise<string> {
     const body = await client
-      .withPrintInfo(() =>
-        Promise.resolve([
-          toCon(this.getHelp(), toFmt(environment[toEnvKey('format')])),
-        ]),
+      .with(
+        client.printInfo(
+          Promise.resolve(
+            toCon(this.getHelp(), toFmt(environment[toEnvKey('format')])),
+          ),
+        ),
       )
       .build()
 
@@ -130,30 +132,34 @@ export class CmdBase {
 
     const loadCliEnv = (func: () => Promise<string>) => {
       for (const [key, value] of Object.entries(_environment)) {
-        _client = _client.withVarSet(
-          () => Promise.resolve(key),
-          () => Promise.resolve(_client.toInnerStr(value)),
+        _client = _client.with(
+          _client.varSet(
+            Promise.resolve(key),
+            Promise.resolve(_client.toInner(value)),
+          ),
         )
       }
 
       if (_environment[toEnvKey('debug')]) {
-        _client = _client.withPrint(() =>
-          Promise.resolve([
-            toCon(
-              {
-                debug: {
-                  context: _context,
-                  environment: _environment,
+        _client = _client.with(
+          _client.print(
+            Promise.resolve(
+              toCon(
+                {
+                  debug: {
+                    context: _context,
+                    environment: _environment,
+                  },
                 },
-              },
-              toFmt(_environment[toEnvKey('format')]),
+                toFmt(_environment[toEnvKey('format')]),
+              ),
             ),
-          ]),
+          ),
         )
       }
 
       if (_environment[toEnvKey('trace')]) {
-        _client = _client.withTrace()
+        _client = _client.with(Promise.resolve(_client.trace()))
       }
 
       return func()

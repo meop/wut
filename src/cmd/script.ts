@@ -32,31 +32,33 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     filters.push(...environment[SCRIPT_OP_PARTS_KEY(op)].split(' '))
   }
 
-  const list = await getCfgFsFileLoad(() => Promise.resolve([SCRIPT_KEY]), {
+  const list = await getCfgFsFileLoad(Promise.resolve([SCRIPT_KEY]), {
     extension: Fmt.yaml,
   })
   const contextFilter = list[_client.name]
 
   if (op === 'find') {
-    _client = _client.withPrint(async () =>
-      (
-        await getCfgFsDirDump(() => Promise.resolve(dirParts), {
-          context,
-          contextFilter,
-          extension: _client.extension as Fmt,
-          filters: () => Promise.resolve(filters),
-        })
-      ).map(p => p.join(' ')),
+    _client = _client.with(
+      _client.gatedFunc(
+        'use cfg (remote)',
+        _client.print(
+          getCfgFsDirDump(Promise.resolve(dirParts), {
+            context,
+            contextFilter,
+            extension: _client.extension as Fmt,
+            filters: Promise.resolve(filters),
+          }).then(x => x.map(y => y.join(' '))),
+        ),
+      ),
     )
   } else {
     _client = _client.with(
-      async () =>
-        await getCfgFsDirLoad(() => Promise.resolve(dirParts), {
-          context,
-          contextFilter,
-          extension: _client.extension as Fmt,
-          filters: () => Promise.resolve(filters),
-        }),
+      getCfgFsDirLoad(Promise.resolve(dirParts), {
+        context,
+        contextFilter,
+        extension: _client.extension as Fmt,
+        filters: Promise.resolve(filters),
+      }),
     )
   }
 

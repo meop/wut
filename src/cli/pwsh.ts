@@ -5,41 +5,47 @@ export class Powershell extends CliBase implements Cli {
     super('pwsh', 'ps1')
   }
 
-  static execStr(value: string): string {
+  static execStr(value: string) {
     return `pwsh -noprofile -c ${value}`
   }
 
-  override toInnerStr(value: string): string {
+  async gatedFunc(name: string, lines: Promise<Array<string>>) {
+    return [
+      '&{',
+      `  $yn = ''`,
+      '  if ($YES) {',
+      `    $yn = 'y'`,
+      '  } else {',
+      `    $yn = Read-Host "? ${name} [y, [n]]"`,
+      '  }',
+      `  if ($yn -ne 'n') {`,
+      ...(await lines),
+      '  }',
+      '}',
+    ]
+  }
+
+  override toInner(value: string) {
     return `'${value.replaceAll("'", "''")}'`
   }
 
-  override toOuterStr(value: string): string {
+  override toOuter(value: string) {
     return `'${value}'`
   }
 
-  override withTrace(): Cli {
-    return this.with(() => Promise.resolve(['Set-PSDebug -Trace 1']))
+  trace() {
+    return 'Set-PSDebug -Trace 1'
   }
 
-  override withVarArrSet(
-    name: () => Promise<string>,
-    values: () => Promise<Array<string>>,
-  ): Cli {
-    return this.with(async () => [
-      `$${await name()} = ${`@( ${(await values()).join(', ')} )`}`,
-    ])
+  async varArrSet(name: Promise<string>, values: Promise<Array<string>>) {
+    return `$${await name} = ${`@( ${(await values).join(', ')} )`}`
   }
 
-  override withVarSet(
-    name: () => Promise<string>,
-    value: () => Promise<string>,
-  ): Cli {
-    return this.with(async () => [`$${await name()} = ${await value()}`])
+  async varSet(name: Promise<string>, value: Promise<string>) {
+    return `$${await name} = ${await value}`
   }
 
-  override withVarUnset(name: () => Promise<string>): Cli {
-    return this.with(async () => [
-      `Remove-Variable ${await name()} -ErrorAction SilentlyContinue`,
-    ])
+  async varUnset(name: Promise<string>) {
+    return `Remove-Variable ${await name} -ErrorAction SilentlyContinue`
   }
 }

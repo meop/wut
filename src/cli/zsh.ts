@@ -5,39 +5,47 @@ export class Zshell extends CliBase implements Cli {
     super('zsh', 'zsh')
   }
 
-  static execStr(value: string): string {
+  static execStr(value: string) {
     return `zsh --no-rcs -c ${value}`
   }
 
-  override toInnerStr(value: string): string {
+  async gatedFunc(name: string, lines: Promise<Array<string>>) {
+    return [
+      'function () {',
+      `  local yn=''`,
+      '  if [[ $YES ]]; then',
+      `    yn='y'`,
+      '  else',
+      `    read "yn?? ${name} [y, [n]]: "`,
+      '  fi',
+      `  if [[ $yn != 'n' ]]; then`,
+      ...(await lines),
+      '  fi',
+      '}',
+    ]
+  }
+
+  override toInner(value: string) {
     return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "'\\''")}'`
   }
 
-  override toOuterStr(value: string): string {
+  override toOuter(value: string) {
     return `'${value}'`
   }
 
-  override withTrace(): Cli {
-    return this.with(() => Promise.resolve(['set -x']))
+  trace() {
+    return 'set -x'
   }
 
-  override withVarArrSet(
-    name: () => Promise<string>,
-    values: () => Promise<Array<string>>,
-  ): Cli {
-    return this.with(async () => [
-      `${await name()}=( ${(await values()).join(' ')} )`,
-    ])
+  async varArrSet(name: Promise<string>, values: Promise<Array<string>>) {
+    return `${await name}=( ${(await values).join(' ')} )`
   }
 
-  override withVarSet(
-    name: () => Promise<string>,
-    value: () => Promise<string>,
-  ): Cli {
-    return this.with(async () => [`${await name()}=${await value()}`])
+  async varSet(name: Promise<string>, value: Promise<string>) {
+    return `${await name}=${await value}`
   }
 
-  override withVarUnset(name: () => Promise<string>): Cli {
-    return this.with(async () => [`unset ${await name()}`])
+  async varUnset(name: Promise<string>) {
+    return `unset ${await name}`
   }
 }

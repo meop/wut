@@ -5,7 +5,7 @@ def packWinget [] {
     if 'YES' in $env {
       $yn = 'y'
     } else {
-      $yn = input $"? use ($cmd) \(system\) [y, [n]] "
+      $yn = input $"? use ($cmd) \(system\) [y, [n]]: "
     }
     if $yn != 'n' {
       packWingetOp $cmd

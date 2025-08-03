@@ -5,7 +5,7 @@ def packApt [] {
     if 'YES' in $env {
       $yn = 'y'
     } else {
-      $yn = input $"? use ($cmd) \(system\) [y, [n]] "
+      $yn = input $"? use ($cmd) \(system\) [y, [n]]: "
     }
     if $yn != 'n' {
       let cmd = if (which sudo | is-not-empty) { $"sudo ($cmd)" } else { $cmd }

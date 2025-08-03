@@ -5,7 +5,7 @@ def packScoop [] {
     if 'YES' in $env {
       $yn = 'y'
     } else {
-      $yn = input $"? use ($cmd) \(user\) [y, [n]] "
+      $yn = input $"? use ($cmd) \(user\) [y, [n]]: "
     }
     if $yn != 'n' {
       packScoopOp $cmd

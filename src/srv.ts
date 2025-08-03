@@ -90,9 +90,7 @@ async function runSrv(req: Request) {
 
     const op = parts[0]
     if (op === Op.cfg) {
-      const config = await getCfgFsFileContent(() =>
-        Promise.resolve(parts.slice(1)),
-      )
+      const config = await getCfgFsFileContent(Promise.resolve(parts.slice(1)))
       if (config == null) {
         return new Response(`echo "config not found: ${config}"`, {
           status: 404,
@@ -122,30 +120,30 @@ async function runSrv(req: Request) {
           : new Nushell()
 
     client = client
-      .withVarSet(
-        () => Promise.resolve('REQ_URL_CFG'),
-        () =>
-          Promise.resolve(
-            client.toInnerStr([context.req_orig, Op.cfg].join('/')),
-          ),
+      .with(
+        client.varSet(
+          Promise.resolve('REQ_URL_CFG'),
+          Promise.resolve(client.toInner([context.req_orig, Op.cfg].join('/'))),
+        ),
       )
-      .withVarSet(
-        () => Promise.resolve('REQ_URL_CLI'),
-        () =>
+      .with(
+        client.varSet(
+          Promise.resolve('REQ_URL_CLI'),
           Promise.resolve(
-            client.toInnerStr(
+            client.toInner(
               [context.req_orig, context.req_path, context.req_srch].join(''),
             ),
           ),
+        ),
       )
-      .withFsFileLoad(() => Promise.resolve(['op']))
+      .with(client.fsFileLoad(Promise.resolve(['op'])))
 
     if (!context.sys_cpu_arch) {
       return new Response(
         await client
-          .withFsFileLoad(() => Promise.resolve(['ver']))
-          .withFsFileLoad(() => Promise.resolve(['sys']))
-          .withFsFileLoad(() => Promise.resolve(['get']))
+          .with(client.fsFileLoad(Promise.resolve(['ver'])))
+          .with(client.fsFileLoad(Promise.resolve(['sys'])))
+          .with(client.fsFileLoad(Promise.resolve(['get'])))
           .build(),
       )
     }
@@ -154,9 +152,11 @@ async function runSrv(req: Request) {
       if (!e[1]) {
         continue
       }
-      client = client.withVarSet(
-        () => Promise.resolve(e[0].toUpperCase()),
-        () => Promise.resolve(client.toInnerStr(e[1])),
+      client = client.with(
+        client.varSet(
+          Promise.resolve(e[0].toUpperCase()),
+          Promise.resolve(client.toInner(e[1])),
+        ),
       )
     }
 
@@ -170,7 +170,7 @@ async function runSrv(req: Request) {
       }
       console.error(errStr)
       const body = await client
-        .withPrintErr(() => Promise.resolve([errStr]))
+        .with(client.printErr(Promise.resolve(errStr)))
         .build()
       return new Response(body)
     }

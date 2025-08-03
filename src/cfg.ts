@@ -21,20 +21,20 @@ export function localCfgPath(parts: Array<string>) {
 }
 
 export async function getCfgFsDirDump(
-  parts: () => Promise<Array<string>>,
+  parts: Promise<Array<string>>,
   options?: {
     context?: Ctx
     contextFilter?: CtxFilter
     extension?: Fmt
-    filters?: () => Promise<Array<string>>
+    filters?: Promise<Array<string>>
   },
 ) {
-  const _parts = await parts()
+  const _parts = await parts
   const dirPath = localCfgPath(_parts)
   const dirParts = (
     await getFilePaths(dirPath, {
       extension: options?.extension,
-      filters: options?.filters ? await options.filters() : undefined,
+      filters: options?.filters ? await options.filters : undefined,
     })
   ).map(p => toRelParts(dirPath, p))
   if (options?.context && options.contextFilter) {
@@ -76,15 +76,15 @@ export async function getCfgFsDirDump(
 }
 
 export async function getCfgFsDirLoad(
-  parts: () => Promise<Array<string>>,
+  parts: Promise<Array<string>>,
   options?: {
     context?: Ctx
     contextFilter?: CtxFilter
     extension?: Fmt
-    filters?: () => Promise<Array<string>>
+    filters?: Promise<Array<string>>
   },
 ) {
-  const _parts = await parts()
+  const _parts = await parts
   const dirPath = localCfgPath(_parts)
   const contents: Array<string> = []
   if (!(await isDir(dirPath))) {
@@ -93,7 +93,7 @@ export async function getCfgFsDirLoad(
   const dirParts = await getCfgFsDirDump(parts, options)
   for (const fileParts of dirParts) {
     const content = await getCfgFsFileLoad(
-      () => Promise.resolve([..._parts, ...fileParts]),
+      Promise.resolve([..._parts, ...fileParts]),
       options,
     )
     if (content != null) {
@@ -104,24 +104,24 @@ export async function getCfgFsDirLoad(
 }
 
 export async function getCfgFsFileContent(
-  parts: () => Promise<Array<string>>,
+  parts: Promise<Array<string>>,
   options?: {
     extension?: Fmt
   },
 ) {
-  const _parts = await parts()
+  const _parts = await parts
   return await getFileContent(
     `${localCfgPath(_parts)}${options?.extension ? `.${options.extension}` : ''}`,
   )
 }
 
 export async function getCfgFsFileDump(
-  parts: () => Promise<Array<string>>,
+  parts: Promise<Array<string>>,
   options?: {
     extension?: Fmt
   },
 ) {
-  const _parts = await parts()
+  const _parts = await parts
   return toRelParts(
     cfgDirPath,
     `${localCfgPath(_parts)}${options?.extension ? `.${options.extension}` : ''}`,
@@ -129,7 +129,7 @@ export async function getCfgFsFileDump(
 }
 
 export async function getCfgFsFileLoad(
-  parts: () => Promise<Array<string>>,
+  parts: Promise<Array<string>>,
   options?: {
     extension?: Fmt
   },

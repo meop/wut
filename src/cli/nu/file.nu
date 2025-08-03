@@ -1,4 +1,4 @@
-def rmInnerStr [value] {
+def rmInner [value] {
   mut value = $value
   if ($value | str starts-with `r#'`) and ($value | str ends-with `'#`) {
     return ($value | str substring 3..-3)
@@ -25,7 +25,7 @@ def file [] {
   if 'YES' in $env {
     $yn = 'y'
   } else {
-    $yn = input $"? use file \(user\) [y, [n]] "
+    $yn = input r#'? use file (user) [y, [n]]: '#
   }
   if $yn != 'n' {
     fileOp

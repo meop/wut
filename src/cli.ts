@@ -1,32 +1,34 @@
 import { buildFilePath, getFileContent } from './path.ts'
 
 export interface Cli {
-  build(): Promise<string>
   name: string
   extension: string
 
-  toInnerStr: (value: string) => string
-  toOuterStr: (value: string) => string
+  build(): Promise<string>
 
-  with(lines: () => Promise<Array<string>>): Cli
+  fsFileLoad(parts: Promise<Array<string>>): Promise<Array<string>>
+  gatedFunc(name: string, lines: Promise<Array<string>>): Promise<Array<string>>
 
-  withFsFileLoad(parts: () => Promise<Array<string>>): Cli
+  print(lines: Promise<string | Array<string>>): Promise<Array<string>>
+  printCmd(lines: Promise<string | Array<string>>): Promise<Array<string>>
+  printErr(lines: Promise<string | Array<string>>): Promise<Array<string>>
+  printInfo(lines: Promise<string | Array<string>>): Promise<Array<string>>
+  printSucc(lines: Promise<string | Array<string>>): Promise<Array<string>>
+  printWarn(lines: Promise<string | Array<string>>): Promise<Array<string>>
 
-  withPrint(lines: () => Promise<Array<string>>): Cli
-  withPrintErr(lines: () => Promise<Array<string>>): Cli
-  withPrintInfo(lines: () => Promise<Array<string>>): Cli
-  withPrintOp(lines: () => Promise<Array<string>>): Cli
-  withPrintSucc(lines: () => Promise<Array<string>>): Cli
-  withPrintWarn(lines: () => Promise<Array<string>>): Cli
+  toInner: (value: string) => string
+  toOuter: (value: string) => string
 
-  withTrace(): Cli
+  trace(): string
 
-  withVarArrSet(
-    name: () => Promise<string>,
-    values: () => Promise<Array<string>>,
-  ): Cli
-  withVarSet(name: () => Promise<string>, value: () => Promise<string>): Cli
-  withVarUnset(name: () => Promise<string>): Cli
+  varArrSet(
+    name: Promise<string>,
+    values: Promise<Array<string>>,
+  ): Promise<string>
+  varSet(name: Promise<string>, value: Promise<string>): Promise<string>
+  varUnset(name: Promise<string>): Promise<string>
+
+  with(lines: Promise<string | Array<string>>): Cli
 }
 
 export class CliBase {
@@ -34,7 +36,7 @@ export class CliBase {
   extension: string
 
   dirPath: string
-  lineBuilders: Array<() => Promise<string>> = []
+  lineBuilders: Array<Promise<string | Array<string>>> = []
 
   constructor(name: string, extension: string) {
     this.name = name
@@ -46,88 +48,67 @@ export class CliBase {
   async build() {
     const lines: Array<string> = []
     for (const lineBuilder of this.lineBuilders) {
-      lines.push(await lineBuilder())
+      const line = await lineBuilder
+      lines.push(...(typeof line === 'string' ? [line] : line))
       lines.push('')
     }
     return lines.join('\n')
-  }
-
-  toInnerStr(_value: string): string {
-    throw new Error('not implemented')
-  }
-
-  toOuterStr(_value: string): string {
-    throw new Error('not implemented')
-  }
-
-  with(lines: () => Promise<Array<string>>): Cli {
-    this.lineBuilders.push(async () => (await lines()).join('\n'))
-    return this
   }
 
   localDirPath(parts: Array<string>) {
     return buildFilePath(...[this.dirPath, ...parts])
   }
 
-  withFsFileLoad(parts: () => Promise<Array<string>>): Cli {
-    return this.with(async () => {
-      const path = `${this.localDirPath(await parts())}.${this.extension}`
-      return [(await getFileContent(path)) ?? '']
-    })
+  async fsFileLoad(parts: Promise<Array<string>>) {
+    const path = `${this.localDirPath(await parts)}.${this.extension}`
+    return [(await getFileContent(path)) ?? '']
   }
 
-  withPrint(lines: () => Promise<Array<string>>): Cli {
-    return this.with(async () =>
-      (await lines()).map(l => `opPrint ${this.toInnerStr(l)}`),
+  _abstract(): string {
+    throw new Error('Method not implemented')
+  }
+
+  toInner(_value: string) {
+    return this._abstract()
+  }
+
+  toOuter(_value: string) {
+    return this._abstract()
+  }
+
+  async _print(lines: Promise<string | Array<string>>, op: string) {
+    const _lines = await lines
+    return (typeof _lines === 'string' ? [_lines] : _lines).map(
+      l => `${op} ${this.toInner(l)}`,
     )
   }
 
-  withPrintErr(lines: () => Promise<Array<string>>): Cli {
-    return this.with(async () =>
-      (await lines()).map(l => `opPrintErr ${this.toInnerStr(l)}`),
-    )
+  print(lines: Promise<string | Array<string>>) {
+    return this._print(lines, 'opPrint')
   }
 
-  withPrintInfo(lines: () => Promise<Array<string>>): Cli {
-    return this.with(async () =>
-      (await lines()).map(l => `opPrintInfo ${this.toInnerStr(l)}`),
-    )
+  printCmd(lines: Promise<string | Array<string>>) {
+    return this._print(lines, 'opPrintCmd')
   }
 
-  withPrintOp(lines: () => Promise<Array<string>>): Cli {
-    return this.with(async () =>
-      (await lines()).map(l => `opPrintCmd ${this.toInnerStr(l)}`),
-    )
+  printErr(lines: Promise<string | Array<string>>) {
+    return this._print(lines, 'opPrintErr')
   }
 
-  withPrintSucc(lines: () => Promise<Array<string>>): Cli {
-    return this.with(async () =>
-      (await lines()).map(l => `opPrintSucc ${this.toInnerStr(l)}`),
-    )
+  printInfo(lines: Promise<string | Array<string>>) {
+    return this._print(lines, 'opPrintInfo')
   }
 
-  withPrintWarn(lines: () => Promise<Array<string>>): Cli {
-    return this.with(async () =>
-      (await lines()).map(l => `opPrintWarn ${this.toInnerStr(l)}`),
-    )
+  printSucc(lines: Promise<string | Array<string>>) {
+    return this._print(lines, 'opPrintSucc')
   }
 
-  withTrace(): Cli {
-    throw new Error('not implemented')
+  printWarn(lines: Promise<string | Array<string>>) {
+    return this._print(lines, 'opPrintWarn')
   }
 
-  withVarArrSet(
-    _name: () => Promise<string>,
-    _values: () => Promise<Array<string>>,
-  ): Cli {
-    throw new Error('not implemented')
-  }
-
-  withVarSet(_name: () => Promise<string>, _value: () => Promise<string>): Cli {
-    throw new Error('not implemented')
-  }
-
-  withVarUnset(_name: () => Promise<string>): Cli {
-    throw new Error('not implemented')
+  with(lines: Promise<string | Array<string>>) {
+    this.lineBuilders.push(lines)
+    return this
   }
 }

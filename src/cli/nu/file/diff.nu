@@ -4,8 +4,8 @@ def fileOp [] {
     if (which $pairParts.0 | is-empty) {
       continue
     }
-    let src = rmInnerStr $pairParts.1 | str trim --left --char '/'
-    let dst = envReplace (rmInnerStr $pairParts.2) | path expand
+    let src = rmInner $pairParts.1 | str trim --left --char '/'
+    let dst = envReplace (rmInner $pairParts.2) | path expand
 
     let url = $"($env.REQ_URL_CFG)/file/($src)"
 
