@@ -24,6 +24,25 @@ const SCRIPT_KEY = 'script'
 const SCRIPT_OP_PARTS_KEY = (op: string) => toEnvKey(SCRIPT_KEY, op, 'parts')
 
 async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
+  if (
+    client.name === 'nu' ||
+    (client.name === 'pwsh' && context.sys_os_plat !== 'winnt')
+  ) {
+    if (context.sys_os_plat === 'winnt') {
+      const url = [
+        context.req_orig,
+        context.req_path.replace(`/cli/${client.name}`, '/cli/pwsh'),
+        context.req_srch,
+      ].join('')
+      return `pwsh -noprofile -c 'Invoke-Expression "$( Invoke-WebRequest -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "${url}" )"'`
+    }
+    const url = [
+      context.req_orig,
+      context.req_path.replace(`/cli/${client.name}`, '/cli/zsh'),
+      context.req_srch,
+    ].join('')
+    return `zsh --no-rcs -c 'eval "$( curl --fail-with-body --location --no-progress-meter --url "${url}" )"'`
+  }
   let _client = client
 
   const dirParts = [SCRIPT_KEY, _client.name]

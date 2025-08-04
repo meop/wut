@@ -1,3 +1,0 @@
-script finding should go from zsh/nu or pwsh/zu, ie both should see each other
-
-nushell interrupts should not print errors

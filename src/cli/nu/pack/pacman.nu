@@ -1,31 +1,43 @@
 def packYay [] {
-  let cmd = 'yay'
-  if ('PACK_MANAGER' not-in $env or $env.PACK_MANAGER == $cmd) and (which $cmd | is-not-empty) {
-    mut yn = ''
-    if 'YES' in $env {
-      $yn = 'y'
-    } else {
-      $yn = input $"? use ($cmd) \(system\) [y, [n]]: "
+  try {
+    let cmd = 'yay'
+    if ('PACK_MANAGER' not-in $env or $env.PACK_MANAGER == $cmd) and (which $cmd | is-not-empty) {
+      mut yn = ''
+      if 'YES' in $env {
+        $yn = 'y'
+      } else {
+        $yn = input $"? use ($cmd) \(system\) [y, [n]]: "
+      }
+      if $yn != 'n' {
+        packPacmanOp $cmd
+      }
     }
-    if $yn != 'n' {
-      packPacmanOp $cmd
+  } catch { |e|
+    if not (($e.msg | str downcase) == "i/o error") {
+      throw $e
     }
   }
 }
 def packPacman [] {
-  let cmd = 'pacman'
-  if ('PACK_MANAGER' not-in $env) and (which yay | is-not-empty) {
-    # yay is a superset of pacman
-  } else if ('PACK_MANAGER' not-in $env or $env.PACK_MANAGER == $cmd) and (which $cmd | is-not-empty) {
-    mut yn = ''
-    if 'YES' in $env {
-      $yn = 'y'
-    } else {
-      $yn = input $"? use ($cmd) \(system\) [y, [n]]: "
+  try {
+    let cmd = 'pacman'
+    if ('PACK_MANAGER' not-in $env) and (which yay | is-not-empty) {
+      # yay is a superset of pacman
+    } else if ('PACK_MANAGER' not-in $env or $env.PACK_MANAGER == $cmd) and (which $cmd | is-not-empty) {
+      mut yn = ''
+      if 'YES' in $env {
+        $yn = 'y'
+      } else {
+        $yn = input $"? use ($cmd) \(system\) [y, [n]]: "
+      }
+      if $yn != 'n' {
+        let cmd = if (which sudo | is-not-empty) { $"sudo ($cmd)" } else { $cmd }
+        packPacmanOp $cmd
+      }
     }
-    if $yn != 'n' {
-      let cmd = if (which sudo | is-not-empty) { $"sudo ($cmd)" } else { $cmd }
-      packPacmanOp $cmd
+  } catch { |e|
+    if not (($e.msg | str downcase) == "i/o error") {
+      throw $e
     }
   }
 }
