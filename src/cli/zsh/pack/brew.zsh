@@ -5,7 +5,7 @@ function packBrew {
     if [[ $YES ]]; then
       yn='y'
     else
-      read "yn?? use ${cmd} (system) [y, [n]] "
+      read "yn?? use ${cmd} (system) [y, [n]]: "
     fi
     if [[ $yn != 'n' ]]; then
       packBrewOp "$cmd"
