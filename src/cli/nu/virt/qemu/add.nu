@@ -46,12 +46,13 @@ def virtQemuRebindVfioPci [pciDevId] {
   for cmd in $cmds {
     opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($cmd)'#"
   }
+
   if 'NOOP' not-in $env {
     sleep 2sec
   }
 }
 
-def virtQemuRun [config, configVm, cmd, cmdSysArch, instance] {
+def virtQemuOpAdd [config, configVm, cmd, cmdSysArch, instance] {
   mut qemuEnv = {}
 
   let configEnv = [
@@ -74,11 +75,17 @@ def virtQemuRun [config, configVm, cmd, cmdSysArch, instance] {
   let cpuVendor = if ($cpuVendorFull | str contains 'amd') { 'amd' } else { 'intel' }
   $qemuEnv = $qemuEnv | upsert 'QEMU_GUEST_CPU_VENDOR' ($cpuVendor | str trim)
 
-  let nicMac = ^cat $"/sys/class/net/($qemuEnv.QEMU_HOST_NIC)/address"
-  $qemuEnv = $qemuEnv | upsert 'QEMU_HOST_NIC_MAC' ($nicMac | str trim)
-
-  let nicIfIndex = ^cat $"/sys/class/net/($qemuEnv.QEMU_HOST_NIC)/ifindex"
-  $qemuEnv = $qemuEnv | upsert 'QEMU_HOST_NIC_IF_INDEX' ($nicIfIndex | str trim)
+  let nicPath = $"/sys/class/net/($qemuEnv.QEMU_HOST_NIC)"
+  $qemuEnv = $qemuEnv | upsert 'QEMU_HOST_NIC_MAC' (if ('QEMU_HOST_NIC_MAC' in $qemuEnv) {
+    $qemuEnv.QEMU_HOST_NIC_MAC
+  } else {
+    ^cat $"($nicPath)/address" | str trim
+  })
+  $qemuEnv = $qemuEnv | upsert 'QEMU_HOST_NIC_IF_INDEX' (if ('QEMU_HOST_NIC_IF_INDEX' in $qemuEnv) {
+    $qemuEnv.QEMU_HOST_NIC_IF_INDEX
+  } else {
+    ^cat $"($nicPath)/ifindex" | str trim
+  })
 
   let sysArch = $qemuEnv.QEMU_GUEST_SYS_ARCH
   let sysPlat = $qemuEnv.QEMU_GUEST_SYS_PLAT
@@ -116,64 +123,83 @@ def virtQemuRun [config, configVm, cmd, cmdSysArch, instance] {
   if 'qemu' in $configVm {
     if (opPrintRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full $""^($cmdSysArch).*($instance)"" '}' '|' is-not-empty) == 'true' {
       opPrintWarn $"`($cmd)` instance `($instance)` is already up"
-    } else {
-      if 'swtpm' in $configVm {
-        if (opPrintRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full $""^swtpm.*($instance)"" '}' '|' is-not-empty) == 'true' {
-          opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'pkill --full "^swtpm.*($instance)"'#"
-        }
+      return
+    }
 
-        let swtpmBin = 'swtpm'
-
-        let qEnv = $qemuEnv
-        let swtpmArgs = envReplace $qEnv ($configVm | get swtpm.arguments? | default [])
-
-        for a in $swtpmArgs {
-          if ($a | str contains '--tpmstate') {
-            opPrintMaybeRunCmd mkdir $"($a | split row '=' | last | str trim)"
-          }
-        }
-
-        let swtpmCmd = $"($swtpmBin)(if ($swtpmArgs | length) > 0 { ' ' + ($swtpmArgs | str join ' ') } else { '' })"
-        opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($swtpmCmd)'#"
-
-        if 'NOOP' not-in $env {
-          sleep 2sec
-        }
+    if 'swtpm' in $configVm {
+      if (opPrintRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full $""^swtpm.*($instance)"" '}' '|' is-not-empty) == 'true' {
+        opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'pkill --full "^swtpm.*($instance)"'#"
       }
 
-      let qemuBlock = $config | get qemu | get $sysArch
-      let qemuBin = $cmdSysArch
+      let tmpPath = $"($qemuEnv.TMP_QEMU_DIR_PATH)/($instance)"
+      if ($tmpPath | path exists) {
+        opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'rm --force --recursive "($tmpPath)"'#"
+      }
 
-      let qemuCpuFlags = [
-        [cpu _ _ flags],
-        [cpu $cpuVendor _ flags],
-        [cpu _ $sysPlat flags],
-        [cpu _ $cpuVendor $sysPlat _ flags],
-      ] | each {
-        |s| let p = (intoCellPath ...$s)
-        if ($qemuBlock | get $p | is-not-empty) {
-          $qemuBlock | get $p
-        } else {
-          []
-        }
-      } | flatten
+      opPrintMaybeRunCmd mkdir $tmpPath
 
-      $qemuEnv = $qemuEnv | upsert 'QEMU_GUEST_CPU_FLAGS' (
-        if ($qemuCpuFlags | length) > 0 {
-          $",($qemuCpuFlags | str join ',')"
-        } else {
-          ''
-        }
-      )
+      let swtpmBin = 'swtpm'
 
       let qEnv = $qemuEnv
-      let qemuArgs = envReplace $qEnv ($configVm | get qemu.arguments? | default [])
+      let swtpmArgs = envReplace $qEnv ($configVm | get swtpm.arguments? | default [])
 
-      let qemuCmd = $"($qemuBin)(if ($qemuArgs | length) > 0 { ' ' + ($qemuArgs | str join ' ') } else { '' })"
-      opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($qemuCmd)'#"
+      let swtpmCmd = $"($swtpmBin)(if ($swtpmArgs | length) > 0 { ' ' + ($swtpmArgs | str join ' ') } else { '' })"
+      opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($swtpmCmd)'#"
 
       if 'NOOP' not-in $env {
         sleep 2sec
+      }
+    }
+
+    let qemuBlock = $config | get qemu | get $sysArch
+    let qemuBin = $cmdSysArch
+
+    let qemuCpuFlags = [
+      [cpu _ _ flags],
+      [cpu $cpuVendor _ flags],
+      [cpu _ $sysPlat flags],
+      [cpu _ $cpuVendor $sysPlat _ flags],
+    ] | each {
+      |s| let p = (intoCellPath ...$s)
+      if ($qemuBlock | get $p | is-not-empty) {
+        $qemuBlock | get $p
+      } else {
+        []
+      }
+    } | flatten
+
+    $qemuEnv = $qemuEnv | upsert 'QEMU_GUEST_CPU_FLAGS' (
+      if ($qemuCpuFlags | length) > 0 {
+        $",($qemuCpuFlags | str join ',')"
+      } else {
+        ''
+      }
+    )
+
+    let qEnv = $qemuEnv
+    let qemuArgs = envReplace $qEnv ($configVm | get qemu.arguments? | default [])
+
+    let qemuCmd = $"($qemuBin)(if ($qemuArgs | length) > 0 { ' ' + ($qemuArgs | str join ' ') } else { '' })"
+    opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($qemuCmd)'#"
+
+    if 'NOOP' not-in $env {
+      sleep 2sec
+
+      let cpus = 0..<(($qemuEnv.QEMU_GUEST_CPU_SOCKETS | into int) * ($qemuEnv.QEMU_GUEST_CPU_CORES | into int) * ($qemuEnv.QEMU_GUEST_CPU_THREADS | into int))
+
+      let pid = opPrintRunCmd ^pgrep --ignore-ancestors --full --list-full $""^($cmdSysArch).*($instance)"" '|' split row $"r#' '#" '|' first
+      let pidThreadInfos = ^ps --pid $pid -T -o ucmd,spid | from ssv
+
+      let pidThreads = $cpus | each { |cpu|
+        $pidThreadInfos | each { |threadInfo|
+          if ($threadInfo | get CMD | str starts-with $"CPU ($cpu)/KVM") {
+            $threadInfo | get SPID
+          }
+        }
+      } | flatten
+
+      for $i in ($pidThreads | enumerate) {
+        opPrintRunCmd sudo --preserve-env sh -c $"r#'taskset --pid --cpu-list ($i.index) ($i.item)'#" '|' ignore
       }
     }
   }
@@ -188,6 +214,6 @@ def virtQemuOp [cmd, cmdSysArch] {
     let configVm = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($urlConfigVm)'#" ')"'
 
     virtQemuUnbindEfiFb
-    virtQemuRun ($config | from yaml) ($configVm | from yaml) $cmd $cmdSysArch $instance
+    virtQemuOpAdd ($config | from yaml) ($configVm | from yaml) $cmd $cmdSysArch $instance
   }
 }

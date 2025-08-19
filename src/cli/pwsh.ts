@@ -11,7 +11,7 @@ export class Powershell extends CliBase implements Cli {
 
   async gatedFunc(name: string, lines: Promise<Array<string>>) {
     return [
-      '&{',
+      '& {',
       `  $yn = ''`,
       '  if ($YES) {',
       `    $yn = 'y'`,

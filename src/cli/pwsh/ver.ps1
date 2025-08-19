@@ -1,4 +1,4 @@
-&{
+& {
   $sh_ver_major = 7
   $sh_ver_minor = 5
 

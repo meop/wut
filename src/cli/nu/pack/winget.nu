@@ -14,7 +14,7 @@ def packWinget [] {
     }
   } catch { |e|
     if not (($e.msg | str downcase) == "i/o error") {
-      throw $e
+      error make $e
     }
   }
 }
