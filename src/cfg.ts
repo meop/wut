@@ -4,6 +4,7 @@ import {
   getFileContent,
   getFilePaths,
   isDir,
+  isFile,
   toRelParts,
 } from './path.ts'
 import { Fmt, fromCfg } from './serde.ts'
@@ -101,6 +102,18 @@ export async function getCfgFsDirLoad(
     }
   }
   return contents
+}
+
+export async function isCfgFsFile(
+  parts: Promise<Array<string>>,
+  options?: {
+    extension?: Fmt
+  },
+) {
+  const _parts = await parts
+  return await isFile(
+    `${localCfgPath(_parts)}${options?.extension ? `.${options.extension}` : ''}`,
+  )
 }
 
 export async function getCfgFsFileContent(

@@ -169,7 +169,9 @@ export class VirtCmdAdd extends CmdBase implements Cmd {
     this.name = 'add'
     this.description = 'add on local'
     this.aliases = ['a', 'ad', 'in', 'install']
-    this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
+    this.arguments = [
+      { name: 'parts', description: 'path part(s) to match', required: true },
+    ]
   }
   override async work(
     client: Cli,
@@ -220,7 +222,9 @@ export class VirtCmdRem extends CmdBase implements Cmd {
     this.name = 'rem'
     this.description = 'remove on local'
     this.aliases = ['r', 'rm', 'rem', 'remove', 'un', 'unin', 'uninstall']
-    this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
+    this.arguments = [
+      { name: 'parts', description: 'path part(s) to match', required: true },
+    ]
   }
   override async work(
     client: Cli,

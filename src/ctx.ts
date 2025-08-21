@@ -29,8 +29,10 @@ export function getSp(usp: URLSearchParams, key: string) {
   return usp.has(key) ? (usp.get(key) ?? '') : undefined
 }
 
-export function getCtx(req: Request): Ctx {
-  const url = new URL(req.url.endsWith('/') ? req.url.slice(0, -1) : req.url)
+export function getCtx(request: Request): Ctx {
+  const url = new URL(
+    request.url.endsWith('/') ? request.url.slice(0, -1) : request.url,
+  )
   const usp = new URLSearchParams(url.search)
 
   const spSysCpuArch = getSp(usp, 'sysCpuArch')

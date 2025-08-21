@@ -1,4 +1,9 @@
-import { getCfgFsFileDump, getCfgFsFileLoad } from '../cfg.ts'
+import {
+  getCfgFsDirDump,
+  getCfgFsFileDump,
+  getCfgFsFileLoad,
+  isCfgFsFile,
+} from '../cfg.ts'
 import { Powershell } from '../cli/pwsh.ts'
 import { Zshell } from '../cli/zsh.ts'
 import type { Cli } from '../cli.ts'
@@ -100,19 +105,30 @@ async function workAddFindRem(
       .with(_client.fsFileLoad(Promise.resolve([PACK_KEY, supportedManager])))
   }
 
-  const requestedNames = environment[PACK_OP_NAMES_KEY(op)].split(' ')
+  const requestedNames = environment[PACK_OP_NAMES_KEY(op)]?.split(' ') ?? []
   const foundNames: Array<string> = []
 
   if (environment[PACK_OP_GROUPS_KEY(op)]) {
-    for (const name of requestedNames) {
-      const content = await getCfgFsFileLoad(
-        Promise.resolve([PACK_KEY, name]),
-        {
-          extension: Fmt.yaml,
-        },
+    if (!requestedNames.length && op === 'find') {
+      _client = _client.with(
+        _client.gatedFunc(
+          'use cfg (remote)',
+          _client.print(
+            getCfgFsDirDump(Promise.resolve([PACK_KEY]), {
+              extension: Fmt.yaml,
+            }).then(x => x.map(r => r.join(' '))),
+          ),
+        ),
       )
+    }
 
-      if (content == null) {
+    for (const name of requestedNames) {
+      const fileParts = [PACK_KEY, name]
+      if (
+        !(await isCfgFsFile(Promise.resolve(fileParts), {
+          extension: Fmt.yaml,
+        }))
+      ) {
         continue
       }
 
@@ -121,13 +137,21 @@ async function workAddFindRem(
           _client.gatedFunc(
             'use cfg (remote)',
             _client.print(
-              getCfgFsFileDump(Promise.resolve([PACK_KEY, name]), {
+              getCfgFsFileDump(Promise.resolve(fileParts), {
                 extension: Fmt.yaml,
               }).then(x => x.pop() ?? ''),
             ),
           ),
         )
       } else {
+        const content = await getCfgFsFileLoad(Promise.resolve(fileParts), {
+          extension: Fmt.yaml,
+        })
+
+        if (content == null) {
+          continue
+        }
+
         for (const key of Object.keys(content)) {
           if (!supportedManagers.includes(key)) {
             continue
@@ -242,7 +266,7 @@ export class PackCmdAdd extends CmdBase implements Cmd {
     this.description = 'add on local'
     this.aliases = ['a', 'ad', 'in', 'install']
     this.arguments = [
-      { name: 'names', description: 'name(s) to match', req: true },
+      { name: 'names', description: 'name(s) to match', required: true },
     ]
     this.switches = [{ keys: ['-g', '--groups'], description: 'check groups' }]
   }
@@ -261,9 +285,7 @@ export class PackCmdFind extends CmdBase implements Cmd {
     this.name = 'find'
     this.description = 'find from remote'
     this.aliases = ['f', 'fi', 'se', 'search']
-    this.arguments = [
-      { name: 'names', description: 'name(s) to match', req: true },
-    ]
+    this.arguments = [{ name: 'names', description: 'name(s) to match' }]
     this.switches = [{ keys: ['-g', '--groups'], description: 'check groups' }]
   }
   override async work(
@@ -316,7 +338,7 @@ export class PackCmdRem extends CmdBase implements Cmd {
     this.description = 'remove on local'
     this.aliases = ['r', 'rm', 'rem', 'remove', 'un', 'unin', 'uninstall']
     this.arguments = [
-      { name: 'names', description: 'name(s) to match', req: true },
+      { name: 'names', description: 'name(s) to match', required: true },
     ]
     this.switches = [{ keys: ['-g', '--groups'], description: 'check groups' }]
   }

@@ -76,9 +76,9 @@ enum Op {
   cli = 'cli',
 }
 
-async function runSrv(req: Request) {
+async function runSrv(request: Request) {
   try {
-    const context = getCtx(req)
+    const context = getCtx(request)
     const path = context.req_path
     const parts = expandParts(path.split('/').filter(p => p.length > 0))
 
@@ -192,5 +192,5 @@ Deno.serve(
     hostname: Deno.env.get('hostname') ?? '0.0.0.0',
     port: Number(Deno.env.get('port') ?? '9000'),
   },
-  async req => await runSrv(req),
+  async request => await runSrv(request),
 )

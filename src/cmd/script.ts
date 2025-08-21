@@ -96,7 +96,9 @@ export class ScriptCmdExec extends CmdBase implements Cmd {
     this.name = 'exec'
     this.description = 'exec on local'
     this.aliases = ['e', 'execute', 'ru', 'run']
-    this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
+    this.arguments = [
+      { name: 'parts', description: 'path part(s) to match', required: true },
+    ]
   }
   override async work(
     client: Cli,

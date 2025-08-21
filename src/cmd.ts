@@ -8,7 +8,7 @@ export interface Cmd {
   description: string
 
   aliases: Array<string>
-  arguments: Array<{ name: string; description: string; req?: boolean }>
+  arguments: Array<{ name: string; description: string; required?: boolean }>
   options: Array<{ keys: Array<string>; description: string }>
   switches: Array<{ keys: Array<string>; description: string }>
 
@@ -37,7 +37,8 @@ export class CmdBase {
   description = ''
 
   aliases: Array<string> = []
-  arguments: Array<{ name: string; description: string; req?: boolean }> = []
+  arguments: Array<{ name: string; description: string; required?: boolean }> =
+    []
   options: Array<{ keys: Array<string>; description: string }> = []
   switches: Array<{ keys: Array<string>; description: string }> = []
 
@@ -60,7 +61,7 @@ export class CmdBase {
     if (this.arguments.length) {
       content.arguments = this.arguments.map(
         a =>
-          `${a.req ? '<' : '['}${a.name}${a.req ? '>' : ']'} | ${a.description}`,
+          `${a.required ? '<' : '['}${a.name}${a.required ? '>' : ']'} | ${a.description}`,
       )
     }
 
@@ -230,7 +231,7 @@ export class CmdBase {
     }
 
     while (argumentIndex < this.arguments.length) {
-      if (this.arguments[argumentIndex].req) {
+      if (this.arguments[argumentIndex].required) {
         return loadCliEnv(() => this.help(_client, _context, _environment))
       }
       argumentIndex += 1
