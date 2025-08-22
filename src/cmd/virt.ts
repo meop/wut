@@ -82,10 +82,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   const supportedManagers = getSupportedManagers(context, environment)
 
   const dirParts = [VIRT_KEY, context.sys_host ?? '']
-  const filters: Array<string> = []
-  if (VIRT_OP_PARTS_KEY(op) in environment) {
-    filters.push(...environment[VIRT_OP_PARTS_KEY(op)].split(' '))
-  }
+  const filters = environment[VIRT_OP_PARTS_KEY(op)]?.split(' ') ?? []
 
   if (op === 'find') {
     _client = _client.with(

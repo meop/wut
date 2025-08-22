@@ -1,9 +1,4 @@
-import {
-  getCfgFsDirDump,
-  getCfgFsFileDump,
-  getCfgFsFileLoad,
-  isCfgFsFile,
-} from '../cfg.ts'
+import { getCfgFsDirDump, getCfgFsFileLoad } from '../cfg.ts'
 import { Powershell } from '../cli/pwsh.ts'
 import { Zshell } from '../cli/zsh.ts'
 import type { Cli } from '../cli.ts'
@@ -105,48 +100,36 @@ async function workAddFindRem(
       .with(_client.fsFileLoad(Promise.resolve([PACK_KEY, supportedManager])))
   }
 
-  const requestedNames = environment[PACK_OP_NAMES_KEY(op)]?.split(' ') ?? []
-  const foundNames: Array<string> = []
+  const names = environment[PACK_OP_NAMES_KEY(op)]?.split(' ') ?? []
+  const namesFound: Array<string> = []
+
+  const groupFind = (filters?: Promise<Array<string>>) =>
+    _client.with(
+      _client.gatedFunc(
+        'use cfg (remote)',
+        _client.print(
+          getCfgFsDirDump(Promise.resolve([PACK_KEY]), {
+            extension: Fmt.yaml,
+            filters,
+          }).then(x => x.map(r => r.join(' '))),
+        ),
+      ),
+    )
 
   if (environment[PACK_OP_GROUPS_KEY(op)]) {
-    if (!requestedNames.length && op === 'find') {
-      _client = _client.with(
-        _client.gatedFunc(
-          'use cfg (remote)',
-          _client.print(
-            getCfgFsDirDump(Promise.resolve([PACK_KEY]), {
-              extension: Fmt.yaml,
-            }).then(x => x.map(r => r.join(' '))),
-          ),
-        ),
-      )
+    if (!names.length && op === 'find') {
+      _client = groupFind()
     }
-
-    for (const name of requestedNames) {
-      const fileParts = [PACK_KEY, name]
-      if (
-        !(await isCfgFsFile(Promise.resolve(fileParts), {
-          extension: Fmt.yaml,
-        }))
-      ) {
-        continue
-      }
-
+    for (const name of names) {
       if (op === 'find') {
-        _client = _client.with(
-          _client.gatedFunc(
-            'use cfg (remote)',
-            _client.print(
-              getCfgFsFileDump(Promise.resolve(fileParts), {
-                extension: Fmt.yaml,
-              }).then(x => x.pop() ?? ''),
-            ),
-          ),
-        )
+        _client = groupFind(Promise.resolve([name]))
       } else {
-        const content = await getCfgFsFileLoad(Promise.resolve(fileParts), {
-          extension: Fmt.yaml,
-        })
+        const content = await getCfgFsFileLoad(
+          Promise.resolve([PACK_KEY, name]),
+          {
+            extension: Fmt.yaml,
+          },
+        )
 
         if (content == null) {
           continue
@@ -205,18 +188,18 @@ async function workAddFindRem(
           }
         }
       }
-      foundNames.push(name)
+      namesFound.push(name)
     }
   }
 
-  const remainingNames = requestedNames.filter(n => !foundNames.includes(n))
+  const namesRemaining = names.filter(n => !namesFound.includes(n))
 
-  if (remainingNames.length) {
+  if (namesRemaining.length) {
     _client = _client
       .with(
         _client.varSet(
           Promise.resolve(PACK_OP_NAMES_KEY(op)),
-          Promise.resolve(_client.toInner(remainingNames.join(' '))),
+          Promise.resolve(_client.toInner(namesRemaining.join(' '))),
         ),
       )
       .with(Promise.resolve(supportedManagers.map(m => getManagerFuncName(m))))

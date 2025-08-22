@@ -122,6 +122,9 @@ export async function getCfgFsFileContent(
     extension?: Fmt
   },
 ) {
+  if (!(await isCfgFsFile(parts, options))) {
+    return null
+  }
   const _parts = await parts
   return await getFileContent(
     `${localCfgPath(_parts)}${options?.extension ? `.${options.extension}` : ''}`,

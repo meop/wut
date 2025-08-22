@@ -66,10 +66,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   }
 
   let _client = client
-  const filters: Array<string> = []
-  if (FILE_OP_PARTS_KEY(op) in environment) {
-    filters.push(...environment[FILE_OP_PARTS_KEY(op)].split(' '))
-  }
+  const filters = environment[FILE_OP_PARTS_KEY(op)]?.split(' ') ?? []
 
   const content: Sync = await getCfgFsFileLoad(Promise.resolve([FILE_KEY]), {
     extension: Fmt.yaml,
