@@ -37,7 +37,7 @@ export function getSysOsDeId(sysOsDeId: string) {
     case 'kde':
     case 'plasma':
       return 'plasma'
-    case 'lxde-pi-labwc':
+    case 'rpd':
     case 'lxde':
       return 'lxde'
     case 'lxqt':
