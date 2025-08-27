@@ -1,7 +1,7 @@
 ---
 name: wut
 services:
-  web:
+  srv:
     command: deno run --allow-all --watch src/srv.ts
     # command: -f /dev/null
     # entrypoint: /usr/bin/tail
@@ -11,7 +11,7 @@ services:
     hostname: wut-srv
     image: docker.io/denoland/deno:latest
     ports:
-      - "9000:9000/tcp"
+      - '9000:9000/tcp'
     restart: unless-stopped
     volumes:
       - type: bind
