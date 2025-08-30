@@ -14,7 +14,7 @@
   },
   "scripts": {
     "down": "docker compose --file docker/wut.yaml down",
-    "run": "deno run --allow-all --watch src/srv.ts",
+    "srv": "deno run --allow-all --watch src/srv.ts",
     "up": "docker compose --file docker/wut.yaml up --detach --pull always"
   },
   "trustedDependencies": [
