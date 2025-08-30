@@ -13,9 +13,9 @@
     "typescript": "^5.9.2"
   },
   "scripts": {
-    "hot": "deno run --allow-all --watch src/srv.ts",
-    "up": "docker compose --file docker/srv.yaml up --detach --pull always",
-    "down": "docker compose --file docker/srv.yaml down"
+    "down": "docker compose --file docker/wut.yaml down",
+    "run": "deno run --allow-all --watch src/srv.ts",
+    "up": "docker compose --file docker/wut.yaml up --detach --pull always"
   },
   "trustedDependencies": [
     "@biomejs/biome"
