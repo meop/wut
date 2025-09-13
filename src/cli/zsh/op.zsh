@@ -64,6 +64,10 @@ function opPrintCmd {
   fi
 }
 
+# function opPrintCmdOutput {
+#   echo "$(echo "$1" | sed -z 's/\n*$//')"
+# }
+
 function opRunCmd {
   eval "$*"
 }
