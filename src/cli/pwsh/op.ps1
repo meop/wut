@@ -2,7 +2,7 @@ function opPrint {
   if ($SUCCINCT) {
     return
   }
-  [Console]::WriteLine($($args -Join ' '))
+  [Console]::WriteLine($($args -join ' '))
 }
 
 function opPrintErr {
@@ -10,11 +10,11 @@ function opPrintErr {
     return
   }
   if ($GRAYSCALE) {
-    [Console]::Error.WriteLine($($args -Join ' '))
+    [Console]::Error.WriteLine($($args -join ' '))
     return
   }
-  [Console]::ForegroundColor = 'Red'
-  [Console]::Error.WriteLine($($args -Join ' '))
+  [Console]::ForegroundColor = 'red'
+  [Console]::Error.WriteLine($($args -join ' '))
   [Console]::ResetColor()
 }
 
@@ -23,11 +23,11 @@ function opPrintSucc {
     return
   }
   if ($GRAYSCALE) {
-    [Console]::WriteLine($($args -Join ' '))
+    [Console]::WriteLine($($args -join ' '))
     return
   }
-  [Console]::ForegroundColor = 'Green'
-  [Console]::WriteLine($($args -Join ' '))
+  [Console]::ForegroundColor = 'green'
+  [Console]::WriteLine($($args -join ' '))
   [Console]::ResetColor()
 }
 
@@ -36,11 +36,11 @@ function opPrintWarn {
     return
   }
   if ($GRAYSCALE) {
-    [Console]::WriteLine($($args -Join ' '))
+    [Console]::WriteLine($($args -join ' '))
     return
   }
-  [Console]::ForegroundColor = 'Yellow'
-  [Console]::WriteLine($($args -Join ' '))
+  [Console]::ForegroundColor = 'yellow'
+  [Console]::WriteLine($($args -join ' '))
   [Console]::ResetColor()
 }
 
@@ -49,11 +49,11 @@ function opPrintInfo {
     return
   }
   if ($GRAYSCALE) {
-    [Console]::WriteLine($($args -Join ' '))
+    [Console]::WriteLine($($args -join ' '))
     return
   }
-  [Console]::ForegroundColor = 'Blue'
-  [Console]::WriteLine($($args -Join ' '))
+  [Console]::ForegroundColor = 'blue'
+  [Console]::WriteLine($($args -join ' '))
   [Console]::ResetColor()
 }
 
@@ -62,16 +62,16 @@ function opPrintCmd {
     return
   }
   if ($GRAYSCALE) {
-    [Console]::WriteLine($($args -Join ' '))
+    [Console]::WriteLine($($args -join ' '))
     return
   }
-  [Console]::ForegroundColor = 'Magenta'
+  [Console]::ForegroundColor = 'magenta'
   [Console]::Write($args[0])
   [Console]::ResetColor()
   if ($args.Length -gt 1) {
     [Console]::Write(' ')
-    [Console]::ForegroundColor = 'Cyan'
-    [Console]::WriteLine($($($args | Select-Object -Skip 1) -Join ' '))
+    [Console]::ForegroundColor = 'cyan'
+    [Console]::WriteLine($($($args | Select-Object -Skip 1) -join ' '))
     [Console]::ResetColor()
   }
 }

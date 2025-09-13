@@ -1,7 +1,7 @@
 function packScoopOp ($cmd) {
   if ($PACK_ADD_GROUP_NAMES) {
     foreach ($pg in $PACK_ADD_GROUP_NAMES) {
-      $pgSplit = $pg -Split ' '
+      $pgSplit = $pg -split ' '
       opPrintMaybeRunCmd @pgSplit
     }
   }
