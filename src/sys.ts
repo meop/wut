@@ -4,8 +4,8 @@ export function getSysCpuArch(sysCpuArch: string) {
     case 'x64':
     case 'x86_64':
       return 'x86_64'
-    case 'aarch64':
     case 'arm64':
+    case 'aarch64':
       return 'aarch64'
     default:
       throw new Error(`unsupported cpu architecture: ${sysCpuArch}`)
