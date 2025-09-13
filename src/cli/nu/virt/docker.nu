@@ -13,7 +13,7 @@ def virtDocker [] {
       }
     }
   } catch { |e|
-    if not (($e.msg | str downcase) == "i/o error") {
+    if not (($e.msg | str downcase) == 'external command had a non-zero exit code') {
       error make $e
     }
   }

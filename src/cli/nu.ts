@@ -23,7 +23,7 @@ export class Nushell extends CliBase implements Cli {
       ...(await lines),
       '    }',
       '  } catch { |e|',
-      `    if not (($e.msg | str downcase) == "i/o error") {`,
+      `    if not (($e.msg | str downcase) == 'external command had a non-zero exit code') {`,
       '      throw $e',
       '    }',
       '  }',

@@ -1,5 +1,5 @@
 def packBrew [] {
-  try {  
+  try {
     let cmd = 'brew'
     if ('PACK_MANAGER' not-in $env or $env.PACK_MANAGER == $cmd) and (which $cmd | is-not-empty) {
       mut yn = ''
@@ -13,7 +13,7 @@ def packBrew [] {
       }
     }
   } catch { |e|
-    if not (($e.msg | str downcase) == "i/o error") {
+    if not (($e.msg | str downcase) == 'external command had a non-zero exit code') {
       error make $e
     }
   }
