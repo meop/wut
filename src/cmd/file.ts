@@ -87,8 +87,8 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   }
 
   _client = _client
-    .with(_client.fsFileLoad(Promise.resolve([FILE_KEY, op])))
-    .with(_client.fsFileLoad(Promise.resolve([FILE_KEY])))
+    .with(_client.fsFileLoad(Promise.resolve([FILE_KEY, FILE_KEY, op])))
+    .with(_client.fsFileLoad(Promise.resolve([FILE_KEY, FILE_KEY])))
 
   if (op === 'find') {
     _client = _client.with(
