@@ -6,15 +6,15 @@
     "yaml": "^2.8.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.0",
-    "@types/node": "^24.3.0"
+    "@biomejs/biome": "^2.2.4",
+    "@types/node": "^24.3.1"
   },
   "peerDependencies": {
     "typescript": "^5.9.2"
   },
   "scripts": {
     "down": "docker compose --file docker/wut.yaml down",
-    "srv": "deno run --allow-all --watch src/srv.ts",
+    "hot": "deno run --allow-all --watch src/srv.ts",
     "up": "docker compose --file docker/wut.yaml up --detach --pull always"
   },
   "trustedDependencies": [
