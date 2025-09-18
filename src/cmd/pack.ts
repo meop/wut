@@ -61,10 +61,10 @@ function getSupportedManagers(context: Ctx, environment: Env) {
     managers.push(...osPlatToManagers[osPlat])
   }
   if (osId) {
-    managers = managers.filter(p => osIdToManagers[osId].includes(p))
+    managers = managers.filter((p) => osIdToManagers[osId].includes(p))
   }
   if (environment[PACK_MANAGER_KEY]) {
-    managers = managers.filter(p => p === environment[PACK_MANAGER_KEY])
+    managers = managers.filter((p) => p === environment[PACK_MANAGER_KEY])
   }
 
   return managers
@@ -111,7 +111,7 @@ async function workAddFindRem(
           getCfgFsDirDump(Promise.resolve([PACK_KEY]), {
             extension: Fmt.yaml,
             filters,
-          }).then(x => x.map(r => r.join(' '))),
+          }).then((x) => x.map((r) => r.join(' '))),
         ),
       ),
     )
@@ -159,11 +159,11 @@ async function workAddFindRem(
                   value[op].map((v: string) =>
                     _client.name === 'nu'
                       ? _client.toOuter(
-                          context.sys_os_plat === 'winnt'
-                            ? Powershell.execStr(_client.toInner(v))
-                            : Zshell.execStr(_client.toInner(v)),
-                        )
-                      : _client.toInner(v),
+                        context.sys_os_plat === 'winnt'
+                          ? Powershell.execStr(_client.toInner(v))
+                          : Zshell.execStr(_client.toInner(v)),
+                      )
+                      : _client.toInner(v)
                   ),
                 ),
               ),
@@ -192,7 +192,7 @@ async function workAddFindRem(
     }
   }
 
-  const namesRemaining = names.filter(n => !namesFound.includes(n))
+  const namesRemaining = names.filter((n) => !namesFound.includes(n))
 
   if (namesRemaining.length) {
     _client = _client
@@ -202,7 +202,9 @@ async function workAddFindRem(
           Promise.resolve(_client.toInner(namesRemaining.join(' '))),
         ),
       )
-      .with(Promise.resolve(supportedManagers.map(m => getManagerFuncName(m))))
+      .with(
+        Promise.resolve(supportedManagers.map((m) => getManagerFuncName(m))),
+      )
   }
 
   const body = await _client.build()
@@ -232,7 +234,7 @@ async function workListOutSyncTidy(
   }
 
   const body = await _client
-    .with(Promise.resolve(supportedManagers.map(m => getManagerFuncName(m))))
+    .with(Promise.resolve(supportedManagers.map((m) => getManagerFuncName(m))))
     .build()
 
   if (environment[LOG_KEY]) {

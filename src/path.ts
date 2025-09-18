@@ -21,6 +21,15 @@ export async function isFile(filePath: string) {
   }
 }
 
+export async function isValidPath(fsPath: string) {
+  try {
+    await fs.stat(fsPath)
+    return true
+  } catch {
+    return false
+  }
+}
+
 export async function getFileContent(filePath: string) {
   if (!(await isFile(filePath))) {
     return null
@@ -47,7 +56,7 @@ export async function getFilePaths(
   const patterns: Array<string> = []
 
   if (options?.filters?.length) {
-    const filterPattern = options.filters.map(f => `${f}*`).join('/')
+    const filterPattern = options.filters.map((f) => `${f}*`).join('/')
     if (options?.extension) {
       patterns.push(`${filterPattern}/*.${options.extension}`)
       patterns.push(`${filterPattern}.${options.extension}`)
@@ -67,10 +76,12 @@ export async function getFilePaths(
 
   const filePaths: Array<string> = []
   for (const pattern of patterns) {
-    for await (const match of fs.glob(pattern, {
-      cwd: dirPath,
-      withFileTypes: true,
-    })) {
+    for await (
+      const match of fs.glob(pattern, {
+        cwd: dirPath,
+        withFileTypes: true,
+      })
+    ) {
       if (match.isFile()) {
         filePaths.push(PATH.join(match.parentPath, match.name))
       }
@@ -91,8 +102,8 @@ export function toRelParts(dirPath: string, filePath: string, stripExt = true) {
   return adjustedFilePath
     .replace(dir, '')
     .split(PATH.sep)
-    .filter(f => f)
-    .map(f => f.trimEnd())
+    .filter((f) => f)
+    .map((f) => f.trimEnd())
 }
 
 export type AclPermScope = {
@@ -182,7 +193,9 @@ export function getPlatAclPermCmds(
     case 'winnt':
       return [
         `icacls '${toWinntPath(fsPath)}' /t /reset`,
-        `icacls '${toWinntPath(fsPath)}' /t /inheritance:r /grant ${getFsAclWinntVal(perm, user)}`,
+        `icacls '${toWinntPath(fsPath)}' /t /inheritance:r /grant ${
+          getFsAclWinntVal(perm, user)
+        }`,
       ]
     default:
       throw new Error(`unsupported os platform: ${plat}`)

@@ -1,15 +1,16 @@
-import { getCfgFsFileLoad, localCfgPath } from '../cfg.ts'
+import { getCfgFsFileLoad, localCfgPaths } from '../cfg.ts'
 import { Powershell } from '../cli/pwsh.ts'
 import { Zshell } from '../cli/zsh.ts'
 import type { Cli } from '../cli.ts'
 import { type Cmd, CmdBase } from '../cmd.ts'
-import type { Ctx } from '../ctx.ts'
+import { Ctx, withCtx } from '../ctx.ts'
 import { type Env, toEnvKey } from '../env.ts'
 import {
   type AclPerm,
   getFilePaths,
   getPlatAclPermCmds,
   isDir,
+  isValidPath,
   toRelParts,
 } from '../path.ts'
 import { Fmt } from '../serde.ts'
@@ -78,10 +79,12 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   const sys_os_plat = context.sys_os_plat ?? ''
 
   const validKeys: Array<string> = []
-  for (const key of Object.keys(content).filter(
-    k => !filters.length || filters.find(f => k.startsWith(f)),
-  )) {
-    if (content[key].find(p => sys_os_plat in p.out)) {
+  for (
+    const key of Object.keys(content).filter(
+      (k) => !filters.length || filters.find((f) => k.startsWith(f)),
+    )
+  ) {
+    if (content[key].find((p) => sys_os_plat in p.out)) {
       validKeys.push(key)
     }
   }
@@ -94,59 +97,70 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     _client = _client.with(
       _client.varArrSet(
         Promise.resolve(FILE_OP_KEYS_KEY(op)),
-        Promise.resolve(validKeys.map(x => _client.toInner(x))),
+        Promise.resolve(validKeys.map((x) => _client.toInner(x))),
       ),
     )
   } else {
-    const validClearDirs: Array<string> = []
+    const validClearDirs: Set<string> = new Set()
     const validPairs: Array<string> = []
     const validPerms: Array<string> = []
 
     for (const key of validKeys) {
       for (const entry of content[key]) {
-        if (!(sys_os_plat in entry.out)) {
+        const entry_in = withCtx(entry.in, context)
+        const entry_out = entry.out
+        const entry_perm = entry.perm
+
+        if (!(sys_os_plat in entry_out)) {
           continue
         }
-
-        const localDirPath = localCfgPath([FILE_KEY, key, entry.in])
-        if (await isDir(localDirPath)) {
-          validClearDirs.push(
-            _client.toOuter(`${key}${PARAM_SPLIT}${entry.out[sys_os_plat]}`),
-          )
-          for (const filePath of await getFilePaths(localDirPath)) {
-            const filePathParts = toRelParts(localDirPath, filePath, false)
-            const srcFull = _client.toInner(
-              [key, entry.in, ...filePathParts].join('/'),
+        const localEntryPaths = localCfgPaths([FILE_KEY, key, entry_in]).filter(
+          (x) => isValidPath(x),
+        )
+        if (!localEntryPaths.length) {
+          continue
+        }
+        if (await isDir(localEntryPaths[0])) {
+          for (const localEntryPath of localEntryPaths) {
+            validClearDirs.add(
+              _client.toOuter(`${key}${PARAM_SPLIT}${entry_out[sys_os_plat]}`),
             )
-            const dstFull = _client.toInner(
-              [entry.out[sys_os_plat], ...filePathParts].join('/'),
-            )
-            validPairs.push(
-              _client.toOuter(
-                `${key}${PARAM_SPLIT}${srcFull}${PARAM_SPLIT}${dstFull}`,
-              ),
-            )
+            for (const filePath of await getFilePaths(localEntryPath)) {
+              const filePathParts = toRelParts(localEntryPath, filePath, false)
+              const srcFull = _client.toInner(
+                [key, entry_in, ...filePathParts].join('/'),
+              )
+              const dstFull = _client.toInner(
+                [entry_out[sys_os_plat], ...filePathParts].join('/'),
+              )
+              validPairs.push(
+                _client.toOuter(
+                  `${key}${PARAM_SPLIT}${srcFull}${PARAM_SPLIT}${dstFull}`,
+                ),
+              )
+            }
           }
         } else {
-          const srcFull = _client.toInner([key, entry.in].join('/'))
-          const dstFull = _client.toInner(entry.out[sys_os_plat])
+          const srcFull = _client.toInner([key, entry_in].join('/'))
+          const dstFull = _client.toInner(entry_out[sys_os_plat])
           validPairs.push(
             _client.toOuter(
               `${key}${PARAM_SPLIT}${srcFull}${PARAM_SPLIT}${dstFull}`,
             ),
           )
         }
-        if (entry.perm) {
-          for (const permCmd of getPlatAclPermCmds(
-            sys_os_plat,
-            entry.out[sys_os_plat],
-            entry.perm,
-            context.sys_user ?? '',
-          )) {
-            const permCmdFull =
-              context.sys_os_plat === 'winnt'
-                ? Powershell.execStr(_client.toInner(permCmd))
-                : Zshell.execStr(_client.toInner(permCmd))
+        if (entry_perm) {
+          for (
+            const permCmd of getPlatAclPermCmds(
+              sys_os_plat,
+              entry_out[sys_os_plat],
+              entry_perm,
+              context.sys_user ?? '',
+            )
+          ) {
+            const permCmdFull = context.sys_os_plat === 'winnt'
+              ? Powershell.execStr(_client.toInner(permCmd))
+              : Zshell.execStr(_client.toInner(permCmd))
             validPerms.push(
               _client.toOuter(`${key}${PARAM_SPLIT}${permCmdFull}`),
             )
@@ -163,11 +177,11 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     )
 
     if (op === 'sync') {
-      if (validClearDirs.length) {
+      if (validClearDirs.size) {
         _client = _client.with(
           _client.varArrSet(
             Promise.resolve(FILE_OP_CLEAR_DIRS_KEY(op)),
-            Promise.resolve(validClearDirs),
+            Promise.resolve([...validClearDirs]),
           ),
         )
       }

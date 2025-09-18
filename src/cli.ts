@@ -79,7 +79,7 @@ export class CliBase {
   async _print(lines: Promise<string | Array<string>>, op: string) {
     const _lines = await lines
     return (typeof _lines === 'string' ? [_lines] : _lines).map(
-      l => `${op} ${this.toInner(l)}`,
+      (l) => `${op} ${this.toInner(l)}`,
     )
   }
 

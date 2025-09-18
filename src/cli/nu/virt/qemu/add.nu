@@ -97,7 +97,7 @@ def virtQemuOpAdd [config, configVm, cmd, cmdSysArch, instance] {
     }
   }
 
-  def envReplace [localEnv, lines] {
+  def replaceEnv [localEnv, lines] {
     let localEnvItems = $localEnv | items { |key, value| [$key, $value] }
 
     mut linesX = []
@@ -141,7 +141,7 @@ def virtQemuOpAdd [config, configVm, cmd, cmdSysArch, instance] {
       let swtpmBin = 'swtpm'
 
       let qEnv = $qemuEnv
-      let swtpmArgs = envReplace $qEnv ($configVm | get swtpm.arguments? | default [])
+      let swtpmArgs = replaceEnv $qEnv ($configVm | get swtpm.arguments? | default [])
 
       let swtpmCmd = $"($swtpmBin)(if ($swtpmArgs | length) > 0 { ' ' + ($swtpmArgs | str join ' ') } else { '' })"
       opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($swtpmCmd)'#"
@@ -177,7 +177,7 @@ def virtQemuOpAdd [config, configVm, cmd, cmdSysArch, instance] {
     )
 
     let qEnv = $qemuEnv
-    let qemuArgs = envReplace $qEnv ($configVm | get qemu.arguments? | default [])
+    let qemuArgs = replaceEnv $qEnv ($configVm | get qemu.arguments? | default [])
 
     let qemuCmd = $"($qemuBin)(if ($qemuArgs | length) > 0 { ' ' + ($qemuArgs | str join ' ') } else { '' })"
     opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($qemuCmd)'#"

@@ -8,7 +8,17 @@ Some operations cannot work over SSH because they are installing GUI tools
 
 Some operations create dynamic prompts for the user and cannot be scripted
 
-## nu
+## client
+
+### run
+
+Install a supported client from below how you would like
+
+For Unix, make sure sudo is installed
+
+Copy and paste the chosen run function into your client
+
+#### nu
 
 Nushell is supported on Unix or Windows for SSR commands (pack, script)
 
@@ -26,7 +36,7 @@ def wut --wrapped [...args] {
 }
 ```
 
-## pwsh
+#### pwsh
 
 Powershell is supported on Windows for SSR commands (pack, script)
 
@@ -44,7 +54,7 @@ function wut {
 }
 ```
 
-## zsh
+#### zsh
 
 Zshell is supported on Unix for SSR commands (pack, script)
 
@@ -60,4 +70,18 @@ function wut {
 
   zsh --no-rcs -c "$( curl --fail-with-body --location --no-progress-meter --url "${url}" )"
 }
+```
+
+## server
+
+Install Deno how you would like and run the server in dev mode
+
+```sh
+deno run dev
+```
+
+Or install Docker how you would like and run the server in test mode
+
+```sh
+deno run start
 ```

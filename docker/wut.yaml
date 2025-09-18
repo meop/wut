@@ -2,10 +2,13 @@
 name: wut
 services:
   srv:
-    command: deno run --allow-all --watch src/srv.ts
+    command: deno run --allow-all --env-file --watch src/srv.ts
     # command: -f /dev/null
     # entrypoint: /usr/bin/tail
     # tty: true
+    env_file:
+      - path: '../.env'
+        required: true
     environment:
       - PORT=9000
     hostname: wut-srv
@@ -15,9 +18,12 @@ services:
     restart: unless-stopped
     volumes:
       - type: bind
-        source: /vol/src/code/meop/wut
+        source: '..'
         target: /wut
       - type: bind
-        source: /vol/src/code/meop/wut-config
+        source: '../../wut-config'
         target: /wut-config
+      - type: bind
+        source: '../../wut-config-secret'
+        target: /wut-config-secret
     working_dir: /wut

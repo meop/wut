@@ -63,7 +63,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
             contextFilter,
             extension: _client.extension as Fmt,
             filters: Promise.resolve(filters),
-          }).then(x => x.map(y => y.join(' '))),
+          }).then((x) => x.map((y) => y.join(' '))),
         ),
       ),
     )

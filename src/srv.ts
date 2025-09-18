@@ -1,5 +1,3 @@
-import pkg from '../package.json' with { type: 'json' }
-
 import { getCfgFsFileContent } from './cfg.ts'
 import { Nushell } from './cli/nu.ts'
 import { Powershell } from './cli/pwsh.ts'
@@ -32,8 +30,8 @@ function expandParts(parts: Array<string>) {
 class SrvCmd extends CmdBase implements Cmd {
   constructor() {
     super([])
-    this.name = pkg.name.toLowerCase()
-    this.description = pkg.description.toLowerCase()
+    this.name = 'wut'
+    this.description = 'web update tool'
     const fmtKeys = Object.keys(Fmt).map((k, i) => {
       if (i === 0) {
         return k
@@ -80,7 +78,7 @@ async function runSrv(request: Request) {
   try {
     const context = getCtx(request)
     const path = context.req_path
-    const parts = expandParts(path.split('/').filter(p => p.length > 0))
+    const parts = expandParts(path.split('/').filter((p) => p.length > 0))
 
     if (!parts.length) {
       return new Response(`echo "missing operation"`, {
@@ -90,7 +88,9 @@ async function runSrv(request: Request) {
 
     const op = parts[0]
     if (op === Op.cfg) {
-      const config = await getCfgFsFileContent(Promise.resolve(parts.slice(1)))
+      const config = await getCfgFsFileContent(
+        Promise.resolve(parts.slice(1)),
+      )
       if (config == null) {
         return new Response(`echo "config not found: ${config}"`, {
           status: 404,
@@ -112,18 +112,19 @@ async function runSrv(request: Request) {
       })
     }
 
-    let client: Cli =
-      cli === 'pwsh'
-        ? new Powershell()
-        : cli === 'zsh'
-          ? new Zshell()
-          : new Nushell()
+    let client: Cli = cli === 'pwsh'
+      ? new Powershell()
+      : cli === 'zsh'
+      ? new Zshell()
+      : new Nushell()
 
     client = client
       .with(
         client.varSet(
           Promise.resolve('REQ_URL_CFG'),
-          Promise.resolve(client.toInner([context.req_orig, Op.cfg].join('/'))),
+          Promise.resolve(
+            client.toInner([context.req_orig, Op.cfg].join('/')),
+          ),
         ),
       )
       .with(
@@ -189,8 +190,8 @@ async function runSrv(request: Request) {
 
 Deno.serve(
   {
-    hostname: Deno.env.get('hostname') ?? '0.0.0.0',
-    port: Number(Deno.env.get('port') ?? '9000'),
+    hostname: Deno.env.get('HOSTNAME') ?? '0.0.0.0',
+    port: Number(Deno.env.get('PORT') ?? '9000'),
   },
-  async request => await runSrv(request),
+  async (request) => await runSrv(request),
 )

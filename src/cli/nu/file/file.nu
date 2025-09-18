@@ -5,11 +5,11 @@ def rmInner [value] {
   }
   return $value
 }
-def envReplace [line] {
-  let envItems = $env | items { |key, value| [$key, $value] }
+def replaceEnv [line] {
   mut l = $line
   if ($l | str contains '{') {
-    for e in ($envItems | where { |e| (($e.0 | describe) == 'string') and (($e.1 | describe) == 'string') }) {
+    let itemsEnv = $env | items { |key, value| [$key, $value] }
+    for e in ($itemsEnv | where { |e| (($e.0 | describe) == 'string') and (($e.1 | describe) == 'string') }) {
       $l = $l | str replace --all $"{($e.0)}" ($e.1)
     }
   }

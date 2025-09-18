@@ -48,7 +48,7 @@ function getSupportedManagers(context: Ctx, environment: Env) {
     managers.push(...osPlatToManager[osPlat])
   }
   if (environment[VIRT_MANAGER_KEY]) {
-    managers = managers.filter(p => p === environment[VIRT_MANAGER_KEY])
+    managers = managers.filter((p) => p === environment[VIRT_MANAGER_KEY])
   }
 
   return managers
@@ -92,10 +92,10 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
           getCfgFsDirDump(Promise.resolve(dirParts), {
             extension: Fmt.yaml,
             filters: Promise.resolve(filters),
-          }).then(x =>
+          }).then((x) =>
             x
-              .filter(r => supportedManagers.includes(r[0]))
-              .map(r => r.join(' ')),
+              .filter((r) => supportedManagers.includes(r[0]))
+              .map((r) => r.join(' '))
           ),
         ),
       ),

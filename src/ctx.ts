@@ -70,3 +70,17 @@ export function getCtx(request: Request): Ctx {
     sys_user: sysUser,
   }
 }
+
+export function withCtx(line: string, context: Ctx) {
+  let l = line
+  if (l.includes('{')) {
+    const ctxItems = Object.keys(context).map(
+      (key) => [key, context[key as keyof typeof context] ?? ''],
+    )
+    for (const i of ctxItems) {
+      console.log(i)
+      l = l.replaceAll(`{${i[0].toUpperCase()}}`, i[1])
+    }
+  }
+  return l
+}

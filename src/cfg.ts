@@ -1,24 +1,32 @@
+import { deepMerge } from 'jsr:@cross/deepmerge'
+
+import process from 'node:process'
+
 import type { Ctx, CtxFilter } from './ctx.ts'
 import {
   buildFilePath,
   getFileContent,
   getFilePaths,
   isDir,
-  isFile,
+  isValidPath,
   toRelParts,
 } from './path.ts'
 import { Fmt, fromCfg } from './serde.ts'
 
-const cfgDirPath = buildFilePath(
-  import.meta.dirname ?? '',
-  '..',
-  '..',
-  'wut-config',
-  'cfg',
+const cfgDirPaths = (process.env['WUT_CFG_DIRS'] ?? 'wut').split(',').map((
+  dir,
+) =>
+  buildFilePath(
+    import.meta.dirname ?? '',
+    '..',
+    '..',
+    dir,
+    'cfg',
+  )
 )
 
-export function localCfgPath(parts: Array<string>) {
-  return `${buildFilePath(...[cfgDirPath, ...parts])}`
+export function localCfgPaths(parts: Array<string>) {
+  return cfgDirPaths.map((c) => `${buildFilePath(...[c, ...parts])}`)
 }
 
 export async function getCfgFsDirDump(
@@ -31,13 +39,16 @@ export async function getCfgFsDirDump(
   },
 ) {
   const _parts = await parts
-  const dirPath = localCfgPath(_parts)
-  const dirParts = (
-    await getFilePaths(dirPath, {
-      extension: options?.extension,
-      filters: options?.filters ? await options.filters : undefined,
-    })
-  ).map(p => toRelParts(dirPath, p))
+  const dirParts: Array<Array<string>> = []
+  for (const dirPath of localCfgPaths(_parts)) {
+    dirParts.push(...(
+      await getFilePaths(dirPath, {
+        extension: options?.extension,
+        filters: options?.filters ? await options.filters : undefined,
+      })
+    ).map((p) => toRelParts(dirPath, p)))
+  }
+
   if (options?.context && options.contextFilter) {
     const dirPartsFiltered: Array<Array<string>> = []
     for (const fileParts of dirParts) {
@@ -86,10 +97,11 @@ export async function getCfgFsDirLoad(
   },
 ) {
   const _parts = await parts
-  const dirPath = localCfgPath(_parts)
   const contents: Array<string> = []
-  if (!(await isDir(dirPath))) {
-    return contents
+  for (const dirPath of localCfgPaths(_parts)) {
+    if (!(await isDir(dirPath))) {
+      return contents
+    }
   }
   const dirParts = await getCfgFsDirDump(parts, options)
   for (const fileParts of dirParts) {
@@ -104,44 +116,22 @@ export async function getCfgFsDirLoad(
   return contents
 }
 
-export async function isCfgFsFile(
-  parts: Promise<Array<string>>,
-  options?: {
-    extension?: Fmt
-  },
-) {
-  const _parts = await parts
-  return await isFile(
-    `${localCfgPath(_parts)}${options?.extension ? `.${options.extension}` : ''}`,
-  )
-}
-
 export async function getCfgFsFileContent(
   parts: Promise<Array<string>>,
   options?: {
     extension?: Fmt
   },
 ) {
-  if (!(await isCfgFsFile(parts, options))) {
-    return null
+  const _parts = await parts
+  for (const cfgPath of localCfgPaths(_parts).reverse()) {
+    if (
+      await isValidPath(
+        `${cfgPath}${options?.extension ? `.${options.extension}` : ''}`,
+      )
+    ) {
+      return await getFileContent(cfgPath)
+    }
   }
-  const _parts = await parts
-  return await getFileContent(
-    `${localCfgPath(_parts)}${options?.extension ? `.${options.extension}` : ''}`,
-  )
-}
-
-export async function getCfgFsFileDump(
-  parts: Promise<Array<string>>,
-  options?: {
-    extension?: Fmt
-  },
-) {
-  const _parts = await parts
-  return toRelParts(
-    cfgDirPath,
-    `${localCfgPath(_parts)}${options?.extension ? `.${options.extension}` : ''}`,
-  )
 }
 
 export async function getCfgFsFileLoad(
@@ -150,9 +140,23 @@ export async function getCfgFsFileLoad(
     extension?: Fmt
   },
 ) {
-  const content = await getCfgFsFileContent(parts, options)
-  if (content == null) {
-    return null
+  const _parts = await parts
+  // deno-lint-ignore no-explicit-any
+  let content: any
+
+  for (const filePath of localCfgPaths(_parts)) {
+    const contentRaw = await getFileContent(
+      `${filePath}${options?.extension ? `.${options.extension}` : ''}`,
+    )
+    if (contentRaw != null) {
+      const contentRawFmt = fromCfg(contentRaw, options?.extension ?? Fmt.yaml)
+      if (content == null) {
+        content = contentRawFmt
+      } else {
+        content = deepMerge(content, contentRawFmt)
+      }
+    }
   }
-  return fromCfg(content, options?.extension ?? Fmt.yaml)
+
+  return content
 }

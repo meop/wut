@@ -60,15 +60,17 @@ export class CmdBase {
 
     if (this.arguments.length) {
       content.arguments = this.arguments.map(
-        a =>
-          `${a.required ? '<' : '['}${a.name}${a.required ? '>' : ']'} | ${a.description}`,
+        (a) =>
+          `${a.required ? '<' : '['}${a.name}${
+            a.required ? '>' : ']'
+          } | ${a.description}`,
       )
     }
 
     if (this.options.length) {
       this.options.sort((a, b) => a.keys[0].localeCompare(b.keys[0]))
       content.options = this.options.map(
-        opt => `${opt.keys.join(', ')} | ${opt.description}`,
+        (opt) => `${opt.keys.join(', ')} | ${opt.description}`,
       )
     }
 
@@ -79,12 +81,12 @@ export class CmdBase {
     if (this.switches.length) {
       this.switches.sort((a, b) => a.keys[0].localeCompare(b.keys[0]))
       content.switches = this.switches.map(
-        swt => `${swt.keys.join(', ')} | ${swt.description}`,
+        (swt) => `${swt.keys.join(', ')} | ${swt.description}`,
       )
     }
 
     if (this.commands.length) {
-      content.commands = this.commands.map(c => c.name).join(', ')
+      content.commands = this.commands.map((c) => c.name).join(', ')
     }
 
     return content
@@ -176,22 +178,22 @@ export class CmdBase {
         if (part === '-h' || part === '--help') {
           return loadCliEnv(() => this.help(_client, _context, _environment))
         }
-        const _switch = this.switches.find(s => s.keys.includes(part))
+        const _switch = this.switches.find((s) => s.keys.includes(part))
         if (_switch) {
           setEnv(
-            _switch.keys.find(k => k.startsWith('--'))?.split('--')[1] ?? '',
+            _switch.keys.find((k) => k.startsWith('--'))?.split('--')[1] ?? '',
             '1',
           )
           partsIndex += 1
           continue
         }
-        const _option = this.options.find(o => o.keys.includes(part))
+        const _option = this.options.find((o) => o.keys.includes(part))
         if (_option && partsIndex + 1 < parts.length) {
           if (parts[partsIndex + 1].startsWith('-')) {
             return loadCliEnv(() => this.help(_client, _context, _environment))
           }
           setEnv(
-            _option.keys.find(k => k.startsWith('--'))?.split('--')[1] ?? '',
+            _option.keys.find((k) => k.startsWith('--'))?.split('--')[1] ?? '',
             parts[partsIndex + 1],
           )
           partsIndex += 2
@@ -201,7 +203,7 @@ export class CmdBase {
 
       if (this.commands.length) {
         const _command = this.commands.find(
-          c => c.name === part || c.aliases.find(a => a === part),
+          (c) => c.name === part || c.aliases.find((a) => a === part),
         )
         if (_command) {
           return _command.process(
