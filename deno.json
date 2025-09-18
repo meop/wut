@@ -1,0 +1,16 @@
+{
+  "fmt": {
+    "semiColons": false,
+    "singleQuote": true,
+    "trailingCommas": "onlyMultiLine"
+  },
+  "imports": {
+    "@cross/deepmerge": "jsr:@cross/deepmerge@^1.0.0",
+    "@eemeli/yaml": "jsr:@eemeli/yaml@^2.8.1"
+  },
+  "tasks": {
+    "dev": "deno run --allow-all --env-file --watch src/srv.ts",
+    "start": "docker compose --file docker/wut.yaml up --detach --pull always",
+    "stop": "docker compose --file docker/wut.yaml down"
+  }
+}
