@@ -8,7 +8,9 @@ function packScoop {
       $yn = Read-Host "? use ${cmd} (user) [y, [n]]"
     }
     if ($yn -ne 'n') {
-      packScoopOp $cmd | Out-Host
+      packScoopOp $cmd |
+      # use Out-Host to skip stdout buffer being copied to function output
+      Out-Host
     }
   }
 }

@@ -1,14 +1,3 @@
-# function packWingetPrintCmdOutput ($obj) {
-#   $pssor = $PSStyle.OutputRendering
-#   # Out-String will strip ANSI chars unless this is set
-#   $PSStyle.OutputRendering = 'ansi'
-#   # -stream will stream line by line
-#   opPrintCmdOutput (($obj | Out-String -stream) | Where-Object {
-#       # skip spinner and progress output
-#       if (-not $_.StartsWith(' ')) { $_ }
-#     })
-#   $PSStyle.OutputRendering = $pssor
-# }
 function packWinget {
   $cmd = 'winget'
   if ((-not $PACK_MANAGER -or $PACK_MANAGER -eq $cmd) -and (Get-Command $cmd -ErrorAction Ignore)) {
@@ -19,7 +8,17 @@ function packWinget {
       $yn = Read-Host "? use ${cmd} (system) [y, [n]]"
     }
     if ($yn -ne 'n') {
-      packWingetOp $cmd | Out-Host
+      $pssor = $PSStyle.OutputRendering
+      # with ANSI rendering with to preserve color
+      $PSStyle.OutputRendering = 'ansi'
+      # use Out-String -stream to split line by line
+      packWingetOp $cmd | Out-String -stream | Where-Object {
+        # skip lines starting with space, which are spinner / progress lines
+        $_ -notmatch '^\s+'
+      } |
+      # use Out-Host to skip stdout buffer being copied to function output
+      Out-Host
+      $PSStyle.OutputRendering = $pssor
     }
   }
 }

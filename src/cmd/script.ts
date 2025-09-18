@@ -48,10 +48,10 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   const dirParts = [SCRIPT_KEY, _client.name]
   const filters = environment[SCRIPT_OP_PARTS_KEY(op)]?.split(' ') ?? []
 
-  const list = await getCfgFsFileLoad(Promise.resolve([SCRIPT_KEY]), {
+  const content = await getCfgFsFileLoad(Promise.resolve([SCRIPT_KEY]), {
     extension: Fmt.yaml,
   })
-  const contextFilter = list[_client.name]
+  const contextFilter = content[_client.name]
 
   if (op === 'find') {
     _client = _client.with(

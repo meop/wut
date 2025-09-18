@@ -78,7 +78,6 @@ export function withCtx(line: string, context: Ctx) {
       (key) => [key, context[key as keyof typeof context] ?? ''],
     )
     for (const i of ctxItems) {
-      console.log(i)
       l = l.replaceAll(`{${i[0].toUpperCase()}}`, i[1])
     }
   }

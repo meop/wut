@@ -14,7 +14,7 @@ export class PackCmd extends CmdBase implements Cmd {
     this.description = 'package manager ops'
     this.aliases = ['p', 'pa', 'pac', 'package']
     this.options = [
-      { keys: ['-m', '--manager'], description: 'package manager' },
+      { keys: ['-m', '--manager'], description: 'manager to use' },
     ]
     this.commands = [
       new PackCmdAdd([...this.scopes, this.name]),
@@ -253,7 +253,10 @@ export class PackCmdAdd extends CmdBase implements Cmd {
     this.arguments = [
       { name: 'names', description: 'name(s) to match', required: true },
     ]
-    this.switches = [{ keys: ['-g', '--groups'], description: 'check groups' }]
+    this.switches = [{
+      keys: ['-g', '--group'],
+      description: 'group search will be used',
+    }]
   }
   override async work(
     client: Cli,
@@ -271,7 +274,10 @@ export class PackCmdFind extends CmdBase implements Cmd {
     this.description = 'find from remote'
     this.aliases = ['f', 'fi', 'se', 'search']
     this.arguments = [{ name: 'names', description: 'name(s) to match' }]
-    this.switches = [{ keys: ['-g', '--groups'], description: 'check groups' }]
+    this.switches = [{
+      keys: ['-g', '--group'],
+      description: 'group search will be used',
+    }]
   }
   override async work(
     client: Cli,
@@ -325,7 +331,10 @@ export class PackCmdRem extends CmdBase implements Cmd {
     this.arguments = [
       { name: 'names', description: 'name(s) to match', required: true },
     ]
-    this.switches = [{ keys: ['-g', '--groups'], description: 'check groups' }]
+    this.switches = [{
+      keys: ['-g', '--group'],
+      description: 'group search will be used',
+    }]
   }
   override async work(
     client: Cli,

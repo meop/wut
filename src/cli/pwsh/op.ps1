@@ -76,14 +76,6 @@ function opPrintCmd {
   }
 }
 
-# function opPrintCmdOutput ($obj) {
-#   $pssor = $PSStyle.OutputRendering
-#   # Out-String will strip ANSI chars unless this is set
-#   $PSStyle.OutputRendering = 'ansi'
-#   ($obj | Out-String).TrimEnd() | Out-Host
-#   $PSStyle.OutputRendering = $pssor
-# }
-
 function opRunCmd {
   Invoke-Expression "$($args -Join ' ')"
 }

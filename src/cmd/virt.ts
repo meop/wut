@@ -12,7 +12,7 @@ export class VirtCmd extends CmdBase implements Cmd {
     this.description = 'virtual manager ops'
     this.aliases = ['v', 'vi', 'vir', 'virtual']
     this.options = [
-      { keys: ['-m', '--manager'], description: 'virtual manager' },
+      { keys: ['-m', '--manager'], description: 'manager to use' },
     ]
     this.commands = [
       new VirtCmdAdd([...this.scopes, this.name]),

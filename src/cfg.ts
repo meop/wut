@@ -39,9 +39,12 @@ export async function getCfgFsDirDump(
   },
 ) {
   const _parts = await parts
-  const dirParts: Array<Array<string>> = []
+  const dirFileParts: Array<Array<string>> = []
   for (const dirPath of localCfgPaths(_parts)) {
-    dirParts.push(...(
+    if (!(await isDir(dirPath))) {
+      continue
+    }
+    dirFileParts.push(...(
       await getFilePaths(dirPath, {
         extension: options?.extension,
         filters: options?.filters ? await options.filters : undefined,
@@ -50,8 +53,8 @@ export async function getCfgFsDirDump(
   }
 
   if (options?.context && options.contextFilter) {
-    const dirPartsFiltered: Array<Array<string>> = []
-    for (const fileParts of dirParts) {
+    const dirFilePartsFiltered: Array<Array<string>> = []
+    for (const fileParts of dirFileParts) {
       let contextFilterPtr = options.contextFilter
       let valid = true
       let found = true
@@ -66,7 +69,7 @@ export async function getCfgFsDirDump(
         contextFilterPtr = contextFilterPtr[key] as CtxFilter
       }
       if (!found) {
-        dirPartsFiltered.push(fileParts)
+        dirFilePartsFiltered.push(fileParts)
         continue
       }
       for (const key of Object.keys(contextFilterPtr) as Array<keyof Ctx>) {
@@ -79,12 +82,12 @@ export async function getCfgFsDirDump(
         }
       }
       if (valid) {
-        dirPartsFiltered.push(fileParts)
+        dirFilePartsFiltered.push(fileParts)
       }
     }
-    return dirPartsFiltered
+    return dirFilePartsFiltered
   }
-  return dirParts
+  return dirFileParts
 }
 
 export async function getCfgFsDirLoad(
@@ -98,13 +101,8 @@ export async function getCfgFsDirLoad(
 ) {
   const _parts = await parts
   const contents: Array<string> = []
-  for (const dirPath of localCfgPaths(_parts)) {
-    if (!(await isDir(dirPath))) {
-      return contents
-    }
-  }
-  const dirParts = await getCfgFsDirDump(parts, options)
-  for (const fileParts of dirParts) {
+  const dirFileParts = await getCfgFsDirDump(parts, options)
+  for (const fileParts of dirFileParts) {
     const content = await getCfgFsFileLoad(
       Promise.resolve([..._parts, ...fileParts]),
       options,

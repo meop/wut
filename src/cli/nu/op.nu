@@ -68,13 +68,6 @@ def opPrintCmd --wrapped [...args] {
   }
 }
 
-# def opPrintCmdOutput [obj] {
-#   # lines will stream line by line
-#   # double quotes are needed for newline interpretation
-#   # print $in is needed to append final newline when input is a stream
-#   $obj | lines | str join "\n" | print $in
-# }
-
 def opRunCmd --wrapped [...args] {
   nu --no-config-file -c $"($args | str join ' ')"
 }
