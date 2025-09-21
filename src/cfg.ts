@@ -1,17 +1,17 @@
-import { deepMerge } from 'jsr:@cross/deepmerge'
-
 import process from 'node:process'
 
-import type { Ctx, CtxFilter } from './ctx.ts'
+import { deepMerge } from '@cross/deepmerge'
+import type { Ctx, CtxFilter } from '@meop/shire/ctx'
 import {
   buildFilePath,
   getFileContent,
   getFilePaths,
-  isDir,
-  isValidPath,
-  toRelParts,
-} from './path.ts'
-import { Fmt, fromCfg } from './serde.ts'
+  isDirPath,
+  isPath,
+} from '@meop/shire/path'
+import { Fmt, parse } from '@meop/shire/serde'
+
+import { toRelParts } from './path.ts'
 
 const cfgDirPaths = (process.env['WUT_CFG_DIRS'] ?? 'wut').split(',').map((
   dir,
@@ -41,7 +41,7 @@ export async function getCfgFsDirDump(
   const _parts = await parts
   const dirFileParts: Array<Array<string>> = []
   for (const dirPath of localCfgPaths(_parts)) {
-    if (!(await isDir(dirPath))) {
+    if (!(await isDirPath(dirPath))) {
       continue
     }
     dirFileParts.push(...(
@@ -123,7 +123,7 @@ export async function getCfgFsFileContent(
   const _parts = await parts
   for (const cfgPath of localCfgPaths(_parts).reverse()) {
     if (
-      await isValidPath(
+      await isPath(
         `${cfgPath}${options?.extension ? `.${options.extension}` : ''}`,
       )
     ) {
@@ -147,7 +147,7 @@ export async function getCfgFsFileLoad(
       `${filePath}${options?.extension ? `.${options.extension}` : ''}`,
     )
     if (contentRaw != null) {
-      const contentRawFmt = fromCfg(contentRaw, options?.extension ?? Fmt.yaml)
+      const contentRawFmt = parse(contentRaw, options?.extension ?? Fmt.yaml)
       if (content == null) {
         content = contentRawFmt
       } else {

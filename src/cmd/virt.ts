@@ -1,9 +1,10 @@
+import type { Cli } from '@meop/shire/cli'
+import { type Cmd, CmdBase } from '@meop/shire/cmd'
+import type { Ctx } from '@meop/shire/ctx'
+import { type Env, SPLIT_VAL, toKey } from '@meop/shire/env'
+import { Fmt } from '@meop/shire/serde'
+
 import { getCfgFsDirDump } from '../cfg.ts'
-import type { Cli } from '../cli.ts'
-import { type Cmd, CmdBase } from '../cmd.ts'
-import type { Ctx } from '../ctx.ts'
-import { type Env, toEnvKey } from '../env.ts'
-import { Fmt } from '../serde.ts'
 
 export class VirtCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -31,13 +32,11 @@ const osPlatToManager: { [key: string]: Array<string> } = {
   winnt: ['docker'],
 }
 
-const LOG_KEY = toEnvKey('log')
-
 const VIRT_KEY = 'virt'
-const VIRT_MANAGER_KEY = toEnvKey(VIRT_KEY, 'manager')
-const VIRT_OP_PARTS_KEY = (op: string) => toEnvKey(VIRT_KEY, op, 'parts')
+const VIRT_MANAGER_KEY = toKey(VIRT_KEY, 'manager')
+const VIRT_OP_PARTS_KEY = (op: string) => toKey(VIRT_KEY, op, 'parts')
 
-const VIRT_INSTANCES_KEY = toEnvKey(VIRT_KEY, 'instances')
+const VIRT_INSTANCES_KEY = toKey(VIRT_KEY, 'instances')
 
 function getSupportedManagers(context: Ctx, environment: Env) {
   let managers: Array<string> = []
@@ -47,8 +46,8 @@ function getSupportedManagers(context: Ctx, environment: Env) {
   if (osPlat) {
     managers.push(...osPlatToManager[osPlat])
   }
-  if (environment[VIRT_MANAGER_KEY]) {
-    managers = managers.filter((p) => p === environment[VIRT_MANAGER_KEY])
+  if (environment.get(VIRT_MANAGER_KEY)) {
+    managers = managers.filter((p) => p === environment.get(VIRT_MANAGER_KEY))
   }
 
   return managers
@@ -82,7 +81,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   const supportedManagers = getSupportedManagers(context, environment)
 
   const dirParts = [VIRT_KEY, context.sys_host ?? '']
-  const filters = environment[VIRT_OP_PARTS_KEY(op)]?.split(' ') ?? []
+  const filters = environment.get(VIRT_OP_PARTS_KEY(op))?.split(SPLIT_VAL) ?? []
 
   if (op === 'find') {
     _client = _client.with(
@@ -104,9 +103,9 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     for (const supportedManager of supportedManagers) {
       _client = _client
         .with(
-          _client.fsFileLoad(Promise.resolve([VIRT_KEY, supportedManager, op])),
+          _client.fileLoad(Promise.resolve([VIRT_KEY, supportedManager, op])),
         )
-        .with(_client.fsFileLoad(Promise.resolve([VIRT_KEY, supportedManager])))
+        .with(_client.fileLoad(Promise.resolve([VIRT_KEY, supportedManager])))
     }
     const results = await getCfgFsDirDump(Promise.resolve(dirParts), {
       extension: Fmt.yaml,
@@ -153,7 +152,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
 
   const body = await _client.build()
 
-  if (environment[LOG_KEY]) {
+  if (environment.get('log')) {
     console.log(body)
   }
 

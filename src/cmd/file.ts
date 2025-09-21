@@ -1,19 +1,14 @@
+import type { Cli } from '@meop/shire/cli'
+import { Powershell } from '@meop/shire/cli/pwsh'
+import { Zshell } from '@meop/shire/cli/zsh'
+import { type Cmd, CmdBase } from '@meop/shire/cmd'
+import { Ctx, withCtx } from '@meop/shire/ctx'
+import { type Env, SPLIT_VAL, toKey } from '@meop/shire/env'
+import { getFilePaths, isDirPath, isPath } from '@meop/shire/path'
+import { Fmt } from '@meop/shire/serde'
+
 import { getCfgFsFileLoad, localCfgPaths } from '../cfg.ts'
-import { Powershell } from '../cli/pwsh.ts'
-import { Zshell } from '../cli/zsh.ts'
-import type { Cli } from '../cli.ts'
-import { type Cmd, CmdBase } from '../cmd.ts'
-import { Ctx, withCtx } from '../ctx.ts'
-import { type Env, toEnvKey } from '../env.ts'
-import {
-  type AclPerm,
-  getFilePaths,
-  getPlatAclPermCmds,
-  isDir,
-  isValidPath,
-  toRelParts,
-} from '../path.ts'
-import { Fmt } from '../serde.ts'
+import { type AclPerm, getPlatAclPermCmds, toRelParts } from '../path.ts'
 
 export class FileCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -43,18 +38,16 @@ type Sync = {
 
 const PARAM_SPLIT = '|'
 
-const LOG_KEY = toEnvKey('log')
-
 const FILE_KEY = 'file'
 
-const FILE_OP_KEYS_KEY = (op: string) => toEnvKey(FILE_KEY, op, 'keys')
-const FILE_OP_PARTS_KEY = (op: string) => toEnvKey(FILE_KEY, op, 'parts')
+const FILE_OP_KEYS_KEY = (op: string) => toKey(FILE_KEY, op, 'keys')
+const FILE_OP_PARTS_KEY = (op: string) => toKey(FILE_KEY, op, 'parts')
 const FILE_OP_CLEAR_DIRS_KEY = (op: string) =>
-  toEnvKey(FILE_KEY, op, 'clear', 'dirs')
+  toKey(FILE_KEY, op, 'clear', 'dirs')
 const FILE_OP_PATH_PAIRS_KEY = (op: string) =>
-  toEnvKey(FILE_KEY, op, 'path', 'pairs')
+  toKey(FILE_KEY, op, 'path', 'pairs')
 const FILE_OP_PATH_PERMS_KEY = (op: string) =>
-  toEnvKey(FILE_KEY, op, 'path', 'perms')
+  toKey(FILE_KEY, op, 'path', 'perms')
 
 async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   if (client.name !== 'nu') {
@@ -67,7 +60,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   }
 
   let _client = client
-  const filters = environment[FILE_OP_PARTS_KEY(op)]?.split(' ') ?? []
+  const filters = environment.get(FILE_OP_PARTS_KEY(op))?.split(SPLIT_VAL) ?? []
 
   const content: Sync = await getCfgFsFileLoad(Promise.resolve([FILE_KEY]), {
     extension: Fmt.yaml,
@@ -90,8 +83,8 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   }
 
   _client = _client
-    .with(_client.fsFileLoad(Promise.resolve([FILE_KEY, FILE_KEY, op])))
-    .with(_client.fsFileLoad(Promise.resolve([FILE_KEY, FILE_KEY])))
+    .with(_client.fileLoad(Promise.resolve([FILE_KEY, FILE_KEY, op])))
+    .with(_client.fileLoad(Promise.resolve([FILE_KEY, FILE_KEY])))
 
   if (op === 'find') {
     _client = _client.with(
@@ -115,12 +108,12 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
           continue
         }
         const localEntryPaths = localCfgPaths([FILE_KEY, key, entry_in]).filter(
-          (x) => isValidPath(x),
+          async (x) => await isPath(x),
         )
         if (!localEntryPaths.length) {
           continue
         }
-        if (await isDir(localEntryPaths[0])) {
+        if (await isDirPath(localEntryPaths[0])) {
           for (const localEntryPath of localEntryPaths) {
             validClearDirs.add(
               _client.toOuter(`${key}${PARAM_SPLIT}${entry_out[sys_os_plat]}`),
@@ -201,7 +194,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
 
   const body = await _client.build()
 
-  if (environment[LOG_KEY]) {
+  if (environment.get('log')) {
     console.log(body)
   }
 

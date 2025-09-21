@@ -1,104 +1,13 @@
-import { promises as fs } from 'node:fs'
 import PATH from 'node:path'
 
-export function buildFilePath(...parts: Array<string>) {
-  return PATH.join(...parts)
-}
-
-export async function isDir(dirPath: string) {
-  try {
-    return (await fs.stat(dirPath)).isDirectory()
-  } catch {
-    return false
-  }
-}
-
-export async function isFile(filePath: string) {
-  try {
-    return (await fs.stat(filePath)).isFile()
-  } catch {
-    return false
-  }
-}
-
-export async function isValidPath(fsPath: string) {
-  try {
-    await fs.stat(fsPath)
-    return true
-  } catch {
-    return false
-  }
-}
-
-export async function getFileContent(filePath: string) {
-  if (!(await isFile(filePath))) {
-    return null
-  }
-
-  try {
-    return await fs.readFile(filePath, 'utf-8')
-  } catch {
-    return null
-  }
-}
-
-export async function getFilePaths(
-  dirPath: string,
-  options?: {
-    extension?: string
-    filters?: Array<string>
-  },
-) {
-  if (!(await isDir(dirPath))) {
-    return []
-  }
-
-  const patterns: Array<string> = []
-
-  if (options?.filters?.length) {
-    const filterPattern = options.filters.map((f) => `${f}*`).join('/')
-    if (options?.extension) {
-      patterns.push(`${filterPattern}/*.${options.extension}`)
-      patterns.push(`${filterPattern}.${options.extension}`)
-    } else {
-      patterns.push(`${filterPattern}/**`)
-      patterns.push(filterPattern)
-    }
-  } else {
-    if (options?.extension) {
-      patterns.push(`**/*.${options.extension}`)
-      patterns.push(`*.${options.extension}`)
-    } else {
-      patterns.push('**')
-      patterns.push('*')
-    }
-  }
-
-  const filePaths: Array<string> = []
-  for (const pattern of patterns) {
-    for await (
-      const match of fs.glob(pattern, {
-        cwd: dirPath,
-        withFileTypes: true,
-      })
-    ) {
-      if (match.isFile()) {
-        filePaths.push(PATH.join(match.parentPath, match.name))
-      }
-    }
-  }
-
-  return [...new Set(filePaths)].sort()
-}
-
-function withStripExt(filePath: string) {
-  const path = PATH.parse(filePath)
-  return PATH.join(path.dir, path.name)
+function withoutExt(filePath: string) {
+  const parsedPath = PATH.parse(filePath)
+  return PATH.join(parsedPath.dir, parsedPath.name)
 }
 
 export function toRelParts(dirPath: string, filePath: string, stripExt = true) {
   const dir = dirPath ? `${dirPath}${PATH.sep}` : ''
-  const adjustedFilePath = stripExt ? withStripExt(filePath) : filePath
+  const adjustedFilePath = stripExt ? withoutExt(filePath) : filePath
   return adjustedFilePath
     .replace(dir, '')
     .split(PATH.sep)
@@ -172,11 +81,11 @@ function getFsAclWinntVal(perm: AclPerm, user: string) {
   return permBlocks.join(' ')
 }
 
-function toUnixPath(filePath: string) {
+export function toUnixPath(filePath: string) {
   return filePath.replaceAll(PATH.win32.sep, PATH.posix.sep)
 }
 
-function toWinntPath(filePath: string) {
+export function toWinntPath(filePath: string) {
   return filePath.replaceAll(PATH.posix.sep, PATH.win32.sep)
 }
 

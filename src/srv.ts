@@ -1,56 +1,24 @@
+import type { Cli } from '@meop/shire/cli'
+import { type Cmd } from '@meop/shire/cmd'
+import { getCtx } from '@meop/shire/ctx'
+import { SrvBase } from '@meop/shire/srv'
+import { Fmt, stringify } from '@meop/shire/serde'
+
+import { Nushell } from '@meop/shire/cli/nu'
+import { Powershell } from '@meop/shire/cli/pwsh'
+import { Zshell } from '@meop/shire/cli/zsh'
+
 import { getCfgFsFileContent } from './cfg.ts'
-import { Nushell } from './cli/nu.ts'
-import { Powershell } from './cli/pwsh.ts'
-import { Zshell } from './cli/zsh.ts'
-import type { Cli } from './cli.ts'
 import { FileCmd } from './cmd/file.ts'
 import { PackCmd } from './cmd/pack.ts'
 import { ScriptCmd } from './cmd/script.ts'
 import { VirtCmd } from './cmd/virt.ts'
-import { type Cmd, CmdBase } from './cmd.ts'
-import { getCtx } from './ctx.ts'
-import { Fmt, toCon } from './serde.ts'
 
-function expandParts(parts: Array<string>) {
-  const expandedParts: Array<string> = []
-
-  for (const part of parts) {
-    if (part.startsWith('-') && !part.startsWith('--')) {
-      for (const c of part.split('').slice(1)) {
-        expandedParts.push(`-${c}`)
-      }
-      continue
-    }
-    expandedParts.push(part)
-  }
-
-  return expandedParts
-}
-
-class SrvCmd extends CmdBase implements Cmd {
+class SrvCmd extends SrvBase implements Cmd {
   constructor() {
     super([])
     this.name = 'wut'
     this.description = 'web update tool'
-    const fmtKeys = Object.keys(Fmt).map((k, i) => {
-      if (i === 0) {
-        return k
-      }
-      return `[${k}]`
-    })
-    this.options.push({
-      keys: ['-f', '--format'],
-      description: `print format <${fmtKeys.join(', ')}>`,
-    })
-    this.switches.push(
-      { keys: ['-d', '--debug'], description: 'print debug' },
-      { keys: ['-g', '--grayscale'], description: 'print no color' },
-      { keys: ['-l', '--log'], description: 'log on server' },
-      { keys: ['-n', '--noop'], description: 'print but no op' },
-      { keys: ['-s', '--succinct'], description: 'no print' },
-      { keys: ['-t', '--trace'], description: 'print trace' },
-      { keys: ['-y', '--yes'], description: 'no prompt' },
-    )
     this.commands.push(
       new FileCmd([this.name]),
       new PackCmd([this.name]),
@@ -77,8 +45,7 @@ enum Op {
 async function runSrv(request: Request) {
   try {
     const context = getCtx(request)
-    const path = context.req_path
-    const parts = expandParts(path.split('/').filter((p) => p.length > 0))
+    const parts = context.req_path.split('/').filter((p) => p.length > 0)
 
     if (!parts.length) {
       return new Response(`echo "missing operation"`, {
@@ -137,14 +104,14 @@ async function runSrv(request: Request) {
           ),
         ),
       )
-      .with(client.fsFileLoad(Promise.resolve(['op'])))
+      .with(client.fileLoad(Promise.resolve(['op'])))
 
     if (!context.sys_cpu_arch) {
       return new Response(
         await client
-          .with(client.fsFileLoad(Promise.resolve(['ver'])))
-          .with(client.fsFileLoad(Promise.resolve(['sys'])))
-          .with(client.fsFileLoad(Promise.resolve(['get'])))
+          .with(client.fileLoad(Promise.resolve(['ver'])))
+          .with(client.fileLoad(Promise.resolve(['sys'])))
+          .with(client.fileLoad(Promise.resolve(['get'])))
           .build(),
       )
     }
@@ -167,7 +134,7 @@ async function runSrv(request: Request) {
     } catch (err) {
       let errStr = String(err)
       if (err instanceof Error) {
-        errStr = toCon(getErr(err), Fmt.json)
+        errStr = stringify(getErr(err), Fmt.json)
       }
       console.error(errStr)
       const body = await client

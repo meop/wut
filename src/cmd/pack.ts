@@ -1,11 +1,12 @@
+import type { Cli } from '@meop/shire/cli'
+import { Powershell } from '@meop/shire/cli/pwsh'
+import { Zshell } from '@meop/shire/cli/zsh'
+import { type Cmd, CmdBase } from '@meop/shire/cmd'
+import type { Ctx } from '@meop/shire/ctx'
+import { type Env, SPLIT_VAL, toKey } from '@meop/shire/env'
+import { Fmt } from '@meop/shire/serde'
+
 import { getCfgFsDirDump, getCfgFsFileLoad } from '../cfg.ts'
-import { Powershell } from '../cli/pwsh.ts'
-import { Zshell } from '../cli/zsh.ts'
-import type { Cli } from '../cli.ts'
-import { type Cmd, CmdBase } from '../cmd.ts'
-import type { Ctx } from '../ctx.ts'
-import { type Env, toEnvKey } from '../env.ts'
-import { Fmt } from '../serde.ts'
 
 export class PackCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -42,14 +43,12 @@ const osIdToManagers: { [key: string]: Array<string> } = {
   fedora: ['dnf'],
 }
 
-const LOG_KEY = toEnvKey('log')
-
 const PACK_KEY = 'pack'
-const PACK_MANAGER_KEY = toEnvKey(PACK_KEY, 'manager')
-const PACK_OP_NAMES_KEY = (op: string) => toEnvKey(PACK_KEY, op, 'names')
-const PACK_OP_GROUPS_KEY = (op: string) => toEnvKey(PACK_KEY, op, 'groups')
+const PACK_MANAGER_KEY = toKey(PACK_KEY, 'manager')
+const PACK_OP_NAMES_KEY = (op: string) => toKey(PACK_KEY, op, 'names')
+const PACK_OP_GROUPS_KEY = (op: string) => toKey(PACK_KEY, op, 'groups')
 const PACK_OP_GROUP_NAMES_KEY = (op: string) =>
-  toEnvKey(PACK_KEY, op, 'group', 'names')
+  toKey(PACK_KEY, op, 'group', 'names')
 
 function getSupportedManagers(context: Ctx, environment: Env) {
   let managers: Array<string> = []
@@ -63,8 +62,8 @@ function getSupportedManagers(context: Ctx, environment: Env) {
   if (osId) {
     managers = managers.filter((p) => osIdToManagers[osId].includes(p))
   }
-  if (environment[PACK_MANAGER_KEY]) {
-    managers = managers.filter((p) => p === environment[PACK_MANAGER_KEY])
+  if (environment.get(PACK_MANAGER_KEY)) {
+    managers = managers.filter((p) => p === environment.get(PACK_MANAGER_KEY))
   }
 
   return managers
@@ -95,12 +94,12 @@ async function workAddFindRem(
   for (const supportedManager of supportedManagers) {
     _client = _client
       .with(
-        _client.fsFileLoad(Promise.resolve([PACK_KEY, supportedManager, op])),
+        _client.fileLoad(Promise.resolve([PACK_KEY, supportedManager, op])),
       )
-      .with(_client.fsFileLoad(Promise.resolve([PACK_KEY, supportedManager])))
+      .with(_client.fileLoad(Promise.resolve([PACK_KEY, supportedManager])))
   }
 
-  const names = environment[PACK_OP_NAMES_KEY(op)]?.split(' ') ?? []
+  const names = environment.get(PACK_OP_NAMES_KEY(op))?.split(SPLIT_VAL) ?? []
   const namesFound: Array<string> = []
 
   const groupFind = (filters?: Promise<Array<string>>) =>
@@ -116,7 +115,7 @@ async function workAddFindRem(
       ),
     )
 
-  if (environment[PACK_OP_GROUPS_KEY(op)]) {
+  if (environment.get(PACK_OP_GROUPS_KEY(op))) {
     if (!names.length && op === 'find') {
       _client = groupFind()
     }
@@ -209,7 +208,7 @@ async function workAddFindRem(
 
   const body = await _client.build()
 
-  if (environment[LOG_KEY]) {
+  if (environment.get('log')) {
     console.log(body)
   }
 
@@ -228,16 +227,16 @@ async function workListOutSyncTidy(
   for (const supportedManager of supportedManagers) {
     _client = _client
       .with(
-        _client.fsFileLoad(Promise.resolve([PACK_KEY, supportedManager, op])),
+        _client.fileLoad(Promise.resolve([PACK_KEY, supportedManager, op])),
       )
-      .with(_client.fsFileLoad(Promise.resolve([PACK_KEY, supportedManager])))
+      .with(_client.fileLoad(Promise.resolve([PACK_KEY, supportedManager])))
   }
 
   const body = await _client
     .with(Promise.resolve(supportedManagers.map((m) => getManagerFuncName(m))))
     .build()
 
-  if (environment[LOG_KEY]) {
+  if (environment.get('log')) {
     console.log(body)
   }
 

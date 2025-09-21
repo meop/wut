@@ -6,8 +6,12 @@
   },
   "imports": {
     "@cross/deepmerge": "jsr:@cross/deepmerge@^1.0.0",
-    "@eemeli/yaml": "jsr:@eemeli/yaml@^2.8.1"
+    "@eemeli/yaml": "jsr:@eemeli/yaml@^2.8.1",
+    "@meop/shire": "jsr:@meop/shire@^0.1.0"
   },
+  "links": [
+    "../shire"
+  ],
   "tasks": {
     "dev": "deno run --allow-all --env-file --watch src/srv.ts",
     "start": "docker compose --file docker/wut.yaml up --detach --pull always",

@@ -1,9 +1,10 @@
+import type { Cli } from '@meop/shire/cli'
+import { type Cmd, CmdBase } from '@meop/shire/cmd'
+import type { Ctx } from '@meop/shire/ctx'
+import { type Env, SPLIT_VAL, toKey } from '@meop/shire/env'
+import { Fmt } from '@meop/shire/serde'
+
 import { getCfgFsDirDump, getCfgFsDirLoad, getCfgFsFileLoad } from '../cfg.ts'
-import type { Cli } from '../cli.ts'
-import { type Cmd, CmdBase } from '../cmd.ts'
-import type { Ctx } from '../ctx.ts'
-import { type Env, toEnvKey } from '../env.ts'
-import { Fmt } from '../serde.ts'
 
 export class ScriptCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -18,10 +19,8 @@ export class ScriptCmd extends CmdBase implements Cmd {
   }
 }
 
-const LOG_KEY = toEnvKey('log')
-
 const SCRIPT_KEY = 'script'
-const SCRIPT_OP_PARTS_KEY = (op: string) => toEnvKey(SCRIPT_KEY, op, 'parts')
+const SCRIPT_OP_PARTS_KEY = (op: string) => toKey(SCRIPT_KEY, op, 'parts')
 
 async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   if (
@@ -46,7 +45,8 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   let _client = client
 
   const dirParts = [SCRIPT_KEY, _client.name]
-  const filters = environment[SCRIPT_OP_PARTS_KEY(op)]?.split(' ') ?? []
+  const filters = environment.get(SCRIPT_OP_PARTS_KEY(op))?.split(SPLIT_VAL) ??
+    []
 
   const content = await getCfgFsFileLoad(Promise.resolve([SCRIPT_KEY]), {
     extension: Fmt.yaml,
@@ -80,7 +80,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
 
   const body = await client.build()
 
-  if (environment[LOG_KEY]) {
+  if (environment.get('log')) {
     console.log(body)
   }
 
