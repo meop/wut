@@ -9,8 +9,6 @@ services:
     env_file:
       - path: '../.env'
         required: true
-    environment:
-      - PORT=9000
     hostname: wut-srv
     image: docker.io/denoland/deno:latest
     ports:

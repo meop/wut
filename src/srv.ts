@@ -1,14 +1,16 @@
-import type { Cli } from '@meop/shire/cli'
-import { type Cmd } from '@meop/shire/cmd'
-import { getCtx } from '@meop/shire/ctx'
-import { SrvBase } from '@meop/shire/srv'
-import { Fmt, stringify } from '@meop/shire/serde'
+import process from 'node:process'
 
+import type { Cli } from '@meop/shire/cli'
 import { Nushell } from '@meop/shire/cli/nu'
 import { Powershell } from '@meop/shire/cli/pwsh'
 import { Zshell } from '@meop/shire/cli/zsh'
+import { type Cmd } from '@meop/shire/cmd'
+import { type Ctx, getCtx } from '@meop/shire/ctx'
+import { joinKey } from '@meop/shire/reg'
+import { Fmt, stringify } from '@meop/shire/serde'
+import { SrvBase } from '@meop/shire/srv'
 
-import { getCfgFsFileContent } from './cfg.ts'
+import { getCfgFileContent } from './cfg.ts'
 import { FileCmd } from './cmd/file.ts'
 import { PackCmd } from './cmd/pack.ts'
 import { ScriptCmd } from './cmd/script.ts'
@@ -42,76 +44,92 @@ enum Op {
   cli = 'cli',
 }
 
+const CLI_VER_MAJOR_KEY = ['cli', 'ver', 'major']
+const CLI_VER_MINOR_KEY = ['cli', 'ver', 'minor']
+
+const VAR_CLI_VER_MAJOR_KEY = (cli: string) => [cli, 'ver', 'major']
+const VAR_CLI_VER_MINOR_KEY = (cli: string) => [cli, 'ver', 'minor']
+const VAR_REQ_URL_OP_KEY = (op: string) => ['req', 'url', op]
+
 async function runSrv(request: Request) {
   try {
     const context = getCtx(request)
     const parts = context.req_path.split('/').filter((p) => p.length > 0)
 
     if (!parts.length) {
-      return new Response(`echo "missing operation"`, {
+      return new Response(`echo "operation request missing"`, {
         status: 400,
       })
     }
 
     const op = parts[0]
     if (op === Op.cfg) {
-      const config = await getCfgFsFileContent(
-        Promise.resolve(parts.slice(1)),
-      )
+      const config = await getCfgFileContent(parts.slice(1))
       if (config == null) {
         return new Response(`echo "config not found: ${config}"`, {
           status: 404,
         })
       }
       return new Response(config)
+    } else if (op != Op.cli) {
+      return new Response(`echo "operation requested not supported: ${op}`)
     }
 
     if (!(parts.length > 1)) {
-      return new Response(`echo "missing client"`, {
+      return new Response(`echo "client request missing"`, {
         status: 400,
       })
     }
 
     const cli = parts[1]
-    if (!['pwsh', 'nu', 'zsh'].includes(cli)) {
-      return new Response(`echo "unsupported client: ${cli}"`, {
+    if (!['nu', 'pwsh', 'zsh'].includes(cli)) {
+      return new Response(`echo "client requested not supported: ${cli}"`, {
         status: 404,
       })
     }
 
-    let client: Cli = cli === 'pwsh'
+    let client: Cli = cli === 'nu'
+      ? new Nushell()
+      : cli === 'pwsh'
       ? new Powershell()
-      : cli === 'zsh'
-      ? new Zshell()
-      : new Nushell()
+      : new Zshell()
 
     client = client
       .with(
         client.varSet(
-          Promise.resolve('REQ_URL_CFG'),
-          Promise.resolve(
-            client.toInner([context.req_orig, Op.cfg].join('/')),
-          ),
+          VAR_REQ_URL_OP_KEY(Op.cfg),
+          client.toInner([context.req_orig, Op.cfg].join('/')),
         ),
       )
       .with(
         client.varSet(
-          Promise.resolve('REQ_URL_CLI'),
-          Promise.resolve(
-            client.toInner(
-              [context.req_orig, context.req_path, context.req_srch].join(''),
-            ),
+          VAR_REQ_URL_OP_KEY(Op.cli),
+          client.toInner(
+            [context.req_orig, context.req_path, context.req_srch].join(''),
           ),
         ),
       )
-      .with(client.fileLoad(Promise.resolve(['op'])))
+      .with(await client.fileLoad(['op']))
 
-    if (!context.sys_cpu_arch) {
+    const major = process.env[joinKey(...VAR_CLI_VER_MAJOR_KEY(cli))]
+    if (major) {
+      client = client.with(client.varSet(CLI_VER_MAJOR_KEY, major))
+    }
+    const minor = process.env[joinKey(...VAR_CLI_VER_MINOR_KEY(cli))]
+    if (minor) {
+      client = client.with(client.varSet(CLI_VER_MINOR_KEY, minor))
+    }
+    client = client.with(await client.fileLoad(['ver']))
+
+    if (
+      !(Object.keys(context).filter((k) => k.startsWith('sys')).some((k) =>
+        context[k as keyof Ctx]
+      ))
+    ) {
       return new Response(
-        await client
-          .with(client.fileLoad(Promise.resolve(['ver'])))
-          .with(client.fileLoad(Promise.resolve(['sys'])))
-          .with(client.fileLoad(Promise.resolve(['get'])))
+        client
+          .with(await client.fileLoad(['sys']))
+          .with(await client.fileLoad(['get']))
           .build(),
       )
     }
@@ -121,10 +139,7 @@ async function runSrv(request: Request) {
         continue
       }
       client = client.with(
-        client.varSet(
-          Promise.resolve(e[0].toUpperCase()),
-          Promise.resolve(client.toInner(e[1])),
-        ),
+        client.varSet([e[0]], client.toInner(e[1])),
       )
     }
 
@@ -132,24 +147,22 @@ async function runSrv(request: Request) {
       const cmd = new SrvCmd()
       return new Response(await cmd.process(parts.slice(2), client, context))
     } catch (err) {
-      let errStr = String(err)
+      let error = String(err)
       if (err instanceof Error) {
-        errStr = stringify(getErr(err), Fmt.json)
+        error = stringify(getErr(err), Fmt.json)
       }
-      console.error(errStr)
-      const body = await client
-        .with(client.printErr(Promise.resolve(errStr)))
-        .build()
+      console.error(error)
+      const body = client.with(client.printErr(error)).build()
       return new Response(body)
     }
   } catch (err) {
-    let errStr = String(err)
+    let error = String(err)
     if (err instanceof Error) {
-      errStr = JSON.stringify(getErr(err), null, 2)
+      error = JSON.stringify(getErr(err), null, 2)
         .replaceAll('\\', '')
         .trimEnd()
     }
-    console.error(errStr)
+    console.error(error)
     const body = `echo "check server logs"`
     return new Response(body, { status: 500 })
   }
@@ -157,8 +170,8 @@ async function runSrv(request: Request) {
 
 Deno.serve(
   {
-    hostname: Deno.env.get('HOSTNAME') ?? '0.0.0.0',
-    port: Number(Deno.env.get('PORT') ?? '9000'),
+    hostname: process.env['HOSTNAME'] ?? '0.0.0.0',
+    port: Number(process.env['PORT'] ?? '9000'),
   },
   async (request) => await runSrv(request),
 )

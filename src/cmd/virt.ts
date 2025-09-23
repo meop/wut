@@ -1,10 +1,10 @@
 import type { Cli } from '@meop/shire/cli'
 import { type Cmd, CmdBase } from '@meop/shire/cmd'
 import type { Ctx } from '@meop/shire/ctx'
-import { type Env, SPLIT_VAL, toKey } from '@meop/shire/env'
+import { type Env } from '@meop/shire/env'
 import { Fmt } from '@meop/shire/serde'
 
-import { getCfgFsDirDump } from '../cfg.ts'
+import { getCfgDirDump } from '../cfg.ts'
 
 export class VirtCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -33,10 +33,10 @@ const osPlatToManager: { [key: string]: Array<string> } = {
 }
 
 const VIRT_KEY = 'virt'
-const VIRT_MANAGER_KEY = toKey(VIRT_KEY, 'manager')
-const VIRT_OP_PARTS_KEY = (op: string) => toKey(VIRT_KEY, op, 'parts')
+const VIRT_MANAGER_KEY = [VIRT_KEY, 'manager']
+const VIRT_OP_PARTS_KEY = (op: string) => [VIRT_KEY, op, 'parts']
 
-const VIRT_INSTANCES_KEY = toKey(VIRT_KEY, 'instances')
+const VIRT_INSTANCES_KEY = [VIRT_KEY, 'instances']
 
 function getSupportedManagers(context: Ctx, environment: Env) {
   let managers: Array<string> = []
@@ -81,35 +81,39 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   const supportedManagers = getSupportedManagers(context, environment)
 
   const dirParts = [VIRT_KEY, context.sys_host ?? '']
-  const filters = environment.get(VIRT_OP_PARTS_KEY(op))?.split(SPLIT_VAL) ?? []
+  const filters = environment.getSplit(VIRT_OP_PARTS_KEY(op))
 
   if (op === 'find') {
-    _client = _client.with(
-      _client.gatedFunc(
-        'use cfg (remote)',
-        _client.print(
-          getCfgFsDirDump(Promise.resolve(dirParts), {
-            extension: Fmt.yaml,
-            filters: Promise.resolve(filters),
-          }).then((x) =>
-            x
-              .filter((r) => supportedManagers.includes(r[0]))
-              .map((r) => r.join(' '))
+    _client = _client.with(_client.gatedFunc(
+      'use config (remote)',
+      _client.print(
+        await getCfgDirDump(dirParts, { extension: Fmt.yaml, filters })
+          .then((x) =>
+            x.filter((r) => supportedManagers.includes(r[0])).map((r) =>
+              r.join(' ')
+            )
           ),
-        ),
       ),
-    )
+    ))
   } else {
     for (const supportedManager of supportedManagers) {
-      _client = _client
-        .with(
-          _client.fileLoad(Promise.resolve([VIRT_KEY, supportedManager, op])),
-        )
-        .with(_client.fileLoad(Promise.resolve([VIRT_KEY, supportedManager])))
+      _client = _client.with(
+        await _client.fileLoad(
+          [VIRT_KEY, supportedManager, op],
+          import.meta.resolve,
+          ['..'],
+        ),
+      ).with(
+        await _client.fileLoad(
+          [VIRT_KEY, supportedManager],
+          import.meta.resolve,
+          ['..'],
+        ),
+      )
     }
-    const results = await getCfgFsDirDump(Promise.resolve(dirParts), {
+    const results = await getCfgDirDump(dirParts, {
       extension: Fmt.yaml,
-      filters: Promise.resolve(filters),
+      filters,
     })
 
     const virtMap: { [key: string]: Array<string> } = {}
@@ -128,31 +132,26 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
       }
       if (supportedManagers.length > 1) {
         _client = _client.with(
-          _client.varSet(
-            Promise.resolve(VIRT_MANAGER_KEY),
-            Promise.resolve(_client.toInner(key)),
-          ),
+          _client.varSet(VIRT_MANAGER_KEY, _client.toInner(key)),
         )
       }
-      _client = _client
-        .with(
-          _client.varArrSet(
-            Promise.resolve(VIRT_INSTANCES_KEY),
-            Promise.resolve(virtMap[key]),
-          ),
-        )
-        .with(Promise.resolve([getManagerFuncName(key)]))
+      _client = _client.with(
+        _client.varSetArr(
+          VIRT_INSTANCES_KEY,
+          virtMap[key],
+        ),
+      ).with([getManagerFuncName(key)])
       if (supportedManagers.length > 1) {
         _client = _client.with(
-          _client.varUnset(Promise.resolve(VIRT_MANAGER_KEY)),
+          _client.varUnset(VIRT_MANAGER_KEY),
         )
       }
     }
   }
 
-  const body = await _client.build()
+  const body = _client.build()
 
-  if (environment.get('log')) {
+  if (environment.get(['log'])) {
     console.log(body)
   }
 

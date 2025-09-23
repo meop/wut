@@ -3,10 +3,11 @@ import { Powershell } from '@meop/shire/cli/pwsh'
 import { Zshell } from '@meop/shire/cli/zsh'
 import { type Cmd, CmdBase } from '@meop/shire/cmd'
 import type { Ctx } from '@meop/shire/ctx'
-import { type Env, SPLIT_VAL, toKey } from '@meop/shire/env'
+import { type Env } from '@meop/shire/env'
 import { Fmt } from '@meop/shire/serde'
+import { SysOsPlat } from '@meop/shire/sys'
 
-import { getCfgFsDirDump, getCfgFsFileLoad } from '../cfg.ts'
+import { getCfgDirDump, getCfgFileLoad } from '../cfg.ts'
 
 export class PackCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -44,11 +45,10 @@ const osIdToManagers: { [key: string]: Array<string> } = {
 }
 
 const PACK_KEY = 'pack'
-const PACK_MANAGER_KEY = toKey(PACK_KEY, 'manager')
-const PACK_OP_NAMES_KEY = (op: string) => toKey(PACK_KEY, op, 'names')
-const PACK_OP_GROUPS_KEY = (op: string) => toKey(PACK_KEY, op, 'groups')
-const PACK_OP_GROUP_NAMES_KEY = (op: string) =>
-  toKey(PACK_KEY, op, 'group', 'names')
+const PACK_MANAGER_KEY = [PACK_KEY, 'manager']
+const PACK_OP_NAMES_KEY = (op: string) => [PACK_KEY, op, 'names']
+const PACK_OP_GROUP_KEY = (op: string) => [PACK_KEY, op, 'group']
+const PACK_OP_GROUP_NAMES_KEY = (op: string) => [PACK_KEY, op, 'group', 'names']
 
 function getSupportedManagers(context: Ctx, environment: Env) {
   let managers: Array<string> = []
@@ -94,42 +94,52 @@ async function workAddFindRem(
   for (const supportedManager of supportedManagers) {
     _client = _client
       .with(
-        _client.fileLoad(Promise.resolve([PACK_KEY, supportedManager, op])),
+        await _client.fileLoad(
+          [PACK_KEY, supportedManager, op],
+          import.meta.resolve,
+          ['..'],
+        ),
       )
-      .with(_client.fileLoad(Promise.resolve([PACK_KEY, supportedManager])))
+      .with(
+        await _client.fileLoad(
+          [PACK_KEY, supportedManager],
+          import.meta.resolve,
+          ['..'],
+        ),
+      )
   }
 
-  const names = environment.get(PACK_OP_NAMES_KEY(op))?.split(SPLIT_VAL) ?? []
+  const names = environment.getSplit(PACK_OP_NAMES_KEY(op))
   const namesFound: Array<string> = []
 
-  const groupFind = (filters?: Promise<Array<string>>) =>
+  const groupFind = (filters?: Array<string>) =>
+    getCfgDirDump([PACK_KEY], {
+      extension: Fmt.yaml,
+      filters,
+    }).then((x) => x.map((r) => r.join(' ')))
+
+  const printGroupFind = (matches: Array<string>) =>
     _client.with(
       _client.gatedFunc(
-        'use cfg (remote)',
-        _client.print(
-          getCfgFsDirDump(Promise.resolve([PACK_KEY]), {
-            extension: Fmt.yaml,
-            filters,
-          }).then((x) => x.map((r) => r.join(' '))),
-        ),
+        'use config (remote)',
+        _client.print(matches),
       ),
     )
 
-  if (environment.get(PACK_OP_GROUPS_KEY(op))) {
-    if (!names.length && op === 'find') {
-      _client = groupFind()
-    }
+  if (environment.get(PACK_OP_GROUP_KEY(op))) {
     for (const name of names) {
       if (op === 'find') {
-        _client = groupFind(Promise.resolve([name]))
+        const matches = await groupFind([name])
+        if (!matches.length) {
+          continue
+        }
       } else {
-        const content = await getCfgFsFileLoad(
-          Promise.resolve([PACK_KEY, name]),
+        const content = await getCfgFileLoad(
+          [PACK_KEY, name],
           {
             extension: Fmt.yaml,
           },
         )
-
         if (content == null) {
           continue
         }
@@ -145,49 +155,50 @@ async function workAddFindRem(
           if (supportedManagers.length > 1) {
             _client = _client.with(
               _client.varSet(
-                Promise.resolve(PACK_MANAGER_KEY),
-                Promise.resolve(_client.toInner(key)),
+                PACK_MANAGER_KEY,
+                _client.toInner(key),
               ),
             )
           }
           if (value[op]) {
             _client = _client.with(
-              _client.varArrSet(
-                Promise.resolve(PACK_OP_GROUP_NAMES_KEY(op)),
-                Promise.resolve(
-                  value[op].map((v: string) =>
-                    _client.name === 'nu'
-                      ? _client.toOuter(
-                        context.sys_os_plat === 'winnt'
-                          ? Powershell.execStr(_client.toInner(v))
-                          : Zshell.execStr(_client.toInner(v)),
-                      )
-                      : _client.toInner(v)
-                  ),
+              _client.varSetArr(
+                PACK_OP_GROUP_NAMES_KEY(op),
+                value[op].map((v: string) =>
+                  _client.name === 'nu'
+                    ? _client.toOuter(
+                      context.sys_os_plat === SysOsPlat.winnt
+                        ? Powershell.execStr(_client.toInner(v))
+                        : Zshell.execStr(_client.toInner(v)),
+                    )
+                    : _client.toInner(v)
                 ),
               ),
             )
           }
           _client = _client.with(
             _client.varSet(
-              Promise.resolve(PACK_OP_NAMES_KEY(op)),
-              Promise.resolve(_client.toInner(value.names.join(' '))),
+              PACK_OP_NAMES_KEY(op),
+              _client.toInner(value.names.join(' ')),
             ),
           )
-          _client = _client.with(Promise.resolve([getManagerFuncName(key)]))
+          _client = _client.with([getManagerFuncName(key)])
           if (value[op]) {
             _client = _client.with(
-              _client.varUnset(Promise.resolve(PACK_OP_GROUP_NAMES_KEY(op))),
+              _client.varUnset(PACK_OP_GROUP_NAMES_KEY(op)),
             )
           }
           if (supportedManagers.length > 1) {
             _client = _client.with(
-              _client.varUnset(Promise.resolve(PACK_MANAGER_KEY)),
+              _client.varUnset(PACK_MANAGER_KEY),
             )
           }
         }
       }
       namesFound.push(name)
+    }
+    if (op === 'find') {
+      _client = printGroupFind(names.length ? namesFound : await groupFind())
     }
   }
 
@@ -197,18 +208,16 @@ async function workAddFindRem(
     _client = _client
       .with(
         _client.varSet(
-          Promise.resolve(PACK_OP_NAMES_KEY(op)),
-          Promise.resolve(_client.toInner(namesRemaining.join(' '))),
+          PACK_OP_NAMES_KEY(op),
+          _client.toInner(namesRemaining.join(' ')),
         ),
       )
-      .with(
-        Promise.resolve(supportedManagers.map((m) => getManagerFuncName(m))),
-      )
+      .with(supportedManagers.map((m) => getManagerFuncName(m)))
   }
 
-  const body = await _client.build()
+  const body = _client.build()
 
-  if (environment.get('log')) {
+  if (environment.get(['log'])) {
     console.log(body)
   }
 
@@ -227,16 +236,26 @@ async function workListOutSyncTidy(
   for (const supportedManager of supportedManagers) {
     _client = _client
       .with(
-        _client.fileLoad(Promise.resolve([PACK_KEY, supportedManager, op])),
+        await _client.fileLoad(
+          [PACK_KEY, supportedManager, op],
+          import.meta.resolve,
+          ['..'],
+        ),
       )
-      .with(_client.fileLoad(Promise.resolve([PACK_KEY, supportedManager])))
+      .with(
+        await _client.fileLoad(
+          [PACK_KEY, supportedManager],
+          import.meta.resolve,
+          ['..'],
+        ),
+      )
   }
 
-  const body = await _client
-    .with(Promise.resolve(supportedManagers.map((m) => getManagerFuncName(m))))
+  const body = _client
+    .with(supportedManagers.map((m) => getManagerFuncName(m)))
     .build()
 
-  if (environment.get('log')) {
+  if (environment.get(['log'])) {
     console.log(body)
   }
 

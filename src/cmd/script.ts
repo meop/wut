@@ -1,10 +1,11 @@
 import type { Cli } from '@meop/shire/cli'
 import { type Cmd, CmdBase } from '@meop/shire/cmd'
-import type { Ctx } from '@meop/shire/ctx'
-import { type Env, SPLIT_VAL, toKey } from '@meop/shire/env'
+import type { Ctx, CtxFilter } from '@meop/shire/ctx'
+import { type Env } from '@meop/shire/env'
 import { Fmt } from '@meop/shire/serde'
+import { SysOsPlat } from '@meop/shire/sys'
 
-import { getCfgFsDirDump, getCfgFsDirLoad, getCfgFsFileLoad } from '../cfg.ts'
+import { getCfgDirContent, getCfgDirDump, getCfgFileLoad } from '../cfg.ts'
 
 export class ScriptCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -20,14 +21,14 @@ export class ScriptCmd extends CmdBase implements Cmd {
 }
 
 const SCRIPT_KEY = 'script'
-const SCRIPT_OP_PARTS_KEY = (op: string) => toKey(SCRIPT_KEY, op, 'parts')
+const SCRIPT_OP_PARTS_KEY = (op: string) => [SCRIPT_KEY, op, 'parts']
 
 async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   if (
     client.name === 'nu' ||
-    (client.name === 'pwsh' && context.sys_os_plat !== 'winnt')
+    (client.name === 'pwsh' && context.sys_os_plat !== SysOsPlat.winnt)
   ) {
-    if (context.sys_os_plat === 'winnt') {
+    if (context.sys_os_plat === SysOsPlat.winnt) {
       const url = [
         context.req_orig,
         context.req_path.replace(`/cli/${client.name}`, '/cli/pwsh'),
@@ -45,42 +46,45 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   let _client = client
 
   const dirParts = [SCRIPT_KEY, _client.name]
-  const filters = environment.get(SCRIPT_OP_PARTS_KEY(op))?.split(SPLIT_VAL) ??
-    []
+  const filters = environment.getSplit(SCRIPT_OP_PARTS_KEY(op))
 
-  const content = await getCfgFsFileLoad(Promise.resolve([SCRIPT_KEY]), {
+  const content = await getCfgFileLoad([SCRIPT_KEY], {
     extension: Fmt.yaml,
   })
-  const contextFilter = content[_client.name]
+
+  let contextFilter: CtxFilter | undefined
+  if (content != null) {
+    contextFilter = content[_client.name]
+  }
 
   if (op === 'find') {
     _client = _client.with(
       _client.gatedFunc(
-        'use cfg (remote)',
+        'use config (remote)',
         _client.print(
-          getCfgFsDirDump(Promise.resolve(dirParts), {
+          await getCfgDirDump(dirParts, {
             context,
             contextFilter,
-            extension: _client.extension as Fmt,
-            filters: Promise.resolve(filters),
+            extension: _client.extension,
+            filters,
           }).then((x) => x.map((y) => y.join(' '))),
         ),
       ),
     )
   } else {
     _client = _client.with(
-      getCfgFsDirLoad(Promise.resolve(dirParts), {
+      await getCfgDirContent(dirParts, {
         context,
         contextFilter,
-        extension: _client.extension as Fmt,
-        filters: Promise.resolve(filters),
+        extension: _client.extension,
+        filters,
       }),
     )
   }
 
-  const body = await client.build()
+  const body = client.build()
 
-  if (environment.get('log')) {
+  if (environment.get(['log'])) {
     console.log(body)
   }
 

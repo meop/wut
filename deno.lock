@@ -17,7 +17,15 @@
   "workspace": {
     "dependencies": [
       "jsr:@cross/deepmerge@1",
-      "jsr:@eemeli/yaml@^2.8.1"
-    ]
+      "jsr:@eemeli/yaml@^2.8.1",
+      "jsr:@meop/shire@0.1"
+    ],
+    "links": {
+      "jsr:@meop/shire@0.1.0": {
+        "dependencies": [
+          "jsr:@eemeli/yaml@^2.8.1"
+        ]
+      }
+    }
   }
 }

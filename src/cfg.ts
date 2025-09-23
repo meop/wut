@@ -9,45 +9,73 @@ import {
   isDirPath,
   isPath,
 } from '@meop/shire/path'
+import { joinKey, splitVal } from '@meop/shire/reg'
 import { Fmt, parse } from '@meop/shire/serde'
 
 import { toRelParts } from './path.ts'
 
-const cfgDirPaths = (process.env['WUT_CFG_DIRS'] ?? 'wut').split(',').map((
-  dir,
-) =>
+const ENV_CFG_DIRS_KEY = ['cfg', 'dirs']
+
+const cfgDirPaths = [
   buildFilePath(
     import.meta.dirname ?? '',
     '..',
-    '..',
-    dir,
     'cfg',
-  )
-)
+  ),
+  ...(
+    splitVal(process.env[joinKey(...ENV_CFG_DIRS_KEY)]).map((
+      dir,
+    ) =>
+      buildFilePath(
+        import.meta.dirname ?? '',
+        '..',
+        '..',
+        dir,
+        'cfg',
+      )
+    )
+  ),
+].reverse()
 
-export function localCfgPaths(parts: Array<string>) {
-  return cfgDirPaths.map((c) => `${buildFilePath(...[c, ...parts])}`)
+export async function localCfgPaths(parts: Array<string>, extension?: string) {
+  const validDirs: Array<string> = []
+  const validCfgPaths: Array<string> = []
+
+  for (const maybeDir of cfgDirPaths) {
+    if (await isDirPath(maybeDir)) {
+      validDirs.push(maybeDir)
+    }
+  }
+
+  for (const validDir of validDirs) {
+    const maybeCfgPath = `${buildFilePath(validDir, ...parts)}${
+      extension ? `.${extension}` : ''
+    }`
+    if (await isPath(maybeCfgPath)) {
+      validCfgPaths.push(maybeCfgPath)
+    }
+  }
+  return validCfgPaths
 }
 
-export async function getCfgFsDirDump(
-  parts: Promise<Array<string>>,
+export async function getCfgDirDump(
+  parts: Array<string>,
   options?: {
     context?: Ctx
     contextFilter?: CtxFilter
-    extension?: Fmt
-    filters?: Promise<Array<string>>
+    extension?: string
+    filters?: Array<string>
   },
 ) {
-  const _parts = await parts
   const dirFileParts: Array<Array<string>> = []
-  for (const dirPath of localCfgPaths(_parts)) {
+  for (const dirPath of await localCfgPaths(parts)) {
     if (!(await isDirPath(dirPath))) {
       continue
     }
     dirFileParts.push(...(
       await getFilePaths(dirPath, {
         extension: options?.extension,
-        filters: options?.filters ? await options.filters : undefined,
+        filters: options?.filters ?? undefined,
       })
     ).map((p) => toRelParts(dirPath, p)))
   }
@@ -90,21 +118,20 @@ export async function getCfgFsDirDump(
   return dirFileParts
 }
 
-export async function getCfgFsDirLoad(
-  parts: Promise<Array<string>>,
+export async function getCfgDirContent(
+  parts: Array<string>,
   options?: {
     context?: Ctx
     contextFilter?: CtxFilter
-    extension?: Fmt
-    filters?: Promise<Array<string>>
+    extension?: string
+    filters?: Array<string>
   },
 ) {
-  const _parts = await parts
   const contents: Array<string> = []
-  const dirFileParts = await getCfgFsDirDump(parts, options)
+  const dirFileParts = await getCfgDirDump(parts, options)
   for (const fileParts of dirFileParts) {
-    const content = await getCfgFsFileLoad(
-      Promise.resolve([..._parts, ...fileParts]),
+    const content = await getCfgFileContent(
+      [...parts, ...fileParts],
       options,
     )
     if (content != null) {
@@ -114,40 +141,33 @@ export async function getCfgFsDirLoad(
   return contents
 }
 
-export async function getCfgFsFileContent(
-  parts: Promise<Array<string>>,
+export async function getCfgFileContent(
+  parts: Array<string>,
   options?: {
-    extension?: Fmt
+    extension?: string
   },
 ) {
-  const _parts = await parts
-  for (const cfgPath of localCfgPaths(_parts).reverse()) {
-    if (
-      await isPath(
-        `${cfgPath}${options?.extension ? `.${options.extension}` : ''}`,
-      )
-    ) {
-      return await getFileContent(cfgPath)
-    }
-  }
+  return await getFileContent(
+    (await localCfgPaths(parts, options?.extension))[0] ?? '',
+  )
 }
 
-export async function getCfgFsFileLoad(
-  parts: Promise<Array<string>>,
+export async function getCfgFileLoad(
+  parts: Array<string>,
   options?: {
-    extension?: Fmt
+    extension?: string
   },
 ) {
-  const _parts = await parts
   // deno-lint-ignore no-explicit-any
-  let content: any
+  let content: any = null
 
-  for (const filePath of localCfgPaths(_parts)) {
-    const contentRaw = await getFileContent(
-      `${filePath}${options?.extension ? `.${options.extension}` : ''}`,
-    )
+  for (const localCfgPath of (await localCfgPaths(parts, options?.extension))) {
+    const contentRaw = await getFileContent(localCfgPath)
     if (contentRaw != null) {
-      const contentRawFmt = parse(contentRaw, options?.extension ?? Fmt.yaml)
+      const contentRawFmt = parse(
+        contentRaw,
+        options?.extension as Fmt ?? Fmt.yaml,
+      )
       if (content == null) {
         content = contentRawFmt
       } else {

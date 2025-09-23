@@ -13,7 +13,7 @@ def packYay [] {
       }
     }
   } catch { |e|
-    if not (($e.msg | str downcase) == 'external command had a non-zero exit code') {
+    if not (($e.msg | str downcase) == 'i/o error') {
       error make $e
     }
   }
@@ -36,7 +36,7 @@ def packPacman [] {
       }
     }
   } catch { |e|
-    if not (($e.msg | str downcase) == 'external command had a non-zero exit code') {
+    if not (($e.msg | str downcase) == 'i/o error') {
       error make $e
     }
   }

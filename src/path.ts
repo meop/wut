@@ -1,5 +1,7 @@
 import PATH from 'node:path'
 
+import { SysOsPlat } from '@meop/shire/sys'
+
 function withoutExt(filePath: string) {
   const parsedPath = PATH.parse(filePath)
   return PATH.join(parsedPath.dir, parsedPath.name)
@@ -90,19 +92,19 @@ export function toWinntPath(filePath: string) {
 }
 
 export function getPlatAclPermCmds(
-  plat: string,
-  fsPath: string,
+  plat: SysOsPlat,
+  path: string,
   perm: AclPerm,
   user: string,
 ) {
   switch (plat) {
-    case 'linux':
-    case 'darwin':
-      return [`chmod -R a-s,${getFsAclUnixVal(perm)} '${toUnixPath(fsPath)}'`]
-    case 'winnt':
+    case SysOsPlat.darwin:
+    case SysOsPlat.linux:
+      return [`chmod -R a-s,${getFsAclUnixVal(perm)} '${toUnixPath(path)}'`]
+    case SysOsPlat.winnt:
       return [
-        `icacls '${toWinntPath(fsPath)}' /t /reset`,
-        `icacls '${toWinntPath(fsPath)}' /t /inheritance:r /grant ${
+        `icacls '${toWinntPath(path)}' /t /reset`,
+        `icacls '${toWinntPath(path)}' /t /inheritance:r /grant ${
           getFsAclWinntVal(perm, user)
         }`,
       ]
