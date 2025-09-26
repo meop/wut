@@ -3,8 +3,9 @@
   "specifiers": {
     "jsr:@cross/deepmerge@*": "1.0.0",
     "jsr:@cross/deepmerge@1": "1.0.0",
-    "jsr:@eemeli/yaml@*": "2.8.1",
-    "jsr:@eemeli/yaml@^2.8.1": "2.8.1"
+    "jsr:@eemeli/yaml@^2.8.1": "2.8.1",
+    "jsr:@meop/shire@~0.1.1": "0.1.1",
+    "npm:@types/node@*": "24.2.0"
   },
   "jsr": {
     "@cross/deepmerge@1.0.0": {
@@ -12,16 +13,33 @@
     },
     "@eemeli/yaml@2.8.1": {
       "integrity": "148adba3583caeb2b81ea06c8af8804e4548201a9e46bcdfa08c0afb8e78f446"
+    },
+    "@meop/shire@0.1.1": {
+      "integrity": "7d322f6969f17dacc5d222fccb34ed64990a5f58eb77b0ece127b3a62265eb9f",
+      "dependencies": [
+        "jsr:@eemeli/yaml"
+      ]
+    }
+  },
+  "npm": {
+    "@types/node@24.2.0": {
+      "integrity": "sha512-3xyG3pMCq3oYCNg7/ZP+E1ooTaGB4cG8JWRsqqOYQdbWNY4zbaV0Ennrd7stjiJEFZCaybcIgpTjJWHRfBSIDw==",
+      "dependencies": [
+        "undici-types"
+      ]
+    },
+    "undici-types@7.10.0": {
+      "integrity": "sha512-t5Fy/nfn+14LuOc2KNYg75vZqClpAiqscVvMygNnlsHBFpSXdJaYtXMcdNLpl/Qvc3P2cB3s6lOV51nqsFq4ag=="
     }
   },
   "workspace": {
     "dependencies": [
       "jsr:@cross/deepmerge@1",
       "jsr:@eemeli/yaml@^2.8.1",
-      "jsr:@meop/shire@0.1"
+      "jsr:@meop/shire@~0.1.1"
     ],
     "links": {
-      "jsr:@meop/shire@0.1.0": {
+      "jsr:@meop/shire@0.1.1": {
         "dependencies": [
           "jsr:@eemeli/yaml@^2.8.1"
         ]
