@@ -33,7 +33,7 @@ export class PackCmd extends CmdBase implements Cmd {
 const osPlatToManagers: { [key: string]: Array<string> } = {
   linux: ['apt', 'dnf', 'yay', 'pacman'],
   darwin: ['brew'],
-  winnt: ['scoop', 'winget'],
+  winnt: ['scoop', 'winget', 'choco'],
 }
 
 const osIdToManagers: { [key: string]: Array<string> } = {
