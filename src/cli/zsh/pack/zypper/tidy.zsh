@@ -1,3 +1,3 @@
 function packZypperOp {
-  opPrintMaybeRunCmd $1 clean
+  opPrintMaybeRunCmd $1 clean --only-unneeded
 }

@@ -1,3 +1,3 @@
 def packZypperOp [cmd] {
-  opPrintMaybeRunCmd $cmd clean
+  opPrintMaybeRunCmd $cmd clean --only-unneeded
 }
