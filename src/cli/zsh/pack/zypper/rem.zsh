@@ -1,5 +1,5 @@
-function packPacmanOp {
-  opPrintMaybeRunCmd $1 --remove --nosave --recursive $PACK_REM_NAMES
+function packZypperOp {
+  opPrintMaybeRunCmd $1 remove --clean-deps $PACK_REM_NAMES
   if [[ $PACK_REM_GROUP_NAMES ]]; then
     for group in "${PACK_REM_GROUP_NAMES[@]}"; do
       groupSplit=( ${(s: :)group} )

@@ -31,9 +31,9 @@ export class PackCmd extends CmdBase implements Cmd {
 }
 
 const osPlatToManagers: { [key: string]: Array<string> } = {
-  linux: ['apt', 'dnf', 'yay', 'pacman'],
+  linux: ['yay', 'pacman', 'apt', 'dnf', 'zypper'],
   darwin: ['brew'],
-  winnt: ['scoop', 'winget', 'choco'],
+  winnt: ['choco', 'scoop', 'winget'],
 }
 
 const osIdToManagers: { [key: string]: Array<string> } = {
@@ -42,6 +42,7 @@ const osIdToManagers: { [key: string]: Array<string> } = {
   ubuntu: ['apt'],
   rocky: ['dnf'],
   fedora: ['dnf'],
+  suse: ['zypper'],
 }
 
 const PACK_KEY = 'pack'
