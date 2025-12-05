@@ -3,19 +3,19 @@
   "specifiers": {
     "jsr:@cross/deepmerge@*": "1.0.0",
     "jsr:@cross/deepmerge@1": "1.0.0",
-    "jsr:@eemeli/yaml@^2.8.1": "2.8.1",
-    "jsr:@meop/shire@~0.1.3": "0.1.3",
+    "jsr:@eemeli/yaml@^2.8.2": "2.8.2",
+    "jsr:@meop/shire@~0.1.5": "0.1.5",
     "npm:@types/node@*": "24.2.0"
   },
   "jsr": {
     "@cross/deepmerge@1.0.0": {
       "integrity": "1e1318a74e31ba1959b9aa0acae8bd417b806f74ffd25ac07c90e12f83ad6b1d"
     },
-    "@eemeli/yaml@2.8.1": {
-      "integrity": "148adba3583caeb2b81ea06c8af8804e4548201a9e46bcdfa08c0afb8e78f446"
+    "@eemeli/yaml@2.8.2": {
+      "integrity": "58f95e7b82f2717963d31f350a9c7cdc098a7b481a3f64c58e979e2e999db0b0"
     },
-    "@meop/shire@0.1.3": {
-      "integrity": "755b134ccc81314cdb170808de9dd21d1420b607a951f133460de3e4a347f6fc",
+    "@meop/shire@0.1.5": {
+      "integrity": "27e82b0d31aff17a553b3345fd3fb8be263a757acbe56e84cc900730ac1241ee",
       "dependencies": [
         "jsr:@eemeli/yaml"
       ]
@@ -35,13 +35,13 @@
   "workspace": {
     "dependencies": [
       "jsr:@cross/deepmerge@1",
-      "jsr:@eemeli/yaml@^2.8.1",
-      "jsr:@meop/shire@~0.1.3"
+      "jsr:@eemeli/yaml@^2.8.2",
+      "jsr:@meop/shire@~0.1.5"
     ],
     "links": {
-      "jsr:@meop/shire@0.1.3": {
+      "jsr:@meop/shire@0.1.5": {
         "dependencies": [
-          "jsr:@eemeli/yaml@^2.8.1"
+          "jsr:@eemeli/yaml@^2.8.2"
         ]
       }
     }
