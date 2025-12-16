@@ -27,16 +27,19 @@ export class FileCmd extends CmdBase implements Cmd {
 }
 
 type Sync = {
-  [key: string]: [
-    {
+  [key: string]: {
+    aliases?: Array<string>
+    maps: [{
       in: string
       out: {
         [key: string]: string
       }
-      perm?: AclPerm
-    },
-  ]
+      permission?: AclPerm
+    }]
+  }
 }
+
+const KEY_SPLIT = ','
 
 const FILE_KEY = 'file'
 
@@ -45,6 +48,10 @@ const FILE_OP_PARTS_KEY = (op: string) => [FILE_KEY, op, 'parts']
 const FILE_OP_CLEAR_DIRS_KEY = (op: string) => [FILE_KEY, op, 'clear', 'dirs']
 const FILE_OP_PATH_PAIRS_KEY = (op: string) => [FILE_KEY, op, 'path', 'pairs']
 const FILE_OP_PATH_PERMS_KEY = (op: string) => [FILE_KEY, op, 'path', 'perms']
+
+function joinKey(key: string, aliases?: Array<string>): string {
+  return [key, ...aliases ?? []].join(KEY_SPLIT)
+}
 
 async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
   if (client.name !== 'nu') {
@@ -70,11 +77,14 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
 
   const validKeys: Array<string> = []
   for (
-    const key of Object.keys(content).filter(
-      (k) => !filters.length || filters.find((f) => k.startsWith(f)),
+    const key of Object.keys(content).filter((k) =>
+      !filters.length ||
+      filters.find((f) =>
+        k.startsWith(f) || content[k].aliases?.find((a) => a.startsWith(f))
+      )
     )
   ) {
-    if (sys_os_plat && content[key].find((p) => sys_os_plat in p.out)) {
+    if (sys_os_plat && content[key].maps.find((p) => sys_os_plat in p.out)) {
       validKeys.push(key)
     }
   }
@@ -99,59 +109,76 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     _client = _client.with(
       _client.varSetArr(
         FILE_OP_KEYS_KEY(op),
-        validKeys.map((x) => _client.toInner(x)),
+        validKeys.map((x) => _client.toInner(joinKey(x, content[x].aliases)))
+          .toSorted(),
       ),
     )
   } else {
-    const validClearDirs: Set<string> = new Set()
+    const validDirs: Set<string> = new Set()
     const validPairs: Array<string> = []
     const validPerms: Array<string> = []
     for (const key of validKeys) {
-      for (const entry of content[key]) {
-        const entry_in = withCtx(entry.in, context)
-        const entry_out = entry.out
-        const entry_perm = entry.perm
-        if (!(sys_os_plat && sys_os_plat in entry_out)) {
+      const entry = content[key]
+      const aliases = entry.aliases
+      for (const map of entry.maps) {
+        const map_in = withCtx(map.in, context)
+        const map_out = map.out
+        const map_permission = map.permission
+        if (!(sys_os_plat && sys_os_plat in map_out)) {
           continue
         }
-        const localEntryPaths = await localCfgPaths([FILE_KEY, key, entry_in])
+        const localEntryPaths = await localCfgPaths([FILE_KEY, key, map_in])
         if (!localEntryPaths.length) {
           continue
         }
         if (await isDirPath(localEntryPaths[0])) {
           for (const localEntryPath of localEntryPaths) {
-            validClearDirs.add(
-              _client.toOuter(joinVal(key, entry_out[sys_os_plat])),
+            validDirs.add(
+              _client.toOuter(
+                joinVal(joinKey(key, aliases), map_out[sys_os_plat]),
+              ),
             )
             for (const filePath of await getFilePaths(localEntryPath)) {
               const filePathParts = toRelParts(localEntryPath, filePath, false)
               const srcFull = _client.toInner(
-                [key, entry_in, ...filePathParts].join('/'),
+                [key, map_in, ...filePathParts].join('/'),
               )
               const dstFull = _client.toInner(
-                [entry_out[sys_os_plat], ...filePathParts].join('/'),
+                [map_out[sys_os_plat], ...filePathParts].join('/'),
               )
-              validPairs.push(_client.toOuter(joinVal(key, srcFull, dstFull)))
+              validPairs.push(
+                _client.toOuter(
+                  joinVal(joinKey(key, aliases), srcFull, dstFull),
+                ),
+              )
             }
           }
         } else {
-          const srcFull = _client.toInner([key, entry_in].join('/'))
-          const dstFull = _client.toInner(entry_out[sys_os_plat])
-          validPairs.push(_client.toOuter(joinVal(key, srcFull, dstFull)))
+          const srcFull = _client.toInner([key, map_in].join('/'))
+          const dstFull = _client.toInner(map_out[sys_os_plat])
+          validPairs.push(
+            _client.toOuter(
+              joinVal(joinKey(key, aliases), srcFull, dstFull),
+            ),
+          )
         }
-        if (entry_perm) {
+        if (map_permission) {
           for (
             const permCmd of getPlatAclPermCmds(
               sys_os_plat,
-              entry_out[sys_os_plat],
-              entry_perm,
+              map_out[sys_os_plat],
+              map_permission,
               context.sys_user ?? '',
             )
           ) {
             const permCmdFull = context.sys_os_plat === SysOsPlat.winnt
               ? Powershell.execStr(_client.toInner(permCmd))
               : Zshell.execStr(_client.toInner(permCmd))
-            validPerms.push(_client.toOuter(joinVal(key, permCmdFull)))
+            validPerms.push(
+              _client.toOuter(
+                joinVal(joinKey(key, aliases), permCmdFull),
+              ),
+            )
           }
         }
       }
@@ -162,9 +189,9 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     )
 
     if (op === 'sync') {
-      if (validClearDirs.size) {
+      if (validDirs.size) {
         _client = _client.with(
-          _client.varSetArr(FILE_OP_CLEAR_DIRS_KEY(op), [...validClearDirs]),
+          _client.varSetArr(FILE_OP_CLEAR_DIRS_KEY(op), [...validDirs]),
         )
       }
 

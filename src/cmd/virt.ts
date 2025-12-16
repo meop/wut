@@ -91,7 +91,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
           .then((x) =>
             x.filter((r) => supportedManagers.includes(r[0])).map((r) =>
               r.join(' ')
-            )
+            ).toSorted()
           ),
       ),
     ))

@@ -1,9 +1,18 @@
 def fileOp [] {
   for pair in $env.FILE_DIFF_PATH_PAIRS {
     let pairParts = $pair | split row '|'
-    if (which $pairParts.0 | is-empty) {
+
+    mut bin = ''
+    for alias in ($pairParts.0 | split row ',') {
+      if (which $alias | is-not-empty) {
+        $bin = $alias
+        break
+      }
+    }
+    if ($bin | is-empty) {
       continue
     }
+
     let src = rmInner $pairParts.1 | str trim --left --char '/'
     let dst = replaceEnv (rmInner $pairParts.2) | path expand
 

@@ -2,7 +2,15 @@ def fileOp [] {
   if 'FILE_SYNC_CLEAR_DIRS' in $env {
     for dir in $env.FILE_SYNC_CLEAR_DIRS {
       let dirParts = $dir | split row '|'
-      if (which $dirParts.0 | is-empty) {
+
+      mut bin = ''
+      for alias in ($dirParts.0 | split row ',') {
+        if (which $alias | is-not-empty) {
+          $bin = $alias
+          break
+        }
+      }
+      if ($bin | is-empty) {
         continue
       }
 
@@ -14,7 +22,15 @@ def fileOp [] {
   mut createdDirs = []
   for pair in $env.FILE_SYNC_PATH_PAIRS {
     let pairParts = $pair | split row '|'
-    if (which $pairParts.0 | is-empty) {
+
+    mut bin = ''
+    for alias in ($pairParts.0 | split row ',') {
+      if (which $alias | is-not-empty) {
+        $bin = $alias
+        break
+      }
+    }
+    if ($bin | is-empty) {
       continue
     }
 
@@ -34,7 +50,15 @@ def fileOp [] {
   if 'FILE_SYNC_PATH_PERMS' in $env {
     for perm in $env.FILE_SYNC_PATH_PERMS {
       let permParts = $perm | split row '|'
-      if (which $permParts.0 | is-empty) {
+
+      mut bin = ''
+      for alias in ($permParts.0 | split row ',') {
+        if (which $alias | is-not-empty) {
+          $bin = $alias
+          break
+        }
+      }
+      if ($bin | is-empty) {
         continue
       }
 

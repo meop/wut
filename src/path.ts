@@ -29,15 +29,15 @@ export type AclPerm = {
   other?: AclPermScope
 }
 
-function getFsAclUnixSymVal(itemPerm?: AclPermScope) {
+function getFsAclUnixSymVal(permScope?: AclPermScope) {
   let symbols = ''
-  if (itemPerm?.read) {
+  if (permScope?.read) {
     symbols += 'r'
   }
-  if (itemPerm?.write) {
+  if (permScope?.write) {
     symbols += 'w'
   }
-  if (itemPerm?.execute) {
+  if (permScope?.execute) {
     symbols += 'x'
   }
   return symbols

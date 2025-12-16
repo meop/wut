@@ -123,7 +123,7 @@ async function workAddFindRem(
     _client.with(
       _client.gatedFunc(
         'use config (remote)',
-        _client.print(matches),
+        _client.print(matches.toSorted()),
       ),
     )
 
