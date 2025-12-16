@@ -7,7 +7,7 @@
   "imports": {
     "@cross/deepmerge": "jsr:@cross/deepmerge@^1.0.0",
     "@eemeli/yaml": "jsr:@eemeli/yaml@^2.8.2",
-    "@meop/shire": "jsr:@meop/shire@^0.1.5"
+    "@meop/shire": "jsr:@meop/shire@^0.1.6"
   },
   "links": [
     "../shire"

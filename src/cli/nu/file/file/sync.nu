@@ -14,7 +14,7 @@ def fileOp [] {
         continue
       }
 
-      let dst = replaceEnv (rmInner $dirParts.1) | path expand
+      let dst = replaceEnv $dirParts.1 | path expand
       opPrintMaybeRunCmd rm --force --permanent --recursive $"r#'($dst)'#"
     }
   }
@@ -34,8 +34,8 @@ def fileOp [] {
       continue
     }
 
-    let src = rmInner $pairParts.1 | str trim --left --char '/'
-    let dst = replaceEnv (rmInner $pairParts.2) | path expand
+    let src = $pairParts.1 | str trim --left --char '/'
+    let dst = replaceEnv $pairParts.2 | path expand
 
     let url = $"($env.REQ_URL_CFG)/file/($src)"
 
@@ -62,7 +62,7 @@ def fileOp [] {
         continue
       }
 
-      let cmd = replaceEnv (rmInner $permParts.1)
+      let cmd = replaceEnv $permParts.1
       opPrintMaybeRunCmd ...($cmd | split row ' ')
     }
   }

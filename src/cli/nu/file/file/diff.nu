@@ -13,8 +13,8 @@ def fileOp [] {
       continue
     }
 
-    let src = rmInner $pairParts.1 | str trim --left --char '/'
-    let dst = replaceEnv (rmInner $pairParts.2) | path expand
+    let src = $pairParts.1 | str trim --left --char '/'
+    let dst = replaceEnv $pairParts.2 | path expand
 
     let url = $"($env.REQ_URL_CFG)/file/($src)"
 

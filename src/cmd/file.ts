@@ -109,7 +109,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     _client = _client.with(
       _client.varSetArr(
         FILE_OP_KEYS_KEY(op),
-        validKeys.map((x) => _client.toInner(joinKey(x, content[x].aliases)))
+        validKeys.map((x) => _client.toOuter(joinKey(x, content[x].aliases)))
           .toSorted(),
       ),
     )
@@ -120,6 +120,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     for (const key of validKeys) {
       const entry = content[key]
       const aliases = entry.aliases
+      const compoundKey = joinKey(key, aliases)
       for (const map of entry.maps) {
         const map_in = withCtx(map.in, context)
         const map_out = map.out
@@ -135,30 +136,26 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
           for (const localEntryPath of localEntryPaths) {
             validDirs.add(
               _client.toOuter(
-                joinVal(joinKey(key, aliases), map_out[sys_os_plat]),
+                joinVal(compoundKey, map_out[sys_os_plat]),
               ),
             )
             for (const filePath of await getFilePaths(localEntryPath)) {
               const filePathParts = toRelParts(localEntryPath, filePath, false)
-              const srcFull = _client.toInner(
-                [key, map_in, ...filePathParts].join('/'),
-              )
-              const dstFull = _client.toInner(
-                [map_out[sys_os_plat], ...filePathParts].join('/'),
-              )
+              const srcFull = [key, map_in, ...filePathParts].join('/')
+              const dstFull = [map_out[sys_os_plat], ...filePathParts].join('/')
               validPairs.push(
                 _client.toOuter(
-                  joinVal(joinKey(key, aliases), srcFull, dstFull),
+                  joinVal(compoundKey, srcFull, dstFull),
                 ),
               )
             }
           }
         } else {
-          const srcFull = _client.toInner([key, map_in].join('/'))
-          const dstFull = _client.toInner(map_out[sys_os_plat])
+          const srcFull = [key, map_in].join('/')
+          const dstFull = map_out[sys_os_plat]
           validPairs.push(
             _client.toOuter(
-              joinVal(joinKey(key, aliases), srcFull, dstFull),
+              joinVal(compoundKey, srcFull, dstFull),
             ),
           )
         }
@@ -176,7 +173,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
               : Zshell.execStr(_client.toInner(permCmd))
             validPerms.push(
               _client.toOuter(
-                joinVal(joinKey(key, aliases), permCmdFull),
+                joinVal(compoundKey, permCmdFull),
               ),
             )
           }
