@@ -1,3 +1,3 @@
 def packWingetOp [cmd] {
-  # not applicable
+  opPrintInfo 'Nothing to do'
 }

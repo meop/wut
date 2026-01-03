@@ -1,3 +1,3 @@
 def virtQemuOp [cmd, cmdSysArch] {
-  # not applicable
+  opPrintInfo 'Nothing to do'
 }
