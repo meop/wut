@@ -29,13 +29,13 @@ export class FileCmd extends CmdBase implements Cmd {
 type Sync = {
   [key: string]: {
     aliases?: Array<string>
-    maps: [{
+    maps?: Array<{
       in: string
       out: {
         [key: string]: string
       }
       permission?: AclPerm
-    }]
+    }>
   }
 }
 
@@ -80,11 +80,11 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     const key of Object.keys(content).filter((k) =>
       !filters.length ||
       filters.find((f) =>
-        k.startsWith(f) || content[k].aliases?.find((a) => a.startsWith(f))
+        k.startsWith(f) || content[k]?.aliases?.find((a) => a.startsWith(f))
       )
     )
   ) {
-    if (sys_os_plat && content[key].maps.find((p) => sys_os_plat in p.out)) {
+    if (sys_os_plat && content[key]?.maps?.find((p) => sys_os_plat in p.out)) {
       validKeys.push(key)
     }
   }
@@ -121,7 +121,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
       const entry = content[key]
       const aliases = entry.aliases
       const compoundKey = joinKey(key, aliases)
-      for (const map of entry.maps) {
+      for (const map of entry.maps ?? []) {
         const map_in = withCtx(map.in, context)
         const map_out = map.out
         const map_permission = map.permission
