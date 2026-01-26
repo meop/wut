@@ -4,6 +4,5 @@ def packPacmanOp [cmd] {
       opPrintMaybeRunCmd ...($name | split row ' ')
     }
   }
-  opPrintMaybeRunCmd $cmd --sync --refresh '|' complete '|' ignore
   opPrintMaybeRunCmd $cmd --sync --needed $env.PACK_ADD_NAMES
 }

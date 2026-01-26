@@ -5,6 +5,5 @@ function packScoopOp ($cmd) {
       opPrintMaybeRunCmd @pgSplit
     }
   }
-  opPrintMaybeRunCmd $cmd update '>' '$null' '2>&1' '3>&1' '4>&1' '5>&1' '6>&1'
   opPrintMaybeRunCmd $cmd install $PACK_ADD_NAMES
 }

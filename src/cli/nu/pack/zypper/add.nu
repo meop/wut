@@ -4,6 +4,5 @@ def packZypperOp [cmd] {
       opPrintMaybeRunCmd ...($name | split row ' ')
     }
   }
-  opPrintMaybeRunCmd $cmd refresh '|' complete '|' ignore
   opPrintMaybeRunCmd $cmd install $env.PACK_ADD_NAMES
 }

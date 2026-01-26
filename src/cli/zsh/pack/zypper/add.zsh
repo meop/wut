@@ -5,6 +5,5 @@ function packZypperOp {
       opPrintMaybeRunCmd "${groupSplit[@]}"
     done
   fi
-  opPrintMaybeRunCmd $1 refresh '>' /dev/null '2>&1'
   opPrintMaybeRunCmd $1 install $PACK_ADD_NAMES
 }

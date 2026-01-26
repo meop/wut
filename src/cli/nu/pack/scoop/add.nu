@@ -4,6 +4,5 @@ def packScoopOp [cmd] {
       opPrintMaybeRunCmd ...($name | split row ' ')
     }
   }
-  opPrintMaybeRunCmd $cmd update '|' complete '|' ignore
   opPrintMaybeRunCmd $cmd install $env.PACK_ADD_NAMES
 }

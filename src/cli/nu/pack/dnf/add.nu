@@ -4,6 +4,5 @@ def packDnfOp [cmd] {
       opPrintMaybeRunCmd ...($name | split row ' ')
     }
   }
-  opPrintMaybeRunCmd $cmd check-upgrade '|' complete '|' ignore
   opPrintMaybeRunCmd $cmd install $env.PACK_ADD_NAMES
 }

@@ -5,6 +5,5 @@ function packPacmanOp {
       opPrintMaybeRunCmd "${groupSplit[@]}"
     done
   fi
-  opPrintMaybeRunCmd $1 --sync --refresh '>' /dev/null '2>&1'
   opPrintMaybeRunCmd $1 --sync --needed $PACK_ADD_NAMES
 }

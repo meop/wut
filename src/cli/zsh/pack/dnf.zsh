@@ -9,6 +9,9 @@ function packDnf {
     fi
     if [[ $yn != 'n' ]]; then
       local cmd=$(if type sudo > /dev/null; then echo "sudo ${cmd}"; else echo "${cmd}"; fi)
+      if [[ -n $PACK_OP && ( "$PACK_OP" == 'add' || "$PACK_OP" == 'find' || "$PACK_OP" == 'out' || "$PACK_OP" == 'sync' ) ]]; then
+        opPrintMaybeRunCmd $cmd check-upgrade '>' /dev/null '2>&1'
+      fi
       packDnfOp "$cmd"
     fi
   fi

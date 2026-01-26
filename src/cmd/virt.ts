@@ -143,7 +143,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
       ).with([getManagerFuncName(key)])
       if (supportedManagers.length > 1) {
         _client = _client.with(
-          _client.varUnset(VIRT_MANAGER_KEY),
+          _client.varUnSet(VIRT_MANAGER_KEY),
         )
       }
     }

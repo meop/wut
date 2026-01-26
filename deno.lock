@@ -4,6 +4,7 @@
     "jsr:@cross/deepmerge@*": "1.0.0",
     "jsr:@cross/deepmerge@1": "1.0.0",
     "jsr:@eemeli/yaml@^2.8.2": "2.8.2",
+    "jsr:@meop/shire@~0.1.7": "0.1.7",
     "npm:@types/node@*": "24.2.0"
   },
   "jsr": {
@@ -12,6 +13,12 @@
     },
     "@eemeli/yaml@2.8.2": {
       "integrity": "58f95e7b82f2717963d31f350a9c7cdc098a7b481a3f64c58e979e2e999db0b0"
+    },
+    "@meop/shire@0.1.7": {
+      "integrity": "1d67b856b08d362475c30f4a5a59abf0c320fbd0a3e5971010786855d52d7264",
+      "dependencies": [
+        "jsr:@eemeli/yaml"
+      ]
     }
   },
   "npm": {
@@ -29,10 +36,10 @@
     "dependencies": [
       "jsr:@cross/deepmerge@1",
       "jsr:@eemeli/yaml@^2.8.2",
-      "jsr:@meop/shire@~0.1.6"
+      "jsr:@meop/shire@~0.1.7"
     ],
     "links": {
-      "jsr:@meop/shire@0.1.6": {
+      "jsr:@meop/shire@0.1.7": {
         "dependencies": [
           "jsr:@eemeli/yaml@^2.8.2"
         ]
