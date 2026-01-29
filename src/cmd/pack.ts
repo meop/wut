@@ -206,7 +206,7 @@ async function workAddRemSync(
   environment: Env,
   op: string,
 ) {
-  let _client = client.with(client.varSet(PACK_OP_KEY, op))
+  let _client = client.with(client.varSet(PACK_OP_KEY, client.toOuter(op)))
   const supportedManagers = getSupportedManagers(context, environment)
 
   _client = await loadManagerFiles(_client, supportedManagers, op)
@@ -245,7 +245,7 @@ async function workFindListOut(
   environment: Env,
   op: string,
 ) {
-  let _client = client.with(client.varSet(PACK_OP_KEY, op))
+  let _client = client.with(client.varSet(PACK_OP_KEY, client.toOuter(op)))
   const supportedManagers = getSupportedManagers(context, environment)
 
   _client = await loadManagerFiles(_client, supportedManagers, op)
@@ -371,7 +371,7 @@ async function workTidy(
 ) {
   const supportedManagers = getSupportedManagers(context, environment)
 
-  let _client = client.with(client.varSet(PACK_OP_KEY, op))
+  let _client = client.with(client.varSet(PACK_OP_KEY, client.toOuter(op)))
   _client = await loadManagerFiles(_client, supportedManagers, op)
 
   const body = _client
