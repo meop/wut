@@ -74,14 +74,17 @@ function wut {
 
 ## server
 
-Install Deno how you would like and run the server in dev mode
+Install Deno and run the server in dev mode (hot reload):
 
 ```sh
-deno run dev
+deno task dev
 ```
 
-Or install Docker how you would like and run the server in test mode
+Or install Docker and run the server in a container:
 
 ```sh
-deno run start
+deno task docker:dev
+
+# Stop it when done
+deno task docker:dev:down
 ```

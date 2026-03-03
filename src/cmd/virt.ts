@@ -34,6 +34,7 @@ const osPlatToManager: { [key: string]: Array<string> } = {
 
 const VIRT_KEY = 'virt'
 const VIRT_MANAGER_KEY = [VIRT_KEY, 'manager']
+const VIRT_OP_KEY = [VIRT_KEY, 'op']
 const VIRT_OP_PARTS_KEY = (op: string) => [VIRT_KEY, op, 'parts']
 
 const VIRT_INSTANCES_KEY = [VIRT_KEY, 'instances']
@@ -67,7 +68,7 @@ function getManagerFuncName(manager: string, prefix = VIRT_KEY) {
   return `${prefix}${first}${rest}`
 }
 
-async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
+async function execOp(client: Cli, context: Ctx, environment: Env, op: string) {
   if (client.name !== 'nu') {
     const url = [
       context.req_orig,
@@ -77,7 +78,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     return `nu --no-config-file -c 'nu --no-config-file -c $"( http get --raw --redirect-mode follow "${url}" )"'`
   }
 
-  let _client = client
+  let _client = client.with(client.varSet(VIRT_OP_KEY, client.toLiteral(op)))
   const supportedManagers = getSupportedManagers(context, environment)
 
   const dirParts = [VIRT_KEY, context.sys_host ?? '']
@@ -87,12 +88,8 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     _client = _client.with(_client.gatedFunc(
       'use config (remote)',
       _client.print(
-        await getCfgDirDump(dirParts, { extension: Fmt.yaml, filters })
-          .then((x) =>
-            x.filter((r) => supportedManagers.includes(r[0])).map((r) =>
-              r.join(' ')
-            ).toSorted()
-          ),
+        await getCfgDirDump(dirParts, { extension: Fmt.yaml, filters, flexible: true })
+          .then((x) => x.filter((r) => supportedManagers.includes(r[0])).map((r) => r.join(' ')).toSorted()),
       ),
     ))
   } else {
@@ -132,7 +129,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
       }
       if (supportedManagers.length > 1) {
         _client = _client.with(
-          _client.varSet(VIRT_MANAGER_KEY, _client.toInner(key)),
+          _client.varSet(VIRT_MANAGER_KEY, _client.toLiteral(key)),
         )
       }
       _client = _client.with(
@@ -173,7 +170,7 @@ export class VirtCmdAdd extends CmdBase implements Cmd {
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await workOp(client, context, environment, this.name)
+    return await execOp(client, context, environment, this.name)
   }
 }
 
@@ -190,7 +187,7 @@ export class VirtCmdFind extends CmdBase implements Cmd {
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await workOp(client, context, environment, this.name)
+    return await execOp(client, context, environment, this.name)
   }
 }
 
@@ -207,7 +204,7 @@ export class VirtCmdList extends CmdBase implements Cmd {
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await workOp(client, context, environment, this.name)
+    return await execOp(client, context, environment, this.name)
   }
 }
 
@@ -226,7 +223,7 @@ export class VirtCmdRem extends CmdBase implements Cmd {
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await workOp(client, context, environment, this.name)
+    return await execOp(client, context, environment, this.name)
   }
 }
 
@@ -243,7 +240,7 @@ export class VirtCmdSync extends CmdBase implements Cmd {
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await workOp(client, context, environment, this.name)
+    return await execOp(client, context, environment, this.name)
   }
 }
 
@@ -259,6 +256,6 @@ export class VirtCmdTidy extends CmdBase implements Cmd {
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await workOp(client, context, environment, this.name)
+    return await execOp(client, context, environment, this.name)
   }
 }

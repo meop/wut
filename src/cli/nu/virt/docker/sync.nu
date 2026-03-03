@@ -1,6 +1,6 @@
 def virtDockerOp [cmd] {
   for instance in $env.VIRT_INSTANCES {
-    if ((^$cmd container ls) | find --ignore-case $instance | is-empty) {
+    if (do --ignore-errors { ^$cmd container ls } | find --ignore-case $instance | is-empty) {
       continue
     }
     let url = $"($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml"

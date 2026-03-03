@@ -2,13 +2,7 @@ import process from 'node:process'
 
 import { deepMerge } from '@cross/deepmerge'
 import type { Ctx, CtxFilter } from '@meop/shire/ctx'
-import {
-  buildFilePath,
-  getFileContent,
-  getFilePaths,
-  isDirPath,
-  isPath,
-} from '@meop/shire/path'
+import { buildFilePath, getFileContent, getFilePaths, isDirPath, isPath } from '@meop/shire/path'
 import { joinKey, splitVal } from '@meop/shire/reg'
 import { Fmt, parse } from '@meop/shire/serde'
 
@@ -48,9 +42,7 @@ export async function localCfgPaths(parts: Array<string>, extension?: string) {
   }
 
   for (const validDir of validDirs) {
-    const maybeCfgPath = `${buildFilePath(validDir, ...parts)}${
-      extension ? `.${extension}` : ''
-    }`
+    const maybeCfgPath = `${buildFilePath(validDir, ...parts)}${extension ? `.${extension}` : ''}`
     if (await isPath(maybeCfgPath)) {
       validCfgPaths.push(maybeCfgPath)
     }
@@ -65,6 +57,7 @@ export async function getCfgDirDump(
     contextFilter?: CtxFilter
     extension?: string
     filters?: Array<string>
+    flexible?: boolean
   },
 ) {
   const dirFileParts: Array<Array<string>> = []
@@ -76,6 +69,7 @@ export async function getCfgDirDump(
       await getFilePaths(dirPath, {
         extension: options?.extension,
         filters: options?.filters ?? undefined,
+        flexible: options?.flexible,
       })
     ).map((p) => toRelParts(dirPath, p)))
   }
@@ -125,6 +119,7 @@ export async function getCfgDirContent(
     contextFilter?: CtxFilter
     extension?: string
     filters?: Array<string>
+    flexible?: boolean
   },
 ) {
   const contents: Array<string> = []

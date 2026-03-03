@@ -1,7 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with
-code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Repository Setup
 
@@ -27,24 +26,27 @@ workspace/
 
 **Dependencies:**
 
-- **shire** - Shell Interface Renderer library (published to JSR as
-  `@meop/shire`)
-- **wut-config** - Configuration files for package definitions, dotfile
-  mappings, scripts
-- **wut-config-secret** - Private configuration (optional, for sensitive
-  configs)
+- **shire** - Shell Interface Renderer library (published to JSR as `@meop/shire`)
+- **wut-config** - Configuration files for package definitions, dotfile mappings, scripts
+- **wut-config-secret** - Private configuration (optional, for sensitive configs)
 
 ## Development Commands
 
 ```bash
 # Development mode with hot reload
-deno run dev
+deno task dev
 
-# Start Docker container (test/production mode)
-deno run start
+# Start Docker container
+deno task docker:dev
 
 # Stop Docker container
-deno run stop
+deno task docker:dev:down
+
+# Run tests (snapshot + syntax)
+deno task test
+
+# Regenerate snapshots after intentional changes
+deno task test:update
 ```
 
 The server runs on port 9000 by default (configurable via PORT env var).
@@ -53,16 +55,13 @@ The server runs on port 9000 by default (configurable via PORT env var).
 
 ### Server-Side Rendered Shell Scripts
 
-The core concept is that shell scripts are **dynamically generated** on the
-server and delivered to clients via HTTP. Clients execute these scripts locally
-using their shell (nushell/powershell/zsh).
+The core concept is that shell scripts are **dynamically generated** on the server and delivered to clients via HTTP.
+Clients execute these scripts locally using their shell (nushell/powershell/zsh).
 
 **Request Flow:**
 
-1. Client makes HTTP GET request to server (e.g.,
-   `http://yard.lan:9000/cli/nu/pack/add/firefox`)
-2. Server parses URL path to determine: client type (nu/pwsh/zsh), command
-   (pack), operation (add), arguments (firefox)
+1. Client makes HTTP GET request to server (e.g., `http://yard.lan:9000/cli/nu/pack/add/firefox`)
+2. Server parses URL path to determine: client type (nu/pwsh/zsh), command (pack), operation (add), arguments (firefox)
 3. Server builds a shell script by:
    - Loading shell-specific template files from `src/cli/{nu,pwsh,zsh}/`
    - Setting variables based on context (OS, user, etc.)
@@ -92,20 +91,18 @@ Commands are hierarchical (provided by shire library) with support for:
 - Switches (e.g., `-g` for group mode)
 - Arguments (e.g., package names)
 
-The `CmdBase` class (from shire) handles argument parsing and dispatches to the
-appropriate `work()` method.
+The `CmdBase` class (from shire) handles argument parsing and dispatches to the appropriate `work()` method.
 
 ### Client Abstraction
 
 The `Cli` interface (from shire) abstracts shell-specific differences:
 
-- String quoting/escaping (toInner/toOuter)
+- String quoting/escaping (toLiteral/toElement)
 - Variable setting (varSet/varSetArr/varUnSet)
 - Print operations (print/printErr/printInfo/etc.)
 - File loading from shell-specific directories
 
-Each shell has a concrete implementation (Nushell, Powershell, Zshell) that
-knows how to generate shell-specific syntax.
+Each shell has a concrete implementation (Nushell, Powershell, Zshell) that knows how to generate shell-specific syntax.
 
 ### Configuration Loading (src/cfg.ts)
 
@@ -115,9 +112,8 @@ Configuration is loaded from multiple directories specified in `.env`:
 CFG_DIRS=wut-config|wut-config-secret
 ```
 
-Files are loaded from `../wut-config/cfg/` and `../wut-config-secret/cfg/`
-relative to wut directory. Later directories override earlier ones via deep
-merge.
+Files are loaded from `../wut-config/cfg/` and `../wut-config-secret/cfg/` relative to wut directory. Later directories
+override earlier ones via deep merge.
 
 Configuration files can be:
 
@@ -128,8 +124,7 @@ Configuration files can be:
 
 **pack** (src/cmd/pack.ts) - Package manager operations
 
-- Detects OS and selects appropriate package manager (yay, pacman, apt, brew,
-  choco, etc.)
+- Detects OS and selects appropriate package manager (yay, pacman, apt, brew, choco, etc.)
 - Supports group-based installs (packages defined in YAML config files)
 - Operations: add, find, list, out, rem (remove), sync, tidy
 
@@ -156,10 +151,13 @@ Configuration files can be:
 
 **.env:**
 
-- `CFG_DIRS` - Pipe-separated list of config directories
-  (wut-config|wut-config-secret)
-- `{NU,PWSH,ZSH}_VER_MAJOR` - Major version of client shell
-- `{NU,PWSH,ZSH}_VER_MINOR` - Minor version of client shell
+- `CFG_DIRS` - Pipe-separated list of config directories (wut-config|wut-config-secret)
+
+**Shell version numbers** are hardcoded in `src/ver.ts` (not env vars).
+
+**OS platform enum** (`SysOsPlat`) lives in `src/sys.ts` (`darwin`/`linux`/`winnt`). shire passes all sys fields through
+as raw strings; client bootstrap scripts (`shire/src/cli/*/sys.*`) normalize aliases before sending URL params (e.g.
+`arm64`→`aarch64`, `genuineintel`→`intel`, `qemu`→`apple`, `kde`→`plasma`).
 
 **Server Runtime:**
 
@@ -181,8 +179,8 @@ Configuration files can be:
 - Used for: file commands, virt commands
 - Only works with nushell (pwsh/zsh redirect to nu)
 
-The distinction is important: some commands intentionally redirect non-nu
-clients to nu for CSR operations (see src/cmd/file.ts:57-63).
+The distinction is important: some commands intentionally redirect non-nu clients to nu for CSR operations (see
+src/cmd/file.ts:57-63).
 
 ## Code Formatting
 
@@ -192,13 +190,23 @@ Deno formatting rules (deno.json):
 - Single quotes
 - Trailing commas only on multiline
 
-## Testing Notes
+## Testing
 
-The tool is designed for **local interactive use** - some operations:
+Automated tests live in `tests/` and use two tiers:
+
+- **Tier 1 (snapshot)**: Calls `runSrv()` directly with synthetic requests; snapshots the generated script body. Fast,
+  no Docker, no shells needed. Snapshots are committed and show diffs in PRs.
+- **Tier 2 (syntax)**: Pipes each generated body through the shell's parser (`nu --ide-check`, `zsh -n`,
+  `pwsh -Command ParseInput`). Skips gracefully if the shell binary is not found.
+
+```bash
+deno task test          # run all tests
+deno task test:update   # regenerate snapshots after intentional changes
+```
+
+The tool is also designed for **local interactive use** — some operations cannot be fully automated:
 
 - Cannot work over SSH (GUI tool installation)
 - Create dynamic prompts for users
-- Cannot be fully automated
 
-When working with this codebase, test changes using the dev server and actual
-shell clients, not just unit tests.
+Test interactive changes using the dev server and actual shell clients.

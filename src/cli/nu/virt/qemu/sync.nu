@@ -1,3 +1,1 @@
-def virtQemuOp [cmd, cmdSysArch] {
-  opPrintInfo 'Nothing to do'
-}
+def virtQemuOp [cmd, cmdSysArch] {}

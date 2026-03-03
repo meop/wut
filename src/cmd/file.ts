@@ -7,7 +7,6 @@ import { type Env } from '@meop/shire/env'
 import { getFilePaths, isDirPath } from '@meop/shire/path'
 import { joinVal } from '@meop/shire/reg'
 import { Fmt } from '@meop/shire/serde'
-import { SysOsPlat } from '@meop/shire/sys'
 
 import { getCfgFileLoad, localCfgPaths } from '../cfg.ts'
 import { type AclPerm, getPlatAclPermCmds, toRelParts } from '../path.ts'
@@ -53,7 +52,7 @@ function joinKey(key: string, aliases?: Array<string>): string {
   return [key, ...aliases ?? []].join(KEY_SPLIT)
 }
 
-async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
+async function execOp(client: Cli, context: Ctx, environment: Env, op: string) {
   if (client.name !== 'nu') {
     const url = [
       context.req_orig,
@@ -80,7 +79,9 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     const key of Object.keys(content).filter((k) =>
       !filters.length ||
       filters.find((f) =>
-        k.startsWith(f) || content[k]?.aliases?.find((a) => a.startsWith(f))
+        op === 'find'
+          ? k.includes(f) || content[k]?.aliases?.find((a) => a.includes(f))
+          : k.startsWith(f) || content[k]?.aliases?.find((a) => a.startsWith(f))
       )
     )
   ) {
@@ -109,7 +110,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
     _client = _client.with(
       _client.varSetArr(
         FILE_OP_KEYS_KEY(op),
-        validKeys.map((x) => _client.toOuter(joinKey(x, content[x].aliases)))
+        validKeys.map((x) => _client.toElement(joinKey(x, content[x].aliases)))
           .toSorted(),
       ),
     )
@@ -135,16 +136,18 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
         if (await isDirPath(localEntryPaths[0])) {
           for (const localEntryPath of localEntryPaths) {
             validDirs.add(
-              _client.toOuter(
+              _client.toElement(
                 joinVal(compoundKey, map_out[sys_os_plat]),
               ),
             )
             for (const filePath of await getFilePaths(localEntryPath)) {
               const filePathParts = toRelParts(localEntryPath, filePath, false)
               const srcFull = [key, map_in, ...filePathParts].join('/')
-              const dstFull = [map_out[sys_os_plat], ...filePathParts].join('/')
+              const dstFull = [map_out[sys_os_plat], ...filePathParts].join(
+                '/',
+              )
               validPairs.push(
-                _client.toOuter(
+                _client.toElement(
                   joinVal(compoundKey, srcFull, dstFull),
                 ),
               )
@@ -154,7 +157,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
           const srcFull = [key, map_in].join('/')
           const dstFull = map_out[sys_os_plat]
           validPairs.push(
-            _client.toOuter(
+            _client.toElement(
               joinVal(compoundKey, srcFull, dstFull),
             ),
           )
@@ -168,11 +171,11 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
               context.sys_user ?? '',
             )
           ) {
-            const permCmdFull = context.sys_os_plat === SysOsPlat.winnt
-              ? Powershell.execStr(_client.toInner(permCmd))
-              : Zshell.execStr(_client.toInner(permCmd))
+            const permCmdFull = context.sys_os_plat === 'winnt'
+              ? Powershell.execStr(_client.toLiteral(permCmd))
+              : Zshell.execStr(_client.toLiteral(permCmd))
             validPerms.push(
-              _client.toOuter(
+              _client.toElement(
                 joinVal(compoundKey, permCmdFull),
               ),
             )
@@ -225,7 +228,7 @@ export class FileCmdDiff extends CmdBase implements Cmd {
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await workOp(client, context, environment, this.name)
+    return await execOp(client, context, environment, this.name)
   }
 }
 
@@ -243,7 +246,7 @@ export class FileCmdFind extends CmdBase implements Cmd {
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await workOp(client, context, environment, this.name)
+    return await execOp(client, context, environment, this.name)
   }
 }
 
@@ -261,6 +264,6 @@ export class FileCmdSync extends CmdBase implements Cmd {
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await workOp(client, context, environment, this.name)
+    return await execOp(client, context, environment, this.name)
   }
 }

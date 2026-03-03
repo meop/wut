@@ -1,6 +1,9 @@
 function packWinget {
   $cmd = 'winget'
   if ((-not $PACK_MANAGER -or $PACK_MANAGER -eq $cmd) -and (Get-Command $cmd -ErrorAction Ignore)) {
+    if ($PACK_OP -eq 'tidy') {
+      return
+    }
     $yn = ''
     if ($YES) {
       $yn = 'y'

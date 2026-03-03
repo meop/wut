@@ -1,7 +1,7 @@
 ---
 name: wut
 services:
-  srv:
+  web:
     command: deno run --allow-all --env-file --watch src/srv.ts
     # command: -f /dev/null
     # entrypoint: /usr/bin/tail
@@ -9,22 +9,22 @@ services:
     env_file:
       - path: '../.env'
         required: true
-    hostname: wut-srv
+    hostname: wut-web
     image: docker.io/denoland/deno:latest
     ports:
-      - '9000:9000/tcp'
+      - '9000:80/tcp'
     restart: unless-stopped
     volumes:
       - type: bind
-        source: '../../shire'
+        source: '../../../shire'
         target: /shire
       - type: bind
-        source: '..'
-        target: /wut
+        source: '../../wut'
+        target: /@wut/wut
       - type: bind
         source: '../../wut-config'
-        target: /wut-config
+        target: /@wut/wut-config
       - type: bind
         source: '../../wut-config-secret'
-        target: /wut-config-secret
-    working_dir: /wut
+        target: /@wut/wut-config-secret
+    working_dir: /@wut/wut

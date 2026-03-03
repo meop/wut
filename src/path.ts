@@ -1,7 +1,5 @@
 import PATH from 'node:path'
 
-import { SysOsPlat } from '@meop/shire/sys'
-
 function withoutExt(filePath: string) {
   const parsedPath = PATH.parse(filePath)
   return PATH.join(parsedPath.dir, parsedPath.name)
@@ -92,21 +90,19 @@ export function toWinntPath(filePath: string) {
 }
 
 export function getPlatAclPermCmds(
-  plat: SysOsPlat,
+  plat: string,
   path: string,
   perm: AclPerm,
   user: string,
 ) {
   switch (plat) {
-    case SysOsPlat.darwin:
-    case SysOsPlat.linux:
+    case 'darwin':
+    case 'linux':
       return [`chmod -R a-s,${getFsAclUnixVal(perm)} '${toUnixPath(path)}'`]
-    case SysOsPlat.winnt:
+    case 'winnt':
       return [
         `icacls '${toWinntPath(path)}' /t /reset`,
-        `icacls '${toWinntPath(path)}' /t /inheritance:r /grant ${
-          getFsAclWinntVal(perm, user)
-        }`,
+        `icacls '${toWinntPath(path)}' /t /inheritance:r /grant ${getFsAclWinntVal(perm, user)}`,
       ]
     default:
       throw new Error(`unsupported os platform: ${plat}`)

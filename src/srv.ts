@@ -6,11 +6,11 @@ import { Powershell } from '@meop/shire/cli/pwsh'
 import { Zshell } from '@meop/shire/cli/zsh'
 import { type Cmd } from '@meop/shire/cmd'
 import { type Ctx, getCtx } from '@meop/shire/ctx'
-import { joinKey } from '@meop/shire/reg'
 import { Fmt, stringify } from '@meop/shire/serde'
 import { SrvBase } from '@meop/shire/srv'
 
 import { getCfgFileContent } from './cfg.ts'
+import { VERSIONS } from './ver.ts'
 import { FileCmd } from './cmd/file.ts'
 import { PackCmd } from './cmd/pack.ts'
 import { ScriptCmd } from './cmd/script.ts'
@@ -47,11 +47,9 @@ enum Op {
 const CLI_VER_MAJOR_KEY = ['cli', 'ver', 'major']
 const CLI_VER_MINOR_KEY = ['cli', 'ver', 'minor']
 
-const VAR_CLI_VER_MAJOR_KEY = (cli: string) => [cli, 'ver', 'major']
-const VAR_CLI_VER_MINOR_KEY = (cli: string) => [cli, 'ver', 'minor']
 const VAR_REQ_URL_OP_KEY = (op: string) => ['req', 'url', op]
 
-async function runSrv(request: Request) {
+export async function runSrv(request: Request) {
   try {
     const context = getCtx(request)
     const parts = context.req_path.split('/').filter((p) => p.length > 0)
@@ -88,43 +86,33 @@ async function runSrv(request: Request) {
       })
     }
 
-    let client: Cli = cli === 'nu'
-      ? new Nushell()
-      : cli === 'pwsh'
-      ? new Powershell()
-      : new Zshell()
+    let client: Cli = cli === 'nu' ? new Nushell() : cli === 'pwsh' ? new Powershell() : new Zshell()
 
     client = client
       .with(
         client.varSet(
           VAR_REQ_URL_OP_KEY(Op.cfg),
-          client.toInner([context.req_orig, Op.cfg].join('/')),
+          client.toLiteral([context.req_orig, Op.cfg].join('/')),
         ),
       )
       .with(
         client.varSet(
           VAR_REQ_URL_OP_KEY(Op.cli),
-          client.toInner(
+          client.toLiteral(
             [context.req_orig, context.req_path, context.req_srch].join(''),
           ),
         ),
       )
       .with(await client.fileLoad(['op']))
 
-    const major = process.env[joinKey(...VAR_CLI_VER_MAJOR_KEY(cli))]
-    if (major) {
-      client = client.with(client.varSet(CLI_VER_MAJOR_KEY, major))
-    }
-    const minor = process.env[joinKey(...VAR_CLI_VER_MINOR_KEY(cli))]
-    if (minor) {
-      client = client.with(client.varSet(CLI_VER_MINOR_KEY, minor))
-    }
+    const ver = VERSIONS[cli]
+    client = client
+      .with(client.varSet(CLI_VER_MAJOR_KEY, String(ver.major)))
+      .with(client.varSet(CLI_VER_MINOR_KEY, String(ver.minor)))
     client = client.with(await client.fileLoad(['ver']))
 
     if (
-      !(Object.keys(context).filter((k) => k.startsWith('sys')).some((k) =>
-        context[k as keyof Ctx]
-      ))
+      !(Object.keys(context).filter((k) => k.startsWith('sys')).some((k) => context[k as keyof Ctx]))
     ) {
       return new Response(
         client
@@ -139,7 +127,7 @@ async function runSrv(request: Request) {
         continue
       }
       client = client.with(
-        client.varSet([e[0]], client.toInner(e[1])),
+        client.varSet([e[0]], client.toLiteral(e[1])),
       )
     }
 
@@ -168,10 +156,12 @@ async function runSrv(request: Request) {
   }
 }
 
-Deno.serve(
-  {
-    hostname: process.env['HOSTNAME'] ?? '0.0.0.0',
-    port: Number(process.env['PORT'] ?? '9000'),
-  },
-  async (request) => await runSrv(request),
-)
+if (import.meta.main) {
+  Deno.serve(
+    {
+      hostname: process.env['WUT_HOST'] ?? '0.0.0.0',
+      port: Number(process.env['WUT_PORT'] ?? '80'),
+    },
+    async (request) => await runSrv(request),
+  )
+}

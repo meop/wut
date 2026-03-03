@@ -1,7 +1,7 @@
 def packPacmanOp [cmd] {
   if 'PACK_OUT_NAMES' in $env {
-    opPrintMaybeRunCmd $cmd --query --upgrades '|' find --ignore-case $env.PACK_OUT_NAMES
+    opPrintMaybeRunCmd do --ignore-errors '{' $cmd --query --upgrades '|' find --ignore-case $env.PACK_OUT_NAMES '}'
   } else {
-    opPrintMaybeRunCmd $cmd --query --upgrades
+    opPrintMaybeRunCmd do --ignore-errors '{' $cmd --query --upgrades '}'
   }
 }

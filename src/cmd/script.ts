@@ -3,7 +3,6 @@ import { type Cmd, CmdBase } from '@meop/shire/cmd'
 import type { Ctx, CtxFilter } from '@meop/shire/ctx'
 import { type Env } from '@meop/shire/env'
 import { Fmt } from '@meop/shire/serde'
-import { SysOsPlat } from '@meop/shire/sys'
 
 import { getCfgDirContent, getCfgDirDump, getCfgFileLoad } from '../cfg.ts'
 
@@ -23,12 +22,12 @@ export class ScriptCmd extends CmdBase implements Cmd {
 const SCRIPT_KEY = 'script'
 const SCRIPT_OP_PARTS_KEY = (op: string) => [SCRIPT_KEY, op, 'parts']
 
-async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
+async function execOp(client: Cli, context: Ctx, environment: Env, op: string) {
   if (
     client.name === 'nu' ||
-    (client.name === 'pwsh' && context.sys_os_plat !== SysOsPlat.winnt)
+    (client.name === 'pwsh' && context.sys_os_plat !== 'winnt')
   ) {
-    if (context.sys_os_plat === SysOsPlat.winnt) {
+    if (context.sys_os_plat === 'winnt') {
       const url = [
         context.req_orig,
         context.req_path.replace(`/cli/${client.name}`, '/cli/pwsh'),
@@ -67,6 +66,7 @@ async function workOp(client: Cli, context: Ctx, environment: Env, op: string) {
             contextFilter,
             extension: _client.extension,
             filters,
+            flexible: true,
           }).then((x) => x.map((y) => y.join(' ')).toSorted()),
         ),
       ),
@@ -106,7 +106,7 @@ export class ScriptCmdExec extends CmdBase implements Cmd {
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await workOp(client, context, environment, this.name)
+    return await execOp(client, context, environment, this.name)
   }
 }
 
@@ -123,6 +123,6 @@ export class ScriptCmdFind extends CmdBase implements Cmd {
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await workOp(client, context, environment, this.name)
+    return await execOp(client, context, environment, this.name)
   }
 }

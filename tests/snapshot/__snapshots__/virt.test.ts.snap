@@ -1,0 +1,2586 @@
+export const snapshot = {};
+
+snapshot[`nu / linux / add 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/add?sysOsPlat=linux'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/add'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux'#
+
+opPrintInfo r#'id: wut virt add | add on local
+aliases: a, ad, in, install
+arguments:
+  - <parts> | path part(s) to match'#
+\`
+`;
+
+snapshot[`nu / linux / find 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/find?sysOsPlat=linux'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/find'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux'#
+
+\$env.VIRT_OP = r#'find'#
+
+do {
+  try {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input r#'? use config (remote) [y, [n]]: '#
+    }
+    if \$yn != 'n' {
+opPrint r#'qemu'#
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      throw \$e
+    }
+  }
+}
+\`
+`;
+
+snapshot[`nu / linux / list 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/list?sysOsPlat=linux'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/list'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux'#
+
+\$env.VIRT_OP = r#'list'#
+
+def virtDockerOp [cmd] {
+  opPrintMaybeRunCmd \$cmd container ls
+}
+
+
+def virtDocker [] {
+  try {
+    mut yn = ''
+    let cmd = 'docker'
+    if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+      if 'YES' in \$env {
+        \$yn = 'y'
+      } else {
+        \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+      }
+      if \$yn != 'n' {
+        virtDockerOp \$cmd
+      }
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      error make \$e
+    }
+  }
+}
+
+
+def virtQemuOp [cmd, cmdSysArch] {
+  opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^swtpm"" '}'
+  opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^(\$cmdSysArch)"" '}'
+}
+
+
+def virtQemu [] {
+  try {
+    let cmd = 'qemu'
+    let cmdSysArch = \$"(\$cmd)-system-(\$env.SYS_CPU_ARCH)"
+    if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmdSysArch | is-not-empty) {
+      if \$env.VIRT_OP in ['sync', 'tidy'] {
+        return
+      }
+      mut yn = ''
+      if 'YES' in \$env {
+        \$yn = 'y'
+      } else {
+        \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+      }
+      if \$yn != 'n' {
+        virtQemuOp \$cmd \$cmdSysArch
+      }
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      error make \$e
+    }
+  }
+}
+
+
+\$env.VIRT_MANAGER = r#'qemu'#
+
+\$env.VIRT_INSTANCES = [  ]
+
+virtQemu
+
+hide-env VIRT_MANAGER
+\`
+`;
+
+snapshot[`nu / linux / rem 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/rem?sysOsPlat=linux'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/rem'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux'#
+
+opPrintInfo r#'id: wut virt rem | remove on local
+aliases: r, rm, rem, remove, un, unin, uninstall
+arguments:
+  - <parts> | path part(s) to match'#
+\`
+`;
+
+snapshot[`nu / linux / sync 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/sync?sysOsPlat=linux'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/sync'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux'#
+
+\$env.VIRT_OP = r#'sync'#
+
+def virtDockerOp [cmd] {
+  for instance in \$env.VIRT_INSTANCES {
+    if (do --ignore-errors { ^\$cmd container ls } | find --ignore-case \$instance | is-empty) {
+      continue
+    }
+    let url = \$"(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml"
+    opPrintMaybeRunCmd '\$"(' http get --raw --redirect-mode follow \$"r#'(\$url)'#" ')"' '|' \$cmd compose --file - up --detach --pull always
+  }
+}
+
+
+def virtDocker [] {
+  try {
+    mut yn = ''
+    let cmd = 'docker'
+    if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+      if 'YES' in \$env {
+        \$yn = 'y'
+      } else {
+        \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+      }
+      if \$yn != 'n' {
+        virtDockerOp \$cmd
+      }
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      error make \$e
+    }
+  }
+}
+
+
+def virtQemuOp [cmd, cmdSysArch] {}
+
+def virtQemu [] {
+  try {
+    let cmd = 'qemu'
+    let cmdSysArch = \$"(\$cmd)-system-(\$env.SYS_CPU_ARCH)"
+    if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmdSysArch | is-not-empty) {
+      if \$env.VIRT_OP in ['sync', 'tidy'] {
+        return
+      }
+      mut yn = ''
+      if 'YES' in \$env {
+        \$yn = 'y'
+      } else {
+        \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+      }
+      if \$yn != 'n' {
+        virtQemuOp \$cmd \$cmdSysArch
+      }
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      error make \$e
+    }
+  }
+}
+
+
+\$env.VIRT_MANAGER = r#'qemu'#
+
+\$env.VIRT_INSTANCES = [  ]
+
+virtQemu
+
+hide-env VIRT_MANAGER
+\`
+`;
+
+snapshot[`nu / linux / tidy 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/tidy?sysOsPlat=linux'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/tidy'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux'#
+
+\$env.VIRT_OP = r#'tidy'#
+
+def virtDockerOp [cmd] {
+  opPrintMaybeRunCmd \$cmd system prune --all --volumes
+}
+
+
+def virtDocker [] {
+  try {
+    mut yn = ''
+    let cmd = 'docker'
+    if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+      if 'YES' in \$env {
+        \$yn = 'y'
+      } else {
+        \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+      }
+      if \$yn != 'n' {
+        virtDockerOp \$cmd
+      }
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      error make \$e
+    }
+  }
+}
+
+
+def virtQemuOp [cmd, cmdSysArch] {}
+
+def virtQemu [] {
+  try {
+    let cmd = 'qemu'
+    let cmdSysArch = \$"(\$cmd)-system-(\$env.SYS_CPU_ARCH)"
+    if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmdSysArch | is-not-empty) {
+      if \$env.VIRT_OP in ['sync', 'tidy'] {
+        return
+      }
+      mut yn = ''
+      if 'YES' in \$env {
+        \$yn = 'y'
+      } else {
+        \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+      }
+      if \$yn != 'n' {
+        virtQemuOp \$cmd \$cmdSysArch
+      }
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      error make \$e
+    }
+  }
+}
+
+
+\$env.VIRT_MANAGER = r#'qemu'#
+
+\$env.VIRT_INSTANCES = [  ]
+
+virtQemu
+
+hide-env VIRT_MANAGER
+\`
+`;
+
+snapshot[`nu / darwin / add 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/add?sysOsPlat=darwin'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'darwin'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/add'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
+
+opPrintInfo r#'id: wut virt add | add on local
+aliases: a, ad, in, install
+arguments:
+  - <parts> | path part(s) to match'#
+\`
+`;
+
+snapshot[`nu / darwin / find 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/find?sysOsPlat=darwin'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'darwin'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/find'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
+
+\$env.VIRT_OP = r#'find'#
+
+do {
+  try {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input r#'? use config (remote) [y, [n]]: '#
+    }
+    if \$yn != 'n' {
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      throw \$e
+    }
+  }
+}
+\`
+`;
+
+snapshot[`nu / darwin / list 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/list?sysOsPlat=darwin'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'darwin'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/list'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
+
+\$env.VIRT_OP = r#'list'#
+
+def virtDockerOp [cmd] {
+  opPrintMaybeRunCmd \$cmd container ls
+}
+
+
+def virtDocker [] {
+  try {
+    mut yn = ''
+    let cmd = 'docker'
+    if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+      if 'YES' in \$env {
+        \$yn = 'y'
+      } else {
+        \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+      }
+      if \$yn != 'n' {
+        virtDockerOp \$cmd
+      }
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      error make \$e
+    }
+  }
+}
+
+\`
+`;
+
+snapshot[`nu / darwin / rem 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/rem?sysOsPlat=darwin'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'darwin'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/rem'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
+
+opPrintInfo r#'id: wut virt rem | remove on local
+aliases: r, rm, rem, remove, un, unin, uninstall
+arguments:
+  - <parts> | path part(s) to match'#
+\`
+`;
+
+snapshot[`nu / darwin / sync 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/sync?sysOsPlat=darwin'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'darwin'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/sync'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
+
+\$env.VIRT_OP = r#'sync'#
+
+def virtDockerOp [cmd] {
+  for instance in \$env.VIRT_INSTANCES {
+    if (do --ignore-errors { ^\$cmd container ls } | find --ignore-case \$instance | is-empty) {
+      continue
+    }
+    let url = \$"(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml"
+    opPrintMaybeRunCmd '\$"(' http get --raw --redirect-mode follow \$"r#'(\$url)'#" ')"' '|' \$cmd compose --file - up --detach --pull always
+  }
+}
+
+
+def virtDocker [] {
+  try {
+    mut yn = ''
+    let cmd = 'docker'
+    if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+      if 'YES' in \$env {
+        \$yn = 'y'
+      } else {
+        \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+      }
+      if \$yn != 'n' {
+        virtDockerOp \$cmd
+      }
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      error make \$e
+    }
+  }
+}
+
+\`
+`;
+
+snapshot[`nu / darwin / tidy 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/tidy?sysOsPlat=darwin'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'darwin'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/tidy'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
+
+\$env.VIRT_OP = r#'tidy'#
+
+def virtDockerOp [cmd] {
+  opPrintMaybeRunCmd \$cmd system prune --all --volumes
+}
+
+
+def virtDocker [] {
+  try {
+    mut yn = ''
+    let cmd = 'docker'
+    if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+      if 'YES' in \$env {
+        \$yn = 'y'
+      } else {
+        \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+      }
+      if \$yn != 'n' {
+        virtDockerOp \$cmd
+      }
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      error make \$e
+    }
+  }
+}
+
+\`
+`;
+
+snapshot[`nu / winnt / add 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/add?sysOsPlat=winnt'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'winnt'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/add'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
+
+opPrintInfo r#'id: wut virt add | add on local
+aliases: a, ad, in, install
+arguments:
+  - <parts> | path part(s) to match'#
+\`
+`;
+
+snapshot[`nu / winnt / find 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/find?sysOsPlat=winnt'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'winnt'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/find'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
+
+\$env.VIRT_OP = r#'find'#
+
+do {
+  try {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input r#'? use config (remote) [y, [n]]: '#
+    }
+    if \$yn != 'n' {
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      throw \$e
+    }
+  }
+}
+\`
+`;
+
+snapshot[`nu / winnt / list 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/list?sysOsPlat=winnt'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'winnt'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/list'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
+
+\$env.VIRT_OP = r#'list'#
+
+def virtDockerOp [cmd] {
+  opPrintMaybeRunCmd \$cmd container ls
+}
+
+
+def virtDocker [] {
+  try {
+    mut yn = ''
+    let cmd = 'docker'
+    if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+      if 'YES' in \$env {
+        \$yn = 'y'
+      } else {
+        \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+      }
+      if \$yn != 'n' {
+        virtDockerOp \$cmd
+      }
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      error make \$e
+    }
+  }
+}
+
+\`
+`;
+
+snapshot[`nu / winnt / rem 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/rem?sysOsPlat=winnt'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'winnt'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/rem'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
+
+opPrintInfo r#'id: wut virt rem | remove on local
+aliases: r, rm, rem, remove, un, unin, uninstall
+arguments:
+  - <parts> | path part(s) to match'#
+\`
+`;
+
+snapshot[`nu / winnt / sync 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/sync?sysOsPlat=winnt'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'winnt'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/sync'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
+
+\$env.VIRT_OP = r#'sync'#
+
+def virtDockerOp [cmd] {
+  for instance in \$env.VIRT_INSTANCES {
+    if (do --ignore-errors { ^\$cmd container ls } | find --ignore-case \$instance | is-empty) {
+      continue
+    }
+    let url = \$"(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml"
+    opPrintMaybeRunCmd '\$"(' http get --raw --redirect-mode follow \$"r#'(\$url)'#" ')"' '|' \$cmd compose --file - up --detach --pull always
+  }
+}
+
+
+def virtDocker [] {
+  try {
+    mut yn = ''
+    let cmd = 'docker'
+    if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+      if 'YES' in \$env {
+        \$yn = 'y'
+      } else {
+        \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+      }
+      if \$yn != 'n' {
+        virtDockerOp \$cmd
+      }
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      error make \$e
+    }
+  }
+}
+
+\`
+`;
+
+snapshot[`nu / winnt / tidy 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/tidy?sysOsPlat=winnt'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.CLI_VER_MAJOR = 0
+
+\$env.CLI_VER_MINOR = 111
+
+do {
+  let major = \$env.CLI_VER_MAJOR | into int
+  let minor = \$env.CLI_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'winnt'#
+
+\$env.REQ_PATH = r#'/cli/nu/virt/tidy'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
+
+\$env.VIRT_OP = r#'tidy'#
+
+def virtDockerOp [cmd] {
+  opPrintMaybeRunCmd \$cmd system prune --all --volumes
+}
+
+
+def virtDocker [] {
+  try {
+    mut yn = ''
+    let cmd = 'docker'
+    if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+      if 'YES' in \$env {
+        \$yn = 'y'
+      } else {
+        \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+      }
+      if \$yn != 'n' {
+        virtDockerOp \$cmd
+      }
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      error make \$e
+    }
+  }
+}
+
+\`
+`;
