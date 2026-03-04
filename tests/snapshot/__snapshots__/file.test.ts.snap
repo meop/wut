@@ -180,14 +180,14 @@ def file [] {
 }
 
 
-\$env.FILE_DIFF_PATH_PAIRS = [ \`docker|docker/config.json|{HOME}/.docker/config.json\`, \`fzf|fzf/theme.zsh|{HOME}/.fzf/theme.zsh\`, \`ghostty|ghostty/config|{HOME}/.config/ghostty/config\`, \`ghostty|ghostty/themes/theme|{HOME}/.config/ghostty/themes/theme\`, \`konsole|konsole/Default.profile|{HOME}/.local/share/konsole/Default.profile\`, \`konsole|konsole/theme.colorscheme|{HOME}/.local/share/konsole/theme.colorscheme\`, \`nu|nu/nu/00-vim.nu|{HOME}/.config/nushell/autoload/00-vim.nu\`, \`nu|nu/nu/01-nvim.nu|{HOME}/.config/nushell/autoload/01-nvim.nu\`, \`nu|nu/nu/70-wut.nu|{HOME}/.config/nushell/autoload/70-wut.nu\`, \`nu|nu/env.nu|{HOME}/.config/nushell/env.nu\`, \`nu|nu/config.nu|{HOME}/.config/nushell/config.nu\`, \`nvim|nvim/init.lua|{HOME}/.config/nvim/init.lua\`, \`nvim|nvim/lua/plugins/spec.lua|{HOME}/.config/nvim/lua/plugins/spec.lua\`, \`pwsh|pwsh/pwsh/05-bun.ps1|{HOME}/.pwsh/05-bun.ps1\`, \`pwsh|pwsh/pwsh/05-deno.ps1|{HOME}/.pwsh/05-deno.ps1\`, \`pwsh|pwsh/pwsh/05-zed.ps1|{HOME}/.pwsh/05-zed.ps1\`, \`pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1\`, \`pwsh|pwsh/pwsh/11-nvim.ps1|{HOME}/.pwsh/11-nvim.ps1\`, \`pwsh|pwsh/pwsh/20-fzf.ps1|{HOME}/.pwsh/20-fzf.ps1\`, \`pwsh|pwsh/pwsh/70-wut.ps1|{HOME}/.pwsh/70-wut.ps1\`, \`pwsh|pwsh/pwsh/99-bin.ps1|{HOME}/.pwsh/99-bin.ps1\`, \`pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1\`, \`pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1\`, \`ssh|ssh/hushlogin|{HOME}/.hushlogin\`, \`starship|starship/starship.toml|{HOME}/.config/starship.toml\`, \`zellij|zellij/config.kdl|{HOME}/.config/zellij/config.kdl\`, \`zellij|zellij/themes/theme.kdl|{HOME}/.config/zellij/themes/theme.kdl\`, \`zsh|zsh/zsh/00-brew.zsh|{HOME}/.zsh/00-brew.zsh\`, \`zsh|zsh/zsh/05-android.zsh|{HOME}/.zsh/05-android.zsh\`, \`zsh|zsh/zsh/05-bun.zsh|{HOME}/.zsh/05-bun.zsh\`, \`zsh|zsh/zsh/05-cargo.zsh|{HOME}/.zsh/05-cargo.zsh\`, \`zsh|zsh/zsh/05-deno.zsh|{HOME}/.zsh/05-deno.zsh\`, \`zsh|zsh/zsh/05-go.zsh|{HOME}/.zsh/05-go.zsh\`, \`zsh|zsh/zsh/05-xcode.zsh|{HOME}/.zsh/05-xcode.zsh\`, \`zsh|zsh/zsh/05-zed.zsh|{HOME}/.zsh/05-zed.zsh\`, \`zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh\`, \`zsh|zsh/zsh/11-nvim.zsh|{HOME}/.zsh/11-nvim.zsh\`, \`zsh|zsh/zsh/20-fzf.zsh|{HOME}/.zsh/20-fzf.zsh\`, \`zsh|zsh/zsh/20-ssh.zsh|{HOME}/.zsh/20-ssh.zsh\`, \`zsh|zsh/zsh/60-incus.zsh|{HOME}/.zsh/60-incus.zsh\`, \`zsh|zsh/zsh/66-docker.zsh|{HOME}/.zsh/66-docker.zsh\`, \`zsh|zsh/zsh/69-proot-distro.zsh|{HOME}/.zsh/69-proot-distro.zsh\`, \`zsh|zsh/zsh/70-wut.zsh|{HOME}/.zsh/70-wut.zsh\`, \`zsh|zsh/zsh/99-bin.zsh|{HOME}/.zsh/99-bin.zsh\`, \`zsh|zsh/zshenv|{HOME}/.zshenv\`, \`zsh|zsh/zshrc|{HOME}/.zshrc\` ]
+\$env.FILE_DIFF_PATH_PAIRS = [  ]
 
 file
 "
 `;
 
 snapshot[`nu / linux / find 1`] = `
-"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_CLI = r#'http://x/cli/nu/file/find?sysOsPlat=linux'#
 
@@ -195,7 +195,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$\\"(\$args | str join ' ')\\" | print
+  \$"(\$args | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -203,11 +203,11 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print --stderr
+    \$"(\$args | str join ' ')" | print --stderr
     return
   }
 
-  \$\\"(ansi red)(\$args | str join ' ')(ansi reset)\\" | print --stderr
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -215,11 +215,11 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi green)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -227,11 +227,11 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi yellow)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -239,11 +239,11 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi blue)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -251,18 +251,18 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
   if (\$args | length) > 1 {
-    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
   }
 }
 
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$\\"(\$args | str join ' ')\\"
+  nu --no-config-file -c \$"(\$args | str join ' ')"
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -287,7 +287,7 @@ do {
   let minor = \$env.CLI_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
     exit 1
   }
 }
@@ -302,9 +302,13 @@ do {
 \$env.REQ_SRCH = r#'?sysOsPlat=linux'#
 
 def fileOp [] {
-  for key in \$env.FILE_FIND_KEYS {
+  for entry in \$env.FILE_FIND_KEYS {
+    let parts = \$entry | split row '|'
+    let keys = \$parts | get 0
+    let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
+
     mut bin = ''
-    for alias in (\$key | split row ',') {
+    for alias in (\$keys | split row ',') {
       if (which \$alias | is-not-empty) {
         \$bin = \$alias
         break
@@ -315,6 +319,9 @@ def fileOp [] {
     }
 
     opPrint \$bin
+    if (\$ins | is-not-empty) {
+      opPrint \$"  (\$ins)"
+    }
   }
 }
 
@@ -324,7 +331,7 @@ def replaceEnv [line] {
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
     for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
-      \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
+      \$l = \$l | str replace --all \$"{(\$e.0)}" (\$e.1)
     }
   }
   return \$l
@@ -348,14 +355,14 @@ def file [] {
 }
 
 
-\$env.FILE_FIND_KEYS = [ \`docker\`, \`fzf\`, \`ghostty\`, \`konsole\`, \`nu\`, \`nvim\`, \`pwsh\`, \`ssh\`, \`starship\`, \`zellij\`, \`zsh\` ]
+\$env.FILE_FIND_KEYS = [  ]
 
 file
-"
+\`
 `;
 
 snapshot[`nu / linux / sync 1`] = `
-"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_CLI = r#'http://x/cli/nu/file/sync?sysOsPlat=linux'#
 
@@ -363,7 +370,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$\\"(\$args | str join ' ')\\" | print
+  \$"(\$args | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -371,11 +378,11 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print --stderr
+    \$"(\$args | str join ' ')" | print --stderr
     return
   }
 
-  \$\\"(ansi red)(\$args | str join ' ')(ansi reset)\\" | print --stderr
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -383,11 +390,11 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi green)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -395,11 +402,11 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi yellow)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -407,11 +414,11 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi blue)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -419,18 +426,18 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
   if (\$args | length) > 1 {
-    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
   }
 }
 
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$\\"(\$args | str join ' ')\\"
+  nu --no-config-file -c \$"(\$args | str join ' ')"
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -455,7 +462,7 @@ do {
   let minor = \$env.CLI_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
     exit 1
   }
 }
@@ -486,7 +493,7 @@ def fileOp [] {
       }
 
       let dst = replaceEnv \$dirParts.1 | path expand
-      opPrintMaybeRunCmd rm --force --permanent --recursive \$\\"r#'(\$dst)'#\\"
+      opPrintMaybeRunCmd rm --force --permanent --recursive \$"r#'(\$dst)'#"
     }
   }
 
@@ -508,14 +515,14 @@ def fileOp [] {
     let src = \$pairParts.1 | str trim --left --char '/'
     let dst = replaceEnv \$pairParts.2 | path expand
 
-    let url = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+    let url = \$"(\$env.REQ_URL_CFG)/file/(\$src)"
 
     let dstParent = \$dst | path dirname
     if (\$dstParent not-in \$createdDirs) {
       \$createdDirs = \$createdDirs ++ [\$dstParent]
-      opPrintMaybeRunCmd mkdir \$\\"r#'(\$dstParent)'#\\"
+      opPrintMaybeRunCmd mkdir \$"r#'(\$dstParent)'#"
     }
-    opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$url)'#\\" ')\\"' '|' save --force \$\\"r#'(\$dst)'#\\"
+    opPrintMaybeRunCmd '\$"(' http get --raw --redirect-mode follow \$"r#'(\$url)'#" ')"' '|' save --force \$"r#'(\$dst)'#"
   }
 
   if 'FILE_SYNC_PATH_PERMS' in \$env {
@@ -545,7 +552,7 @@ def replaceEnv [line] {
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
     for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
-      \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
+      \$l = \$l | str replace --all \$"{(\$e.0)}" (\$e.1)
     }
   }
   return \$l
@@ -569,12 +576,10 @@ def file [] {
 }
 
 
-\$env.FILE_SYNC_PATH_PAIRS = [ \`docker|docker/config.json|{HOME}/.docker/config.json\`, \`fzf|fzf/theme.zsh|{HOME}/.fzf/theme.zsh\`, \`ghostty|ghostty/config|{HOME}/.config/ghostty/config\`, \`ghostty|ghostty/themes/theme|{HOME}/.config/ghostty/themes/theme\`, \`konsole|konsole/Default.profile|{HOME}/.local/share/konsole/Default.profile\`, \`konsole|konsole/theme.colorscheme|{HOME}/.local/share/konsole/theme.colorscheme\`, \`nu|nu/nu/00-vim.nu|{HOME}/.config/nushell/autoload/00-vim.nu\`, \`nu|nu/nu/01-nvim.nu|{HOME}/.config/nushell/autoload/01-nvim.nu\`, \`nu|nu/nu/70-wut.nu|{HOME}/.config/nushell/autoload/70-wut.nu\`, \`nu|nu/env.nu|{HOME}/.config/nushell/env.nu\`, \`nu|nu/config.nu|{HOME}/.config/nushell/config.nu\`, \`nvim|nvim/init.lua|{HOME}/.config/nvim/init.lua\`, \`nvim|nvim/lua/plugins/spec.lua|{HOME}/.config/nvim/lua/plugins/spec.lua\`, \`pwsh|pwsh/pwsh/05-bun.ps1|{HOME}/.pwsh/05-bun.ps1\`, \`pwsh|pwsh/pwsh/05-deno.ps1|{HOME}/.pwsh/05-deno.ps1\`, \`pwsh|pwsh/pwsh/05-zed.ps1|{HOME}/.pwsh/05-zed.ps1\`, \`pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1\`, \`pwsh|pwsh/pwsh/11-nvim.ps1|{HOME}/.pwsh/11-nvim.ps1\`, \`pwsh|pwsh/pwsh/20-fzf.ps1|{HOME}/.pwsh/20-fzf.ps1\`, \`pwsh|pwsh/pwsh/70-wut.ps1|{HOME}/.pwsh/70-wut.ps1\`, \`pwsh|pwsh/pwsh/99-bin.ps1|{HOME}/.pwsh/99-bin.ps1\`, \`pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1\`, \`pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1\`, \`ssh|ssh/hushlogin|{HOME}/.hushlogin\`, \`starship|starship/starship.toml|{HOME}/.config/starship.toml\`, \`zellij|zellij/config.kdl|{HOME}/.config/zellij/config.kdl\`, \`zellij|zellij/themes/theme.kdl|{HOME}/.config/zellij/themes/theme.kdl\`, \`zsh|zsh/zsh/00-brew.zsh|{HOME}/.zsh/00-brew.zsh\`, \`zsh|zsh/zsh/05-android.zsh|{HOME}/.zsh/05-android.zsh\`, \`zsh|zsh/zsh/05-bun.zsh|{HOME}/.zsh/05-bun.zsh\`, \`zsh|zsh/zsh/05-cargo.zsh|{HOME}/.zsh/05-cargo.zsh\`, \`zsh|zsh/zsh/05-deno.zsh|{HOME}/.zsh/05-deno.zsh\`, \`zsh|zsh/zsh/05-go.zsh|{HOME}/.zsh/05-go.zsh\`, \`zsh|zsh/zsh/05-xcode.zsh|{HOME}/.zsh/05-xcode.zsh\`, \`zsh|zsh/zsh/05-zed.zsh|{HOME}/.zsh/05-zed.zsh\`, \`zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh\`, \`zsh|zsh/zsh/11-nvim.zsh|{HOME}/.zsh/11-nvim.zsh\`, \`zsh|zsh/zsh/20-fzf.zsh|{HOME}/.zsh/20-fzf.zsh\`, \`zsh|zsh/zsh/20-ssh.zsh|{HOME}/.zsh/20-ssh.zsh\`, \`zsh|zsh/zsh/60-incus.zsh|{HOME}/.zsh/60-incus.zsh\`, \`zsh|zsh/zsh/66-docker.zsh|{HOME}/.zsh/66-docker.zsh\`, \`zsh|zsh/zsh/69-proot-distro.zsh|{HOME}/.zsh/69-proot-distro.zsh\`, \`zsh|zsh/zsh/70-wut.zsh|{HOME}/.zsh/70-wut.zsh\`, \`zsh|zsh/zsh/99-bin.zsh|{HOME}/.zsh/99-bin.zsh\`, \`zsh|zsh/zshenv|{HOME}/.zshenv\`, \`zsh|zsh/zshrc|{HOME}/.zshrc\` ]
-
-\$env.FILE_SYNC_CLEAR_DIRS = [ \`ghostty|{HOME}/.config/ghostty/themes\`, \`nu|{HOME}/.config/nushell/autoload\`, \`nvim|{HOME}/.config/nvim/lua\`, \`pwsh|{HOME}/.pwsh\`, \`zellij|{HOME}/.config/zellij/themes\`, \`zsh|{HOME}/.zsh\` ]
+\$env.FILE_SYNC_PATH_PAIRS = [  ]
 
 file
-"
+\`
 `;
 
 snapshot[`nu / darwin / diff 1`] = `
@@ -757,14 +762,14 @@ def file [] {
 }
 
 
-\$env.FILE_DIFF_PATH_PAIRS = [ \`docker|docker/config.json|{HOME}/.docker/config.json\`, \`fzf|fzf/theme.zsh|{HOME}/.fzf/theme.zsh\`, \`ghostty|ghostty/config|{HOME}/.config/ghostty/config\`, \`ghostty|ghostty/themes/theme|{HOME}/.config/ghostty/themes/theme\`, \`nu|nu/nu/00-vim.nu|{HOME}/.config/nushell/autoload/00-vim.nu\`, \`nu|nu/nu/01-nvim.nu|{HOME}/.config/nushell/autoload/01-nvim.nu\`, \`nu|nu/nu/70-wut.nu|{HOME}/.config/nushell/autoload/70-wut.nu\`, \`nu|nu/env.nu|{HOME}/.config/nushell/env.nu\`, \`nu|nu/config.nu|{HOME}/.config/nushell/config.nu\`, \`nvim|nvim/init.lua|{HOME}/.config/nvim/init.lua\`, \`nvim|nvim/lua/plugins/spec.lua|{HOME}/.config/nvim/lua/plugins/spec.lua\`, \`pwsh|pwsh/pwsh/05-bun.ps1|{HOME}/.pwsh/05-bun.ps1\`, \`pwsh|pwsh/pwsh/05-deno.ps1|{HOME}/.pwsh/05-deno.ps1\`, \`pwsh|pwsh/pwsh/05-zed.ps1|{HOME}/.pwsh/05-zed.ps1\`, \`pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1\`, \`pwsh|pwsh/pwsh/11-nvim.ps1|{HOME}/.pwsh/11-nvim.ps1\`, \`pwsh|pwsh/pwsh/20-fzf.ps1|{HOME}/.pwsh/20-fzf.ps1\`, \`pwsh|pwsh/pwsh/70-wut.ps1|{HOME}/.pwsh/70-wut.ps1\`, \`pwsh|pwsh/pwsh/99-bin.ps1|{HOME}/.pwsh/99-bin.ps1\`, \`pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1\`, \`pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1\`, \`ssh|ssh/hushlogin|{HOME}/.hushlogin\`, \`starship|starship/starship.toml|{HOME}/.config/starship.toml\`, \`zellij|zellij/config.kdl|{HOME}/.config/zellij/config.kdl\`, \`zellij|zellij/themes/theme.kdl|{HOME}/.config/zellij/themes/theme.kdl\`, \`zsh|zsh/zsh/00-brew.zsh|{HOME}/.zsh/00-brew.zsh\`, \`zsh|zsh/zsh/05-android.zsh|{HOME}/.zsh/05-android.zsh\`, \`zsh|zsh/zsh/05-bun.zsh|{HOME}/.zsh/05-bun.zsh\`, \`zsh|zsh/zsh/05-cargo.zsh|{HOME}/.zsh/05-cargo.zsh\`, \`zsh|zsh/zsh/05-deno.zsh|{HOME}/.zsh/05-deno.zsh\`, \`zsh|zsh/zsh/05-go.zsh|{HOME}/.zsh/05-go.zsh\`, \`zsh|zsh/zsh/05-xcode.zsh|{HOME}/.zsh/05-xcode.zsh\`, \`zsh|zsh/zsh/05-zed.zsh|{HOME}/.zsh/05-zed.zsh\`, \`zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh\`, \`zsh|zsh/zsh/11-nvim.zsh|{HOME}/.zsh/11-nvim.zsh\`, \`zsh|zsh/zsh/20-fzf.zsh|{HOME}/.zsh/20-fzf.zsh\`, \`zsh|zsh/zsh/20-ssh.zsh|{HOME}/.zsh/20-ssh.zsh\`, \`zsh|zsh/zsh/60-incus.zsh|{HOME}/.zsh/60-incus.zsh\`, \`zsh|zsh/zsh/66-docker.zsh|{HOME}/.zsh/66-docker.zsh\`, \`zsh|zsh/zsh/69-proot-distro.zsh|{HOME}/.zsh/69-proot-distro.zsh\`, \`zsh|zsh/zsh/70-wut.zsh|{HOME}/.zsh/70-wut.zsh\`, \`zsh|zsh/zsh/99-bin.zsh|{HOME}/.zsh/99-bin.zsh\`, \`zsh|zsh/zshenv|{HOME}/.zshenv\`, \`zsh|zsh/zshrc|{HOME}/.zshrc\` ]
+\$env.FILE_DIFF_PATH_PAIRS = [  ]
 
 file
 "
 `;
 
 snapshot[`nu / darwin / find 1`] = `
-"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_CLI = r#'http://x/cli/nu/file/find?sysOsPlat=darwin'#
 
@@ -772,7 +777,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$\\"(\$args | str join ' ')\\" | print
+  \$"(\$args | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -780,11 +785,11 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print --stderr
+    \$"(\$args | str join ' ')" | print --stderr
     return
   }
 
-  \$\\"(ansi red)(\$args | str join ' ')(ansi reset)\\" | print --stderr
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -792,11 +797,11 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi green)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -804,11 +809,11 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi yellow)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -816,11 +821,11 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi blue)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -828,18 +833,18 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
   if (\$args | length) > 1 {
-    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
   }
 }
 
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$\\"(\$args | str join ' ')\\"
+  nu --no-config-file -c \$"(\$args | str join ' ')"
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -864,7 +869,7 @@ do {
   let minor = \$env.CLI_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
     exit 1
   }
 }
@@ -879,9 +884,13 @@ do {
 \$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
 
 def fileOp [] {
-  for key in \$env.FILE_FIND_KEYS {
+  for entry in \$env.FILE_FIND_KEYS {
+    let parts = \$entry | split row '|'
+    let keys = \$parts | get 0
+    let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
+
     mut bin = ''
-    for alias in (\$key | split row ',') {
+    for alias in (\$keys | split row ',') {
       if (which \$alias | is-not-empty) {
         \$bin = \$alias
         break
@@ -892,6 +901,9 @@ def fileOp [] {
     }
 
     opPrint \$bin
+    if (\$ins | is-not-empty) {
+      opPrint \$"  (\$ins)"
+    }
   }
 }
 
@@ -901,7 +913,7 @@ def replaceEnv [line] {
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
     for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
-      \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
+      \$l = \$l | str replace --all \$"{(\$e.0)}" (\$e.1)
     }
   }
   return \$l
@@ -925,14 +937,14 @@ def file [] {
 }
 
 
-\$env.FILE_FIND_KEYS = [ \`docker\`, \`fzf\`, \`ghostty\`, \`nu\`, \`nvim\`, \`pwsh\`, \`ssh\`, \`starship\`, \`zellij\`, \`zsh\` ]
+\$env.FILE_FIND_KEYS = [  ]
 
 file
-"
+\`
 `;
 
 snapshot[`nu / darwin / sync 1`] = `
-"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_CLI = r#'http://x/cli/nu/file/sync?sysOsPlat=darwin'#
 
@@ -940,7 +952,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$\\"(\$args | str join ' ')\\" | print
+  \$"(\$args | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -948,11 +960,11 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print --stderr
+    \$"(\$args | str join ' ')" | print --stderr
     return
   }
 
-  \$\\"(ansi red)(\$args | str join ' ')(ansi reset)\\" | print --stderr
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -960,11 +972,11 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi green)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -972,11 +984,11 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi yellow)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -984,11 +996,11 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi blue)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -996,18 +1008,18 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
   if (\$args | length) > 1 {
-    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
   }
 }
 
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$\\"(\$args | str join ' ')\\"
+  nu --no-config-file -c \$"(\$args | str join ' ')"
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -1032,7 +1044,7 @@ do {
   let minor = \$env.CLI_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
     exit 1
   }
 }
@@ -1063,7 +1075,7 @@ def fileOp [] {
       }
 
       let dst = replaceEnv \$dirParts.1 | path expand
-      opPrintMaybeRunCmd rm --force --permanent --recursive \$\\"r#'(\$dst)'#\\"
+      opPrintMaybeRunCmd rm --force --permanent --recursive \$"r#'(\$dst)'#"
     }
   }
 
@@ -1085,14 +1097,14 @@ def fileOp [] {
     let src = \$pairParts.1 | str trim --left --char '/'
     let dst = replaceEnv \$pairParts.2 | path expand
 
-    let url = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+    let url = \$"(\$env.REQ_URL_CFG)/file/(\$src)"
 
     let dstParent = \$dst | path dirname
     if (\$dstParent not-in \$createdDirs) {
       \$createdDirs = \$createdDirs ++ [\$dstParent]
-      opPrintMaybeRunCmd mkdir \$\\"r#'(\$dstParent)'#\\"
+      opPrintMaybeRunCmd mkdir \$"r#'(\$dstParent)'#"
     }
-    opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$url)'#\\" ')\\"' '|' save --force \$\\"r#'(\$dst)'#\\"
+    opPrintMaybeRunCmd '\$"(' http get --raw --redirect-mode follow \$"r#'(\$url)'#" ')"' '|' save --force \$"r#'(\$dst)'#"
   }
 
   if 'FILE_SYNC_PATH_PERMS' in \$env {
@@ -1122,7 +1134,7 @@ def replaceEnv [line] {
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
     for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
-      \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
+      \$l = \$l | str replace --all \$"{(\$e.0)}" (\$e.1)
     }
   }
   return \$l
@@ -1146,12 +1158,10 @@ def file [] {
 }
 
 
-\$env.FILE_SYNC_PATH_PAIRS = [ \`docker|docker/config.json|{HOME}/.docker/config.json\`, \`fzf|fzf/theme.zsh|{HOME}/.fzf/theme.zsh\`, \`ghostty|ghostty/config|{HOME}/.config/ghostty/config\`, \`ghostty|ghostty/themes/theme|{HOME}/.config/ghostty/themes/theme\`, \`nu|nu/nu/00-vim.nu|{HOME}/.config/nushell/autoload/00-vim.nu\`, \`nu|nu/nu/01-nvim.nu|{HOME}/.config/nushell/autoload/01-nvim.nu\`, \`nu|nu/nu/70-wut.nu|{HOME}/.config/nushell/autoload/70-wut.nu\`, \`nu|nu/env.nu|{HOME}/.config/nushell/env.nu\`, \`nu|nu/config.nu|{HOME}/.config/nushell/config.nu\`, \`nvim|nvim/init.lua|{HOME}/.config/nvim/init.lua\`, \`nvim|nvim/lua/plugins/spec.lua|{HOME}/.config/nvim/lua/plugins/spec.lua\`, \`pwsh|pwsh/pwsh/05-bun.ps1|{HOME}/.pwsh/05-bun.ps1\`, \`pwsh|pwsh/pwsh/05-deno.ps1|{HOME}/.pwsh/05-deno.ps1\`, \`pwsh|pwsh/pwsh/05-zed.ps1|{HOME}/.pwsh/05-zed.ps1\`, \`pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1\`, \`pwsh|pwsh/pwsh/11-nvim.ps1|{HOME}/.pwsh/11-nvim.ps1\`, \`pwsh|pwsh/pwsh/20-fzf.ps1|{HOME}/.pwsh/20-fzf.ps1\`, \`pwsh|pwsh/pwsh/70-wut.ps1|{HOME}/.pwsh/70-wut.ps1\`, \`pwsh|pwsh/pwsh/99-bin.ps1|{HOME}/.pwsh/99-bin.ps1\`, \`pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1\`, \`pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1\`, \`ssh|ssh/hushlogin|{HOME}/.hushlogin\`, \`starship|starship/starship.toml|{HOME}/.config/starship.toml\`, \`zellij|zellij/config.kdl|{HOME}/.config/zellij/config.kdl\`, \`zellij|zellij/themes/theme.kdl|{HOME}/.config/zellij/themes/theme.kdl\`, \`zsh|zsh/zsh/00-brew.zsh|{HOME}/.zsh/00-brew.zsh\`, \`zsh|zsh/zsh/05-android.zsh|{HOME}/.zsh/05-android.zsh\`, \`zsh|zsh/zsh/05-bun.zsh|{HOME}/.zsh/05-bun.zsh\`, \`zsh|zsh/zsh/05-cargo.zsh|{HOME}/.zsh/05-cargo.zsh\`, \`zsh|zsh/zsh/05-deno.zsh|{HOME}/.zsh/05-deno.zsh\`, \`zsh|zsh/zsh/05-go.zsh|{HOME}/.zsh/05-go.zsh\`, \`zsh|zsh/zsh/05-xcode.zsh|{HOME}/.zsh/05-xcode.zsh\`, \`zsh|zsh/zsh/05-zed.zsh|{HOME}/.zsh/05-zed.zsh\`, \`zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh\`, \`zsh|zsh/zsh/11-nvim.zsh|{HOME}/.zsh/11-nvim.zsh\`, \`zsh|zsh/zsh/20-fzf.zsh|{HOME}/.zsh/20-fzf.zsh\`, \`zsh|zsh/zsh/20-ssh.zsh|{HOME}/.zsh/20-ssh.zsh\`, \`zsh|zsh/zsh/60-incus.zsh|{HOME}/.zsh/60-incus.zsh\`, \`zsh|zsh/zsh/66-docker.zsh|{HOME}/.zsh/66-docker.zsh\`, \`zsh|zsh/zsh/69-proot-distro.zsh|{HOME}/.zsh/69-proot-distro.zsh\`, \`zsh|zsh/zsh/70-wut.zsh|{HOME}/.zsh/70-wut.zsh\`, \`zsh|zsh/zsh/99-bin.zsh|{HOME}/.zsh/99-bin.zsh\`, \`zsh|zsh/zshenv|{HOME}/.zshenv\`, \`zsh|zsh/zshrc|{HOME}/.zshrc\` ]
-
-\$env.FILE_SYNC_CLEAR_DIRS = [ \`ghostty|{HOME}/.config/ghostty/themes\`, \`nu|{HOME}/.config/nushell/autoload\`, \`nvim|{HOME}/.config/nvim/lua\`, \`pwsh|{HOME}/.pwsh\`, \`zellij|{HOME}/.config/zellij/themes\`, \`zsh|{HOME}/.zsh\` ]
+\$env.FILE_SYNC_PATH_PAIRS = [  ]
 
 file
-"
+\`
 `;
 
 snapshot[`nu / winnt / diff 1`] = `
@@ -1334,14 +1344,14 @@ def file [] {
 }
 
 
-\$env.FILE_DIFF_PATH_PAIRS = [ \`docker|docker/config.json|{HOME}/.docker/config.json\`, \`fzf|fzf/theme.ps1|{HOME}/.fzf/theme.ps1\`, \`nu|nu/nu/00-vim.nu|{HOME}/AppData/Roaming/nushell/autoload/00-vim.nu\`, \`nu|nu/nu/01-nvim.nu|{HOME}/AppData/Roaming/nushell/autoload/01-nvim.nu\`, \`nu|nu/nu/70-wut.nu|{HOME}/AppData/Roaming/nushell/autoload/70-wut.nu\`, \`nu|nu/env.nu|{HOME}/AppData/Roaming/nushell/env.nu\`, \`nu|nu/config.nu|{HOME}/AppData/Roaming/nushell/config.nu\`, \`nvim|nvim/init.lua|{HOME}/AppData/Local/nvim/init.lua\`, \`nvim|nvim/lua/plugins/spec.lua|{HOME}/AppData/Local/nvim/lua/plugins/spec.lua\`, \`pwsh|pwsh/pwsh/05-bun.ps1|{HOME}/.pwsh/05-bun.ps1\`, \`pwsh|pwsh/pwsh/05-deno.ps1|{HOME}/.pwsh/05-deno.ps1\`, \`pwsh|pwsh/pwsh/05-zed.ps1|{HOME}/.pwsh/05-zed.ps1\`, \`pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1\`, \`pwsh|pwsh/pwsh/11-nvim.ps1|{HOME}/.pwsh/11-nvim.ps1\`, \`pwsh|pwsh/pwsh/20-fzf.ps1|{HOME}/.pwsh/20-fzf.ps1\`, \`pwsh|pwsh/pwsh/70-wut.ps1|{HOME}/.pwsh/70-wut.ps1\`, \`pwsh|pwsh/pwsh/99-bin.ps1|{HOME}/.pwsh/99-bin.ps1\`, \`pwsh|pwsh/env.ps1|{HOME}/Documents/PowerShell/env.ps1\`, \`pwsh|pwsh/profile.ps1|{HOME}/Documents/PowerShell/profile.ps1\`, \`ssh|ssh/hushlogin|{HOME}/.hushlogin\`, \`starship|starship/starship.toml|{HOME}/.config/starship.toml\`, \`winget|winget/settings.json|{HOME}/AppData/Local/Packages/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe/LocalState/settings.json\`, \`wsl|wsl/wslconfig|{HOME}/.wslconfig\` ]
+\$env.FILE_DIFF_PATH_PAIRS = [  ]
 
 file
 "
 `;
 
 snapshot[`nu / winnt / find 1`] = `
-"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_CLI = r#'http://x/cli/nu/file/find?sysOsPlat=winnt'#
 
@@ -1349,7 +1359,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$\\"(\$args | str join ' ')\\" | print
+  \$"(\$args | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -1357,11 +1367,11 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print --stderr
+    \$"(\$args | str join ' ')" | print --stderr
     return
   }
 
-  \$\\"(ansi red)(\$args | str join ' ')(ansi reset)\\" | print --stderr
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -1369,11 +1379,11 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi green)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -1381,11 +1391,11 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi yellow)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -1393,11 +1403,11 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi blue)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -1405,18 +1415,18 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
   if (\$args | length) > 1 {
-    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
   }
 }
 
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$\\"(\$args | str join ' ')\\"
+  nu --no-config-file -c \$"(\$args | str join ' ')"
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -1441,7 +1451,7 @@ do {
   let minor = \$env.CLI_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
     exit 1
   }
 }
@@ -1456,9 +1466,13 @@ do {
 \$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
 
 def fileOp [] {
-  for key in \$env.FILE_FIND_KEYS {
+  for entry in \$env.FILE_FIND_KEYS {
+    let parts = \$entry | split row '|'
+    let keys = \$parts | get 0
+    let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
+
     mut bin = ''
-    for alias in (\$key | split row ',') {
+    for alias in (\$keys | split row ',') {
       if (which \$alias | is-not-empty) {
         \$bin = \$alias
         break
@@ -1469,6 +1483,9 @@ def fileOp [] {
     }
 
     opPrint \$bin
+    if (\$ins | is-not-empty) {
+      opPrint \$"  (\$ins)"
+    }
   }
 }
 
@@ -1478,7 +1495,7 @@ def replaceEnv [line] {
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
     for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
-      \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
+      \$l = \$l | str replace --all \$"{(\$e.0)}" (\$e.1)
     }
   }
   return \$l
@@ -1502,14 +1519,14 @@ def file [] {
 }
 
 
-\$env.FILE_FIND_KEYS = [ \`docker\`, \`fzf\`, \`nu\`, \`nvim\`, \`pwsh\`, \`ssh\`, \`starship\`, \`winget\`, \`wsl\` ]
+\$env.FILE_FIND_KEYS = [  ]
 
 file
-"
+\`
 `;
 
 snapshot[`nu / winnt / sync 1`] = `
-"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_CLI = r#'http://x/cli/nu/file/sync?sysOsPlat=winnt'#
 
@@ -1517,7 +1534,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$\\"(\$args | str join ' ')\\" | print
+  \$"(\$args | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -1525,11 +1542,11 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print --stderr
+    \$"(\$args | str join ' ')" | print --stderr
     return
   }
 
-  \$\\"(ansi red)(\$args | str join ' ')(ansi reset)\\" | print --stderr
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -1537,11 +1554,11 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi green)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -1549,11 +1566,11 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi yellow)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -1561,11 +1578,11 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi blue)(\$args | str join ' ')(ansi reset)\\" | print
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -1573,18 +1590,18 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$"(\$args | str join ' ')" | print
     return
   }
 
-  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
   if (\$args | length) > 1 {
-    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
   }
 }
 
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$\\"(\$args | str join ' ')\\"
+  nu --no-config-file -c \$"(\$args | str join ' ')"
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -1609,7 +1626,7 @@ do {
   let minor = \$env.CLI_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
     exit 1
   }
 }
@@ -1640,7 +1657,7 @@ def fileOp [] {
       }
 
       let dst = replaceEnv \$dirParts.1 | path expand
-      opPrintMaybeRunCmd rm --force --permanent --recursive \$\\"r#'(\$dst)'#\\"
+      opPrintMaybeRunCmd rm --force --permanent --recursive \$"r#'(\$dst)'#"
     }
   }
 
@@ -1662,14 +1679,14 @@ def fileOp [] {
     let src = \$pairParts.1 | str trim --left --char '/'
     let dst = replaceEnv \$pairParts.2 | path expand
 
-    let url = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+    let url = \$"(\$env.REQ_URL_CFG)/file/(\$src)"
 
     let dstParent = \$dst | path dirname
     if (\$dstParent not-in \$createdDirs) {
       \$createdDirs = \$createdDirs ++ [\$dstParent]
-      opPrintMaybeRunCmd mkdir \$\\"r#'(\$dstParent)'#\\"
+      opPrintMaybeRunCmd mkdir \$"r#'(\$dstParent)'#"
     }
-    opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$url)'#\\" ')\\"' '|' save --force \$\\"r#'(\$dst)'#\\"
+    opPrintMaybeRunCmd '\$"(' http get --raw --redirect-mode follow \$"r#'(\$url)'#" ')"' '|' save --force \$"r#'(\$dst)'#"
   }
 
   if 'FILE_SYNC_PATH_PERMS' in \$env {
@@ -1699,7 +1716,7 @@ def replaceEnv [line] {
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
     for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
-      \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
+      \$l = \$l | str replace --all \$"{(\$e.0)}" (\$e.1)
     }
   }
   return \$l
@@ -1723,10 +1740,8 @@ def file [] {
 }
 
 
-\$env.FILE_SYNC_PATH_PAIRS = [ \`docker|docker/config.json|{HOME}/.docker/config.json\`, \`fzf|fzf/theme.ps1|{HOME}/.fzf/theme.ps1\`, \`nu|nu/nu/00-vim.nu|{HOME}/AppData/Roaming/nushell/autoload/00-vim.nu\`, \`nu|nu/nu/01-nvim.nu|{HOME}/AppData/Roaming/nushell/autoload/01-nvim.nu\`, \`nu|nu/nu/70-wut.nu|{HOME}/AppData/Roaming/nushell/autoload/70-wut.nu\`, \`nu|nu/env.nu|{HOME}/AppData/Roaming/nushell/env.nu\`, \`nu|nu/config.nu|{HOME}/AppData/Roaming/nushell/config.nu\`, \`nvim|nvim/init.lua|{HOME}/AppData/Local/nvim/init.lua\`, \`nvim|nvim/lua/plugins/spec.lua|{HOME}/AppData/Local/nvim/lua/plugins/spec.lua\`, \`pwsh|pwsh/pwsh/05-bun.ps1|{HOME}/.pwsh/05-bun.ps1\`, \`pwsh|pwsh/pwsh/05-deno.ps1|{HOME}/.pwsh/05-deno.ps1\`, \`pwsh|pwsh/pwsh/05-zed.ps1|{HOME}/.pwsh/05-zed.ps1\`, \`pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1\`, \`pwsh|pwsh/pwsh/11-nvim.ps1|{HOME}/.pwsh/11-nvim.ps1\`, \`pwsh|pwsh/pwsh/20-fzf.ps1|{HOME}/.pwsh/20-fzf.ps1\`, \`pwsh|pwsh/pwsh/70-wut.ps1|{HOME}/.pwsh/70-wut.ps1\`, \`pwsh|pwsh/pwsh/99-bin.ps1|{HOME}/.pwsh/99-bin.ps1\`, \`pwsh|pwsh/env.ps1|{HOME}/Documents/PowerShell/env.ps1\`, \`pwsh|pwsh/profile.ps1|{HOME}/Documents/PowerShell/profile.ps1\`, \`ssh|ssh/hushlogin|{HOME}/.hushlogin\`, \`starship|starship/starship.toml|{HOME}/.config/starship.toml\`, \`winget|winget/settings.json|{HOME}/AppData/Local/Packages/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe/LocalState/settings.json\`, \`wsl|wsl/wslconfig|{HOME}/.wslconfig\` ]
-
-\$env.FILE_SYNC_CLEAR_DIRS = [ \`nu|{HOME}/AppData/Roaming/nushell/autoload\`, \`nvim|{HOME}/AppData/Local/nvim/lua\`, \`pwsh|{HOME}/.pwsh\` ]
+\$env.FILE_SYNC_PATH_PAIRS = [  ]
 
 file
-"
+\`
 `;

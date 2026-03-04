@@ -144,19 +144,49 @@ async function loadGroupConfig(name: string) {
   return await getCfgFileLoad([PACK_KEY, name], { extension: Fmt.yaml })
 }
 
-async function findGroups(filters?: Array<string>) {
+async function findGroupsWithNames(
+  filters: Array<string> | undefined,
+  managers: Array<string>,
+): Promise<{ entries: Array<string>; found: Array<string> }> {
   const results = await getCfgDirDump([PACK_KEY], {
     extension: Fmt.yaml,
-    filters,
     flexible: true,
   })
-  return results.map((r) => r.join(' '))
+  const entries: Array<string> = []
+  const found: Array<string> = []
+  for (const r of results) {
+    const name = r.join(' ')
+    const content = await loadGroupConfig(name)
+    if (content == null) continue
+    const allNames: Array<string> = []
+    for (const key of Object.keys(content)) {
+      if (managers.length && !managers.includes(key)) continue
+      for (const n of (content[key] as ManagerEntry)?.names ?? []) {
+        if (!allNames.includes(n)) allNames.push(n)
+      }
+    }
+    if (filters?.length) {
+      const matchedFilters = filters.filter((f) => name.includes(f) || allNames.some((n) => n.includes(f)))
+      if (!matchedFilters.length) continue
+      for (const f of matchedFilters) {
+        if (!found.includes(f)) found.push(f)
+      }
+    }
+    entries.push(allNames.length ? `${name}|${allNames.join(', ')}` : name)
+  }
+  return { entries: entries.toSorted(), found }
 }
 
-function printGroups(client: Cli, matches: Array<string>) {
-  return client.with(
-    client.gatedFunc('use config (remote)', client.print(matches.toSorted())),
-  )
+function printGroups(client: Cli, entries: Array<string>) {
+  const lines: Array<string> = []
+  for (const entry of entries) {
+    const sep = entry.indexOf('|')
+    const key = sep >= 0 ? entry.slice(0, sep) : entry
+    const names = sep >= 0 ? entry.slice(sep + 1) : ''
+    lines.push(...client.print(key))
+    if (names) lines.push(...client.print(`  ${names}`))
+  }
+  return client.with(client.gatedFunc('use config (remote)', lines))
 }
 
 function callManagers(client: Cli, managers: Array<string>) {
@@ -305,22 +335,6 @@ async function processGroupNames(
   return { client: _client, found }
 }
 
-async function processGroupFind(
-  client: Cli,
-  names: Array<string>,
-): Promise<{ client: Cli; found: Array<string> }> {
-  const found: Array<string> = []
-
-  for (const name of names) {
-    const matches = await findGroups([name])
-    if (matches.length) {
-      found.push(name)
-    }
-  }
-
-  return { client, found }
-}
-
 async function execOp(
   client: Cli,
   context: Ctx,
@@ -341,12 +355,17 @@ async function execOp(
 
   const names = environment.getSplit(PACK_OP_NAMES_KEY(op))
   let found: Array<string> = []
+  let groupFound = false
 
   if (environment.get(PACK_OP_GROUP_KEY(op))) {
     if (op === 'find') {
-      const groupResult = await processGroupFind(result, names)
-      found = groupResult.found
-      result = printGroups(result, names.length ? found : await findGroups())
+      const { entries: groupEntries, found: groupFilterFound } = await findGroupsWithNames(
+        names.length ? names : undefined,
+        managers,
+      )
+      found = groupFilterFound
+      result = printGroups(result, groupEntries)
+      groupFound = groupEntries.length > 0
     } else {
       const groupResult = await processGroupNames(
         result,
@@ -367,7 +386,7 @@ async function execOp(
       result = setOpNames(result, op, name)
       result = callManagers(result, managers)
     }
-    if (names.length === 0) {
+    if (names.length === 0 && !groupFound) {
       result = callManagers(result, managers)
     }
   } else {

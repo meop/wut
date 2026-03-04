@@ -77,12 +77,14 @@ async function execOp(client: Cli, context: Ctx, environment: Env, op: string) {
   const validKeys: Array<string> = []
   for (
     const key of Object.keys(content).filter((k) =>
-      !filters.length ||
-      filters.find((f) =>
-        op === 'find'
-          ? k.includes(f) || content[k]?.aliases?.find((a) => a.includes(f))
-          : k.startsWith(f) || content[k]?.aliases?.find((a) => a.startsWith(f))
-      )
+    filters.find((f) => {
+      const inValues = content[k]?.maps?.map((m) => m.in) ?? []
+      return op === 'find'
+        ? k.includes(f) ||
+          content[k]?.aliases?.find((a) => a.includes(f)) ||
+          inValues.find((i) => i.includes(f))
+        : k.startsWith(f) || content[k]?.aliases?.find((a) => a.startsWith(f))
+    })
     )
   ) {
     if (sys_os_plat && content[key]?.maps?.find((p) => sys_os_plat in p.out)) {
@@ -110,8 +112,11 @@ async function execOp(client: Cli, context: Ctx, environment: Env, op: string) {
     _client = _client.with(
       _client.varSetArr(
         FILE_OP_KEYS_KEY(op),
-        validKeys.map((x) => _client.toElement(joinKey(x, content[x].aliases)))
-          .toSorted(),
+        validKeys.map((x) => {
+          const keyPart = joinKey(x, content[x].aliases)
+          const inPart = (content[x].maps ?? []).map((m) => m.in).join(', ')
+          return _client.toElement(inPart ? `${keyPart}|${inPart}` : keyPart)
+        }).toSorted(),
       ),
     )
   } else {
