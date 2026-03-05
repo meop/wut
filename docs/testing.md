@@ -67,7 +67,7 @@ Dotfile synchronization — nu × all platforms × all ops (`diff`, `find`, `syn
 ## Adding New Test Cases
 
 1. Add a new `Deno.test` entry to the appropriate file (or create a new test file).
-2. Call `runSrv(req('/cli/...'))`, snapshot the body with `assertSnapshot`, then call `checkSyntax`.
+2. Call `runSrv(req('/sh/...'))`, snapshot the body with `assertSnapshot`, then call `checkSyntax`.
 3. Run `deno task test:update` to generate the initial snapshot.
 4. Commit both the test and the snapshot.
 
@@ -77,7 +77,7 @@ import { runSrv } from '../../src/srv.ts'
 import { checkSyntax, req } from '../helpers.ts'
 
 Deno.test('nu / arch / new-op', async (t) => {
-  const body = await (await runSrv(req('/cli/nu/pack/new-op?sysOsPlat=linux&sysOsId=arch'))).text()
+  const body = await (await runSrv(req('/sh/nu/pack/new-op?sysOsPlat=linux&sysOsId=arch'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })

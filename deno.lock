@@ -3,15 +3,14 @@
   "specifiers": {
     "jsr:@cross/deepmerge@^1.0.1": "1.0.1",
     "jsr:@eemeli/yaml@^2.8.2": "2.8.2",
-    "jsr:@meop/shire@~0.1.7": "0.1.9",
+    "jsr:@meop/shire@~0.2.1": "0.2.1",
     "jsr:@std/assert@^1.0.17": "1.0.19",
     "jsr:@std/assert@^1.0.19": "1.0.19",
     "jsr:@std/data-structures@^1.0.10": "1.0.10",
     "jsr:@std/fs@^1.0.22": "1.0.23",
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "jsr:@std/path@^1.1.4": "1.1.4",
-    "jsr:@std/testing@^1.0.17": "1.0.17",
-    "npm:@types/node@*": "24.2.0"
+    "jsr:@std/testing@^1.0.17": "1.0.17"
   },
   "jsr": {
     "@cross/deepmerge@1.0.1": {
@@ -20,8 +19,8 @@
     "@eemeli/yaml@2.8.2": {
       "integrity": "58f95e7b82f2717963d31f350a9c7cdc098a7b481a3f64c58e979e2e999db0b0"
     },
-    "@meop/shire@0.1.9": {
-      "integrity": "79f884d1553bd8eca89ea6a4241a08c5d812c11e4e73cfd215cfacd4e18241e4",
+    "@meop/shire@0.2.1": {
+      "integrity": "b7a05494d578a22718b0d7e992a26900c3557dfd9ac93632ede6d379080834e1",
       "dependencies": [
         "jsr:@eemeli/yaml"
       ]
@@ -61,30 +60,19 @@
       ]
     }
   },
-  "npm": {
-    "@types/node@24.2.0": {
-      "integrity": "sha512-3xyG3pMCq3oYCNg7/ZP+E1ooTaGB4cG8JWRsqqOYQdbWNY4zbaV0Ennrd7stjiJEFZCaybcIgpTjJWHRfBSIDw==",
-      "dependencies": [
-        "undici-types"
-      ]
-    },
-    "undici-types@7.10.0": {
-      "integrity": "sha512-t5Fy/nfn+14LuOc2KNYg75vZqClpAiqscVvMygNnlsHBFpSXdJaYtXMcdNLpl/Qvc3P2cB3s6lOV51nqsFq4ag=="
-    }
-  },
   "workspace": {
     "dependencies": [
       "jsr:@cross/deepmerge@^1.0.1",
       "jsr:@eemeli/yaml@^2.8.2",
-      "jsr:@meop/shire@~0.1.7",
+      "jsr:@meop/shire@~0.2.1",
       "jsr:@std/assert@^1.0.19",
       "jsr:@std/testing@^1.0.17"
     ],
     "links": {
-      "jsr:@meop/shire@0.1.9": {
+      "jsr:@meop/shire@0.2.1": {
         "dependencies": [
           "jsr:@eemeli/yaml@^2.8.2",
-          "jsr:@std/assert@1"
+          "jsr:@std/assert@^1.0.19"
         ]
       }
     }

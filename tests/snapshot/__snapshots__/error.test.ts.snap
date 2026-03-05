@@ -1,0 +1,659 @@
+export const snapshot = {};
+
+snapshot[`error / unsupported operation 1`] = `'echo "operation requested not supported: invalid'`;
+
+snapshot[`error / unsupported shell 1`] = `'echo "shell requested not supported: invalid"'`;
+
+snapshot[`error / operation request missing 1`] = `'echo "operation request missing"'`;
+
+snapshot[`error / shell request missing 1`] = `'echo "shell request missing"'`;
+
+snapshot[`error / command not found (nu) 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/invalid'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.SH_VER_MAJOR = 0
+
+\$env.SH_VER_MINOR = 111
+
+do {
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.SYS_CPU_ARCH = match (uname | get machine | str downcase) {
+  'arm64' => 'aarch64',
+  'amd64' => 'x86_64',
+  \$x => \$x,
+}
+\$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)?sysCpuArch=(\$env.SYS_CPU_ARCH)"
+
+\$env.SYS_CPU_VEN_ID = match (sys cpu | first | get vendor_id | split words | first | str downcase) {
+  'genuineintel' => 'intel',
+  'authenticamd' => 'amd',
+  'qemu' => 'apple',
+  \$x => \$x,
+}
+\$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysCpuVenId=(\$env.SYS_CPU_VEN_ID)"
+
+\$env.SYS_HOST = sys host | get hostname | str downcase
+\$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysHost=(\$env.SYS_HOST)"
+
+\$env.SYS_OS_PLAT = match (uname | get kernel-name | str downcase) {
+  'darwin' => 'darwin',
+  'linux' => 'linux',
+  'windows_nt' => 'winnt',
+  \$x => \$x,
+}
+\$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsPlat=(\$env.SYS_OS_PLAT)"
+
+if \$env.SYS_OS_PLAT == 'linux' {
+  if 'SYS_OS_DE_ID' not-in \$env {
+    if 'XDG_SESSION_DESKTOP' in \$env {
+      \$env.SYS_OS_DE_ID = \$env.XDG_SESSION_DESKTOP | str downcase
+    }
+    if 'SYS_OS_DE_ID' in \$env {
+      \$env.SYS_OS_DE_ID = match \$env.SYS_OS_DE_ID {
+        'kde' => 'plasma',
+        'rpd' | 'rpd-labwc' => 'lxde',
+        \$x => \$x,
+      }
+      \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsDeId=(\$env.SYS_OS_DE_ID)"
+    }
+  }
+
+  if ('/etc/os-release' | path exists) {
+    open /etc/os-release | lines | parse "{key}={value}" |
+      update value { |v| str trim --char '"' } |
+      transpose --as-record --header-row |
+      load-env
+
+    if 'SYS_OS_ID' not-in \$env {
+      if 'ID' in \$env {
+        \$env.SYS_OS_ID = \$env.ID | str downcase
+      }
+      if 'SYS_OS_ID' in \$env {
+        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsId=(\$env.SYS_OS_ID)"
+      }
+    }
+
+    if 'SYS_OS_ID_LIKE' not-in \$env {
+      if 'ID_LIKE' in \$env {
+        \$env.SYS_OS_ID_LIKE = \$env.ID_LIKE | split words | first | str downcase
+      }
+      if 'SYS_OS_ID_LIKE' in \$env {
+        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsIdLike=(\$env.SYS_OS_ID_LIKE)"
+      }
+    }
+
+    if 'SYS_OS_VER_ID' not-in \$env {
+      if 'VERSION_ID' in \$env {
+        \$env.SYS_OS_VER_ID = \$env.VERSION_ID | str downcase
+      }
+      if 'SYS_OS_VER_ID' in \$env {
+        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsVerId=(\$env.SYS_OS_VER_ID)"
+      }
+    }
+
+    if 'SYS_OS_VER_CODE' not-in \$env {
+      if 'VERSION_CODENAME' in \$env {
+        \$env.SYS_OS_VER_CODE = \$env.VERSION_CODENAME | str downcase
+      }
+      if 'SYS_OS_VER_CODE' in \$env {
+        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsVerCode=(\$env.SYS_OS_VER_CODE)"
+      }
+    }
+  }
+}
+
+\$env.SYS_USER = whoami | str downcase
+\$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysUser=(\$env.SYS_USER)"
+
+
+nu --no-config-file -c \$"( http get --raw --redirect-mode follow \$"(\$env.REQ_URL_SH)" )"
+
+\`
+`;
+
+snapshot[`error / command not found (pwsh) 1`] = `
+\`\$REQ_URL_CFG = 'http://x/cfg'
+
+\$REQ_URL_SH = 'http://x/sh/pwsh/file/invalid'
+
+function opPrint {
+  if (\$SUCCINCT) {
+    return
+  }
+  [Console]::WriteLine(\$(\$args -join ' '))
+}
+
+function opPrintErr {
+  if (\$SUCCINCT) {
+    return
+  }
+  if (\$GRAYSCALE) {
+    [Console]::Error.WriteLine(\$(\$args -join ' '))
+    return
+  }
+  [Console]::ForegroundColor = 'red'
+  [Console]::Error.WriteLine(\$(\$args -join ' '))
+  [Console]::ResetColor()
+}
+
+function opPrintSucc {
+  if (\$SUCCINCT) {
+    return
+  }
+  if (\$GRAYSCALE) {
+    [Console]::WriteLine(\$(\$args -join ' '))
+    return
+  }
+  [Console]::ForegroundColor = 'green'
+  [Console]::WriteLine(\$(\$args -join ' '))
+  [Console]::ResetColor()
+}
+
+function opPrintWarn {
+  if (\$SUCCINCT) {
+    return
+  }
+  if (\$GRAYSCALE) {
+    [Console]::WriteLine(\$(\$args -join ' '))
+    return
+  }
+  [Console]::ForegroundColor = 'yellow'
+  [Console]::WriteLine(\$(\$args -join ' '))
+  [Console]::ResetColor()
+}
+
+function opPrintInfo {
+  if (\$SUCCINCT) {
+    return
+  }
+  if (\$GRAYSCALE) {
+    [Console]::WriteLine(\$(\$args -join ' '))
+    return
+  }
+  [Console]::ForegroundColor = 'blue'
+  [Console]::WriteLine(\$(\$args -join ' '))
+  [Console]::ResetColor()
+}
+
+function opPrintCmd {
+  if (\$SUCCINCT) {
+    return
+  }
+  if (\$GRAYSCALE) {
+    [Console]::WriteLine(\$(\$args -join ' '))
+    return
+  }
+  [Console]::ForegroundColor = 'magenta'
+  [Console]::Write(\$args[0])
+  [Console]::ResetColor()
+  if (\$args.Length -gt 1) {
+    [Console]::Write(' ')
+    [Console]::ForegroundColor = 'cyan'
+    [Console]::WriteLine(\$(\$(\$args | Select-Object -Skip 1) -join ' '))
+    [Console]::ResetColor()
+  }
+}
+
+function opRunCmd {
+  Invoke-Expression "\$(\$args -join ' ')"
+}
+
+function opPrintRunCmd {
+  opPrintCmd @args
+  opRunCmd @args
+}
+
+function opPrintMaybeRunCmd {
+  opPrintCmd @args
+  if (-not \$NOOP) {
+    opRunCmd @args
+  }
+}
+
+
+\$SH_VER_MAJOR = 7
+
+\$SH_VER_MINOR = 5
+
+& {
+  \$major = \$SH_VER_MAJOR -as [int]
+  \$minor = \$SH_VER_MINOR -as [int]
+
+  if (\$PSVersionTable.PSVersion.Major -lt \$major -or \$PSVersionTable.PSVersion.Minor -lt \$minor) {
+    opPrintErr "pwsh must be >= '\${major}.\${minor}' .. found '\$(\$PSVersionTable.PSVersion)' .. aborting"
+    exit 1
+  }
+}
+
+
+if (\$IsWindows) {
+  \$SYS_CPU_ARCH = "\${env:PROCESSOR_ARCHITECTURE}".ToLower()
+} else {
+  \$SYS_CPU_ARCH = "\$(uname -m)".ToLower()
+}
+\$SYS_CPU_ARCH = switch (\$SYS_CPU_ARCH) {
+  'arm64' { 'aarch64' }
+  'amd64' { 'x86_64' }
+  default { \$SYS_CPU_ARCH }
+}
+\$REQ_URL_SH = "\${REQ_URL_SH}?sysCpuArch=\${SYS_CPU_ARCH}"
+
+if (\$IsWindows) {
+  \$_raw_ven = "\$(Get-WmiObject -Class Win32_Processor | Select-Object -ExpandProperty Manufacturer)".ToLower()
+} elseif (\$IsLinux) {
+  \$_raw_ven = "\$(lscpu | grep --ignore-case 'vendor id' | cut -d ':' -f 2 | xargs)".ToLower()
+} else {
+  \$_raw_ven = "\$(sysctl machdep.cpu.vendor 2> /dev/null | cut -d ':' -f 2 | xargs)".ToLower()
+  if (-not \$_raw_ven) {
+    \$_raw_ven = 'apple'
+  }
+}
+\$SYS_CPU_VEN_ID = switch (\$_raw_ven) {
+  'genuineintel' { 'intel' }
+  'authenticamd' { 'amd' }
+  'qemu'         { 'apple' }
+  default        { \$_raw_ven }
+}
+\$REQ_URL_SH = "\${REQ_URL_SH}&sysCpuVenId=\${SYS_CPU_VEN_ID}"
+
+if (\$IsWindows) {
+  \$SYS_HOST = "\${env:COMPUTERNAME}".ToLower()
+} else {
+  \$SYS_HOST = "\$(hostname)".ToLower()
+}
+\$REQ_URL_SH = "\${REQ_URL_SH}&sysHost=\${SYS_HOST}"
+
+\$_raw_plat = if (\$IsMacOS) { 'darwin' } elseif (\$IsLinux) { 'linux' } elseif (\$IsWindows) { 'winnt' } else { 'unknown' }
+\$SYS_OS_PLAT = switch (\$_raw_plat) {
+  'darwin' { 'darwin' }
+  'linux'  { 'linux' }
+  'winnt'  { 'winnt' }
+  default  { \$_raw_plat }
+}
+\$REQ_URL_SH = "\${REQ_URL_SH}&sysOsPlat=\${SYS_OS_PLAT}"
+
+if (\$SYS_OS_PLAT -eq 'linux') {
+  if (-not \$SYS_OS_DE_ID) {
+    if (\$XDG_SESSION_DESKTOP) {
+      \$SYS_OS_DE_ID = "\${XDG_SESSION_DESKTOP}".ToLower()
+    }
+    if (\$SYS_OS_DE_ID) {
+      \$SYS_OS_DE_ID = switch (\$SYS_OS_DE_ID) {
+        'kde'       { 'plasma' }
+        'rpd'       { 'lxde' }
+        'rpd-labwc' { 'lxde' }
+        default     { \$SYS_OS_DE_ID }
+      }
+      \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsDeId=\${SYS_OS_DE_ID}"
+    }
+  }
+
+  if (Test-Path /etc/os-release) {
+    (Get-Content -Path /etc/os-release -Raw | ConvertFrom-StringData).GetEnumerator() |
+    ForEach-Object {
+      Set-Variable -Name "\$(\$_.Name)" -Value "\$(\$_.Value)".Trim('"')
+    }
+
+    if (-not \$SYS_OS_ID) {
+      if (\$ID) {
+        \$SYS_OS_ID = "\${ID}".ToLower()
+      }
+      if (\$SYS_OS_ID) {
+        \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsId=\${SYS_OS_ID}"
+      }
+    }
+
+    if (-not \$SYS_OS_ID_LIKE) {
+      if (\$ID_LIKE) {
+        \$SYS_OS_ID_LIKE = "\${ID_LIKE}".ToLower().Split(' ')[0]
+      }
+      if (\$SYS_OS_ID_LIKE) {
+        \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsIdLike=\${SYS_OS_ID_LIKE}"
+      }
+    }
+
+    if (-not \$SYS_OS_VER_ID) {
+      if (\$VERSION_ID) {
+        \$SYS_OS_VER_ID = "\${VERSION_ID}".ToLower()
+      }
+      if (\$SYS_OS_VER_ID) {
+        \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsVerId=\${SYS_OS_VER_ID}"
+      }
+    }
+
+    if (-not \$SYS_OS_VER_CODE) {
+      if (\$VERSION_CODENAME) {
+        \$SYS_OS_VER_CODE = "\${VERSION_CODENAME}".ToLower()
+      }
+      if (\$SYS_OS_VER_CODE) {
+        \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsVerCode=\${SYS_OS_VER_CODE}"
+      }
+    }
+  }
+}
+
+if (\$IsWindows) {
+  \$SYS_USER = "\${env:USERNAME}".ToLower()
+} else {
+  \$SYS_USER = "\$(whoami)".ToLower()
+}
+\$REQ_URL_SH = "\${REQ_URL_SH}&sysUser=\${SYS_USER}"
+
+
+Invoke-Expression "\$( Invoke-WebRequest -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "\${REQ_URL_SH}" )"
+
+\`
+`;
+
+snapshot[`error / command not found (zsh) 1`] = `
+\`REQ_URL_CFG='http://x/cfg'
+
+REQ_URL_SH='http://x/sh/zsh/file/invalid'
+
+function opPrint {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  print -r -- "\$*"
+}
+
+function opPrintErr {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*" >&2
+    return
+  fi
+  print -n "\\\\033[0;31m" >&2
+  print -n -r -- "\$*" >&2
+  print "\\\\033[0m" >&2
+}
+
+function opPrintSucc {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;32m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintWarn {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;33m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintInfo {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;34m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintCmd {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;35m"
+  print -n -r "\$1"
+  print -n "\\\\033[0m"
+  shift 1
+  if [[ \$* ]]; then
+    print -n " \\\\033[0;36m"
+    print -n -r -- "\$*"
+    print "\\\\033[0m"
+  fi
+}
+
+function opRunCmd {
+  eval "\$*"
+}
+
+function opPrintRunCmd {
+  opPrintCmd "\$@"
+  opRunCmd "\$@"
+}
+
+function opPrintMaybeRunCmd {
+  opPrintCmd "\$@"
+  if [[ -z \$NOOP ]]; then
+    opRunCmd "\$@"
+  fi
+}
+
+
+SH_VER_MAJOR=5
+
+SH_VER_MINOR=9
+
+function () {
+  local major=\$SH_VER_MAJOR
+  local minor=\$SH_VER_MINOR
+
+  autoload is-at-least
+  if ! is-at-least "\${major}.\${minor}"; then
+    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
+    exit 1
+  fi
+}
+
+
+_raw_arch="\${(L)\$(uname -m)}"
+case "\$_raw_arch" in
+  arm64)   export SYS_CPU_ARCH='aarch64' ;;
+  amd64)   export SYS_CPU_ARCH='x86_64' ;;
+  *)       export SYS_CPU_ARCH="\$_raw_arch" ;;
+esac
+export REQ_URL_SH="\${REQ_URL_SH}?sysCpuArch=\${SYS_CPU_ARCH}"
+
+if type lscpu > /dev/null; then
+  _raw_ven="\${(L)\$(lscpu | grep --ignore-case 'vendor id' | cut -d ':' -f 2 | xargs)}"
+elif type sysctl > /dev/null; then
+  _raw_ven="\${(L)\$(sysctl machdep.cpu.vendor 2> /dev/null | cut -d ':' -f 2 | xargs)}"
+  if [[ -z \$_raw_ven ]]; then
+    _raw_ven='apple'
+  fi
+fi
+case "\$_raw_ven" in
+  genuineintel) export SYS_CPU_VEN_ID='intel' ;;
+  authenticamd) export SYS_CPU_VEN_ID='amd' ;;
+  qemu)         export SYS_CPU_VEN_ID='apple' ;;
+  *)            export SYS_CPU_VEN_ID="\$_raw_ven" ;;
+esac
+export REQ_URL_SH="\${REQ_URL_SH}&sysCpuVenId=\${SYS_CPU_VEN_ID}"
+
+export SYS_HOST="\${(L)\$(hostname)}"
+export REQ_URL_SH="\${REQ_URL_SH}&sysHost=\${SYS_HOST}"
+
+_raw_plat="\${(L)\$(uname)}"
+case "\$_raw_plat" in
+  darwin) export SYS_OS_PLAT='darwin' ;;
+  linux)  export SYS_OS_PLAT='linux' ;;
+  *)      export SYS_OS_PLAT="\$_raw_plat" ;;
+esac
+export REQ_URL_SH="\${REQ_URL_SH}&sysOsPlat=\${SYS_OS_PLAT}"
+
+if [[ \$SYS_OS_PLAT == 'linux' ]]; then
+  if [[ -z \$SYS_OS_DE_ID ]]; then
+    if [[ \$XDG_SESSION_DESKTOP ]]; then
+      export SYS_OS_DE_ID="\${(L)XDG_SESSION_DESKTOP}"
+    fi
+    if [[ \$SYS_OS_DE_ID ]]; then
+      case "\$SYS_OS_DE_ID" in
+        kde)       export SYS_OS_DE_ID='plasma' ;;
+        rpd|rpd-labwc) export SYS_OS_DE_ID='lxde' ;;
+      esac
+      export REQ_URL_SH="\${REQ_URL_SH}&sysOsDeId=\${SYS_OS_DE_ID}"
+    fi
+  fi
+
+  if [[ -f /etc/os-release ]]; then
+    source /etc/os-release
+
+    if [[ -z \$SYS_OS_ID ]]; then
+      if [[ \$ID ]]; then
+        export SYS_OS_ID="\${(L)ID}"
+      fi
+      if [[ \$SYS_OS_ID ]]; then
+        export REQ_URL_SH="\${REQ_URL_SH}&sysOsId=\${SYS_OS_ID}"
+      fi
+    fi
+
+    if [[ -z \$SYS_OS_ID_LIKE ]]; then
+      if [[ \$ID_LIKE ]]; then
+        export SYS_OS_ID_LIKE="\${(L)ID_LIKE%% *}"
+      fi
+      if [[ \$SYS_OS_ID_LIKE ]]; then
+        export REQ_URL_SH="\${REQ_URL_SH}&sysOsIdLike=\${SYS_OS_ID_LIKE}"
+      fi
+    fi
+
+    if [[ -z \$SYS_OS_VER_ID ]]; then
+      if [[ \$VERSION_ID ]]; then
+        export SYS_OS_VER_ID="\${(L)VERSION_ID}"
+      fi
+      if [[ \$SYS_OS_VER_ID ]]; then
+        export REQ_URL_SH="\${REQ_URL_SH}&sysOsVerId=\${SYS_OS_VER_ID}"
+      fi
+    fi
+
+    if [[ -z \$SYS_OS_VER_CODE ]]; then
+      if [[ \$VERSION_CODENAME ]]; then
+        export SYS_OS_VER_CODE="\${(L)VERSION_CODENAME}"
+      fi
+      if [[ \$SYS_OS_VER_CODE ]]; then
+        export REQ_URL_SH="\${REQ_URL_SH}&sysOsVerCode=\${SYS_OS_VER_CODE}"
+      fi
+    fi
+  fi
+fi
+
+export SYS_USER="\${(L)\$(whoami)}"
+export REQ_URL_SH="\${REQ_URL_SH}&sysUser=\${SYS_USER}"
+
+
+eval "\$( curl --fail-with-body --location --no-progress-meter --url "\${REQ_URL_SH}" )"
+
+\`
+`;

@@ -8,15 +8,15 @@ Some operations cannot work over SSH because they are installing GUI tools
 
 Some operations create dynamic prompts for the user and cannot be scripted
 
-## client
+## shell
 
 ### run
 
-Install a supported client from below how you would like
+Install a supported shell from below how you would like
 
 For Unix, make sure sudo is installed
 
-Copy and paste the chosen run function into your client
+Copy and paste the chosen run function into your shell
 
 #### nu
 
@@ -29,7 +29,7 @@ $env.WUT_URL = 'http://yard.lan:9000'
 
 def wut --wrapped [...args] {
   mut url = $"($env.WUT_URL)" | str trim --right --char '/'
-  mut url = $"($url)/cli/nu"
+  mut url = $"($url)/sh/nu"
   mut url = $"($url)/($args | str join '/')" | str trim --right --char '/'
 
   nu --no-config-file -c $"( http get --raw --redirect-mode follow $"($url)" )"
@@ -38,7 +38,9 @@ def wut --wrapped [...args] {
 
 #### pwsh
 
-Powershell is supported on Windows for SSR commands (pack, script)
+Powershell is supported on Windows for SSR commands (script)
+
+Nushell will be invoked for SSR commands (pack)
 
 Nushell will be invoked for CSR commands (file, virt)
 
@@ -47,7 +49,7 @@ $env:WUT_URL = 'http://yard.lan:9000'
 
 function wut {
   $url = "${env:WUT_URL}".TrimEnd('/')
-  $url = "${url}/cli/pwsh"
+  $url = "${url}/sh/pwsh"
   $url = "${url}/$($args -Join '/')".TrimEnd('/')
 
   pwsh -noprofile -c "$( Invoke-WebRequest -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "${url}" )"
@@ -56,7 +58,9 @@ function wut {
 
 #### zsh
 
-Zshell is supported on Unix for SSR commands (pack, script)
+Zshell is supported on Unix for SSR commands (script)
+
+Nushell will be invoked for SSR commands (pack)
 
 Nushell will be invoked for CSR commands (file, virt)
 
@@ -65,7 +69,7 @@ export WUT_URL='http://yard.lan:9000'
 
 function wut {
   local url=$(echo "${WUT_URL}" | sed 's:/*$::')
-  local url=$(echo "${url}/cli/zsh")
+  local url=$(echo "${url}/sh/zsh")
   local url=$(echo "${url}/$(echo "$*" | sed 's/ /\//g')" | sed 's:/*$::')
 
   zsh --no-rcs -c "$( curl --fail-with-body --location --no-progress-meter --url "${url}" )"
@@ -83,8 +87,8 @@ deno task dev
 Or install Docker and run the server in a container:
 
 ```sh
-deno task docker:dev
+deno task dev:docker
 
 # Stop it when done
-deno task docker:dev:down
+deno task dev:docker:down
 ```

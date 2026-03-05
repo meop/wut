@@ -1,10 +1,11 @@
-import type { Cli } from '@meop/shire/cli'
 import { type Cmd, CmdBase } from '@meop/shire/cmd'
 import type { Ctx, CtxFilter } from '@meop/shire/ctx'
 import { type Env } from '@meop/shire/env'
 import { Fmt } from '@meop/shire/serde'
+import type { Sh } from '@meop/shire/sh'
 
 import { getCfgDirContent, getCfgDirDump, getCfgFileLoad } from '../cfg.ts'
+import { redirectNativeShell } from '../sh.ts'
 
 export class ScriptCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -22,29 +23,12 @@ export class ScriptCmd extends CmdBase implements Cmd {
 const SCRIPT_KEY = 'script'
 const SCRIPT_OP_PARTS_KEY = (op: string) => [SCRIPT_KEY, op, 'parts']
 
-async function execOp(client: Cli, context: Ctx, environment: Env, op: string) {
-  if (
-    client.name === 'nu' ||
-    (client.name === 'pwsh' && context.sys_os_plat !== 'winnt')
-  ) {
-    if (context.sys_os_plat === 'winnt') {
-      const url = [
-        context.req_orig,
-        context.req_path.replace(`/cli/${client.name}`, '/cli/pwsh'),
-        context.req_srch,
-      ].join('')
-      return `pwsh -noprofile -c 'Invoke-Expression "$( Invoke-WebRequest -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "${url}" )"'`
-    }
-    const url = [
-      context.req_orig,
-      context.req_path.replace(`/cli/${client.name}`, '/cli/zsh'),
-      context.req_srch,
-    ].join('')
-    return `zsh --no-rcs -c 'eval "$( curl --fail-with-body --location --no-progress-meter --url "${url}" )"'`
-  }
-  let _client = client
+async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
+  const redirect = await redirectNativeShell(shell, context)
+  if (redirect) return redirect
+  let _shell = shell
 
-  const dirParts = [SCRIPT_KEY, _client.name]
+  const dirParts = [SCRIPT_KEY, _shell.name]
   const filters = environment.getSplit(SCRIPT_OP_PARTS_KEY(op))
 
   const content = await getCfgFileLoad([SCRIPT_KEY], {
@@ -53,18 +37,18 @@ async function execOp(client: Cli, context: Ctx, environment: Env, op: string) {
 
   let contextFilter: CtxFilter | undefined
   if (content != null) {
-    contextFilter = content[_client.name]
+    contextFilter = content[_shell.name]
   }
 
   if (op === 'find') {
-    _client = _client.with(
-      _client.gatedFunc(
+    _shell = _shell.with(
+      _shell.gatedFunc(
         'use config (remote)',
-        _client.print(
+        _shell.print(
           await getCfgDirDump(dirParts, {
             context,
             contextFilter,
-            extension: _client.extension,
+            extension: _shell.extension,
             filters,
             flexible: true,
           }).then((x) => x.map((y) => y.join(' ')).toSorted()),
@@ -72,17 +56,17 @@ async function execOp(client: Cli, context: Ctx, environment: Env, op: string) {
       ),
     )
   } else {
-    _client = _client.with(
+    _shell = _shell.with(
       await getCfgDirContent(dirParts, {
         context,
         contextFilter,
-        extension: _client.extension,
+        extension: _shell.extension,
         filters,
       }),
     )
   }
 
-  const body = client.build()
+  const body = shell.build()
 
   if (environment.get(['log'])) {
     console.log(body)
@@ -102,11 +86,11 @@ export class ScriptCmdExec extends CmdBase implements Cmd {
     ]
   }
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }
 
@@ -119,10 +103,10 @@ export class ScriptCmdFind extends CmdBase implements Cmd {
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }

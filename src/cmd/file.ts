@@ -1,15 +1,14 @@
-import type { Cli } from '@meop/shire/cli'
-import { Powershell } from '@meop/shire/cli/pwsh'
-import { Zshell } from '@meop/shire/cli/zsh'
 import { type Cmd, CmdBase } from '@meop/shire/cmd'
 import { Ctx, withCtx } from '@meop/shire/ctx'
 import { type Env } from '@meop/shire/env'
 import { getFilePaths, isDirPath } from '@meop/shire/path'
 import { joinVal } from '@meop/shire/reg'
 import { Fmt } from '@meop/shire/serde'
+import type { Sh } from '@meop/shire/sh'
 
 import { getCfgFileLoad, localCfgPaths } from '../cfg.ts'
 import { type AclPerm, getPlatAclPermCmds, toRelParts } from '../path.ts'
+import { execNativeShell, redirectCommonShell } from '../sh.ts'
 
 export class FileCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -25,18 +24,14 @@ export class FileCmd extends CmdBase implements Cmd {
   }
 }
 
-type Sync = {
-  [key: string]: {
-    aliases?: Array<string>
-    maps?: Array<{
-      in: string
-      out: {
-        [key: string]: string
-      }
-      permission?: AclPerm
-    }>
-  }
-}
+type Sync = Record<string, {
+  aliases?: Array<string>
+  maps?: Array<{
+    in: string
+    out: Record<string, string>
+    permission?: AclPerm
+  }>
+}>
 
 const KEY_SPLIT = ','
 
@@ -52,17 +47,13 @@ function joinKey(key: string, aliases?: Array<string>): string {
   return [key, ...aliases ?? []].join(KEY_SPLIT)
 }
 
-async function execOp(client: Cli, context: Ctx, environment: Env, op: string) {
-  if (client.name !== 'nu') {
-    const url = [
-      context.req_orig,
-      context.req_path.replace(`/cli/${client.name}`, '/cli/nu'),
-      context.req_srch,
-    ].join('')
-    return `nu --no-config-file -c 'nu --no-config-file -c $"( http get --raw --redirect-mode follow "${url}" )"'`
+async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
+  const redirect = await redirectCommonShell(shell, context)
+  if (redirect) {
+    return redirect
   }
 
-  let _client = client
+  let _shell = shell
   const filters = environment.getSplit(FILE_OP_PARTS_KEY(op))
 
   const content: Sync = await getCfgFileLoad([FILE_KEY], {
@@ -77,14 +68,15 @@ async function execOp(client: Cli, context: Ctx, environment: Env, op: string) {
   const validKeys: Array<string> = []
   for (
     const key of Object.keys(content).filter((k) =>
-    filters.find((f) => {
-      const inValues = content[k]?.maps?.map((m) => m.in) ?? []
-      return op === 'find'
-        ? k.includes(f) ||
-          content[k]?.aliases?.find((a) => a.includes(f)) ||
-          inValues.find((i) => i.includes(f))
-        : k.startsWith(f) || content[k]?.aliases?.find((a) => a.startsWith(f))
-    })
+      !filters.length ||
+      filters.find((f) => {
+        const inValues = content[k]?.maps?.map((m) => m.in) ?? []
+        return op === 'find'
+          ? k.includes(f) ||
+            content[k]?.aliases?.find((a) => a.includes(f)) ||
+            inValues.find((i) => i.includes(f))
+          : k.startsWith(f) || content[k]?.aliases?.find((a) => a.startsWith(f))
+      })
     )
   ) {
     if (sys_os_plat && content[key]?.maps?.find((p) => sys_os_plat in p.out)) {
@@ -92,16 +84,16 @@ async function execOp(client: Cli, context: Ctx, environment: Env, op: string) {
     }
   }
 
-  _client = _client
+  _shell = _shell
     .with(
-      await _client.fileLoad(
+      await _shell.fileLoad(
         [FILE_KEY, FILE_KEY, op],
         import.meta.resolve,
         ['..'],
       ),
     )
     .with(
-      await _client.fileLoad(
+      await _shell.fileLoad(
         [FILE_KEY, FILE_KEY],
         import.meta.resolve,
         ['..'],
@@ -109,13 +101,13 @@ async function execOp(client: Cli, context: Ctx, environment: Env, op: string) {
     )
 
   if (op === 'find') {
-    _client = _client.with(
-      _client.varSetArr(
+    _shell = _shell.with(
+      _shell.varSetArr(
         FILE_OP_KEYS_KEY(op),
         validKeys.map((x) => {
           const keyPart = joinKey(x, content[x].aliases)
-          const inPart = (content[x].maps ?? []).map((m) => m.in).join(', ')
-          return _client.toElement(inPart ? `${keyPart}|${inPart}` : keyPart)
+          const inPart = (content[x].maps ?? []).map((m) => withCtx(m.in, context)).join(', ')
+          return inPart ? `${keyPart}|${inPart}` : keyPart
         }).toSorted(),
       ),
     )
@@ -140,32 +132,18 @@ async function execOp(client: Cli, context: Ctx, environment: Env, op: string) {
         }
         if (await isDirPath(localEntryPaths[0])) {
           for (const localEntryPath of localEntryPaths) {
-            validDirs.add(
-              _client.toElement(
-                joinVal(compoundKey, map_out[sys_os_plat]),
-              ),
-            )
+            validDirs.add(joinVal(compoundKey, map_out[sys_os_plat]))
             for (const filePath of await getFilePaths(localEntryPath)) {
               const filePathParts = toRelParts(localEntryPath, filePath, false)
               const srcFull = [key, map_in, ...filePathParts].join('/')
-              const dstFull = [map_out[sys_os_plat], ...filePathParts].join(
-                '/',
-              )
-              validPairs.push(
-                _client.toElement(
-                  joinVal(compoundKey, srcFull, dstFull),
-                ),
-              )
+              const dstFull = [map_out[sys_os_plat], ...filePathParts].join('/')
+              validPairs.push(joinVal(compoundKey, srcFull, dstFull))
             }
           }
         } else {
           const srcFull = [key, map_in].join('/')
           const dstFull = map_out[sys_os_plat]
-          validPairs.push(
-            _client.toElement(
-              joinVal(compoundKey, srcFull, dstFull),
-            ),
-          )
+          validPairs.push(joinVal(compoundKey, srcFull, dstFull))
         }
         if (map_permission) {
           for (
@@ -176,41 +154,36 @@ async function execOp(client: Cli, context: Ctx, environment: Env, op: string) {
               context.sys_user ?? '',
             )
           ) {
-            const permCmdFull = context.sys_os_plat === 'winnt'
-              ? Powershell.execStr(_client.toLiteral(permCmd))
-              : Zshell.execStr(_client.toLiteral(permCmd))
             validPerms.push(
-              _client.toElement(
-                joinVal(compoundKey, permCmdFull),
-              ),
+              joinVal(compoundKey, execNativeShell(_shell, sys_os_plat, permCmd)),
             )
           }
         }
       }
     }
 
-    _client = _client.with(
-      _client.varSetArr(FILE_OP_PATH_PAIRS_KEY(op), validPairs),
+    _shell = _shell.with(
+      _shell.varSetArr(FILE_OP_PATH_PAIRS_KEY(op), validPairs),
     )
 
     if (op === 'sync') {
       if (validDirs.size) {
-        _client = _client.with(
-          _client.varSetArr(FILE_OP_CLEAR_DIRS_KEY(op), [...validDirs]),
+        _shell = _shell.with(
+          _shell.varSetArr(FILE_OP_CLEAR_DIRS_KEY(op), [...validDirs]),
         )
       }
 
       if (validPerms.length) {
-        _client = _client.with(
-          _client.varSetArr(FILE_OP_PATH_PERMS_KEY(op), validPerms),
+        _shell = _shell.with(
+          _shell.varSetArr(FILE_OP_PATH_PERMS_KEY(op), validPerms),
         )
       }
     }
   }
 
-  _client = _client.with([FILE_KEY])
+  _shell = _shell.with([FILE_KEY])
 
-  const body = _client.build()
+  const body = _shell.build()
 
   if (environment.get(['log'])) {
     console.log(body)
@@ -229,11 +202,11 @@ export class FileCmdDiff extends CmdBase implements Cmd {
   }
 
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }
 
@@ -247,11 +220,11 @@ export class FileCmdFind extends CmdBase implements Cmd {
   }
 
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }
 
@@ -265,10 +238,10 @@ export class FileCmdSync extends CmdBase implements Cmd {
   }
 
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }

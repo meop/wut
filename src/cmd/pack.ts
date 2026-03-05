@@ -1,12 +1,11 @@
-import type { Cli } from '@meop/shire/cli'
-import { Powershell } from '@meop/shire/cli/pwsh'
-import { Zshell } from '@meop/shire/cli/zsh'
 import { type Cmd, CmdBase } from '@meop/shire/cmd'
 import type { Ctx } from '@meop/shire/ctx'
 import { type Env } from '@meop/shire/env'
 import { Fmt } from '@meop/shire/serde'
+import type { Sh } from '@meop/shire/sh'
 
 import { getCfgDirDump, getCfgFileLoad } from '../cfg.ts'
+import { execNativeShell, redirectCommonShell } from '../sh.ts'
 
 export class PackCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -29,13 +28,13 @@ export class PackCmd extends CmdBase implements Cmd {
   }
 }
 
-const osPlatToManagers: { [key: string]: Array<string> } = {
+const osPlatToManagers: Record<string, Array<string>> = {
   linux: ['yay', 'pacman', 'apt', 'dnf', 'zypper'],
   darwin: ['brew'],
   winnt: ['choco', 'scoop', 'winget'],
 }
 
-const osIdToManagers: { [key: string]: Array<string> } = {
+const osIdToManagers: Record<string, Array<string>> = {
   arch: ['yay', 'pacman'],
   archarm: ['yay', 'pacman'],
   manjaro: ['yay', 'pacman'],
@@ -68,9 +67,9 @@ function getSupportedManagers(context: Ctx, environment: Env) {
   const osId = context.sys_os_id
 
   if (osPlat) {
-    managers.push(...osPlatToManagers[osPlat])
+    managers.push(...(osPlatToManagers[osPlat] ?? []))
   }
-  if (osId) {
+  if (osId && osId in osIdToManagers) {
     managers = managers.filter((p) => osIdToManagers[osId].includes(p))
   }
   if (environment.get(PACK_MANAGER_KEY)) {
@@ -95,33 +94,33 @@ function getManagerFuncName(manager: string, prefix = PACK_KEY) {
 }
 
 async function loadManagerFiles(
-  client: Cli,
+  shell: Sh,
   supportedManagers: Array<string>,
   op: string,
 ) {
-  let _client = client
+  let _shell = shell
   for (const supportedManager of supportedManagers) {
-    _client = _client
+    _shell = _shell
       .with(
-        await _client.fileLoad(
+        await _shell.fileLoad(
           [PACK_KEY, supportedManager, op],
           import.meta.resolve,
           ['..'],
         ),
       )
       .with(
-        await _client.fileLoad(
+        await _shell.fileLoad(
           [PACK_KEY, supportedManager],
           import.meta.resolve,
           ['..'],
         ),
       )
   }
-  return _client
+  return _shell
 }
 
-function buildAndLog(client: Cli, environment: Env) {
-  const body = client.build()
+function buildAndLog(shell: Sh, environment: Env) {
+  const body = shell.build()
   if (environment.get(['log'])) {
     console.log(body)
   }
@@ -129,15 +128,15 @@ function buildAndLog(client: Cli, environment: Env) {
 }
 
 async function initOp(
-  client: Cli,
+  shell: Sh,
   context: Ctx,
   environment: Env,
   op: string,
-): Promise<{ client: Cli; managers: Array<string> }> {
-  let _client = client.with(client.varSet(PACK_OP_KEY, client.toLiteral(op)))
+): Promise<{ shell: Sh; managers: Array<string> }> {
+  let _shell = shell.with(shell.varSetStr(PACK_OP_KEY, op))
   const managers = getSupportedManagers(context, environment)
-  _client = await loadManagerFiles(_client, managers, op)
-  return { client: _client, managers }
+  _shell = await loadManagerFiles(_shell, managers, op)
+  return { shell: _shell, managers }
 }
 
 async function loadGroupConfig(name: string) {
@@ -177,62 +176,54 @@ async function findGroupsWithNames(
   return { entries: entries.toSorted(), found }
 }
 
-function printGroups(client: Cli, entries: Array<string>) {
+function printGroups(shell: Sh, entries: Array<string>) {
   const lines: Array<string> = []
   for (const entry of entries) {
     const sep = entry.indexOf('|')
     const key = sep >= 0 ? entry.slice(0, sep) : entry
     const names = sep >= 0 ? entry.slice(sep + 1) : ''
-    lines.push(...client.print(key))
-    if (names) lines.push(...client.print(`  ${names}`))
+    lines.push(...shell.print(key))
+    if (names) lines.push(...shell.print(`  ${names}`))
   }
-  return client.with(client.gatedFunc('use config (remote)', lines))
+  return shell.with(shell.gatedFunc('use config (remote)', lines))
 }
 
-function callManagers(client: Cli, managers: Array<string>) {
-  return client.with(managers.map((m) => getManagerFuncName(m)))
+function callManagers(shell: Sh, managers: Array<string>) {
+  return shell.with(managers.map((m) => getManagerFuncName(m)))
 }
 
-function setOpNames(client: Cli, op: string, names: string) {
-  return client.with(
-    client.varSet(PACK_OP_NAMES_KEY(op), client.toLiteral(names)),
+function setOpNames(shell: Sh, op: string, names: string) {
+  return shell.with(
+    shell.varSetStr(PACK_OP_NAMES_KEY(op), names),
   )
 }
 
 function setOpGroupNames(
-  client: Cli,
+  shell: Sh,
   context: Ctx,
   op: string,
   values: Array<string>,
 ) {
-  return client.with(
-    client.varSetArr(
+  return shell.with(
+    shell.varSetArr(
       PACK_OP_GROUP_NAMES_KEY(op),
-      values.map((v: string) =>
-        client.name === 'nu'
-          ? client.toElement(
-            context.sys_os_plat === 'winnt'
-              ? Powershell.execStr(client.toLiteral(v))
-              : Zshell.execStr(client.toLiteral(v)),
-          )
-          : client.toLiteral(v)
-      ),
+      values.map((v: string) => execNativeShell(shell, context.sys_os_plat ?? '', v)),
     ),
   )
 }
 
-function unsetOpGroupNames(client: Cli, op: string) {
-  return client.with(client.varUnSet(PACK_OP_GROUP_NAMES_KEY(op)))
+function unsetOpGroupNames(shell: Sh, op: string) {
+  return shell.with(shell.varUnSet(PACK_OP_GROUP_NAMES_KEY(op)))
 }
 
-function setManager(client: Cli, manager: string) {
-  return client.with(
-    client.varSet(PACK_MANAGER_KEY, client.toLiteral(manager)),
+function setManager(shell: Sh, manager: string) {
+  return shell.with(
+    shell.varSetStr(PACK_MANAGER_KEY, manager),
   )
 }
 
-function unsetManager(client: Cli) {
-  return client.with(client.varUnSet(PACK_MANAGER_KEY))
+function unsetManager(shell: Sh) {
+  return shell.with(shell.varUnSet(PACK_MANAGER_KEY))
 }
 
 interface ManagerEntry {
@@ -241,50 +232,50 @@ interface ManagerEntry {
 }
 
 function processManagerEntry(
-  client: Cli,
+  shell: Sh,
   context: Ctx,
   op: string,
   manager: string,
   entry: ManagerEntry,
   multiManager: boolean,
-): Cli {
-  let _client = client
+): Sh {
+  let _shell = shell
 
   if (multiManager) {
-    _client = setManager(_client, manager)
+    _shell = setManager(_shell, manager)
   }
 
   if (entry[op]) {
-    _client = setOpGroupNames(_client, context, op, entry[op] as Array<string>)
+    _shell = setOpGroupNames(_shell, context, op, entry[op] as Array<string>)
   }
 
-  _client = setOpNames(_client, op, entry.names.join(' '))
-  _client = _client.with([getManagerFuncName(manager)])
+  _shell = setOpNames(_shell, op, entry.names.join(' '))
+  _shell = _shell.with([getManagerFuncName(manager)])
 
   if (entry[op]) {
-    _client = unsetOpGroupNames(_client, op)
+    _shell = unsetOpGroupNames(_shell, op)
   }
 
   if (multiManager) {
-    _client = unsetManager(_client)
+    _shell = unsetManager(_shell)
   }
 
-  return _client
+  return _shell
 }
 
 async function processGroupConfig(
-  client: Cli,
+  shell: Sh,
   context: Ctx,
   op: string,
   managers: Array<string>,
   name: string,
-): Promise<{ client: Cli; found: boolean }> {
+): Promise<{ shell: Sh; found: boolean }> {
   const content = await loadGroupConfig(name)
   if (content == null) {
-    return { client, found: false }
+    return { shell, found: false }
   }
 
-  let _client = client
+  let _shell = shell
   const multiManager = managers.length > 1
 
   for (const key of Object.keys(content)) {
@@ -295,8 +286,8 @@ async function processGroupConfig(
     if (!entry?.names?.length) {
       continue
     }
-    _client = processManagerEntry(
-      _client,
+    _shell = processManagerEntry(
+      _shell,
       context,
       op,
       key,
@@ -305,49 +296,54 @@ async function processGroupConfig(
     )
   }
 
-  return { client: _client, found: true }
+  return { shell: _shell, found: true }
 }
 
 async function processGroupNames(
-  client: Cli,
+  shell: Sh,
   context: Ctx,
   op: string,
   managers: Array<string>,
   names: Array<string>,
-): Promise<{ client: Cli; found: Array<string> }> {
-  let _client = client
+): Promise<{ shell: Sh; found: Array<string> }> {
+  let _shell = shell
   const found: Array<string> = []
 
   for (const name of names) {
     const result = await processGroupConfig(
-      _client,
+      _shell,
       context,
       op,
       managers,
       name,
     )
-    _client = result.client
+    _shell = result.shell
     if (result.found) {
       found.push(name)
     }
   }
 
-  return { client: _client, found }
+  return { shell: _shell, found }
 }
 
 async function execOp(
-  client: Cli,
+  shell: Sh,
   context: Ctx,
   environment: Env,
   op: string,
 ): Promise<string> {
-  const { client: _client, managers } = await initOp(
-    client,
+  const redirect = await redirectCommonShell(shell, context)
+  if (redirect) {
+    return redirect
+  }
+
+  const { shell: _shell, managers } = await initOp(
+    shell,
     context,
     environment,
     op,
   )
-  let result = _client
+  let result = _shell
 
   if (op === 'tidy') {
     return buildAndLog(callManagers(result, managers), environment)
@@ -374,7 +370,7 @@ async function execOp(
         managers,
         names,
       )
-      result = groupResult.client
+      result = groupResult.shell
       found = groupResult.found
     }
   }
@@ -387,6 +383,7 @@ async function execOp(
       result = callManagers(result, managers)
     }
     if (names.length === 0 && !groupFound) {
+      result = setOpNames(result, op, '')
       result = callManagers(result, managers)
     }
   } else {
@@ -416,11 +413,11 @@ export class PackCmdAdd extends CmdBase implements Cmd {
     }]
   }
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }
 
@@ -437,11 +434,11 @@ export class PackCmdFind extends CmdBase implements Cmd {
     }]
   }
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }
 
@@ -454,11 +451,11 @@ export class PackCmdList extends CmdBase implements Cmd {
     this.arguments = [{ name: 'names', description: 'name(s) to match' }]
   }
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }
 
@@ -471,11 +468,11 @@ export class PackCmdOut extends CmdBase implements Cmd {
     this.arguments = [{ name: 'names', description: 'name(s) to match' }]
   }
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }
 
@@ -494,11 +491,11 @@ export class PackCmdRem extends CmdBase implements Cmd {
     }]
   }
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }
 
@@ -511,11 +508,11 @@ export class PackCmdSync extends CmdBase implements Cmd {
     this.arguments = [{ name: 'names', description: 'name(s) to match' }]
   }
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }
 
@@ -527,10 +524,10 @@ export class PackCmdTidy extends CmdBase implements Cmd {
     this.aliases = ['t', 'ti', 'cl', 'clean']
   }
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }

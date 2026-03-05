@@ -3,7 +3,7 @@ export const snapshot = {};
 snapshot[`nu / linux / add 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/add?sysOsPlat=linux'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/add?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -92,13 +92,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -111,7 +111,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/add'#
+\$env.REQ_PATH = r#'/sh/nu/virt/add'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux'#
 
@@ -125,7 +125,7 @@ arguments:
 snapshot[`nu / linux / find 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/find?sysOsPlat=linux'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -214,13 +214,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -233,7 +233,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/find'#
+\$env.REQ_PATH = r#'/sh/nu/virt/find'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux'#
 
@@ -262,7 +262,7 @@ opPrint r#'qemu'#
 snapshot[`nu / linux / list 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/list?sysOsPlat=linux'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/list?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -351,13 +351,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -370,7 +370,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/list'#
+\$env.REQ_PATH = r#'/sh/nu/virt/list'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux'#
 
@@ -434,21 +434,13 @@ def virtQemu [] {
   }
 }
 
-
-\$env.VIRT_MANAGER = r#'qemu'#
-
-\$env.VIRT_INSTANCES = [  ]
-
-virtQemu
-
-hide-env VIRT_MANAGER
 \`
 `;
 
 snapshot[`nu / linux / rem 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/rem?sysOsPlat=linux'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/rem?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -537,13 +529,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -556,7 +548,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/rem'#
+\$env.REQ_PATH = r#'/sh/nu/virt/rem'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux'#
 
@@ -570,7 +562,7 @@ arguments:
 snapshot[`nu / linux / sync 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/sync?sysOsPlat=linux'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/sync?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -659,13 +651,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -678,7 +670,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/sync'#
+\$env.REQ_PATH = r#'/sh/nu/virt/sync'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux'#
 
@@ -744,21 +736,13 @@ def virtQemu [] {
   }
 }
 
-
-\$env.VIRT_MANAGER = r#'qemu'#
-
-\$env.VIRT_INSTANCES = [  ]
-
-virtQemu
-
-hide-env VIRT_MANAGER
 \`
 `;
 
 snapshot[`nu / linux / tidy 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/tidy?sysOsPlat=linux'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/tidy?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -847,13 +831,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -866,7 +850,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/tidy'#
+\$env.REQ_PATH = r#'/sh/nu/virt/tidy'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux'#
 
@@ -926,21 +910,13 @@ def virtQemu [] {
   }
 }
 
-
-\$env.VIRT_MANAGER = r#'qemu'#
-
-\$env.VIRT_INSTANCES = [  ]
-
-virtQemu
-
-hide-env VIRT_MANAGER
 \`
 `;
 
 snapshot[`nu / darwin / add 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/add?sysOsPlat=darwin'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/add?sysOsPlat=darwin'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -1029,13 +1005,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -1048,7 +1024,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'darwin'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/add'#
+\$env.REQ_PATH = r#'/sh/nu/virt/add'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
 
@@ -1062,7 +1038,7 @@ arguments:
 snapshot[`nu / darwin / find 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/find?sysOsPlat=darwin'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find?sysOsPlat=darwin'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -1151,13 +1127,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -1170,7 +1146,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'darwin'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/find'#
+\$env.REQ_PATH = r#'/sh/nu/virt/find'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
 
@@ -1198,7 +1174,7 @@ do {
 snapshot[`nu / darwin / list 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/list?sysOsPlat=darwin'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/list?sysOsPlat=darwin'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -1287,13 +1263,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -1306,7 +1282,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'darwin'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/list'#
+\$env.REQ_PATH = r#'/sh/nu/virt/list'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
 
@@ -1344,7 +1320,7 @@ def virtDocker [] {
 snapshot[`nu / darwin / rem 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/rem?sysOsPlat=darwin'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/rem?sysOsPlat=darwin'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -1433,13 +1409,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -1452,7 +1428,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'darwin'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/rem'#
+\$env.REQ_PATH = r#'/sh/nu/virt/rem'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
 
@@ -1466,7 +1442,7 @@ arguments:
 snapshot[`nu / darwin / sync 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/sync?sysOsPlat=darwin'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/sync?sysOsPlat=darwin'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -1555,13 +1531,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -1574,7 +1550,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'darwin'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/sync'#
+\$env.REQ_PATH = r#'/sh/nu/virt/sync'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
 
@@ -1618,7 +1594,7 @@ def virtDocker [] {
 snapshot[`nu / darwin / tidy 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/tidy?sysOsPlat=darwin'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/tidy?sysOsPlat=darwin'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -1707,13 +1683,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -1726,7 +1702,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'darwin'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/tidy'#
+\$env.REQ_PATH = r#'/sh/nu/virt/tidy'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
 
@@ -1764,7 +1740,7 @@ def virtDocker [] {
 snapshot[`nu / winnt / add 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/add?sysOsPlat=winnt'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/add?sysOsPlat=winnt'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -1853,13 +1829,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -1872,7 +1848,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'winnt'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/add'#
+\$env.REQ_PATH = r#'/sh/nu/virt/add'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
 
@@ -1886,7 +1862,7 @@ arguments:
 snapshot[`nu / winnt / find 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/find?sysOsPlat=winnt'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find?sysOsPlat=winnt'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -1975,13 +1951,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -1994,7 +1970,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'winnt'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/find'#
+\$env.REQ_PATH = r#'/sh/nu/virt/find'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
 
@@ -2022,7 +1998,7 @@ do {
 snapshot[`nu / winnt / list 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/list?sysOsPlat=winnt'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/list?sysOsPlat=winnt'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -2111,13 +2087,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -2130,7 +2106,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'winnt'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/list'#
+\$env.REQ_PATH = r#'/sh/nu/virt/list'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
 
@@ -2168,7 +2144,7 @@ def virtDocker [] {
 snapshot[`nu / winnt / rem 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/rem?sysOsPlat=winnt'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/rem?sysOsPlat=winnt'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -2257,13 +2233,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -2276,7 +2252,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'winnt'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/rem'#
+\$env.REQ_PATH = r#'/sh/nu/virt/rem'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
 
@@ -2290,7 +2266,7 @@ arguments:
 snapshot[`nu / winnt / sync 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/sync?sysOsPlat=winnt'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/sync?sysOsPlat=winnt'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -2379,13 +2355,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -2398,7 +2374,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'winnt'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/sync'#
+\$env.REQ_PATH = r#'/sh/nu/virt/sync'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
 
@@ -2442,7 +2418,7 @@ def virtDocker [] {
 snapshot[`nu / winnt / tidy 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_CLI = r#'http://x/cli/nu/virt/tidy?sysOsPlat=winnt'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/tidy?sysOsPlat=winnt'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -2531,13 +2507,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.CLI_VER_MAJOR = 0
+\$env.SH_VER_MAJOR = 0
 
-\$env.CLI_VER_MINOR = 111
+\$env.SH_VER_MINOR = 111
 
 do {
-  let major = \$env.CLI_VER_MAJOR | into int
-  let minor = \$env.CLI_VER_MINOR | into int
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -2550,7 +2526,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'winnt'#
 
-\$env.REQ_PATH = r#'/cli/nu/virt/tidy'#
+\$env.REQ_PATH = r#'/sh/nu/virt/tidy'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
 

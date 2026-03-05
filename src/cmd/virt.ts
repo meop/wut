@@ -1,10 +1,11 @@
-import type { Cli } from '@meop/shire/cli'
 import { type Cmd, CmdBase } from '@meop/shire/cmd'
 import type { Ctx } from '@meop/shire/ctx'
 import { type Env } from '@meop/shire/env'
 import { Fmt } from '@meop/shire/serde'
+import type { Sh } from '@meop/shire/sh'
 
 import { getCfgDirDump } from '../cfg.ts'
+import { redirectCommonShell } from '../sh.ts'
 
 export class VirtCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -26,7 +27,7 @@ export class VirtCmd extends CmdBase implements Cmd {
   }
 }
 
-const osPlatToManager: { [key: string]: Array<string> } = {
+const osPlatToManager: Record<string, Array<string>> = {
   linux: ['docker', 'qemu'],
   darwin: ['docker'],
   winnt: ['docker'],
@@ -45,7 +46,7 @@ function getSupportedManagers(context: Ctx, environment: Env) {
   const osPlat = context.sys_os_plat
 
   if (osPlat) {
-    managers.push(...osPlatToManager[osPlat])
+    managers.push(...(osPlatToManager[osPlat] ?? []))
   }
   if (environment.get(VIRT_MANAGER_KEY)) {
     managers = managers.filter((p) => p === environment.get(VIRT_MANAGER_KEY))
@@ -68,54 +69,52 @@ function getManagerFuncName(manager: string, prefix = VIRT_KEY) {
   return `${prefix}${first}${rest}`
 }
 
-async function execOp(client: Cli, context: Ctx, environment: Env, op: string) {
-  if (client.name !== 'nu') {
-    const url = [
-      context.req_orig,
-      context.req_path.replace(`/cli/${client.name}`, '/cli/nu'),
-      context.req_srch,
-    ].join('')
-    return `nu --no-config-file -c 'nu --no-config-file -c $"( http get --raw --redirect-mode follow "${url}" )"'`
+async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
+  const redirect = await redirectCommonShell(shell, context)
+  if (redirect) {
+    return redirect
   }
 
-  let _client = client.with(client.varSet(VIRT_OP_KEY, client.toLiteral(op)))
+  let _shell = shell.with(shell.varSetStr(VIRT_OP_KEY, op))
   const supportedManagers = getSupportedManagers(context, environment)
 
   const dirParts = [VIRT_KEY, context.sys_host ?? '']
   const filters = environment.getSplit(VIRT_OP_PARTS_KEY(op))
 
   if (op === 'find') {
-    _client = _client.with(_client.gatedFunc(
+    _shell = _shell.with(_shell.gatedFunc(
       'use config (remote)',
-      _client.print(
+      _shell.print(
         await getCfgDirDump(dirParts, { extension: Fmt.yaml, filters, flexible: true })
           .then((x) => x.filter((r) => supportedManagers.includes(r[0])).map((r) => r.join(' ')).toSorted()),
       ),
     ))
   } else {
     for (const supportedManager of supportedManagers) {
-      _client = _client.with(
-        await _client.fileLoad(
+      _shell = _shell.with(
+        await _shell.fileLoad(
           [VIRT_KEY, supportedManager, op],
           import.meta.resolve,
           ['..'],
         ),
-      ).with(
-        await _client.fileLoad(
-          [VIRT_KEY, supportedManager],
-          import.meta.resolve,
-          ['..'],
-        ),
       )
+        .with(
+          await _shell.fileLoad(
+            [VIRT_KEY, supportedManager],
+            import.meta.resolve,
+            ['..'],
+          ),
+        )
     }
     const results = await getCfgDirDump(dirParts, {
       extension: Fmt.yaml,
       filters,
     })
 
-    const virtMap: { [key: string]: Array<string> } = {}
+    const virtMap: Record<string, Array<string>> = {}
 
     for (const parts of results) {
+      if (!parts[1]) continue
       if (parts[0] in virtMap) {
         virtMap[parts[0]].push(parts[1])
       } else {
@@ -128,25 +127,25 @@ async function execOp(client: Cli, context: Ctx, environment: Env, op: string) {
         continue
       }
       if (supportedManagers.length > 1) {
-        _client = _client.with(
-          _client.varSet(VIRT_MANAGER_KEY, _client.toLiteral(key)),
+        _shell = _shell.with(
+          _shell.varSetStr(VIRT_MANAGER_KEY, key),
         )
       }
-      _client = _client.with(
-        _client.varSetArr(
+      _shell = _shell.with(
+        _shell.varSetArr(
           VIRT_INSTANCES_KEY,
           virtMap[key],
         ),
       ).with([getManagerFuncName(key)])
       if (supportedManagers.length > 1) {
-        _client = _client.with(
-          _client.varUnSet(VIRT_MANAGER_KEY),
+        _shell = _shell.with(
+          _shell.varUnSet(VIRT_MANAGER_KEY),
         )
       }
     }
   }
 
-  const body = _client.build()
+  const body = _shell.build()
 
   if (environment.get(['log'])) {
     console.log(body)
@@ -166,11 +165,11 @@ export class VirtCmdAdd extends CmdBase implements Cmd {
     ]
   }
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }
 
@@ -183,11 +182,11 @@ export class VirtCmdFind extends CmdBase implements Cmd {
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }
 
@@ -200,11 +199,11 @@ export class VirtCmdList extends CmdBase implements Cmd {
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }
 
@@ -219,11 +218,11 @@ export class VirtCmdRem extends CmdBase implements Cmd {
     ]
   }
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }
 
@@ -236,11 +235,11 @@ export class VirtCmdSync extends CmdBase implements Cmd {
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }
 
@@ -252,10 +251,10 @@ export class VirtCmdTidy extends CmdBase implements Cmd {
     this.aliases = ['t', 'ti', 'cl', 'clean']
   }
   override async work(
-    client: Cli,
+    shell: Sh,
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(client, context, environment, this.name)
+    return await execOp(shell, context, environment, this.name)
   }
 }

@@ -8,7 +8,7 @@
   "imports": {
     "@cross/deepmerge": "jsr:@cross/deepmerge@^1.0.1",
     "@eemeli/yaml": "jsr:@eemeli/yaml@^2.8.2",
-    "@meop/shire": "jsr:@meop/shire@^0.1.7",
+    "@meop/shire": "jsr:@meop/shire@^0.2.1",
     "@std/assert": "jsr:@std/assert@^1.0.19",
     "@std/testing": "jsr:@std/testing@^1.0.17"
   },
@@ -21,9 +21,10 @@
     }
   },
   "tasks": {
+    "check": "deno check src/**/*.ts",
     "dev": "deno run --allow-all --env-file --watch src/srv.ts",
-    "docker:dev": "docker compose --file .docker/compose.yaml up --detach --pull always",
-    "docker:dev:down": "docker compose --file .docker/compose.yaml down",
+    "dev:docker": "docker compose --file .docker/compose.yaml up --detach --pull always",
+    "dev:docker:down": "docker compose --file .docker/compose.yaml down",
     "fmt": "deno fmt",
     "fmt:check": "deno fmt --check",
     "lint": "deno lint",

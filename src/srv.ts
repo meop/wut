@@ -1,20 +1,20 @@
 import process from 'node:process'
 
-import type { Cli } from '@meop/shire/cli'
-import { Nushell } from '@meop/shire/cli/nu'
-import { Powershell } from '@meop/shire/cli/pwsh'
-import { Zshell } from '@meop/shire/cli/zsh'
 import { type Cmd } from '@meop/shire/cmd'
 import { type Ctx, getCtx } from '@meop/shire/ctx'
 import { Fmt, stringify } from '@meop/shire/serde'
+import type { Sh } from '@meop/shire/sh'
+import { Nushell } from '@meop/shire/sh/nu'
+import { Powershell } from '@meop/shire/sh/pwsh'
+import { Zshell } from '@meop/shire/sh/zsh'
 import { SrvBase } from '@meop/shire/srv'
 
 import { getCfgFileContent } from './cfg.ts'
-import { VERSIONS } from './ver.ts'
 import { FileCmd } from './cmd/file.ts'
 import { PackCmd } from './cmd/pack.ts'
 import { ScriptCmd } from './cmd/script.ts'
 import { VirtCmd } from './cmd/virt.ts'
+import { VERSIONS } from './ver.ts'
 
 class SrvCmd extends SrvBase implements Cmd {
   constructor() {
@@ -41,11 +41,11 @@ function getErr(err: Error) {
 
 enum Op {
   cfg = 'cfg',
-  cli = 'cli',
+  sh = 'sh',
 }
 
-const CLI_VER_MAJOR_KEY = ['cli', 'ver', 'major']
-const CLI_VER_MINOR_KEY = ['cli', 'ver', 'minor']
+const SH_VER_MAJOR_KEY = ['sh', 'ver', 'major']
+const SH_VER_MINOR_KEY = ['sh', 'ver', 'minor']
 
 const VAR_REQ_URL_OP_KEY = (op: string) => ['req', 'url', op]
 
@@ -69,55 +69,53 @@ export async function runSrv(request: Request) {
         })
       }
       return new Response(config)
-    } else if (op != Op.cli) {
+    } else if (op != Op.sh) {
       return new Response(`echo "operation requested not supported: ${op}`)
     }
 
     if (!(parts.length > 1)) {
-      return new Response(`echo "client request missing"`, {
+      return new Response(`echo "shell request missing"`, {
         status: 400,
       })
     }
 
-    const cli = parts[1]
-    if (!['nu', 'pwsh', 'zsh'].includes(cli)) {
-      return new Response(`echo "client requested not supported: ${cli}"`, {
+    const sh = parts[1]
+    if (!['nu', 'pwsh', 'zsh'].includes(sh)) {
+      return new Response(`echo "shell requested not supported: ${sh}"`, {
         status: 404,
       })
     }
 
-    let client: Cli = cli === 'nu' ? new Nushell() : cli === 'pwsh' ? new Powershell() : new Zshell()
+    let shell: Sh = sh === 'nu' ? new Nushell() : sh === 'pwsh' ? new Powershell() : new Zshell()
 
-    client = client
+    shell = shell
       .with(
-        client.varSet(
+        shell.varSetStr(
           VAR_REQ_URL_OP_KEY(Op.cfg),
-          client.toLiteral([context.req_orig, Op.cfg].join('/')),
+          [context.req_orig, Op.cfg].join('/'),
         ),
       )
       .with(
-        client.varSet(
-          VAR_REQ_URL_OP_KEY(Op.cli),
-          client.toLiteral(
-            [context.req_orig, context.req_path, context.req_srch].join(''),
-          ),
+        shell.varSetStr(
+          VAR_REQ_URL_OP_KEY(Op.sh),
+          [context.req_orig, context.req_path, context.req_srch].join(''),
         ),
       )
-      .with(await client.fileLoad(['op']))
+      .with(await shell.fileLoad(['op']))
 
-    const ver = VERSIONS[cli]
-    client = client
-      .with(client.varSet(CLI_VER_MAJOR_KEY, String(ver.major)))
-      .with(client.varSet(CLI_VER_MINOR_KEY, String(ver.minor)))
-    client = client.with(await client.fileLoad(['ver']))
+    const ver = VERSIONS[sh]
+    shell = shell
+      .with(shell.varSet(SH_VER_MAJOR_KEY, String(ver.major)))
+      .with(shell.varSet(SH_VER_MINOR_KEY, String(ver.minor)))
+    shell = shell.with(await shell.fileLoad(['ver']))
 
     if (
       !(Object.keys(context).filter((k) => k.startsWith('sys')).some((k) => context[k as keyof Ctx]))
     ) {
       return new Response(
-        client
-          .with(await client.fileLoad(['sys']))
-          .with(await client.fileLoad(['get']))
+        shell
+          .with(await shell.fileLoad(['sys']))
+          .with(await shell.fileLoad(['get']))
           .build(),
       )
     }
@@ -126,21 +124,21 @@ export async function runSrv(request: Request) {
       if (!e[1]) {
         continue
       }
-      client = client.with(
-        client.varSet([e[0]], client.toLiteral(e[1])),
+      shell = shell.with(
+        shell.varSetStr([e[0]], e[1]),
       )
     }
 
     try {
       const cmd = new SrvCmd()
-      return new Response(await cmd.process(parts.slice(2), client, context))
+      return new Response(await cmd.process(parts.slice(2), shell, context))
     } catch (err) {
       let error = String(err)
       if (err instanceof Error) {
         error = stringify(getErr(err), Fmt.json)
       }
       console.error(error)
-      const body = client.with(client.printErr(error)).build()
+      const body = shell.with(shell.printErr(error)).build()
       return new Response(body)
     }
   } catch (err) {
