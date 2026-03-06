@@ -25,7 +25,7 @@ Nushell is supported on Unix or Windows for SSR commands (pack, script)
 Nushell is supported on Unix or Windows for CSR commands (file, virt)
 
 ```nu
-$env.WUT_URL = 'http://yard.lan:9000'
+$env.WUT_URL = 'http://arch.lan:9000'
 
 def wut --wrapped [...args] {
   mut url = $"($env.WUT_URL)" | str trim --right --char '/'
@@ -45,7 +45,7 @@ Nushell will be invoked for SSR commands (pack)
 Nushell will be invoked for CSR commands (file, virt)
 
 ```pwsh
-$env:WUT_URL = 'http://yard.lan:9000'
+$env:WUT_URL = 'http://arch.lan:9000'
 
 function wut {
   $url = "${env:WUT_URL}".TrimEnd('/')
@@ -65,7 +65,7 @@ Nushell will be invoked for SSR commands (pack)
 Nushell will be invoked for CSR commands (file, virt)
 
 ```zsh
-export WUT_URL='http://yard.lan:9000'
+export WUT_URL='http://arch.lan:9000'
 
 function wut {
   local url=$(echo "${WUT_URL}" | sed 's:/*$::')

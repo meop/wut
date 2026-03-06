@@ -248,6 +248,7 @@ do {
       \$yn = input r#'? use config (remote) [y, [n]]: '#
     }
     if \$yn != 'n' {
+opPrint r#'lxc'#
 opPrint r#'qemu'#
     }
   } catch { |e|
@@ -377,7 +378,7 @@ do {
 \$env.VIRT_OP = r#'list'#
 
 def virtDockerOp [cmd] {
-  opPrintMaybeRunCmd \$cmd container ls
+  opPrintMaybeRunCmd sudo \$cmd container ls --format '"table {{.Names}}\\\\\\\\t{{.Image}}\\\\\\\\t{{.Ports}}\\\\\\\\t{{.State}}\\\\\\\\t{{.Status}}"' --no-trunc
 }
 
 
@@ -393,6 +394,37 @@ def virtDocker [] {
       }
       if \$yn != 'n' {
         virtDockerOp \$cmd
+      }
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      error make \$e
+    }
+  }
+}
+
+
+def virtLxcOp [cmd] {
+  opPrintMaybeRunCmd sudo \$"(\$cmd)-ls" --fancy --fancy-format '"NAME,IPV4,IPV6,STATE,AUTOSTART"' --running
+}
+
+
+def virtLxc [] {
+  try {
+    let cmd = 'lxc'
+    let cmdStart = \$"(\$cmd)-start"
+    if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmdStart | is-not-empty) {
+      if \$env.VIRT_OP in ['sync', 'tidy'] {
+        return
+      }
+      mut yn = ''
+      if 'YES' in \$env {
+        \$yn = 'y'
+      } else {
+        \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+      }
+      if \$yn != 'n' {
+        virtLxcOp \$cmd
       }
     }
   } catch { |e|
@@ -678,7 +710,7 @@ do {
 
 def virtDockerOp [cmd] {
   for instance in \$env.VIRT_INSTANCES {
-    if (do --ignore-errors { ^\$cmd container ls } | find --ignore-case \$instance | is-empty) {
+    if (do --ignore-errors { ^sudo \$cmd container ls | find --ignore-case \$instance | is-empty }) {
       continue
     }
     let url = \$"(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml"
@@ -699,6 +731,35 @@ def virtDocker [] {
       }
       if \$yn != 'n' {
         virtDockerOp \$cmd
+      }
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      error make \$e
+    }
+  }
+}
+
+
+def virtLxcOp [cmd] {}
+
+
+def virtLxc [] {
+  try {
+    let cmd = 'lxc'
+    let cmdStart = \$"(\$cmd)-start"
+    if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmdStart | is-not-empty) {
+      if \$env.VIRT_OP in ['sync', 'tidy'] {
+        return
+      }
+      mut yn = ''
+      if 'YES' in \$env {
+        \$yn = 'y'
+      } else {
+        \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+      }
+      if \$yn != 'n' {
+        virtLxcOp \$cmd
       }
     }
   } catch { |e|
@@ -857,7 +918,7 @@ do {
 \$env.VIRT_OP = r#'tidy'#
 
 def virtDockerOp [cmd] {
-  opPrintMaybeRunCmd \$cmd system prune --all --volumes
+  opPrintMaybeRunCmd sudo \$cmd system prune --all --volumes
 }
 
 
@@ -873,6 +934,35 @@ def virtDocker [] {
       }
       if \$yn != 'n' {
         virtDockerOp \$cmd
+      }
+    }
+  } catch { |e|
+    if not ((\$e.msg | str downcase) == 'i/o error') {
+      error make \$e
+    }
+  }
+}
+
+
+def virtLxcOp [cmd] {}
+
+
+def virtLxc [] {
+  try {
+    let cmd = 'lxc'
+    let cmdStart = \$"(\$cmd)-start"
+    if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmdStart | is-not-empty) {
+      if \$env.VIRT_OP in ['sync', 'tidy'] {
+        return
+      }
+      mut yn = ''
+      if 'YES' in \$env {
+        \$yn = 'y'
+      } else {
+        \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+      }
+      if \$yn != 'n' {
+        virtLxcOp \$cmd
       }
     }
   } catch { |e|
@@ -1289,7 +1379,7 @@ do {
 \$env.VIRT_OP = r#'list'#
 
 def virtDockerOp [cmd] {
-  opPrintMaybeRunCmd \$cmd container ls
+  opPrintMaybeRunCmd sudo \$cmd container ls --format '"table {{.Names}}\\\\\\\\t{{.Image}}\\\\\\\\t{{.Ports}}\\\\\\\\t{{.State}}\\\\\\\\t{{.Status}}"' --no-trunc
 }
 
 
@@ -1558,7 +1648,7 @@ do {
 
 def virtDockerOp [cmd] {
   for instance in \$env.VIRT_INSTANCES {
-    if (do --ignore-errors { ^\$cmd container ls } | find --ignore-case \$instance | is-empty) {
+    if (do --ignore-errors { ^sudo \$cmd container ls | find --ignore-case \$instance | is-empty }) {
       continue
     }
     let url = \$"(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml"
@@ -1709,7 +1799,7 @@ do {
 \$env.VIRT_OP = r#'tidy'#
 
 def virtDockerOp [cmd] {
-  opPrintMaybeRunCmd \$cmd system prune --all --volumes
+  opPrintMaybeRunCmd sudo \$cmd system prune --all --volumes
 }
 
 
@@ -2113,7 +2203,7 @@ do {
 \$env.VIRT_OP = r#'list'#
 
 def virtDockerOp [cmd] {
-  opPrintMaybeRunCmd \$cmd container ls
+  opPrintMaybeRunCmd sudo \$cmd container ls --format '"table {{.Names}}\\\\\\\\t{{.Image}}\\\\\\\\t{{.Ports}}\\\\\\\\t{{.State}}\\\\\\\\t{{.Status}}"' --no-trunc
 }
 
 
@@ -2382,7 +2472,7 @@ do {
 
 def virtDockerOp [cmd] {
   for instance in \$env.VIRT_INSTANCES {
-    if (do --ignore-errors { ^\$cmd container ls } | find --ignore-case \$instance | is-empty) {
+    if (do --ignore-errors { ^sudo \$cmd container ls | find --ignore-case \$instance | is-empty }) {
       continue
     }
     let url = \$"(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml"
@@ -2533,7 +2623,7 @@ do {
 \$env.VIRT_OP = r#'tidy'#
 
 def virtDockerOp [cmd] {
-  opPrintMaybeRunCmd \$cmd system prune --all --volumes
+  opPrintMaybeRunCmd sudo \$cmd system prune --all --volumes
 }
 
 

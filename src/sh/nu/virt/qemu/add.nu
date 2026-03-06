@@ -62,8 +62,10 @@ def virtQemuOpAdd [config, configVm, cmd, cmdSysArch, instance] {
 
   for key in $configEnv {
     let parts = $key | split row '='
-    $qemuEnv = $qemuEnv| upsert $parts.0 $parts.1
+    $qemuEnv = $qemuEnv | upsert $parts.0 $parts.1
   }
+
+  $qemuEnv = $qemuEnv | upsert 'instance' $instance
 
   let cpuStat = ^lscpu
   $qemuEnv = $qemuEnv | upsert 'QEMU_GUEST_CPU_SOCKETS' ($cpuStat | find --ignore-case 'socket(s)' | split row ':' | last | str trim | ansi strip)
@@ -121,13 +123,9 @@ def virtQemuOpAdd [config, configVm, cmd, cmdSysArch, instance] {
   }
 
   if 'qemu' in $configVm {
-    if (opPrintRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full $""^($cmdSysArch).*($instance)"" '|' is-not-empty '}') == 'true' {
-      opPrintWarn $"`($cmd)` instance `($instance)` is already up"
-      return
-    }
 
     if 'swtpm' in $configVm {
-      if (opPrintRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full $""^swtpm.*($instance)"" '|' is-not-empty '}') == 'true' {
+      if (do --ignore-errors { ^pgrep --ignore-ancestors --full --list-full $"^swtpm.*($instance)" | is-not-empty }) {
         opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'pkill --full "^swtpm.*($instance)"'#"
       }
 
@@ -136,7 +134,7 @@ def virtQemuOpAdd [config, configVm, cmd, cmdSysArch, instance] {
         opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'rm --force --recursive "($tmpPath)"'#"
       }
 
-      opPrintMaybeRunCmd mkdir $tmpPath
+      opPrintMaybeRunCmd sudo mkdir -p $tmpPath
 
       let swtpmBin = 'swtpm'
 
@@ -207,6 +205,11 @@ def virtQemuOpAdd [config, configVm, cmd, cmdSysArch, instance] {
 
 def virtQemuOp [cmd, cmdSysArch] {
   for instance in $env.VIRT_INSTANCES {
+    if (do --ignore-errors { ^pgrep --ignore-ancestors --full --list-full $"^($cmdSysArch).*($instance)" | is-not-empty }) {
+      opPrintWarn $"`($cmd)` instance `($instance)` is already up"
+      continue
+    }
+
     let urlConfig = $"($env.REQ_URL_CFG)/virt/($cmd).yaml"
     let config = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($urlConfig)'#" ')"'
 

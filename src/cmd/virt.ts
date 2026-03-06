@@ -28,7 +28,7 @@ export class VirtCmd extends CmdBase implements Cmd {
 }
 
 const osPlatToManager: Record<string, Array<string>> = {
-  linux: ['docker', 'qemu'],
+  linux: ['docker', 'lxc', 'qemu'],
   darwin: ['docker'],
   winnt: ['docker'],
 }

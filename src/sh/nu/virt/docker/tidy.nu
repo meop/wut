@@ -1,3 +1,3 @@
 def virtDockerOp [cmd] {
-  opPrintMaybeRunCmd $cmd system prune --all --volumes
+  opPrintMaybeRunCmd sudo $cmd system prune --all --volumes
 }

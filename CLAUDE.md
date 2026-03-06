@@ -77,7 +77,7 @@ Shells execute these scripts locally using their shell.
 
 **Request Flow:**
 
-1. Shell makes HTTP GET request to server (e.g., `http://yard.lan:9000/sh/nu/pack/add/firefox`)
+1. Shell makes HTTP GET request to server (e.g., `http://arch.lan:9000/sh/nu/pack/add/firefox`)
 2. Server parses URL path to determine: shell type (nu/pwsh/zsh), command (pack), operation (add), arguments (firefox)
 3. Server builds a shell script by:
    - Loading shell-specific template files from `src/sh/{nu,pwsh,zsh}/`
@@ -180,7 +180,6 @@ as raw strings; shell bootstrap scripts (`shire/src/sh/*/sys.*`) normalize alias
 
 - `HOSTNAME` - Server bind address (default: 0.0.0.0)
 - `PORT` - Server port (default: 9000)
-- `WUT_URL` - Shell-side variable pointing to server URL
 
 ## Multi-Shell Support
 

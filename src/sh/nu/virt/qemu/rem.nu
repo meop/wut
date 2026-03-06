@@ -11,12 +11,12 @@ def virtQemuOpRem [config, cmd, cmdSysArch, instance] {
   }
 
   mut found = false
-  if (opPrintRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full $""^($cmdSysArch).*($instance)"" '|' is-not-empty '}') == 'true' {
+  if (do --ignore-errors { ^pgrep --ignore-ancestors --full --list-full $"^($cmdSysArch).*($instance)" | is-not-empty }) {
     opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'pkill --full "^($cmdSysArch).*($instance)"'#"
     $found = true
   }
 
-  if (opPrintRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full $""^swtpm.*($instance)"" '|' is-not-empty '}') == 'true' {
+  if (do --ignore-errors { ^pgrep --ignore-ancestors --full --list-full $"^swtpm.*($instance)" | is-not-empty }) {
     opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'pkill --full "^swtpm.*($instance)"'#"
   }
 

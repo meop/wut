@@ -1,2 +1,1 @@
-def packWingetOp [cmd] {
-}
+def packWingetOp [cmd] {}

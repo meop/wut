@@ -1770,7 +1770,7 @@ do {
 
 def packAptOp [cmd] {
   if 'PACK_LIST_NAMES' in \$env {
-    opPrintMaybeRunCmd \$cmd list --installed '|' complate '|' get stdout '|' str trim --right '|' find --ignore-case \$env.PACK_LIST_NAMES
+    opPrintMaybeRunCmd \$cmd list --installed '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case \$env.PACK_LIST_NAMES
   } else {
     opPrintMaybeRunCmd \$cmd list --installed
   }
@@ -4004,7 +4004,7 @@ do {
 
 def packZypperOp [cmd] {
   if 'PACK_LIST_NAMES' in \$env {
-    opPrintMaybeRunCmd \$cmd search --installed-only '|' complate '|' get stdout '|' str trim --right '|' find --ignore-case \$env.PACK_LIST_NAMES
+    opPrintMaybeRunCmd \$cmd search --installed-only '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case \$env.PACK_LIST_NAMES
   } else {
     opPrintMaybeRunCmd \$cmd search --installed-only
   }
@@ -7296,8 +7296,7 @@ def packScoop [] {
 }
 
 
-def packWingetOp [cmd] {
-}
+def packWingetOp [cmd] {}
 
 
 def packWinget [] {
@@ -7846,10 +7845,12 @@ if \$env.SYS_OS_PLAT == 'linux' {
   }
 
   if ('/etc/os-release' | path exists) {
-    open /etc/os-release | lines | parse "{key}={value}" |
-      update value { |v| str trim --char '"' } |
-      transpose --as-record --header-row |
-      load-env
+    open /etc/os-release
+      | lines
+      | parse "{key}={value}"
+      | update value { |v| str trim --char '"' }
+      | transpose --as-record --header-row
+      | load-env
 
     if 'SYS_OS_ID' not-in \$env {
       if 'ID' in \$env {

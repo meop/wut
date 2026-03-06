@@ -157,8 +157,8 @@ export async function runSrv(request: Request) {
 if (import.meta.main) {
   Deno.serve(
     {
-      hostname: process.env['WUT_HOST'] ?? '0.0.0.0',
-      port: Number(process.env['WUT_PORT'] ?? '80'),
+      hostname: process.env['HOSTNAME'] ?? '0.0.0.0',
+      port: Number(process.env['PORT'] ?? '80'),
     },
     async (request) => await runSrv(request),
   )
