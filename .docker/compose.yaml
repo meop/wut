@@ -16,7 +16,7 @@ services:
     restart: unless-stopped
     volumes:
       - type: bind
-        source: '../../../shire'
+        source: '../../shire'
         target: /shire
       - type: bind
         source: '../../wut'

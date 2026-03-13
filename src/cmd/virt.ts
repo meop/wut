@@ -27,10 +27,10 @@ export class VirtCmd extends CmdBase implements Cmd {
   }
 }
 
-const osPlatToManager: Record<string, Array<string>> = {
-  linux: ['docker', 'lxc', 'qemu'],
-  darwin: ['docker'],
-  winnt: ['docker'],
+const sysOsPlatToManager: Record<string, Array<string>> = {
+  linux: ['lxc', 'podman', 'qemu'],
+  darwin: [],
+  winnt: [],
 }
 
 const VIRT_KEY = 'virt'
@@ -43,10 +43,10 @@ const VIRT_INSTANCES_KEY = [VIRT_KEY, 'instances']
 function getSupportedManagers(context: Ctx, environment: Env) {
   let managers: Array<string> = []
 
-  const osPlat = context.sys_os_plat
+  const sysOsPlat = context.sys_os_plat
 
-  if (osPlat) {
-    managers.push(...(osPlatToManager[osPlat] ?? []))
+  if (sysOsPlat) {
+    managers.push(...(sysOsPlatToManager[sysOsPlat] ?? []))
   }
   if (environment.get(VIRT_MANAGER_KEY)) {
     managers = managers.filter((p) => p === environment.get(VIRT_MANAGER_KEY))
@@ -82,13 +82,34 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   const filters = environment.getSplit(VIRT_OP_PARTS_KEY(op))
 
   if (op === 'find') {
-    _shell = _shell.with(_shell.gatedFunc(
-      'use config (remote)',
-      _shell.print(
-        await getCfgDirDump(dirParts, { extension: Fmt.yaml, filters, flexible: true })
-          .then((x) => x.filter((r) => supportedManagers.includes(r[0])).map((r) => r.join(' ')).toSorted()),
-      ),
-    ))
+    const allResults = await getCfgDirDump(dirParts, { extension: Fmt.yaml, flexible: true })
+    const grouped = new Map<string, string[]>()
+    for (const r of allResults) {
+      if (!supportedManagers.includes(r[0])) continue
+      const key = r.slice(0, 2).join(' ')
+      if (r.length > 2) {
+        const existing = grouped.get(key)
+        if (existing) existing.push(r[2])
+        else grouped.set(key, [r[2]])
+      } else if (!grouped.has(key)) {
+        grouped.set(key, [])
+      }
+    }
+    const shellLines: string[] = []
+    for (const [key, containers] of [...grouped.entries()].toSorted(([a], [b]) => a.localeCompare(b))) {
+      if (filters.length > 0) {
+        const keyMatch = filters.some((f) => key.includes(f))
+        const matchedContainers = containers.filter((c) => keyMatch || filters.some((f) => c.includes(f)))
+        if (!keyMatch && matchedContainers.length === 0) continue
+        shellLines.push(..._shell.print(key))
+        const display = keyMatch ? containers : matchedContainers
+        if (display.length > 0) shellLines.push(..._shell.print(`  ${display.toSorted().join(', ')}`))
+      } else {
+        shellLines.push(..._shell.print(key))
+        if (containers.length > 0) shellLines.push(..._shell.print(`  ${containers.toSorted().join(', ')}`))
+      }
+    }
+    _shell = _shell.with(_shell.gatedFunc('use virt (remote)', shellLines))
   } else {
     for (const supportedManager of supportedManagers) {
       _shell = _shell.with(
@@ -116,9 +137,9 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     for (const parts of results) {
       if (!parts[1]) continue
       if (parts[0] in virtMap) {
-        virtMap[parts[0]].push(parts[1])
+        virtMap[parts[0]].push(parts.slice(1).join('/'))
       } else {
-        virtMap[parts[0]] = [parts[1]]
+        virtMap[parts[0]] = [parts.slice(1).join('/')]
       }
     }
 

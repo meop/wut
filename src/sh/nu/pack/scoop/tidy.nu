@@ -1,3 +1,3 @@
-def packScoopOp [cmd] {
+def --env packScoopOp [cmd] {
   opPrintMaybeRunCmd $cmd cleanup --all --cache
 }

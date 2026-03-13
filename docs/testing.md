@@ -77,7 +77,7 @@ import { runSrv } from '../../src/srv.ts'
 import { checkSyntax, req } from '../helpers.ts'
 
 Deno.test('nu / arch / new-op', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/new-op?sysOsPlat=linux&sysOsId=arch'))).text()
+  const body = await (await runSrv(req('/sh/nu/pack/new-op?sysOsPlat=linux&sysOs=arch'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })

@@ -1,4 +1,4 @@
-def packAptOp [cmd] {
+def --env packAptOp [cmd] {
   if 'PACK_LIST_NAMES' in $env {
     opPrintMaybeRunCmd $cmd list --installed '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case $env.PACK_LIST_NAMES
   } else {

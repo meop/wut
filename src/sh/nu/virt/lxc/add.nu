@@ -28,9 +28,10 @@ def virtLxcOpAdd [config, configVm, cmd, instance] {
 
   opPrintMaybeRunCmd sudo mkdir -p $rootfsPath
 
-  mut configLines = []
-  $configLines = $configLines | append $"lxc.uts.name = ($instance)"
-  $configLines = $configLines | append $"lxc.rootfs.path = dir:($rootfsPath)"
+  mut configLines = [
+    $"lxc.uts.name = ($instance)",
+    $"lxc.rootfs.path = dir:($rootfsPath)",
+  ]
   if ($configVm | get lxc.autostart? | default false) {
     $configLines = $configLines | append 'lxc.start.auto = 1'
   }
@@ -41,9 +42,11 @@ def virtLxcOpAdd [config, configVm, cmd, instance] {
 
   let net = $configVm | get lxc.network? | default {}
   if ($net | is-not-empty) {
-    $configLines = $configLines | append $"lxc.net.0.type = ($net.type)"
-    $configLines = $configLines | append $"lxc.net.0.link = ($net.link)"
-    $configLines = $configLines | append $"lxc.net.0.name = ($net.name)"
+    $configLines = $configLines | append [
+      $"lxc.net.0.type = ($net.type)",
+      $"lxc.net.0.link = ($net.link)",
+      $"lxc.net.0.name = ($net.name)",
+    ]
     if 'hwaddr' in $net {
       $configLines = $configLines | append $"lxc.net.0.hwaddr = ($net.hwaddr)"
     }

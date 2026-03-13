@@ -3,7 +3,7 @@ export const snapshot = {};
 snapshot[`nu / arch / add 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOsId=arch'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -109,13 +109,13 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'arch'#
+\$env.SYS_OS = r#'arch'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/add/firefox'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=arch'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=arch'#
 
 \$env.PACK_ADD_NAMES = r#'firefox'#
 
@@ -125,20 +125,21 @@ do {
 
 
 
-def packPacmanOp [cmd] {
+def --env packPacmanOp [cmd] {
   if 'PACK_ADD_GROUP_NAMES' in \$env {
     for name in \$env.PACK_ADD_GROUP_NAMES {
       opPrintMaybeRunCmd ...(\$name | split row ' ')
     }
   }
   opPrintMaybeRunCmd \$cmd --sync --needed \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
 }
 
 
-def packYay [] {
-  try {
-    let cmd = 'yay'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packYay [] {
+  let cmd = 'yay'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -152,18 +153,13 @@ def packYay [] {
         packPacmanOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
-def packPacman [] {
-  try {
-    let cmd = 'pacman'
-    if ('PACK_MANAGER' not-in \$env) and (which yay | is-not-empty) {
-      # yay is a superset of pacman
-    } else if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packPacman [] {
+  let cmd = 'pacman'
+  if ('PACK_MANAGER' not-in \$env) and (which yay | is-not-empty) {
+  } else if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -177,10 +173,6 @@ def packPacman [] {
         }
         packPacmanOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -196,7 +188,7 @@ packPacman
 snapshot[`nu / arch / find 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOsId=arch'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -302,13 +294,13 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'arch'#
+\$env.SYS_OS = r#'arch'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/find/firefox'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=arch'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=arch'#
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
@@ -318,15 +310,15 @@ do {
 
 
 
-def packPacmanOp [cmd] {
+def --env packPacmanOp [cmd] {
   opPrintMaybeRunCmd \$cmd --sync --search \$env.PACK_FIND_NAMES
 }
 
 
-def packYay [] {
-  try {
-    let cmd = 'yay'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packYay [] {
+  let cmd = 'yay'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -340,18 +332,13 @@ def packYay [] {
         packPacmanOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
-def packPacman [] {
-  try {
-    let cmd = 'pacman'
-    if ('PACK_MANAGER' not-in \$env) and (which yay | is-not-empty) {
-      # yay is a superset of pacman
-    } else if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packPacman [] {
+  let cmd = 'pacman'
+  if ('PACK_MANAGER' not-in \$env) and (which yay | is-not-empty) {
+  } else if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -366,13 +353,20 @@ def packPacman [] {
         packPacmanOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
+
+do {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+  }
+  if \$yn != 'n' {
+  }
+}
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
@@ -384,7 +378,7 @@ packPacman
 snapshot[`nu / arch / list 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOsId=arch'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=arch'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -490,13 +484,13 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'arch'#
+\$env.SYS_OS = r#'arch'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/list'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=arch'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=arch'#
 
 \$env.PACK_OP = r#'list'#
 
@@ -504,7 +498,7 @@ do {
 
 
 
-def packPacmanOp [cmd] {
+def --env packPacmanOp [cmd] {
   if 'PACK_LIST_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd --query '|' find --ignore-case \$env.PACK_LIST_NAMES
   } else {
@@ -513,10 +507,10 @@ def packPacmanOp [cmd] {
 }
 
 
-def packYay [] {
-  try {
-    let cmd = 'yay'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packYay [] {
+  let cmd = 'yay'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -530,18 +524,13 @@ def packYay [] {
         packPacmanOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
-def packPacman [] {
-  try {
-    let cmd = 'pacman'
-    if ('PACK_MANAGER' not-in \$env) and (which yay | is-not-empty) {
-      # yay is a superset of pacman
-    } else if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packPacman [] {
+  let cmd = 'pacman'
+  if ('PACK_MANAGER' not-in \$env) and (which yay | is-not-empty) {
+  } else if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -555,10 +544,6 @@ def packPacman [] {
         }
         packPacmanOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -574,7 +559,7 @@ packPacman
 snapshot[`nu / arch / out 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/out?sysOsPlat=linux&sysOsId=arch'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/out?sysOsPlat=linux&sysOs=arch'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -680,13 +665,13 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'arch'#
+\$env.SYS_OS = r#'arch'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/out'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=arch'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=arch'#
 
 \$env.PACK_OP = r#'out'#
 
@@ -694,7 +679,7 @@ do {
 
 
 
-def packPacmanOp [cmd] {
+def --env packPacmanOp [cmd] {
   if 'PACK_OUT_NAMES' in \$env {
     opPrintMaybeRunCmd do --ignore-errors '{' \$cmd --query --upgrades '|' find --ignore-case \$env.PACK_OUT_NAMES '}'
   } else {
@@ -703,10 +688,10 @@ def packPacmanOp [cmd] {
 }
 
 
-def packYay [] {
-  try {
-    let cmd = 'yay'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packYay [] {
+  let cmd = 'yay'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -720,18 +705,13 @@ def packYay [] {
         packPacmanOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
-def packPacman [] {
-  try {
-    let cmd = 'pacman'
-    if ('PACK_MANAGER' not-in \$env) and (which yay | is-not-empty) {
-      # yay is a superset of pacman
-    } else if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packPacman [] {
+  let cmd = 'pacman'
+  if ('PACK_MANAGER' not-in \$env) and (which yay | is-not-empty) {
+  } else if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -745,10 +725,6 @@ def packPacman [] {
         }
         packPacmanOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -764,7 +740,7 @@ packPacman
 snapshot[`nu / arch / rem 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOsId=arch'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOs=arch'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -870,13 +846,13 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'arch'#
+\$env.SYS_OS = r#'arch'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/rem/firefox'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=arch'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=arch'#
 
 \$env.PACK_REM_NAMES = r#'firefox'#
 
@@ -886,8 +862,9 @@ do {
 
 
 
-def packPacmanOp [cmd] {
+def --env packPacmanOp [cmd] {
   opPrintMaybeRunCmd \$cmd --remove --nosave --recursive \$env.PACK_REM_NAMES
+  \$env.PACKED = true
   if 'PACK_REM_GROUP_NAMES' in \$env {
     for name in \$env.PACK_REM_GROUP_NAMES {
       opPrintMaybeRunCmd ...(\$name | split row ' ')
@@ -896,10 +873,10 @@ def packPacmanOp [cmd] {
 }
 
 
-def packYay [] {
-  try {
-    let cmd = 'yay'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packYay [] {
+  let cmd = 'yay'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -913,18 +890,13 @@ def packYay [] {
         packPacmanOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
-def packPacman [] {
-  try {
-    let cmd = 'pacman'
-    if ('PACK_MANAGER' not-in \$env) and (which yay | is-not-empty) {
-      # yay is a superset of pacman
-    } else if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packPacman [] {
+  let cmd = 'pacman'
+  if ('PACK_MANAGER' not-in \$env) and (which yay | is-not-empty) {
+  } else if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -938,10 +910,6 @@ def packPacman [] {
         }
         packPacmanOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -957,7 +925,7 @@ packPacman
 snapshot[`nu / arch / sync 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOsId=arch'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=arch'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -1063,13 +1031,13 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'arch'#
+\$env.SYS_OS = r#'arch'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/sync'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=arch'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=arch'#
 
 \$env.PACK_OP = r#'sync'#
 
@@ -1077,7 +1045,7 @@ do {
 
 
 
-def packPacmanOp [cmd] {
+def --env packPacmanOp [cmd] {
   if 'PACK_SYNC_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd --sync --needed \$env.PACK_SYNC_NAMES
   } else {
@@ -1086,10 +1054,10 @@ def packPacmanOp [cmd] {
 }
 
 
-def packYay [] {
-  try {
-    let cmd = 'yay'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packYay [] {
+  let cmd = 'yay'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -1103,18 +1071,13 @@ def packYay [] {
         packPacmanOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
-def packPacman [] {
-  try {
-    let cmd = 'pacman'
-    if ('PACK_MANAGER' not-in \$env) and (which yay | is-not-empty) {
-      # yay is a superset of pacman
-    } else if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packPacman [] {
+  let cmd = 'pacman'
+  if ('PACK_MANAGER' not-in \$env) and (which yay | is-not-empty) {
+  } else if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -1128,10 +1091,6 @@ def packPacman [] {
         }
         packPacmanOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -1145,7 +1104,7 @@ packPacman
 snapshot[`nu / arch / tidy 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOsId=arch'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=arch'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -1251,13 +1210,13 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'arch'#
+\$env.SYS_OS = r#'arch'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/tidy'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=arch'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=arch'#
 
 \$env.PACK_OP = r#'tidy'#
 
@@ -1265,17 +1224,17 @@ do {
 
 
 
-def packPacmanOp [cmd] {
+def --env packPacmanOp [cmd] {
   # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
   opPrintMaybeRunCmd sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete
   opPrintMaybeRunCmd \$cmd --sync --clean
 }
 
 
-def packYay [] {
-  try {
-    let cmd = 'yay'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packYay [] {
+  let cmd = 'yay'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -1289,18 +1248,13 @@ def packYay [] {
         packPacmanOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
-def packPacman [] {
-  try {
-    let cmd = 'pacman'
-    if ('PACK_MANAGER' not-in \$env) and (which yay | is-not-empty) {
-      # yay is a superset of pacman
-    } else if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packPacman [] {
+  let cmd = 'pacman'
+  if ('PACK_MANAGER' not-in \$env) and (which yay | is-not-empty) {
+  } else if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -1314,10 +1268,6 @@ def packPacman [] {
         }
         packPacmanOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -1331,7 +1281,7 @@ packPacman
 snapshot[`nu / ubuntu / add 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOsId=ubuntu'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=ubuntu'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -1437,32 +1387,33 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'ubuntu'#
+\$env.SYS_OS = r#'ubuntu'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/add/firefox'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=ubuntu'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=ubuntu'#
 
 \$env.PACK_ADD_NAMES = r#'firefox'#
 
 \$env.PACK_OP = r#'add'#
 
-def packAptOp [cmd] {
+def --env packAptOp [cmd] {
   if 'PACK_ADD_GROUP_NAMES' in \$env {
     for name in \$env.PACK_ADD_GROUP_NAMES {
       opPrintMaybeRunCmd ...(\$name | split row ' ')
     }
   }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
 }
 
 
-def packApt [] {
-  try {
-    let cmd = 'apt'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packApt [] {
+  let cmd = 'apt'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -1476,10 +1427,6 @@ def packApt [] {
         }
         packAptOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -1494,7 +1441,7 @@ packApt
 snapshot[`nu / ubuntu / find 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOsId=ubuntu'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=ubuntu'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -1600,27 +1547,27 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'ubuntu'#
+\$env.SYS_OS = r#'ubuntu'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/find/firefox'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=ubuntu'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=ubuntu'#
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
 \$env.PACK_OP = r#'find'#
 
-def packAptOp [cmd] {
+def --env packAptOp [cmd] {
   opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
 }
 
 
-def packApt [] {
-  try {
-    let cmd = 'apt'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packApt [] {
+  let cmd = 'apt'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -1635,13 +1582,20 @@ def packApt [] {
         packAptOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
+
+do {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+  }
+  if \$yn != 'n' {
+  }
+}
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
@@ -1652,7 +1606,7 @@ packApt
 snapshot[`nu / ubuntu / list 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOsId=ubuntu'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=ubuntu'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -1758,17 +1712,17 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'ubuntu'#
+\$env.SYS_OS = r#'ubuntu'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/list'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=ubuntu'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=ubuntu'#
 
 \$env.PACK_OP = r#'list'#
 
-def packAptOp [cmd] {
+def --env packAptOp [cmd] {
   if 'PACK_LIST_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd list --installed '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case \$env.PACK_LIST_NAMES
   } else {
@@ -1777,10 +1731,10 @@ def packAptOp [cmd] {
 }
 
 
-def packApt [] {
-  try {
-    let cmd = 'apt'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packApt [] {
+  let cmd = 'apt'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -1794,10 +1748,6 @@ def packApt [] {
         }
         packAptOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -1812,7 +1762,7 @@ packApt
 snapshot[`nu / ubuntu / out 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/out?sysOsPlat=linux&sysOsId=ubuntu'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/out?sysOsPlat=linux&sysOs=ubuntu'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -1918,17 +1868,17 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'ubuntu'#
+\$env.SYS_OS = r#'ubuntu'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/out'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=ubuntu'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=ubuntu'#
 
 \$env.PACK_OP = r#'out'#
 
-def packAptOp [cmd] {
+def --env packAptOp [cmd] {
   if 'PACK_OUT_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd list --upgradable '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case \$env.PACK_OUT_NAMES
   } else {
@@ -1937,10 +1887,10 @@ def packAptOp [cmd] {
 }
 
 
-def packApt [] {
-  try {
-    let cmd = 'apt'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packApt [] {
+  let cmd = 'apt'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -1954,10 +1904,6 @@ def packApt [] {
         }
         packAptOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -1972,7 +1918,7 @@ packApt
 snapshot[`nu / ubuntu / rem 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOsId=ubuntu'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOs=ubuntu'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -2078,20 +2024,21 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'ubuntu'#
+\$env.SYS_OS = r#'ubuntu'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/rem/firefox'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=ubuntu'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=ubuntu'#
 
 \$env.PACK_REM_NAMES = r#'firefox'#
 
 \$env.PACK_OP = r#'rem'#
 
-def packAptOp [cmd] {
+def --env packAptOp [cmd] {
   opPrintMaybeRunCmd \$cmd purge --autoremove \$env.PACK_REM_NAMES
+  \$env.PACKED = true
   if 'PACK_REM_GROUP_NAMES' in \$env {
     for name in \$env.PACK_REM_GROUP_NAMES {
       opPrintMaybeRunCmd ...(\$name | split row ' ')
@@ -2100,10 +2047,10 @@ def packAptOp [cmd] {
 }
 
 
-def packApt [] {
-  try {
-    let cmd = 'apt'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packApt [] {
+  let cmd = 'apt'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -2117,10 +2064,6 @@ def packApt [] {
         }
         packAptOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -2135,7 +2078,7 @@ packApt
 snapshot[`nu / ubuntu / sync 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOsId=ubuntu'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=ubuntu'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -2241,17 +2184,17 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'ubuntu'#
+\$env.SYS_OS = r#'ubuntu'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/sync'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=ubuntu'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=ubuntu'#
 
 \$env.PACK_OP = r#'sync'#
 
-def packAptOp [cmd] {
+def --env packAptOp [cmd] {
   if 'PACK_SYNC_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd install \$env.PACK_SYNC_NAMES
   } else {
@@ -2260,10 +2203,10 @@ def packAptOp [cmd] {
 }
 
 
-def packApt [] {
-  try {
-    let cmd = 'apt'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packApt [] {
+  let cmd = 'apt'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -2277,10 +2220,6 @@ def packApt [] {
         }
         packAptOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -2293,7 +2232,7 @@ packApt
 snapshot[`nu / ubuntu / tidy 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOsId=ubuntu'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=ubuntu'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -2399,26 +2338,26 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'ubuntu'#
+\$env.SYS_OS = r#'ubuntu'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/tidy'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=ubuntu'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=ubuntu'#
 
 \$env.PACK_OP = r#'tidy'#
 
-def packAptOp [cmd] {
+def --env packAptOp [cmd] {
   opPrintMaybeRunCmd \$cmd autoclean
   opPrintMaybeRunCmd \$cmd autoremove
 }
 
 
-def packApt [] {
-  try {
-    let cmd = 'apt'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packApt [] {
+  let cmd = 'apt'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -2433,10 +2372,6 @@ def packApt [] {
         packAptOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
@@ -2448,7 +2383,7 @@ packApt
 snapshot[`nu / rocky / add 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOsId=rocky'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=rocky'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -2554,32 +2489,33 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'rocky'#
+\$env.SYS_OS = r#'rocky'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/add/firefox'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=rocky'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=rocky'#
 
 \$env.PACK_ADD_NAMES = r#'firefox'#
 
 \$env.PACK_OP = r#'add'#
 
-def packDnfOp [cmd] {
+def --env packDnfOp [cmd] {
   if 'PACK_ADD_GROUP_NAMES' in \$env {
     for name in \$env.PACK_ADD_GROUP_NAMES {
       opPrintMaybeRunCmd ...(\$name | split row ' ')
     }
   }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
 }
 
 
-def packDnf [] {
-  try {
-    let cmd = 'dnf'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packDnf [] {
+  let cmd = 'dnf'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -2593,10 +2529,6 @@ def packDnf [] {
         }
         packDnfOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -2611,7 +2543,7 @@ packDnf
 snapshot[`nu / rocky / find 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOsId=rocky'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=rocky'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -2717,27 +2649,27 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'rocky'#
+\$env.SYS_OS = r#'rocky'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/find/firefox'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=rocky'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=rocky'#
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
 \$env.PACK_OP = r#'find'#
 
-def packDnfOp [cmd] {
+def --env packDnfOp [cmd] {
   opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
 }
 
 
-def packDnf [] {
-  try {
-    let cmd = 'dnf'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packDnf [] {
+  let cmd = 'dnf'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -2752,13 +2684,20 @@ def packDnf [] {
         packDnfOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
+
+do {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+  }
+  if \$yn != 'n' {
+  }
+}
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
@@ -2769,7 +2708,7 @@ packDnf
 snapshot[`nu / rocky / list 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOsId=rocky'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=rocky'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -2875,17 +2814,17 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'rocky'#
+\$env.SYS_OS = r#'rocky'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/list'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=rocky'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=rocky'#
 
 \$env.PACK_OP = r#'list'#
 
-def packDnfOp [cmd] {
+def --env packDnfOp [cmd] {
   if 'PACK_LIST_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd list --installed '|' find --ignore-case \$env.PACK_LIST_NAMES
   } else {
@@ -2894,10 +2833,10 @@ def packDnfOp [cmd] {
 }
 
 
-def packDnf [] {
-  try {
-    let cmd = 'dnf'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packDnf [] {
+  let cmd = 'dnf'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -2911,10 +2850,6 @@ def packDnf [] {
         }
         packDnfOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -2929,7 +2864,7 @@ packDnf
 snapshot[`nu / rocky / out 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/out?sysOsPlat=linux&sysOsId=rocky'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/out?sysOsPlat=linux&sysOs=rocky'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -3035,17 +2970,17 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'rocky'#
+\$env.SYS_OS = r#'rocky'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/out'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=rocky'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=rocky'#
 
 \$env.PACK_OP = r#'out'#
 
-def packDnfOp [cmd] {
+def --env packDnfOp [cmd] {
   if 'PACK_OUT_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd list --upgrades '|' find --ignore-case \$env.PACK_OUT_NAMES
   } else {
@@ -3054,10 +2989,10 @@ def packDnfOp [cmd] {
 }
 
 
-def packDnf [] {
-  try {
-    let cmd = 'dnf'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packDnf [] {
+  let cmd = 'dnf'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -3071,10 +3006,6 @@ def packDnf [] {
         }
         packDnfOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -3089,7 +3020,7 @@ packDnf
 snapshot[`nu / rocky / rem 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOsId=rocky'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOs=rocky'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -3195,20 +3126,21 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'rocky'#
+\$env.SYS_OS = r#'rocky'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/rem/firefox'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=rocky'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=rocky'#
 
 \$env.PACK_REM_NAMES = r#'firefox'#
 
 \$env.PACK_OP = r#'rem'#
 
-def packDnfOp [cmd] {
+def --env packDnfOp [cmd] {
   opPrintMaybeRunCmd \$cmd remove \$env.PACK_REM_NAMES
+  \$env.PACKED = true
   if 'PACK_REM_GROUP_NAMES' in \$env {
     for name in \$env.PACK_REM_GROUP_NAMES {
       opPrintMaybeRunCmd ...(\$name | split row ' ')
@@ -3217,10 +3149,10 @@ def packDnfOp [cmd] {
 }
 
 
-def packDnf [] {
-  try {
-    let cmd = 'dnf'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packDnf [] {
+  let cmd = 'dnf'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -3234,10 +3166,6 @@ def packDnf [] {
         }
         packDnfOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -3252,7 +3180,7 @@ packDnf
 snapshot[`nu / rocky / sync 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOsId=rocky'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=rocky'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -3358,17 +3286,17 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'rocky'#
+\$env.SYS_OS = r#'rocky'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/sync'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=rocky'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=rocky'#
 
 \$env.PACK_OP = r#'sync'#
 
-def packDnfOp [cmd] {
+def --env packDnfOp [cmd] {
   if 'PACK_SYNC_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd upgrade \$env.PACK_SYNC_NAMES
   } else {
@@ -3377,10 +3305,10 @@ def packDnfOp [cmd] {
 }
 
 
-def packDnf [] {
-  try {
-    let cmd = 'dnf'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packDnf [] {
+  let cmd = 'dnf'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -3394,10 +3322,6 @@ def packDnf [] {
         }
         packDnfOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -3410,7 +3334,7 @@ packDnf
 snapshot[`nu / rocky / tidy 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOsId=rocky'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=rocky'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -3516,26 +3440,26 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'rocky'#
+\$env.SYS_OS = r#'rocky'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/tidy'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=rocky'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=rocky'#
 
 \$env.PACK_OP = r#'tidy'#
 
-def packDnfOp [cmd] {
+def --env packDnfOp [cmd] {
   opPrintMaybeRunCmd \$cmd autoremove
   opPrintMaybeRunCmd \$cmd clean packages
 }
 
 
-def packDnf [] {
-  try {
-    let cmd = 'dnf'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packDnf [] {
+  let cmd = 'dnf'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -3550,10 +3474,6 @@ def packDnf [] {
         packDnfOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
@@ -3565,7 +3485,7 @@ packDnf
 snapshot[`nu / suse / add 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOsId=suse'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=suse'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -3671,32 +3591,33 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'suse'#
+\$env.SYS_OS = r#'suse'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/add/firefox'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=suse'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=suse'#
 
 \$env.PACK_ADD_NAMES = r#'firefox'#
 
 \$env.PACK_OP = r#'add'#
 
-def packZypperOp [cmd] {
+def --env packZypperOp [cmd] {
   if 'PACK_ADD_GROUP_NAMES' in \$env {
     for name in \$env.PACK_ADD_GROUP_NAMES {
       opPrintMaybeRunCmd ...(\$name | split row ' ')
     }
   }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
 }
 
 
-def packZypper [] {
-  try {
-    let cmd = 'zypper'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packZypper [] {
+  let cmd = 'zypper'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -3710,10 +3631,6 @@ def packZypper [] {
         }
         packZypperOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -3728,7 +3645,7 @@ packZypper
 snapshot[`nu / suse / find 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOsId=suse'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=suse'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -3834,27 +3751,27 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'suse'#
+\$env.SYS_OS = r#'suse'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/find/firefox'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=suse'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=suse'#
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
 \$env.PACK_OP = r#'find'#
 
-def packZypperOp [cmd] {
+def --env packZypperOp [cmd] {
   opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
 }
 
 
-def packZypper [] {
-  try {
-    let cmd = 'zypper'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packZypper [] {
+  let cmd = 'zypper'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -3869,13 +3786,20 @@ def packZypper [] {
         packZypperOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
+
+do {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+  }
+  if \$yn != 'n' {
+  }
+}
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
@@ -3886,7 +3810,7 @@ packZypper
 snapshot[`nu / suse / list 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOsId=suse'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=suse'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -3992,17 +3916,17 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'suse'#
+\$env.SYS_OS = r#'suse'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/list'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=suse'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=suse'#
 
 \$env.PACK_OP = r#'list'#
 
-def packZypperOp [cmd] {
+def --env packZypperOp [cmd] {
   if 'PACK_LIST_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd search --installed-only '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case \$env.PACK_LIST_NAMES
   } else {
@@ -4011,10 +3935,10 @@ def packZypperOp [cmd] {
 }
 
 
-def packZypper [] {
-  try {
-    let cmd = 'zypper'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packZypper [] {
+  let cmd = 'zypper'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -4028,10 +3952,6 @@ def packZypper [] {
         }
         packZypperOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -4046,7 +3966,7 @@ packZypper
 snapshot[`nu / suse / out 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/out?sysOsPlat=linux&sysOsId=suse'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/out?sysOsPlat=linux&sysOs=suse'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -4152,17 +4072,17 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'suse'#
+\$env.SYS_OS = r#'suse'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/out'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=suse'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=suse'#
 
 \$env.PACK_OP = r#'out'#
 
-def packZypperOp [cmd] {
+def --env packZypperOp [cmd] {
   if 'PACK_OUT_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd list-updates '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case \$env.PACK_OUT_NAMES
   } else {
@@ -4171,10 +4091,10 @@ def packZypperOp [cmd] {
 }
 
 
-def packZypper [] {
-  try {
-    let cmd = 'zypper'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packZypper [] {
+  let cmd = 'zypper'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -4188,10 +4108,6 @@ def packZypper [] {
         }
         packZypperOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -4206,7 +4122,7 @@ packZypper
 snapshot[`nu / suse / rem 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOsId=suse'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOs=suse'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -4312,20 +4228,21 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'suse'#
+\$env.SYS_OS = r#'suse'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/rem/firefox'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=suse'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=suse'#
 
 \$env.PACK_REM_NAMES = r#'firefox'#
 
 \$env.PACK_OP = r#'rem'#
 
-def packZypperOp [cmd] {
+def --env packZypperOp [cmd] {
   opPrintMaybeRunCmd \$cmd remove --clean-deps \$env.PACK_REM_NAMES
+  \$env.PACKED = true
   if 'PACK_REM_GROUP_NAMES' in \$env {
     for name in \$env.PACK_REM_GROUP_NAMES {
       opPrintMaybeRunCmd ...(\$name | split row ' ')
@@ -4334,10 +4251,10 @@ def packZypperOp [cmd] {
 }
 
 
-def packZypper [] {
-  try {
-    let cmd = 'zypper'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packZypper [] {
+  let cmd = 'zypper'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -4351,10 +4268,6 @@ def packZypper [] {
         }
         packZypperOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -4369,7 +4282,7 @@ packZypper
 snapshot[`nu / suse / sync 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOsId=suse'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=suse'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -4475,17 +4388,17 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'suse'#
+\$env.SYS_OS = r#'suse'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/sync'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=suse'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=suse'#
 
 \$env.PACK_OP = r#'sync'#
 
-def packZypperOp [cmd] {
+def --env packZypperOp [cmd] {
   if 'PACK_SYNC_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd install \$env.PACK_SYNC_NAMES
   } else {
@@ -4494,10 +4407,10 @@ def packZypperOp [cmd] {
 }
 
 
-def packZypper [] {
-  try {
-    let cmd = 'zypper'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packZypper [] {
+  let cmd = 'zypper'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -4511,10 +4424,6 @@ def packZypper [] {
         }
         packZypperOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -4527,7 +4436,7 @@ packZypper
 snapshot[`nu / suse / tidy 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOsId=suse'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=suse'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -4633,25 +4542,25 @@ do {
 
 \$env.REQ_ORIG = r#'http://x'#
 
-\$env.SYS_OS_ID = r#'suse'#
+\$env.SYS_OS = r#'suse'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
 \$env.REQ_PATH = r#'/sh/nu/pack/tidy'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOsId=suse'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=suse'#
 
 \$env.PACK_OP = r#'tidy'#
 
-def packZypperOp [cmd] {
+def --env packZypperOp [cmd] {
   opPrintMaybeRunCmd \$cmd clean --only-unneeded
 }
 
 
-def packZypper [] {
-  try {
-    let cmd = 'zypper'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packZypper [] {
+  let cmd = 'zypper'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -4665,10 +4574,6 @@ def packZypper [] {
         }
         packZypperOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -4797,20 +4702,21 @@ do {
 
 \$env.PACK_OP = r#'add'#
 
-def packBrewOp [cmd] {
+def --env packBrewOp [cmd] {
   if 'PACK_ADD_GROUP_NAMES' in \$env {
     for name in \$env.PACK_ADD_GROUP_NAMES {
       opPrintMaybeRunCmd ...(\$name | split row ' ')
     }
   }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
 }
 
 
-def packBrew [] {
-  try {
-    let cmd = 'brew'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packBrew [] {
+  let cmd = 'brew'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -4823,10 +4729,6 @@ def packBrew [] {
           opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
         }
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -4957,15 +4859,15 @@ do {
 
 \$env.PACK_OP = r#'find'#
 
-def packBrewOp [cmd] {
+def --env packBrewOp [cmd] {
   opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
 }
 
 
-def packBrew [] {
-  try {
-    let cmd = 'brew'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packBrew [] {
+  let cmd = 'brew'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -4979,13 +4881,20 @@ def packBrew [] {
         }
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
+
+do {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+  }
+  if \$yn != 'n' {
+  }
+}
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
@@ -5110,7 +5019,7 @@ do {
 
 \$env.PACK_OP = r#'list'#
 
-def packBrewOp [cmd] {
+def --env packBrewOp [cmd] {
   if 'PACK_LIST_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd list '|' find --ignore-case \$env.PACK_LIST_NAMES
   } else {
@@ -5119,10 +5028,10 @@ def packBrewOp [cmd] {
 }
 
 
-def packBrew [] {
-  try {
-    let cmd = 'brew'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packBrew [] {
+  let cmd = 'brew'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -5135,10 +5044,6 @@ def packBrew [] {
           opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
         }
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -5267,7 +5172,7 @@ do {
 
 \$env.PACK_OP = r#'out'#
 
-def packBrewOp [cmd] {
+def --env packBrewOp [cmd] {
   if 'PACK_OUT_NAMES' in \$env {
     opPrintMaybeRunCmd do --ignore-errors '{' \$cmd outdated '|' find --ignore-case \$env.PACK_OUT_NAMES '}'
   } else {
@@ -5276,10 +5181,10 @@ def packBrewOp [cmd] {
 }
 
 
-def packBrew [] {
-  try {
-    let cmd = 'brew'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packBrew [] {
+  let cmd = 'brew'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -5292,10 +5197,6 @@ def packBrew [] {
           opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
         }
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -5426,8 +5327,9 @@ do {
 
 \$env.PACK_OP = r#'rem'#
 
-def packBrewOp [cmd] {
+def --env packBrewOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
+  \$env.PACKED = true
   if 'PACK_REM_GROUP_NAMES' in \$env {
     for name in \$env.PACK_REM_GROUP_NAMES {
       opPrintMaybeRunCmd ...(\$name | split row ' ')
@@ -5436,10 +5338,10 @@ def packBrewOp [cmd] {
 }
 
 
-def packBrew [] {
-  try {
-    let cmd = 'brew'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packBrew [] {
+  let cmd = 'brew'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -5452,10 +5354,6 @@ def packBrew [] {
           opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
         }
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -5584,7 +5482,7 @@ do {
 
 \$env.PACK_OP = r#'sync'#
 
-def packBrewOp [cmd] {
+def --env packBrewOp [cmd] {
   if 'PACK_SYNC_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd upgrade --greedy \$env.PACK_SYNC_NAMES
   } else {
@@ -5593,10 +5491,10 @@ def packBrewOp [cmd] {
 }
 
 
-def packBrew [] {
-  try {
-    let cmd = 'brew'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packBrew [] {
+  let cmd = 'brew'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -5609,10 +5507,6 @@ def packBrew [] {
           opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
         }
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -5739,15 +5633,15 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
-def packBrewOp [cmd] {
+def --env packBrewOp [cmd] {
   opPrintMaybeRunCmd \$cmd cleanup --prune=all
 }
 
 
-def packBrew [] {
-  try {
-    let cmd = 'brew'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packBrew [] {
+  let cmd = 'brew'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -5760,10 +5654,6 @@ def packBrew [] {
           opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
         }
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -5892,20 +5782,21 @@ do {
 
 \$env.PACK_OP = r#'add'#
 
-def packChocoOp [cmd] {
+def --env packChocoOp [cmd] {
   if 'PACK_ADD_GROUP_NAMES' in \$env {
     for name in \$env.PACK_ADD_GROUP_NAMES {
       opPrintMaybeRunCmd ...(\$name | split row ' ')
     }
   }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
 }
 
 
-def packChoco [] {
-  try {
-    let cmd = 'choco'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packChoco [] {
+  let cmd = 'choco'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -5917,28 +5808,25 @@ def packChoco [] {
         packChocoOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
 
-def packScoopOp [cmd] {
+def --env packScoopOp [cmd] {
   if 'PACK_ADD_GROUP_NAMES' in \$env {
     for name in \$env.PACK_ADD_GROUP_NAMES {
       opPrintMaybeRunCmd ...(\$name | split row ' ')
     }
   }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
 }
 
 
-def packScoop [] {
-  try {
-    let cmd = 'scoop'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packScoop [] {
+  let cmd = 'scoop'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -5952,31 +5840,28 @@ def packScoop [] {
         packScoopOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
 
-def packWingetOp [cmd] {
+def --env packWingetOp [cmd] {
   if 'PACK_ADD_GROUP_NAMES' in \$env {
     for name in \$env.PACK_ADD_GROUP_NAMES {
       opPrintMaybeRunCmd ...(\$name | split row ' ')
     }
   }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
 }
 
 
-def packWinget [] {
-  try {
-    let cmd = 'winget'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
-      if \$env.PACK_OP == 'tidy' {
-        return
-      }
+def --env packWinget [] {
+  let cmd = 'winget'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if \$env.PACK_OP == 'tidy' {
+      return
+    }
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -5986,10 +5871,6 @@ def packWinget [] {
       if \$yn != 'n' {
         packWingetOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -6122,15 +6003,15 @@ do {
 
 \$env.PACK_OP = r#'find'#
 
-def packChocoOp [cmd] {
+def --env packChocoOp [cmd] {
   opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
 }
 
 
-def packChoco [] {
-  try {
-    let cmd = 'choco'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packChoco [] {
+  let cmd = 'choco'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -6142,23 +6023,19 @@ def packChoco [] {
         packChocoOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
 
-def packScoopOp [cmd] {
+def --env packScoopOp [cmd] {
   opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
 }
 
 
-def packScoop [] {
-  try {
-    let cmd = 'scoop'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packScoop [] {
+  let cmd = 'scoop'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -6172,26 +6049,22 @@ def packScoop [] {
         packScoopOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
 
-def packWingetOp [cmd] {
+def --env packWingetOp [cmd] {
   opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
 }
 
 
-def packWinget [] {
-  try {
-    let cmd = 'winget'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
-      if \$env.PACK_OP == 'tidy' {
-        return
-      }
+def --env packWinget [] {
+  let cmd = 'winget'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if \$env.PACK_OP == 'tidy' {
+      return
+    }
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -6202,13 +6075,20 @@ def packWinget [] {
         packWingetOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
+
+do {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+  }
+  if \$yn != 'n' {
+  }
+}
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
@@ -6335,7 +6215,7 @@ do {
 
 \$env.PACK_OP = r#'list'#
 
-def packChocoOp [cmd] {
+def --env packChocoOp [cmd] {
   if 'PACK_LIST_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd list '|' find --ignore-case \$env.PACK_LIST_NAMES
   } else {
@@ -6344,10 +6224,10 @@ def packChocoOp [cmd] {
 }
 
 
-def packChoco [] {
-  try {
-    let cmd = 'choco'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packChoco [] {
+  let cmd = 'choco'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -6359,15 +6239,11 @@ def packChoco [] {
         packChocoOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
 
-def packScoopOp [cmd] {
+def --env packScoopOp [cmd] {
   if 'PACK_LIST_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd list '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case \$env.PACK_LIST_NAMES
   } else {
@@ -6376,10 +6252,10 @@ def packScoopOp [cmd] {
 }
 
 
-def packScoop [] {
-  try {
-    let cmd = 'scoop'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packScoop [] {
+  let cmd = 'scoop'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -6393,15 +6269,11 @@ def packScoop [] {
         packScoopOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
 
-def packWingetOp [cmd] {
+def --env packWingetOp [cmd] {
   if 'PACK_LIST_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd list '|' find --ignore-case \$env.PACK_LIST_NAMES
   } else {
@@ -6410,13 +6282,13 @@ def packWingetOp [cmd] {
 }
 
 
-def packWinget [] {
-  try {
-    let cmd = 'winget'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
-      if \$env.PACK_OP == 'tidy' {
-        return
-      }
+def --env packWinget [] {
+  let cmd = 'winget'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if \$env.PACK_OP == 'tidy' {
+      return
+    }
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -6426,10 +6298,6 @@ def packWinget [] {
       if \$yn != 'n' {
         packWingetOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -6560,7 +6428,7 @@ do {
 
 \$env.PACK_OP = r#'out'#
 
-def packChocoOp [cmd] {
+def --env packChocoOp [cmd] {
   if 'PACK_OUT_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd outdated '|' find --ignore-case \$env.PACK_OUT_NAMES
   } else {
@@ -6569,10 +6437,10 @@ def packChocoOp [cmd] {
 }
 
 
-def packChoco [] {
-  try {
-    let cmd = 'choco'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packChoco [] {
+  let cmd = 'choco'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -6584,15 +6452,11 @@ def packChoco [] {
         packChocoOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
 
-def packScoopOp [cmd] {
+def --env packScoopOp [cmd] {
   if 'PACK_OUT_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd status '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case \$env.PACK_OUT_NAMES
   } else {
@@ -6601,10 +6465,10 @@ def packScoopOp [cmd] {
 }
 
 
-def packScoop [] {
-  try {
-    let cmd = 'scoop'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packScoop [] {
+  let cmd = 'scoop'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -6618,15 +6482,11 @@ def packScoop [] {
         packScoopOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
 
-def packWingetOp [cmd] {
+def --env packWingetOp [cmd] {
   if 'PACK_OUT_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd upgrade '|' find --ignore-case \$env.PACK_OUT_NAMES
   } else {
@@ -6635,13 +6495,13 @@ def packWingetOp [cmd] {
 }
 
 
-def packWinget [] {
-  try {
-    let cmd = 'winget'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
-      if \$env.PACK_OP == 'tidy' {
-        return
-      }
+def --env packWinget [] {
+  let cmd = 'winget'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if \$env.PACK_OP == 'tidy' {
+      return
+    }
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -6651,10 +6511,6 @@ def packWinget [] {
       if \$yn != 'n' {
         packWingetOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -6787,8 +6643,9 @@ do {
 
 \$env.PACK_OP = r#'rem'#
 
-def packChocoOp [cmd] {
+def --env packChocoOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
+  \$env.PACKED = true
   if 'PACK_REM_GROUP_NAMES' in \$env {
     for name in \$env.PACK_REM_GROUP_NAMES {
       opPrintMaybeRunCmd ...(\$name | split row ' ')
@@ -6797,10 +6654,10 @@ def packChocoOp [cmd] {
 }
 
 
-def packChoco [] {
-  try {
-    let cmd = 'choco'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packChoco [] {
+  let cmd = 'choco'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -6812,16 +6669,13 @@ def packChoco [] {
         packChocoOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
 
-def packScoopOp [cmd] {
+def --env packScoopOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
+  \$env.PACKED = true
   if 'PACK_REM_GROUP_NAMES' in \$env {
     for name in \$env.PACK_REM_GROUP_NAMES {
       opPrintMaybeRunCmd ...(\$name | split row ' ')
@@ -6830,10 +6684,10 @@ def packScoopOp [cmd] {
 }
 
 
-def packScoop [] {
-  try {
-    let cmd = 'scoop'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packScoop [] {
+  let cmd = 'scoop'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -6847,16 +6701,13 @@ def packScoop [] {
         packScoopOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
 
-def packWingetOp [cmd] {
+def --env packWingetOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
+  \$env.PACKED = true
   if 'PACK_REM_GROUP_NAMES' in \$env {
     for name in \$env.PACK_REM_GROUP_NAMES {
       opPrintMaybeRunCmd ...(\$name | split row ' ')
@@ -6865,13 +6716,13 @@ def packWingetOp [cmd] {
 }
 
 
-def packWinget [] {
-  try {
-    let cmd = 'winget'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
-      if \$env.PACK_OP == 'tidy' {
-        return
-      }
+def --env packWinget [] {
+  let cmd = 'winget'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if \$env.PACK_OP == 'tidy' {
+      return
+    }
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -6881,10 +6732,6 @@ def packWinget [] {
       if \$yn != 'n' {
         packWingetOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -7015,7 +6862,7 @@ do {
 
 \$env.PACK_OP = r#'sync'#
 
-def packChocoOp [cmd] {
+def --env packChocoOp [cmd] {
   if 'PACK_SYNC_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd upgrade \$env.PACK_SYNC_NAMES
   } else {
@@ -7024,10 +6871,10 @@ def packChocoOp [cmd] {
 }
 
 
-def packChoco [] {
-  try {
-    let cmd = 'choco'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packChoco [] {
+  let cmd = 'choco'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -7039,15 +6886,11 @@ def packChoco [] {
         packChocoOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
 
-def packScoopOp [cmd] {
+def --env packScoopOp [cmd] {
   if 'PACK_SYNC_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd update \$env.PACK_SYNC_NAMES
   } else {
@@ -7056,10 +6899,10 @@ def packScoopOp [cmd] {
 }
 
 
-def packScoop [] {
-  try {
-    let cmd = 'scoop'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packScoop [] {
+  let cmd = 'scoop'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -7073,15 +6916,11 @@ def packScoop [] {
         packScoopOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
 
-def packWingetOp [cmd] {
+def --env packWingetOp [cmd] {
   if 'PACK_SYNC_NAMES' in \$env {
     opPrintMaybeRunCmd \$cmd upgrade \$env.PACK_SYNC_NAMES
   } else {
@@ -7090,13 +6929,13 @@ def packWingetOp [cmd] {
 }
 
 
-def packWinget [] {
-  try {
-    let cmd = 'winget'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
-      if \$env.PACK_OP == 'tidy' {
-        return
-      }
+def --env packWinget [] {
+  let cmd = 'winget'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if \$env.PACK_OP == 'tidy' {
+      return
+    }
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -7106,10 +6945,6 @@ def packWinget [] {
       if \$yn != 'n' {
         packWingetOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -7238,15 +7073,15 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
-def packChocoOp [cmd] {
+def --env packChocoOp [cmd] {
   opPrintMaybeRunCmd \$cmd cache remove
 }
 
 
-def packChoco [] {
-  try {
-    let cmd = 'choco'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packChoco [] {
+  let cmd = 'choco'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -7258,23 +7093,19 @@ def packChoco [] {
         packChocoOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
 
-def packScoopOp [cmd] {
+def --env packScoopOp [cmd] {
   opPrintMaybeRunCmd \$cmd cleanup --all --cache
 }
 
 
-def packScoop [] {
-  try {
-    let cmd = 'scoop'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packScoop [] {
+  let cmd = 'scoop'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -7288,24 +7119,20 @@ def packScoop [] {
         packScoopOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
 
-def packWingetOp [cmd] {}
+def --env packWingetOp [cmd] {}
 
 
-def packWinget [] {
-  try {
-    let cmd = 'winget'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
-      if \$env.PACK_OP == 'tidy' {
-        return
-      }
+def --env packWinget [] {
+  let cmd = 'winget'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if \$env.PACK_OP == 'tidy' {
+      return
+    }
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -7315,10 +7142,6 @@ def packWinget [] {
       if \$yn != 'n' {
         packWingetOp \$cmd
       }
-    }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
     }
   }
 }
@@ -7447,15 +7270,15 @@ do {
 
 \$env.PACK_OP = r#'find'#
 
-def packChocoOp [cmd] {
+def --env packChocoOp [cmd] {
   opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
 }
 
 
-def packChoco [] {
-  try {
-    let cmd = 'choco'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packChoco [] {
+  let cmd = 'choco'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -7467,23 +7290,19 @@ def packChoco [] {
         packChocoOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
 
-def packScoopOp [cmd] {
+def --env packScoopOp [cmd] {
   opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
 }
 
 
-def packScoop [] {
-  try {
-    let cmd = 'scoop'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packScoop [] {
+  let cmd = 'scoop'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -7497,26 +7316,22 @@ def packScoop [] {
         packScoopOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
 
-def packWingetOp [cmd] {
+def --env packWingetOp [cmd] {
   opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
 }
 
 
-def packWinget [] {
-  try {
-    let cmd = 'winget'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
-      if \$env.PACK_OP == 'tidy' {
-        return
-      }
+def --env packWinget [] {
+  let cmd = 'winget'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if \$env.PACK_OP == 'tidy' {
+      return
+    }
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -7527,13 +7342,93 @@ def packWinget [] {
         packWingetOp \$cmd
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
+
+do {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+  }
+  if \$yn != 'n' {
+opPrint r#'cli'#
+opPrint r#'  7zip.7zip, ajeetdsouza.zoxide, burntsushi.ripgrep.msvc, clement.bottom, git.git, junegunn.fzf, meta.zstandard, microsoft.appinstaller, microsoft.powershell, neovim.neovim, nushell.nushell, sharkdp.fd, starship.starship, xampprocky.tokei'#
+opPrint r#'dev-ai-claude'#
+opPrint r#'  anthropic.claudecode'#
+opPrint r#'dev-ai-codex'#
+opPrint r#'  openai.codex'#
+opPrint r#'dev-ai-gemini'#
+opPrint r#'dev-ai-opencode'#
+opPrint r#'  sst.opencode'#
+opPrint r#'dev-ai-qwen'#
+opPrint r#'dev-dotnet'#
+opPrint r#'  dotnet-sdk'#
+opPrint r#'dev-go'#
+opPrint r#'  golang.go'#
+opPrint r#'dev-js-bun'#
+opPrint r#'  oven-sh.bun'#
+opPrint r#'dev-js-deno'#
+opPrint r#'  denoland.deno'#
+opPrint r#'dev-js-node'#
+opPrint r#'  openjs.nodejs, pnpm.pnpm'#
+opPrint r#'dev-py-uv'#
+opPrint r#'  astral-sh.uv'#
+opPrint r#'dev-py'#
+opPrint r#'  python'#
+opPrint r#'dev-ruby'#
+opPrint r#'  ruby'#
+opPrint r#'dev-rust'#
+opPrint r#'  rustlang.rustup'#
+opPrint r#'dev'#
+opPrint r#'  msys2'#
+opPrint r#'gui-displaylink'#
+opPrint r#'gui-game'#
+opPrint r#'  eden, pcsx2, rpcs3, shadps4, xemu, xenia-canary, meta.oculus, microsoft.directx, microsoft.vcredist.2005.x64, microsoft.vcredist.2005.x86, microsoft.vcredist.2008.x64, microsoft.vcredist.2008.x86, microsoft.vcredist.2010.x64, microsoft.vcredist.2010.x86, microsoft.vcredist.2012.x64, microsoft.vcredist.2012.x86, microsoft.vcredist.2013.x64, microsoft.vcredist.2013.x86, microsoft.vcredist.2015+.x64, microsoft.vcredist.2015+.x86, valve.steam'#
+opPrint r#'gui-ide-androidstudio'#
+opPrint r#'  google.androidstudio'#
+opPrint r#'gui-ide-vscode'#
+opPrint r#'  microsoft.visualstudiocode'#
+opPrint r#'gui-ide-zed'#
+opPrint r#'  zedindustries.zed'#
+opPrint r#'gui-media-vlc'#
+opPrint r#'  videolan.vlc'#
+opPrint r#'gui-media'#
+opPrint r#'  clsid2.mpc-hc'#
+opPrint r#'gui-net-wireshark'#
+opPrint r#'  wiresharkfoundation.wireshark'#
+opPrint r#'gui-note-obsidian'#
+opPrint r#'  obsidian.obsidian'#
+opPrint r#'gui-term-ghostty'#
+opPrint r#'gui-term'#
+opPrint r#'  microsoft.windowsterminal'#
+opPrint r#'gui-web-brave'#
+opPrint r#'  brave.brave'#
+opPrint r#'gui-web-edge'#
+opPrint r#'  microsoft.edge'#
+opPrint r#'gui-web-vivaldi'#
+opPrint r#'  vivaldi.vivaldi'#
+opPrint r#'gui'#
+opPrint r#'  arminosaj.autodarkmode, glavsoft.tightvnc, microsoft.powertoys, microsoft.sysinternals.suite, microsoft.windowsapp, rufus.rufus, voidtools.everything, windirstat.windirstat'#
+opPrint r#'os-de-gnome'#
+opPrint r#'os-de-kde'#
+opPrint r#'os-font'#
+opPrint r#'  firacode-nf-mono, hack-nf-mono'#
+opPrint r#'os-llm-llama'#
+opPrint r#'os-llm-llama-swap'#
+opPrint r#'os-llm-lmstudio'#
+opPrint r#'  elementlabs.lmstudio'#
+opPrint r#'os-llm-ollama'#
+opPrint r#'  ollama.ollama'#
+opPrint r#'os-net'#
+opPrint r#'os-virt-docker'#
+opPrint r#'os-virt-lxc'#
+opPrint r#'os-virt-podman'#
+opPrint r#'os-virt-qemu'#
+  }
+}
 
 \$env.PACK_FIND_NAMES = r#''#
 
@@ -7660,15 +7555,15 @@ do {
 
 \$env.PACK_OP = r#'find'#
 
-def packBrewOp [cmd] {
+def --env packBrewOp [cmd] {
   opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
 }
 
 
-def packBrew [] {
-  try {
-    let cmd = 'brew'
-    if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+def --env packBrew [] {
+  let cmd = 'brew'
+  if ('PACK_MANAGER' not-in \$env or \$env.PACK_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    if not (('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in \$env {
         \$yn = 'y'
@@ -7682,13 +7577,100 @@ def packBrew [] {
         }
       }
     }
-  } catch { |e|
-    if not ((\$e.msg | str downcase) == 'i/o error') {
-      error make \$e
-    }
   }
 }
 
+
+do {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+  }
+  if \$yn != 'n' {
+opPrint r#'cli'#
+opPrint r#'  bottom, ca-certificates, coreutils, curl, fd, fzf, git, neovim, nushell, openssh, openssl, powershell, ripgrep, sevenzip, starship, tokei, zellij, zoxide, zstd'#
+opPrint r#'dev-ai-claude'#
+opPrint r#'  --cask, claude-code'#
+opPrint r#'dev-ai-codex'#
+opPrint r#'  codex'#
+opPrint r#'dev-ai-gemini'#
+opPrint r#'  gemini-cli'#
+opPrint r#'dev-ai-opencode'#
+opPrint r#'  opencode'#
+opPrint r#'dev-ai-qwen'#
+opPrint r#'  qwen-code'#
+opPrint r#'dev-dotnet'#
+opPrint r#'  --cask, dotnet-sdk'#
+opPrint r#'dev-go'#
+opPrint r#'  go'#
+opPrint r#'dev-js-bun'#
+opPrint r#'  bun'#
+opPrint r#'dev-js-deno'#
+opPrint r#'  deno'#
+opPrint r#'dev-js-node'#
+opPrint r#'  node, pnpm'#
+opPrint r#'dev-py-uv'#
+opPrint r#'  uv'#
+opPrint r#'dev-py'#
+opPrint r#'  python'#
+opPrint r#'dev-ruby'#
+opPrint r#'  ruby'#
+opPrint r#'dev-rust'#
+opPrint r#'  rustup'#
+opPrint r#'dev'#
+opPrint r#'  autoconf, automake'#
+opPrint r#'gui-displaylink'#
+opPrint r#'  --cask, displaylink'#
+opPrint r#'gui-game'#
+opPrint r#'  --cask, steam'#
+opPrint r#'gui-ide-androidstudio'#
+opPrint r#'  --cask, android-studio'#
+opPrint r#'gui-ide-vscode'#
+opPrint r#'  --cask, visual-studio-code'#
+opPrint r#'gui-ide-zed'#
+opPrint r#'  --cask, zed'#
+opPrint r#'gui-media-vlc'#
+opPrint r#'  --cask, vlc'#
+opPrint r#'gui-media'#
+opPrint r#'  --cask, iina'#
+opPrint r#'gui-net-wireshark'#
+opPrint r#'  --cask, wireshark'#
+opPrint r#'gui-note-obsidian'#
+opPrint r#'  --cask, obsidian'#
+opPrint r#'gui-term-ghostty'#
+opPrint r#'  --cask, ghostty'#
+opPrint r#'gui-term'#
+opPrint r#'  --cask, iterm2'#
+opPrint r#'gui-web-brave'#
+opPrint r#'  --cask, brave-browser'#
+opPrint r#'gui-web-edge'#
+opPrint r#'  --cask, microsoft-edge'#
+opPrint r#'gui-web-vivaldi'#
+opPrint r#'  --cask, vivaldi'#
+opPrint r#'gui'#
+opPrint r#'  --cask, flux, grandperspective, karabiner-elements, keka, rectangle, vnc-viewer, windows-app'#
+opPrint r#'os-de-gnome'#
+opPrint r#'os-de-kde'#
+opPrint r#'os-font'#
+opPrint r#'  --cask, font-fira-code-nerd-font, font-hack-nerd-font'#
+opPrint r#'os-llm-llama-swap'#
+opPrint r#'  llama-swap'#
+opPrint r#'os-llm-llama'#
+opPrint r#'  llama.cpp'#
+opPrint r#'os-llm-lmstudio'#
+opPrint r#'  --cask, lm-studio'#
+opPrint r#'os-llm-ollama'#
+opPrint r#'  --cask, ollama-app'#
+opPrint r#'os-net'#
+opPrint r#'os-virt-docker'#
+opPrint r#'os-virt-lxc'#
+opPrint r#'os-virt-podman'#
+opPrint r#'os-virt-qemu'#
+opPrint r#'  swtpm, utm'#
+  }
+}
 
 \$env.PACK_FIND_NAMES = r#''#
 
@@ -7810,13 +7792,13 @@ do {
 }
 \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)?sysCpuArch=(\$env.SYS_CPU_ARCH)"
 
-\$env.SYS_CPU_VEN_ID = match (sys cpu | first | get vendor_id | split words | first | str downcase) {
+\$env.SYS_CPU_VEND = match (sys cpu | first | get vendor_id | split words | first | str downcase) {
   'genuineintel' => 'intel',
   'authenticamd' => 'amd',
   'qemu' => 'apple',
   \$x => \$x,
 }
-\$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysCpuVenId=(\$env.SYS_CPU_VEN_ID)"
+\$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysCpuVend=(\$env.SYS_CPU_VEND)"
 
 \$env.SYS_HOST = sys host | get hostname | str downcase
 \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysHost=(\$env.SYS_HOST)"
@@ -7830,17 +7812,17 @@ do {
 \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsPlat=(\$env.SYS_OS_PLAT)"
 
 if \$env.SYS_OS_PLAT == 'linux' {
-  if 'SYS_OS_DE_ID' not-in \$env {
+  if 'SYS_OS_DE' not-in \$env {
     if 'XDG_SESSION_DESKTOP' in \$env {
-      \$env.SYS_OS_DE_ID = \$env.XDG_SESSION_DESKTOP | str downcase
+      \$env.SYS_OS_DE = \$env.XDG_SESSION_DESKTOP | str downcase
     }
-    if 'SYS_OS_DE_ID' in \$env {
-      \$env.SYS_OS_DE_ID = match \$env.SYS_OS_DE_ID {
+    if 'SYS_OS_DE' in \$env {
+      \$env.SYS_OS_DE = match \$env.SYS_OS_DE {
         'kde' => 'plasma',
         'rpd' | 'rpd-labwc' => 'lxde',
         \$x => \$x,
       }
-      \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsDeId=(\$env.SYS_OS_DE_ID)"
+      \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsDe=(\$env.SYS_OS_DE)"
     }
   }
 
@@ -7852,39 +7834,39 @@ if \$env.SYS_OS_PLAT == 'linux' {
       | transpose --as-record --header-row
       | load-env
 
-    if 'SYS_OS_ID' not-in \$env {
+    if 'SYS_OS' not-in \$env {
       if 'ID' in \$env {
-        \$env.SYS_OS_ID = \$env.ID | str downcase
+        \$env.SYS_OS = \$env.ID | str downcase
       }
-      if 'SYS_OS_ID' in \$env {
-        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsId=(\$env.SYS_OS_ID)"
+      if 'SYS_OS' in \$env {
+        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOs=(\$env.SYS_OS)"
       }
     }
 
-    if 'SYS_OS_ID_LIKE' not-in \$env {
+    if 'SYS_OS_LIKE' not-in \$env {
       if 'ID_LIKE' in \$env {
-        \$env.SYS_OS_ID_LIKE = \$env.ID_LIKE | split words | first | str downcase
+        \$env.SYS_OS_LIKE = \$env.ID_LIKE | split words | first | str downcase
       }
-      if 'SYS_OS_ID_LIKE' in \$env {
-        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsIdLike=(\$env.SYS_OS_ID_LIKE)"
+      if 'SYS_OS_LIKE' in \$env {
+        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsLike=(\$env.SYS_OS_LIKE)"
       }
     }
 
-    if 'SYS_OS_VER_ID' not-in \$env {
+    if 'SYS_OS_VERS' not-in \$env {
       if 'VERSION_ID' in \$env {
-        \$env.SYS_OS_VER_ID = \$env.VERSION_ID | str downcase
+        \$env.SYS_OS_VERS = \$env.VERSION_ID | str downcase
       }
-      if 'SYS_OS_VER_ID' in \$env {
-        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsVerId=(\$env.SYS_OS_VER_ID)"
+      if 'SYS_OS_VERS' in \$env {
+        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsVers=(\$env.SYS_OS_VERS)"
       }
     }
 
-    if 'SYS_OS_VER_CODE' not-in \$env {
+    if 'SYS_OS_VERS_CODE' not-in \$env {
       if 'VERSION_CODENAME' in \$env {
-        \$env.SYS_OS_VER_CODE = \$env.VERSION_CODENAME | str downcase
+        \$env.SYS_OS_VERS_CODE = \$env.VERSION_CODENAME | str downcase
       }
-      if 'SYS_OS_VER_CODE' in \$env {
-        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsVerCode=(\$env.SYS_OS_VER_CODE)"
+      if 'SYS_OS_VERS_CODE' in \$env {
+        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsVersCode=(\$env.SYS_OS_VERS_CODE)"
       }
     }
   }

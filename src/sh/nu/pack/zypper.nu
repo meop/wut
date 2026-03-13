@@ -1,7 +1,7 @@
-def packZypper [] {
-  try {
-    let cmd = 'zypper'
-    if ('PACK_MANAGER' not-in $env or $env.PACK_MANAGER == $cmd) and (which $cmd | is-not-empty) {
+def --env packZypper [] {
+  let cmd = 'zypper'
+  if ('PACK_MANAGER' not-in $env or $env.PACK_MANAGER == $cmd) and (which $cmd | is-not-empty) {
+    if not (('PACK_OP' in $env) and ($env.PACK_OP in ['add', 'rem']) and ($env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in $env {
         $yn = 'y'
@@ -15,10 +15,6 @@ def packZypper [] {
         }
         packZypperOp $cmd
       }
-    }
-  } catch { |e|
-    if not (($e.msg | str downcase) == 'i/o error') {
-      error make $e
     }
   }
 }

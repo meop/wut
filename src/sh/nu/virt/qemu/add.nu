@@ -68,29 +68,29 @@ def virtQemuOpAdd [config, configVm, cmd, cmdSysArch, instance] {
   $qemuEnv = $qemuEnv | upsert 'instance' $instance
 
   let cpuStat = ^lscpu
-  $qemuEnv = $qemuEnv | upsert 'QEMU_GUEST_CPU_SOCKETS' ($cpuStat | find --ignore-case 'socket(s)' | split row ':' | last | str trim | ansi strip)
-  $qemuEnv = $qemuEnv | upsert 'QEMU_GUEST_CPU_CORES' ($cpuStat | find --ignore-case 'core(s)' | split row ':' | last | str trim | ansi strip)
-  $qemuEnv = $qemuEnv | upsert 'QEMU_GUEST_CPU_THREADS' ($cpuStat | find --ignore-case 'thread(s)' | split row ':' | last | str trim | ansi strip)
+  $qemuEnv = $qemuEnv | upsert 'VM_CPU_SOCKETS' ($cpuStat | find --ignore-case 'socket(s)' | split row ':' | last | str trim | ansi strip)
+  $qemuEnv = $qemuEnv | upsert 'VM_CPU_CORES' ($cpuStat | find --ignore-case 'core(s)' | split row ':' | last | str trim | ansi strip)
+  $qemuEnv = $qemuEnv | upsert 'VM_CPU_THREADS' ($cpuStat | find --ignore-case 'thread(s)' | split row ':' | last | str trim | ansi strip)
 
   let cpuInfo = ^cat '/proc/cpuinfo'
   let cpuVendorFull = $cpuInfo | find --ignore-case 'vendor_id' | last | split row ':' | last | str downcase | str trim | ansi strip
   let cpuVendor = if ($cpuVendorFull | str contains 'amd') { 'amd' } else { 'intel' }
-  $qemuEnv = $qemuEnv | upsert 'QEMU_GUEST_CPU_VENDOR' ($cpuVendor | str trim)
+  $qemuEnv = $qemuEnv | upsert 'VM_CPU_VENDOR' ($cpuVendor | str trim)
 
-  let nicPath = $"/sys/class/net/($qemuEnv.QEMU_HOST_NIC)"
-  $qemuEnv = $qemuEnv | upsert 'QEMU_HOST_NIC_MAC' (if ('QEMU_HOST_NIC_MAC' in $qemuEnv) {
-    $qemuEnv.QEMU_HOST_NIC_MAC
+  let nicPath = $"/sys/class/net/($qemuEnv.NIC)"
+  $qemuEnv = $qemuEnv | upsert 'NIC_MAC' (if ('NIC_MAC' in $qemuEnv) {
+    $qemuEnv.NIC_MAC
   } else {
     ^cat $"($nicPath)/address" | str trim
   })
-  $qemuEnv = $qemuEnv | upsert 'QEMU_HOST_NIC_IF_INDEX' (if ('QEMU_HOST_NIC_IF_INDEX' in $qemuEnv) {
-    $qemuEnv.QEMU_HOST_NIC_IF_INDEX
+  $qemuEnv = $qemuEnv | upsert 'NIC_IF_INDEX' (if ('NIC_IF_INDEX' in $qemuEnv) {
+    $qemuEnv.NIC_IF_INDEX
   } else {
     ^cat $"($nicPath)/ifindex" | str trim
   })
 
-  let sysArch = $qemuEnv.QEMU_GUEST_SYS_ARCH
-  let sysPlat = $qemuEnv.QEMU_GUEST_SYS_PLAT
+  let sysArch = $qemuEnv.VM_SYS_ARCH
+  let sysPlat = $qemuEnv.VM_SYS_PLAT
 
   if 'VFIO_PCI_DEV_IDS' in $qemuEnv {
     for pciDevId in (($qemuEnv.VFIO_PCI_DEV_IDS | split row ',') | enumerate) {
@@ -123,40 +123,58 @@ def virtQemuOpAdd [config, configVm, cmd, cmdSysArch, instance] {
   }
 
   if 'qemu' in $configVm {
+    let serviceName = $"qemu-($instance)"
+    let serviceDir = '/etc/systemd/system'
+    let configDir = $"/var/lib/qemu/($instance)"
+
+    let servicePath = ($serviceDir | path join $"($serviceName).service")
+
+    opPrintMaybeRunCmd sudo mkdir -p $serviceDir
+    opPrintMaybeRunCmd sudo mkdir -p $configDir
+
+    let tmpPath = $"($qemuEnv.TMP_QEMU_DIR_PATH)/($instance)"
+    let pidFilePath = ($tmpPath | path join qemu.pid)
+
+    mut serviceLines = [
+      '[Unit]',
+      $"Description=QEMU instance ($instance)",
+      'After=network.target',
+      '',
+      '[Service]',
+      'Type=forking',
+      $"PIDFile=($pidFilePath)",
+      $"WorkingDirectory=($configDir)",
+      $"ExecStartPre=/usr/bin/mkdir -p ($tmpPath)",
+    ]
 
     if 'swtpm' in $configVm {
-      if (do --ignore-errors { ^pgrep --ignore-ancestors --full --list-full $"^swtpm.*($instance)" | is-not-empty }) {
-        opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'pkill --full "^swtpm.*($instance)"'#"
-      }
+      let swtpmScriptPath = ($configDir | path join swtpm.sh)
+      let swtpmArgs = replaceEnv $qemuEnv ($configVm | get swtpm.arguments? | default [])
+      let swtpmCmd = $"swtpm(if ($swtpmArgs | length) > 0 { ' ' + ($swtpmArgs | str join ' ') } else { '' })"
+      let swtpmContent = (['#!/usr/bin/sh', $"exec ($swtpmCmd)"] | str join "\n") + "\n"
 
-      let tmpPath = $"($qemuEnv.TMP_QEMU_DIR_PATH)/($instance)"
-      if ($tmpPath | path exists) {
-        opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'rm --force --recursive "($tmpPath)"'#"
-      }
-
-      opPrintMaybeRunCmd sudo mkdir -p $tmpPath
-
-      let swtpmBin = 'swtpm'
-
-      let qEnv = $qemuEnv
-      let swtpmArgs = replaceEnv $qEnv ($configVm | get swtpm.arguments? | default [])
-
-      let swtpmCmd = $"($swtpmBin)(if ($swtpmArgs | length) > 0 { ' ' + ($swtpmArgs | str join ' ') } else { '' })"
-      opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($swtpmCmd)'#"
-
-      if 'NOOP' not-in $env {
-        sleep 2sec
-      }
+      # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+      # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+      opPrintMaybeRunCmd $"r##'($swtpmContent)'##" '|' sudo tee $swtpmScriptPath '|' ignore
+      opPrintMaybeRunCmd sudo chmod +x $swtpmScriptPath
+      $serviceLines = $serviceLines | append [
+        $"ExecStartPre=-/usr/bin/pkill --full \"^swtpm.*($instance)\"",
+        $"ExecStartPre=-/usr/bin/rm -f ($tmpPath)/tpm.socket",
+        $"ExecStartPre=($swtpmScriptPath)",
+        'ExecStartPre=/usr/bin/sleep 2',
+      ]
     }
 
-    let qemuBlock = $config | get qemu | get $sysArch
+    $serviceLines = $serviceLines | append $"ExecStartPre=-/usr/bin/rm -f ($pidFilePath)"
+
+    let qemuBlock = $config | get qemu | get architecture | get $sysArch
     let qemuBin = $cmdSysArch
 
     let qemuCpuFlags = [
-      [cpu _ _ flags],
-      [cpu $cpuVendor _ flags],
-      [cpu _ $sysPlat flags],
-      [cpu _ $cpuVendor $sysPlat _ flags],
+      [cpu flags],
+      [cpu vendor $cpuVendor flags],
+      [cpu platform $sysPlat flags],
+      [cpu vendor $cpuVendor platform $sysPlat flags],
     ] | each {
       |s| let p = (intoCellPath ...$s)
       if ($qemuBlock | get $p | is-not-empty) {
@@ -166,7 +184,7 @@ def virtQemuOpAdd [config, configVm, cmd, cmdSysArch, instance] {
       }
     } | flatten
 
-    $qemuEnv = $qemuEnv | upsert 'QEMU_GUEST_CPU_FLAGS' (
+    $qemuEnv = $qemuEnv | upsert 'VM_CPU_FLAGS' (
       if ($qemuCpuFlags | length) > 0 {
         $",($qemuCpuFlags | str join ',')"
       } else {
@@ -174,32 +192,55 @@ def virtQemuOpAdd [config, configVm, cmd, cmdSysArch, instance] {
       }
     )
 
-    let qEnv = $qemuEnv
-    let qemuArgs = replaceEnv $qEnv ($configVm | get qemu.arguments? | default [])
-
+    let qemuScriptPath = ($configDir | path join qemu.sh)
+    let qemuArgs = replaceEnv $qemuEnv ($configVm | get qemu.arguments? | default [])
+    let cpusCount = (($qemuEnv.VM_CPU_SOCKETS | into int) * ($qemuEnv.VM_CPU_CORES | into int) * ($qemuEnv.VM_CPU_THREADS | into int))
+    let cpusMax = $cpusCount - 1
     let qemuCmd = $"($qemuBin)(if ($qemuArgs | length) > 0 { ' ' + ($qemuArgs | str join ' ') } else { '' })"
-    opPrintMaybeRunCmd sudo --preserve-env sh -c $"r#'($qemuCmd)'#"
+    let qemuContent = (['#!/usr/bin/sh', $"exec ($qemuCmd)"] | str join "\n") + "\n"
 
-    if 'NOOP' not-in $env {
-      sleep 2sec
+    # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+    # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+    opPrintMaybeRunCmd $"r##'($qemuContent)'##" '|' sudo tee $qemuScriptPath '|' ignore
+    opPrintMaybeRunCmd sudo chmod +x $qemuScriptPath
+    $serviceLines = $serviceLines | append $"ExecStart=($qemuScriptPath)"
 
-      let cpus = 0..<(($qemuEnv.QEMU_GUEST_CPU_SOCKETS | into int) * ($qemuEnv.QEMU_GUEST_CPU_CORES | into int) * ($qemuEnv.QEMU_GUEST_CPU_THREADS | into int))
+    if ($qemuBlock | get cpu.pin? | default false) {
+      let pinScriptPath = ($configDir | path join pin.sh)
+      let pinLines = [
+        '#!/usr/bin/sh',
+        ("pid=$(cat " + $pidFilePath + ")"),
+        'if [ -z "$pid" ]; then exit 0; fi',
+        ("for i in $(seq 0 " + ($cpusMax | into string) + "); do"),
+        "  spid=$(ps --pid $pid -T -o ucmd,spid | grep \"CPU $i/KVM\" | awk '{print $NF}')",
+        '  if [ -n "$spid" ]; then',
+        '    taskset --pid --cpu-list $i $spid',
+        '  fi',
+        'done',
+      ]
+      let pinContent = ($pinLines | str join "\n") + "\n"
 
-      let pid = opPrintRunCmd ^pgrep --ignore-ancestors --full --list-full $""^($cmdSysArch).*($instance)"" '|' split row $"r#' '#" '|' first
-      let pidThreadInfos = ^ps --pid $pid -T -o ucmd,spid | from ssv
-
-      let pidThreads = $cpus | each { |cpu|
-        $pidThreadInfos | each { |threadInfo|
-          if ($threadInfo | get CMD | str starts-with $"CPU ($cpu)/KVM") {
-            $threadInfo | get SPID
-          }
-        }
-      } | flatten
-
-      for $i in ($pidThreads | enumerate) {
-        opPrintRunCmd sudo --preserve-env sh -c $"r#'taskset --pid --cpu-list ($i.index) ($i.item)'#" '|' ignore
-      }
+      # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+      # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+      opPrintMaybeRunCmd $"r##'($pinContent)'##" '|' sudo tee $pinScriptPath '|' ignore
+      opPrintMaybeRunCmd sudo chmod +x $pinScriptPath
+      $serviceLines = $serviceLines | append [
+        'ExecStartPost=/usr/bin/sleep 2',
+        $"ExecStartPost=($pinScriptPath)",
+      ]
     }
+
+    $serviceLines = $serviceLines | append [
+      'Restart=on-failure',
+      '',
+      '[Install]',
+      'WantedBy=default.target',
+    ]
+    let serviceContent = ($serviceLines | str join "\n") + "\n"
+
+    opPrintMaybeRunCmd $"r#'($serviceContent)'#" '|' sudo tee $servicePath '|' ignore
+    opPrintMaybeRunCmd sudo systemctl daemon-reload
+    opPrintMaybeRunCmd sudo systemctl enable --now $serviceName
   }
 }
 

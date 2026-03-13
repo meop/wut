@@ -16,7 +16,11 @@ def virtDockerOp [cmd] {
           | each { |v|
               if ($v | describe) == 'string' {
                 let host = $v | split row ':' | first
-                if ($host | str starts-with '/') { $host } else { null }
+                if ($host | str starts-with '/') {
+                  $host
+                } else {
+                  null
+                }
               } else if ($v | get type? | default '') == 'bind' {
                 $v.source
               } else {

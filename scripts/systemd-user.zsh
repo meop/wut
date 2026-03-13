@@ -22,7 +22,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=$WUT_DIR
-ExecStart=$DENO_BIN run --allow-all --env-file src/srv.ts
+ExecStart=$DENO_BIN run --allow-all --env-file --watch src/srv.ts
 Restart=on-failure
 Environment=HOME=%h
 

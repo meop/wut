@@ -1,3 +1,3 @@
-def packDnfOp [cmd] {
+def --env packDnfOp [cmd] {
   opPrintMaybeRunCmd $cmd search $env.PACK_FIND_NAMES
 }

@@ -43,7 +43,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   if (op === 'find') {
     _shell = _shell.with(
       _shell.gatedFunc(
-        'use config (remote)',
+        'use script (remote)',
         _shell.print(
           await getCfgDirDump(dirParts, {
             context,

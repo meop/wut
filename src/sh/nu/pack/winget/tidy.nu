@@ -1,1 +1,1 @@
-def packWingetOp [cmd] {}
+def --env packWingetOp [cmd] {}

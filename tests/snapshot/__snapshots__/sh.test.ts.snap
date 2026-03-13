@@ -1,7 +1,7 @@
 export const snapshot = {};
 
 snapshot[`pwsh / pack / add (redirect) 1`] = `
-\`nu --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOsId=arch''#
+\`nu --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch''#
 
 nu --no-config-file -c \$"( http get --raw --redirect-mode follow \$"(\$env.REQ_URL_SH)" )"
 
@@ -9,7 +9,7 @@ nu --no-config-file -c \$"( http get --raw --redirect-mode follow \$"(\$env.REQ_
 `;
 
 snapshot[`pwsh / pack / find (redirect) 1`] = `
-\`nu --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOsId=arch''#
+\`nu --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch''#
 
 nu --no-config-file -c \$"( http get --raw --redirect-mode follow \$"(\$env.REQ_URL_SH)" )"
 
@@ -41,7 +41,7 @@ nu --no-config-file -c \$"( http get --raw --redirect-mode follow \$"(\$env.REQ_
 `;
 
 snapshot[`zsh / pack / add (redirect) 1`] = `
-\`nu --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOsId=arch'\\\\''#
+\`nu --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch'\\\\''#
 
 nu --no-config-file -c \$"( http get --raw --redirect-mode follow \$"(\$env.REQ_URL_SH)" )"
 
@@ -49,7 +49,7 @@ nu --no-config-file -c \$"( http get --raw --redirect-mode follow \$"(\$env.REQ_
 `;
 
 snapshot[`zsh / pack / find (redirect) 1`] = `
-\`nu --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOsId=arch'\\\\''#
+\`nu --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch'\\\\''#
 
 nu --no-config-file -c \$"( http get --raw --redirect-mode follow \$"(\$env.REQ_URL_SH)" )"
 

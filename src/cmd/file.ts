@@ -63,7 +63,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     throw new Error(`config file not found: ${FILE_KEY}.${Fmt.yaml}`)
   }
 
-  const sys_os_plat = context.sys_os_plat
+  const sysOsPlat = context.sys_os_plat
 
   const validKeys: Array<string> = []
   for (
@@ -79,7 +79,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       })
     )
   ) {
-    if (sys_os_plat && content[key]?.maps?.find((p) => sys_os_plat in p.out)) {
+    if (sysOsPlat && content[key]?.maps?.find((p) => sysOsPlat in p.out)) {
       validKeys.push(key)
     }
   }
@@ -123,7 +123,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
         const map_in = withCtx(map.in, context)
         const map_out = map.out
         const map_permission = map.permission
-        if (!(sys_os_plat && sys_os_plat in map_out)) {
+        if (!(sysOsPlat && sysOsPlat in map_out)) {
           continue
         }
         const localEntryPaths = await localCfgPaths([FILE_KEY, key, map_in])
@@ -132,30 +132,30 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
         }
         if (await isDirPath(localEntryPaths[0])) {
           for (const localEntryPath of localEntryPaths) {
-            validDirs.add(joinVal(compoundKey, map_out[sys_os_plat]))
+            validDirs.add(joinVal(compoundKey, map_out[sysOsPlat]))
             for (const filePath of await getFilePaths(localEntryPath)) {
               const filePathParts = toRelParts(localEntryPath, filePath, false)
               const srcFull = [key, map_in, ...filePathParts].join('/')
-              const dstFull = [map_out[sys_os_plat], ...filePathParts].join('/')
+              const dstFull = [map_out[sysOsPlat], ...filePathParts].join('/')
               validPairs.push(joinVal(compoundKey, srcFull, dstFull))
             }
           }
         } else {
           const srcFull = [key, map_in].join('/')
-          const dstFull = map_out[sys_os_plat]
+          const dstFull = map_out[sysOsPlat]
           validPairs.push(joinVal(compoundKey, srcFull, dstFull))
         }
         if (map_permission) {
           for (
             const permCmd of getPlatAclPermCmds(
-              sys_os_plat,
-              map_out[sys_os_plat],
+              sysOsPlat,
+              map_out[sysOsPlat],
               map_permission,
               context.sys_user ?? '',
             )
           ) {
             validPerms.push(
-              joinVal(compoundKey, execNativeShell(_shell, sys_os_plat, permCmd)),
+              joinVal(compoundKey, execNativeShell(_shell, sysOsPlat, permCmd)),
             )
           }
         }

@@ -1,3 +1,3 @@
-def packChocoOp [cmd] {
+def --env packChocoOp [cmd] {
   opPrintMaybeRunCmd $cmd cache remove
 }

@@ -6,7 +6,7 @@ import { Zshell } from '@meop/shire/sh/zsh'
 
 const REQ_URL_SH = ['req', 'url', 'sh']
 
-const platToNativeShell: Record<string, string> = {
+const sysOsPlatToNativeShell: Record<string, string> = {
   linux: 'zsh',
   darwin: 'zsh',
   winnt: 'pwsh',
@@ -54,11 +54,11 @@ export async function redirectCommonShell(shell: Sh, context: Ctx): Promise<stri
 }
 
 export async function redirectNativeShell(shell: Sh, context: Ctx): Promise<string | null> {
-  return await redirectShell(shell, platToNativeShell[context.sys_os_plat ?? ''], context)
+  return await redirectShell(shell, sysOsPlatToNativeShell[context.sys_os_plat ?? ''], context)
 }
 
 export function execNativeShell(shell: Sh, plat: string, cmd: string): string {
-  return platToNativeShell[plat] === 'pwsh'
+  return sysOsPlatToNativeShell[plat] === 'pwsh'
     ? Powershell.execStr(shell.toLiteral(cmd))
     : Zshell.execStr(shell.toLiteral(cmd))
 }

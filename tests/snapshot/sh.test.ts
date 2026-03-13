@@ -5,13 +5,13 @@ import { checkSyntax, req } from '../helpers.ts'
 
 // pwsh → nu redirect
 Deno.test('pwsh / pack / add (redirect)', async (t) => {
-  const body = await (await runSrv(req('/sh/pwsh/pack/add/firefox?sysOsPlat=linux&sysOsId=arch'))).text()
+  const body = await (await runSrv(req('/sh/pwsh/pack/add/firefox?sysOsPlat=linux&sysOs=arch'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('pwsh', body)
 })
 
 Deno.test('pwsh / pack / find (redirect)', async (t) => {
-  const body = await (await runSrv(req('/sh/pwsh/pack/find/firefox?sysOsPlat=linux&sysOsId=arch'))).text()
+  const body = await (await runSrv(req('/sh/pwsh/pack/find/firefox?sysOsPlat=linux&sysOs=arch'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('pwsh', body)
 })
@@ -36,13 +36,13 @@ Deno.test('pwsh / virt / list (redirect)', async (t) => {
 
 // zsh → nu redirect
 Deno.test('zsh / pack / add (redirect)', async (t) => {
-  const body = await (await runSrv(req('/sh/zsh/pack/add/firefox?sysOsPlat=linux&sysOsId=arch'))).text()
+  const body = await (await runSrv(req('/sh/zsh/pack/add/firefox?sysOsPlat=linux&sysOs=arch'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('zsh', body)
 })
 
 Deno.test('zsh / pack / find (redirect)', async (t) => {
-  const body = await (await runSrv(req('/sh/zsh/pack/find/firefox?sysOsPlat=linux&sysOsId=arch'))).text()
+  const body = await (await runSrv(req('/sh/zsh/pack/find/firefox?sysOsPlat=linux&sysOs=arch'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('zsh', body)
 })

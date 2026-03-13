@@ -1,4 +1,4 @@
-def packZypperOp [cmd] {
+def --env packZypperOp [cmd] {
   if 'PACK_LIST_NAMES' in $env {
     opPrintMaybeRunCmd $cmd search --installed-only '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case $env.PACK_LIST_NAMES
   } else {

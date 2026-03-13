@@ -1,7 +1,7 @@
-def packYay [] {
-  try {
-    let cmd = 'yay'
-    if ('PACK_MANAGER' not-in $env or $env.PACK_MANAGER == $cmd) and (which $cmd | is-not-empty) {
+def --env packYay [] {
+  let cmd = 'yay'
+  if ('PACK_MANAGER' not-in $env or $env.PACK_MANAGER == $cmd) and (which $cmd | is-not-empty) {
+    if not (('PACK_OP' in $env) and ($env.PACK_OP in ['add', 'rem']) and ($env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in $env {
         $yn = 'y'
@@ -15,18 +15,13 @@ def packYay [] {
         packPacmanOp $cmd
       }
     }
-  } catch { |e|
-    if not (($e.msg | str downcase) == 'i/o error') {
-      error make $e
-    }
   }
 }
-def packPacman [] {
-  try {
-    let cmd = 'pacman'
-    if ('PACK_MANAGER' not-in $env) and (which yay | is-not-empty) {
-      # yay is a superset of pacman
-    } else if ('PACK_MANAGER' not-in $env or $env.PACK_MANAGER == $cmd) and (which $cmd | is-not-empty) {
+def --env packPacman [] {
+  let cmd = 'pacman'
+  if ('PACK_MANAGER' not-in $env) and (which yay | is-not-empty) {
+  } else if ('PACK_MANAGER' not-in $env or $env.PACK_MANAGER == $cmd) and (which $cmd | is-not-empty) {
+    if not (('PACK_OP' in $env) and ($env.PACK_OP in ['add', 'rem']) and ($env.PACKED? | default false)) {
       mut yn = ''
       if 'YES' in $env {
         $yn = 'y'
@@ -40,10 +35,6 @@ def packPacman [] {
         }
         packPacmanOp $cmd
       }
-    }
-  } catch { |e|
-    if not (($e.msg | str downcase) == 'i/o error') {
-      error make $e
     }
   }
 }

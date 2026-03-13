@@ -9,19 +9,13 @@ def replaceEnv [line] {
   return $l
 }
 def file [] {
-  try {
-    mut yn = ''
-    if 'YES' in $env {
-      $yn = 'y'
-    } else {
-      $yn = input r#'? use file (user) [y, [n]]: '#
-    }
-    if $yn != 'n' {
-      fileOp
-    }
-  } catch { |e|
-    if not (($e.msg | str downcase) == 'i/o error') {
-      error make $e
-    }
+  mut yn = ''
+  if 'YES' in $env {
+    $yn = 'y'
+  } else {
+    $yn = input r#'? use file (user) [y, [n]]: '#
+  }
+  if $yn != 'n' {
+    fileOp
   }
 }

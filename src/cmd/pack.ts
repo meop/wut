@@ -28,13 +28,13 @@ export class PackCmd extends CmdBase implements Cmd {
   }
 }
 
-const osPlatToManagers: Record<string, Array<string>> = {
+const sysOsPlatToManagers: Record<string, Array<string>> = {
   linux: ['yay', 'pacman', 'apt', 'dnf', 'zypper'],
   darwin: ['brew'],
   winnt: ['choco', 'scoop', 'winget'],
 }
 
-const osIdToManagers: Record<string, Array<string>> = {
+const sysOsToManagers: Record<string, Array<string>> = {
   arch: ['yay', 'pacman'],
   archarm: ['yay', 'pacman'],
   manjaro: ['yay', 'pacman'],
@@ -55,7 +55,6 @@ const PACK_KEY = 'pack'
 const PACK_MANAGER_KEY = [PACK_KEY, 'manager']
 const PACK_OP_KEY = [PACK_KEY, 'op']
 const PACK_OP_NAMES_KEY = (op: string) => [PACK_KEY, op, 'names']
-const PACK_OP_GROUP_KEY = (op: string) => [PACK_KEY, op, 'group']
 const PACK_OP_GROUP_NAMES_KEY = (
   op: string,
 ) => [PACK_KEY, op, 'group', 'names']
@@ -63,14 +62,14 @@ const PACK_OP_GROUP_NAMES_KEY = (
 function getSupportedManagers(context: Ctx, environment: Env) {
   let managers: Array<string> = []
 
-  const osPlat = context.sys_os_plat
-  const osId = context.sys_os_id
+  const sysOsPlat = context.sys_os_plat
+  const sysOs = context.sys_os
 
-  if (osPlat) {
-    managers.push(...(osPlatToManagers[osPlat] ?? []))
+  if (sysOsPlat) {
+    managers.push(...(sysOsPlatToManagers[sysOsPlat] ?? []))
   }
-  if (osId && osId in osIdToManagers) {
-    managers = managers.filter((p) => osIdToManagers[osId].includes(p))
+  if (sysOs && sysOs in sysOsToManagers) {
+    managers = managers.filter((p) => sysOsToManagers[sysOs].includes(p))
   }
   if (environment.get(PACK_MANAGER_KEY)) {
     managers = managers.filter((p) => p === environment.get(PACK_MANAGER_KEY))
@@ -185,7 +184,7 @@ function printGroups(shell: Sh, entries: Array<string>) {
     lines.push(...shell.print(key))
     if (names) lines.push(...shell.print(`  ${names}`))
   }
-  return shell.with(shell.gatedFunc('use config (remote)', lines))
+  return shell.with(shell.gatedFunc('use pack (remote)', lines))
 }
 
 function callManagers(shell: Sh, managers: Array<string>) {
@@ -351,9 +350,8 @@ async function execOp(
 
   const names = environment.getSplit(PACK_OP_NAMES_KEY(op))
   let found: Array<string> = []
-  let groupFound = false
 
-  if (environment.get(PACK_OP_GROUP_KEY(op))) {
+  if (op === 'add' || op === 'find' || op === 'rem') {
     if (op === 'find') {
       const { entries: groupEntries, found: groupFilterFound } = await findGroupsWithNames(
         names.length ? names : undefined,
@@ -361,7 +359,6 @@ async function execOp(
       )
       found = groupFilterFound
       result = printGroups(result, groupEntries)
-      groupFound = groupEntries.length > 0
     } else {
       const groupResult = await processGroupNames(
         result,
@@ -378,11 +375,11 @@ async function execOp(
   const remaining = names.filter((n) => !found.includes(n))
 
   if (op === 'find' || op === 'list' || op === 'out') {
-    for (const name of remaining) {
+    for (const name of names) {
       result = setOpNames(result, op, name)
       result = callManagers(result, managers)
     }
-    if (names.length === 0 && !groupFound) {
+    if (names.length === 0) {
       result = setOpNames(result, op, '')
       result = callManagers(result, managers)
     }
@@ -407,10 +404,6 @@ export class PackCmdAdd extends CmdBase implements Cmd {
     this.arguments = [
       { name: 'names', description: 'name(s) to match', required: true },
     ]
-    this.switches = [{
-      keys: ['-g', '--group'],
-      description: 'group search will be used',
-    }]
   }
   override async work(
     shell: Sh,
@@ -428,10 +421,6 @@ export class PackCmdFind extends CmdBase implements Cmd {
     this.description = 'find from remote'
     this.aliases = ['f', 'fi', 'se', 'search']
     this.arguments = [{ name: 'names', description: 'name(s) to match' }]
-    this.switches = [{
-      keys: ['-g', '--group'],
-      description: 'group search will be used',
-    }]
   }
   override async work(
     shell: Sh,
@@ -485,10 +474,6 @@ export class PackCmdRem extends CmdBase implements Cmd {
     this.arguments = [
       { name: 'names', description: 'name(s) to match', required: true },
     ]
-    this.switches = [{
-      keys: ['-g', '--group'],
-      description: 'group search will be used',
-    }]
   }
   override async work(
     shell: Sh,

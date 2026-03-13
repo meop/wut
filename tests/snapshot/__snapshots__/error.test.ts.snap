@@ -122,13 +122,13 @@ do {
 }
 \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)?sysCpuArch=(\$env.SYS_CPU_ARCH)"
 
-\$env.SYS_CPU_VEN_ID = match (sys cpu | first | get vendor_id | split words | first | str downcase) {
+\$env.SYS_CPU_VEND = match (sys cpu | first | get vendor_id | split words | first | str downcase) {
   'genuineintel' => 'intel',
   'authenticamd' => 'amd',
   'qemu' => 'apple',
   \$x => \$x,
 }
-\$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysCpuVenId=(\$env.SYS_CPU_VEN_ID)"
+\$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysCpuVend=(\$env.SYS_CPU_VEND)"
 
 \$env.SYS_HOST = sys host | get hostname | str downcase
 \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysHost=(\$env.SYS_HOST)"
@@ -142,17 +142,17 @@ do {
 \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsPlat=(\$env.SYS_OS_PLAT)"
 
 if \$env.SYS_OS_PLAT == 'linux' {
-  if 'SYS_OS_DE_ID' not-in \$env {
+  if 'SYS_OS_DE' not-in \$env {
     if 'XDG_SESSION_DESKTOP' in \$env {
-      \$env.SYS_OS_DE_ID = \$env.XDG_SESSION_DESKTOP | str downcase
+      \$env.SYS_OS_DE = \$env.XDG_SESSION_DESKTOP | str downcase
     }
-    if 'SYS_OS_DE_ID' in \$env {
-      \$env.SYS_OS_DE_ID = match \$env.SYS_OS_DE_ID {
+    if 'SYS_OS_DE' in \$env {
+      \$env.SYS_OS_DE = match \$env.SYS_OS_DE {
         'kde' => 'plasma',
         'rpd' | 'rpd-labwc' => 'lxde',
         \$x => \$x,
       }
-      \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsDeId=(\$env.SYS_OS_DE_ID)"
+      \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsDe=(\$env.SYS_OS_DE)"
     }
   }
 
@@ -164,39 +164,39 @@ if \$env.SYS_OS_PLAT == 'linux' {
       | transpose --as-record --header-row
       | load-env
 
-    if 'SYS_OS_ID' not-in \$env {
+    if 'SYS_OS' not-in \$env {
       if 'ID' in \$env {
-        \$env.SYS_OS_ID = \$env.ID | str downcase
+        \$env.SYS_OS = \$env.ID | str downcase
       }
-      if 'SYS_OS_ID' in \$env {
-        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsId=(\$env.SYS_OS_ID)"
+      if 'SYS_OS' in \$env {
+        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOs=(\$env.SYS_OS)"
       }
     }
 
-    if 'SYS_OS_ID_LIKE' not-in \$env {
+    if 'SYS_OS_LIKE' not-in \$env {
       if 'ID_LIKE' in \$env {
-        \$env.SYS_OS_ID_LIKE = \$env.ID_LIKE | split words | first | str downcase
+        \$env.SYS_OS_LIKE = \$env.ID_LIKE | split words | first | str downcase
       }
-      if 'SYS_OS_ID_LIKE' in \$env {
-        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsIdLike=(\$env.SYS_OS_ID_LIKE)"
+      if 'SYS_OS_LIKE' in \$env {
+        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsLike=(\$env.SYS_OS_LIKE)"
       }
     }
 
-    if 'SYS_OS_VER_ID' not-in \$env {
+    if 'SYS_OS_VERS' not-in \$env {
       if 'VERSION_ID' in \$env {
-        \$env.SYS_OS_VER_ID = \$env.VERSION_ID | str downcase
+        \$env.SYS_OS_VERS = \$env.VERSION_ID | str downcase
       }
-      if 'SYS_OS_VER_ID' in \$env {
-        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsVerId=(\$env.SYS_OS_VER_ID)"
+      if 'SYS_OS_VERS' in \$env {
+        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsVers=(\$env.SYS_OS_VERS)"
       }
     }
 
-    if 'SYS_OS_VER_CODE' not-in \$env {
+    if 'SYS_OS_VERS_CODE' not-in \$env {
       if 'VERSION_CODENAME' in \$env {
-        \$env.SYS_OS_VER_CODE = \$env.VERSION_CODENAME | str downcase
+        \$env.SYS_OS_VERS_CODE = \$env.VERSION_CODENAME | str downcase
       }
-      if 'SYS_OS_VER_CODE' in \$env {
-        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsVerCode=(\$env.SYS_OS_VER_CODE)"
+      if 'SYS_OS_VERS_CODE' in \$env {
+        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsVersCode=(\$env.SYS_OS_VERS_CODE)"
       }
     }
   }
@@ -348,13 +348,13 @@ if (\$IsWindows) {
     \$_raw_ven = 'apple'
   }
 }
-\$SYS_CPU_VEN_ID = switch (\$_raw_ven) {
+\$SYS_CPU_VEND = switch (\$_raw_ven) {
   'genuineintel' { 'intel' }
   'authenticamd' { 'amd' }
   'qemu'         { 'apple' }
   default        { \$_raw_ven }
 }
-\$REQ_URL_SH = "\${REQ_URL_SH}&sysCpuVenId=\${SYS_CPU_VEN_ID}"
+\$REQ_URL_SH = "\${REQ_URL_SH}&sysCpuVend=\${SYS_CPU_VEND}"
 
 if (\$IsWindows) {
   \$SYS_HOST = "\${env:COMPUTERNAME}".ToLower()
@@ -373,18 +373,18 @@ if (\$IsWindows) {
 \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsPlat=\${SYS_OS_PLAT}"
 
 if (\$SYS_OS_PLAT -eq 'linux') {
-  if (-not \$SYS_OS_DE_ID) {
+  if (-not \$SYS_OS_DE) {
     if (\$XDG_SESSION_DESKTOP) {
-      \$SYS_OS_DE_ID = "\${XDG_SESSION_DESKTOP}".ToLower()
+      \$SYS_OS_DE = "\${XDG_SESSION_DESKTOP}".ToLower()
     }
-    if (\$SYS_OS_DE_ID) {
-      \$SYS_OS_DE_ID = switch (\$SYS_OS_DE_ID) {
+    if (\$SYS_OS_DE) {
+      \$SYS_OS_DE = switch (\$SYS_OS_DE) {
         'kde'       { 'plasma' }
         'rpd'       { 'lxde' }
         'rpd-labwc' { 'lxde' }
-        default     { \$SYS_OS_DE_ID }
+        default     { \$SYS_OS_DE }
       }
-      \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsDeId=\${SYS_OS_DE_ID}"
+      \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsDe=\${SYS_OS_DE}"
     }
   }
 
@@ -394,39 +394,39 @@ if (\$SYS_OS_PLAT -eq 'linux') {
       Set-Variable -Name "\$(\$_.Name)" -Value "\$(\$_.Value)".Trim('"')
     }
 
-    if (-not \$SYS_OS_ID) {
+    if (-not \$SYS_OS) {
       if (\$ID) {
-        \$SYS_OS_ID = "\${ID}".ToLower()
+        \$SYS_OS = "\${ID}".ToLower()
       }
-      if (\$SYS_OS_ID) {
-        \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsId=\${SYS_OS_ID}"
+      if (\$SYS_OS) {
+        \$REQ_URL_SH = "\${REQ_URL_SH}&sysOs=\${SYS_OS}"
       }
     }
 
-    if (-not \$SYS_OS_ID_LIKE) {
+    if (-not \$SYS_OS_LIKE) {
       if (\$ID_LIKE) {
-        \$SYS_OS_ID_LIKE = "\${ID_LIKE}".ToLower().Split(' ')[0]
+        \$SYS_OS_LIKE = "\${ID_LIKE}".ToLower().Split(' ')[0]
       }
-      if (\$SYS_OS_ID_LIKE) {
-        \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsIdLike=\${SYS_OS_ID_LIKE}"
+      if (\$SYS_OS_LIKE) {
+        \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsLike=\${SYS_OS_LIKE}"
       }
     }
 
-    if (-not \$SYS_OS_VER_ID) {
+    if (-not \$SYS_OS_VERS) {
       if (\$VERSION_ID) {
-        \$SYS_OS_VER_ID = "\${VERSION_ID}".ToLower()
+        \$SYS_OS_VERS = "\${VERSION_ID}".ToLower()
       }
-      if (\$SYS_OS_VER_ID) {
-        \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsVerId=\${SYS_OS_VER_ID}"
+      if (\$SYS_OS_VERS) {
+        \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsVers=\${SYS_OS_VERS}"
       }
     }
 
-    if (-not \$SYS_OS_VER_CODE) {
+    if (-not \$SYS_OS_VERS_CODE) {
       if (\$VERSION_CODENAME) {
-        \$SYS_OS_VER_CODE = "\${VERSION_CODENAME}".ToLower()
+        \$SYS_OS_VERS_CODE = "\${VERSION_CODENAME}".ToLower()
       }
-      if (\$SYS_OS_VER_CODE) {
-        \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsVerCode=\${SYS_OS_VER_CODE}"
+      if (\$SYS_OS_VERS_CODE) {
+        \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsVersCode=\${SYS_OS_VERS_CODE}"
       }
     }
   }
@@ -578,12 +578,12 @@ elif type sysctl > /dev/null; then
   fi
 fi
 case "\$_raw_ven" in
-  genuineintel) export SYS_CPU_VEN_ID='intel' ;;
-  authenticamd) export SYS_CPU_VEN_ID='amd' ;;
-  qemu)         export SYS_CPU_VEN_ID='apple' ;;
-  *)            export SYS_CPU_VEN_ID="\$_raw_ven" ;;
+  genuineintel) export SYS_CPU_VEND='intel' ;;
+  authenticamd) export SYS_CPU_VEND='amd' ;;
+  qemu)         export SYS_CPU_VEND='apple' ;;
+  *)            export SYS_CPU_VEND="\$_raw_ven" ;;
 esac
-export REQ_URL_SH="\${REQ_URL_SH}&sysCpuVenId=\${SYS_CPU_VEN_ID}"
+export REQ_URL_SH="\${REQ_URL_SH}&sysCpuVend=\${SYS_CPU_VEND}"
 
 export SYS_HOST="\${(L)\$(hostname)}"
 export REQ_URL_SH="\${REQ_URL_SH}&sysHost=\${SYS_HOST}"
@@ -597,55 +597,55 @@ esac
 export REQ_URL_SH="\${REQ_URL_SH}&sysOsPlat=\${SYS_OS_PLAT}"
 
 if [[ \$SYS_OS_PLAT == 'linux' ]]; then
-  if [[ -z \$SYS_OS_DE_ID ]]; then
+  if [[ -z \$SYS_OS_DE ]]; then
     if [[ \$XDG_SESSION_DESKTOP ]]; then
-      export SYS_OS_DE_ID="\${(L)XDG_SESSION_DESKTOP}"
+      export SYS_OS_DE="\${(L)XDG_SESSION_DESKTOP}"
     fi
-    if [[ \$SYS_OS_DE_ID ]]; then
-      case "\$SYS_OS_DE_ID" in
-        kde)       export SYS_OS_DE_ID='plasma' ;;
-        rpd|rpd-labwc) export SYS_OS_DE_ID='lxde' ;;
+    if [[ \$SYS_OS_DE ]]; then
+      case "\$SYS_OS_DE" in
+        kde)       export SYS_OS_DE='plasma' ;;
+        rpd|rpd-labwc) export SYS_OS_DE='lxde' ;;
       esac
-      export REQ_URL_SH="\${REQ_URL_SH}&sysOsDeId=\${SYS_OS_DE_ID}"
+      export REQ_URL_SH="\${REQ_URL_SH}&sysOsDe=\${SYS_OS_DE}"
     fi
   fi
 
   if [[ -f /etc/os-release ]]; then
     source /etc/os-release
 
-    if [[ -z \$SYS_OS_ID ]]; then
+    if [[ -z \$SYS_OS ]]; then
       if [[ \$ID ]]; then
-        export SYS_OS_ID="\${(L)ID}"
+        export SYS_OS="\${(L)ID}"
       fi
-      if [[ \$SYS_OS_ID ]]; then
-        export REQ_URL_SH="\${REQ_URL_SH}&sysOsId=\${SYS_OS_ID}"
+      if [[ \$SYS_OS ]]; then
+        export REQ_URL_SH="\${REQ_URL_SH}&sysOs=\${SYS_OS}"
       fi
     fi
 
-    if [[ -z \$SYS_OS_ID_LIKE ]]; then
+    if [[ -z \$SYS_OS_LIKE ]]; then
       if [[ \$ID_LIKE ]]; then
-        export SYS_OS_ID_LIKE="\${(L)ID_LIKE%% *}"
+        export SYS_OS_LIKE="\${(L)ID_LIKE%% *}"
       fi
-      if [[ \$SYS_OS_ID_LIKE ]]; then
-        export REQ_URL_SH="\${REQ_URL_SH}&sysOsIdLike=\${SYS_OS_ID_LIKE}"
+      if [[ \$SYS_OS_LIKE ]]; then
+        export REQ_URL_SH="\${REQ_URL_SH}&sysOsLike=\${SYS_OS_LIKE}"
       fi
     fi
 
-    if [[ -z \$SYS_OS_VER_ID ]]; then
+    if [[ -z \$SYS_OS_VERS ]]; then
       if [[ \$VERSION_ID ]]; then
-        export SYS_OS_VER_ID="\${(L)VERSION_ID}"
+        export SYS_OS_VERS="\${(L)VERSION_ID}"
       fi
-      if [[ \$SYS_OS_VER_ID ]]; then
-        export REQ_URL_SH="\${REQ_URL_SH}&sysOsVerId=\${SYS_OS_VER_ID}"
+      if [[ \$SYS_OS_VERS ]]; then
+        export REQ_URL_SH="\${REQ_URL_SH}&sysOsVers=\${SYS_OS_VERS}"
       fi
     fi
 
-    if [[ -z \$SYS_OS_VER_CODE ]]; then
+    if [[ -z \$SYS_OS_VERS_CODE ]]; then
       if [[ \$VERSION_CODENAME ]]; then
-        export SYS_OS_VER_CODE="\${(L)VERSION_CODENAME}"
+        export SYS_OS_VERS_CODE="\${(L)VERSION_CODENAME}"
       fi
-      if [[ \$SYS_OS_VER_CODE ]]; then
-        export REQ_URL_SH="\${REQ_URL_SH}&sysOsVerCode=\${SYS_OS_VER_CODE}"
+      if [[ \$SYS_OS_VERS_CODE ]]; then
+        export REQ_URL_SH="\${REQ_URL_SH}&sysOsVersCode=\${SYS_OS_VERS_CODE}"
       fi
     fi
   fi
