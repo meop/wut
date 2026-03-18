@@ -16,7 +16,9 @@ export async function checkSyntax(shell: 'nu' | 'pwsh' | 'zsh', body: string): P
     try {
       proc = cmd.spawn()
     } catch (e) {
-      if (e instanceof Deno.errors.NotFound) return
+      if (e instanceof Deno.errors.NotFound) {
+        return
+      }
       throw e
     }
     const writer = proc.stdin.getWriter()
@@ -39,7 +41,9 @@ export async function checkSyntax(shell: 'nu' | 'pwsh' | 'zsh', body: string): P
           stderr: 'piped',
         }).output()
       } catch (e) {
-        if (e instanceof Deno.errors.NotFound) return
+        if (e instanceof Deno.errors.NotFound) {
+          return
+        }
         throw e
       }
       if (result.code !== 0) {
@@ -66,7 +70,9 @@ export async function checkSyntax(shell: 'nu' | 'pwsh' | 'zsh', body: string): P
           stderr: 'piped',
         }).output()
       } catch (e) {
-        if (e instanceof Deno.errors.NotFound) return
+        if (e instanceof Deno.errors.NotFound) {
+          return
+        }
         throw e
       }
       if (result.code !== 0) {

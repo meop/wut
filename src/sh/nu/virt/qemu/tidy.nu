@@ -1,1 +1,1 @@
-def virtQemuOp [cmd, cmdSysArch] {}
+def virtQemuOp [cmd] {}

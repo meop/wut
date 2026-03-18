@@ -79,17 +79,9 @@ function getSupportedManagers(context: Ctx, environment: Env) {
 }
 
 function getManagerFuncName(manager: string, prefix = PACK_KEY) {
-  if (!manager) {
-    return ''
-  }
-  const first = manager[0].toUpperCase()
-  const rest = manager
-    .slice(1)
-    .replaceAll('-', '')
-    .replaceAll('_', '')
-    .toLowerCase()
-
-  return `${prefix}${first}${rest}`
+  return manager
+    ? `${prefix}${manager[0].toUpperCase()}${manager.slice(1).replaceAll('-', '').replaceAll('_', '').toLowerCase()}`
+    : ''
 }
 
 async function loadManagerFiles(
@@ -155,19 +147,29 @@ async function findGroupsWithNames(
   for (const r of results) {
     const name = r.join(' ')
     const content = await loadGroupConfig(name)
-    if (content == null) continue
+    if (content == null) {
+      continue
+    }
     const allNames: Array<string> = []
     for (const key of Object.keys(content)) {
-      if (managers.length && !managers.includes(key)) continue
+      if (managers.length && !managers.includes(key)) {
+        continue
+      }
       for (const n of (content[key] as ManagerEntry)?.names ?? []) {
-        if (!allNames.includes(n)) allNames.push(n)
+        if (!allNames.includes(n)) {
+          allNames.push(n)
+        }
       }
     }
     if (filters?.length) {
       const matchedFilters = filters.filter((f) => name.includes(f) || allNames.some((n) => n.includes(f)))
-      if (!matchedFilters.length) continue
+      if (!matchedFilters.length) {
+        continue
+      }
       for (const f of matchedFilters) {
-        if (!found.includes(f)) found.push(f)
+        if (!found.includes(f)) {
+          found.push(f)
+        }
       }
     }
     entries.push(allNames.length ? `${name}|${allNames.join(', ')}` : name)
@@ -182,7 +184,9 @@ function printGroups(shell: Sh, entries: Array<string>) {
     const key = sep >= 0 ? entry.slice(0, sep) : entry
     const names = sep >= 0 ? entry.slice(sep + 1) : ''
     lines.push(...shell.print(key))
-    if (names) lines.push(...shell.print(`  ${names}`))
+    if (names) {
+      lines.push(...shell.print(`  ${names}`))
+    }
   }
   return shell.with(shell.gatedFunc('use pack (remote)', lines))
 }

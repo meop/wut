@@ -4,10 +4,9 @@ def virtDockerOp [cmd] {
       continue
     }
 
-    let url = $"($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml"
-    let yaml = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($url)'#" ')"'
+    let yaml = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml'#" ')"'
 
-    let bindSources = $yaml
+    for src in ($yaml
       | from yaml
       | get services? | default {}
       | values
@@ -29,9 +28,7 @@ def virtDockerOp [cmd] {
             }
           | compact
         }
-      | flatten
-
-    for src in $bindSources {
+      | flatten) {
       opPrintMaybeRunCmd sudo mkdir -p $src
     }
 

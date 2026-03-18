@@ -1,6 +1,6 @@
 import process from 'node:process'
 
-import { type Cmd } from '@meop/shire/cmd'
+import { type Cmd, resolveCanonicalParts } from '@meop/shire/cmd'
 import { type Ctx, getCtx } from '@meop/shire/ctx'
 import { Fmt, stringify } from '@meop/shire/serde'
 import type { Sh } from '@meop/shire/sh'
@@ -120,7 +120,11 @@ export async function runSrv(request: Request) {
       )
     }
 
-    for (const e of Object.entries(context)) {
+    const cmd = new SrvCmd()
+    const canonicalParts = resolveCanonicalParts(cmd, parts.slice(2))
+    const canonicalContext: Ctx = { ...context, req_path: ['', 'sh', sh, ...canonicalParts].join('/') }
+
+    for (const e of Object.entries(canonicalContext)) {
       if (!e[1]) {
         continue
       }
@@ -130,8 +134,7 @@ export async function runSrv(request: Request) {
     }
 
     try {
-      const cmd = new SrvCmd()
-      return new Response(await cmd.process(parts.slice(2), shell, context))
+      return new Response(await cmd.process(parts.slice(2), shell, canonicalContext))
     } catch (err) {
       let error = String(err)
       if (err instanceof Error) {

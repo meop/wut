@@ -11,28 +11,37 @@ def replaceEnv [localEnv, value] {
 def virtLxcOpAdd [config, configVm, cmd, instance] {
   mut lxcEnv = {}
 
-  let configEnv = [
-    ...($config | get environment? | default []),
-    ...($configVm | get environment? | default []),
-  ]
-
-  for key in $configEnv {
-    let parts = $key | split row '='
-    $lxcEnv = $lxcEnv | upsert $parts.0 $parts.1
+  for e in ([...($config | get environment? | default []), ...($configVm | get environment? | default [])] | each { split row '=' }) {
+    $lxcEnv = $lxcEnv | upsert $e.0 $e.1
   }
 
   $lxcEnv = $lxcEnv | upsert 'instance' $instance
 
   let lxcDir = $lxcEnv.VIRT_LXC_DIR_PATH
   let rootfsPath = $"($lxcDir)/($instance)/rootfs"
+  $lxcEnv = $lxcEnv | upsert 'rootfs' $rootfsPath
 
   opPrintMaybeRunCmd sudo mkdir -p $rootfsPath
+
+  let rootfsReady = do --ignore-errors { ^sudo test -d $"($rootfsPath)/usr"; true } | default false
+  if not $rootfsReady {
+    let template = $configVm | get lxc.create.template?
+    let templateName = ($template | columns | get 0?) | default 'download'
+    opPrintMaybeRunCmd sudo lxc-create --name $instance --lxcpath $lxcDir --template $templateName -- ...(
+      (if ($templateName in ($template | columns)) { $template | get $templateName } else { {} })
+      | transpose key value
+      | each { |kv| [$"--($kv.key)", $kv.value] }
+      | flatten
+    )
+    opPrintMaybeRunCmd sudo rm -f $"($lxcDir)/($instance)/config"
+  }
 
   mut configLines = [
     $"lxc.uts.name = ($instance)",
     $"lxc.rootfs.path = dir:($rootfsPath)",
   ]
-  if ($configVm | get lxc.autostart? | default false) {
+  let autostart = $configVm | get lxc.autostart? | default false
+  if $autostart {
     $configLines = $configLines | append 'lxc.start.auto = 1'
   }
 
@@ -51,7 +60,7 @@ def virtLxcOpAdd [config, configVm, cmd, instance] {
       $configLines = $configLines | append $"lxc.net.0.hwaddr = ($net.hwaddr)"
     }
     if $net.type == 'veth' {
-      $configLines = $configLines | append $"lxc.net.0.veth.pair = lxc-($instance)"
+      $configLines = $configLines | append $"lxc.net.0.veth.pair = veth-($instance)"
     } else if $net.type == 'macvlan' {
       $configLines = $configLines | append $"lxc.net.0.macvlan.mode = ($net.mode? | default 'bridge')"
     }
@@ -59,19 +68,18 @@ def virtLxcOpAdd [config, configVm, cmd, instance] {
   }
 
   for mnt in ($configVm | get lxc.mounts? | default []) {
-    let source = replaceEnv $lxcEnv $mnt.source
-    let target = (replaceEnv $lxcEnv $mnt.target) | str trim --left --char '/'
-    $configLines = $configLines | append $"lxc.mount.entry = ($source) ($target) none bind,create=dir 0 0"
+    $configLines = $configLines | append $"lxc.mount.entry = (replaceEnv $lxcEnv $mnt.source) ((replaceEnv $lxcEnv $mnt.target) | str trim --left --char '/') none bind,create=dir 0 0"
   }
-
-  let configContent = ($configLines | str join "\n") + "\n"
-  let configPath = $"/var/lib/lxc/($instance)/config"
 
   opPrintMaybeRunCmd sudo mkdir -p $"/var/lib/lxc/($instance)"
 
-  opPrintMaybeRunCmd $"r#'($configContent)'#" '|' sudo tee $configPath '|' ignore
+  opPrintMaybeRunCmd $"r#'(($configLines | str join "\n") + "\n")'#" '|' sudo tee $"/var/lib/lxc/($instance)/config" '|' ignore
 
-  opPrintMaybeRunCmd sudo $"($cmd)-start" -n $instance
+  if $autostart {
+    opPrintMaybeRunCmd sudo systemctl enable lxc
+  }
+
+  opPrintMaybeRunCmd sudo $"($cmd)-start" --name $instance
 }
 
 def virtLxcOp [cmd] {
@@ -81,11 +89,8 @@ def virtLxcOp [cmd] {
       continue
     }
 
-    let urlConfig = $"($env.REQ_URL_CFG)/virt/($cmd).yaml"
-    let config = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($urlConfig)'#" ')"'
-
-    let urlConfigVm = $"($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml"
-    let configVm = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($urlConfigVm)'#" ')"'
+    let config = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($cmd).yaml'#" ')"'
+    let configVm = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml'#" ')"'
 
     virtLxcOpAdd ($config | from yaml) ($configVm | from yaml) $cmd $instance
   }

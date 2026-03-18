@@ -135,15 +135,17 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
             validDirs.add(joinVal(compoundKey, map_out[sysOsPlat]))
             for (const filePath of await getFilePaths(localEntryPath)) {
               const filePathParts = toRelParts(localEntryPath, filePath, false)
-              const srcFull = [key, map_in, ...filePathParts].join('/')
-              const dstFull = [map_out[sysOsPlat], ...filePathParts].join('/')
-              validPairs.push(joinVal(compoundKey, srcFull, dstFull))
+              validPairs.push(
+                joinVal(
+                  compoundKey,
+                  [key, map_in, ...filePathParts].join('/'),
+                  [map_out[sysOsPlat], ...filePathParts].join('/'),
+                ),
+              )
             }
           }
         } else {
-          const srcFull = [key, map_in].join('/')
-          const dstFull = map_out[sysOsPlat]
-          validPairs.push(joinVal(compoundKey, srcFull, dstFull))
+          validPairs.push(joinVal(compoundKey, [key, map_in].join('/'), map_out[sysOsPlat]))
         }
         if (map_permission) {
           for (

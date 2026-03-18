@@ -1,8 +1,7 @@
 def virtLxc [] {
   let cmd = 'lxc'
-  let cmdStart = $"($cmd)-start"
-  if ('VIRT_MANAGER' not-in $env or $env.VIRT_MANAGER == $cmd) and (which $cmdStart | is-not-empty) {
-    if $env.VIRT_OP in ['sync', 'tidy'] {
+  if ('VIRT_MANAGER' not-in $env or $env.VIRT_MANAGER == $cmd) and (which $"($cmd)-ls" | is-not-empty) {
+    if $env.VIRT_OP == 'tidy' {
       return
     }
     mut yn = ''

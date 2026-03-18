@@ -193,6 +193,7 @@ Deno formatting rules (deno.json):
 - No semicolons
 - Single quotes
 - Trailing commas only on multiline
+- Always use curly braces for `if` statement bodies, with body on next line
 
 ### Import Sorting
 

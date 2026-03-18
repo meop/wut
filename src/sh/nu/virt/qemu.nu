@@ -1,8 +1,7 @@
 def virtQemu [] {
   let cmd = 'qemu'
-  let cmdSysArch = $"($cmd)-system-($env.SYS_CPU_ARCH)"
-  if ('VIRT_MANAGER' not-in $env or $env.VIRT_MANAGER == $cmd) and (which $cmdSysArch | is-not-empty) {
-    if $env.VIRT_OP in ['sync', 'tidy'] {
+  if ('VIRT_MANAGER' not-in $env or $env.VIRT_MANAGER == $cmd) and (which $"($cmd)-img" | is-not-empty) {
+    if $env.VIRT_OP == 'tidy' {
       return
     }
     mut yn = ''
@@ -12,7 +11,7 @@ def virtQemu [] {
       $yn = input $"? use ($cmd) \(system\) [y, [n]]: "
     }
     if $yn != 'n' {
-      virtQemuOp $cmd $cmdSysArch
+      virtQemuOp $cmd
     }
   }
 }

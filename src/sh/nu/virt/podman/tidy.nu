@@ -1,3 +1,3 @@
 def virtPodmanOp [cmd] {
-  opPrintMaybeRunCmd sudo $cmd system prune --force
+  opPrintMaybeRunCmd sudo $cmd system prune --all
 }

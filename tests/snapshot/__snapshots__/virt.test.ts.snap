@@ -248,6 +248,8 @@ do {
   }
   if \$yn != 'n' {
 opPrint r#'lxc'#
+opPrint r#'podman'#
+opPrint r#'  undefined'#
 opPrint r#'qemu'#
   }
 }
@@ -371,16 +373,77 @@ do {
 
 \$env.VIRT_OP = r#'list'#
 
+def virtDockerOp [cmd] {
+  opPrintMaybeRunCmd sudo \$cmd container ls --format '"table {{.Names}}\\\\\\\\t{{.Image}}\\\\\\\\t{{.Ports}}\\\\\\\\t{{.State}}\\\\\\\\t{{.Status}}"' --no-trunc
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtDockerOp \$cmd
+    }
+  }
+}
+
+
+def virtPodmanOp [cmd] {
+  let pods = if 'VIRT_INSTANCES' in \$env {
+    \$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq
+  } else {
+    []
+  }
+
+  let podFilters = if (\$pods | length) == 1 {
+    ['--filter', \$"name=(\$pods | first)"]
+  } else {
+    []
+  }
+  let containerFilters = if (\$pods | length) == 1 {
+    ['--filter', \$"pod=(\$pods | first)"]
+  } else {
+    []
+  }
+
+  opPrintMaybeRunCmd sudo \$cmd pod list ...\$podFilters --format '"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}"'
+  opPrintMaybeRunCmd sudo \$cmd container list ...\$containerFilters --format '"table {{.PodName}}\\\\t{{.Names}}\\\\t{{.Image}}\\\\t{{.Ports}}\\\\t{{.State}}\\\\t{{.Status}}"'
+}
+
+
+def virtPodman [] {
+  let cmd = 'podman'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtPodmanOp \$cmd
+    }
+  }
+}
+
+
 def virtLxcOp [cmd] {
-  opPrintMaybeRunCmd sudo \$"(\$cmd)-ls" --fancy --fancy-format '"NAME,IPV4,IPV6,STATE,AUTOSTART"' --running
+  let instances = if 'VIRT_INSTANCES' in \$env { \$env.VIRT_INSTANCES } else { [] }
+  let nameFilter = if (\$instances | length) == 1 { [\$instances.0] } else { [] }
+  opPrintMaybeRunCmd sudo \$"(\$cmd)-ls" --fancy --fancy-format '"NAME,IPV4,IPV6,STATE,AUTOSTART"' --running ...\$nameFilter
 }
 
 
 def virtLxc [] {
   let cmd = 'lxc'
-  let cmdStart = \$"(\$cmd)-start"
-  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmdStart | is-not-empty) {
-    if \$env.VIRT_OP in ['sync', 'tidy'] {
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$"(\$cmd)-ls" | is-not-empty) {
+    if \$env.VIRT_OP == 'tidy' {
       return
     }
     mut yn = ''
@@ -396,39 +459,23 @@ def virtLxc [] {
 }
 
 
-def virtPodmanOp [cmd] {
-  opPrintMaybeRunCmd sudo \$cmd pod list --format '"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.Containers}}"'
-  opPrintMaybeRunCmd sudo \$cmd container list --format '"table {{.Names}}\\\\t{{.Image}}\\\\t{{.IPAddress}}\\\\t{{.Ports}}\\\\t{{.State}}\\\\t{{.Status}}\\\\t{{.PodName}}"'
-}
-
-
-def virtPodman [] {
-  let cmd = 'podman'
-  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == 'podman') and (which \$cmd | is-not-empty) {
-    mut yn = ''
-    if 'YES' in \$env {
-      \$yn = 'y'
-    } else {
-      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
-    }
-    if \$yn != 'n' {
-      virtPodmanOp \$cmd
-    }
+def virtQemuOp [cmd] {
+  let instances = if 'VIRT_INSTANCES' in \$env { \$env.VIRT_INSTANCES } else { [] }
+  if (\$instances | length) == 1 {
+    let instance = \$instances.0
+    opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^swtpm.*(\$instance)"" '}'
+    opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^qemu-system.*(\$instance)"" '}'
+  } else {
+    opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^swtpm"" '}'
+    opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^qemu-system"" '}'
   }
-}
-
-
-def virtQemuOp [cmd, cmdSysArch] {
-  opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^swtpm"" '}'
-  opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^(\$cmdSysArch)"" '}'
 }
 
 
 def virtQemu [] {
   let cmd = 'qemu'
-  let cmdSysArch = \$"(\$cmd)-system-(\$env.SYS_CPU_ARCH)"
-  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmdSysArch | is-not-empty) {
-    if \$env.VIRT_OP in ['sync', 'tidy'] {
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$"(\$cmd)-img" | is-not-empty) {
+    if \$env.VIRT_OP == 'tidy' {
       return
     }
     mut yn = ''
@@ -438,7 +485,7 @@ def virtQemu [] {
       \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
     }
     if \$yn != 'n' {
-      virtQemuOp \$cmd \$cmdSysArch
+      virtQemuOp \$cmd
     }
   }
 }
@@ -685,14 +732,92 @@ do {
 
 \$env.VIRT_OP = r#'sync'#
 
-def virtLxcOp [cmd] {}
+def virtDockerOp [cmd] {
+  for instance in \$env.VIRT_INSTANCES {
+    if (do --ignore-errors { ^sudo \$cmd container ls | find --ignore-case \$instance | is-empty }) {
+      continue
+    }
+    opPrintMaybeRunCmd '\$"(' http get --raw --redirect-mode follow \$"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#" ')"' '|' \$cmd compose --file - up --detach --pull always
+  }
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtDockerOp \$cmd
+    }
+  }
+}
+
+
+def virtPodmanOp [cmd] {
+  let kubeDir = '/etc/containers/systemd'
+
+  for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
+    if not (\$"(\$kubeDir)/(\$pod).kube" | path exists) {
+      continue
+    }
+
+    opPrintMaybeRunCmd sudo systemctl stop \$"(\$pod).service"
+
+    let addPath = \$env.REQ_PATH | str replace '/sync/' '/add/' | str replace '/sh/nu/' '/sh/nu/--yes/'
+    let addUrl = \$"(\$env.REQ_ORIG)(\$addPath)(\$env.REQ_SRCH)"
+    opPrintCmd nu --no-config-file -c '\$"(' http get --raw --redirect-mode follow \$"r#'(\$addUrl)'#" ')"'
+    if 'NOOP' not-in \$env {
+      nu --no-config-file -c \$"(http get --raw --redirect-mode follow \$addUrl)"
+    }
+  }
+}
+
+
+def virtPodman [] {
+  let cmd = 'podman'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtPodmanOp \$cmd
+    }
+  }
+}
+
+
+def virtLxcOp [cmd] {
+  for instance in \$env.VIRT_INSTANCES {
+    if not (\$"/var/lib/lxc/(\$instance)/config" | path exists) {
+      continue
+    }
+
+    if (do --ignore-errors { ^sudo \$"(\$cmd)-ls" --running | split row ' ' | str trim | where { |l| \$l | is-not-empty } | any { |l| \$l == \$instance } }) {
+      opPrintMaybeRunCmd sudo \$"(\$cmd)-stop" -n \$instance
+    }
+
+    let addPath = \$env.REQ_PATH | str replace '/sync/' '/add/' | str replace '/sh/nu/' '/sh/nu/--yes/'
+    let addUrl = \$"(\$env.REQ_ORIG)(\$addPath)(\$env.REQ_SRCH)"
+    opPrintCmd nu --no-config-file -c '\$"(' http get --raw --redirect-mode follow \$"r#'(\$addUrl)'#" ')"'
+    if 'NOOP' not-in \$env {
+      nu --no-config-file -c \$"(http get --raw --redirect-mode follow \$addUrl)"
+    }
+  }
+}
 
 
 def virtLxc [] {
   let cmd = 'lxc'
-  let cmdStart = \$"(\$cmd)-start"
-  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmdStart | is-not-empty) {
-    if \$env.VIRT_OP in ['sync', 'tidy'] {
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$"(\$cmd)-ls" | is-not-empty) {
+    if \$env.VIRT_OP == 'tidy' {
       return
     }
     mut yn = ''
@@ -708,49 +833,28 @@ def virtLxc [] {
 }
 
 
-def virtPodmanOp [cmd] {
-  let pods = \$env.VIRT_INSTANCES
-    | each { |p| (\$p | split row '/') | first }
-    | uniq
+def virtQemuOp [cmd] {
+  for instance in \$env.VIRT_INSTANCES {
+    if not (\$"/etc/systemd/system/qemu-(\$instance).service" | path exists) {
+      continue
+    }
 
-  for pod in \$pods {
-    let yamlPath = \$"/etc/containers/systemd/(\$pod).yaml"
-    let kubePath = \$"/etc/containers/systemd/(\$pod).kube"
+    opPrintMaybeRunCmd sudo systemctl stop \$"qemu-(\$instance)"
 
-    if (\$kubePath | path exists) {
-      let existing = open \$yamlPath
-      for container in \$existing.spec.containers {
-        opPrintMaybeRunCmd sudo \$cmd pull \$container.image
-      }
-      opPrintMaybeRunCmd sudo systemctl restart \$"(\$pod).service"
+    let addPath = \$env.REQ_PATH | str replace '/sync/' '/add/' | str replace '/sh/nu/' '/sh/nu/--yes/'
+    let addUrl = \$"(\$env.REQ_ORIG)(\$addPath)(\$env.REQ_SRCH)"
+    opPrintCmd nu --no-config-file -c '\$"(' http get --raw --redirect-mode follow \$"r#'(\$addUrl)'#" ')"'
+    if 'NOOP' not-in \$env {
+      nu --no-config-file -c \$"(http get --raw --redirect-mode follow \$addUrl)"
     }
   }
 }
 
-
-def virtPodman [] {
-  let cmd = 'podman'
-  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == 'podman') and (which \$cmd | is-not-empty) {
-    mut yn = ''
-    if 'YES' in \$env {
-      \$yn = 'y'
-    } else {
-      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
-    }
-    if \$yn != 'n' {
-      virtPodmanOp \$cmd
-    }
-  }
-}
-
-
-def virtQemuOp [cmd, cmdSysArch] {}
 
 def virtQemu [] {
   let cmd = 'qemu'
-  let cmdSysArch = \$"(\$cmd)-system-(\$env.SYS_CPU_ARCH)"
-  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmdSysArch | is-not-empty) {
-    if \$env.VIRT_OP in ['sync', 'tidy'] {
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$"(\$cmd)-img" | is-not-empty) {
+    if \$env.VIRT_OP == 'tidy' {
       return
     }
     mut yn = ''
@@ -760,7 +864,7 @@ def virtQemu [] {
       \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
     }
     if \$yn != 'n' {
-      virtQemuOp \$cmd \$cmdSysArch
+      virtQemuOp \$cmd
     }
   }
 }
@@ -885,14 +989,55 @@ do {
 
 \$env.VIRT_OP = r#'tidy'#
 
+def virtDockerOp [cmd] {
+  opPrintMaybeRunCmd sudo \$cmd system prune --all
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtDockerOp \$cmd
+    }
+  }
+}
+
+
+def virtPodmanOp [cmd] {
+  opPrintMaybeRunCmd sudo \$cmd system prune --all
+}
+
+
+def virtPodman [] {
+  let cmd = 'podman'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtPodmanOp \$cmd
+    }
+  }
+}
+
+
 def virtLxcOp [cmd] {}
 
 
 def virtLxc [] {
   let cmd = 'lxc'
-  let cmdStart = \$"(\$cmd)-start"
-  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmdStart | is-not-empty) {
-    if \$env.VIRT_OP in ['sync', 'tidy'] {
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$"(\$cmd)-ls" | is-not-empty) {
+    if \$env.VIRT_OP == 'tidy' {
       return
     }
     mut yn = ''
@@ -908,34 +1053,13 @@ def virtLxc [] {
 }
 
 
-def virtPodmanOp [cmd] {
-  opPrintMaybeRunCmd sudo \$cmd system prune --force
-}
+def virtQemuOp [cmd] {}
 
-
-def virtPodman [] {
-  let cmd = 'podman'
-  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == 'podman') and (which \$cmd | is-not-empty) {
-    mut yn = ''
-    if 'YES' in \$env {
-      \$yn = 'y'
-    } else {
-      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
-    }
-    if \$yn != 'n' {
-      virtPodmanOp \$cmd
-    }
-  }
-}
-
-
-def virtQemuOp [cmd, cmdSysArch] {}
 
 def virtQemu [] {
   let cmd = 'qemu'
-  let cmdSysArch = \$"(\$cmd)-system-(\$env.SYS_CPU_ARCH)"
-  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmdSysArch | is-not-empty) {
-    if \$env.VIRT_OP in ['sync', 'tidy'] {
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$"(\$cmd)-img" | is-not-empty) {
+    if \$env.VIRT_OP == 'tidy' {
       return
     }
     mut yn = ''
@@ -945,7 +1069,7 @@ def virtQemu [] {
       \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
     }
     if \$yn != 'n' {
-      virtQemuOp \$cmd \$cmdSysArch
+      virtQemuOp \$cmd
     }
   }
 }
@@ -1200,6 +1324,9 @@ do {
     \$yn = input r#'? use virt (remote) [y, [n]]: '#
   }
   if \$yn != 'n' {
+opPrint r#'podman'#
+opPrint r#'  undefined'#
+opPrint r#'qemu'#
   }
 }
 \`
@@ -1321,6 +1448,98 @@ do {
 \$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
 
 \$env.VIRT_OP = r#'list'#
+
+def virtDockerOp [cmd] {
+  opPrintMaybeRunCmd sudo \$cmd container ls --format '"table {{.Names}}\\\\\\\\t{{.Image}}\\\\\\\\t{{.Ports}}\\\\\\\\t{{.State}}\\\\\\\\t{{.Status}}"' --no-trunc
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtDockerOp \$cmd
+    }
+  }
+}
+
+
+def virtPodmanOp [cmd] {
+  let pods = if 'VIRT_INSTANCES' in \$env {
+    \$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq
+  } else {
+    []
+  }
+
+  let podFilters = if (\$pods | length) == 1 {
+    ['--filter', \$"name=(\$pods | first)"]
+  } else {
+    []
+  }
+  let containerFilters = if (\$pods | length) == 1 {
+    ['--filter', \$"pod=(\$pods | first)"]
+  } else {
+    []
+  }
+
+  opPrintMaybeRunCmd sudo \$cmd pod list ...\$podFilters --format '"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}"'
+  opPrintMaybeRunCmd sudo \$cmd container list ...\$containerFilters --format '"table {{.PodName}}\\\\t{{.Names}}\\\\t{{.Image}}\\\\t{{.Ports}}\\\\t{{.State}}\\\\t{{.Status}}"'
+}
+
+
+def virtPodman [] {
+  let cmd = 'podman'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtPodmanOp \$cmd
+    }
+  }
+}
+
+
+def virtQemuOp [cmd] {
+  let instances = if 'VIRT_INSTANCES' in \$env { \$env.VIRT_INSTANCES } else { [] }
+  if (\$instances | length) == 1 {
+    let instance = \$instances.0
+    opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^swtpm.*(\$instance)"" '}'
+    opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^qemu-system.*(\$instance)"" '}'
+  } else {
+    opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^swtpm"" '}'
+    opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^qemu-system"" '}'
+  }
+}
+
+
+def virtQemu [] {
+  let cmd = 'qemu'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$"(\$cmd)-img" | is-not-empty) {
+    if \$env.VIRT_OP == 'tidy' {
+      return
+    }
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtQemuOp \$cmd
+    }
+  }
+}
+
 \`
 `;
 
@@ -1562,6 +1781,105 @@ do {
 \$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
 
 \$env.VIRT_OP = r#'sync'#
+
+def virtDockerOp [cmd] {
+  for instance in \$env.VIRT_INSTANCES {
+    if (do --ignore-errors { ^sudo \$cmd container ls | find --ignore-case \$instance | is-empty }) {
+      continue
+    }
+    opPrintMaybeRunCmd '\$"(' http get --raw --redirect-mode follow \$"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#" ')"' '|' \$cmd compose --file - up --detach --pull always
+  }
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtDockerOp \$cmd
+    }
+  }
+}
+
+
+def virtPodmanOp [cmd] {
+  let kubeDir = '/etc/containers/systemd'
+
+  for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
+    if not (\$"(\$kubeDir)/(\$pod).kube" | path exists) {
+      continue
+    }
+
+    opPrintMaybeRunCmd sudo systemctl stop \$"(\$pod).service"
+
+    let addPath = \$env.REQ_PATH | str replace '/sync/' '/add/' | str replace '/sh/nu/' '/sh/nu/--yes/'
+    let addUrl = \$"(\$env.REQ_ORIG)(\$addPath)(\$env.REQ_SRCH)"
+    opPrintCmd nu --no-config-file -c '\$"(' http get --raw --redirect-mode follow \$"r#'(\$addUrl)'#" ')"'
+    if 'NOOP' not-in \$env {
+      nu --no-config-file -c \$"(http get --raw --redirect-mode follow \$addUrl)"
+    }
+  }
+}
+
+
+def virtPodman [] {
+  let cmd = 'podman'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtPodmanOp \$cmd
+    }
+  }
+}
+
+
+def virtQemuOp [cmd] {
+  for instance in \$env.VIRT_INSTANCES {
+    if not (\$"/etc/systemd/system/qemu-(\$instance).service" | path exists) {
+      continue
+    }
+
+    opPrintMaybeRunCmd sudo systemctl stop \$"qemu-(\$instance)"
+
+    let addPath = \$env.REQ_PATH | str replace '/sync/' '/add/' | str replace '/sh/nu/' '/sh/nu/--yes/'
+    let addUrl = \$"(\$env.REQ_ORIG)(\$addPath)(\$env.REQ_SRCH)"
+    opPrintCmd nu --no-config-file -c '\$"(' http get --raw --redirect-mode follow \$"r#'(\$addUrl)'#" ')"'
+    if 'NOOP' not-in \$env {
+      nu --no-config-file -c \$"(http get --raw --redirect-mode follow \$addUrl)"
+    }
+  }
+}
+
+
+def virtQemu [] {
+  let cmd = 'qemu'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$"(\$cmd)-img" | is-not-empty) {
+    if \$env.VIRT_OP == 'tidy' {
+      return
+    }
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtQemuOp \$cmd
+    }
+  }
+}
+
 \`
 `;
 
@@ -1681,6 +1999,70 @@ do {
 \$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
 
 \$env.VIRT_OP = r#'tidy'#
+
+def virtDockerOp [cmd] {
+  opPrintMaybeRunCmd sudo \$cmd system prune --all
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtDockerOp \$cmd
+    }
+  }
+}
+
+
+def virtPodmanOp [cmd] {
+  opPrintMaybeRunCmd sudo \$cmd system prune --all
+}
+
+
+def virtPodman [] {
+  let cmd = 'podman'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtPodmanOp \$cmd
+    }
+  }
+}
+
+
+def virtQemuOp [cmd] {}
+
+
+def virtQemu [] {
+  let cmd = 'qemu'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$"(\$cmd)-img" | is-not-empty) {
+    if \$env.VIRT_OP == 'tidy' {
+      return
+    }
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtQemuOp \$cmd
+    }
+  }
+}
+
 \`
 `;
 
@@ -2412,5 +2794,939 @@ do {
 \$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
 
 \$env.VIRT_OP = r#'tidy'#
+\`
+`;
+
+snapshot[`nu / linux / find (arch) 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find?sysOsPlat=linux&sysHost=arch'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.SH_VER_MAJOR = 0
+
+\$env.SH_VER_MINOR = 111
+
+do {
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.SYS_HOST = r#'arch'#
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/virt/find'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=arch'#
+
+\$env.VIRT_OP = r#'find'#
+
+do {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'? use virt (remote) [y, [n]]: '#
+  }
+  if \$yn != 'n' {
+opPrint r#'lxc'#
+opPrint r#'  yard'#
+opPrint r#'podman'#
+opPrint r#'  home'#
+opPrint r#'    heimdall'#
+opPrint r#'qemu'#
+opPrint r#'  glass'#
+  }
+}
+\`
+`;
+
+snapshot[`nu / linux / list (arch) 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/list?sysOsPlat=linux&sysHost=arch'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.SH_VER_MAJOR = 0
+
+\$env.SH_VER_MINOR = 111
+
+do {
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.SYS_HOST = r#'arch'#
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/virt/list'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=arch'#
+
+\$env.VIRT_OP = r#'list'#
+
+def virtDockerOp [cmd] {
+  opPrintMaybeRunCmd sudo \$cmd container ls --format '"table {{.Names}}\\\\\\\\t{{.Image}}\\\\\\\\t{{.Ports}}\\\\\\\\t{{.State}}\\\\\\\\t{{.Status}}"' --no-trunc
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtDockerOp \$cmd
+    }
+  }
+}
+
+
+def virtPodmanOp [cmd] {
+  let pods = if 'VIRT_INSTANCES' in \$env {
+    \$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq
+  } else {
+    []
+  }
+
+  let podFilters = if (\$pods | length) == 1 {
+    ['--filter', \$"name=(\$pods | first)"]
+  } else {
+    []
+  }
+  let containerFilters = if (\$pods | length) == 1 {
+    ['--filter', \$"pod=(\$pods | first)"]
+  } else {
+    []
+  }
+
+  opPrintMaybeRunCmd sudo \$cmd pod list ...\$podFilters --format '"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}"'
+  opPrintMaybeRunCmd sudo \$cmd container list ...\$containerFilters --format '"table {{.PodName}}\\\\t{{.Names}}\\\\t{{.Image}}\\\\t{{.Ports}}\\\\t{{.State}}\\\\t{{.Status}}"'
+}
+
+
+def virtPodman [] {
+  let cmd = 'podman'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtPodmanOp \$cmd
+    }
+  }
+}
+
+
+def virtLxcOp [cmd] {
+  let instances = if 'VIRT_INSTANCES' in \$env { \$env.VIRT_INSTANCES } else { [] }
+  let nameFilter = if (\$instances | length) == 1 { [\$instances.0] } else { [] }
+  opPrintMaybeRunCmd sudo \$"(\$cmd)-ls" --fancy --fancy-format '"NAME,IPV4,IPV6,STATE,AUTOSTART"' --running ...\$nameFilter
+}
+
+
+def virtLxc [] {
+  let cmd = 'lxc'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$"(\$cmd)-ls" | is-not-empty) {
+    if \$env.VIRT_OP == 'tidy' {
+      return
+    }
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtLxcOp \$cmd
+    }
+  }
+}
+
+
+def virtQemuOp [cmd] {
+  let instances = if 'VIRT_INSTANCES' in \$env { \$env.VIRT_INSTANCES } else { [] }
+  if (\$instances | length) == 1 {
+    let instance = \$instances.0
+    opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^swtpm.*(\$instance)"" '}'
+    opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^qemu-system.*(\$instance)"" '}'
+  } else {
+    opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^swtpm"" '}'
+    opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^qemu-system"" '}'
+  }
+}
+
+
+def virtQemu [] {
+  let cmd = 'qemu'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$"(\$cmd)-img" | is-not-empty) {
+    if \$env.VIRT_OP == 'tidy' {
+      return
+    }
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtQemuOp \$cmd
+    }
+  }
+}
+
+
+\$env.VIRT_MANAGER = r#'lxc'#
+
+\$env.VIRT_INSTANCES = [ r#'yard'# ]
+
+virtLxc
+
+hide-env VIRT_MANAGER
+
+\$env.VIRT_MANAGER = r#'podman'#
+
+\$env.VIRT_INSTANCES = [ r#'home/heimdall'# ]
+
+virtPodman
+
+hide-env VIRT_MANAGER
+
+\$env.VIRT_MANAGER = r#'qemu'#
+
+\$env.VIRT_INSTANCES = [ r#'glass'# ]
+
+virtQemu
+
+hide-env VIRT_MANAGER
+\`
+`;
+
+snapshot[`nu / linux / list (arch podman) 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/list/podman?sysOsPlat=linux&sysHost=arch'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.SH_VER_MAJOR = 0
+
+\$env.SH_VER_MINOR = 111
+
+do {
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.SYS_HOST = r#'arch'#
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/virt/list/podman'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=arch'#
+
+\$env.VIRT_LIST_PARTS = r#'podman'#
+
+\$env.VIRT_OP = r#'list'#
+
+def virtDockerOp [cmd] {
+  opPrintMaybeRunCmd sudo \$cmd container ls --format '"table {{.Names}}\\\\\\\\t{{.Image}}\\\\\\\\t{{.Ports}}\\\\\\\\t{{.State}}\\\\\\\\t{{.Status}}"' --no-trunc
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtDockerOp \$cmd
+    }
+  }
+}
+
+
+def virtPodmanOp [cmd] {
+  let pods = if 'VIRT_INSTANCES' in \$env {
+    \$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq
+  } else {
+    []
+  }
+
+  let podFilters = if (\$pods | length) == 1 {
+    ['--filter', \$"name=(\$pods | first)"]
+  } else {
+    []
+  }
+  let containerFilters = if (\$pods | length) == 1 {
+    ['--filter', \$"pod=(\$pods | first)"]
+  } else {
+    []
+  }
+
+  opPrintMaybeRunCmd sudo \$cmd pod list ...\$podFilters --format '"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}"'
+  opPrintMaybeRunCmd sudo \$cmd container list ...\$containerFilters --format '"table {{.PodName}}\\\\t{{.Names}}\\\\t{{.Image}}\\\\t{{.Ports}}\\\\t{{.State}}\\\\t{{.Status}}"'
+}
+
+
+def virtPodman [] {
+  let cmd = 'podman'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtPodmanOp \$cmd
+    }
+  }
+}
+
+
+def virtLxcOp [cmd] {
+  let instances = if 'VIRT_INSTANCES' in \$env { \$env.VIRT_INSTANCES } else { [] }
+  let nameFilter = if (\$instances | length) == 1 { [\$instances.0] } else { [] }
+  opPrintMaybeRunCmd sudo \$"(\$cmd)-ls" --fancy --fancy-format '"NAME,IPV4,IPV6,STATE,AUTOSTART"' --running ...\$nameFilter
+}
+
+
+def virtLxc [] {
+  let cmd = 'lxc'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$"(\$cmd)-ls" | is-not-empty) {
+    if \$env.VIRT_OP == 'tidy' {
+      return
+    }
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtLxcOp \$cmd
+    }
+  }
+}
+
+
+def virtQemuOp [cmd] {
+  let instances = if 'VIRT_INSTANCES' in \$env { \$env.VIRT_INSTANCES } else { [] }
+  if (\$instances | length) == 1 {
+    let instance = \$instances.0
+    opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^swtpm.*(\$instance)"" '}'
+    opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^qemu-system.*(\$instance)"" '}'
+  } else {
+    opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^swtpm"" '}'
+    opPrintMaybeRunCmd do --ignore-errors '{' ^pgrep --ignore-ancestors --full --list-full \$""^qemu-system"" '}'
+  }
+}
+
+
+def virtQemu [] {
+  let cmd = 'qemu'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$"(\$cmd)-img" | is-not-empty) {
+    if \$env.VIRT_OP == 'tidy' {
+      return
+    }
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtQemuOp \$cmd
+    }
+  }
+}
+
+
+\$env.VIRT_MANAGER = r#'podman'#
+
+\$env.VIRT_INSTANCES = [ r#'home/heimdall'# ]
+
+virtPodman
+
+hide-env VIRT_MANAGER
+\`
+`;
+
+snapshot[`nu / linux / sync (arch) 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/sync?sysOsPlat=linux&sysHost=arch'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.SH_VER_MAJOR = 0
+
+\$env.SH_VER_MINOR = 111
+
+do {
+  let major = \$env.SH_VER_MAJOR | into int
+  let minor = \$env.SH_VER_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.SYS_HOST = r#'arch'#
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/virt/sync'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=arch'#
+
+\$env.VIRT_OP = r#'sync'#
+
+def virtDockerOp [cmd] {
+  for instance in \$env.VIRT_INSTANCES {
+    if (do --ignore-errors { ^sudo \$cmd container ls | find --ignore-case \$instance | is-empty }) {
+      continue
+    }
+    opPrintMaybeRunCmd '\$"(' http get --raw --redirect-mode follow \$"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#" ')"' '|' \$cmd compose --file - up --detach --pull always
+  }
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtDockerOp \$cmd
+    }
+  }
+}
+
+
+def virtPodmanOp [cmd] {
+  let kubeDir = '/etc/containers/systemd'
+
+  for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
+    if not (\$"(\$kubeDir)/(\$pod).kube" | path exists) {
+      continue
+    }
+
+    opPrintMaybeRunCmd sudo systemctl stop \$"(\$pod).service"
+
+    let addPath = \$env.REQ_PATH | str replace '/sync/' '/add/' | str replace '/sh/nu/' '/sh/nu/--yes/'
+    let addUrl = \$"(\$env.REQ_ORIG)(\$addPath)(\$env.REQ_SRCH)"
+    opPrintCmd nu --no-config-file -c '\$"(' http get --raw --redirect-mode follow \$"r#'(\$addUrl)'#" ')"'
+    if 'NOOP' not-in \$env {
+      nu --no-config-file -c \$"(http get --raw --redirect-mode follow \$addUrl)"
+    }
+  }
+}
+
+
+def virtPodman [] {
+  let cmd = 'podman'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$cmd | is-not-empty) {
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtPodmanOp \$cmd
+    }
+  }
+}
+
+
+def virtLxcOp [cmd] {
+  for instance in \$env.VIRT_INSTANCES {
+    if not (\$"/var/lib/lxc/(\$instance)/config" | path exists) {
+      continue
+    }
+
+    if (do --ignore-errors { ^sudo \$"(\$cmd)-ls" --running | split row ' ' | str trim | where { |l| \$l | is-not-empty } | any { |l| \$l == \$instance } }) {
+      opPrintMaybeRunCmd sudo \$"(\$cmd)-stop" -n \$instance
+    }
+
+    let addPath = \$env.REQ_PATH | str replace '/sync/' '/add/' | str replace '/sh/nu/' '/sh/nu/--yes/'
+    let addUrl = \$"(\$env.REQ_ORIG)(\$addPath)(\$env.REQ_SRCH)"
+    opPrintCmd nu --no-config-file -c '\$"(' http get --raw --redirect-mode follow \$"r#'(\$addUrl)'#" ')"'
+    if 'NOOP' not-in \$env {
+      nu --no-config-file -c \$"(http get --raw --redirect-mode follow \$addUrl)"
+    }
+  }
+}
+
+
+def virtLxc [] {
+  let cmd = 'lxc'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$"(\$cmd)-ls" | is-not-empty) {
+    if \$env.VIRT_OP == 'tidy' {
+      return
+    }
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtLxcOp \$cmd
+    }
+  }
+}
+
+
+def virtQemuOp [cmd] {
+  for instance in \$env.VIRT_INSTANCES {
+    if not (\$"/etc/systemd/system/qemu-(\$instance).service" | path exists) {
+      continue
+    }
+
+    opPrintMaybeRunCmd sudo systemctl stop \$"qemu-(\$instance)"
+
+    let addPath = \$env.REQ_PATH | str replace '/sync/' '/add/' | str replace '/sh/nu/' '/sh/nu/--yes/'
+    let addUrl = \$"(\$env.REQ_ORIG)(\$addPath)(\$env.REQ_SRCH)"
+    opPrintCmd nu --no-config-file -c '\$"(' http get --raw --redirect-mode follow \$"r#'(\$addUrl)'#" ')"'
+    if 'NOOP' not-in \$env {
+      nu --no-config-file -c \$"(http get --raw --redirect-mode follow \$addUrl)"
+    }
+  }
+}
+
+
+def virtQemu [] {
+  let cmd = 'qemu'
+  if ('VIRT_MANAGER' not-in \$env or \$env.VIRT_MANAGER == \$cmd) and (which \$"(\$cmd)-img" | is-not-empty) {
+    if \$env.VIRT_OP == 'tidy' {
+      return
+    }
+    mut yn = ''
+    if 'YES' in \$env {
+      \$yn = 'y'
+    } else {
+      \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+    }
+    if \$yn != 'n' {
+      virtQemuOp \$cmd
+    }
+  }
+}
+
+
+\$env.VIRT_MANAGER = r#'lxc'#
+
+\$env.VIRT_INSTANCES = [ r#'yard'# ]
+
+virtLxc
+
+hide-env VIRT_MANAGER
+
+\$env.VIRT_MANAGER = r#'podman'#
+
+\$env.VIRT_INSTANCES = [ r#'home/heimdall'# ]
+
+virtPodman
+
+hide-env VIRT_MANAGER
+
+\$env.VIRT_MANAGER = r#'qemu'#
+
+\$env.VIRT_INSTANCES = [ r#'glass'# ]
+
+virtQemu
+
+hide-env VIRT_MANAGER
 \`
 `;

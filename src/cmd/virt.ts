@@ -28,8 +28,8 @@ export class VirtCmd extends CmdBase implements Cmd {
 }
 
 const sysOsPlatToManager: Record<string, Array<string>> = {
-  linux: ['lxc', 'podman', 'qemu'],
-  darwin: [],
+  linux: ['docker', 'podman', 'lxc', 'qemu'],
+  darwin: ['docker', 'podman', 'qemu'],
   winnt: [],
 }
 
@@ -56,17 +56,9 @@ function getSupportedManagers(context: Ctx, environment: Env) {
 }
 
 function getManagerFuncName(manager: string, prefix = VIRT_KEY) {
-  if (!manager) {
-    return ''
-  }
-  const first = manager[0].toUpperCase()
-  const rest = manager
-    .slice(1)
-    .replaceAll('-', '')
-    .replaceAll('_', '')
-    .toLowerCase()
-
-  return `${prefix}${first}${rest}`
+  return manager
+    ? `${prefix}${manager[0].toUpperCase()}${manager.slice(1).replaceAll('-', '').replaceAll('_', '').toLowerCase()}`
+    : ''
 }
 
 async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
@@ -82,43 +74,77 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   const filters = environment.getSplit(VIRT_OP_PARTS_KEY(op))
 
   if (op === 'find') {
-    const allResults = await getCfgDirDump(dirParts, { extension: Fmt.yaml, flexible: true })
-    const grouped = new Map<string, string[]>()
+    const allResults = await getCfgDirDump(dirParts, {
+      extension: Fmt.yaml,
+      flexible: true,
+    })
+
+    const grouped = new Map<string, Map<string, string[]>>()
     for (const r of allResults) {
-      if (!supportedManagers.includes(r[0])) continue
-      const key = r.slice(0, 2).join(' ')
-      if (r.length > 2) {
-        const existing = grouped.get(key)
-        if (existing) existing.push(r[2])
-        else grouped.set(key, [r[2]])
-      } else if (!grouped.has(key)) {
-        grouped.set(key, [])
+      if (!supportedManagers.includes(r[0])) {
+        continue
+      }
+      const manager = r[0]
+      const pod = r[1]
+      const instance = r[2]
+
+      if (!grouped.has(manager)) {
+        grouped.set(manager, new Map())
+      }
+      const managerGroup = grouped.get(manager)!
+
+      if (manager === 'podman') {
+        if (!managerGroup.has(pod)) {
+          managerGroup.set(pod, [])
+        }
+        if (instance) {
+          managerGroup.get(pod)!.push(instance)
+        }
+      } else {
+        if (pod) {
+          if (!managerGroup.has('')) {
+            managerGroup.set('', [])
+          }
+          managerGroup.get('')!.push(pod)
+        }
       }
     }
+
     const shellLines: string[] = []
-    for (const [key, containers] of [...grouped.entries()].toSorted(([a], [b]) => a.localeCompare(b))) {
-      if (filters.length > 0) {
-        const keyMatch = filters.some((f) => key.includes(f))
-        const matchedContainers = containers.filter((c) => keyMatch || filters.some((f) => c.includes(f)))
-        if (!keyMatch && matchedContainers.length === 0) continue
-        shellLines.push(..._shell.print(key))
-        const display = keyMatch ? containers : matchedContainers
-        if (display.length > 0) shellLines.push(..._shell.print(`  ${display.toSorted().join(', ')}`))
-      } else {
-        shellLines.push(..._shell.print(key))
-        if (containers.length > 0) shellLines.push(..._shell.print(`  ${containers.toSorted().join(', ')}`))
+    for (
+      const [manager, podMap] of [...grouped.entries()].toSorted(([a], [b]) => a.localeCompare(b))
+    ) {
+      shellLines.push(..._shell.print(manager))
+      for (
+        const [pod, instances] of [...podMap.entries()].toSorted(([a], [b]) => a.localeCompare(b))
+      ) {
+        if (pod !== '') {
+          shellLines.push(..._shell.print(`  ${pod}`))
+          if (instances.length > 0) {
+            shellLines.push(
+              ..._shell.print(`    ${instances.toSorted().join(', ')}`),
+            )
+          }
+        } else {
+          if (instances.length > 0) {
+            shellLines.push(
+              ..._shell.print(`  ${instances.toSorted().join(', ')}`),
+            )
+          }
+        }
       }
     }
     _shell = _shell.with(_shell.gatedFunc('use virt (remote)', shellLines))
   } else {
     for (const supportedManager of supportedManagers) {
-      _shell = _shell.with(
-        await _shell.fileLoad(
-          [VIRT_KEY, supportedManager, op],
-          import.meta.resolve,
-          ['..'],
-        ),
-      )
+      _shell = _shell
+        .with(
+          await _shell.fileLoad(
+            [VIRT_KEY, supportedManager, op],
+            import.meta.resolve,
+            ['..'],
+          ),
+        )
         .with(
           await _shell.fileLoad(
             [VIRT_KEY, supportedManager],
@@ -127,42 +153,56 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
           ),
         )
     }
-    const results = await getCfgDirDump(dirParts, {
-      extension: Fmt.yaml,
-      filters,
-    })
 
-    const virtMap: Record<string, Array<string>> = {}
-
-    for (const parts of results) {
-      if (!parts[1]) continue
-      if (parts[0] in virtMap) {
-        virtMap[parts[0]].push(parts.slice(1).join('/'))
-      } else {
-        virtMap[parts[0]] = [parts.slice(1).join('/')]
+    const applyResults = (results: Array<Array<string>>) => {
+      const virtMap: Record<string, Array<string>> = {}
+      for (const parts of results) {
+        if (!parts[1] || (parts[0] === 'podman' && !parts[2])) {
+          continue
+        }
+        ;(virtMap[parts[0]] ??= []).push(parts.slice(1).join('/'))
+      }
+      for (const key of Object.keys(virtMap)) {
+        if (!supportedManagers.includes(key)) {
+          continue
+        }
+        if (supportedManagers.length > 1) {
+          _shell = _shell.with(
+            _shell.varSetStr(VIRT_MANAGER_KEY, key),
+          )
+        }
+        _shell = _shell
+          .with(
+            _shell.varSetArr(
+              VIRT_INSTANCES_KEY,
+              virtMap[key],
+            ),
+          )
+          .with([getManagerFuncName(key)])
+        if (supportedManagers.length > 1) {
+          _shell = _shell.with(
+            _shell.varUnSet(VIRT_MANAGER_KEY),
+          )
+        }
       }
     }
 
-    for (const key of Object.keys(virtMap)) {
-      if (!supportedManagers.includes(key)) {
-        continue
-      }
-      if (supportedManagers.length > 1) {
-        _shell = _shell.with(
-          _shell.varSetStr(VIRT_MANAGER_KEY, key),
+    if (op === 'list') {
+      const managerFilters = filters.filter((f) => supportedManagers.some((m) => m.includes(f)))
+      const instanceFilters = filters.filter((f) => !managerFilters.includes(f))
+      const iterations = instanceFilters.length > 0
+        ? instanceFilters.map((f) => [...managerFilters, f])
+        : [managerFilters]
+      for (const iterFilters of iterations) {
+        applyResults(
+          await getCfgDirDump(dirParts, {
+            filters: iterFilters,
+            flexible: managerFilters.length === 0 && iterFilters.length > 0,
+          }),
         )
       }
-      _shell = _shell.with(
-        _shell.varSetArr(
-          VIRT_INSTANCES_KEY,
-          virtMap[key],
-        ),
-      ).with([getManagerFuncName(key)])
-      if (supportedManagers.length > 1) {
-        _shell = _shell.with(
-          _shell.varUnSet(VIRT_MANAGER_KEY),
-        )
-      }
+    } else {
+      applyResults(await getCfgDirDump(dirParts, { extension: Fmt.yaml, filters }))
     }
   }
 

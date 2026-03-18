@@ -25,7 +25,9 @@ const SCRIPT_OP_PARTS_KEY = (op: string) => [SCRIPT_KEY, op, 'parts']
 
 async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   const redirect = await redirectNativeShell(shell, context)
-  if (redirect) return redirect
+  if (redirect) {
+    return redirect
+  }
   let _shell = shell
 
   const dirParts = [SCRIPT_KEY, _shell.name]
@@ -41,18 +43,40 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   }
 
   if (op === 'find') {
+    const allResults = await getCfgDirDump(dirParts, {
+      context,
+      contextFilter,
+      extension: _shell.extension,
+      filters,
+      flexible: true,
+    })
+
+    const grouped = new Map<string, string[]>()
+    for (const r of allResults) {
+      const key = r[0]
+      const val = r.slice(1).join('/')
+      if (!grouped.has(key)) {
+        grouped.set(key, [])
+      }
+      if (val) {
+        grouped.get(key)!.push(val)
+      }
+    }
+
+    const shellLines: string[] = []
+    for (
+      const [key, scripts] of [...grouped.entries()].toSorted(([a], [b]) => a.localeCompare(b))
+    ) {
+      shellLines.push(..._shell.print(key))
+      if (scripts.length > 0) {
+        shellLines.push(..._shell.print(`  ${scripts.toSorted().join(', ')}`))
+      }
+    }
+
     _shell = _shell.with(
       _shell.gatedFunc(
         'use script (remote)',
-        _shell.print(
-          await getCfgDirDump(dirParts, {
-            context,
-            contextFilter,
-            extension: _shell.extension,
-            filters,
-            flexible: true,
-          }).then((x) => x.map((y) => y.join(' ')).toSorted()),
-        ),
+        shellLines,
       ),
     )
   } else {
@@ -66,7 +90,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     )
   }
 
-  const body = shell.build()
+  const body = _shell.build()
 
   if (environment.get(['log'])) {
     console.log(body)

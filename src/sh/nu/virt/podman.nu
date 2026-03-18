@@ -1,6 +1,6 @@
 def virtPodman [] {
   let cmd = 'podman'
-  if ('VIRT_MANAGER' not-in $env or $env.VIRT_MANAGER == 'podman') and (which $cmd | is-not-empty) {
+  if ('VIRT_MANAGER' not-in $env or $env.VIRT_MANAGER == $cmd) and (which $cmd | is-not-empty) {
     mut yn = ''
     if 'YES' in $env {
       $yn = 'y'
