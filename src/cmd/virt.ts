@@ -4,7 +4,7 @@ import { type Env } from '@meop/shire/env'
 import { Fmt } from '@meop/shire/serde'
 import type { Sh } from '@meop/shire/sh'
 
-import { getCfgDirDump } from '../cfg.ts'
+import { getCfgDirDump, getCfgFileLoad } from '../cfg.ts'
 import { redirectCommonShell } from '../sh.ts'
 
 export class VirtCmd extends CmdBase implements Cmd {
@@ -36,6 +36,7 @@ const sysOsPlatToManager: Record<string, Array<string>> = {
 const VIRT_KEY = 'virt'
 const VIRT_MANAGER_KEY = [VIRT_KEY, 'manager']
 const VIRT_OP_KEY = [VIRT_KEY, 'op']
+const VIRT_PODMAN_NETWORKS_KEY = [VIRT_KEY, 'podman', 'networks']
 const VIRT_OP_PARTS_KEY = (op: string) => [VIRT_KEY, op, 'parts']
 
 const VIRT_INSTANCES_KEY = [VIRT_KEY, 'instances']
@@ -154,6 +155,12 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
         )
     }
 
+    if (supportedManagers.includes('podman')) {
+      const podmanConfig = await getCfgFileLoad([VIRT_KEY, 'podman'], { extension: Fmt.yaml })
+      const networks = podmanConfig?.podman?.networks ?? {}
+      _shell = _shell.with(_shell.varSetStr(VIRT_PODMAN_NETWORKS_KEY, JSON.stringify(networks)))
+    }
+
     const applyResults = (results: Array<Array<string>>) => {
       const virtMap: Record<string, Array<string>> = {}
       for (const parts of results) {
@@ -187,22 +194,25 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       }
     }
 
-    if (op === 'list') {
+    if (op === 'list' || op === 'rem') {
       const managerFilters = filters.filter((f) => supportedManagers.some((m) => m.includes(f)))
       const instanceFilters = filters.filter((f) => !managerFilters.includes(f))
-      const iterations = instanceFilters.length > 0
-        ? instanceFilters.map((f) => [...managerFilters, f])
-        : [managerFilters]
-      for (const iterFilters of iterations) {
-        applyResults(
-          await getCfgDirDump(dirParts, {
-            filters: iterFilters,
-            flexible: managerFilters.length === 0 && iterFilters.length > 0,
-          }),
-        )
+      const managersToOp = managerFilters.length > 0
+        ? supportedManagers.filter((m) => managerFilters.some((f) => m.includes(f)))
+        : supportedManagers
+      for (const supportedManager of managersToOp) {
+        if (supportedManagers.length > 1) {
+          _shell = _shell.with(_shell.varSetStr(VIRT_MANAGER_KEY, supportedManager))
+        }
+        _shell = _shell
+          .with(_shell.varSetArr(VIRT_INSTANCES_KEY, instanceFilters))
+          .with([getManagerFuncName(supportedManager)])
+        if (supportedManagers.length > 1) {
+          _shell = _shell.with(_shell.varUnSet(VIRT_MANAGER_KEY))
+        }
       }
     } else {
-      applyResults(await getCfgDirDump(dirParts, { extension: Fmt.yaml, filters }))
+      applyResults(await getCfgDirDump(dirParts, { extension: Fmt.yaml, filters: filters.slice(0, 2) }))
     }
   }
 

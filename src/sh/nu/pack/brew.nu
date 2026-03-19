@@ -9,10 +9,10 @@ def --env packBrew [] {
         $yn = input $"? use ($cmd) \(system\) [y, [n]]: "
       }
       if $yn != 'n' {
-        packBrewOp $cmd
         if 'PACK_OP' in $env and ($env.PACK_OP == 'add' or $env.PACK_OP == 'find' or $env.PACK_OP == 'out' or $env.PACK_OP == 'sync') {
           opPrintMaybeRunCmd $cmd update '|' complete '|' ignore
         }
+        packBrewOp $cmd
       }
     }
   }

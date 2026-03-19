@@ -1,5 +1,12 @@
 def virtLxcOp [cmd] {
-  let instances = if 'VIRT_INSTANCES' in $env { $env.VIRT_INSTANCES } else { [] }
-  let nameFilter = if ($instances | length) == 1 { [$instances.0] } else { [] }
-  opPrintMaybeRunCmd sudo $"($cmd)-ls" --fancy --fancy-format '"NAME,IPV4,IPV6,STATE,AUTOSTART"' --running ...$nameFilter
+  let filters = if ($env.VIRT_INSTANCES | is-not-empty) { $env.VIRT_INSTANCES } else { [] }
+  let allInstances = do --ignore-errors { ^sudo $"($cmd)-ls" } | default '' | split row ' ' | str trim | where { is-not-empty }
+  let instances = if ($filters | is-not-empty) {
+    $allInstances | where { |i| $filters | all { |f| $i | str contains $f } }
+  } else {
+    $allInstances
+  }
+  for instance in $instances {
+    opPrintMaybeRunCmd sudo $"($cmd)-ls" --fancy --fancy-format '"NAME,IPV4,IPV6,STATE,AUTOSTART"' -- $instance
+  }
 }

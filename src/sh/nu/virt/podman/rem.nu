@@ -24,59 +24,28 @@ def removeNetworkIfUnused [network: string, pod: string, managedNetworks: record
 }
 
 def virtPodmanOp [cmd] {
-  let config = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/podman.yaml'#" ')"' | from yaml
-  let managedNetworks = $config | get podman.networks? | default {}
+  let managedNetworks = $env.VIRT_PODMAN_NETWORKS | from json
+  let kubeDir = '/etc/containers/systemd'
 
-  for instancePath in $env.VIRT_INSTANCES {
-    let parts = $instancePath | split row '/'
-    let pod = $parts | first
-
-    if ($parts | length) == 1 {
-      let kubeDir = '/etc/containers/systemd'
-      let kubePath = $"($kubeDir)/($pod).kube"
-      let network = readKubeNetwork $kubePath
-      opPrintMaybeRunCmd sudo systemctl stop $"($pod).service"
-      opPrintMaybeRunCmd sudo rm -f $"($kubeDir)/($pod).yaml" $kubePath
-      opPrintMaybeRunCmd sudo systemctl daemon-reload
-      removeNetworkIfUnused $network $pod $managedNetworks
+  let pods = if ($env.VIRT_INSTANCES | is-not-empty) {
+    $env.VIRT_INSTANCES | each { ($in | split row '/') | first } | uniq
+  } else {
+    if ($kubeDir | path exists) {
+      ls $kubeDir
+        | where name =~ '\.kube$'
+        | get name
+        | each { |f| $f | path basename | str replace '.kube' '' }
     } else {
-      let instance = $parts | last
-
-      let kubeDir = '/etc/containers/systemd'
-      let yamlPath = $"($kubeDir)/($pod).yaml"
-      let kubePath = $"($kubeDir)/($pod).kube"
-
-      if ($yamlPath | path exists) {
-        let docs = open --raw $yamlPath | split row "\n---\n" | each { |d| $d | str trim | from yaml }
-        let existing = $docs | where { |d| ($d | get kind? | default '') == 'Pod' } | first
-        let remaining = $existing.spec.containers | where { |c| $c.name != $instance and not ($c.name | str starts-with $"($instance)-") }
-
-        if ($remaining | is-empty) {
-          let network = readKubeNetwork $kubePath
-          opPrintMaybeRunCmd sudo systemctl stop $"($pod).service"
-          opPrintMaybeRunCmd sudo rm -f $yamlPath $kubePath
-          opPrintMaybeRunCmd sudo systemctl daemon-reload
-          removeNetworkIfUnused $network $pod $managedNetworks
-        } else {
-          let allContainerNames = $existing.spec.containers | each { $in.name }
-          let remainingNames = $remaining | each { $in.name }
-          let filteredAnnotations = $existing
-            | get metadata.annotations? | default {}
-            | transpose key value
-            | where { |kv|
-                let suffix = $kv.key | split row '/' | last
-                not ($allContainerNames | any { $in == $suffix }) or ($remainingNames | any { $in == $suffix })
-              }
-            | reduce --fold {} { |kv, acc| $acc | upsert $kv.key $kv.value }
-          let combinedYaml = $existing
-            | update spec.containers $remaining
-            | upsert metadata.annotations $filteredAnnotations
-            | to yaml
-          opPrintMaybeRunCmd $"r#'($combinedYaml)'#" '|' sudo tee $yamlPath '|' ignore
-          opPrintMaybeRunCmd sudo systemctl daemon-reload
-          opPrintMaybeRunCmd sudo systemctl restart $"($pod).service"
-        }
-      }
+      []
     }
+  }
+  for pod in $pods {
+    let yamlPath = $"($kubeDir)/($pod).yaml"
+    let kubePath = $"($kubeDir)/($pod).kube"
+    let network = readKubeNetwork $kubePath
+    opPrintMaybeRunCmd sudo systemctl stop $"($pod).service"
+    opPrintMaybeRunCmd sudo rm -f $yamlPath $kubePath
+    opPrintMaybeRunCmd sudo systemctl daemon-reload
+    removeNetworkIfUnused $network $pod $managedNetworks
   }
 }

@@ -1,6 +1,7 @@
 def --env packWingetOp [cmd] {
-  if 'PACK_OUT_NAMES' in $env {
-    opPrintMaybeRunCmd $cmd upgrade '|' find --ignore-case $env.PACK_OUT_NAMES
+  let filterArgs = $env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', $t] } | flatten
+  if ($filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd $cmd upgrade ...$filterArgs
   } else {
     opPrintMaybeRunCmd $cmd upgrade
   }

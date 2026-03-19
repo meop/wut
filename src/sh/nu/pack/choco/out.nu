@@ -1,6 +1,7 @@
 def --env packChocoOp [cmd] {
-  if 'PACK_OUT_NAMES' in $env {
-    opPrintMaybeRunCmd $cmd outdated '|' find --ignore-case $env.PACK_OUT_NAMES
+  let filterArgs = $env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', $t] } | flatten
+  if ($filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd $cmd outdated ...$filterArgs
   } else {
     opPrintMaybeRunCmd $cmd outdated
   }

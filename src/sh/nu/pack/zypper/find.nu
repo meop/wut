@@ -1,3 +1,10 @@
 def --env packZypperOp [cmd] {
-  opPrintMaybeRunCmd $cmd search $env.PACK_FIND_NAMES
+  let terms = $env.PACK_FIND_NAMES? | default '' | split words
+  if ($terms | is-empty) {
+    opPrintMaybeRunCmd $cmd search
+  } else {
+    for term in $terms {
+      opPrintMaybeRunCmd $cmd search $term
+    }
+  }
 }

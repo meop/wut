@@ -1,5 +1,5 @@
 def --env packPacmanOp [cmd] {
-  if 'PACK_SYNC_NAMES' in $env {
+  if ($env.PACK_SYNC_NAMES? | is-not-empty) {
     opPrintMaybeRunCmd $cmd --sync --needed $env.PACK_SYNC_NAMES
   } else {
     opPrintMaybeRunCmd $cmd --sync --sysupgrade

@@ -22,7 +22,20 @@ def virtQemuOpRem [cmd, instance] {
 }
 
 def virtQemuOp [cmd] {
-  for instance in $env.VIRT_INSTANCES {
+  let instances = if ($env.VIRT_INSTANCES | is-not-empty) {
+    $env.VIRT_INSTANCES
+  } else {
+    let serviceDir = '/etc/systemd/system'
+    if ($serviceDir | path exists) {
+      ls $serviceDir
+        | where name =~ '/qemu-[^/]+\.service$'
+        | get name
+        | each { |f| $f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
+    } else {
+      []
+    }
+  }
+  for instance in $instances {
     virtQemuOpRem $cmd $instance
   }
 }

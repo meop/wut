@@ -126,10 +126,8 @@ do {
 
 
 def --env packPacmanOp [cmd] {
-  if 'PACK_ADD_GROUP_NAMES' in \$env {
-    for name in \$env.PACK_ADD_GROUP_NAMES {
-      opPrintMaybeRunCmd ...(\$name | split row ' ')
-    }
+  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
   }
   opPrintMaybeRunCmd \$cmd --sync --needed \$env.PACK_ADD_NAMES
   \$env.PACKED = true
@@ -313,7 +311,7 @@ do {
 
 
 def --env packPacmanOp [cmd] {
-  opPrintMaybeRunCmd \$cmd --sync --search \$env.PACK_FIND_NAMES
+  opPrintMaybeRunCmd \$cmd --sync --search ...(\$env.PACK_FIND_NAMES? | default '' | split words)
 }
 
 
@@ -503,8 +501,9 @@ do {
 
 
 def --env packPacmanOp [cmd] {
-  if 'PACK_LIST_NAMES' in \$env {
-    opPrintMaybeRunCmd \$cmd --query '|' find --ignore-case \$env.PACK_LIST_NAMES
+  let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd --query ...\$filterArgs
   } else {
     opPrintMaybeRunCmd \$cmd --query
   }
@@ -686,11 +685,8 @@ do {
 
 
 def --env packPacmanOp [cmd] {
-  if 'PACK_OUT_NAMES' in \$env {
-    opPrintMaybeRunCmd do --ignore-errors '{' \$cmd --query --upgrades '|' find --ignore-case \$env.PACK_OUT_NAMES '}'
-  } else {
-    opPrintMaybeRunCmd do --ignore-errors '{' \$cmd --query --upgrades '}'
-  }
+  let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  opPrintMaybeRunCmd do --ignore-errors '{' \$cmd --query --upgrades ...\$filterArgs '}'
 }
 
 
@@ -873,10 +869,8 @@ do {
 def --env packPacmanOp [cmd] {
   opPrintMaybeRunCmd \$cmd --remove --nosave --recursive \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  if 'PACK_REM_GROUP_NAMES' in \$env {
-    for name in \$env.PACK_REM_GROUP_NAMES {
-      opPrintMaybeRunCmd ...(\$name | split row ' ')
-    }
+  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
   }
 }
 
@@ -1056,7 +1050,7 @@ do {
 
 
 def --env packPacmanOp [cmd] {
-  if 'PACK_SYNC_NAMES' in \$env {
+  if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
     opPrintMaybeRunCmd \$cmd --sync --needed \$env.PACK_SYNC_NAMES
   } else {
     opPrintMaybeRunCmd \$cmd --sync --sysupgrade
@@ -1414,10 +1408,8 @@ do {
 \$env.PACK_OP = r#'add'#
 
 def --env packAptOp [cmd] {
-  if 'PACK_ADD_GROUP_NAMES' in \$env {
-    for name in \$env.PACK_ADD_GROUP_NAMES {
-      opPrintMaybeRunCmd ...(\$name | split row ' ')
-    }
+  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
   }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
   \$env.PACKED = true
@@ -1574,7 +1566,7 @@ do {
 \$env.PACK_OP = r#'find'#
 
 def --env packAptOp [cmd] {
-  opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
+  opPrintMaybeRunCmd \$cmd search ...(\$env.PACK_FIND_NAMES? | default '' | split words)
 }
 
 
@@ -1737,8 +1729,9 @@ do {
 \$env.PACK_OP = r#'list'#
 
 def --env packAptOp [cmd] {
-  if 'PACK_LIST_NAMES' in \$env {
-    opPrintMaybeRunCmd \$cmd list --installed '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case \$env.PACK_LIST_NAMES
+  let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd list --installed '|' complete '|' get stdout '|' str trim --right ...\$filterArgs
   } else {
     opPrintMaybeRunCmd \$cmd list --installed
   }
@@ -1893,8 +1886,9 @@ do {
 \$env.PACK_OP = r#'out'#
 
 def --env packAptOp [cmd] {
-  if 'PACK_OUT_NAMES' in \$env {
-    opPrintMaybeRunCmd \$cmd list --upgradable '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case \$env.PACK_OUT_NAMES
+  let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd list --upgradable '|' complete '|' get stdout '|' str trim --right ...\$filterArgs
   } else {
     opPrintMaybeRunCmd \$cmd list --upgradable
   }
@@ -2053,10 +2047,8 @@ do {
 def --env packAptOp [cmd] {
   opPrintMaybeRunCmd \$cmd purge --autoremove \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  if 'PACK_REM_GROUP_NAMES' in \$env {
-    for name in \$env.PACK_REM_GROUP_NAMES {
-      opPrintMaybeRunCmd ...(\$name | split row ' ')
-    }
+  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
   }
 }
 
@@ -2209,7 +2201,7 @@ do {
 \$env.PACK_OP = r#'sync'#
 
 def --env packAptOp [cmd] {
-  if 'PACK_SYNC_NAMES' in \$env {
+  if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
     opPrintMaybeRunCmd \$cmd install \$env.PACK_SYNC_NAMES
   } else {
     opPrintMaybeRunCmd \$cmd full-upgrade
@@ -2516,10 +2508,8 @@ do {
 \$env.PACK_OP = r#'add'#
 
 def --env packDnfOp [cmd] {
-  if 'PACK_ADD_GROUP_NAMES' in \$env {
-    for name in \$env.PACK_ADD_GROUP_NAMES {
-      opPrintMaybeRunCmd ...(\$name | split row ' ')
-    }
+  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
   }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
   \$env.PACKED = true
@@ -2676,7 +2666,7 @@ do {
 \$env.PACK_OP = r#'find'#
 
 def --env packDnfOp [cmd] {
-  opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
+  opPrintMaybeRunCmd \$cmd search ...(\$env.PACK_FIND_NAMES? | default '' | split words)
 }
 
 
@@ -2839,8 +2829,9 @@ do {
 \$env.PACK_OP = r#'list'#
 
 def --env packDnfOp [cmd] {
-  if 'PACK_LIST_NAMES' in \$env {
-    opPrintMaybeRunCmd \$cmd list --installed '|' find --ignore-case \$env.PACK_LIST_NAMES
+  let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd list --installed ...\$filterArgs
   } else {
     opPrintMaybeRunCmd \$cmd list --installed
   }
@@ -2995,8 +2986,9 @@ do {
 \$env.PACK_OP = r#'out'#
 
 def --env packDnfOp [cmd] {
-  if 'PACK_OUT_NAMES' in \$env {
-    opPrintMaybeRunCmd \$cmd list --upgrades '|' find --ignore-case \$env.PACK_OUT_NAMES
+  let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd list --upgrades ...\$filterArgs
   } else {
     opPrintMaybeRunCmd \$cmd list --upgrades
   }
@@ -3155,10 +3147,8 @@ do {
 def --env packDnfOp [cmd] {
   opPrintMaybeRunCmd \$cmd remove \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  if 'PACK_REM_GROUP_NAMES' in \$env {
-    for name in \$env.PACK_REM_GROUP_NAMES {
-      opPrintMaybeRunCmd ...(\$name | split row ' ')
-    }
+  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
   }
 }
 
@@ -3311,7 +3301,7 @@ do {
 \$env.PACK_OP = r#'sync'#
 
 def --env packDnfOp [cmd] {
-  if 'PACK_SYNC_NAMES' in \$env {
+  if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
     opPrintMaybeRunCmd \$cmd upgrade \$env.PACK_SYNC_NAMES
   } else {
     opPrintMaybeRunCmd \$cmd distro-sync
@@ -3618,10 +3608,8 @@ do {
 \$env.PACK_OP = r#'add'#
 
 def --env packZypperOp [cmd] {
-  if 'PACK_ADD_GROUP_NAMES' in \$env {
-    for name in \$env.PACK_ADD_GROUP_NAMES {
-      opPrintMaybeRunCmd ...(\$name | split row ' ')
-    }
+  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
   }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
   \$env.PACKED = true
@@ -3778,7 +3766,14 @@ do {
 \$env.PACK_OP = r#'find'#
 
 def --env packZypperOp [cmd] {
-  opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
+  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
+  if (\$terms | is-empty) {
+    opPrintMaybeRunCmd \$cmd search
+  } else {
+    for term in \$terms {
+      opPrintMaybeRunCmd \$cmd search \$term
+    }
+  }
 }
 
 
@@ -3941,8 +3936,9 @@ do {
 \$env.PACK_OP = r#'list'#
 
 def --env packZypperOp [cmd] {
-  if 'PACK_LIST_NAMES' in \$env {
-    opPrintMaybeRunCmd \$cmd search --installed-only '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case \$env.PACK_LIST_NAMES
+  let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd search --installed-only '|' complete '|' get stdout '|' str trim --right ...\$filterArgs
   } else {
     opPrintMaybeRunCmd \$cmd search --installed-only
   }
@@ -4097,8 +4093,9 @@ do {
 \$env.PACK_OP = r#'out'#
 
 def --env packZypperOp [cmd] {
-  if 'PACK_OUT_NAMES' in \$env {
-    opPrintMaybeRunCmd \$cmd list-updates '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case \$env.PACK_OUT_NAMES
+  let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd list-updates '|' complete '|' get stdout '|' str trim --right ...\$filterArgs
   } else {
     opPrintMaybeRunCmd \$cmd list-updates
   }
@@ -4257,10 +4254,8 @@ do {
 def --env packZypperOp [cmd] {
   opPrintMaybeRunCmd \$cmd remove --clean-deps \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  if 'PACK_REM_GROUP_NAMES' in \$env {
-    for name in \$env.PACK_REM_GROUP_NAMES {
-      opPrintMaybeRunCmd ...(\$name | split row ' ')
-    }
+  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
   }
 }
 
@@ -4413,7 +4408,7 @@ do {
 \$env.PACK_OP = r#'sync'#
 
 def --env packZypperOp [cmd] {
-  if 'PACK_SYNC_NAMES' in \$env {
+  if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
     opPrintMaybeRunCmd \$cmd install \$env.PACK_SYNC_NAMES
   } else {
     opPrintMaybeRunCmd \$cmd update
@@ -4717,10 +4712,8 @@ do {
 \$env.PACK_OP = r#'add'#
 
 def --env packBrewOp [cmd] {
-  if 'PACK_ADD_GROUP_NAMES' in \$env {
-    for name in \$env.PACK_ADD_GROUP_NAMES {
-      opPrintMaybeRunCmd ...(\$name | split row ' ')
-    }
+  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
   }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
   \$env.PACKED = true
@@ -4738,10 +4731,10 @@ def --env packBrew [] {
         \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
       }
       if \$yn != 'n' {
-        packBrewOp \$cmd
         if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
           opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
         }
+        packBrewOp \$cmd
       }
     }
   }
@@ -4874,7 +4867,14 @@ do {
 \$env.PACK_OP = r#'find'#
 
 def --env packBrewOp [cmd] {
-  opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
+  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
+  if (\$terms | is-empty) {
+    opPrintMaybeRunCmd \$cmd search
+  } else {
+    for term in \$terms {
+      opPrintMaybeRunCmd \$cmd search \$term
+    }
+  }
 }
 
 
@@ -4889,10 +4889,10 @@ def --env packBrew [] {
         \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
       }
       if \$yn != 'n' {
-        packBrewOp \$cmd
         if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
           opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
         }
+        packBrewOp \$cmd
       }
     }
   }
@@ -5034,8 +5034,9 @@ do {
 \$env.PACK_OP = r#'list'#
 
 def --env packBrewOp [cmd] {
-  if 'PACK_LIST_NAMES' in \$env {
-    opPrintMaybeRunCmd \$cmd list '|' find --ignore-case \$env.PACK_LIST_NAMES
+  let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd list ...\$filterArgs
   } else {
     opPrintMaybeRunCmd \$cmd list
   }
@@ -5053,10 +5054,10 @@ def --env packBrew [] {
         \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
       }
       if \$yn != 'n' {
-        packBrewOp \$cmd
         if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
           opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
         }
+        packBrewOp \$cmd
       }
     }
   }
@@ -5187,11 +5188,8 @@ do {
 \$env.PACK_OP = r#'out'#
 
 def --env packBrewOp [cmd] {
-  if 'PACK_OUT_NAMES' in \$env {
-    opPrintMaybeRunCmd do --ignore-errors '{' \$cmd outdated '|' find --ignore-case \$env.PACK_OUT_NAMES '}'
-  } else {
-    opPrintMaybeRunCmd do --ignore-errors '{' \$cmd outdated '}'
-  }
+  let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  opPrintMaybeRunCmd do --ignore-errors '{' \$cmd outdated ...\$filterArgs '}'
 }
 
 
@@ -5206,10 +5204,10 @@ def --env packBrew [] {
         \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
       }
       if \$yn != 'n' {
-        packBrewOp \$cmd
         if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
           opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
         }
+        packBrewOp \$cmd
       }
     }
   }
@@ -5344,10 +5342,8 @@ do {
 def --env packBrewOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  if 'PACK_REM_GROUP_NAMES' in \$env {
-    for name in \$env.PACK_REM_GROUP_NAMES {
-      opPrintMaybeRunCmd ...(\$name | split row ' ')
-    }
+  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
   }
 }
 
@@ -5363,10 +5359,10 @@ def --env packBrew [] {
         \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
       }
       if \$yn != 'n' {
-        packBrewOp \$cmd
         if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
           opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
         }
+        packBrewOp \$cmd
       }
     }
   }
@@ -5497,7 +5493,7 @@ do {
 \$env.PACK_OP = r#'sync'#
 
 def --env packBrewOp [cmd] {
-  if 'PACK_SYNC_NAMES' in \$env {
+  if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
     opPrintMaybeRunCmd \$cmd upgrade --greedy \$env.PACK_SYNC_NAMES
   } else {
     opPrintMaybeRunCmd \$cmd upgrade --greedy
@@ -5516,10 +5512,10 @@ def --env packBrew [] {
         \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
       }
       if \$yn != 'n' {
-        packBrewOp \$cmd
         if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
           opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
         }
+        packBrewOp \$cmd
       }
     }
   }
@@ -5663,10 +5659,10 @@ def --env packBrew [] {
         \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
       }
       if \$yn != 'n' {
-        packBrewOp \$cmd
         if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
           opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
         }
+        packBrewOp \$cmd
       }
     }
   }
@@ -5797,10 +5793,8 @@ do {
 \$env.PACK_OP = r#'add'#
 
 def --env packChocoOp [cmd] {
-  if 'PACK_ADD_GROUP_NAMES' in \$env {
-    for name in \$env.PACK_ADD_GROUP_NAMES {
-      opPrintMaybeRunCmd ...(\$name | split row ' ')
-    }
+  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
   }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
   \$env.PACKED = true
@@ -5827,10 +5821,8 @@ def --env packChoco [] {
 
 
 def --env packScoopOp [cmd] {
-  if 'PACK_ADD_GROUP_NAMES' in \$env {
-    for name in \$env.PACK_ADD_GROUP_NAMES {
-      opPrintMaybeRunCmd ...(\$name | split row ' ')
-    }
+  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
   }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
   \$env.PACKED = true
@@ -5859,10 +5851,8 @@ def --env packScoop [] {
 
 
 def --env packWingetOp [cmd] {
-  if 'PACK_ADD_GROUP_NAMES' in \$env {
-    for name in \$env.PACK_ADD_GROUP_NAMES {
-      opPrintMaybeRunCmd ...(\$name | split row ' ')
-    }
+  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
   }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
   \$env.PACKED = true
@@ -6018,7 +6008,14 @@ do {
 \$env.PACK_OP = r#'find'#
 
 def --env packChocoOp [cmd] {
-  opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
+  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
+  if (\$terms | is-empty) {
+    opPrintMaybeRunCmd \$cmd search
+  } else {
+    for term in \$terms {
+      opPrintMaybeRunCmd \$cmd search \$term
+    }
+  }
 }
 
 
@@ -6042,7 +6039,14 @@ def --env packChoco [] {
 
 
 def --env packScoopOp [cmd] {
-  opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
+  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
+  if (\$terms | is-empty) {
+    opPrintMaybeRunCmd \$cmd search
+  } else {
+    for term in \$terms {
+      opPrintMaybeRunCmd \$cmd search \$term
+    }
+  }
 }
 
 
@@ -6068,7 +6072,14 @@ def --env packScoop [] {
 
 
 def --env packWingetOp [cmd] {
-  opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
+  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
+  if (\$terms | is-empty) {
+    opPrintMaybeRunCmd \$cmd search
+  } else {
+    for term in \$terms {
+      opPrintMaybeRunCmd \$cmd search \$term
+    }
+  }
 }
 
 
@@ -6230,8 +6241,9 @@ do {
 \$env.PACK_OP = r#'list'#
 
 def --env packChocoOp [cmd] {
-  if 'PACK_LIST_NAMES' in \$env {
-    opPrintMaybeRunCmd \$cmd list '|' find --ignore-case \$env.PACK_LIST_NAMES
+  let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd list ...\$filterArgs
   } else {
     opPrintMaybeRunCmd \$cmd list
   }
@@ -6258,8 +6270,9 @@ def --env packChoco [] {
 
 
 def --env packScoopOp [cmd] {
-  if 'PACK_LIST_NAMES' in \$env {
-    opPrintMaybeRunCmd \$cmd list '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case \$env.PACK_LIST_NAMES
+  let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd list '|' complete '|' get stdout '|' str trim --right ...\$filterArgs
   } else {
     opPrintMaybeRunCmd \$cmd list
   }
@@ -6288,8 +6301,9 @@ def --env packScoop [] {
 
 
 def --env packWingetOp [cmd] {
-  if 'PACK_LIST_NAMES' in \$env {
-    opPrintMaybeRunCmd \$cmd list '|' find --ignore-case \$env.PACK_LIST_NAMES
+  let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd list ...\$filterArgs
   } else {
     opPrintMaybeRunCmd \$cmd list
   }
@@ -6443,8 +6457,9 @@ do {
 \$env.PACK_OP = r#'out'#
 
 def --env packChocoOp [cmd] {
-  if 'PACK_OUT_NAMES' in \$env {
-    opPrintMaybeRunCmd \$cmd outdated '|' find --ignore-case \$env.PACK_OUT_NAMES
+  let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd outdated ...\$filterArgs
   } else {
     opPrintMaybeRunCmd \$cmd outdated
   }
@@ -6471,8 +6486,9 @@ def --env packChoco [] {
 
 
 def --env packScoopOp [cmd] {
-  if 'PACK_OUT_NAMES' in \$env {
-    opPrintMaybeRunCmd \$cmd status '|' complete '|' get stdout '|' str trim --right '|' find --ignore-case \$env.PACK_OUT_NAMES
+  let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd status '|' complete '|' get stdout '|' str trim --right ...\$filterArgs
   } else {
     opPrintMaybeRunCmd \$cmd status
   }
@@ -6501,8 +6517,9 @@ def --env packScoop [] {
 
 
 def --env packWingetOp [cmd] {
-  if 'PACK_OUT_NAMES' in \$env {
-    opPrintMaybeRunCmd \$cmd upgrade '|' find --ignore-case \$env.PACK_OUT_NAMES
+  let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd upgrade ...\$filterArgs
   } else {
     opPrintMaybeRunCmd \$cmd upgrade
   }
@@ -6660,10 +6677,8 @@ do {
 def --env packChocoOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  if 'PACK_REM_GROUP_NAMES' in \$env {
-    for name in \$env.PACK_REM_GROUP_NAMES {
-      opPrintMaybeRunCmd ...(\$name | split row ' ')
-    }
+  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
   }
 }
 
@@ -6690,10 +6705,8 @@ def --env packChoco [] {
 def --env packScoopOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  if 'PACK_REM_GROUP_NAMES' in \$env {
-    for name in \$env.PACK_REM_GROUP_NAMES {
-      opPrintMaybeRunCmd ...(\$name | split row ' ')
-    }
+  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
   }
 }
 
@@ -6722,10 +6735,8 @@ def --env packScoop [] {
 def --env packWingetOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  if 'PACK_REM_GROUP_NAMES' in \$env {
-    for name in \$env.PACK_REM_GROUP_NAMES {
-      opPrintMaybeRunCmd ...(\$name | split row ' ')
-    }
+  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
   }
 }
 
@@ -6877,7 +6888,7 @@ do {
 \$env.PACK_OP = r#'sync'#
 
 def --env packChocoOp [cmd] {
-  if 'PACK_SYNC_NAMES' in \$env {
+  if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
     opPrintMaybeRunCmd \$cmd upgrade \$env.PACK_SYNC_NAMES
   } else {
     opPrintMaybeRunCmd \$cmd upgrade all
@@ -6905,7 +6916,7 @@ def --env packChoco [] {
 
 
 def --env packScoopOp [cmd] {
-  if 'PACK_SYNC_NAMES' in \$env {
+  if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
     opPrintMaybeRunCmd \$cmd update \$env.PACK_SYNC_NAMES
   } else {
     opPrintMaybeRunCmd \$cmd update --all
@@ -6935,7 +6946,7 @@ def --env packScoop [] {
 
 
 def --env packWingetOp [cmd] {
-  if 'PACK_SYNC_NAMES' in \$env {
+  if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
     opPrintMaybeRunCmd \$cmd upgrade \$env.PACK_SYNC_NAMES
   } else {
     opPrintMaybeRunCmd \$cmd upgrade --all
@@ -7285,7 +7296,14 @@ do {
 \$env.PACK_OP = r#'find'#
 
 def --env packChocoOp [cmd] {
-  opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
+  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
+  if (\$terms | is-empty) {
+    opPrintMaybeRunCmd \$cmd search
+  } else {
+    for term in \$terms {
+      opPrintMaybeRunCmd \$cmd search \$term
+    }
+  }
 }
 
 
@@ -7309,7 +7327,14 @@ def --env packChoco [] {
 
 
 def --env packScoopOp [cmd] {
-  opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
+  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
+  if (\$terms | is-empty) {
+    opPrintMaybeRunCmd \$cmd search
+  } else {
+    for term in \$terms {
+      opPrintMaybeRunCmd \$cmd search \$term
+    }
+  }
 }
 
 
@@ -7335,7 +7360,14 @@ def --env packScoop [] {
 
 
 def --env packWingetOp [cmd] {
-  opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
+  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
+  if (\$terms | is-empty) {
+    opPrintMaybeRunCmd \$cmd search
+  } else {
+    for term in \$terms {
+      opPrintMaybeRunCmd \$cmd search \$term
+    }
+  }
 }
 
 
@@ -7570,7 +7602,14 @@ do {
 \$env.PACK_OP = r#'find'#
 
 def --env packBrewOp [cmd] {
-  opPrintMaybeRunCmd \$cmd search \$env.PACK_FIND_NAMES
+  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
+  if (\$terms | is-empty) {
+    opPrintMaybeRunCmd \$cmd search
+  } else {
+    for term in \$terms {
+      opPrintMaybeRunCmd \$cmd search \$term
+    }
+  }
 }
 
 
@@ -7585,10 +7624,10 @@ def --env packBrew [] {
         \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
       }
       if \$yn != 'n' {
-        packBrewOp \$cmd
         if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
           opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
         }
+        packBrewOp \$cmd
       }
     }
   }

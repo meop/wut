@@ -5,7 +5,7 @@ def virtLxcOp [cmd] {
     }
 
     if (do --ignore-errors { ^sudo $"($cmd)-ls" --running | split row ' ' | str trim | where { |l| $l | is-not-empty } | any { |l| $l == $instance } }) {
-      opPrintMaybeRunCmd sudo $"($cmd)-stop" -n $instance
+      opPrintMaybeRunCmd sudo $"($cmd)-stop" --name $instance
     }
 
     let addPath = $env.REQ_PATH | str replace '/sync/' '/add/' | str replace '/sh/nu/' '/sh/nu/--yes/'

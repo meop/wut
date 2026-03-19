@@ -163,7 +163,7 @@ async function findGroupsWithNames(
     }
     if (filters?.length) {
       const matchedFilters = filters.filter((f) => name.includes(f) || allNames.some((n) => n.includes(f)))
-      if (!matchedFilters.length) {
+      if (matchedFilters.length !== filters.length) {
         continue
       }
       for (const f of matchedFilters) {
@@ -379,14 +379,8 @@ async function execOp(
   const remaining = names.filter((n) => !found.includes(n))
 
   if (op === 'find' || op === 'list' || op === 'out') {
-    for (const name of names) {
-      result = setOpNames(result, op, name)
-      result = callManagers(result, managers)
-    }
-    if (names.length === 0) {
-      result = setOpNames(result, op, '')
-      result = callManagers(result, managers)
-    }
+    result = setOpNames(result, op, names.join(' '))
+    result = callManagers(result, managers)
   } else {
     if (remaining.length) {
       result = setOpNames(result, op, remaining.join(' '))

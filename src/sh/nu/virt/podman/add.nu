@@ -43,7 +43,8 @@ def buildImage [yamlRaw, host, pod, instance] {
     opPrintMaybeRunCmd sudo mkdir -p $context
     opPrintMaybeRunCmd $"r#'($containerfileContent)'#" '|' sudo tee $containerfilePath '|' ignore
 
-    if not (do --ignore-errors { ^sudo podman image exists $image }) {
+    do --ignore-errors { ^sudo podman image exists $image }
+    if $env.LAST_EXIT_CODE != 0 {
       opPrintMaybeRunCmd sudo podman build --tag $image $context
     }
   }
@@ -51,8 +52,7 @@ def buildImage [yamlRaw, host, pod, instance] {
 
 def virtPodmanOp [cmd] {
   let kubeDir = '/etc/containers/systemd'
-
-  let config = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/podman.yaml'#" ')"' | from yaml
+  let networks = $env.VIRT_PODMAN_NETWORKS | from json
 
   let pods = $env.VIRT_INSTANCES | each { |p| ($p | split row '/') | first } | uniq
   for pod in $pods {
@@ -65,15 +65,15 @@ def virtPodmanOp [cmd] {
       continue
     }
 
-    let configPod = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/podman/($pod).yaml'#" ')"'
-      | str replace --all '{pod}' $pod
-      | from yaml
+    let configPodRaw = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/podman/($pod).yaml'#" ')"'
+    buildImage $configPodRaw $env.SYS_HOST $pod ''
+    let configPod = $configPodRaw | str replace --all '{pod}' $pod | splitYamlDocs | where { |d| ($d | get kind? | default '') == 'Pod' } | first
 
     let hostname = $configPod | get spec.hostname? | default $pod
     let network = $configPod | get metadata.annotations.'io.podman.kube.network'? | default ''
     let mac = $configPod | get metadata.annotations.'io.podman.kube.podmanargs.mac-address'? | default ''
 
-    let networkDef = $config | get podman.networks? | default {} | get --optional $network
+    let networkDef = $networks | get --optional $network
     if $networkDef != null {
       if not (^sudo podman network ls --format '{{.Name}}' | lines | any { $in == $network }) {
         mut netArgs = ['network', 'create']
@@ -126,12 +126,12 @@ def virtPodmanOp [cmd] {
       opPrintMaybeRunCmd sudo $cmd pull $container.image
     }
 
-    let allDocs = ([{
+    let allDocs = ([({
       apiVersion: 'v1',
       kind: 'Pod',
       metadata: { name: $pod, annotations: $annotations },
       spec: { hostname: $hostname, containers: $containers, volumes: $volumes },
-    } | to yaml] | append ($configMaps | each { to yaml })) | str join "---\n"
+    } | to yaml)] | append ($configMaps | each { |cm| $cm | to yaml })) | str join "---\n"
 
     mut kubeLines = ['[Unit]', $"Description=($pod) pod", '', '[Kube]', $"Yaml=($pod).yaml", $"Network=($network)"]
     if ($mac | is-not-empty) {

@@ -1,3 +1,21 @@
+def flattenLxcConfig [cfg, prefix = ''] {
+  mut lines = []
+  for kv in ($cfg | transpose key value) {
+    let key = if $prefix == '' { $kv.key } else { $"($prefix).($kv.key)" }
+    let desc = ($kv.value | describe)
+    if ($desc | str starts-with 'record') {
+      $lines = $lines | append (flattenLxcConfig $kv.value $key)
+    } else if ($desc | str starts-with 'list') {
+      for item in $kv.value {
+        $lines = $lines | append $"lxc.($key) = ($item)"
+      }
+    } else {
+      $lines = $lines | append $"lxc.($key) = ($kv.value)"
+    }
+  }
+  $lines
+}
+
 def replaceEnv [localEnv, value] {
   mut v = $value
   if ($v | str contains '{') {
@@ -25,7 +43,7 @@ def virtLxcOpAdd [config, configVm, cmd, instance] {
 
   let rootfsReady = do --ignore-errors { ^sudo test -d $"($rootfsPath)/usr"; true } | default false
   if not $rootfsReady {
-    let template = $configVm | get lxc.create.template?
+    let template = $configVm | get lxc.create.template? | default ($config | get lxc.create.template?)
     let templateName = ($template | columns | get 0?) | default 'download'
     opPrintMaybeRunCmd sudo lxc-create --name $instance --lxcpath $lxcDir --template $templateName -- ...(
       (if ($templateName in ($template | columns)) { $template | get $templateName } else { {} })
@@ -40,16 +58,19 @@ def virtLxcOpAdd [config, configVm, cmd, instance] {
     $"lxc.uts.name = ($instance)",
     $"lxc.rootfs.path = dir:($rootfsPath)",
   ]
-  let autostart = $configVm | get lxc.autostart? | default false
+  let autostart = $configVm | get lxc.autostart? | default ($config | get lxc.autostart? | default false)
   if $autostart {
     $configLines = $configLines | append 'lxc.start.auto = 1'
   }
 
-  for line in ($config | get lxc.config? | default []) {
+  for line in (flattenLxcConfig ($config | get lxc.config? | default {})) {
+    $configLines = $configLines | append (replaceEnv $lxcEnv $line)
+  }
+  for line in (flattenLxcConfig ($configVm | get lxc.config? | default {})) {
     $configLines = $configLines | append (replaceEnv $lxcEnv $line)
   }
 
-  let net = $configVm | get lxc.network? | default {}
+  let net = ($config | get lxc.network? | default {}) | merge ($configVm | get lxc.network? | default {})
   if ($net | is-not-empty) {
     $configLines = $configLines | append [
       $"lxc.net.0.type = ($net.type)",
@@ -67,7 +88,7 @@ def virtLxcOpAdd [config, configVm, cmd, instance] {
     $configLines = $configLines | append 'lxc.net.0.flags = up'
   }
 
-  for mnt in ($configVm | get lxc.mounts? | default []) {
+  for mnt in ([...($config | get lxc.mounts? | default []), ...($configVm | get lxc.mounts? | default [])]) {
     $configLines = $configLines | append $"lxc.mount.entry = (replaceEnv $lxcEnv $mnt.source) ((replaceEnv $lxcEnv $mnt.target) | str trim --left --char '/') none bind,create=dir 0 0"
   }
 

@@ -19,6 +19,7 @@ export class FileCmd extends CmdBase implements Cmd {
     this.commands = [
       new FileCmdDiff([...this.scopes, this.name]),
       new FileCmdFind([...this.scopes, this.name]),
+      new FileCmdList([...this.scopes, this.name]),
       new FileCmdSync([...this.scopes, this.name]),
     ]
   }
@@ -69,7 +70,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   for (
     const key of Object.keys(content).filter((k) =>
       !filters.length ||
-      filters.find((f) => {
+      filters.every((f) => {
         const inValues = content[k]?.maps?.map((m) => m.in) ?? []
         return op === 'find'
           ? k.includes(f) ||
@@ -218,6 +219,24 @@ export class FileCmdFind extends CmdBase implements Cmd {
     this.name = 'find'
     this.description = 'find from remote'
     this.aliases = ['f', 'fi']
+    this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
+  }
+
+  override async work(
+    shell: Sh,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
+    return await execOp(shell, context, environment, this.name)
+  }
+}
+
+export class FileCmdList extends CmdBase implements Cmd {
+  constructor(scopes: Array<string>) {
+    super(scopes)
+    this.name = 'list'
+    this.description = 'list on local'
+    this.aliases = ['l', 'li', 'ls']
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
 

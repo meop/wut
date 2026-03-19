@@ -130,14 +130,14 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
       ]
     }
 
-    if 'swtpm' in $configVm {
+    if ('swtpm' in $configVm) or ('swtpm' in $config) {
       let swtpmScriptPath = ($configDir | path join swtpm.sh)
-      let swtpmArgs = replaceEnv $qemuEnv ($configVm | get swtpm.arguments? | default [])
+      let swtpmArgs = replaceEnv $qemuEnv ([...($config | get swtpm.arguments? | default []), ...($configVm | get swtpm.arguments? | default [])])
       let swtpmCmd = $"swtpm(if ($swtpmArgs | length) > 0 { ' ' + ($swtpmArgs | str join ' ') } else { '' })"
 
       # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
       # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
-      opPrintMaybeRunCmd $"r##'((['#!/usr/bin/sh', $"exec ($swtpmCmd)"] | str join "\n") + "\n")'##" '|' sudo tee $swtpmScriptPath '|' ignore
+      opPrintMaybeRunCmd $"r##'((['#!/usr/bin/sh', ('exec ' + $swtpmCmd)] | str join "\n") + "\n")'##" '|' sudo tee $swtpmScriptPath '|' ignore
       opPrintMaybeRunCmd sudo chmod +x $swtpmScriptPath
       $serviceLines = $serviceLines | append [
         $"ExecStartPre=-/usr/bin/pkill --full \"^swtpm.*($instance)\"",
@@ -175,13 +175,13 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
     )
 
     let qemuScriptPath = ($configDir | path join qemu.sh)
-    let qemuArgs = replaceEnv $qemuEnv ($configVm | get qemu.arguments? | default [])
+    let qemuArgs = replaceEnv $qemuEnv ([...($config | get qemu.arguments? | default []), ...($configVm | get qemu.arguments? | default [])])
     let cpusCount = (($qemuEnv.VM_CPU_SOCKETS | into int) * ($qemuEnv.VM_CPU_CORES | into int) * ($qemuEnv.VM_CPU_THREADS | into int))
     let cpusMax = $cpusCount - 1
     let qemuCmd = $"($qemuBin)(if ($qemuArgs | length) > 0 { ' ' + ($qemuArgs | str join ' ') } else { '' })"
     # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
     # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
-    opPrintMaybeRunCmd $"r##'((['#!/usr/bin/sh', $"exec ($qemuCmd)"] | str join "\n") + "\n")'##" '|' sudo tee $qemuScriptPath '|' ignore
+    opPrintMaybeRunCmd $"r##'((['#!/usr/bin/sh', ('exec ' + $qemuCmd)] | str join "\n") + "\n")'##" '|' sudo tee $qemuScriptPath '|' ignore
     opPrintMaybeRunCmd sudo chmod +x $qemuScriptPath
     $serviceLines = $serviceLines | append $"ExecStart=($qemuScriptPath)"
 

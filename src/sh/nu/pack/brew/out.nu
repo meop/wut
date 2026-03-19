@@ -1,7 +1,4 @@
 def --env packBrewOp [cmd] {
-  if 'PACK_OUT_NAMES' in $env {
-    opPrintMaybeRunCmd do --ignore-errors '{' $cmd outdated '|' find --ignore-case $env.PACK_OUT_NAMES '}'
-  } else {
-    opPrintMaybeRunCmd do --ignore-errors '{' $cmd outdated '}'
-  }
+  let filterArgs = $env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', $t] } | flatten
+  opPrintMaybeRunCmd do --ignore-errors '{' $cmd outdated ...$filterArgs '}'
 }

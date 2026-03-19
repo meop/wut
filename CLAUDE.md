@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This repository requires sibling repositories to be cloned:
 
-```bash
+```sh
 cd /your/workspace
 git clone <your-wut-repo-url>
 git clone git@github.com:meop/shire.git
@@ -32,7 +32,7 @@ workspace/
 
 ## Development Commands
 
-```bash
+```sh
 deno task dev             # development mode with hot reload
 deno task dev:docker      # start Docker container
 deno task dev:docker:down # stop Docker container
@@ -129,8 +129,19 @@ Configuration is loaded from multiple directories specified in `.env`:
 CFG_DIRS=wut-config|wut-config-secret
 ```
 
-Files are loaded from `../wut-config/cfg/` and `../wut-config-secret/cfg/` relative to wut directory. Later directories
-override earlier ones via deep merge.
+Files are loaded from `../wut-config/cfg/` and `../wut-config-secret/cfg/` relative to wut directory.
+
+Two distinct loading functions with different semantics:
+
+- **`getCfgFileContent(parts)`** — returns raw content of the first matching file (wut-config-secret wins over
+  wut-config). Used by the `/cfg` HTTP route, which nushell scripts call at runtime for files like containerfiles and
+  pod YAMLs.
+- **`getCfgFileLoad(parts, {extension})`** — loads ALL matching files for the same path across ALL cfg dirs and deep
+  merges them. Used by commands that process config server-side (pack, file, script, virt). This is what makes those
+  commands "stitch-capable" — a `wut-config-secret/cfg/file.yaml` automatically merges with `wut-config/cfg/file.yaml`.
+
+Deep merge semantics (`@cross/deepmerge`): records merge recursively, arrays append (later dirs append to earlier),
+scalars: later dirs win.
 
 Configuration files can be:
 
@@ -144,6 +155,9 @@ Configuration files can be:
 - Detects OS and selects appropriate package manager (yay, pacman, apt, brew, choco, etc.)
 - Supports group-based installs (packages defined in YAML config files)
 - Operations: add, find, list, out, rem (remove), sync, tidy
+- Config (package groups) loaded **server-side** via `getCfgFileLoad`; package names and pre/post group scripts inlined
+  as env vars (`$env.PACK_ADD_NAMES`, `$env.PACK_ADD_GROUP_NAMES`, etc.). Nushell manager scripts never fetch config via
+  HTTP.
 
 **file** (src/cmd/file.ts) - Dotfile synchronization
 
@@ -151,18 +165,48 @@ Configuration files can be:
 - Supports permission management (ACLs on Windows, chmod on Unix)
 - Operations: diff, find, sync
 - **Note:** Only works with nushell shell (falls back to nu from pwsh/zsh)
+- `file.yaml` loaded **server-side** via `getCfgFileLoad` (stitch-capable). Path pairs and permissions inlined as env
+  var arrays. Actual file content fetched at runtime via `REQ_URL_CFG/file/{path}`.
 
 **script** (src/cmd/script.ts) - Custom script execution
 
 - Executes shell scripts stored in config directories
-- Scripts filtered by shell type and OS context
+- Scripts filtered by shell type and OS context via `contextFilter` in `script.yaml`
 - Operations: exec, find
 - **Note:** For pwsh/zsh shells, SSR mode only (not CSR)
+- `script.yaml` loaded **server-side** via `getCfgFileLoad` (stitch-capable). In exec mode, script content is inlined
+  directly into the generated script. In find mode, a listing is generated.
 
-**virt** (src/cmd/virt.ts) - Virtual machine management
+**virt** (src/cmd/virt.ts) - Virtual machine / container management
 
-- Manages Docker containers and QEMU VMs
+- Manages Docker, Podman, LXC containers, and QEMU VMs
 - Operations: add, find, list, rem, sync, tidy
+- Managers by platform: linux=[docker, podman, lxc, qemu], darwin=[docker, podman, qemu]
+
+#### virt config hierarchy
+
+Config lives at two levels:
+
+- **Global**: `cfg/virt/{manager}.yaml` — defaults, shared settings, architecture/CPU flags
+- **Instance**: `cfg/virt/{host}/{manager}/{instance}.yaml` — per-instance overrides and specifics
+
+**lxc and qemu** use overlay-style config: global sets defaults, instance overrides. Both configs are fetched at runtime
+by the nushell script via `REQ_URL_CFG`, then deep merged in nushell (`deepMerge` function). Merge rules: records merge
+recursively, lists append (global first, instance appended), scalars: instance wins. This means any field can freely be
+moved between global and instance YAML without changing behavior.
+
+**podman** has three layers and is NOT overlay-style:
+
+1. `cfg/virt/podman.yaml` — global network definitions only. Loaded **server-side** via `getCfgFileLoad`, networks
+   record inlined as `$env.VIRT_PODMAN_NETWORKS` (JSON). Nushell reads `$env.VIRT_PODMAN_NETWORKS | from json`.
+2. `cfg/virt/{host}/podman/{pod}.yaml` — pod-level Kubernetes YAML (kind: Pod) with hostname, network annotation, MAC.
+   Also the place to put a `kind: Build` block for shared image builds across instances.
+3. `cfg/virt/{host}/podman/{pod}/{instance}.yaml` — instance-level Kubernetes YAML (kind: Pod containers/volumes,
+   optional kind: ConfigMap).
+
+Pod and instance YAMLs are standard Kubernetes YAML consumed directly by `podman kube play` / systemd quadlets. The
+`kind: Build` custom doc type triggers `podman build` before kube play; it is stripped before passing to podman.
+Placeholder substitution (`{host}`, `{pod}`, `{instance}`) is done by the nushell script at runtime.
 
 ## Environment Variables
 
@@ -203,6 +247,65 @@ each category:
 1. Built-in modules (e.g., `node:*`)
 2. External packages (e.g., `@std/*`, `@meop/shire`)
 3. Local project files (e.g., `./cmd.ts`, `../sh.ts`)
+
+## Nushell Pitfalls
+
+Known nushell parsing quirks that have caused bugs in `src/sh/nu/`:
+
+- **`[{record} | to yaml]` is a list, not a pipeline.** In nushell 0.111+, `|` inside `[...]` is a list separator.
+  `[{a: 1} | to yaml]` produces the 3-element list `[{a: 1}, "to", "yaml"]`. Use `[({a: 1} | to yaml)]` with extra
+  parens to force a pipeline inside a list literal.
+
+- **Nested `$"..."` inside `$"r##'(expr)'##"`** — if `expr` contains its own `$"..."` interpolation, the inner closing
+  `"` terminates the outer string. Fix by rewriting inner interpolations as string concatenation: `'exec ' + $cmd`
+  instead of `$"exec ($cmd)"`.
+
+- **`r#'...'#` with `#!` content** — nushell misparsed `r#'#` as a comment start. Use `r##'...'##` for any content that
+  starts with `#` (e.g. shebangs). Fix was merged in 0.101 then reverted; see
+  https://github.com/nushell/nushell/pull/14548.
+
+## Filter Semantics
+
+All wut commands use **AND semantics** for filters: every provided term must match for an item to be included. This
+means more terms = narrower results, which is the consistent expectation across all commands.
+
+### AND semantics in practice
+
+| Command                      | Behavior                                                                                                                                                                                  |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `wut file find foo bar`      | key/alias/path must contain both `foo` AND `bar`                                                                                                                                          |
+| `wut file diff/sync foo bar` | key/alias must start with `foo` AND `bar` (both must prefix-match)                                                                                                                        |
+| `wut file list foo bar`      | same as diff/sync                                                                                                                                                                         |
+| `wut pack find foo bar`      | multi-arg managers (pacman/apt/dnf) pass both terms as args (native AND); single-arg managers (zypper/brew/choco/scoop/winget) loop per term (unavoidable OR — limitation of those tools) |
+| `wut pack list/out foo bar`  | chained `\| find foo \| find bar` pipeline = AND                                                                                                                                          |
+| `wut pack add/rem foo bar`   | group-based: group name+pkg names must match all filters; remaining names passed together                                                                                                 |
+| `wut virt list/rem foo bar`  | VIRT_INSTANCES AND-filtered: instance name must contain all filters                                                                                                                       |
+| `wut virt add/sync/tidy`     | `filters.slice(0, 2)` caps at `[manager, pod]` — treats pod as whole unit                                                                                                                 |
+
+### Where AND over OR does not apply
+
+- **Single-arg pack managers on find**: zypper, brew, choco, scoop, winget loop per term producing OR behavior. This is
+  a tool limitation — zypper accepts multiple args but treats them as OR; the others only accept one term. pacman/apt/dnf
+  natively AND multiple args.
+
+### Enumeration patterns
+
+- **virt list/rem**: Always enumerates from the **system** (not config), then AND-filters by VIRT_INSTANCES:
+  - docker: `docker compose ls`
+  - podman: `/etc/containers/systemd/*.kube`
+  - lxc: `lxc-ls`
+  - qemu: `/etc/systemd/system/qemu-*.service`
+- **file diff/sync/list**: Enumerates from `file.yaml` config (what is managed), not from the filesystem. VIRT_INSTANCES
+  / FILE_*_PARTS filters narrow down the config set.
+
+### Pack manager splitting ownership
+
+`pack.ts` always passes the full joined name string (e.g. `"foo bar"`) to the manager via env vars like
+`$env.PACK_FIND_NAMES`. Each manager's nushell script owns its own splitting/looping logic:
+
+- Multi-arg managers: `split words` then spread as args (`...$terms`)
+- Single-arg managers: `split words` then loop per term
+- list/out: `split words | each { |t| ['|', 'find', '--ignore-case', $t] } | flatten` for chained AND
 
 ## Testing
 

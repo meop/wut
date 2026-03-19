@@ -32,6 +32,6 @@ def virtDockerOp [cmd] {
       opPrintMaybeRunCmd sudo mkdir -p $src
     }
 
-    opPrintMaybeRunCmd $"r#'($yaml)'#" '|' $cmd compose --file - up --detach --pull always
+    opPrintMaybeRunCmd $"r#'($yaml)'#" '|' sudo $cmd compose --file - up --detach --pull always
   }
 }

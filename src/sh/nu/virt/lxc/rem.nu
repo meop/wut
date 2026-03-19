@@ -11,7 +11,17 @@ def virtLxcOpRem [cmd, instance] {
 }
 
 def virtLxcOp [cmd] {
-  for instance in $env.VIRT_INSTANCES {
+  let instances = if ($env.VIRT_INSTANCES | is-not-empty) {
+    $env.VIRT_INSTANCES
+  } else {
+    let lxcDir = '/var/lib/lxc'
+    if ($lxcDir | path exists) {
+      ls $lxcDir | where type == dir | get name | each { |f| $f | path basename }
+    } else {
+      []
+    }
+  }
+  for instance in $instances {
     virtLxcOpRem $cmd $instance
   }
 }

@@ -1,22 +1,20 @@
 def fileOp [] {
-  if 'FILE_SYNC_CLEAR_DIRS' in $env {
-    for dir in $env.FILE_SYNC_CLEAR_DIRS {
-      let dirParts = $dir | split row '|'
+  for dir in ($env.FILE_SYNC_CLEAR_DIRS? | default []) {
+    let dirParts = $dir | split row '|'
 
-      mut bin = ''
-      for alias in ($dirParts.0 | split row ',') {
-        if (which $alias | is-not-empty) {
-          $bin = $alias
-          break
-        }
+    mut bin = ''
+    for alias in ($dirParts.0 | split row ',') {
+      if (which $alias | is-not-empty) {
+        $bin = $alias
+        break
       }
-      if ($bin | is-empty) {
-        continue
-      }
-
-      let dst = replaceEnv $dirParts.1 | path expand
-      opPrintMaybeRunCmd rm --force --permanent --recursive $"r#'($dst)'#"
     }
+    if ($bin | is-empty) {
+      continue
+    }
+
+    let dst = replaceEnv $dirParts.1 | path expand
+    opPrintMaybeRunCmd rm --force --permanent --recursive $"r#'($dst)'#"
   }
 
   mut createdDirs = []
@@ -47,23 +45,21 @@ def fileOp [] {
     opPrintMaybeRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($url)'#" ')"' '|' save --force $"r#'($dst)'#"
   }
 
-  if 'FILE_SYNC_PATH_PERMS' in $env {
-    for perm in $env.FILE_SYNC_PATH_PERMS {
-      let permParts = $perm | split row '|'
+  for perm in ($env.FILE_SYNC_PATH_PERMS? | default []) {
+    let permParts = $perm | split row '|'
 
-      mut bin = ''
-      for alias in ($permParts.0 | split row ',') {
-        if (which $alias | is-not-empty) {
-          $bin = $alias
-          break
-        }
+    mut bin = ''
+    for alias in ($permParts.0 | split row ',') {
+      if (which $alias | is-not-empty) {
+        $bin = $alias
+        break
       }
-      if ($bin | is-empty) {
-        continue
-      }
-
-      let cmd = replaceEnv $permParts.1
-      opPrintMaybeRunCmd ...($cmd | split row ' ')
     }
+    if ($bin | is-empty) {
+      continue
+    }
+
+    let cmd = replaceEnv $permParts.1
+    opPrintMaybeRunCmd ...($cmd | split row ' ')
   }
 }
