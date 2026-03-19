@@ -80,13 +80,13 @@ function wut {
 
 Install Deno and run the server in dev mode (hot reload):
 
-```sh
+```bash
 deno task dev
 ```
 
 Or install Docker and run the server in a container:
 
-```sh
+```bash
 deno task dev:docker
 
 # Stop it when done

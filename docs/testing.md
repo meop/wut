@@ -14,7 +14,7 @@ Snapshot files are committed to the repo under `tests/snapshot/__snapshots__/`, 
 
 ## Running Tests
 
-```sh
+```bash
 # Run all tests (Tier 1 + Tier 2)
 deno task test
 

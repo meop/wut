@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This repository requires sibling repositories to be cloned:
 
-```sh
+```bash
 cd /your/workspace
 git clone <your-wut-repo-url>
 git clone git@github.com:meop/shire.git
@@ -32,7 +32,7 @@ workspace/
 
 ## Development Commands
 
-```sh
+```bash
 deno task dev             # development mode with hot reload
 deno task dev:docker      # start Docker container
 deno task dev:docker:down # stop Docker container

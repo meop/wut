@@ -86,7 +86,7 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
 
     let unbindEfiFbScriptPath = ($configDir | path join 'unbind-efi-fb.sh')
     let unbindEfiFbLines = [
-      '#!/usr/bin/sh',
+      '#!/usr/bin/bash',
       "checkPath='/sys/bus/platform/drivers/efi-framebuffer/efi-framebuffer.0'",
       'if [ ! -e "$checkPath" ]; then exit 0; fi',
       'for vtcon in /sys/class/vtconsole/vtcon*/bind; do',
@@ -106,7 +106,7 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
     if 'VFIO_PCI_DEV_IDS' in $qemuEnv {
       let rebindScriptPath = ($configDir | path join 'rebind-vfio-pci.sh')
       let rebindLines = [
-        '#!/usr/bin/sh',
+        '#!/usr/bin/bash',
         "driver='vfio-pci'",
         $"for fullPciDevId in ($qemuEnv.VFIO_PCI_DEV_IDS | split row ',' | each { |id| $"0000:($id)" } | str join ' '); do",
         '  if [ -e "/sys/bus/pci/devices/$fullPciDevId/driver_override" ]; then',
@@ -137,7 +137,7 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
 
       # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
       # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
-      opPrintMaybeRunCmd $"r##'((['#!/usr/bin/sh', ('exec ' + $swtpmCmd)] | str join "\n") + "\n")'##" '|' sudo tee $swtpmScriptPath '|' ignore
+      opPrintMaybeRunCmd $"r##'((['#!/usr/bin/bash', ('exec ' + $swtpmCmd)] | str join "\n") + "\n")'##" '|' sudo tee $swtpmScriptPath '|' ignore
       opPrintMaybeRunCmd sudo chmod +x $swtpmScriptPath
       $serviceLines = $serviceLines | append [
         $"ExecStartPre=-/usr/bin/pkill --full \"^swtpm.*($instance)\"",
@@ -181,14 +181,14 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
     let qemuCmd = $"($qemuBin)(if ($qemuArgs | length) > 0 { ' ' + ($qemuArgs | str join ' ') } else { '' })"
     # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
     # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
-    opPrintMaybeRunCmd $"r##'((['#!/usr/bin/sh', ('exec ' + $qemuCmd)] | str join "\n") + "\n")'##" '|' sudo tee $qemuScriptPath '|' ignore
+    opPrintMaybeRunCmd $"r##'((['#!/usr/bin/bash', ('exec ' + $qemuCmd)] | str join "\n") + "\n")'##" '|' sudo tee $qemuScriptPath '|' ignore
     opPrintMaybeRunCmd sudo chmod +x $qemuScriptPath
     $serviceLines = $serviceLines | append $"ExecStart=($qemuScriptPath)"
 
     if ($qemuBlock | get cpu.pin? | default false) {
       let pinScriptPath = ($configDir | path join qemu-cpu-pin.sh)
       let pinLines = [
-        '#!/usr/bin/sh',
+        '#!/usr/bin/bash',
         ("pid=$(cat " + $pidFilePath + ")"),
         'if [ -z "$pid" ]; then exit 0; fi',
         ("for i in $(seq 0 " + ($cpusMax | into string) + "); do"),
