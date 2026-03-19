@@ -4,7 +4,7 @@ def virtLxcOp [cmd] {
       continue
     }
 
-    if (do --ignore-errors { ^sudo $"($cmd)-ls" --running | split row ' ' | str trim | where { |l| $l | is-not-empty } | any { |l| $l == $instance } }) {
+    if (try { ^sudo $"($cmd)-ls" --running | split row ' ' | str trim | where { |l| $l | is-not-empty } | any { |l| $l == $instance } } catch { false }) {
       opPrintMaybeRunCmd sudo $"($cmd)-stop" --name $instance
     }
 

@@ -1,6 +1,6 @@
 def virtDockerOp [cmd] {
   for instance in $env.VIRT_INSTANCES {
-    if (do --ignore-errors { ^sudo $cmd container ls | find --ignore-case $instance | is-not-empty }) {
+    if (try { ^sudo $cmd container ls | find --ignore-case $instance | is-not-empty } catch { false }) {
       continue
     }
 

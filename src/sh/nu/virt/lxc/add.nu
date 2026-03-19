@@ -41,7 +41,7 @@ def virtLxcOpAdd [config, configVm, cmd, instance] {
 
   opPrintMaybeRunCmd sudo mkdir -p $rootfsPath
 
-  let rootfsReady = do --ignore-errors { ^sudo test -d $"($rootfsPath)/usr"; true } | default false
+  let rootfsReady = try { ^sudo test -d $"($rootfsPath)/usr"; true } catch { false }
   if not $rootfsReady {
     let template = $configVm | get lxc.create.template? | default ($config | get lxc.create.template?)
     let templateName = ($template | columns | get 0?) | default 'download'
@@ -105,7 +105,7 @@ def virtLxcOpAdd [config, configVm, cmd, instance] {
 
 def virtLxcOp [cmd] {
   for instance in $env.VIRT_INSTANCES {
-    if (do --ignore-errors { ^sudo $"($cmd)-ls" --running | split row ' ' | str trim | where { |l| $l | is-not-empty } | any { |l| $l == $instance } }) {
+    if (try { ^sudo $"($cmd)-ls" --running | split row ' ' | str trim | where { |l| $l | is-not-empty } | any { |l| $l == $instance } } catch { false }) {
       opPrintWarn $"`($cmd)` instance `($instance)` is already up"
       continue
     }

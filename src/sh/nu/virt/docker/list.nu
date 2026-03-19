@@ -1,6 +1,6 @@
 def virtDockerOp [cmd] {
   let filters = if ($env.VIRT_INSTANCES | is-not-empty) { $env.VIRT_INSTANCES } else { [] }
-  let allInstances = do --ignore-errors { ^sudo $cmd compose ls --format json | from json | get Name } | default []
+  let allInstances = try { ^sudo $cmd compose ls --format json | from json | get Name } catch { [] }
   let instances = if ($filters | is-not-empty) {
     $allInstances | where { |i| $filters | all { |f| $i | str contains $f } }
   } else {

@@ -1,6 +1,6 @@
 def virtLxcOp [cmd] {
   let filters = if ($env.VIRT_INSTANCES | is-not-empty) { $env.VIRT_INSTANCES } else { [] }
-  let allInstances = do --ignore-errors { ^sudo $"($cmd)-ls" } | default '' | split row ' ' | str trim | where { is-not-empty }
+  let allInstances = try { ^sudo $"($cmd)-ls" } catch { '' } | split row ' ' | str trim | where { is-not-empty }
   let instances = if ($filters | is-not-empty) {
     $allInstances | where { |i| $filters | all { |f| $i | str contains $f } }
   } else {

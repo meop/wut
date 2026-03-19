@@ -222,7 +222,7 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
 
 def virtQemuOp [cmd] {
   for instance in $env.VIRT_INSTANCES {
-    if (do --ignore-errors { ^pgrep --ignore-ancestors --full --list-full $"^qemu-system.*($instance)" | is-not-empty }) {
+    if (try { ^pgrep --ignore-ancestors --full --list-full $"^qemu-system.*($instance)" | is-not-empty } catch { false }) {
       opPrintWarn $"`($cmd)` instance `($instance)` is already up"
       continue
     }

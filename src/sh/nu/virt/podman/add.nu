@@ -21,7 +21,7 @@ def processYaml [yamlRaw, host, pod, instance] {
   $result | str join "---\n"
 }
 
-def buildImage [yamlRaw, host, pod, instance] {
+def buildImage [yamlRaw, host, pod, instance, alreadyBuilt: list<string>] {
   let buildDocs = $yamlRaw
     | str replace --all '{host}' $host
     | str replace --all '{pod}' $pod
@@ -29,11 +29,14 @@ def buildImage [yamlRaw, host, pod, instance] {
     | splitYamlDocs
     | where { |d| ($d | get kind? | default '') == 'Build' }
   if ($buildDocs | is-empty) {
-    return
+    return $alreadyBuilt
   }
 
+  mut built = $alreadyBuilt
   for buildInfo in ($buildDocs | first | get images) {
     let image = $buildInfo.name
+    if $image in $built { continue }
+
     let context = $buildInfo.buildContextPath
     let url = $"($env.REQ_URL_CFG)($buildInfo.filePath)"
 
@@ -42,12 +45,11 @@ def buildImage [yamlRaw, host, pod, instance] {
 
     opPrintMaybeRunCmd sudo mkdir -p $context
     opPrintMaybeRunCmd $"r#'($containerfileContent)'#" '|' sudo tee $containerfilePath '|' ignore
+    opPrintMaybeRunCmd sudo podman build --tag $image $context
 
-    do --ignore-errors { ^sudo podman image exists $image }
-    if $env.LAST_EXIT_CODE != 0 {
-      opPrintMaybeRunCmd sudo podman build --tag $image $context
-    }
+    $built = $built | append $image
   }
+  $built
 }
 
 def virtPodmanOp [cmd] {
@@ -60,13 +62,13 @@ def virtPodmanOp [cmd] {
     let kubePath = $"($kubeDir)/($pod).kube"
     let podInstances = $env.VIRT_INSTANCES | where { |p| (($p | split row '/') | first) == $pod }
 
-    if (do --ignore-errors { ^sudo systemctl is-active $"($pod).service" | str trim } | default '') == 'active' {
+    if (try { ^sudo systemctl is-active $"($pod).service" | str trim } catch { '' }) == 'active' {
       opPrintWarn $"`($cmd)` pod `($pod)` is already up"
       continue
     }
 
     let configPodRaw = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/podman/($pod).yaml'#" ')"'
-    buildImage $configPodRaw $env.SYS_HOST $pod ''
+    mut builtImages = buildImage $configPodRaw $env.SYS_HOST $pod '' []
     let configPod = $configPodRaw | str replace --all '{pod}' $pod | splitYamlDocs | where { |d| ($d | get kind? | default '') == 'Pod' } | first
 
     let hostname = $configPod | get spec.hostname? | default $pod
@@ -93,7 +95,7 @@ def virtPodmanOp [cmd] {
       let instance = ($instancePath | split row '/') | last
       let yamlRaw = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/podman/($instancePath).yaml'#" ')"'
 
-      buildImage $yamlRaw $env.SYS_HOST $pod $instance
+      $builtImages = buildImage $yamlRaw $env.SYS_HOST $pod $instance $builtImages
 
       $instanceDocs = $instanceDocs | append [(processYaml $yamlRaw $env.SYS_HOST $pod $instance | splitYamlDocs)]
     }
@@ -123,7 +125,9 @@ def virtPodmanOp [cmd] {
     }
 
     for container in $containers {
-      opPrintMaybeRunCmd sudo $cmd pull $container.image
+      if not ($container.image | str starts-with 'localhost/') {
+        opPrintMaybeRunCmd sudo $cmd pull $container.image
+      }
     }
 
     let allDocs = ([({
