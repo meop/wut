@@ -100,13 +100,13 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 }
 
 
-\$env.SH_VER_MAJOR = 0
+\$env.SH_VERS_MAJOR = 0
 
-\$env.SH_VER_MINOR = 111
+\$env.SH_VERS_MINOR = 111
 
 do {
-  let major = \$env.SH_VER_MAJOR | into int
-  let minor = \$env.SH_VER_MINOR | into int
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
     opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
@@ -311,13 +311,13 @@ function opPrintMaybeRunCmd {
 }
 
 
-\$SH_VER_MAJOR = 7
+\$SH_VERS_MAJOR = 7
 
-\$SH_VER_MINOR = 5
+\$SH_VERS_MINOR = 5
 
 & {
-  \$major = \$SH_VER_MAJOR -as [int]
-  \$minor = \$SH_VER_MINOR -as [int]
+  \$major = \$SH_VERS_MAJOR -as [int]
+  \$minor = \$SH_VERS_MINOR -as [int]
 
   if (\$PSVersionTable.PSVersion.Major -lt \$major -or \$PSVersionTable.PSVersion.Minor -lt \$minor) {
     opPrintErr "pwsh must be >= '\${major}.\${minor}' .. found '\$(\$PSVersionTable.PSVersion)' .. aborting"
@@ -545,13 +545,13 @@ function opPrintMaybeRunCmd {
 }
 
 
-SH_VER_MAJOR=5
+SH_VERS_MAJOR=5
 
-SH_VER_MINOR=9
+SH_VERS_MINOR=9
 
 function () {
-  local major=\$SH_VER_MAJOR
-  local minor=\$SH_VER_MINOR
+  local major=\$SH_VERS_MAJOR
+  local minor=\$SH_VERS_MINOR
 
   autoload is-at-least
   if ! is-at-least "\${major}.\${minor}"; then

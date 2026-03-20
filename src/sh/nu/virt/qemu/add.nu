@@ -1,7 +1,9 @@
 def virtQemuOpAdd [config, configVm, cmd, instance] {
+  let merged = deepMerge $config $configVm
+
   mut qemuEnv = {}
 
-  for e in ([...($config | get environment), ...($configVm | get environment)] | each { split row '=' }) {
+  for e in ($merged | get environment? | default [] | each { split row '=' }) {
     $qemuEnv = $qemuEnv | upsert $e.0 $e.1
   }
 
@@ -16,6 +18,10 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
   $qemuEnv = $qemuEnv | upsert 'VM_CPU_VENDOR' ($cpuVendor | str trim)
 
   let nicPath = $"/sys/class/net/($qemuEnv.NIC)"
+  if not ($nicPath | path exists) {
+    opPrintWarn $"cannot add `($instance)`: NIC '($qemuEnv.NIC)' does not exist"
+    return
+  }
   $qemuEnv = $qemuEnv | upsert 'NIC_MAC' (if ('NIC_MAC' in $qemuEnv) {
     $qemuEnv.NIC_MAC
   } else {
@@ -59,7 +65,7 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
     } | into cell-path
   }
 
-  if 'qemu' in $configVm {
+  if 'qemu' in $merged {
     let serviceName = $"qemu-($instance)"
     let serviceDir = '/etc/systemd/system'
     let configDir = $"/var/lib/qemu/($instance)"
@@ -130,9 +136,9 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
       ]
     }
 
-    if ('swtpm' in $configVm) or ('swtpm' in $config) {
+    if 'swtpm' in $merged {
       let swtpmScriptPath = ($configDir | path join swtpm.sh)
-      let swtpmArgs = replaceEnv $qemuEnv ([...($config | get swtpm.arguments? | default []), ...($configVm | get swtpm.arguments? | default [])])
+      let swtpmArgs = replaceEnv $qemuEnv ($merged | get swtpm?.arguments? | default [])
       let swtpmCmd = $"swtpm(if ($swtpmArgs | length) > 0 { ' ' + ($swtpmArgs | str join ' ') } else { '' })"
 
       # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
@@ -149,7 +155,7 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
 
     $serviceLines = $serviceLines | append $"ExecStartPre=-/usr/bin/rm -f ($pidFilePath)"
 
-    let qemuBlock = $config | get qemu | get architecture | get $sysArch
+    let qemuBlock = $merged | get qemu?.architecture? | get --optional $sysArch | default {}
     let qemuBin = $"($cmd)-system-($sysArch)"
 
     let qemuCpuFlags = [
@@ -175,7 +181,7 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
     )
 
     let qemuScriptPath = ($configDir | path join qemu.sh)
-    let qemuArgs = replaceEnv $qemuEnv ([...($config | get qemu.arguments? | default []), ...($configVm | get qemu.arguments? | default [])])
+    let qemuArgs = replaceEnv $qemuEnv ($merged | get qemu?.arguments? | default [])
     let cpusCount = (($qemuEnv.VM_CPU_SOCKETS | into int) * ($qemuEnv.VM_CPU_CORES | into int) * ($qemuEnv.VM_CPU_THREADS | into int))
     let cpusMax = $cpusCount - 1
     let qemuCmd = $"($qemuBin)(if ($qemuArgs | length) > 0 { ' ' + ($qemuArgs | str join ' ') } else { '' })"
@@ -185,7 +191,7 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
     opPrintMaybeRunCmd sudo chmod +x $qemuScriptPath
     $serviceLines = $serviceLines | append $"ExecStart=($qemuScriptPath)"
 
-    if ($qemuBlock | get cpu.pin? | default false) {
+    if ($qemuBlock | get cpu?.pin? | default false) {
       let pinScriptPath = ($configDir | path join qemu-cpu-pin.sh)
       let pinLines = [
         '#!/usr/bin/bash',
@@ -222,8 +228,8 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
 
 def virtQemuOp [cmd] {
   for instance in $env.VIRT_INSTANCES {
-    if (try { ^pgrep --ignore-ancestors --full --list-full $"^qemu-system.*($instance)" | is-not-empty } catch { false }) {
-      opPrintWarn $"`($cmd)` instance `($instance)` is already up"
+    if (^pgrep --ignore-ancestors --full --list-full $"^qemu-system.*($instance)" | complete | get stdout | is-not-empty) {
+      opPrintWarn $"`($cmd)` instance `($instance)` is already added"
       continue
     }
 

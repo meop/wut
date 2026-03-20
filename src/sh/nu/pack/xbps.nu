@@ -1,5 +1,5 @@
-def --env packZypper [] {
-  let cmd = 'zypper'
+def --env packXbps [] {
+  let cmd = 'xbps-install'
   if ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or (which $cmd | is-empty) {
     return
   }
@@ -17,7 +17,7 @@ def --env packZypper [] {
   }
   let cmd = if (which sudo | is-not-empty) { $"sudo ($cmd)" } else { $cmd }
   if 'PACK_OP' in $env and ($env.PACK_OP == 'add' or $env.PACK_OP == 'find' or $env.PACK_OP == 'out' or $env.PACK_OP == 'sync') {
-    opPrintMaybeRunCmd $cmd refresh '|' complete '|' ignore
+    opPrintMaybeRunCmd $cmd --sync '|' complete '|' ignore
   }
-  packZypperOp $cmd
+  packXbpsOp $cmd
 }

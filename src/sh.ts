@@ -1,8 +1,8 @@
 import type { Ctx } from '@meop/shire/ctx'
 import type { Sh } from '@meop/shire/sh'
-import { Nushell } from '@meop/shire/sh/nu'
-import { Powershell } from '@meop/shire/sh/pwsh'
-import { Zshell } from '@meop/shire/sh/zsh'
+import { NuSh } from '@meop/shire/sh/nu'
+import { PowerSh } from '@meop/shire/sh/pwsh'
+import { ZSh } from '@meop/shire/sh/zsh'
 
 const REQ_URL_SH = ['req', 'url', 'sh']
 
@@ -23,20 +23,20 @@ export async function redirectShell(shell: Sh, target: string, context: Ctx): Pr
     context.req_srch,
   ].join('')
 
-  let targetShell: Nushell | Powershell | Zshell
+  let targetShell: NuSh | PowerSh | ZSh
   let execStr: (value: string) => string
   switch (target) {
     case 'nu':
-      targetShell = new Nushell()
-      execStr = Nushell.execStr
+      targetShell = new NuSh()
+      execStr = NuSh.execStr
       break
     case 'pwsh':
-      targetShell = new Powershell()
-      execStr = Powershell.execStr
+      targetShell = new PowerSh()
+      execStr = PowerSh.execStr
       break
     case 'zsh':
-      targetShell = new Zshell()
-      execStr = Zshell.execStr
+      targetShell = new ZSh()
+      execStr = ZSh.execStr
       break
     default:
       return null
@@ -59,6 +59,6 @@ export async function redirectNativeShell(shell: Sh, context: Ctx): Promise<stri
 
 export function execNativeShell(shell: Sh, plat: string, cmd: string): string {
   return sysOsPlatToNativeShell[plat] === 'pwsh'
-    ? Powershell.execStr(shell.toLiteral(cmd))
-    : Zshell.execStr(shell.toLiteral(cmd))
+    ? PowerSh.execStr(shell.toLiteral(cmd))
+    : ZSh.execStr(shell.toLiteral(cmd))
 }

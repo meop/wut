@@ -4,20 +4,20 @@ def virtQemuOpRem [cmd, instance] {
   let servicePath = ($serviceDir | path join $"($serviceName).service")
   let configDir = $"/var/lib/qemu/($instance)"
 
-  mut found = false
-  if ($servicePath | path exists) {
+  let cleanedService = $servicePath | path exists
+  if $cleanedService {
     opPrintMaybeRunCmd sudo systemctl disable --now $serviceName
     opPrintMaybeRunCmd sudo rm -f $servicePath
     opPrintMaybeRunCmd sudo systemctl daemon-reload
-    $found = true
   }
 
-  if ($configDir | path exists) {
+  let cleanedConfig = $configDir | path exists
+  if $cleanedConfig {
     opPrintMaybeRunCmd sudo rm -rf $configDir
   }
 
-  if not $found {
-    opPrintWarn $"`($cmd)` instance `($instance)` is already down"
+  if not ($cleanedService or $cleanedConfig) {
+    opPrintWarn $"`($cmd)` instance `($instance)` is already removed"
   }
 }
 

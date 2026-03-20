@@ -29,26 +29,24 @@ export class PackCmd extends CmdBase implements Cmd {
 }
 
 const sysOsPlatToManagers: Record<string, Array<string>> = {
-  linux: ['yay', 'pacman', 'apt', 'dnf', 'zypper'],
   darwin: ['brew'],
+  linux: ['apk', 'apt', 'dnf', 'pacman', 'paru', 'xbps', 'yay', 'zypper'],
   winnt: ['choco', 'scoop', 'winget'],
 }
 
 const sysOsToManagers: Record<string, Array<string>> = {
-  arch: ['yay', 'pacman'],
-  archarm: ['yay', 'pacman'],
-  manjaro: ['yay', 'pacman'],
-  debian: ['apt'],
-  linuxmint: ['apt'],
-  ubuntu: ['apt'],
-  fedora: ['dnf'],
+  alpine: ['apk'],
+  arch: ['pacman', 'paru', 'yay'],
   centos: ['dnf'],
-  'centos-stream': ['dnf'],
-  rocky: ['dnf'],
+  debian: ['apt'],
+  fedora: ['dnf'],
+  manjaro: ['pacman', 'paru', 'yay'],
+  mint: ['apt'],
   rhel: ['dnf'],
-  opensuse: ['zypper'],
-  'opensuse-tumbleweed': ['zypper'],
+  rocky: ['dnf'],
   suse: ['zypper'],
+  ubuntu: ['apt'],
+  void: ['xbps'],
 }
 
 const PACK_KEY = 'pack'
@@ -68,8 +66,13 @@ function getSupportedManagers(context: Ctx, environment: Env) {
   if (sysOsPlat) {
     managers.push(...(sysOsPlatToManagers[sysOsPlat] ?? []))
   }
-  if (sysOs && sysOs in sysOsToManagers) {
-    managers = managers.filter((p) => sysOsToManagers[sysOs].includes(p))
+  if (sysOs) {
+    const match = Object.keys(sysOsToManagers)
+      .filter((key) => sysOs.includes(key))
+      .sort((a, b) => b.length - a.length)[0]
+    if (match) {
+      managers = sysOsToManagers[match].filter((p) => managers.includes(p))
+    }
   }
   if (environment.get(PACK_MANAGER_KEY)) {
     managers = managers.filter((p) => p === environment.get(PACK_MANAGER_KEY))

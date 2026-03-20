@@ -3,7 +3,44 @@ import { assertSnapshot } from '@std/testing/snapshot'
 import { runSrv } from '../../src/srv.ts'
 import { checkSyntax, req } from '../helpers.ts'
 
-// nu × arch (yay + pacman)
+// nu × alpine (apk)
+Deno.test('nu / alpine / add', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=alpine'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / alpine / find', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=alpine'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / alpine / list', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/list?sysOsPlat=linux&sysOs=alpine'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / alpine / out', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/out?sysOsPlat=linux&sysOs=alpine'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / alpine / rem', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOs=alpine'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / alpine / sync', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/sync?sysOsPlat=linux&sysOs=alpine'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / alpine / tidy', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=alpine'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+
+// nu × arch (pacman + paru + yay)
 Deno.test('nu / arch / add', async (t) => {
   const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch'))).text()
   await assertSnapshot(t, body)
@@ -36,6 +73,43 @@ Deno.test('nu / arch / sync', async (t) => {
 })
 Deno.test('nu / arch / tidy', async (t) => {
   const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=arch'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+
+// nu × rocky (dnf)
+Deno.test('nu / rocky / add', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=rocky'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / rocky / find', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=rocky'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / rocky / list', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/list?sysOsPlat=linux&sysOs=rocky'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / rocky / out', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/out?sysOsPlat=linux&sysOs=rocky'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / rocky / rem', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOs=rocky'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / rocky / sync', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/sync?sysOsPlat=linux&sysOs=rocky'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / rocky / tidy', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=rocky'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
@@ -77,39 +151,39 @@ Deno.test('nu / ubuntu / tidy', async (t) => {
   await checkSyntax('nu', body)
 })
 
-// nu × rocky (dnf)
-Deno.test('nu / rocky / add', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=rocky'))).text()
+// nu × void (xbps)
+Deno.test('nu / void / add', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=void'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / rocky / find', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=rocky'))).text()
+Deno.test('nu / void / find', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=void'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / rocky / list', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/list?sysOsPlat=linux&sysOs=rocky'))).text()
+Deno.test('nu / void / list', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/list?sysOsPlat=linux&sysOs=void'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / rocky / out', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/out?sysOsPlat=linux&sysOs=rocky'))).text()
+Deno.test('nu / void / out', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/out?sysOsPlat=linux&sysOs=void'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / rocky / rem', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOs=rocky'))).text()
+Deno.test('nu / void / rem', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOs=void'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / rocky / sync', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/sync?sysOsPlat=linux&sysOs=rocky'))).text()
+Deno.test('nu / void / sync', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/sync?sysOsPlat=linux&sysOs=void'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / rocky / tidy', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=rocky'))).text()
+Deno.test('nu / void / tidy', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=void'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })

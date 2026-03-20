@@ -4,11 +4,11 @@ def virtLxcOp [cmd] {
       continue
     }
 
-    if (try { ^sudo $"($cmd)-ls" --running | split row ' ' | str trim | where { |l| $l | is-not-empty } | any { |l| $l == $instance } } catch { false }) {
+    if (^sudo $"($cmd)-ls" --running | complete | get stdout | split row ' ' | str trim | where { |l| $l | is-not-empty } | any { |l| $l == $instance }) {
       opPrintMaybeRunCmd sudo $"($cmd)-stop" --name $instance
     }
 
-    let addPath = $env.REQ_PATH | str replace '/sync/' '/add/' | str replace '/sh/nu/' '/sh/nu/--yes/'
+    let addPath = $env.REQ_PATH | str replace '/sync' '/add' | str replace '/sh/nu/' '/sh/nu/--yes/'
     let addUrl = $"($env.REQ_ORIG)($addPath)($env.REQ_SRCH)"
     opPrintCmd nu --no-config-file -c '$"(' http get --raw --redirect-mode follow $"r#'($addUrl)'#" ')"'
     if 'NOOP' not-in $env {

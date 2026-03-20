@@ -4,9 +4,9 @@ import { type Cmd, resolveCanonicalParts } from '@meop/shire/cmd'
 import { type Ctx, getCtx } from '@meop/shire/ctx'
 import { Fmt, stringify } from '@meop/shire/serde'
 import type { Sh } from '@meop/shire/sh'
-import { Nushell } from '@meop/shire/sh/nu'
-import { Powershell } from '@meop/shire/sh/pwsh'
-import { Zshell } from '@meop/shire/sh/zsh'
+import { NuSh } from '@meop/shire/sh/nu'
+import { PowerSh } from '@meop/shire/sh/pwsh'
+import { ZSh } from '@meop/shire/sh/zsh'
 import { SrvBase } from '@meop/shire/srv'
 
 import { getCfgFileContent } from './cfg.ts'
@@ -14,7 +14,7 @@ import { FileCmd } from './cmd/file.ts'
 import { PackCmd } from './cmd/pack.ts'
 import { ScriptCmd } from './cmd/script.ts'
 import { VirtCmd } from './cmd/virt.ts'
-import { VERSIONS } from './ver.ts'
+import { VERSIONS } from './vers.ts'
 
 class SrvCmd extends SrvBase implements Cmd {
   constructor() {
@@ -44,8 +44,8 @@ enum Op {
   sh = 'sh',
 }
 
-const SH_VER_MAJOR_KEY = ['sh', 'ver', 'major']
-const SH_VER_MINOR_KEY = ['sh', 'ver', 'minor']
+const SH_VERS_MAJOR_KEY = ['sh', 'vers', 'major']
+const SH_VERS_MINOR_KEY = ['sh', 'vers', 'minor']
 
 const VAR_REQ_URL_OP_KEY = (op: string) => ['req', 'url', op]
 
@@ -80,13 +80,18 @@ export async function runSrv(request: Request) {
     }
 
     const sh = parts[1]
-    if (!['nu', 'pwsh', 'zsh'].includes(sh)) {
+    const shellCtors: Record<string, () => Sh> = {
+      nu: () => new NuSh(),
+      pwsh: () => new PowerSh(),
+      zsh: () => new ZSh(),
+    }
+    if (!(sh in shellCtors)) {
       return new Response(`echo "shell requested not supported: ${sh}"`, {
         status: 404,
       })
     }
 
-    let shell: Sh = sh === 'nu' ? new Nushell() : sh === 'pwsh' ? new Powershell() : new Zshell()
+    let shell = shellCtors[sh]()
 
     shell = shell
       .with(
@@ -103,11 +108,11 @@ export async function runSrv(request: Request) {
       )
       .with(await shell.fileLoad(['op']))
 
-    const ver = VERSIONS[sh]
+    const vers = VERSIONS[sh]
     shell = shell
-      .with(shell.varSet(SH_VER_MAJOR_KEY, String(ver.major)))
-      .with(shell.varSet(SH_VER_MINOR_KEY, String(ver.minor)))
-    shell = shell.with(await shell.fileLoad(['ver']))
+      .with(shell.varSet(SH_VERS_MAJOR_KEY, String(vers.major)))
+      .with(shell.varSet(SH_VERS_MINOR_KEY, String(vers.minor)))
+    shell = shell.with(await shell.fileLoad(['vers']))
 
     if (
       !(Object.keys(context).filter((k) => k.startsWith('sys')).some((k) => context[k as keyof Ctx]))

@@ -285,8 +285,8 @@ means more terms = narrower results, which is the consistent expectation across 
 ### Where AND over OR does not apply
 
 - **Single-arg pack managers on find**: zypper, brew, choco, scoop, winget loop per term producing OR behavior. This is
-  a tool limitation — zypper accepts multiple args but treats them as OR; the others only accept one term. pacman/apt/dnf
-  natively AND multiple args.
+  a tool limitation — zypper accepts multiple args but treats them as OR; the others only accept one term.
+  pacman/apt/dnf natively AND multiple args.
 
 ### Enumeration patterns
 

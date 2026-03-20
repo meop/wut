@@ -28,8 +28,8 @@ export class VirtCmd extends CmdBase implements Cmd {
 }
 
 const sysOsPlatToManager: Record<string, Array<string>> = {
-  linux: ['docker', 'podman', 'lxc', 'qemu'],
-  darwin: ['docker', 'podman', 'qemu'],
+  linux: ['docker', 'lxc', 'podman', 'qemu'],
+  darwin: [],
   winnt: [],
 }
 
@@ -137,6 +137,14 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     }
     _shell = _shell.with(_shell.gatedFunc('use virt (remote)', shellLines))
   } else {
+    _shell = _shell.with(
+      await _shell.fileLoad(
+        [VIRT_KEY],
+        import.meta.resolve,
+        ['..'],
+      ),
+    )
+
     for (const supportedManager of supportedManagers) {
       _shell = _shell
         .with(

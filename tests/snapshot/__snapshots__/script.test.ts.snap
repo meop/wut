@@ -1,590 +1,19 @@
 export const snapshot = {};
 
-snapshot[`zsh / linux / find 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
+snapshot[`nu / linux / find (redirect) 1`] = `
+\`zsh --no-rcs -c r#'REQ_URL_SH='http://x/sh/zsh/script/find?sysOsPlat=linux'
 
-REQ_URL_SH='http://x/sh/zsh/script/find?sysOsPlat=linux'
+eval "\$( curl --fail-with-body --location --no-progress-meter --url "\${REQ_URL_SH}" )"
 
-function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  print -r -- "\$*"
-}
-
-function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
-    return
-  fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
-}
-
-function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
-  shift 1
-  if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
-  fi
-}
-
-function opRunCmd {
-  eval "\$*"
-}
-
-function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
-}
-
-function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
-  fi
-}
-
-
-SH_VER_MAJOR=5
-
-SH_VER_MINOR=9
-
-function () {
-  local major=\$SH_VER_MAJOR
-  local minor=\$SH_VER_MINOR
-
-  autoload is-at-least
-  if ! is-at-least "\${major}.\${minor}"; then
-    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
-    exit 1
-  fi
-}
-
-
-REQ_ORIG='http://x'
-
-SYS_OS_PLAT='linux'
-
-REQ_PATH='/sh/zsh/script/find'
-
-REQ_SRCH='?sysOsPlat=linux'
-
-function () {
-  local yn=''
-  if [[ \$YES ]]; then
-    yn='y'
-  else
-    read "yn?? use script (remote) [y, [n]]: "
-  fi
-  if [[ \$yn != 'n' ]]; then
-opPrint 'install'
-opPrint '  bun, deno, font, starship, uv, zoxide'
-opPrint 'setup'
-opPrint '  docker, llama, lxc, ollama, podman'
-  fi
-}
-\`
+'#\`
 `;
 
-snapshot[`zsh / linux / find (install filter) 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
+snapshot[`nu / winnt / find (redirect) 1`] = `
+\`pwsh -noprofile -c r#'\$REQ_URL_SH = 'http://x/sh/pwsh/script/find?sysOsPlat=winnt'
 
-REQ_URL_SH='http://x/sh/zsh/script/find/install?sysOsPlat=linux'
+Invoke-Expression "\$( Invoke-WebRequest -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "\${REQ_URL_SH}" )"
 
-function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  print -r -- "\$*"
-}
-
-function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
-    return
-  fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
-}
-
-function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
-  shift 1
-  if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
-  fi
-}
-
-function opRunCmd {
-  eval "\$*"
-}
-
-function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
-}
-
-function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
-  fi
-}
-
-
-SH_VER_MAJOR=5
-
-SH_VER_MINOR=9
-
-function () {
-  local major=\$SH_VER_MAJOR
-  local minor=\$SH_VER_MINOR
-
-  autoload is-at-least
-  if ! is-at-least "\${major}.\${minor}"; then
-    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
-    exit 1
-  fi
-}
-
-
-REQ_ORIG='http://x'
-
-SYS_OS_PLAT='linux'
-
-REQ_PATH='/sh/zsh/script/find/install'
-
-REQ_SRCH='?sysOsPlat=linux'
-
-SCRIPT_FIND_PARTS='install'
-
-function () {
-  local yn=''
-  if [[ \$YES ]]; then
-    yn='y'
-  else
-    read "yn?? use script (remote) [y, [n]]: "
-  fi
-  if [[ \$yn != 'n' ]]; then
-opPrint 'install'
-opPrint '  bun, deno, font, starship, uv, zoxide'
-  fi
-}
-\`
-`;
-
-snapshot[`zsh / linux / exec (install/yay arch) 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
-
-REQ_URL_SH='http://x/sh/zsh/script/exec/install/yay?sysOsPlat=linux&sysOs=arch'
-
-function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  print -r -- "\$*"
-}
-
-function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
-    return
-  fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
-}
-
-function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
-  shift 1
-  if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
-  fi
-}
-
-function opRunCmd {
-  eval "\$*"
-}
-
-function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
-}
-
-function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
-  fi
-}
-
-
-SH_VER_MAJOR=5
-
-SH_VER_MINOR=9
-
-function () {
-  local major=\$SH_VER_MAJOR
-  local minor=\$SH_VER_MINOR
-
-  autoload is-at-least
-  if ! is-at-least "\${major}.\${minor}"; then
-    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
-    exit 1
-  fi
-}
-
-
-REQ_ORIG='http://x'
-
-SYS_OS='arch'
-
-SYS_OS_PLAT='linux'
-
-REQ_PATH='/sh/zsh/script/exec/install/yay'
-
-REQ_SRCH='?sysOsPlat=linux&sysOs=arch'
-
-SCRIPT_EXEC_PARTS='install|yay'
-
-function () {
-  local yn=''
-  if [[ \$SYS_OS_PLAT == 'linux' ]]; then
-    if [[ \$SYS_OS == 'arch' ]]; then
-      if [[ \$YES ]]; then
-        yn='y'
-      else
-        read 'yn?? install yay - (user) [y, [n]]: '
-      fi
-      if [[ \$yn != 'n' ]]; then
-        local output="\${HOME}/.yay-bin"
-        if [[ -d "\${output}" ]]; then
-          opPrintMaybeRunCmd git -C "\${output}" pull --prune '>' /dev/null '2>&1'
-        else
-          local url='https://aur.archlinux.org/yay-bin.git'
-          opPrintMaybeRunCmd git clone --depth 1 --quiet "\${url}" "\${output}"
-        fi
-        (
-          opPrintMaybeRunCmd pushd "\${output}" '>' /dev/null '2>&1'
-          opPrintMaybeRunCmd makepkg --install --syncdeps
-          opPrintMaybeRunCmd popd '>' /dev/null '2>&1'
-        )
-      fi
-    else
-      echo 'script is for arch'
-    fi
-  else
-    echo 'script is for linux'
-  fi
-}
-
-\`
-`;
-
-snapshot[`zsh / darwin / find 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
-
-REQ_URL_SH='http://x/sh/zsh/script/find?sysOsPlat=darwin'
-
-function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  print -r -- "\$*"
-}
-
-function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
-    return
-  fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
-}
-
-function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
-  shift 1
-  if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
-  fi
-}
-
-function opRunCmd {
-  eval "\$*"
-}
-
-function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
-}
-
-function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
-  fi
-}
-
-
-SH_VER_MAJOR=5
-
-SH_VER_MINOR=9
-
-function () {
-  local major=\$SH_VER_MAJOR
-  local minor=\$SH_VER_MINOR
-
-  autoload is-at-least
-  if ! is-at-least "\${major}.\${minor}"; then
-    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
-    exit 1
-  fi
-}
-
-
-REQ_ORIG='http://x'
-
-SYS_OS_PLAT='darwin'
-
-REQ_PATH='/sh/zsh/script/find'
-
-REQ_SRCH='?sysOsPlat=darwin'
-
-function () {
-  local yn=''
-  if [[ \$YES ]]; then
-    yn='y'
-  else
-    read "yn?? use script (remote) [y, [n]]: "
-  fi
-  if [[ \$yn != 'n' ]]; then
-opPrint 'install'
-opPrint '  brew, bun, deno, starship, uv, zoxide'
-opPrint 'repair'
-opPrint '  brew, copyq'
-opPrint 'setup'
-opPrint '  docker, iterm, llama, lxc, ollama, podman'
-  fi
-}
-\`
+'#\`
 `;
 
 snapshot[`pwsh / winnt / find 1`] = `
@@ -687,13 +116,13 @@ function opPrintMaybeRunCmd {
 }
 
 
-\$SH_VER_MAJOR = 7
+\$SH_VERS_MAJOR = 7
 
-\$SH_VER_MINOR = 5
+\$SH_VERS_MINOR = 5
 
 & {
-  \$major = \$SH_VER_MAJOR -as [int]
-  \$minor = \$SH_VER_MINOR -as [int]
+  \$major = \$SH_VERS_MAJOR -as [int]
+  \$minor = \$SH_VERS_MINOR -as [int]
 
   if (\$PSVersionTable.PSVersion.Major -lt \$major -or \$PSVersionTable.PSVersion.Minor -lt \$minor) {
     opPrintErr "pwsh must be >= '\${major}.\${minor}' .. found '\$(\$PSVersionTable.PSVersion)' .. aborting"
@@ -829,13 +258,13 @@ function opPrintMaybeRunCmd {
 }
 
 
-\$SH_VER_MAJOR = 7
+\$SH_VERS_MAJOR = 7
 
-\$SH_VER_MINOR = 5
+\$SH_VERS_MINOR = 5
 
 & {
-  \$major = \$SH_VER_MAJOR -as [int]
-  \$minor = \$SH_VER_MINOR -as [int]
+  \$major = \$SH_VERS_MAJOR -as [int]
+  \$minor = \$SH_VERS_MINOR -as [int]
 
   if (\$PSVersionTable.PSVersion.Major -lt \$major -or \$PSVersionTable.PSVersion.Minor -lt \$minor) {
     opPrintErr "pwsh must be >= '\${major}.\${minor}' .. found '\$(\$PSVersionTable.PSVersion)' .. aborting"
@@ -855,37 +284,610 @@ function opPrintMaybeRunCmd {
 \$SCRIPT_EXEC_PARTS = 'install|choco'
 
 & {
-  if (\$IsWindows) {
-    \$yn = ''
-    if (\$YES) {
-      \$yn = 'y'
-    } else {
-      \$yn = Read-Host '? install choco - (user) [y, [n]]'
-    }
-    if (\$yn -ne 'n') {
-      \$url = 'https://community.chocolatey.org/install.ps1'
-      opPrintMaybeRunCmd Invoke-Expression '"\$(' Invoke-WebRequest -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "\${url}" ')"'
-    }
-  } else {
+  if (-not \$IsWindows) {
     Write-Host 'script is for winnt'
+    return
   }
+  \$yn = ''
+  if (\$YES) {
+    \$yn = 'y'
+  } else {
+    \$yn = Read-Host '? install choco - (user) [y, [n]]'
+  }
+  if (\$yn -eq 'n') {
+    return
+  }
+  \$url = 'https://community.chocolatey.org/install.ps1'
+  opPrintMaybeRunCmd Invoke-Expression '"\$(' Invoke-WebRequest -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "\${url}" ')"'
 }
 
 \`
 `;
 
-snapshot[`nu / linux / find (redirect) 1`] = `
-\`zsh --no-rcs -c r#'REQ_URL_SH='http://x/sh/zsh/script/find?sysOsPlat=linux'
+snapshot[`zsh / darwin / find 1`] = `
+\`REQ_URL_CFG='http://x/cfg'
 
-eval "\$( curl --fail-with-body --location --no-progress-meter --url "\${REQ_URL_SH}" )"
+REQ_URL_SH='http://x/sh/zsh/script/find?sysOsPlat=darwin'
 
-'#\`
+function opPrint {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  print -r -- "\$*"
+}
+
+function opPrintErr {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*" >&2
+    return
+  fi
+  print -n "\\\\033[0;31m" >&2
+  print -n -r -- "\$*" >&2
+  print "\\\\033[0m" >&2
+}
+
+function opPrintSucc {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;32m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintWarn {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;33m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintInfo {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;34m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintCmd {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;35m"
+  print -n -r "\$1"
+  print -n "\\\\033[0m"
+  shift 1
+  if [[ \$* ]]; then
+    print -n " \\\\033[0;36m"
+    print -n -r -- "\$*"
+    print "\\\\033[0m"
+  fi
+}
+
+function opRunCmd {
+  eval "\$*"
+}
+
+function opPrintRunCmd {
+  opPrintCmd "\$@"
+  opRunCmd "\$@"
+}
+
+function opPrintMaybeRunCmd {
+  opPrintCmd "\$@"
+  if [[ -z \$NOOP ]]; then
+    opRunCmd "\$@"
+  fi
+}
+
+
+SH_VERS_MAJOR=5
+
+SH_VERS_MINOR=9
+
+function () {
+  local major=\$SH_VERS_MAJOR
+  local minor=\$SH_VERS_MINOR
+
+  autoload is-at-least
+  if ! is-at-least "\${major}.\${minor}"; then
+    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
+    exit 1
+  fi
+}
+
+
+REQ_ORIG='http://x'
+
+SYS_OS_PLAT='darwin'
+
+REQ_PATH='/sh/zsh/script/find'
+
+REQ_SRCH='?sysOsPlat=darwin'
+
+function () {
+  local yn=''
+  if [[ \$YES ]]; then
+    yn='y'
+  else
+    read "yn?? use script (remote) [y, [n]]: "
+  fi
+  if [[ \$yn != 'n' ]]; then
+opPrint 'install'
+opPrint '  brew, bun, deno, starship, uv, zoxide'
+opPrint 'repair'
+opPrint '  brew, copyq'
+opPrint 'setup'
+opPrint '  docker, iterm, llama, lxc, ollama, podman'
+  fi
+}
+\`
 `;
 
-snapshot[`nu / winnt / find (redirect) 1`] = `
-\`pwsh -noprofile -c r#'\$REQ_URL_SH = 'http://x/sh/pwsh/script/find?sysOsPlat=winnt'
+snapshot[`zsh / linux / find 1`] = `
+\`REQ_URL_CFG='http://x/cfg'
 
-Invoke-Expression "\$( Invoke-WebRequest -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "\${REQ_URL_SH}" )"
+REQ_URL_SH='http://x/sh/zsh/script/find?sysOsPlat=linux'
 
-'#\`
+function opPrint {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  print -r -- "\$*"
+}
+
+function opPrintErr {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*" >&2
+    return
+  fi
+  print -n "\\\\033[0;31m" >&2
+  print -n -r -- "\$*" >&2
+  print "\\\\033[0m" >&2
+}
+
+function opPrintSucc {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;32m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintWarn {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;33m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintInfo {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;34m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintCmd {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;35m"
+  print -n -r "\$1"
+  print -n "\\\\033[0m"
+  shift 1
+  if [[ \$* ]]; then
+    print -n " \\\\033[0;36m"
+    print -n -r -- "\$*"
+    print "\\\\033[0m"
+  fi
+}
+
+function opRunCmd {
+  eval "\$*"
+}
+
+function opPrintRunCmd {
+  opPrintCmd "\$@"
+  opRunCmd "\$@"
+}
+
+function opPrintMaybeRunCmd {
+  opPrintCmd "\$@"
+  if [[ -z \$NOOP ]]; then
+    opRunCmd "\$@"
+  fi
+}
+
+
+SH_VERS_MAJOR=5
+
+SH_VERS_MINOR=9
+
+function () {
+  local major=\$SH_VERS_MAJOR
+  local minor=\$SH_VERS_MINOR
+
+  autoload is-at-least
+  if ! is-at-least "\${major}.\${minor}"; then
+    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
+    exit 1
+  fi
+}
+
+
+REQ_ORIG='http://x'
+
+SYS_OS_PLAT='linux'
+
+REQ_PATH='/sh/zsh/script/find'
+
+REQ_SRCH='?sysOsPlat=linux'
+
+function () {
+  local yn=''
+  if [[ \$YES ]]; then
+    yn='y'
+  else
+    read "yn?? use script (remote) [y, [n]]: "
+  fi
+  if [[ \$yn != 'n' ]]; then
+opPrint 'install'
+opPrint '  bun, deno, font, starship, uv, zoxide'
+opPrint 'setup'
+opPrint '  docker, llama, lxc, ollama, podman'
+  fi
+}
+\`
+`;
+
+snapshot[`zsh / linux / find (install filter) 1`] = `
+\`REQ_URL_CFG='http://x/cfg'
+
+REQ_URL_SH='http://x/sh/zsh/script/find/install?sysOsPlat=linux'
+
+function opPrint {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  print -r -- "\$*"
+}
+
+function opPrintErr {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*" >&2
+    return
+  fi
+  print -n "\\\\033[0;31m" >&2
+  print -n -r -- "\$*" >&2
+  print "\\\\033[0m" >&2
+}
+
+function opPrintSucc {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;32m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintWarn {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;33m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintInfo {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;34m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintCmd {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;35m"
+  print -n -r "\$1"
+  print -n "\\\\033[0m"
+  shift 1
+  if [[ \$* ]]; then
+    print -n " \\\\033[0;36m"
+    print -n -r -- "\$*"
+    print "\\\\033[0m"
+  fi
+}
+
+function opRunCmd {
+  eval "\$*"
+}
+
+function opPrintRunCmd {
+  opPrintCmd "\$@"
+  opRunCmd "\$@"
+}
+
+function opPrintMaybeRunCmd {
+  opPrintCmd "\$@"
+  if [[ -z \$NOOP ]]; then
+    opRunCmd "\$@"
+  fi
+}
+
+
+SH_VERS_MAJOR=5
+
+SH_VERS_MINOR=9
+
+function () {
+  local major=\$SH_VERS_MAJOR
+  local minor=\$SH_VERS_MINOR
+
+  autoload is-at-least
+  if ! is-at-least "\${major}.\${minor}"; then
+    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
+    exit 1
+  fi
+}
+
+
+REQ_ORIG='http://x'
+
+SYS_OS_PLAT='linux'
+
+REQ_PATH='/sh/zsh/script/find/install'
+
+REQ_SRCH='?sysOsPlat=linux'
+
+SCRIPT_FIND_PARTS='install'
+
+function () {
+  local yn=''
+  if [[ \$YES ]]; then
+    yn='y'
+  else
+    read "yn?? use script (remote) [y, [n]]: "
+  fi
+  if [[ \$yn != 'n' ]]; then
+opPrint 'install'
+opPrint '  bun, deno, font, starship, uv, zoxide'
+  fi
+}
+\`
+`;
+
+snapshot[`zsh / linux / exec (install/yay arch) 1`] = `
+\`REQ_URL_CFG='http://x/cfg'
+
+REQ_URL_SH='http://x/sh/zsh/script/exec/install/yay?sysOsPlat=linux&sysOs=arch'
+
+function opPrint {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  print -r -- "\$*"
+}
+
+function opPrintErr {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*" >&2
+    return
+  fi
+  print -n "\\\\033[0;31m" >&2
+  print -n -r -- "\$*" >&2
+  print "\\\\033[0m" >&2
+}
+
+function opPrintSucc {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;32m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintWarn {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;33m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintInfo {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;34m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintCmd {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;35m"
+  print -n -r "\$1"
+  print -n "\\\\033[0m"
+  shift 1
+  if [[ \$* ]]; then
+    print -n " \\\\033[0;36m"
+    print -n -r -- "\$*"
+    print "\\\\033[0m"
+  fi
+}
+
+function opRunCmd {
+  eval "\$*"
+}
+
+function opPrintRunCmd {
+  opPrintCmd "\$@"
+  opRunCmd "\$@"
+}
+
+function opPrintMaybeRunCmd {
+  opPrintCmd "\$@"
+  if [[ -z \$NOOP ]]; then
+    opRunCmd "\$@"
+  fi
+}
+
+
+SH_VERS_MAJOR=5
+
+SH_VERS_MINOR=9
+
+function () {
+  local major=\$SH_VERS_MAJOR
+  local minor=\$SH_VERS_MINOR
+
+  autoload is-at-least
+  if ! is-at-least "\${major}.\${minor}"; then
+    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
+    exit 1
+  fi
+}
+
+
+REQ_ORIG='http://x'
+
+SYS_OS='arch'
+
+SYS_OS_PLAT='linux'
+
+REQ_PATH='/sh/zsh/script/exec/install/yay'
+
+REQ_SRCH='?sysOsPlat=linux&sysOs=arch'
+
+SCRIPT_EXEC_PARTS='install|yay'
+
+function () {
+  local yn=''
+  if [[ \$SYS_OS_PLAT != 'linux' ]]; then
+    echo 'script is for linux'
+    return
+  fi
+  if [[ \$SYS_OS != 'arch' ]]; then
+    echo 'script is for arch'
+    return
+  fi
+  if [[ \$YES ]]; then
+    yn='y'
+  else
+    read 'yn?? install yay - (user) [y, [n]]: '
+  fi
+  if [[ \$yn == 'n' ]]; then
+    return
+  fi
+  local output="\${HOME}/.yay-bin"
+  if [[ -d "\${output}" ]]; then
+    opPrintMaybeRunCmd git -C "\${output}" pull --prune '>' /dev/null '2>&1'
+  else
+    local url='https://aur.archlinux.org/yay-bin.git'
+    opPrintMaybeRunCmd git clone --depth 1 --quiet "\${url}" "\${output}"
+  fi
+  (
+    opPrintMaybeRunCmd pushd "\${output}" '>' /dev/null '2>&1'
+    opPrintMaybeRunCmd makepkg --install --syncdeps
+    opPrintMaybeRunCmd popd '>' /dev/null '2>&1'
+  )
+}
+
+\`
 `;

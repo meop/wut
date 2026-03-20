@@ -1,12 +1,16 @@
 def virtLxcOpRem [cmd, instance] {
-  if (try { ^sudo $"($cmd)-ls" --running | split row ' ' | str trim | where { |l| $l | is-not-empty } | any { |l| $l == $instance } } catch { false }) {
+  let wasRunning = ^sudo $"($cmd)-ls" --running | complete | get stdout | split row ' ' | str trim | where { |l| $l | is-not-empty } | any { |l| $l == $instance }
+  if $wasRunning {
     opPrintMaybeRunCmd sudo $"($cmd)-stop" --name $instance
   }
 
-  if ($"/var/lib/lxc/($instance)" | path exists) {
+  let hasConfig = $"/var/lib/lxc/($instance)" | path exists
+  if $hasConfig {
     opPrintMaybeRunCmd sudo rm -rf $"/var/lib/lxc/($instance)"
-  } else {
-    opPrintWarn $"`($cmd)` instance `($instance)` not found"
+  }
+
+  if not ($wasRunning or $hasConfig) {
+    opPrintWarn $"`($cmd)` instance `($instance)` is already removed"
   }
 }
 

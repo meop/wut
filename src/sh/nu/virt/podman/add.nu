@@ -52,6 +52,11 @@ def buildImage [yamlRaw, host, pod, instance, alreadyBuilt: list<string>] {
   $built
 }
 
+def upsertByName [existing, incoming] {
+  let incomingNames = $incoming | each { |x| $x.name }
+  ($existing | where { |x| not ($incomingNames | any { |n| $n == $x.name }) }) | append $incoming
+}
+
 def virtPodmanOp [cmd] {
   let kubeDir = '/etc/containers/systemd'
   let networks = $env.VIRT_PODMAN_NETWORKS | from json
@@ -62,66 +67,68 @@ def virtPodmanOp [cmd] {
     let kubePath = $"($kubeDir)/($pod).kube"
     let podInstances = $env.VIRT_INSTANCES | where { |p| (($p | split row '/') | first) == $pod }
 
-    if (try { ^sudo systemctl is-active $"($pod).service" | str trim } catch { '' }) == 'active' {
-      opPrintWarn $"`($cmd)` pod `($pod)` is already up"
+    if (^sudo systemctl is-active $"($pod).service" | complete | get stdout | str trim) == 'active' {
+      opPrintWarn $"`($cmd)` pod `($pod)` is already added"
       continue
     }
 
+    # layer 2: pod.yaml — base pod metadata (hostname, network, mac, annotations)
     let configPodRaw = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/podman/($pod).yaml'#" ')"'
     mut builtImages = buildImage $configPodRaw $env.SYS_HOST $pod '' []
-    let configPod = $configPodRaw | str replace --all '{pod}' $pod | splitYamlDocs | where { |d| ($d | get kind? | default '') == 'Pod' } | first
+    mut podDoc = $configPodRaw
+      | str replace --all '{host}' $env.SYS_HOST
+      | str replace --all '{pod}' $pod
+      | splitYamlDocs
+      | where { |d| ($d | get kind? | default '') == 'Pod' }
+      | first
 
-    let hostname = $configPod | get spec.hostname? | default $pod
-    let network = $configPod | get metadata.annotations.'io.podman.kube.network'? | default ''
-    let mac = $configPod | get metadata.annotations.'io.podman.kube.podmanargs.mac-address'? | default ''
+    mut configMaps = []
 
-    let networkDef = $networks | get --optional $network
-    if $networkDef != null {
-      if not (^sudo podman network ls --format '{{.Name}}' | lines | any { $in == $network }) {
-        mut netArgs = ['network', 'create']
-        if ($networkDef | get driver? | is-not-empty) { $netArgs = $netArgs | append ['--driver', $networkDef.driver] }
-        if ($networkDef | get interface? | is-not-empty) { $netArgs = $netArgs | append ['--interface-name', $networkDef.interface] }
-        if ($networkDef | get ipam? | is-not-empty) { $netArgs = $netArgs | append ['--ipam-driver', $networkDef.ipam] }
-        for opt in ($networkDef | get options? | default {} | transpose key value) {
-          $netArgs = $netArgs | append ['--opt', $"($opt.key)=($opt.value)"]
-        }
-        $netArgs = $netArgs | append $network
-        opPrintMaybeRunCmd sudo podman ...$netArgs
-      }
-    }
-
-    mut instanceDocs = []
+    # layer 3: instance yamls — overlaid onto pod base
     for instancePath in $podInstances {
       let instance = ($instancePath | split row '/') | last
       let yamlRaw = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/podman/($instancePath).yaml'#" ')"'
 
       $builtImages = buildImage $yamlRaw $env.SYS_HOST $pod $instance $builtImages
 
-      $instanceDocs = $instanceDocs | append [(processYaml $yamlRaw $env.SYS_HOST $pod $instance | splitYamlDocs)]
-    }
+      let instanceDocs = processYaml $yamlRaw $env.SYS_HOST $pod $instance | splitYamlDocs
+      let instancePodDoc = $instanceDocs | where { |d| ($d | get kind? | default '') == 'Pod' } | first
 
-    mut containers = []
-    mut volumes = []
-    mut configMaps = []
-    mut annotations = $configPod | get metadata.annotations? | default {}
+      $podDoc = $podDoc
+        | upsert metadata.annotations (deepMerge ($podDoc | get metadata.annotations? | default {}) ($instancePodDoc | get metadata.annotations? | default {}))
+        | upsert spec.containers (upsertByName ($podDoc | get spec.containers? | default []) ($instancePodDoc | get spec.containers? | default []))
+        | upsert spec.volumes (upsertByName ($podDoc | get spec.volumes? | default []) ($instancePodDoc | get spec.volumes? | default []))
 
-    for docs in $instanceDocs {
-      let podDoc = $docs | where { |d| ($d | get kind? | default '') == 'Pod' } | first
-
-      let newContainers = $podDoc | get spec.containers
-      let newNames = $newContainers | each { |c| $c.name }
-      $containers = ($containers | where { |c| not ($newNames | any { |n| $n == $c.name }) }) | append $newContainers
-
-      let newVolumes = $podDoc | get spec.volumes? | default []
-      let newVolNames = $newVolumes | each { |v| $v.name }
-      $volumes = ($volumes | where { |v| not ($newVolNames | any { |n| $n == $v.name }) }) | append $newVolumes
-
-      let newConfigMaps = $docs | where { |d| ($d | get kind? | default '') == 'ConfigMap' }
-      for cm in $newConfigMaps {
-        $configMaps = ($configMaps | where { |m| $m.metadata.name != $cm.metadata.name }) | append $cm
+      let instanceHostname = $instancePodDoc | get spec.hostname?
+      if $instanceHostname != null {
+        $podDoc = $podDoc | upsert spec.hostname $instanceHostname
       }
 
-      $annotations = $annotations | merge ($podDoc | get metadata.annotations? | default {})
+      for cm in ($instanceDocs | where { |d| ($d | get kind? | default '') == 'ConfigMap' }) {
+        $configMaps = ($configMaps | where { |m| $m.metadata.name != $cm.metadata.name }) | append $cm
+      }
+    }
+
+    let annotations = $podDoc | get metadata.annotations? | default {}
+    let network = $annotations | get 'io.podman.kube.network'? | default ''
+    let mac = $annotations | get 'io.podman.kube.podmanargs.mac-address'? | default ''
+    let containers = $podDoc | get spec.containers? | default []
+    let volumes = $podDoc | get spec.volumes? | default []
+    let hostname = $podDoc | get spec.hostname? | default $pod
+
+    let networkDef = $networks | get --optional $network
+    if $networkDef != null {
+      if not (^sudo podman network ls --format '{{.Name}}' | lines | any { $in == $network }) {
+        let netArgs = [
+          ['network', 'create'],
+          (if ($networkDef | get driver? | is-not-empty) { ['--driver', $networkDef.driver] } else { [] }),
+          (if ($networkDef | get interface? | is-not-empty) { ['--interface-name', $networkDef.interface] } else { [] }),
+          (if ($networkDef | get ipam? | is-not-empty) { ['--ipam-driver', $networkDef.ipam] } else { [] }),
+          ($networkDef | get options? | default {} | transpose key value | each { |opt| ['--opt', $"($opt.key)=($opt.value)"] } | flatten),
+          [$network],
+        ] | flatten
+        opPrintMaybeRunCmd sudo podman ...$netArgs
+      }
     }
 
     for container in $containers {
@@ -137,10 +144,10 @@ def virtPodmanOp [cmd] {
       spec: { hostname: $hostname, containers: $containers, volumes: $volumes },
     } | to yaml)] | append ($configMaps | each { |cm| $cm | to yaml })) | str join "---\n"
 
-    mut kubeLines = ['[Unit]', $"Description=($pod) pod", '', '[Kube]', $"Yaml=($pod).yaml", $"Network=($network)"]
-    if ($mac | is-not-empty) {
-      $kubeLines = $kubeLines | append $"PodmanArgs=--mac-address ($mac)"
-    }
+    let kubeLines = [
+      ['[Unit]', $"Description=($pod) pod", '', '[Kube]', $"Yaml=($pod).yaml", $"Network=($network)"],
+      (if ($mac | is-not-empty) { [$"PodmanArgs=--mac-address ($mac)"] } else { [] }),
+    ] | flatten
 
     let isNew = not ($kubePath | path exists)
     opPrintMaybeRunCmd sudo mkdir -p $kubeDir

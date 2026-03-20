@@ -27,9 +27,11 @@ def replaceEnv [localEnv, value] {
 }
 
 def virtLxcOpAdd [config, configVm, cmd, instance] {
+  let merged = deepMerge $config $configVm
+
   mut lxcEnv = {}
 
-  for e in ([...($config | get environment? | default []), ...($configVm | get environment? | default [])] | each { split row '=' }) {
+  for e in ($merged | get environment? | default [] | each { split row '=' }) {
     $lxcEnv = $lxcEnv | upsert $e.0 $e.1
   }
 
@@ -38,12 +40,23 @@ def virtLxcOpAdd [config, configVm, cmd, instance] {
   let lxcDir = $lxcEnv.VIRT_LXC_DIR_PATH
   let rootfsPath = $"($lxcDir)/($instance)/rootfs"
   $lxcEnv = $lxcEnv | upsert 'rootfs' $rootfsPath
+  let lxcEnv = $lxcEnv
+
+  let net = $merged | get lxc?.network? | default {}
+  if ('link' in $net) and not ($"/sys/class/net/($net.link)" | path exists) {
+    opPrintWarn $"cannot add `($instance)`: network link '($net.link)' does not exist"
+    return
+  }
+
+  for mnt in ($merged | get lxc?.mounts? | default []) {
+    opPrintMaybeRunCmd sudo mkdir -p (replaceEnv $lxcEnv $mnt.source)
+  }
 
   opPrintMaybeRunCmd sudo mkdir -p $rootfsPath
 
-  let rootfsReady = try { ^sudo test -d $"($rootfsPath)/usr"; true } catch { false }
+  let rootfsReady = (^sudo test -d $"($rootfsPath)/usr" | complete).exit_code == 0
   if not $rootfsReady {
-    let template = $configVm | get lxc.create.template? | default ($config | get lxc.create.template?)
+    let template = $merged | get lxc?.create?.template?
     let templateName = ($template | columns | get 0?) | default 'download'
     opPrintMaybeRunCmd sudo lxc-create --name $instance --lxcpath $lxcDir --template $templateName -- ...(
       (if ($templateName in ($template | columns)) { $template | get $templateName } else { {} })
@@ -54,43 +67,20 @@ def virtLxcOpAdd [config, configVm, cmd, instance] {
     opPrintMaybeRunCmd sudo rm -f $"($lxcDir)/($instance)/config"
   }
 
-  mut configLines = [
-    $"lxc.uts.name = ($instance)",
-    $"lxc.rootfs.path = dir:($rootfsPath)",
-  ]
-  let autostart = $configVm | get lxc.autostart? | default ($config | get lxc.autostart? | default false)
-  if $autostart {
-    $configLines = $configLines | append 'lxc.start.auto = 1'
-  }
+  let autostart = $merged | get lxc?.autostart? | default false
 
-  for line in (flattenLxcConfig ($config | get lxc.config? | default {})) {
-    $configLines = $configLines | append (replaceEnv $lxcEnv $line)
-  }
-  for line in (flattenLxcConfig ($configVm | get lxc.config? | default {})) {
-    $configLines = $configLines | append (replaceEnv $lxcEnv $line)
-  }
-
-  let net = ($config | get lxc.network? | default {}) | merge ($configVm | get lxc.network? | default {})
-  if ($net | is-not-empty) {
-    $configLines = $configLines | append [
-      $"lxc.net.0.type = ($net.type)",
-      $"lxc.net.0.link = ($net.link)",
-      $"lxc.net.0.name = ($net.name)",
-    ]
-    if 'hwaddr' in $net {
-      $configLines = $configLines | append $"lxc.net.0.hwaddr = ($net.hwaddr)"
-    }
-    if $net.type == 'veth' {
-      $configLines = $configLines | append $"lxc.net.0.veth.pair = veth-($instance)"
-    } else if $net.type == 'macvlan' {
-      $configLines = $configLines | append $"lxc.net.0.macvlan.mode = ($net.mode? | default 'bridge')"
-    }
-    $configLines = $configLines | append 'lxc.net.0.flags = up'
-  }
-
-  for mnt in ([...($config | get lxc.mounts? | default []), ...($configVm | get lxc.mounts? | default [])]) {
-    $configLines = $configLines | append $"lxc.mount.entry = (replaceEnv $lxcEnv $mnt.source) ((replaceEnv $lxcEnv $mnt.target) | str trim --left --char '/') none bind,create=dir 0 0"
-  }
+  let configLines = [
+    [$"lxc.uts.name = ($instance)", $"lxc.rootfs.path = dir:($rootfsPath)"],
+    (if $autostart { ['lxc.start.auto = 1'] } else { [] }),
+    (flattenLxcConfig ($merged | get lxc?.config? | default {}) | each { |l| replaceEnv $lxcEnv $l }),
+    (if ($net | is-not-empty) { [
+      [$"lxc.net.0.type = ($net.type)", $"lxc.net.0.link = ($net.link)", $"lxc.net.0.name = ($net.name)"],
+      (if 'hwaddr' in $net { [$"lxc.net.0.hwaddr = ($net.hwaddr)"] } else { [] }),
+      (if $net.type == 'veth' { [$"lxc.net.0.veth.pair = veth-($instance)"] } else if $net.type == 'macvlan' { [$"lxc.net.0.macvlan.mode = ($net.mode? | default 'bridge')"] } else { [] }),
+      ['lxc.net.0.flags = up'],
+    ] | flatten } else { [] }),
+    ($merged | get lxc?.mounts? | default [] | each { |mnt| $"lxc.mount.entry = (replaceEnv $lxcEnv $mnt.source) ((replaceEnv $lxcEnv $mnt.target) | str trim --left --char '/') none bind,create=dir 0 0" }),
+  ] | flatten
 
   opPrintMaybeRunCmd sudo mkdir -p $"/var/lib/lxc/($instance)"
 
@@ -105,8 +95,8 @@ def virtLxcOpAdd [config, configVm, cmd, instance] {
 
 def virtLxcOp [cmd] {
   for instance in $env.VIRT_INSTANCES {
-    if (try { ^sudo $"($cmd)-ls" --running | split row ' ' | str trim | where { |l| $l | is-not-empty } | any { |l| $l == $instance } } catch { false }) {
-      opPrintWarn $"`($cmd)` instance `($instance)` is already up"
+    if (^sudo $"($cmd)-ls" --running | complete | get stdout | split row ' ' | str trim | where { |l| $l | is-not-empty } | any { |l| $l == $instance }) {
+      opPrintWarn $"`($cmd)` instance `($instance)` is already added"
       continue
     }
 

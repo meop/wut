@@ -15,7 +15,8 @@ def file [] {
   } else {
     $yn = input r#'? use file (user) [y, [n]]: '#
   }
-  if $yn != 'n' {
-    fileOp
+  if $yn == 'n' {
+    return
   }
+  fileOp
 }

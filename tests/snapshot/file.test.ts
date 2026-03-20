@@ -3,23 +3,6 @@ import { assertSnapshot } from '@std/testing/snapshot'
 import { runSrv } from '../../src/srv.ts'
 import { checkSyntax, req } from '../helpers.ts'
 
-// nu × linux
-Deno.test('nu / linux / diff', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/file/diff?sysOsPlat=linux'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / linux / find', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/file/find?sysOsPlat=linux'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / linux / sync', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/file/sync?sysOsPlat=linux'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-
 // nu × darwin
 Deno.test('nu / darwin / diff', async (t) => {
   const body = await (await runSrv(req('/sh/nu/file/diff?sysOsPlat=darwin'))).text()
@@ -33,6 +16,23 @@ Deno.test('nu / darwin / find', async (t) => {
 })
 Deno.test('nu / darwin / sync', async (t) => {
   const body = await (await runSrv(req('/sh/nu/file/sync?sysOsPlat=darwin'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+
+// nu × linux
+Deno.test('nu / linux / diff', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/file/diff?sysOsPlat=linux'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / linux / find', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/file/find?sysOsPlat=linux'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / linux / sync', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/file/sync?sysOsPlat=linux'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })

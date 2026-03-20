@@ -100,6 +100,11 @@ Deno.test('nu / winnt / tidy', async (t) => {
 })
 
 // nu × linux × arch (with sysHost — exercises real instance config loading)
+Deno.test('nu / linux / add (arch)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/virt/add?sysOsPlat=linux&sysHost=arch'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
 Deno.test('nu / linux / find (arch)', async (t) => {
   const body = await (await runSrv(req('/sh/nu/virt/find?sysOsPlat=linux&sysHost=arch'))).text()
   await assertSnapshot(t, body)
@@ -112,6 +117,11 @@ Deno.test('nu / linux / list (arch)', async (t) => {
 })
 Deno.test('nu / linux / list (arch podman)', async (t) => {
   const body = await (await runSrv(req('/sh/nu/virt/list/podman?sysOsPlat=linux&sysHost=arch'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / linux / rem (arch)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/virt/rem?sysOsPlat=linux&sysHost=arch'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
