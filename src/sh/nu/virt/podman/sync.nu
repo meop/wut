@@ -1,8 +1,8 @@
 def virtPodmanOp [cmd] {
-  let kubeDir = '/etc/containers/systemd'
+  let kubeDirPath = '/etc/containers/systemd'
 
   for pod in ($env.VIRT_INSTANCES | each { |p| ($p | split row '/') | first } | uniq) {
-    if not ($"($kubeDir)/($pod).kube" | path exists) {
+    if not ($"($kubeDirPath)/($pod).kube" | path exists) {
       continue
     }
 

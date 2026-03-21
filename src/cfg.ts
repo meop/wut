@@ -98,7 +98,14 @@ export async function getCfgDirDump(
         const contextKey = options.context[key]
         const contextFilterValue = contextFilterPtr[key] as Array<string>
 
-        if (!contextKey || !contextFilterValue.includes(contextKey)) {
+        if (!contextKey) {
+          valid = false
+          break
+        }
+        const matches = key === 'sys_os_like'
+          ? contextFilterValue.some((v) => contextKey.includes(v))
+          : contextFilterValue.includes(contextKey)
+        if (!matches) {
           valid = false
           break
         }

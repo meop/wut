@@ -18,9 +18,9 @@ def virtLxcOp [cmd] {
   let instances = if ($env.VIRT_INSTANCES | is-not-empty) {
     $env.VIRT_INSTANCES
   } else {
-    let lxcDir = '/var/lib/lxc'
-    if ($lxcDir | path exists) {
-      ls $lxcDir | where type == dir | get name | each { |f| $f | path basename }
+    let lxcDirPath = '/var/lib/lxc'
+    if ($lxcDirPath | path exists) {
+      ls $lxcDirPath | where type == dir | get name | each { |f| $f | path basename }
     } else {
       []
     }

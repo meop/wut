@@ -17,20 +17,20 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
   let cpuVendor = if ((^cat '/proc/cpuinfo' | find --ignore-case 'vendor_id' | last | split row ':' | last | str downcase | str trim | ansi strip) | str contains 'amd') { 'amd' } else { 'intel' }
   $qemuEnv = $qemuEnv | upsert 'VM_CPU_VENDOR' ($cpuVendor | str trim)
 
-  let nicPath = $"/sys/class/net/($qemuEnv.NIC)"
-  if not ($nicPath | path exists) {
+  let nicDirPath = $"/sys/class/net/($qemuEnv.NIC)"
+  if not ($nicDirPath | path exists) {
     opPrintWarn $"cannot add `($instance)`: NIC '($qemuEnv.NIC)' does not exist"
     return
   }
   $qemuEnv = $qemuEnv | upsert 'NIC_MAC' (if ('NIC_MAC' in $qemuEnv) {
     $qemuEnv.NIC_MAC
   } else {
-    ^cat $"($nicPath)/address" | str trim
+    ^cat $"($nicDirPath)/address" | str trim
   })
   $qemuEnv = $qemuEnv | upsert 'NIC_IF_INDEX' (if ('NIC_IF_INDEX' in $qemuEnv) {
     $qemuEnv.NIC_IF_INDEX
   } else {
-    ^cat $"($nicPath)/ifindex" | str trim
+    ^cat $"($nicDirPath)/ifindex" | str trim
   })
 
   let sysArch = $qemuEnv.VM_SYS_ARCH
@@ -67,16 +67,16 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
 
   if 'qemu' in $merged {
     let serviceName = $"qemu-($instance)"
-    let serviceDir = '/etc/systemd/system'
-    let configDir = $"/var/lib/qemu/($instance)"
+    let serviceDirPath = '/etc/systemd/system'
+    let configDirPath = $"/var/lib/qemu/($instance)"
 
-    let servicePath = ($serviceDir | path join $"($serviceName).service")
+    let serviceFilePath = ($serviceDirPath | path join $"($serviceName).service")
 
-    opPrintMaybeRunCmd sudo mkdir -p $serviceDir
-    opPrintMaybeRunCmd sudo mkdir -p $configDir
+    opPrintMaybeRunCmd sudo mkdir -p $serviceDirPath
+    opPrintMaybeRunCmd sudo mkdir -p $configDirPath
 
-    let tmpPath = $"($qemuEnv.TMP_QEMU_DIR_PATH)/($instance)"
-    let pidFilePath = ($tmpPath | path join qemu.pid)
+    let tmpDirPath = $"($qemuEnv.TMP_QEMU_DIR_PATH)/($instance)"
+    let pidFilePath = ($tmpDirPath | path join qemu.pid)
 
     mut serviceLines = [
       '[Unit]',
@@ -86,11 +86,11 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
       '[Service]',
       'Type=forking',
       $"PIDFile=($pidFilePath)",
-      $"WorkingDirectory=($configDir)",
-      $"ExecStartPre=/usr/bin/mkdir -p ($tmpPath)",
+      $"WorkingDirectory=($configDirPath)",
+      $"ExecStartPre=/usr/bin/mkdir -p ($tmpDirPath)",
     ]
 
-    let unbindEfiFbScriptPath = ($configDir | path join 'unbind-efi-fb.sh')
+    let unbindEfiFbScriptFilePath = ($configDirPath | path join 'unbind-efi-fb.sh')
     let unbindEfiFbLines = [
       '#!/usr/bin/bash',
       "checkPath='/sys/bus/platform/drivers/efi-framebuffer/efi-framebuffer.0'",
@@ -102,15 +102,15 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
     ]
     # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
     # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
-    opPrintMaybeRunCmd $"r##'(($unbindEfiFbLines | str join "\n") + "\n")'##" '|' sudo tee $unbindEfiFbScriptPath '|' ignore
-    opPrintMaybeRunCmd sudo chmod +x $unbindEfiFbScriptPath
+    opPrintMaybeRunCmd $"r##'(($unbindEfiFbLines | str join "\n") + "\n")'##" '|' sudo tee $unbindEfiFbScriptFilePath '|' ignore
+    opPrintMaybeRunCmd sudo chmod +x $unbindEfiFbScriptFilePath
     $serviceLines = $serviceLines | append [
-      $"ExecStartPre=($unbindEfiFbScriptPath)",
+      $"ExecStartPre=($unbindEfiFbScriptFilePath)",
       'ExecStartPre=/usr/bin/sleep 2',
     ]
 
     if 'VFIO_PCI_DEV_IDS' in $qemuEnv {
-      let rebindScriptPath = ($configDir | path join 'rebind-vfio-pci.sh')
+      let rebindScriptFilePath = ($configDirPath | path join 'rebind-vfio-pci.sh')
       let rebindLines = [
         '#!/usr/bin/bash',
         "driver='vfio-pci'",
@@ -128,27 +128,27 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
       ]
       # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
       # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
-      opPrintMaybeRunCmd $"r##'(($rebindLines | str join "\n") + "\n")'##" '|' sudo tee $rebindScriptPath '|' ignore
-      opPrintMaybeRunCmd sudo chmod +x $rebindScriptPath
+      opPrintMaybeRunCmd $"r##'(($rebindLines | str join "\n") + "\n")'##" '|' sudo tee $rebindScriptFilePath '|' ignore
+      opPrintMaybeRunCmd sudo chmod +x $rebindScriptFilePath
       $serviceLines = $serviceLines | append [
-        $"ExecStartPre=($rebindScriptPath)",
+        $"ExecStartPre=($rebindScriptFilePath)",
         'ExecStartPre=/usr/bin/sleep 2',
       ]
     }
 
     if 'swtpm' in $merged {
-      let swtpmScriptPath = ($configDir | path join swtpm.sh)
+      let swtpmScriptFilePath = ($configDirPath | path join swtpm.sh)
       let swtpmArgs = replaceEnv $qemuEnv ($merged | get swtpm?.arguments? | default [])
       let swtpmCmd = $"swtpm(if ($swtpmArgs | length) > 0 { ' ' + ($swtpmArgs | str join ' ') } else { '' })"
 
       # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
       # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
-      opPrintMaybeRunCmd $"r##'((['#!/usr/bin/bash', ('exec ' + $swtpmCmd)] | str join "\n") + "\n")'##" '|' sudo tee $swtpmScriptPath '|' ignore
-      opPrintMaybeRunCmd sudo chmod +x $swtpmScriptPath
+      opPrintMaybeRunCmd $"r##'((['#!/usr/bin/bash', ('exec ' + $swtpmCmd)] | str join "\n") + "\n")'##" '|' sudo tee $swtpmScriptFilePath '|' ignore
+      opPrintMaybeRunCmd sudo chmod +x $swtpmScriptFilePath
       $serviceLines = $serviceLines | append [
         $"ExecStartPre=-/usr/bin/pkill --full \"^swtpm.*($instance)\"",
-        $"ExecStartPre=-/usr/bin/rm -f ($tmpPath)/tpm.socket",
-        $"ExecStartPre=($swtpmScriptPath)",
+        $"ExecStartPre=-/usr/bin/rm -f ($tmpDirPath)/tpm.socket",
+        $"ExecStartPre=($swtpmScriptFilePath)",
         'ExecStartPre=/usr/bin/sleep 2',
       ]
     }
@@ -180,19 +180,19 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
       }
     )
 
-    let qemuScriptPath = ($configDir | path join qemu.sh)
+    let qemuScriptFilePath = ($configDirPath | path join qemu.sh)
     let qemuArgs = replaceEnv $qemuEnv ($merged | get qemu?.arguments? | default [])
     let cpusCount = (($qemuEnv.VM_CPU_SOCKETS | into int) * ($qemuEnv.VM_CPU_CORES | into int) * ($qemuEnv.VM_CPU_THREADS | into int))
     let cpusMax = $cpusCount - 1
     let qemuCmd = $"($qemuBin)(if ($qemuArgs | length) > 0 { ' ' + ($qemuArgs | str join ' ') } else { '' })"
     # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
     # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
-    opPrintMaybeRunCmd $"r##'((['#!/usr/bin/bash', ('exec ' + $qemuCmd)] | str join "\n") + "\n")'##" '|' sudo tee $qemuScriptPath '|' ignore
-    opPrintMaybeRunCmd sudo chmod +x $qemuScriptPath
-    $serviceLines = $serviceLines | append $"ExecStart=($qemuScriptPath)"
+    opPrintMaybeRunCmd $"r##'((['#!/usr/bin/bash', ('exec ' + $qemuCmd)] | str join "\n") + "\n")'##" '|' sudo tee $qemuScriptFilePath '|' ignore
+    opPrintMaybeRunCmd sudo chmod +x $qemuScriptFilePath
+    $serviceLines = $serviceLines | append $"ExecStart=($qemuScriptFilePath)"
 
     if ($qemuBlock | get cpu?.pin? | default false) {
-      let pinScriptPath = ($configDir | path join qemu-cpu-pin.sh)
+      let pinScriptFilePath = ($configDirPath | path join qemu-cpu-pin.sh)
       let pinLines = [
         '#!/usr/bin/bash',
         ("pid=$(cat " + $pidFilePath + ")"),
@@ -206,11 +206,11 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
       ]
       # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
       # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
-      opPrintMaybeRunCmd $"r##'(($pinLines | str join "\n") + "\n")'##" '|' sudo tee $pinScriptPath '|' ignore
-      opPrintMaybeRunCmd sudo chmod +x $pinScriptPath
+      opPrintMaybeRunCmd $"r##'(($pinLines | str join "\n") + "\n")'##" '|' sudo tee $pinScriptFilePath '|' ignore
+      opPrintMaybeRunCmd sudo chmod +x $pinScriptFilePath
       $serviceLines = $serviceLines | append [
         'ExecStartPost=/usr/bin/sleep 2',
-        $"ExecStartPost=($pinScriptPath)",
+        $"ExecStartPost=($pinScriptFilePath)",
       ]
     }
 
@@ -220,7 +220,7 @@ def virtQemuOpAdd [config, configVm, cmd, instance] {
       '[Install]',
       'WantedBy=default.target',
     ]
-    opPrintMaybeRunCmd $"r#'(($serviceLines | str join "\n") + "\n")'#" '|' sudo tee $servicePath '|' ignore
+    opPrintMaybeRunCmd $"r#'(($serviceLines | str join "\n") + "\n")'#" '|' sudo tee $serviceFilePath '|' ignore
     opPrintMaybeRunCmd sudo systemctl daemon-reload
     opPrintMaybeRunCmd sudo systemctl enable --now $serviceName
   }

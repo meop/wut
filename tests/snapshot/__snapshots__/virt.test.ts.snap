@@ -462,9 +462,9 @@ def virtLxc [] {
 
 
 def virtPodmanOp [cmd] {
-  let kubeDir = '/etc/containers/systemd'
-  for pod in (if (\$kubeDir | path exists) {
-    ls \$kubeDir
+  let kubeDirPath = '/etc/containers/systemd'
+  for pod in (if (\$kubeDirPath | path exists) {
+    ls \$kubeDirPath
       | where name =~ '\\\\.kube\$'
       | get name
       | each { |f| \$f | path basename | str replace '.kube' '' }
@@ -496,9 +496,9 @@ def virtPodman [] {
 
 
 def virtQemuOp [cmd] {
-  let serviceDir = '/etc/systemd/system'
-  for instance in (if (\$serviceDir | path exists) {
-    ls \$serviceDir
+  let serviceDirPath = '/etc/systemd/system'
+  for instance in (if (\$serviceDirPath | path exists) {
+    ls \$serviceDirPath
       | where name =~ '/qemu-[^/]+\\\\.service\$'
       | get name
       | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
@@ -896,10 +896,10 @@ def virtLxc [] {
 
 
 def virtPodmanOp [cmd] {
-  let kubeDir = '/etc/containers/systemd'
+  let kubeDirPath = '/etc/containers/systemd'
 
   for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
-    if not (\$"(\$kubeDir)/(\$pod).kube" | path exists) {
+    if not (\$"(\$kubeDirPath)/(\$pod).kube" | path exists) {
       continue
     }
 
@@ -3062,7 +3062,7 @@ opPrint r#'lxc'#
 opPrint r#'  alma, kali, void'#
 opPrint r#'podman'#
 opPrint r#'  home'#
-opPrint r#'    heimdall'#
+opPrint r#'    ftpd, nfsd, smbd'#
 opPrint r#'qemu'#
 opPrint r#'  glass'#
   }
@@ -3278,9 +3278,9 @@ def virtLxc [] {
 
 
 def virtPodmanOp [cmd] {
-  let kubeDir = '/etc/containers/systemd'
-  for pod in (if (\$kubeDir | path exists) {
-    ls \$kubeDir
+  let kubeDirPath = '/etc/containers/systemd'
+  for pod in (if (\$kubeDirPath | path exists) {
+    ls \$kubeDirPath
       | where name =~ '\\\\.kube\$'
       | get name
       | each { |f| \$f | path basename | str replace '.kube' '' }
@@ -3312,9 +3312,9 @@ def virtPodman [] {
 
 
 def virtQemuOp [cmd] {
-  let serviceDir = '/etc/systemd/system'
-  for instance in (if (\$serviceDir | path exists) {
-    ls \$serviceDir
+  let serviceDirPath = '/etc/systemd/system'
+  for instance in (if (\$serviceDirPath | path exists) {
+    ls \$serviceDirPath
       | where name =~ '/qemu-[^/]+\\\\.service\$'
       | get name
       | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
@@ -3594,9 +3594,9 @@ def virtLxc [] {
 
 
 def virtPodmanOp [cmd] {
-  let kubeDir = '/etc/containers/systemd'
-  for pod in (if (\$kubeDir | path exists) {
-    ls \$kubeDir
+  let kubeDirPath = '/etc/containers/systemd'
+  for pod in (if (\$kubeDirPath | path exists) {
+    ls \$kubeDirPath
       | where name =~ '\\\\.kube\$'
       | get name
       | each { |f| \$f | path basename | str replace '.kube' '' }
@@ -3628,9 +3628,9 @@ def virtPodman [] {
 
 
 def virtQemuOp [cmd] {
-  let serviceDir = '/etc/systemd/system'
-  for instance in (if (\$serviceDir | path exists) {
-    ls \$serviceDir
+  let serviceDirPath = '/etc/systemd/system'
+  for instance in (if (\$serviceDirPath | path exists) {
+    ls \$serviceDirPath
       | where name =~ '/qemu-[^/]+\\\\.service\$'
       | get name
       | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
@@ -4008,10 +4008,10 @@ def virtLxc [] {
 
 
 def virtPodmanOp [cmd] {
-  let kubeDir = '/etc/containers/systemd'
+  let kubeDirPath = '/etc/containers/systemd'
 
   for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
-    if not (\$"(\$kubeDir)/(\$pod).kube" | path exists) {
+    if not (\$"(\$kubeDirPath)/(\$pod).kube" | path exists) {
       continue
     }
 
@@ -4096,7 +4096,7 @@ hide-env VIRT_MANAGER
 
 \$env.VIRT_MANAGER = r#'podman'#
 
-\$env.VIRT_INSTANCES = [ r#'home/heimdall'# ]
+\$env.VIRT_INSTANCES = [ r#'home/ftpd'#, r#'home/nfsd'#, r#'home/smbd'# ]
 
 virtPodman
 

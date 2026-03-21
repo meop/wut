@@ -46,7 +46,7 @@ Deno.test('zsh / linux / find (install filter)', async (t) => {
   await checkSyntax('zsh', body)
 })
 Deno.test('zsh / linux / exec (install/yay arch)', async (t) => {
-  const body = await (await runSrv(req('/sh/zsh/script/exec/install/yay?sysOsPlat=linux&sysOs=arch'))).text()
+  const body = await (await runSrv(req('/sh/zsh/script/exec/install/yay?sysOsPlat=linux&sysOsLike=arch'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('zsh', body)
 })

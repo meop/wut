@@ -1,7 +1,7 @@
 def virtPodmanOp [cmd] {
-  let kubeDir = '/etc/containers/systemd'
-  for pod in (if ($kubeDir | path exists) {
-    ls $kubeDir
+  let kubeDirPath = '/etc/containers/systemd'
+  for pod in (if ($kubeDirPath | path exists) {
+    ls $kubeDirPath
       | where name =~ '\.kube$'
       | get name
       | each { |f| $f | path basename | str replace '.kube' '' }

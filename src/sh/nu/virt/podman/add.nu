@@ -37,15 +37,15 @@ def buildImage [yamlRaw, host, pod, instance, alreadyBuilt: list<string>] {
     let image = $buildInfo.name
     if $image in $built { continue }
 
-    let context = $buildInfo.buildContextPath
-    let url = $"($env.REQ_URL_CFG)($buildInfo.filePath)"
+    let contextDirPath = $buildInfo.buildContextPath
+    let containerfileUrl = $"($env.REQ_URL_CFG)($buildInfo.filePath)"
 
-    let containerfilePath = ($context | path join 'Containerfile')
-    let containerfileContent = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($url)'#" ')"'
+    let containerfileFilePath = ($contextDirPath | path join ($buildInfo.filePath | path basename))
+    let containerfileContent = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($containerfileUrl)'#" ')"'
 
-    opPrintMaybeRunCmd sudo mkdir -p $context
-    opPrintMaybeRunCmd $"r#'($containerfileContent)'#" '|' sudo tee $containerfilePath '|' ignore
-    opPrintMaybeRunCmd sudo podman build --tag $image $context
+    opPrintMaybeRunCmd sudo mkdir -p $contextDirPath
+    opPrintMaybeRunCmd $"r#'($containerfileContent)'#" '|' sudo tee $containerfileFilePath '|' ignore
+    opPrintMaybeRunCmd sudo podman build --file $containerfileFilePath --tag $image $contextDirPath
 
     $built = $built | append $image
   }
@@ -58,13 +58,13 @@ def upsertByName [existing, incoming] {
 }
 
 def virtPodmanOp [cmd] {
-  let kubeDir = '/etc/containers/systemd'
+  let kubeDirPath = '/etc/containers/systemd'
   let networks = $env.VIRT_PODMAN_NETWORKS | from json
 
   let pods = $env.VIRT_INSTANCES | each { |p| ($p | split row '/') | first } | uniq
   for pod in $pods {
-    let yamlPath = $"($kubeDir)/($pod).yaml"
-    let kubePath = $"($kubeDir)/($pod).kube"
+    let yamlFilePath = $"($kubeDirPath)/($pod).yaml"
+    let kubeFilePath = $"($kubeDirPath)/($pod).kube"
     let podInstances = $env.VIRT_INSTANCES | where { |p| (($p | split row '/') | first) == $pod }
 
     if (^sudo systemctl is-active $"($pod).service" | complete | get stdout | str trim) == 'active' {
@@ -149,10 +149,10 @@ def virtPodmanOp [cmd] {
       (if ($mac | is-not-empty) { [$"PodmanArgs=--mac-address ($mac)"] } else { [] }),
     ] | flatten
 
-    let isNew = not ($kubePath | path exists)
-    opPrintMaybeRunCmd sudo mkdir -p $kubeDir
-    opPrintMaybeRunCmd $"r#'($allDocs)'#" '|' sudo tee $yamlPath '|' ignore
-    opPrintMaybeRunCmd $"r#'(($kubeLines | append ['', '[Install]', 'WantedBy=default.target'] | str join "\n") + "\n")'#" '|' sudo tee $kubePath '|' ignore
+    let isNew = not ($kubeFilePath | path exists)
+    opPrintMaybeRunCmd sudo mkdir -p $kubeDirPath
+    opPrintMaybeRunCmd $"r#'($allDocs)'#" '|' sudo tee $yamlFilePath '|' ignore
+    opPrintMaybeRunCmd $"r#'(($kubeLines | append ['', '[Install]', 'WantedBy=default.target'] | str join "\n") + "\n")'#" '|' sudo tee $kubeFilePath '|' ignore
     opPrintMaybeRunCmd sudo systemctl daemon-reload
     if $isNew {
       opPrintMaybeRunCmd sudo systemctl start $"($pod).service"

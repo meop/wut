@@ -13,8 +13,8 @@ def fileOp [] {
       continue
     }
 
-    let dst = replaceEnv $dirParts.1 | path expand
-    opPrintMaybeRunCmd rm --force --permanent --recursive $"r#'($dst)'#"
+    let dstFilePath = replaceEnv $dirParts.1 | path expand
+    opPrintMaybeRunCmd rm --force --permanent --recursive $"r#'($dstFilePath)'#"
   }
 
   mut createdDirs = []
@@ -33,16 +33,16 @@ def fileOp [] {
     }
 
     let src = $pairParts.1 | str trim --left --char '/'
-    let dst = replaceEnv $pairParts.2 | path expand
+    let dstFilePath = replaceEnv $pairParts.2 | path expand
 
-    let url = $"($env.REQ_URL_CFG)/file/($src)"
+    let srcUrl = $"($env.REQ_URL_CFG)/file/($src)"
 
-    let dstParent = $dst | path dirname
-    if ($dstParent not-in $createdDirs) {
-      $createdDirs = $createdDirs ++ [$dstParent]
-      opPrintMaybeRunCmd mkdir $"r#'($dstParent)'#"
+    let dstParentDirPath = $dstFilePath | path dirname
+    if ($dstParentDirPath not-in $createdDirs) {
+      $createdDirs = $createdDirs ++ [$dstParentDirPath]
+      opPrintMaybeRunCmd mkdir $"r#'($dstParentDirPath)'#"
     }
-    opPrintMaybeRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($url)'#" ')"' '|' save --force $"r#'($dst)'#"
+    opPrintMaybeRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($srcUrl)'#" ')"' '|' save --force $"r#'($dstFilePath)'#"
   }
 
   for perm in ($env.FILE_SYNC_PATH_PERMS? | default []) {

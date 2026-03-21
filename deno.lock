@@ -3,7 +3,7 @@
   "specifiers": {
     "jsr:@cross/deepmerge@^1.0.1": "1.0.1",
     "jsr:@eemeli/yaml@^2.8.2": "2.8.2",
-    "jsr:@meop/shire@~0.5.1": "0.5.1",
+    "jsr:@meop/shire@~0.5.2": "0.5.2",
     "jsr:@std/assert@^1.0.17": "1.0.19",
     "jsr:@std/assert@^1.0.19": "1.0.19",
     "jsr:@std/data-structures@^1.0.10": "1.0.10",
@@ -19,8 +19,8 @@
     "@eemeli/yaml@2.8.2": {
       "integrity": "58f95e7b82f2717963d31f350a9c7cdc098a7b481a3f64c58e979e2e999db0b0"
     },
-    "@meop/shire@0.5.1": {
-      "integrity": "1d0a78efacb5b3af46ea35598060c7ce3d6161d6cfd68e9ebb1f037cef0836fa",
+    "@meop/shire@0.5.2": {
+      "integrity": "e5f3d24d055dd97d3a0d8c9850f41e95ba9518247b40c3e3829b6f9209f4f64d",
       "dependencies": [
         "jsr:@eemeli/yaml"
       ]
@@ -64,12 +64,12 @@
     "dependencies": [
       "jsr:@cross/deepmerge@^1.0.1",
       "jsr:@eemeli/yaml@^2.8.2",
-      "jsr:@meop/shire@~0.5.1",
+      "jsr:@meop/shire@~0.5.2",
       "jsr:@std/assert@^1.0.19",
       "jsr:@std/testing@^1.0.17"
     ],
     "links": {
-      "jsr:@meop/shire@0.5.1": {
+      "jsr:@meop/shire@0.5.2": {
         "dependencies": [
           "jsr:@eemeli/yaml@^2.8.2",
           "jsr:@std/assert@^1.0.19"

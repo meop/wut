@@ -1,4 +1,4 @@
-# Testing
+# Tests
 
 ## Architecture Overview
 

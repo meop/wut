@@ -10564,10 +10564,9 @@ if \$env.SYS_OS_PLAT == 'linux' {
     }
 
     if 'SYS_OS_LIKE' not-in \$env {
-      if 'ID_LIKE' in \$env {
-        \$env.SYS_OS_LIKE = \$env.ID_LIKE | split words | first | str downcase
-      }
-      if 'SYS_OS_LIKE' in \$env {
+      if 'SYS_OS' in \$env {
+        let _parts = if 'ID_LIKE' in \$env { \$env.ID_LIKE | str downcase | split words } else { [] }
+        \$env.SYS_OS_LIKE = ([\$env.SYS_OS] ++ \$_parts) | str join '-'
         \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsLike=(\$env.SYS_OS_LIKE)"
       }
     }

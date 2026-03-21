@@ -203,10 +203,11 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     }
 
     if (op === 'list' || op === 'rem') {
-      const managerFilters = filters.filter((f) => supportedManagers.some((m) => m.includes(f)))
+      const matchManager = op === 'rem' ? (m: string, f: string) => m === f : (m: string, f: string) => m.includes(f)
+      const managerFilters = filters.filter((f) => supportedManagers.some((m) => matchManager(m, f)))
       const instanceFilters = filters.filter((f) => !managerFilters.includes(f))
       const managersToOp = managerFilters.length > 0
-        ? supportedManagers.filter((m) => managerFilters.some((f) => m.includes(f)))
+        ? supportedManagers.filter((m) => managerFilters.some((f) => matchManager(m, f)))
         : supportedManagers
       for (const supportedManager of managersToOp) {
         if (supportedManagers.length > 1) {
@@ -219,6 +220,9 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
           _shell = _shell.with(_shell.varUnSet(VIRT_MANAGER_KEY))
         }
       }
+    } else if (op === 'add' && filters.length > 0) {
+      const allResults = await getCfgDirDump(dirParts, { extension: Fmt.yaml })
+      applyResults(allResults.filter((parts) => filters.every((f, i) => parts[i] === f)))
     } else {
       applyResults(await getCfgDirDump(dirParts, { extension: Fmt.yaml, filters: filters.slice(0, 2) }))
     }

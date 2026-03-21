@@ -37,9 +37,9 @@ def virtLxcOpAdd [config, configVm, cmd, instance] {
 
   $lxcEnv = $lxcEnv | upsert 'instance' $instance
 
-  let lxcDir = $lxcEnv.VIRT_LXC_DIR_PATH
-  let rootfsPath = $"($lxcDir)/($instance)/rootfs"
-  $lxcEnv = $lxcEnv | upsert 'rootfs' $rootfsPath
+  let lxcDirPath = $lxcEnv.VIRT_LXC_DIR_PATH
+  let rootfsDirPath = $"($lxcDirPath)/($instance)/rootfs"
+  $lxcEnv = $lxcEnv | upsert 'rootfs' $rootfsDirPath
   let lxcEnv = $lxcEnv
 
   let net = $merged | get lxc?.network? | default {}
@@ -52,25 +52,25 @@ def virtLxcOpAdd [config, configVm, cmd, instance] {
     opPrintMaybeRunCmd sudo mkdir -p (replaceEnv $lxcEnv $mnt.source)
   }
 
-  opPrintMaybeRunCmd sudo mkdir -p $rootfsPath
+  opPrintMaybeRunCmd sudo mkdir -p $rootfsDirPath
 
-  let rootfsReady = (^sudo test -d $"($rootfsPath)/usr" | complete).exit_code == 0
+  let rootfsReady = (^sudo test -d $"($rootfsDirPath)/usr" | complete).exit_code == 0
   if not $rootfsReady {
     let template = $merged | get lxc?.create?.template?
     let templateName = ($template | columns | get 0?) | default 'download'
-    opPrintMaybeRunCmd sudo lxc-create --name $instance --lxcpath $lxcDir --template $templateName -- ...(
+    opPrintMaybeRunCmd sudo lxc-create --name $instance --lxcpath $lxcDirPath --template $templateName -- ...(
       (if ($templateName in ($template | columns)) { $template | get $templateName } else { {} })
       | transpose key value
       | each { |kv| [$"--($kv.key)", $kv.value] }
       | flatten
     )
-    opPrintMaybeRunCmd sudo rm -f $"($lxcDir)/($instance)/config"
+    opPrintMaybeRunCmd sudo rm -f $"($lxcDirPath)/($instance)/config"
   }
 
   let autostart = $merged | get lxc?.autostart? | default false
 
   let configLines = [
-    [$"lxc.uts.name = ($instance)", $"lxc.rootfs.path = dir:($rootfsPath)"],
+    [$"lxc.uts.name = ($instance)", $"lxc.rootfs.path = dir:($rootfsDirPath)"],
     (if $autostart { ['lxc.start.auto = 1'] } else { [] }),
     (flattenLxcConfig ($merged | get lxc?.config? | default {}) | each { |l| replaceEnv $lxcEnv $l }),
     (if ($net | is-not-empty) { [

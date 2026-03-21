@@ -1,31 +1,47 @@
 # wut
 
-Web Update Tool
+Web Update Tool — a server that dynamically generates and serves shell scripts to client shells over HTTP.
 
-This tool is expected to be run locally and interactively
+This tool is expected to be run locally and interactively.
 
-Some operations cannot work over SSH because they are installing GUI tools
+Some operations cannot work over SSH because they install GUI tools.
 
-Some operations create dynamic prompts for the user and cannot be scripted
+Some operations create dynamic prompts for the user and cannot be scripted.
 
-## shell
+## prerequisites
 
-### run
+- **wut-config** — config repository cloned as a sibling directory (`../wut-config`)
+- **Deno** or **Docker** — to run the server
 
-Install a supported shell from below how you would like
+## server
 
-For Unix, make sure sudo is installed
+Start the server (requires Deno):
 
-Copy and paste the chosen run function into your shell
+```bash
+deno task dev
+```
 
-#### nu
+Or via Docker:
 
-Nushell is supported on Unix or Windows for SSR commands (pack, script)
+```bash
+deno task dev:docker
 
-Nushell is supported on Unix or Windows for CSR commands (file, virt)
+# Stop when done
+deno task dev:docker:down
+```
+
+The server runs on port 9000 by default. Set `PORT` to override.
+
+## shell client
+
+Set `WUT_URL` to your server address, then paste the corresponding `wut` function into your shell config.
+
+### nu
+
+Nushell is supported on Unix and Windows for all commands.
 
 ```nu
-$env.WUT_URL = 'http://arch.lan:9000'
+$env.WUT_URL = 'http://my-server:9000'
 
 def wut --wrapped [...args] {
   mut url = $"($env.WUT_URL)" | str trim --right --char '/'
@@ -36,16 +52,12 @@ def wut --wrapped [...args] {
 }
 ```
 
-#### pwsh
+### pwsh
 
-Powershell is supported on Windows for SSR commands (script)
-
-Nushell will be invoked for SSR commands (pack)
-
-Nushell will be invoked for CSR commands (file, virt)
+Powershell is supported on Windows for `script`. All other commands invoke Nushell.
 
 ```pwsh
-$env:WUT_URL = 'http://arch.lan:9000'
+$env:WUT_URL = 'http://my-server:9000'
 
 function wut {
   $url = "${env:WUT_URL}".TrimEnd('/')
@@ -56,16 +68,12 @@ function wut {
 }
 ```
 
-#### zsh
+### zsh
 
-Zshell is supported on Unix for SSR commands (script)
-
-Nushell will be invoked for SSR commands (pack)
-
-Nushell will be invoked for CSR commands (file, virt)
+Zshell is supported on Unix for `script`. All other commands invoke Nushell.
 
 ```zsh
-export WUT_URL='http://arch.lan:9000'
+export WUT_URL='http://my-server:9000'
 
 function wut {
   local url=$(echo "${WUT_URL}" | sed 's:/*$::')
@@ -76,19 +84,11 @@ function wut {
 }
 ```
 
-## server
+## commands
 
-Install Deno and run the server in dev mode (hot reload):
-
-```bash
-deno task dev
-```
-
-Or install Docker and run the server in a container:
-
-```bash
-deno task dev:docker
-
-# Stop it when done
-deno task dev:docker:down
-```
+| Command  | Aliases | Description                                                   |
+| -------- | ------- | ------------------------------------------------------------- |
+| `pack`   | `p`     | Package manager operations (add, find, list, rem, sync, tidy) |
+| `file`   | `f`     | Dotfile sync from server to local paths                       |
+| `script` | `s`     | Run shell scripts stored in config                            |
+| `virt`   | `v`     | Container / VM management (docker, podman, lxc, qemu)         |

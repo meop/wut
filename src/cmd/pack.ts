@@ -35,11 +35,13 @@ const sysOsPlatToManagers: Record<string, Array<string>> = {
 }
 
 const sysOsToManagers: Record<string, Array<string>> = {
+  alma: ['dnf'],
   alpine: ['apk'],
   arch: ['pacman', 'paru', 'yay'],
   centos: ['dnf'],
   debian: ['apt'],
   fedora: ['dnf'],
+  kali: ['apt'],
   manjaro: ['pacman', 'paru', 'yay'],
   mint: ['apt'],
   rhel: ['dnf'],
@@ -81,6 +83,11 @@ function getSupportedManagers(context: Ctx, environment: Env) {
   return managers
 }
 
+const managerOpDeps: Record<string, string> = {
+  paru: 'pacman',
+  yay: 'pacman',
+}
+
 function getManagerFuncName(manager: string, prefix = PACK_KEY) {
   return manager
     ? `${prefix}${manager[0].toUpperCase()}${manager.slice(1).replaceAll('-', '').replaceAll('_', '').toLowerCase()}`
@@ -94,6 +101,16 @@ async function loadManagerFiles(
 ) {
   let _shell = shell
   for (const supportedManager of supportedManagers) {
+    const dep = managerOpDeps[supportedManager]
+    if (dep && !supportedManagers.includes(dep)) {
+      _shell = _shell.with(
+        await _shell.fileLoad(
+          [PACK_KEY, dep, op],
+          import.meta.resolve,
+          ['..'],
+        ),
+      )
+    }
     _shell = _shell
       .with(
         await _shell.fileLoad(
@@ -133,8 +150,8 @@ async function initOp(
   return { shell: _shell, managers }
 }
 
-async function loadGroupConfig(name: string) {
-  return await getCfgFileLoad([PACK_KEY, name], { extension: Fmt.yaml })
+async function loadGroupConfig(parts: Array<string>) {
+  return await getCfgFileLoad([PACK_KEY, ...parts], { extension: Fmt.yaml })
 }
 
 async function findGroupsWithNames(
@@ -148,8 +165,8 @@ async function findGroupsWithNames(
   const entries: Array<string> = []
   const found: Array<string> = []
   for (const r of results) {
-    const name = r.join(' ')
-    const content = await loadGroupConfig(name)
+    const name = r.join('-')
+    const content = await loadGroupConfig(r)
     if (content == null) {
       continue
     }
@@ -276,7 +293,7 @@ async function processGroupConfig(
   managers: Array<string>,
   name: string,
 ): Promise<{ shell: Sh; found: boolean }> {
-  const content = await loadGroupConfig(name)
+  const content = await loadGroupConfig(name.split('-'))
   if (content == null) {
     return { shell, found: false }
   }
@@ -358,25 +375,23 @@ async function execOp(
   const names = environment.getSplit(PACK_OP_NAMES_KEY(op))
   let found: Array<string> = []
 
-  if (op === 'add' || op === 'find' || op === 'rem') {
-    if (op === 'find') {
-      const { entries: groupEntries, found: groupFilterFound } = await findGroupsWithNames(
-        names.length ? names : undefined,
-        managers,
-      )
-      found = groupFilterFound
-      result = printGroups(result, groupEntries)
-    } else {
-      const groupResult = await processGroupNames(
-        result,
-        context,
-        op,
-        managers,
-        names,
-      )
-      result = groupResult.shell
-      found = groupResult.found
-    }
+  if (op === 'find') {
+    const { entries: groupEntries, found: groupFilterFound } = await findGroupsWithNames(
+      names.length ? names : undefined,
+      managers,
+    )
+    found = groupFilterFound
+    result = printGroups(result, groupEntries)
+  } else if (op === 'add' || op === 'rem') {
+    const groupResult = await processGroupNames(
+      result,
+      context,
+      op,
+      managers,
+      names,
+    )
+    result = groupResult.shell
+    found = groupResult.found
   }
 
   const remaining = names.filter((n) => !found.includes(n))

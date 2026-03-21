@@ -1,7 +1,7 @@
 def virtQemuOp [cmd] {
-  let serviceDir = '/etc/systemd/system'
-  for instance in (if ($serviceDir | path exists) {
-    ls $serviceDir
+  let serviceDirPath = '/etc/systemd/system'
+  for instance in (if ($serviceDirPath | path exists) {
+    ls $serviceDirPath
       | where name =~ '/qemu-[^/]+\.service$'
       | get name
       | each { |f| $f | path basename | str replace 'qemu-' '' | str replace '.service' '' }

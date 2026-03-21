@@ -14,8 +14,8 @@ def fileOp [] {
     }
 
     let src = $pairParts.1 | str trim --left --char '/'
-    let dst = replaceEnv $pairParts.2 | path expand
+    let dstFilePath = replaceEnv $pairParts.2 | path expand
 
-    opPrint $"($src) -> ($dst)"
+    opPrint $"($src) -> ($dstFilePath)"
   }
 }

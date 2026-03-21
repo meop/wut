@@ -77,7 +77,7 @@ Shells execute these scripts locally using their shell.
 
 **Request Flow:**
 
-1. Shell makes HTTP GET request to server (e.g., `http://arch.lan:9000/sh/nu/pack/add/firefox`)
+1. Shell makes HTTP GET request to server (e.g., `http://my-server:9000/sh/nu/pack/add/firefox`)
 2. Server parses URL path to determine: shell type (nu/pwsh/zsh), command (pack), operation (add), arguments (firefox)
 3. Server builds a shell script by:
    - Loading shell-specific template files from `src/sh/{nu,pwsh,zsh}/`
@@ -89,14 +89,8 @@ Shells execute these scripts locally using their shell.
 
 **Shell Bootstrap Pattern:**
 
-Shells define a function that fetches and executes server-rendered scripts:
-
-```nu
-# Nushell example
-def wut --wrapped [...args] {
-  nu --no-config-file -c $"( http get --raw --redirect-mode follow $"($env.WUT_URL)/sh/nu/($args | str join '/')" )"
-}
-```
+Each shell defines a `wut` function that builds the request URL from args and executes the returned script. See README
+for setup.
 
 ### Command System
 
@@ -168,6 +162,9 @@ Configuration files can be:
 - `file.yaml` loaded **server-side** via `getCfgFileLoad` (stitch-capable). Path pairs and permissions inlined as env
   var arrays. Actual file content fetched at runtime via `REQ_URL_CFG/file/{path}`.
 
+See [docs/rules.md](docs/rules.md) for `file.yaml` structure, directory support, template substitution, and permission
+management.
+
 **script** (src/cmd/script.ts) - Custom script execution
 
 - Executes shell scripts stored in config directories
@@ -176,6 +173,8 @@ Configuration files can be:
 - **Note:** For pwsh/zsh shells, SSR mode only (not CSR)
 - `script.yaml` loaded **server-side** via `getCfgFileLoad` (stitch-capable). In exec mode, script content is inlined
   directly into the generated script. In find mode, a listing is generated.
+
+See [docs/rules.md](docs/rules.md) for gate types, enforcement requirements, and examples.
 
 **virt** (src/cmd/virt.ts) - Virtual machine / container management
 
@@ -278,9 +277,11 @@ means more terms = narrower results, which is the consistent expectation across 
 | `wut file list foo bar`      | same as diff/sync                                                                                                                                                                         |
 | `wut pack find foo bar`      | multi-arg managers (pacman/apt/dnf) pass both terms as args (native AND); single-arg managers (zypper/brew/choco/scoop/winget) loop per term (unavoidable OR — limitation of those tools) |
 | `wut pack list/out foo bar`  | chained `\| find foo \| find bar` pipeline = AND                                                                                                                                          |
-| `wut pack add/rem foo bar`   | group-based: group name+pkg names must match all filters; remaining names passed together                                                                                                 |
-| `wut virt list/rem foo bar`  | VIRT_INSTANCES AND-filtered: instance name must contain all filters                                                                                                                       |
-| `wut virt add/sync/tidy`     | `filters.slice(0, 2)` caps at `[manager, pod]` — treats pod as whole unit                                                                                                                 |
+| `wut pack add/rem foo bar`   | group-based: exact group name lookup; remaining unmatched names passed to manager                                                                                                         |
+| `wut virt add foo bar`       | exact path match: `[manager, pod]` must equal filter terms exactly                                                                                                                        |
+| `wut virt rem foo bar`       | exact manager name match; instance names passed through as-is to nushell                                                                                                                  |
+| `wut virt list foo bar`      | substring manager match; instance names passed through as-is to nushell                                                                                                                   |
+| `wut virt sync/tidy`         | `filters.slice(0, 2)` caps at `[manager, pod]` — glob match, treats pod as whole unit                                                                                                     |
 
 ### Where AND over OR does not apply
 
@@ -309,16 +310,7 @@ means more terms = narrower results, which is the consistent expectation across 
 
 ## Testing
 
-Automated tests live in `tests/` and use two tiers:
+See [docs/tests.md](docs/tests.md) for full details on test architecture, how to update snapshots, and how to add new
+test cases.
 
-- **Tier 1 (snapshot)**: Calls `runSrv()` directly with synthetic requests; snapshots the generated script body. Fast,
-  no Docker, no shells needed. Snapshots are committed and show diffs in PRs.
-- **Tier 2 (syntax)**: Pipes each generated body through the shell's parser (`nu --ide-check`, `zsh -n`,
-  `pwsh -Command ParseInput`). Skips gracefully if the shell binary is not found.
-
-Some operations require **local interactive testing** — cannot be fully automated:
-
-- Cannot work over SSH (GUI tool installation)
-- Create dynamic prompts for users
-
-Test interactive changes using the dev server and actual shell shells.
+Some operations require local interactive testing and cannot be fully automated — see README.

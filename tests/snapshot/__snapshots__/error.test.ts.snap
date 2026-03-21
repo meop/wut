@@ -174,10 +174,9 @@ if \$env.SYS_OS_PLAT == 'linux' {
     }
 
     if 'SYS_OS_LIKE' not-in \$env {
-      if 'ID_LIKE' in \$env {
-        \$env.SYS_OS_LIKE = \$env.ID_LIKE | split words | first | str downcase
-      }
-      if 'SYS_OS_LIKE' in \$env {
+      if 'SYS_OS' in \$env {
+        let _parts = if 'ID_LIKE' in \$env { \$env.ID_LIKE | str downcase | split words } else { [] }
+        \$env.SYS_OS_LIKE = ([\$env.SYS_OS] ++ \$_parts) | str join '-'
         \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsLike=(\$env.SYS_OS_LIKE)"
       }
     }
@@ -404,10 +403,12 @@ if (\$SYS_OS_PLAT -eq 'linux') {
     }
 
     if (-not \$SYS_OS_LIKE) {
-      if (\$ID_LIKE) {
-        \$SYS_OS_LIKE = "\${ID_LIKE}".ToLower().Split(' ')[0]
-      }
-      if (\$SYS_OS_LIKE) {
+      if (\$SYS_OS) {
+        \$SYS_OS_LIKE = if (\$ID_LIKE) {
+          "\${SYS_OS}-\${ID_LIKE}".ToLower().Replace(' ', '-')
+        } else {
+          \$SYS_OS
+        }
         \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsLike=\${SYS_OS_LIKE}"
       }
     }
@@ -623,10 +624,8 @@ if [[ \$SYS_OS_PLAT == 'linux' ]]; then
     fi
 
     if [[ -z \$SYS_OS_LIKE ]]; then
-      if [[ \$ID_LIKE ]]; then
-        export SYS_OS_LIKE="\${(L)ID_LIKE%% *}"
-      fi
-      if [[ \$SYS_OS_LIKE ]]; then
+      if [[ \$SYS_OS ]]; then
+        export SYS_OS_LIKE="\${SYS_OS}\${ID_LIKE:+-\${(L)\${ID_LIKE// /-}}}"
         export REQ_URL_SH="\${REQ_URL_SH}&sysOsLike=\${SYS_OS_LIKE}"
       fi
     fi
