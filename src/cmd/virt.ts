@@ -85,6 +85,12 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       if (!supportedManagers.includes(r[0])) {
         continue
       }
+      if (filters.length > 0) {
+        const pathParts = r.slice(1)
+        if (!filters.every((f) => pathParts.some((p) => p.includes(f)))) {
+          continue
+        }
+      }
       const manager = r[0]
       const pod = r[1]
       const instance = r[2]

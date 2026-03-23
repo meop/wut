@@ -10070,10 +10070,8 @@ opPrint r#'dev-ai-claude'#
 opPrint r#'  anthropic.claudecode'#
 opPrint r#'dev-ai-codex'#
 opPrint r#'  openai.codex'#
-opPrint r#'dev-ai-gemini'#
 opPrint r#'dev-ai-opencode'#
 opPrint r#'  sst.opencode'#
-opPrint r#'dev-ai-qwen'#
 opPrint r#'dev-dotnet'#
 opPrint r#'  dotnet-sdk'#
 opPrint r#'dev-go'#
@@ -10094,7 +10092,6 @@ opPrint r#'dev-rust'#
 opPrint r#'  rustlang.rustup'#
 opPrint r#'dev'#
 opPrint r#'  msys2'#
-opPrint r#'gui-displaylink'#
 opPrint r#'gui-game'#
 opPrint r#'  eden, pcsx2, rpcs3, shadps4, xemu, xenia-canary, meta.oculus, microsoft.directx, microsoft.vcredist.2005.x64, microsoft.vcredist.2005.x86, microsoft.vcredist.2008.x64, microsoft.vcredist.2008.x86, microsoft.vcredist.2010.x64, microsoft.vcredist.2010.x86, microsoft.vcredist.2012.x64, microsoft.vcredist.2012.x86, microsoft.vcredist.2013.x64, microsoft.vcredist.2013.x86, microsoft.vcredist.2015+.x64, microsoft.vcredist.2015+.x86, valve.steam'#
 opPrint r#'gui-ide-androidstudio'#
@@ -10111,7 +10108,6 @@ opPrint r#'gui-net-wireshark'#
 opPrint r#'  wiresharkfoundation.wireshark'#
 opPrint r#'gui-note-obsidian'#
 opPrint r#'  obsidian.obsidian'#
-opPrint r#'gui-term-ghostty'#
 opPrint r#'gui-term'#
 opPrint r#'  microsoft.windowsterminal'#
 opPrint r#'gui-web-brave'#
@@ -10122,21 +10118,12 @@ opPrint r#'gui-web-vivaldi'#
 opPrint r#'  vivaldi.vivaldi'#
 opPrint r#'gui'#
 opPrint r#'  arminosaj.autodarkmode, glavsoft.tightvnc, microsoft.powertoys, microsoft.sysinternals.suite, microsoft.windowsapp, rufus.rufus, voidtools.everything, windirstat.windirstat'#
-opPrint r#'os-de-gnome'#
-opPrint r#'os-de-kde'#
 opPrint r#'os-font'#
 opPrint r#'  firacode-nf-mono, hack-nf-mono'#
-opPrint r#'os-llm-llama'#
-opPrint r#'os-llm-llama-swap'#
 opPrint r#'os-llm-lmstudio'#
 opPrint r#'  elementlabs.lmstudio'#
 opPrint r#'os-llm-ollama'#
 opPrint r#'  ollama.ollama'#
-opPrint r#'os-net'#
-opPrint r#'os-virt-docker'#
-opPrint r#'os-virt-lxc'#
-opPrint r#'os-virt-podman'#
-opPrint r#'os-virt-qemu'#
   }
 }
 
@@ -10371,8 +10358,6 @@ opPrint r#'gui-web-vivaldi'#
 opPrint r#'  --cask, vivaldi'#
 opPrint r#'gui'#
 opPrint r#'  --cask, flux, grandperspective, karabiner-elements, keka, rectangle, vnc-viewer, windows-app'#
-opPrint r#'os-de-gnome'#
-opPrint r#'os-de-kde'#
 opPrint r#'os-font'#
 opPrint r#'  --cask, font-fira-code-nerd-font, font-hack-nerd-font'#
 opPrint r#'os-llm-llama-swap'#
@@ -10383,10 +10368,6 @@ opPrint r#'os-llm-lmstudio'#
 opPrint r#'  --cask, lm-studio'#
 opPrint r#'os-llm-ollama'#
 opPrint r#'  --cask, ollama-app'#
-opPrint r#'os-net'#
-opPrint r#'os-virt-docker'#
-opPrint r#'os-virt-lxc'#
-opPrint r#'os-virt-podman'#
 opPrint r#'os-virt-qemu'#
 opPrint r#'  swtpm, utm'#
   }
@@ -10395,6 +10376,335 @@ opPrint r#'  swtpm, utm'#
 \$env.PACK_FIND_NAMES = r#''#
 
 packBrew
+\`
+`;
+
+snapshot[`nu / arch / find (-m apt) 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/-m/apt/find?sysOsPlat=linux&sysOs=arch'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS = r#'arch'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/pack/--manager/apt/find'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=arch'#
+
+\$env.PACK_MANAGER = r#'apt'#
+
+\$env.PACK_OP = r#'find'#
+
+do {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+  }
+  if \$yn != 'n' {
+  }
+}
+
+\$env.PACK_FIND_NAMES = r#''#
+
+\`
+`;
+
+snapshot[`nu / arch / find (-m yay) 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/-m/yay/find?sysOsPlat=linux&sysOs=arch'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS = r#'arch'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/pack/--manager/yay/find'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=arch'#
+
+\$env.PACK_MANAGER = r#'yay'#
+
+\$env.PACK_OP = r#'find'#
+
+def --env packPacmanOp [cmd] {
+  opPrintMaybeRunCmd \$cmd --sync --search ...(\$env.PACK_FIND_NAMES? | default '' | split words)
+}
+
+
+
+
+def --env packYay [] {
+  let cmd = 'yay'
+  if 'PACK_MANAGER' not-in \$env and (which paru | is-not-empty) {
+    return
+  }
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
+    opPrintMaybeRunCmd \$cmd --sync --refresh '|' complete '|' ignore
+  }
+  packPacmanOp \$cmd
+}
+
+
+do {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+  }
+  if \$yn != 'n' {
+opPrint r#'cli'#
+opPrint r#'  powershell-bin'#
+opPrint r#'dev-ai-claude'#
+opPrint r#'  claude-code'#
+opPrint r#'dev-js-bun'#
+opPrint r#'  bun-bin'#
+opPrint r#'gui-ide-androidstudio'#
+opPrint r#'  android-studio'#
+opPrint r#'gui-ide-vscode'#
+opPrint r#'  visual-studio-code-bin'#
+opPrint r#'gui-web-brave'#
+opPrint r#'  brave-bin'#
+opPrint r#'gui-web-edge'#
+opPrint r#'  microsoft-edge-stable-bin'#
+opPrint r#'os-llm-llama-swap'#
+opPrint r#'  llama-swap'#
+opPrint r#'os-llm-llama'#
+opPrint r#'  llama.cpp-vulkan'#
+opPrint r#'os-llm-lmstudio'#
+opPrint r#'  lmstudio-bin'#
+  }
+}
+
+\$env.PACK_FIND_NAMES = r#''#
+
+packYay
 \`
 `;
 

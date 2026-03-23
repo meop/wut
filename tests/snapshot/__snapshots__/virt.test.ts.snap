@@ -4111,3 +4111,273 @@ virtQemu
 hide-env VIRT_MANAGER
 \`
 `;
+
+snapshot[`nu / linux / find (arch glass) 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find/glass?sysOsPlat=linux&sysHost=arch'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.SYS_HOST = r#'arch'#
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/virt/find/glass'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=arch'#
+
+\$env.VIRT_FIND_PARTS = r#'glass'#
+
+\$env.VIRT_OP = r#'find'#
+
+do {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'? use virt (remote) [y, [n]]: '#
+  }
+  if \$yn != 'n' {
+opPrint r#'qemu'#
+opPrint r#'  glass'#
+  }
+}
+\`
+`;
+
+snapshot[`nu / linux / find (arch glass2) 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find/glass2?sysOsPlat=linux&sysHost=arch'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.SYS_HOST = r#'arch'#
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/virt/find/glass2'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=arch'#
+
+\$env.VIRT_FIND_PARTS = r#'glass2'#
+
+\$env.VIRT_OP = r#'find'#
+
+do {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'? use virt (remote) [y, [n]]: '#
+  }
+  if \$yn != 'n' {
+  }
+}
+\`
+`;

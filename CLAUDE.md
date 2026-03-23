@@ -275,7 +275,7 @@ means more terms = narrower results, which is the consistent expectation across 
 | `wut file find foo bar`      | key/alias/path must contain both `foo` AND `bar`                                                                                                                                          |
 | `wut file diff/sync foo bar` | key/alias must start with `foo` AND `bar` (both must prefix-match)                                                                                                                        |
 | `wut file list foo bar`      | same as diff/sync                                                                                                                                                                         |
-| `wut pack find foo bar`      | multi-arg managers (pacman/apt/dnf) pass both terms as args (native AND); single-arg managers (zypper/brew/choco/scoop/winget) loop per term (unavoidable OR — limitation of those tools) |
+| `wut pack find foo bar`      | multi-arg managers pass both terms as args (native AND); single-arg managers loop per term (unavoidable OR — limitation of those tools) |
 | `wut pack list/out foo bar`  | chained `\| find foo \| find bar` pipeline = AND                                                                                                                                          |
 | `wut pack add/rem foo bar`   | group-based: exact group name lookup; remaining unmatched names passed to manager                                                                                                         |
 | `wut virt add foo bar`       | exact path match: `[manager, pod]` must equal filter terms exactly                                                                                                                        |
@@ -285,9 +285,9 @@ means more terms = narrower results, which is the consistent expectation across 
 
 ### Where AND over OR does not apply
 
-- **Single-arg pack managers on find**: zypper, brew, choco, scoop, winget loop per term producing OR behavior. This is
-  a tool limitation — zypper accepts multiple args but treats them as OR; the others only accept one term.
-  pacman/apt/dnf natively AND multiple args.
+- **Single-arg pack managers on find**: loop per term producing OR behavior. This is
+  a tool limitation — some accept multiple args but treat them as OR; others only accept one term.
+  Multi-arg managers natively AND multiple args.
 
 ### Enumeration patterns
 

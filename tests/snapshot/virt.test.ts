@@ -130,3 +130,15 @@ Deno.test('nu / linux / sync (arch)', async (t) => {
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
+
+// nu × linux × arch × find with filter (exercises substring filter direction)
+Deno.test('nu / linux / find (arch glass)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/virt/find/glass?sysOsPlat=linux&sysHost=arch'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / linux / find (arch glass2)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/virt/find/glass2?sysOsPlat=linux&sysHost=arch'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})

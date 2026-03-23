@@ -156,7 +156,7 @@ async function loadGroupConfig(parts: Array<string>) {
 
 async function findGroupsWithNames(
   filters: Array<string> | undefined,
-  managers: Array<string>,
+  managers: Array<string> | null,
 ): Promise<{ entries: Array<string>; found: Array<string> }> {
   const results = await getCfgDirDump([PACK_KEY], {
     extension: Fmt.yaml,
@@ -172,7 +172,7 @@ async function findGroupsWithNames(
     }
     const allNames: Array<string> = []
     for (const key of Object.keys(content)) {
-      if (managers.length && !managers.includes(key)) {
+      if (managers !== null && !managers.includes(key)) {
         continue
       }
       for (const n of (content[key] as ManagerEntry)?.names ?? []) {
@@ -180,6 +180,9 @@ async function findGroupsWithNames(
           allNames.push(n)
         }
       }
+    }
+    if (!allNames.length) {
+      continue
     }
     if (filters?.length) {
       const matchedFilters = filters.filter((f) => name.includes(f) || allNames.some((n) => n.includes(f)))
@@ -376,9 +379,12 @@ async function execOp(
   let found: Array<string> = []
 
   if (op === 'find') {
+    const managersForFind = (context.sys_os_plat || context.sys_os || environment.get(PACK_MANAGER_KEY))
+      ? managers
+      : null
     const { entries: groupEntries, found: groupFilterFound } = await findGroupsWithNames(
       names.length ? names : undefined,
-      managers,
+      managersForFind,
     )
     found = groupFilterFound
     result = printGroups(result, groupEntries)

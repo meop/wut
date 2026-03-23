@@ -313,6 +313,20 @@ Deno.test('nu / darwin / find (no names)', async (t) => {
   await checkSyntax('nu', body)
 })
 
+// nu × arch × find with unsupported manager (-m apt on arch → empty group list)
+Deno.test('nu / arch / find (-m apt)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/-m/apt/find?sysOsPlat=linux&sysOs=arch'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+
+// nu × arch × find with supported manager (-m yay on arch → yay-keyed groups only)
+Deno.test('nu / arch / find (-m yay)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/-m/yay/find?sysOsPlat=linux&sysOs=arch'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+
 // nu × no-sys (bootstrap path)
 Deno.test('nu / no-sys / add', async (t) => {
   const body = await (await runSrv(req('/sh/nu/pack/add/firefox'))).text()
