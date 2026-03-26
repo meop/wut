@@ -152,7 +152,7 @@ opPrint '  bun, choco, deno, hyper-v, llama, scoop'
 opPrint 'repair'
 opPrint '  gpu'
 opPrint 'setup'
-opPrint '  clock, fs, llama, ssh, webdav, windows-terminal, wsl'
+opPrint '  clock, fs, llama, ssh, webdav, windows-terminal, wsl, wut'
   }
 }
 \`
@@ -441,7 +441,7 @@ opPrint '  brew, bun, deno, starship, uv, zoxide'
 opPrint 'repair'
 opPrint '  brew, copyq'
 opPrint 'setup'
-opPrint '  iterm, llama'
+opPrint '  iterm, llama, wut'
   fi
 }
 \`
@@ -582,7 +582,7 @@ function () {
 opPrint 'install'
 opPrint '  bun, deno, font, starship, uv, zoxide'
 opPrint 'setup'
-opPrint '  docker, llama, lxc, ollama, podman'
+opPrint '  docker, llama, lxc, ollama, podman, wut'
   fi
 }
 \`

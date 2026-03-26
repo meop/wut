@@ -1,5 +1,3 @@
-import process from 'node:process'
-
 import { type Cmd, resolveCanonicalParts } from '@meop/shire/cmd'
 import { type Ctx, getCtx } from '@meop/shire/ctx'
 import { Fmt, stringify } from '@meop/shire/serde'
@@ -165,8 +163,8 @@ export async function runSrv(request: Request) {
 if (import.meta.main) {
   Deno.serve(
     {
-      hostname: process.env['HOSTNAME'] ?? '0.0.0.0',
-      port: Number(process.env['PORT'] ?? '80'),
+      hostname: Deno.env.get('HOSTNAME') ?? '0.0.0.0',
+      port: Number(Deno.env.get('PORT') ?? '80'),
     },
     async (request) => await runSrv(request),
   )

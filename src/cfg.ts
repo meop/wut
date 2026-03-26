@@ -1,26 +1,29 @@
-import process from 'node:process'
-
 import { deepMerge } from '@cross/deepmerge'
-import type { Ctx, CtxFilter } from '@meop/shire/ctx'
-import { buildFilePath, getFileContent, getFilePaths, isDirPath, isPath } from '@meop/shire/path'
+import type { Ctx } from '@meop/shire/ctx'
 import { joinKey, splitVal } from '@meop/shire/reg'
 import { Fmt, parse } from '@meop/shire/serde'
+import { join } from '@std/path'
 
+import { getFileContent, getFilePaths, isDirPath, isPath } from './fs.ts'
 import { toRelParts } from './path.ts'
+
+export type CtxFilter = {
+  [key: string]: CtxFilter | Array<string>
+}
 
 const ENV_CFG_DIRS_KEY = ['cfg', 'dirs']
 
 const cfgDirPaths = [
-  buildFilePath(
+  join(
     import.meta.dirname ?? '',
     '..',
     'cfg',
   ),
   ...(
-    splitVal(process.env[joinKey(...ENV_CFG_DIRS_KEY)]).map((
+    splitVal(Deno.env.get(joinKey(...ENV_CFG_DIRS_KEY))).map((
       dir,
     ) =>
-      buildFilePath(
+      join(
         import.meta.dirname ?? '',
         '..',
         '..',
@@ -42,7 +45,7 @@ export async function localCfgPaths(parts: Array<string>, extension?: string) {
   }
 
   for (const validDir of validDirs) {
-    const maybeCfgPath = `${buildFilePath(validDir, ...parts)}${extension ? `.${extension}` : ''}`
+    const maybeCfgPath = `${join(validDir, ...parts)}${extension ? `.${extension}` : ''}`
     if (await isPath(maybeCfgPath)) {
       validCfgPaths.push(maybeCfgPath)
     }

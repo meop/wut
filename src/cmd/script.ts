@@ -1,10 +1,10 @@
 import { type Cmd, CmdBase } from '@meop/shire/cmd'
-import type { Ctx, CtxFilter } from '@meop/shire/ctx'
+import type { Ctx } from '@meop/shire/ctx'
 import { type Env } from '@meop/shire/env'
 import { Fmt } from '@meop/shire/serde'
 import type { Sh } from '@meop/shire/sh'
 
-import { getCfgDirContent, getCfgDirDump, getCfgFileLoad } from '../cfg.ts'
+import { type CtxFilter, getCfgDirContent, getCfgDirDump, getCfgFileLoad } from '../cfg.ts'
 import { redirectNativeShell } from '../sh.ts'
 
 export class ScriptCmd extends CmdBase implements Cmd {

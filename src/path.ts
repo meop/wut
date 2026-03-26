@@ -1,16 +1,14 @@
-import PATH from 'node:path'
+import { join, parse, relative, SEPARATOR } from '@std/path'
 
 function withoutExt(filePath: string) {
-  const parsedPath = PATH.parse(filePath)
-  return PATH.join(parsedPath.dir, parsedPath.name)
+  const { dir, name } = parse(filePath)
+  return join(dir, name)
 }
 
 export function toRelParts(dirPath: string, filePath: string, stripExt = true) {
-  const dir = dirPath ? `${dirPath}${PATH.sep}` : ''
   const adjustedFilePath = stripExt ? withoutExt(filePath) : filePath
-  return adjustedFilePath
-    .replace(dir, '')
-    .split(PATH.sep)
+  return relative(dirPath, adjustedFilePath)
+    .split(SEPARATOR)
     .filter((f) => f)
     .map((f) => f.trimEnd())
 }
@@ -82,11 +80,11 @@ function getFsAclWinntVal(perm: AclPerm, user: string) {
 }
 
 export function toUnixPath(filePath: string) {
-  return filePath.replaceAll(PATH.win32.sep, PATH.posix.sep)
+  return filePath.replaceAll('\\', '/')
 }
 
 export function toWinntPath(filePath: string) {
-  return filePath.replaceAll(PATH.posix.sep, PATH.win32.sep)
+  return filePath.replaceAll('/', '\\')
 }
 
 export function getPlatAclPermCmds(

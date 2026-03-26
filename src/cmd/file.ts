@@ -1,12 +1,12 @@
 import { type Cmd, CmdBase } from '@meop/shire/cmd'
 import { Ctx, withCtx } from '@meop/shire/ctx'
 import { type Env } from '@meop/shire/env'
-import { getFilePaths, isDirPath } from '@meop/shire/path'
 import { joinVal } from '@meop/shire/reg'
 import { Fmt } from '@meop/shire/serde'
 import type { Sh } from '@meop/shire/sh'
 
 import { getCfgFileLoad, localCfgPaths } from '../cfg.ts'
+import { getFilePaths, isDirPath } from '../fs.ts'
 import { type AclPerm, getPlatAclPermCmds, toRelParts } from '../path.ts'
 import { execNativeShell, redirectCommonShell } from '../sh.ts'
 
