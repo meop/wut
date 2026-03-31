@@ -2,8 +2,13 @@ import { join } from '@std/path'
 import { parse } from '@std/toml'
 
 export interface Settings {
-  cfg_dirs: string[]
-  port?: number
+  srv: {
+    hostname?: string
+    port?: number
+  }
+  cfg: {
+    dirs: string[]
+  }
 }
 
 const env = Deno.env.get('WUT_ENV')

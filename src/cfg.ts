@@ -13,7 +13,7 @@ export type CtxFilter = {
 
 const cfgDirPaths = [
   join(import.meta.dirname ?? '', '..', 'cfg'),
-  ...settings.cfg_dirs.map((dir) => join(import.meta.dirname ?? '', '..', '..', dir, 'cfg')),
+  ...settings.cfg.dirs.map((dir) => join(import.meta.dirname ?? '', '..', '..', dir, 'cfg')),
 ].reverse()
 
 export async function localCfgPaths(parts: Array<string>, extension?: string) {
