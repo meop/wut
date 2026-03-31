@@ -8,6 +8,7 @@ import { ZSh } from '@meop/shire/sh/zsh'
 import { SrvBase } from '@meop/shire/srv'
 
 import { getCfgFileContent } from './cfg.ts'
+import { settings } from './settings.ts'
 import { FileCmd } from './cmd/file.ts'
 import { PackCmd } from './cmd/pack.ts'
 import { ScriptCmd } from './cmd/script.ts'
@@ -164,7 +165,7 @@ if (import.meta.main) {
   Deno.serve(
     {
       hostname: Deno.env.get('HOSTNAME') ?? '0.0.0.0',
-      port: Number(Deno.env.get('PORT') ?? '80'),
+      port: settings.port ?? Number(Deno.env.get('PORT') ?? '80'),
     },
     async (request) => await runSrv(request),
   )

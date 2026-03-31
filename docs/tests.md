@@ -22,7 +22,7 @@ deno task test
 deno task test:update
 ```
 
-The test tasks pass `--env-file=.env.test` automatically, which sets `CFG_DIRS=wut-config` so config resolves correctly.
+The test tasks set `WUT_ENV=test` automatically, which loads `settings-test.toml` so config resolves correctly.
 
 ## Updating Snapshots
 

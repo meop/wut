@@ -1,0 +1,2 @@
+cfg_dirs = ["wut-config"]
+port = 9001

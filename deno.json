@@ -12,7 +12,8 @@
     "@std/assert": "jsr:@std/assert@^1.0.19",
     "@std/fs": "jsr:@std/fs@^1.0.23",
     "@std/path": "jsr:@std/path@^1.1.4",
-    "@std/testing": "jsr:@std/testing@^1.0.17"
+    "@std/testing": "jsr:@std/testing@^1.0.17",
+    "@std/toml": "jsr:@std/toml@^1.0.2"
   },
   "links": [
     "../shire"
@@ -24,7 +25,7 @@
   },
   "tasks": {
     "check": "deno check src/**/*.ts",
-    "dev": "deno run --allow-all --env-file --watch src/srv.ts",
+    "dev": "deno run --allow-all --watch src/srv.ts",
     "dev:docker:up": "docker compose --file .docker/compose.yaml up --detach --pull always",
     "dev:docker:down": "docker compose --file .docker/compose.yaml down",
     "dev:systemd:up": "bash .systemd/user.sh up",
@@ -32,7 +33,7 @@
     "fmt": "deno fmt",
     "fmt:check": "deno fmt --check",
     "lint": "deno lint",
-    "test": "deno test --allow-all --env-file=.env.test tests/",
-    "test:update": "deno test --allow-all --env-file=.env.test tests/ -- --update"
+    "test": "WUT_ENV=test deno test --allow-all tests/",
+    "test:update": "WUT_ENV=test deno test --allow-all tests/ -- --update"
   }
 }

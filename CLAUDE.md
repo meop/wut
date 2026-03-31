@@ -117,10 +117,10 @@ Each shell has a concrete implementation (Nushell, Powershell, Zshell) that know
 
 ### Configuration Loading (src/cfg.ts)
 
-Configuration is loaded from multiple directories specified in `.env`:
+Configuration is loaded from multiple directories specified in `settings.toml` (symlink to `settings-dev.toml`):
 
-```
-CFG_DIRS=wut-config|wut-config-secret
+```toml
+cfg_dirs = ["wut-config", "wut-config-secret"]
 ```
 
 Files are loaded from `../wut-config/cfg/` and `../wut-config-secret/cfg/` relative to wut directory.
@@ -209,9 +209,10 @@ Placeholder substitution (`{host}`, `{pod}`, `{instance}`) is done by the nushel
 
 ## Environment Variables
 
-**.env:**
+**`settings.toml`** (symlink → `settings-dev.toml`; use `settings-test.toml` for tests via `WUT_ENV=test`):
 
-- `CFG_DIRS` - Pipe-separated list of config directories (wut-config|wut-config-secret)
+- `cfg_dirs` - Array of config directories, e.g. `["wut-config", "wut-config-secret"]`
+- `port` - Server port (default: 9000)
 
 **Shell version numbers** are hardcoded in `src/ver.ts` (not env vars).
 

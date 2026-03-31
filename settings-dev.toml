@@ -1,0 +1,2 @@
+cfg_dirs = ["wut-config", "wut-config-secret"]
+port = 9000

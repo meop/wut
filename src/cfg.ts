@@ -1,37 +1,19 @@
 import { deepMerge } from '@cross/deepmerge'
 import type { Ctx } from '@meop/shire/ctx'
-import { joinKey, splitVal } from '@meop/shire/reg'
 import { Fmt, parse } from '@meop/shire/serde'
 import { join } from '@std/path'
 
 import { getFileContent, getFilePaths, isDirPath, isPath } from './fs.ts'
 import { toRelParts } from './path.ts'
+import { settings } from './settings.ts'
 
 export type CtxFilter = {
   [key: string]: CtxFilter | Array<string>
 }
 
-const ENV_CFG_DIRS_KEY = ['cfg', 'dirs']
-
 const cfgDirPaths = [
-  join(
-    import.meta.dirname ?? '',
-    '..',
-    'cfg',
-  ),
-  ...(
-    splitVal(Deno.env.get(joinKey(...ENV_CFG_DIRS_KEY))).map((
-      dir,
-    ) =>
-      join(
-        import.meta.dirname ?? '',
-        '..',
-        '..',
-        dir,
-        'cfg',
-      )
-    )
-  ),
+  join(import.meta.dirname ?? '', '..', 'cfg'),
+  ...settings.cfg_dirs.map((dir) => join(import.meta.dirname ?? '', '..', '..', dir, 'cfg')),
 ].reverse()
 
 export async function localCfgPaths(parts: Array<string>, extension?: string) {
