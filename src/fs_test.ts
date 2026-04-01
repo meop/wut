@@ -1,7 +1,7 @@
 import { assertEquals } from '@std/assert'
 import { join } from '@std/path'
 
-import { getFileContent, getFilePaths, isDirPath, isFilePath, isPath } from '../../src/fs.ts'
+import { getFileContent, getFilePaths, isDirPath, isFilePath, isPath } from './fs.ts'
 
 async function makeTempTree(): Promise<string> {
   const dir = await Deno.makeTempDir()

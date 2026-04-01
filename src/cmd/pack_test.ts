@@ -1,7 +1,7 @@
 import { assertSnapshot } from '@std/testing/snapshot'
 
-import { runSrv } from '../../src/srv.ts'
-import { checkSyntax, req } from '../helpers.ts'
+import { checkSyntax, req } from '../_test.ts'
+import { runSrv } from '../srv.ts'
 
 // nu × alpine (apk)
 Deno.test('nu / alpine / add', async (t) => {

@@ -29,30 +29,6 @@ export async function checkSyntax(shell: 'nu' | 'pwsh' | 'zsh', body: string): P
       const errText = new TextDecoder().decode(stderr)
       assert(false, `nu syntax check failed:\n${errText}`)
     }
-  } else if (shell === 'zsh') {
-    const tmpFile = await Deno.makeTempFile({ suffix: '.zsh' })
-    try {
-      await Deno.writeTextFile(tmpFile, body)
-      let result: Deno.CommandOutput
-      try {
-        result = await new Deno.Command('zsh', {
-          args: ['-n', tmpFile],
-          stdout: 'piped',
-          stderr: 'piped',
-        }).output()
-      } catch (e) {
-        if (e instanceof Deno.errors.NotFound) {
-          return
-        }
-        throw e
-      }
-      if (result.code !== 0) {
-        const errText = new TextDecoder().decode(result.stderr)
-        assert(false, `zsh syntax check failed:\n${errText}`)
-      }
-    } finally {
-      await Deno.remove(tmpFile)
-    }
   } else if (shell === 'pwsh') {
     const tmpFile = await Deno.makeTempFile({ suffix: '.ps1' })
     try {
@@ -78,6 +54,30 @@ export async function checkSyntax(shell: 'nu' | 'pwsh' | 'zsh', body: string): P
       if (result.code !== 0) {
         const errText = new TextDecoder().decode(result.stderr)
         assert(false, `pwsh syntax check failed:\n${errText}`)
+      }
+    } finally {
+      await Deno.remove(tmpFile)
+    }
+  } else if (shell === 'zsh') {
+    const tmpFile = await Deno.makeTempFile({ suffix: '.zsh' })
+    try {
+      await Deno.writeTextFile(tmpFile, body)
+      let result: Deno.CommandOutput
+      try {
+        result = await new Deno.Command('zsh', {
+          args: ['-n', tmpFile],
+          stdout: 'piped',
+          stderr: 'piped',
+        }).output()
+      } catch (e) {
+        if (e instanceof Deno.errors.NotFound) {
+          return
+        }
+        throw e
+      }
+      if (result.code !== 0) {
+        const errText = new TextDecoder().decode(result.stderr)
+        assert(false, `zsh syntax check failed:\n${errText}`)
       }
     } finally {
       await Deno.remove(tmpFile)

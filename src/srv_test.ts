@@ -1,7 +1,7 @@
 import { assertSnapshot } from '@std/testing/snapshot'
 
-import { runSrv } from '../../src/srv.ts'
-import { checkSyntax, req } from '../helpers.ts'
+import { checkSyntax, req } from './_test.ts'
+import { runSrv } from './srv.ts'
 
 Deno.test('error / unsupported operation', async (t) => {
   const body = await (await runSrv(req('/invalid/nu/file/sync'))).text()

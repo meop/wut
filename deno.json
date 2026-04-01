@@ -33,7 +33,7 @@
     "fmt": "deno fmt",
     "fmt:check": "deno fmt --check",
     "lint": "deno lint",
-    "test": "WUT_ENV=test deno test --allow-all tests/",
-    "test:update": "WUT_ENV=test deno test --allow-all tests/ -- --update"
+    "test": "WUT_ENV=test deno test --allow-all src/",
+    "test:update": "WUT_ENV=test deno test --allow-all src/ -- --update"
   }
 }
