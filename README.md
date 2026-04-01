@@ -18,16 +18,16 @@ Some operations create dynamic prompts for the user and cannot be scripted.
 Start the server (requires Deno):
 
 ```bash
-deno task dev
+deno task start
 ```
 
-Or via Docker:
+Or via systemd:
 
 ```bash
-deno task dev:docker
+deno task start:systemd
 
 # Stop when done
-deno task dev:docker:down
+deno task stop:systemd
 ```
 
 The server runs on port 9000 by default. Set `PORT` to override.

@@ -33,13 +33,13 @@ workspace/
 ## Development Commands
 
 ```bash
-deno task dev             # development mode with hot reload
-deno task dev:docker      # start Docker container
-deno task dev:docker:down # stop Docker container
-deno task fmt             # apply formatting (modifies files)
-deno task fmt:check       # verify formatting without modifying (CI / pre-commit)
-deno task lint            # lint
 deno task check           # type check
+deno task format          # apply formatting (modifies files)
+deno task format:check    # verify formatting without modifying (CI / pre-commit)
+deno task lint            # lint
+deno task start           # development mode with hot reload
+deno task start:systemd   # start via systemd
+deno task stop:systemd    # stop via systemd
 deno task test            # run tests (snapshot + syntax)
 deno task test:update     # regenerate snapshots after intentional changes
 ```
@@ -58,7 +58,7 @@ The server runs on port 9000 by default (configurable via PORT env var).
 
 After making code changes, run in this order:
 
-1. `deno task fmt` — apply formatting; always modifies files if needed
+1. `deno task format` — apply formatting; always modifies files if needed
 2. `deno task lint` — check for lint errors
    - If errors found: fix them, then return to step 1
 3. `deno task test` — run tests
@@ -66,7 +66,7 @@ After making code changes, run in this order:
      `git diff tests/snapshot/__snapshots__/` to confirm every changed snapshot is correct and valid shell syntax for
      its target shell (Tier 2 syntax check is automatic; semantic correctness requires human review)
 
-Use `deno task fmt:check` (no modifications) only for CI or to verify formatting before committing.
+Use `deno task format:check` (no modifications) only for CI or to verify formatting before committing.
 
 ## Architecture Overview
 
