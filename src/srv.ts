@@ -164,8 +164,8 @@ export async function runSrv(request: Request) {
 if (import.meta.main) {
   Deno.serve(
     {
-      hostname: SETTINGS.srv?.hostname ?? '0.0.0.0',
-      port: SETTINGS.srv?.port ?? 80,
+      hostname: SETTINGS.srv.hostname,
+      port: SETTINGS.srv.port,
     },
     async (request) => await runSrv(request),
   )
