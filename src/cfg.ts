@@ -5,7 +5,7 @@ import { join } from '@std/path'
 
 import { getFileContent, getFilePaths, isDirPath, isPath } from './fs.ts'
 import { toRelParts } from './path.ts'
-import { settings } from './settings.ts'
+import { SETTINGS } from './stng.ts'
 
 export type CtxFilter = {
   [key: string]: CtxFilter | Array<string>
@@ -13,7 +13,7 @@ export type CtxFilter = {
 
 const cfgDirPaths = [
   join(import.meta.dirname ?? '', '..', 'cfg'),
-  ...settings.cfg.dirs.map((dir) => join(import.meta.dirname ?? '', '..', '..', dir, 'cfg')),
+  ...SETTINGS.cfg.dirs.map((dir) => join(import.meta.dirname ?? '', '..', '..', dir, 'cfg')),
 ].reverse()
 
 export async function localCfgPaths(parts: Array<string>, extension?: string) {

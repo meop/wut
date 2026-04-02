@@ -8,11 +8,11 @@ import { ZSh } from '@meop/shire/sh/zsh'
 import { SrvBase } from '@meop/shire/srv'
 
 import { getCfgFileContent } from './cfg.ts'
-import { settings } from './settings.ts'
 import { FileCmd } from './cmd/file.ts'
 import { PackCmd } from './cmd/pack.ts'
 import { ScriptCmd } from './cmd/script.ts'
 import { VirtCmd } from './cmd/virt.ts'
+import { SETTINGS } from './stng.ts'
 import { VERSIONS } from './vers.ts'
 
 class SrvCmd extends SrvBase implements Cmd {
@@ -164,8 +164,8 @@ export async function runSrv(request: Request) {
 if (import.meta.main) {
   Deno.serve(
     {
-      hostname: settings.srv?.hostname ?? '0.0.0.0',
-      port: settings.srv?.port ?? 80,
+      hostname: SETTINGS.srv?.hostname ?? '0.0.0.0',
+      port: SETTINGS.srv?.port ?? 80,
     },
     async (request) => await runSrv(request),
   )

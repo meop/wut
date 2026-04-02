@@ -138,5 +138,4 @@ dist
 .pnp.*
 
 # settings
-settings.json
-settings.toml
+stng.toml
