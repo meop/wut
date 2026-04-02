@@ -3,8 +3,8 @@ import { parse } from '@std/toml'
 
 export interface Stng {
   srv: {
-    hostname?: string
-    port?: number
+    hostname: string
+    port: number
   }
   cfg: {
     dirs: string[]
@@ -12,7 +12,18 @@ export interface Stng {
 }
 
 const env = Deno.env.get('WUT_ENV')
-const filename = env ? `stng-${env}.toml` : 'stng.toml'
+const filename = env ? `settings-${env}.toml` : 'settings.toml'
 const settingsPath = join(import.meta.dirname ?? '', '..', filename)
 
-export const SETTINGS = parse(await Deno.readTextFile(settingsPath)) as unknown as Stng
+// deno-lint-ignore no-explicit-any
+const raw = parse(await Deno.readTextFile(settingsPath)) as any
+
+export const SETTINGS: Stng = {
+  srv: {
+    hostname: raw.srv?.hostname ?? '0.0.0.0',
+    port: raw.srv?.port ?? 80,
+  },
+  cfg: {
+    dirs: raw.cfg?.dirs ?? [],
+  },
+}
