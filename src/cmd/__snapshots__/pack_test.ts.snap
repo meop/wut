@@ -121,6 +121,36 @@ do {
 
 \$env.PACK_OP = r#'add'#
 
+def --env packCargoOp [cmd] {
+  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
+  }
+  opPrintMaybeRunCmd \$cmd install --locked \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packApkOp [cmd] {
   for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
     opPrintMaybeRunCmd ...(\$name | split row ' ')
@@ -157,6 +187,7 @@ def --env packApk [] {
 
 \$env.PACK_ADD_NAMES = r#'firefox'#
 
+packCargo
 packApk
 \`
 `;
@@ -282,14 +313,37 @@ do {
 
 \$env.PACK_OP = r#'find'#
 
-def --env packApkOp [cmd] {
-  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
-  if (\$terms | is-empty) {
-    opPrintMaybeRunCmd \$cmd search
+def --env packCargoOp [cmd] {
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
   } else {
-    for term in \$terms {
-      opPrintMaybeRunCmd \$cmd search \$term
-    }
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
+def --env packApkOp [cmd] {
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
   }
 }
 
@@ -332,6 +386,7 @@ do {
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
+packCargo
 packApk
 \`
 `;
@@ -455,6 +510,37 @@ do {
 
 \$env.PACK_OP = r#'list'#
 
+def --env packCargoOp [cmd] {
+  let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install --list ...\$filterArgs
+  } else {
+    opPrintMaybeRunCmd \$cmd install --list
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packApkOp [cmd] {
   let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   if (\$filterArgs | is-not-empty) {
@@ -492,6 +578,7 @@ def --env packApk [] {
 
 \$env.PACK_LIST_NAMES = r#''#
 
+packCargo
 packApk
 \`
 `;
@@ -615,6 +702,37 @@ do {
 
 \$env.PACK_OP = r#'out'#
 
+def --env packCargoOp [cmd] {
+  let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install-update --list ...\$filterArgs
+  } else {
+    opPrintMaybeRunCmd \$cmd install-update --list
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packApkOp [cmd] {
   let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   if (\$filterArgs | is-not-empty) {
@@ -652,6 +770,7 @@ def --env packApk [] {
 
 \$env.PACK_OUT_NAMES = r#''#
 
+packCargo
 packApk
 \`
 `;
@@ -777,6 +896,36 @@ do {
 
 \$env.PACK_OP = r#'rem'#
 
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
+  \$env.PACKED = true
+  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packApkOp [cmd] {
   opPrintMaybeRunCmd \$cmd del \$env.PACK_REM_NAMES
   \$env.PACKED = true
@@ -813,6 +962,7 @@ def --env packApk [] {
 
 \$env.PACK_REM_NAMES = r#'firefox'#
 
+packCargo
 packApk
 \`
 `;
@@ -936,6 +1086,36 @@ do {
 
 \$env.PACK_OP = r#'sync'#
 
+def --env packCargoOp [cmd] {
+  if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install-update \$env.PACK_SYNC_NAMES
+  } else {
+    opPrintMaybeRunCmd \$cmd install-update --all
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packApkOp [cmd] {
   if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
     opPrintMaybeRunCmd \$cmd add \$env.PACK_SYNC_NAMES
@@ -970,6 +1150,7 @@ def --env packApk [] {
 }
 
 
+packCargo
 packApk
 \`
 `;
@@ -1093,6 +1274,30 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
+def --env packCargoOp [cmd] {}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packApkOp [cmd] {
   opPrintMaybeRunCmd \$cmd cache clean
 }
@@ -1123,6 +1328,7 @@ def --env packApk [] {
 }
 
 
+packCargo
 packApk
 \`
 `;
@@ -1248,6 +1454,36 @@ do {
 
 \$env.PACK_OP = r#'add'#
 
+def --env packCargoOp [cmd] {
+  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
+  }
+  opPrintMaybeRunCmd \$cmd install --locked \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packPacmanOp [cmd] {
   for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
     opPrintMaybeRunCmd ...(\$name | split row ' ')
@@ -1342,6 +1578,7 @@ def --env packYay [] {
 
 \$env.PACK_ADD_NAMES = r#'firefox'#
 
+packCargo
 packPacman
 packParu
 packYay
@@ -1469,6 +1706,34 @@ do {
 
 \$env.PACK_OP = r#'find'#
 
+def --env packCargoOp [cmd] {
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packPacmanOp [cmd] {
   opPrintMaybeRunCmd \$cmd --sync --search ...(\$env.PACK_FIND_NAMES? | default '' | split words)
 }
@@ -1570,6 +1835,7 @@ do {
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
+packCargo
 packPacman
 packParu
 packYay
@@ -1695,6 +1961,37 @@ do {
 
 \$env.PACK_OP = r#'list'#
 
+def --env packCargoOp [cmd] {
+  let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install --list ...\$filterArgs
+  } else {
+    opPrintMaybeRunCmd \$cmd install --list
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packPacmanOp [cmd] {
   let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   if (\$filterArgs | is-not-empty) {
@@ -1790,6 +2087,7 @@ def --env packYay [] {
 
 \$env.PACK_LIST_NAMES = r#''#
 
+packCargo
 packPacman
 packParu
 packYay
@@ -1915,6 +2213,37 @@ do {
 
 \$env.PACK_OP = r#'out'#
 
+def --env packCargoOp [cmd] {
+  let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install-update --list ...\$filterArgs
+  } else {
+    opPrintMaybeRunCmd \$cmd install-update --list
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packPacmanOp [cmd] {
   let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   opPrintMaybeRunCmd try '{' \$cmd --query --upgrades ...\$filterArgs '}'
@@ -2006,6 +2335,7 @@ def --env packYay [] {
 
 \$env.PACK_OUT_NAMES = r#''#
 
+packCargo
 packPacman
 packParu
 packYay
@@ -2133,6 +2463,36 @@ do {
 
 \$env.PACK_OP = r#'rem'#
 
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
+  \$env.PACKED = true
+  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packPacmanOp [cmd] {
   opPrintMaybeRunCmd \$cmd --remove --nosave --recursive \$env.PACK_REM_NAMES
   \$env.PACKED = true
@@ -2227,6 +2587,7 @@ def --env packYay [] {
 
 \$env.PACK_REM_NAMES = r#'firefox'#
 
+packCargo
 packPacman
 packParu
 packYay
@@ -2352,6 +2713,36 @@ do {
 
 \$env.PACK_OP = r#'sync'#
 
+def --env packCargoOp [cmd] {
+  if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install-update \$env.PACK_SYNC_NAMES
+  } else {
+    opPrintMaybeRunCmd \$cmd install-update --all
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packPacmanOp [cmd] {
   if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
     opPrintMaybeRunCmd \$cmd --sync --needed \$env.PACK_SYNC_NAMES
@@ -2444,6 +2835,7 @@ def --env packYay [] {
 }
 
 
+packCargo
 packPacman
 packParu
 packYay
@@ -2569,6 +2961,30 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
+def --env packCargoOp [cmd] {}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packPacmanOp [cmd] {
   # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
   opPrintMaybeRunCmd sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete
@@ -2659,6 +3075,7 @@ def --env packYay [] {
 }
 
 
+packCargo
 packPacman
 packParu
 packYay
@@ -2786,6 +3203,36 @@ do {
 
 \$env.PACK_OP = r#'add'#
 
+def --env packCargoOp [cmd] {
+  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
+  }
+  opPrintMaybeRunCmd \$cmd install --locked \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packDnfOp [cmd] {
   for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
     opPrintMaybeRunCmd ...(\$name | split row ' ')
@@ -2822,6 +3269,7 @@ def --env packDnf [] {
 
 \$env.PACK_ADD_NAMES = r#'firefox'#
 
+packCargo
 packDnf
 \`
 `;
@@ -2947,6 +3395,34 @@ do {
 
 \$env.PACK_OP = r#'find'#
 
+def --env packCargoOp [cmd] {
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packDnfOp [cmd] {
   opPrintMaybeRunCmd \$cmd search ...(\$env.PACK_FIND_NAMES? | default '' | split words)
 }
@@ -2990,6 +3466,7 @@ do {
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
+packCargo
 packDnf
 \`
 `;
@@ -3113,6 +3590,37 @@ do {
 
 \$env.PACK_OP = r#'list'#
 
+def --env packCargoOp [cmd] {
+  let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install --list ...\$filterArgs
+  } else {
+    opPrintMaybeRunCmd \$cmd install --list
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packDnfOp [cmd] {
   let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   if (\$filterArgs | is-not-empty) {
@@ -3150,6 +3658,7 @@ def --env packDnf [] {
 
 \$env.PACK_LIST_NAMES = r#''#
 
+packCargo
 packDnf
 \`
 `;
@@ -3273,6 +3782,37 @@ do {
 
 \$env.PACK_OP = r#'out'#
 
+def --env packCargoOp [cmd] {
+  let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install-update --list ...\$filterArgs
+  } else {
+    opPrintMaybeRunCmd \$cmd install-update --list
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packDnfOp [cmd] {
   let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   if (\$filterArgs | is-not-empty) {
@@ -3310,6 +3850,7 @@ def --env packDnf [] {
 
 \$env.PACK_OUT_NAMES = r#''#
 
+packCargo
 packDnf
 \`
 `;
@@ -3435,6 +3976,36 @@ do {
 
 \$env.PACK_OP = r#'rem'#
 
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
+  \$env.PACKED = true
+  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packDnfOp [cmd] {
   opPrintMaybeRunCmd \$cmd remove \$env.PACK_REM_NAMES
   \$env.PACKED = true
@@ -3471,6 +4042,7 @@ def --env packDnf [] {
 
 \$env.PACK_REM_NAMES = r#'firefox'#
 
+packCargo
 packDnf
 \`
 `;
@@ -3594,6 +4166,36 @@ do {
 
 \$env.PACK_OP = r#'sync'#
 
+def --env packCargoOp [cmd] {
+  if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install-update \$env.PACK_SYNC_NAMES
+  } else {
+    opPrintMaybeRunCmd \$cmd install-update --all
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packDnfOp [cmd] {
   if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
     opPrintMaybeRunCmd \$cmd upgrade \$env.PACK_SYNC_NAMES
@@ -3628,6 +4230,7 @@ def --env packDnf [] {
 }
 
 
+packCargo
 packDnf
 \`
 `;
@@ -3751,6 +4354,30 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
+def --env packCargoOp [cmd] {}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packDnfOp [cmd] {
   opPrintMaybeRunCmd \$cmd autoremove
   opPrintMaybeRunCmd \$cmd clean packages
@@ -3782,6 +4409,7 @@ def --env packDnf [] {
 }
 
 
+packCargo
 packDnf
 \`
 `;
@@ -3907,6 +4535,36 @@ do {
 
 \$env.PACK_OP = r#'add'#
 
+def --env packCargoOp [cmd] {
+  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
+  }
+  opPrintMaybeRunCmd \$cmd install --locked \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packAptOp [cmd] {
   for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
     opPrintMaybeRunCmd ...(\$name | split row ' ')
@@ -3943,6 +4601,7 @@ def --env packApt [] {
 
 \$env.PACK_ADD_NAMES = r#'firefox'#
 
+packCargo
 packApt
 \`
 `;
@@ -4068,6 +4727,34 @@ do {
 
 \$env.PACK_OP = r#'find'#
 
+def --env packCargoOp [cmd] {
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packAptOp [cmd] {
   opPrintMaybeRunCmd \$cmd search ...(\$env.PACK_FIND_NAMES? | default '' | split words)
 }
@@ -4111,6 +4798,7 @@ do {
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
+packCargo
 packApt
 \`
 `;
@@ -4234,6 +4922,37 @@ do {
 
 \$env.PACK_OP = r#'list'#
 
+def --env packCargoOp [cmd] {
+  let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install --list ...\$filterArgs
+  } else {
+    opPrintMaybeRunCmd \$cmd install --list
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packAptOp [cmd] {
   let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   if (\$filterArgs | is-not-empty) {
@@ -4271,6 +4990,7 @@ def --env packApt [] {
 
 \$env.PACK_LIST_NAMES = r#''#
 
+packCargo
 packApt
 \`
 `;
@@ -4394,6 +5114,37 @@ do {
 
 \$env.PACK_OP = r#'out'#
 
+def --env packCargoOp [cmd] {
+  let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install-update --list ...\$filterArgs
+  } else {
+    opPrintMaybeRunCmd \$cmd install-update --list
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packAptOp [cmd] {
   let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   if (\$filterArgs | is-not-empty) {
@@ -4431,6 +5182,7 @@ def --env packApt [] {
 
 \$env.PACK_OUT_NAMES = r#''#
 
+packCargo
 packApt
 \`
 `;
@@ -4556,6 +5308,36 @@ do {
 
 \$env.PACK_OP = r#'rem'#
 
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
+  \$env.PACKED = true
+  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packAptOp [cmd] {
   opPrintMaybeRunCmd \$cmd purge --autoremove \$env.PACK_REM_NAMES
   \$env.PACKED = true
@@ -4592,6 +5374,7 @@ def --env packApt [] {
 
 \$env.PACK_REM_NAMES = r#'firefox'#
 
+packCargo
 packApt
 \`
 `;
@@ -4715,6 +5498,36 @@ do {
 
 \$env.PACK_OP = r#'sync'#
 
+def --env packCargoOp [cmd] {
+  if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install-update \$env.PACK_SYNC_NAMES
+  } else {
+    opPrintMaybeRunCmd \$cmd install-update --all
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packAptOp [cmd] {
   if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
     opPrintMaybeRunCmd \$cmd install \$env.PACK_SYNC_NAMES
@@ -4749,6 +5562,7 @@ def --env packApt [] {
 }
 
 
+packCargo
 packApt
 \`
 `;
@@ -4872,6 +5686,30 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
+def --env packCargoOp [cmd] {}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packAptOp [cmd] {
   opPrintMaybeRunCmd \$cmd autoclean
   opPrintMaybeRunCmd \$cmd autoremove
@@ -4903,6 +5741,7 @@ def --env packApt [] {
 }
 
 
+packCargo
 packApt
 \`
 `;
@@ -5028,6 +5867,36 @@ do {
 
 \$env.PACK_OP = r#'add'#
 
+def --env packCargoOp [cmd] {
+  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
+  }
+  opPrintMaybeRunCmd \$cmd install --locked \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packXbpsOp [cmd] {
   for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
     opPrintMaybeRunCmd ...(\$name | split row ' ')
@@ -5064,6 +5933,7 @@ def --env packXbps [] {
 
 \$env.PACK_ADD_NAMES = r#'firefox'#
 
+packCargo
 packXbps
 \`
 `;
@@ -5189,14 +6059,37 @@ do {
 
 \$env.PACK_OP = r#'find'#
 
-def --env packXbpsOp [cmd] {
-  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
-  if (\$terms | is-empty) {
-    opPrintMaybeRunCmd xbps-query --repository --search ''
+def --env packCargoOp [cmd] {
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
   } else {
-    for term in \$terms {
-      opPrintMaybeRunCmd xbps-query --repository --search \$term
-    }
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
+def --env packXbpsOp [cmd] {
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd xbps-query --repository --search \$term
   }
 }
 
@@ -5239,6 +6132,7 @@ do {
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
+packCargo
 packXbps
 \`
 `;
@@ -5362,6 +6256,37 @@ do {
 
 \$env.PACK_OP = r#'list'#
 
+def --env packCargoOp [cmd] {
+  let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install --list ...\$filterArgs
+  } else {
+    opPrintMaybeRunCmd \$cmd install --list
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packXbpsOp [cmd] {
   let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   if (\$filterArgs | is-not-empty) {
@@ -5399,6 +6324,7 @@ def --env packXbps [] {
 
 \$env.PACK_LIST_NAMES = r#''#
 
+packCargo
 packXbps
 \`
 `;
@@ -5522,6 +6448,37 @@ do {
 
 \$env.PACK_OP = r#'out'#
 
+def --env packCargoOp [cmd] {
+  let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install-update --list ...\$filterArgs
+  } else {
+    opPrintMaybeRunCmd \$cmd install-update --list
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packXbpsOp [cmd] {
   let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   if (\$filterArgs | is-not-empty) {
@@ -5559,6 +6516,7 @@ def --env packXbps [] {
 
 \$env.PACK_OUT_NAMES = r#''#
 
+packCargo
 packXbps
 \`
 `;
@@ -5684,6 +6642,36 @@ do {
 
 \$env.PACK_OP = r#'rem'#
 
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
+  \$env.PACKED = true
+  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packXbpsOp [cmd] {
   let rem_cmd = \$cmd | str replace 'xbps-install' 'xbps-remove'
   opPrintMaybeRunCmd \$rem_cmd --recursive \$env.PACK_REM_NAMES
@@ -5721,6 +6709,7 @@ def --env packXbps [] {
 
 \$env.PACK_REM_NAMES = r#'firefox'#
 
+packCargo
 packXbps
 \`
 `;
@@ -5844,6 +6833,36 @@ do {
 
 \$env.PACK_OP = r#'sync'#
 
+def --env packCargoOp [cmd] {
+  if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install-update \$env.PACK_SYNC_NAMES
+  } else {
+    opPrintMaybeRunCmd \$cmd install-update --all
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packXbpsOp [cmd] {
   if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
     opPrintMaybeRunCmd \$cmd --update \$env.PACK_SYNC_NAMES
@@ -5878,6 +6897,7 @@ def --env packXbps [] {
 }
 
 
+packCargo
 packXbps
 \`
 `;
@@ -6001,6 +7021,30 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
+def --env packCargoOp [cmd] {}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packXbpsOp [cmd] {
   let rem_cmd = \$cmd | str replace 'xbps-install' 'xbps-remove'
   opPrintMaybeRunCmd \$rem_cmd --remove-orphans
@@ -6032,6 +7076,7 @@ def --env packXbps [] {
 }
 
 
+packCargo
 packXbps
 \`
 `;
@@ -6157,6 +7202,36 @@ do {
 
 \$env.PACK_OP = r#'add'#
 
+def --env packCargoOp [cmd] {
+  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
+  }
+  opPrintMaybeRunCmd \$cmd install --locked \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packZypperOp [cmd] {
   for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
     opPrintMaybeRunCmd ...(\$name | split row ' ')
@@ -6193,6 +7268,7 @@ def --env packZypper [] {
 
 \$env.PACK_ADD_NAMES = r#'firefox'#
 
+packCargo
 packZypper
 \`
 `;
@@ -6318,14 +7394,37 @@ do {
 
 \$env.PACK_OP = r#'find'#
 
-def --env packZypperOp [cmd] {
-  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
-  if (\$terms | is-empty) {
-    opPrintMaybeRunCmd \$cmd search
+def --env packCargoOp [cmd] {
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
   } else {
-    for term in \$terms {
-      opPrintMaybeRunCmd \$cmd search \$term
-    }
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
+def --env packZypperOp [cmd] {
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
   }
 }
 
@@ -6368,6 +7467,7 @@ do {
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
+packCargo
 packZypper
 \`
 `;
@@ -6491,6 +7591,37 @@ do {
 
 \$env.PACK_OP = r#'list'#
 
+def --env packCargoOp [cmd] {
+  let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install --list ...\$filterArgs
+  } else {
+    opPrintMaybeRunCmd \$cmd install --list
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packZypperOp [cmd] {
   let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   if (\$filterArgs | is-not-empty) {
@@ -6528,6 +7659,7 @@ def --env packZypper [] {
 
 \$env.PACK_LIST_NAMES = r#''#
 
+packCargo
 packZypper
 \`
 `;
@@ -6651,6 +7783,37 @@ do {
 
 \$env.PACK_OP = r#'out'#
 
+def --env packCargoOp [cmd] {
+  let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install-update --list ...\$filterArgs
+  } else {
+    opPrintMaybeRunCmd \$cmd install-update --list
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packZypperOp [cmd] {
   let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   if (\$filterArgs | is-not-empty) {
@@ -6688,6 +7851,7 @@ def --env packZypper [] {
 
 \$env.PACK_OUT_NAMES = r#''#
 
+packCargo
 packZypper
 \`
 `;
@@ -6813,6 +7977,36 @@ do {
 
 \$env.PACK_OP = r#'rem'#
 
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
+  \$env.PACKED = true
+  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packZypperOp [cmd] {
   opPrintMaybeRunCmd \$cmd remove --clean-deps \$env.PACK_REM_NAMES
   \$env.PACKED = true
@@ -6849,6 +8043,7 @@ def --env packZypper [] {
 
 \$env.PACK_REM_NAMES = r#'firefox'#
 
+packCargo
 packZypper
 \`
 `;
@@ -6972,6 +8167,36 @@ do {
 
 \$env.PACK_OP = r#'sync'#
 
+def --env packCargoOp [cmd] {
+  if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install-update \$env.PACK_SYNC_NAMES
+  } else {
+    opPrintMaybeRunCmd \$cmd install-update --all
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packZypperOp [cmd] {
   if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
     opPrintMaybeRunCmd \$cmd install \$env.PACK_SYNC_NAMES
@@ -7006,6 +8231,7 @@ def --env packZypper [] {
 }
 
 
+packCargo
 packZypper
 \`
 `;
@@ -7129,6 +8355,30 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
+def --env packCargoOp [cmd] {}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packZypperOp [cmd] {
   opPrintMaybeRunCmd \$cmd clean --only-unneeded
 }
@@ -7159,6 +8409,7 @@ def --env packZypper [] {
 }
 
 
+packCargo
 packZypper
 \`
 `;
@@ -7282,6 +8533,36 @@ do {
 
 \$env.PACK_OP = r#'add'#
 
+def --env packCargoOp [cmd] {
+  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
+  }
+  opPrintMaybeRunCmd \$cmd install --locked \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packBrewOp [cmd] {
   for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
     opPrintMaybeRunCmd ...(\$name | split row ' ')
@@ -7317,6 +8598,7 @@ def --env packBrew [] {
 
 \$env.PACK_ADD_NAMES = r#'firefox'#
 
+packCargo
 packBrew
 \`
 `;
@@ -7440,14 +8722,37 @@ do {
 
 \$env.PACK_OP = r#'find'#
 
-def --env packBrewOp [cmd] {
-  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
-  if (\$terms | is-empty) {
-    opPrintMaybeRunCmd \$cmd search
+def --env packCargoOp [cmd] {
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
   } else {
-    for term in \$terms {
-      opPrintMaybeRunCmd \$cmd search \$term
-    }
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
+def --env packBrewOp [cmd] {
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
   }
 }
 
@@ -7489,6 +8794,7 @@ do {
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
+packCargo
 packBrew
 \`
 `;
@@ -7610,6 +8916,37 @@ do {
 
 \$env.PACK_OP = r#'list'#
 
+def --env packCargoOp [cmd] {
+  let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install --list ...\$filterArgs
+  } else {
+    opPrintMaybeRunCmd \$cmd install --list
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packBrewOp [cmd] {
   let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   if (\$filterArgs | is-not-empty) {
@@ -7646,6 +8983,7 @@ def --env packBrew [] {
 
 \$env.PACK_LIST_NAMES = r#''#
 
+packCargo
 packBrew
 \`
 `;
@@ -7767,6 +9105,37 @@ do {
 
 \$env.PACK_OP = r#'out'#
 
+def --env packCargoOp [cmd] {
+  let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install-update --list ...\$filterArgs
+  } else {
+    opPrintMaybeRunCmd \$cmd install-update --list
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packBrewOp [cmd] {
   let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   opPrintMaybeRunCmd try '{' \$cmd outdated ...\$filterArgs '}'
@@ -7799,6 +9168,7 @@ def --env packBrew [] {
 
 \$env.PACK_OUT_NAMES = r#''#
 
+packCargo
 packBrew
 \`
 `;
@@ -7922,6 +9292,36 @@ do {
 
 \$env.PACK_OP = r#'rem'#
 
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
+  \$env.PACKED = true
+  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packBrewOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
@@ -7957,6 +9357,7 @@ def --env packBrew [] {
 
 \$env.PACK_REM_NAMES = r#'firefox'#
 
+packCargo
 packBrew
 \`
 `;
@@ -8078,6 +9479,36 @@ do {
 
 \$env.PACK_OP = r#'sync'#
 
+def --env packCargoOp [cmd] {
+  if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install-update \$env.PACK_SYNC_NAMES
+  } else {
+    opPrintMaybeRunCmd \$cmd install-update --all
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packBrewOp [cmd] {
   if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
     opPrintMaybeRunCmd \$cmd upgrade --greedy \$env.PACK_SYNC_NAMES
@@ -8111,6 +9542,7 @@ def --env packBrew [] {
 }
 
 
+packCargo
 packBrew
 \`
 `;
@@ -8232,6 +9664,30 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
+def --env packCargoOp [cmd] {}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packBrewOp [cmd] {
   opPrintMaybeRunCmd \$cmd cleanup --prune=all
 }
@@ -8261,6 +9717,7 @@ def --env packBrew [] {
 }
 
 
+packCargo
 packBrew
 \`
 `;
@@ -8384,6 +9841,36 @@ do {
 
 \$env.PACK_OP = r#'add'#
 
+def --env packCargoOp [cmd] {
+  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
+  }
+  opPrintMaybeRunCmd \$cmd install --locked \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packChocoOp [cmd] {
   for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
     opPrintMaybeRunCmd ...(\$name | split row ' ')
@@ -8483,6 +9970,7 @@ def --env packWinget [] {
 
 \$env.PACK_ADD_NAMES = r#'firefox'#
 
+packCargo
 packChoco
 packScoop
 packWinget
@@ -8608,14 +10096,37 @@ do {
 
 \$env.PACK_OP = r#'find'#
 
-def --env packChocoOp [cmd] {
-  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
-  if (\$terms | is-empty) {
-    opPrintMaybeRunCmd \$cmd search
+def --env packCargoOp [cmd] {
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
   } else {
-    for term in \$terms {
-      opPrintMaybeRunCmd \$cmd search \$term
-    }
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
+def --env packChocoOp [cmd] {
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
   }
 }
 
@@ -8643,13 +10154,8 @@ def --env packChoco [] {
 
 
 def --env packScoopOp [cmd] {
-  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
-  if (\$terms | is-empty) {
-    opPrintMaybeRunCmd \$cmd search
-  } else {
-    for term in \$terms {
-      opPrintMaybeRunCmd \$cmd search \$term
-    }
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
   }
 }
 
@@ -8679,13 +10185,8 @@ def --env packScoop [] {
 
 
 def --env packWingetOp [cmd] {
-  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
-  if (\$terms | is-empty) {
-    opPrintMaybeRunCmd \$cmd search
-  } else {
-    for term in \$terms {
-      opPrintMaybeRunCmd \$cmd search \$term
-    }
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
   }
 }
 
@@ -8727,6 +10228,7 @@ do {
 
 \$env.PACK_FIND_NAMES = r#'firefox'#
 
+packCargo
 packChoco
 packScoop
 packWinget
@@ -8850,6 +10352,37 @@ do {
 
 \$env.PACK_OP = r#'list'#
 
+def --env packCargoOp [cmd] {
+  let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install --list ...\$filterArgs
+  } else {
+    opPrintMaybeRunCmd \$cmd install --list
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packChocoOp [cmd] {
   let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   if (\$filterArgs | is-not-empty) {
@@ -8952,6 +10485,7 @@ def --env packWinget [] {
 
 \$env.PACK_LIST_NAMES = r#''#
 
+packCargo
 packChoco
 packScoop
 packWinget
@@ -9075,6 +10609,37 @@ do {
 
 \$env.PACK_OP = r#'out'#
 
+def --env packCargoOp [cmd] {
+  let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
+  if (\$filterArgs | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install-update --list ...\$filterArgs
+  } else {
+    opPrintMaybeRunCmd \$cmd install-update --list
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packChocoOp [cmd] {
   let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   if (\$filterArgs | is-not-empty) {
@@ -9177,6 +10742,7 @@ def --env packWinget [] {
 
 \$env.PACK_OUT_NAMES = r#''#
 
+packCargo
 packChoco
 packScoop
 packWinget
@@ -9302,6 +10868,36 @@ do {
 
 \$env.PACK_OP = r#'rem'#
 
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
+  \$env.PACKED = true
+  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
+    opPrintMaybeRunCmd ...(\$name | split row ' ')
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packChocoOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
@@ -9401,6 +10997,7 @@ def --env packWinget [] {
 
 \$env.PACK_REM_NAMES = r#'firefox'#
 
+packCargo
 packChoco
 packScoop
 packWinget
@@ -9524,6 +11121,36 @@ do {
 
 \$env.PACK_OP = r#'sync'#
 
+def --env packCargoOp [cmd] {
+  if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd install-update \$env.PACK_SYNC_NAMES
+  } else {
+    opPrintMaybeRunCmd \$cmd install-update --all
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packChocoOp [cmd] {
   if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
     opPrintMaybeRunCmd \$cmd upgrade \$env.PACK_SYNC_NAMES
@@ -9621,6 +11248,7 @@ def --env packWinget [] {
 }
 
 
+packCargo
 packChoco
 packScoop
 packWinget
@@ -9744,6 +11372,30 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
+def --env packCargoOp [cmd] {}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
 def --env packChocoOp [cmd] {
   opPrintMaybeRunCmd \$cmd cache remove
 }
@@ -9827,6 +11479,7 @@ def --env packWinget [] {
 }
 
 
+packCargo
 packChoco
 packScoop
 packWinget
@@ -9950,14 +11603,37 @@ do {
 
 \$env.PACK_OP = r#'find'#
 
-def --env packChocoOp [cmd] {
-  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
-  if (\$terms | is-empty) {
-    opPrintMaybeRunCmd \$cmd search
+def --env packCargoOp [cmd] {
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
   } else {
-    for term in \$terms {
-      opPrintMaybeRunCmd \$cmd search \$term
-    }
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
+def --env packChocoOp [cmd] {
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
   }
 }
 
@@ -9985,13 +11661,8 @@ def --env packChoco [] {
 
 
 def --env packScoopOp [cmd] {
-  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
-  if (\$terms | is-empty) {
-    opPrintMaybeRunCmd \$cmd search
-  } else {
-    for term in \$terms {
-      opPrintMaybeRunCmd \$cmd search \$term
-    }
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
   }
 }
 
@@ -10021,13 +11692,8 @@ def --env packScoop [] {
 
 
 def --env packWingetOp [cmd] {
-  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
-  if (\$terms | is-empty) {
-    opPrintMaybeRunCmd \$cmd search
-  } else {
-    for term in \$terms {
-      opPrintMaybeRunCmd \$cmd search \$term
-    }
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
   }
 }
 
@@ -10065,7 +11731,7 @@ do {
   }
   if \$yn != 'n' {
 opPrint r#'cli'#
-opPrint r#'  7zip.7zip, ajeetdsouza.zoxide, burntsushi.ripgrep.msvc, clement.bottom, git.git, junegunn.fzf, meta.zstandard, microsoft.appinstaller, microsoft.powershell, neovim.neovim, nushell.nushell, sharkdp.fd, starship.starship, xampprocky.tokei'#
+opPrint r#'  bottom, cargo-update, fd-find, ripgrep, starship, tokei, zellij, zoxide, 7zip.7zip, git.git, gnupg.gnupg, junegunn.fzf, meta.zstandard, microsoft.appinstaller, microsoft.powershell, neovim.neovim, nushell.nushell'#
 opPrint r#'dev-ai-claude'#
 opPrint r#'  anthropic.claudecode'#
 opPrint r#'dev-ai-codex'#
@@ -10074,6 +11740,8 @@ opPrint r#'dev-ai-opencode'#
 opPrint r#'  sst.opencode'#
 opPrint r#'dev-dotnet'#
 opPrint r#'  dotnet-sdk'#
+opPrint r#'dev-github'#
+opPrint r#'  github.cli'#
 opPrint r#'dev-go'#
 opPrint r#'  golang.go'#
 opPrint r#'dev-js-bun'#
@@ -10126,12 +11794,6 @@ opPrint r#'os-llm-ollama'#
 opPrint r#'  ollama.ollama'#
   }
 }
-
-\$env.PACK_FIND_NAMES = r#''#
-
-packChoco
-packScoop
-packWinget
 \`
 `;
 
@@ -10252,14 +11914,37 @@ do {
 
 \$env.PACK_OP = r#'find'#
 
-def --env packBrewOp [cmd] {
-  let terms = \$env.PACK_FIND_NAMES? | default '' | split words
-  if (\$terms | is-empty) {
-    opPrintMaybeRunCmd \$cmd search
+def --env packCargoOp [cmd] {
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
   } else {
-    for term in \$terms {
-      opPrintMaybeRunCmd \$cmd search \$term
-    }
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
+def --env packBrewOp [cmd] {
+  for term in (\$env.PACK_FIND_NAMES | split words) {
+    opPrintMaybeRunCmd \$cmd search \$term
   }
 }
 
@@ -10297,7 +11982,7 @@ do {
   }
   if \$yn != 'n' {
 opPrint r#'cli'#
-opPrint r#'  bottom, ca-certificates, coreutils, curl, fd, fzf, git, neovim, nushell, openssh, openssl, powershell, ripgrep, sevenzip, starship, tokei, zellij, zoxide, zstd'#
+opPrint r#'  bottom, cargo-update, fd-find, ripgrep, starship, tokei, zellij, zoxide, ca-certificates, coreutils, curl, fzf, git, gnupg, neovim, nushell, openssh, openssl, powershell, sevenzip, zstd'#
 opPrint r#'dev-ai-claude'#
 opPrint r#'  --cask, claude-code'#
 opPrint r#'dev-ai-codex'#
@@ -10310,6 +11995,8 @@ opPrint r#'dev-ai-qwen'#
 opPrint r#'  qwen-code'#
 opPrint r#'dev-dotnet'#
 opPrint r#'  --cask, dotnet-sdk'#
+opPrint r#'dev-github'#
+opPrint r#'  gh'#
 opPrint r#'dev-go'#
 opPrint r#'  go'#
 opPrint r#'dev-js-bun'#
@@ -10372,10 +12059,6 @@ opPrint r#'os-virt-qemu'#
 opPrint r#'  swtpm, utm'#
   }
 }
-
-\$env.PACK_FIND_NAMES = r#''#
-
-packBrew
 \`
 `;
 
@@ -10510,9 +12193,6 @@ do {
   if \$yn != 'n' {
   }
 }
-
-\$env.PACK_FIND_NAMES = r#''#
-
 \`
 `;
 
@@ -10701,10 +12381,6 @@ opPrint r#'os-llm-lmstudio'#
 opPrint r#'  lmstudio-bin'#
   }
 }
-
-\$env.PACK_FIND_NAMES = r#''#
-
-packYay
 \`
 `;
 

@@ -1,6 +1,6 @@
 def --env packXbps [] {
-  let cmd = 'xbps-install'
-  if ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or (which $cmd | is-empty) {
+  let cmd = 'xbps'
+  if ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or (which $"($cmd)-install" | is-empty) {
     return
   }
   if ('PACK_OP' in $env) and ($env.PACK_OP in ['add', 'rem']) and ($env.PACKED? | default false) {
@@ -17,7 +17,7 @@ def --env packXbps [] {
   }
   let cmd = if (which sudo | is-not-empty) { $"sudo ($cmd)" } else { $cmd }
   if 'PACK_OP' in $env and ($env.PACK_OP == 'add' or $env.PACK_OP == 'find' or $env.PACK_OP == 'out' or $env.PACK_OP == 'sync') {
-    opPrintMaybeRunCmd $cmd --sync '|' complete '|' ignore
+    opPrintMaybeRunCmd $"($cmd)-install" --sync '|' complete '|' ignore
   }
   packXbpsOp $cmd
 }

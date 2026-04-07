@@ -28,13 +28,23 @@ export class PackCmd extends CmdBase implements Cmd {
   }
 }
 
-const sysOsPlatToManagers: Record<string, Array<string>> = {
+const UNIVERSAL_MANAGERS = ['cargo']
+
+function withUniversal(
+  managers: Record<string, Array<string>>,
+): Record<string, Array<string>> {
+  return Object.fromEntries(
+    Object.entries(managers).map(([k, v]) => [k, [...UNIVERSAL_MANAGERS, ...v]]),
+  )
+}
+
+const sysOsPlatToManagers = withUniversal({
   darwin: ['brew'],
   linux: ['apk', 'apt', 'dnf', 'pacman', 'paru', 'xbps', 'yay', 'zypper'],
   winnt: ['choco', 'scoop', 'winget'],
-}
+})
 
-const sysOsToManagers: Record<string, Array<string>> = {
+const sysOsToManagers = withUniversal({
   alma: ['dnf'],
   alpine: ['apk'],
   arch: ['pacman', 'paru', 'yay'],
@@ -49,7 +59,7 @@ const sysOsToManagers: Record<string, Array<string>> = {
   suse: ['zypper'],
   ubuntu: ['apt'],
   void: ['xbps'],
-}
+})
 
 const PACK_KEY = 'pack'
 const PACK_MANAGER_KEY = [PACK_KEY, 'manager']
@@ -224,69 +234,46 @@ function setOpNames(shell: Sh, op: string, names: string) {
   )
 }
 
-function setOpGroupNames(
-  shell: Sh,
-  context: Ctx,
-  op: string,
-  values: Array<string>,
-) {
-  return shell.with(
-    shell.varSetArr(
-      PACK_OP_GROUP_NAMES_KEY(op),
-      values.map((v: string) => execNativeShell(shell, context.sys_os_plat ?? '', v)),
-    ),
-  )
-}
-
-function unsetOpGroupNames(shell: Sh, op: string) {
-  return shell.with(shell.varUnSet(PACK_OP_GROUP_NAMES_KEY(op)))
-}
-
-function setManager(shell: Sh, manager: string) {
-  return shell.with(
-    shell.varSetStr(PACK_MANAGER_KEY, manager),
-  )
-}
-
-function unsetManager(shell: Sh) {
-  return shell.with(shell.varUnSet(PACK_MANAGER_KEY))
-}
-
 interface ManagerEntry {
   names: Array<string>
   [op: string]: Array<string> | undefined
 }
 
-function processManagerEntry(
+function processManagerEntryLines(
   shell: Sh,
   context: Ctx,
   op: string,
   manager: string,
   entry: ManagerEntry,
   multiManager: boolean,
-): Sh {
-  let _shell = shell
+): Array<string> {
+  const lines: Array<string> = []
 
   if (multiManager) {
-    _shell = setManager(_shell, manager)
+    lines.push(shell.varSetStr(PACK_MANAGER_KEY, manager))
   }
 
   if (entry[op]) {
-    _shell = setOpGroupNames(_shell, context, op, entry[op] as Array<string>)
+    lines.push(
+      shell.varSetArr(
+        PACK_OP_GROUP_NAMES_KEY(op),
+        (entry[op] as Array<string>).map((v) => execNativeShell(shell, context.sys_os_plat ?? '', v)),
+      ),
+    )
   }
 
-  _shell = setOpNames(_shell, op, entry.names.join(' '))
-  _shell = _shell.with([getManagerFuncName(manager)])
+  lines.push(shell.varSetStr(PACK_OP_NAMES_KEY(op), entry.names.join(' ')))
+  lines.push(getManagerFuncName(manager))
 
   if (entry[op]) {
-    _shell = unsetOpGroupNames(_shell, op)
+    lines.push(shell.varUnSet(PACK_OP_GROUP_NAMES_KEY(op)))
   }
 
   if (multiManager) {
-    _shell = unsetManager(_shell)
+    lines.push(shell.varUnSet(PACK_MANAGER_KEY))
   }
 
-  return _shell
+  return lines
 }
 
 async function processGroupConfig(
@@ -312,13 +299,12 @@ async function processGroupConfig(
     if (!entry?.names?.length) {
       continue
     }
-    _shell = processManagerEntry(
-      _shell,
-      context,
-      op,
-      key,
-      entry,
-      multiManager,
+    _shell = _shell.with(
+      _shell.gatedFunc('use pack (group)', [
+        ..._shell.print(name),
+        ..._shell.print(`  ${entry.names.join(', ')}`),
+        ...processManagerEntryLines(_shell, context, op, key, entry, multiManager),
+      ]),
     )
   }
 
@@ -402,16 +388,12 @@ async function execOp(
 
   const remaining = names.filter((n) => !found.includes(n))
 
-  if (op === 'find' || op === 'list' || op === 'out') {
+  if ((op === 'find' && names.length) || op === 'list' || op === 'out') {
     result = setOpNames(result, op, names.join(' '))
     result = callManagers(result, managers)
-  } else {
-    if (remaining.length) {
-      result = setOpNames(result, op, remaining.join(' '))
-    }
-    if (remaining.length || names.length === 0) {
-      result = callManagers(result, managers)
-    }
+  } else if (op !== 'find' && (remaining.length || !names.length)) {
+    result = remaining.length ? setOpNames(result, op, remaining.join(' ')) : result
+    result = callManagers(result, managers)
   }
 
   return buildAndLog(result, environment)

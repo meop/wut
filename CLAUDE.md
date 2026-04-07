@@ -75,11 +75,12 @@ Two distinct loading functions:
 
 - **`getCfgFileContent(parts)`** — raw content of the first matching file (wut-config-secret wins). Used by the `/cfg`
   HTTP route for files fetched at runtime by nushell scripts (containerfiles, pod YAMLs).
-- **`getCfgFileLoad(parts, {extension})`** — loads ALL matching files across ALL cfg dirs and deep-merges them. Used
-  by commands that process config server-side (pack, file, script, virt). Makes commands "stitch-capable" —
+- **`getCfgFileLoad(parts, {extension})`** — loads ALL matching files across ALL cfg dirs and deep-merges them. Used by
+  commands that process config server-side (pack, file, script, virt). Makes commands "stitch-capable" —
   `wut-config-secret` automatically merges with `wut-config`.
 
-Deep merge (`@cross/deepmerge`): records merge recursively, arrays append (later dirs append to earlier), scalars: later wins.
+Deep merge (`@cross/deepmerge`): records merge recursively, arrays append (later dirs append to earlier), scalars: later
+wins.
 
 ## Filter Semantics
 
