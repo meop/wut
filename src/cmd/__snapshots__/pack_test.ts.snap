@@ -122,10 +122,7 @@ do {
 \$env.PACK_OP = r#'add'#
 
 def --env packCargoOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
-  opPrintMaybeRunCmd \$cmd install --locked \$env.PACK_ADD_NAMES
+  opPrintMaybeRunCmd \$cmd binstall --locked \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
 
@@ -152,9 +149,6 @@ def --env packCargo [] {
 
 
 def --env packApkOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
   opPrintMaybeRunCmd \$cmd add \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
@@ -378,7 +372,7 @@ do {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+    \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
   }
@@ -899,9 +893,6 @@ do {
 def --env packCargoOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
@@ -929,9 +920,6 @@ def --env packCargo [] {
 def --env packApkOp [cmd] {
   opPrintMaybeRunCmd \$cmd del \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
@@ -1328,7 +1316,6 @@ def --env packApk [] {
 }
 
 
-packCargo
 packApk
 \`
 `;
@@ -1455,10 +1442,7 @@ do {
 \$env.PACK_OP = r#'add'#
 
 def --env packCargoOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
-  opPrintMaybeRunCmd \$cmd install --locked \$env.PACK_ADD_NAMES
+  opPrintMaybeRunCmd \$cmd binstall --locked \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
 
@@ -1485,9 +1469,6 @@ def --env packCargo [] {
 
 
 def --env packPacmanOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
   opPrintMaybeRunCmd \$cmd --sync --needed \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
@@ -1827,7 +1808,7 @@ do {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+    \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
   }
@@ -2466,9 +2447,6 @@ do {
 def --env packCargoOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
@@ -2496,9 +2474,6 @@ def --env packCargo [] {
 def --env packPacmanOp [cmd] {
   opPrintMaybeRunCmd \$cmd --remove --nosave --recursive \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
@@ -3075,7 +3050,6 @@ def --env packYay [] {
 }
 
 
-packCargo
 packPacman
 packParu
 packYay
@@ -3204,10 +3178,7 @@ do {
 \$env.PACK_OP = r#'add'#
 
 def --env packCargoOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
-  opPrintMaybeRunCmd \$cmd install --locked \$env.PACK_ADD_NAMES
+  opPrintMaybeRunCmd \$cmd binstall --locked \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
 
@@ -3234,9 +3205,6 @@ def --env packCargo [] {
 
 
 def --env packDnfOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
@@ -3458,7 +3426,7 @@ do {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+    \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
   }
@@ -3979,9 +3947,6 @@ do {
 def --env packCargoOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
@@ -4009,9 +3974,6 @@ def --env packCargo [] {
 def --env packDnfOp [cmd] {
   opPrintMaybeRunCmd \$cmd remove \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
@@ -4409,7 +4371,6 @@ def --env packDnf [] {
 }
 
 
-packCargo
 packDnf
 \`
 `;
@@ -4536,10 +4497,7 @@ do {
 \$env.PACK_OP = r#'add'#
 
 def --env packCargoOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
-  opPrintMaybeRunCmd \$cmd install --locked \$env.PACK_ADD_NAMES
+  opPrintMaybeRunCmd \$cmd binstall --locked \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
 
@@ -4566,9 +4524,6 @@ def --env packCargo [] {
 
 
 def --env packAptOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
@@ -4790,7 +4745,7 @@ do {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+    \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
   }
@@ -5311,9 +5266,6 @@ do {
 def --env packCargoOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
@@ -5341,9 +5293,6 @@ def --env packCargo [] {
 def --env packAptOp [cmd] {
   opPrintMaybeRunCmd \$cmd purge --autoremove \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
@@ -5741,7 +5690,6 @@ def --env packApt [] {
 }
 
 
-packCargo
 packApt
 \`
 `;
@@ -5868,10 +5816,7 @@ do {
 \$env.PACK_OP = r#'add'#
 
 def --env packCargoOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
-  opPrintMaybeRunCmd \$cmd install --locked \$env.PACK_ADD_NAMES
+  opPrintMaybeRunCmd \$cmd binstall --locked \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
 
@@ -5898,17 +5843,14 @@ def --env packCargo [] {
 
 
 def --env packXbpsOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
-  opPrintMaybeRunCmd \$cmd \$env.PACK_ADD_NAMES
+  opPrintMaybeRunCmd \$"(\$cmd)-install" \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
 
 
 def --env packXbps [] {
-  let cmd = 'xbps-install'
-  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+  let cmd = 'xbps'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$"(\$cmd)-install" | is-empty) {
     return
   }
   if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
@@ -5925,7 +5867,7 @@ def --env packXbps [] {
   }
   let cmd = if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
   if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
-    opPrintMaybeRunCmd \$cmd --sync '|' complete '|' ignore
+    opPrintMaybeRunCmd \$"(\$cmd)-install" --sync '|' complete '|' ignore
   }
   packXbpsOp \$cmd
 }
@@ -6089,14 +6031,14 @@ def --env packCargo [] {
 
 def --env packXbpsOp [cmd] {
   for term in (\$env.PACK_FIND_NAMES | split words) {
-    opPrintMaybeRunCmd xbps-query --repository --search \$term
+    opPrintMaybeRunCmd \$"(\$cmd)-query" --repository --search \$term
   }
 }
 
 
 def --env packXbps [] {
-  let cmd = 'xbps-install'
-  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+  let cmd = 'xbps'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$"(\$cmd)-install" | is-empty) {
     return
   }
   if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
@@ -6113,7 +6055,7 @@ def --env packXbps [] {
   }
   let cmd = if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
   if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
-    opPrintMaybeRunCmd \$cmd --sync '|' complete '|' ignore
+    opPrintMaybeRunCmd \$"(\$cmd)-install" --sync '|' complete '|' ignore
   }
   packXbpsOp \$cmd
 }
@@ -6124,7 +6066,7 @@ do {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+    \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
   }
@@ -6290,16 +6232,16 @@ def --env packCargo [] {
 def --env packXbpsOp [cmd] {
   let filterArgs = \$env.PACK_LIST_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   if (\$filterArgs | is-not-empty) {
-    opPrintMaybeRunCmd xbps-query --list-pkgs '|' complete '|' get stdout '|' str trim --right ...\$filterArgs
+    opPrintMaybeRunCmd \$"(\$cmd)-query" --list-pkgs '|' complete '|' get stdout '|' str trim --right ...\$filterArgs
   } else {
-    opPrintMaybeRunCmd xbps-query --list-pkgs
+    opPrintMaybeRunCmd \$"(\$cmd)-query" --list-pkgs
   }
 }
 
 
 def --env packXbps [] {
-  let cmd = 'xbps-install'
-  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+  let cmd = 'xbps'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$"(\$cmd)-install" | is-empty) {
     return
   }
   if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
@@ -6316,7 +6258,7 @@ def --env packXbps [] {
   }
   let cmd = if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
   if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
-    opPrintMaybeRunCmd \$cmd --sync '|' complete '|' ignore
+    opPrintMaybeRunCmd \$"(\$cmd)-install" --sync '|' complete '|' ignore
   }
   packXbpsOp \$cmd
 }
@@ -6482,16 +6424,16 @@ def --env packCargo [] {
 def --env packXbpsOp [cmd] {
   let filterArgs = \$env.PACK_OUT_NAMES | split words | each { |t| ['|', 'find', '--ignore-case', \$t] } | flatten
   if (\$filterArgs | is-not-empty) {
-    opPrintMaybeRunCmd \$cmd --dry-run --update '|' complete '|' get stdout '|' str trim --right ...\$filterArgs
+    opPrintMaybeRunCmd \$"(\$cmd)-install" --dry-run --update '|' complete '|' get stdout '|' str trim --right ...\$filterArgs
   } else {
-    opPrintMaybeRunCmd \$cmd --dry-run --update
+    opPrintMaybeRunCmd \$"(\$cmd)-install" --dry-run --update
   }
 }
 
 
 def --env packXbps [] {
-  let cmd = 'xbps-install'
-  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+  let cmd = 'xbps'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$"(\$cmd)-install" | is-empty) {
     return
   }
   if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
@@ -6508,7 +6450,7 @@ def --env packXbps [] {
   }
   let cmd = if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
   if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
-    opPrintMaybeRunCmd \$cmd --sync '|' complete '|' ignore
+    opPrintMaybeRunCmd \$"(\$cmd)-install" --sync '|' complete '|' ignore
   }
   packXbpsOp \$cmd
 }
@@ -6645,9 +6587,6 @@ do {
 def --env packCargoOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
@@ -6673,18 +6612,14 @@ def --env packCargo [] {
 
 
 def --env packXbpsOp [cmd] {
-  let rem_cmd = \$cmd | str replace 'xbps-install' 'xbps-remove'
-  opPrintMaybeRunCmd \$rem_cmd --recursive \$env.PACK_REM_NAMES
+  opPrintMaybeRunCmd \$"(\$cmd)-remove" --recursive \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
 def --env packXbps [] {
-  let cmd = 'xbps-install'
-  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+  let cmd = 'xbps'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$"(\$cmd)-install" | is-empty) {
     return
   }
   if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
@@ -6701,7 +6636,7 @@ def --env packXbps [] {
   }
   let cmd = if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
   if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
-    opPrintMaybeRunCmd \$cmd --sync '|' complete '|' ignore
+    opPrintMaybeRunCmd \$"(\$cmd)-install" --sync '|' complete '|' ignore
   }
   packXbpsOp \$cmd
 }
@@ -6865,16 +6800,16 @@ def --env packCargo [] {
 
 def --env packXbpsOp [cmd] {
   if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
-    opPrintMaybeRunCmd \$cmd --update \$env.PACK_SYNC_NAMES
+    opPrintMaybeRunCmd \$"(\$cmd)-install" --update \$env.PACK_SYNC_NAMES
   } else {
-    opPrintMaybeRunCmd \$cmd --update
+    opPrintMaybeRunCmd \$"(\$cmd)-install" --update
   }
 }
 
 
 def --env packXbps [] {
-  let cmd = 'xbps-install'
-  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+  let cmd = 'xbps'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$"(\$cmd)-install" | is-empty) {
     return
   }
   if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
@@ -6891,7 +6826,7 @@ def --env packXbps [] {
   }
   let cmd = if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
   if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
-    opPrintMaybeRunCmd \$cmd --sync '|' complete '|' ignore
+    opPrintMaybeRunCmd \$"(\$cmd)-install" --sync '|' complete '|' ignore
   }
   packXbpsOp \$cmd
 }
@@ -7046,14 +6981,13 @@ def --env packCargo [] {
 
 
 def --env packXbpsOp [cmd] {
-  let rem_cmd = \$cmd | str replace 'xbps-install' 'xbps-remove'
-  opPrintMaybeRunCmd \$rem_cmd --remove-orphans
+  opPrintMaybeRunCmd \$"(\$cmd)-remove" --remove-orphans
 }
 
 
 def --env packXbps [] {
-  let cmd = 'xbps-install'
-  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+  let cmd = 'xbps'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$"(\$cmd)-install" | is-empty) {
     return
   }
   if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
@@ -7070,13 +7004,12 @@ def --env packXbps [] {
   }
   let cmd = if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
   if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
-    opPrintMaybeRunCmd \$cmd --sync '|' complete '|' ignore
+    opPrintMaybeRunCmd \$"(\$cmd)-install" --sync '|' complete '|' ignore
   }
   packXbpsOp \$cmd
 }
 
 
-packCargo
 packXbps
 \`
 `;
@@ -7203,10 +7136,7 @@ do {
 \$env.PACK_OP = r#'add'#
 
 def --env packCargoOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
-  opPrintMaybeRunCmd \$cmd install --locked \$env.PACK_ADD_NAMES
+  opPrintMaybeRunCmd \$cmd binstall --locked \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
 
@@ -7233,9 +7163,6 @@ def --env packCargo [] {
 
 
 def --env packZypperOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
@@ -7459,7 +7386,7 @@ do {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+    \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
   }
@@ -7980,9 +7907,6 @@ do {
 def --env packCargoOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
@@ -8010,9 +7934,6 @@ def --env packCargo [] {
 def --env packZypperOp [cmd] {
   opPrintMaybeRunCmd \$cmd remove --clean-deps \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
@@ -8409,7 +8330,6 @@ def --env packZypper [] {
 }
 
 
-packCargo
 packZypper
 \`
 `;
@@ -8534,10 +8454,7 @@ do {
 \$env.PACK_OP = r#'add'#
 
 def --env packCargoOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
-  opPrintMaybeRunCmd \$cmd install --locked \$env.PACK_ADD_NAMES
+  opPrintMaybeRunCmd \$cmd binstall --locked \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
 
@@ -8564,9 +8481,6 @@ def --env packCargo [] {
 
 
 def --env packBrewOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
@@ -8786,7 +8700,7 @@ do {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+    \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
   }
@@ -9295,9 +9209,6 @@ do {
 def --env packCargoOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
@@ -9325,9 +9236,6 @@ def --env packCargo [] {
 def --env packBrewOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
@@ -9717,7 +9625,6 @@ def --env packBrew [] {
 }
 
 
-packCargo
 packBrew
 \`
 `;
@@ -9842,10 +9749,7 @@ do {
 \$env.PACK_OP = r#'add'#
 
 def --env packCargoOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
-  opPrintMaybeRunCmd \$cmd install --locked \$env.PACK_ADD_NAMES
+  opPrintMaybeRunCmd \$cmd binstall --locked \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
 
@@ -9872,9 +9776,6 @@ def --env packCargo [] {
 
 
 def --env packChocoOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
@@ -9903,9 +9804,6 @@ def --env packChoco [] {
 
 
 def --env packScoopOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
@@ -9936,9 +9834,6 @@ def --env packScoop [] {
 
 
 def --env packWingetOp [cmd] {
-  for name in (\$env.PACK_ADD_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
   opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
   \$env.PACKED = true
 }
@@ -10220,7 +10115,7 @@ do {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+    \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
   }
@@ -10871,9 +10766,6 @@ do {
 def --env packCargoOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
@@ -10901,9 +10793,6 @@ def --env packCargo [] {
 def --env packChocoOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
@@ -10932,9 +10821,6 @@ def --env packChoco [] {
 def --env packScoopOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
@@ -10965,9 +10851,6 @@ def --env packScoop [] {
 def --env packWingetOp [cmd] {
   opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
   \$env.PACKED = true
-  for name in (\$env.PACK_REM_GROUP_NAMES? | default []) {
-    opPrintMaybeRunCmd ...(\$name | split row ' ')
-  }
 }
 
 
@@ -11479,7 +11362,6 @@ def --env packWinget [] {
 }
 
 
-packCargo
 packChoco
 packScoop
 packWinget
@@ -11727,56 +11609,56 @@ do {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+    \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
-opPrint r#'cli'#
-opPrint r#'  bottom, cargo-update, fd-find, ripgrep, starship, tokei, zellij, zoxide, 7zip.7zip, git.git, gnupg.gnupg, junegunn.fzf, meta.zstandard, microsoft.appinstaller, microsoft.powershell, neovim.neovim, nushell.nushell'#
-opPrint r#'dev-ai-claude'#
-opPrint r#'  anthropic.claudecode'#
-opPrint r#'dev-ai-codex'#
-opPrint r#'  openai.codex'#
-opPrint r#'dev-ai-opencode'#
-opPrint r#'  sst.opencode'#
-opPrint r#'dev-dotnet'#
+opPrint r#'cli-dotnet'#
 opPrint r#'  dotnet-sdk'#
-opPrint r#'dev-github'#
+opPrint r#'cli-github'#
 opPrint r#'  github.cli'#
-opPrint r#'dev-go'#
+opPrint r#'cli-go'#
 opPrint r#'  golang.go'#
-opPrint r#'dev-js-bun'#
-opPrint r#'  oven-sh.bun'#
-opPrint r#'dev-js-deno'#
-opPrint r#'  denoland.deno'#
-opPrint r#'dev-js-node'#
+opPrint r#'cli-javascript-bun'#
+opPrint r#'  irm https://bun.sh/install.ps1 | iex'#
+opPrint r#'cli-javascript-deno'#
+opPrint r#'  irm https://deno.land/install.ps1 | iex'#
+opPrint r#'cli-javascript-node'#
 opPrint r#'  openjs.nodejs, pnpm.pnpm'#
-opPrint r#'dev-py-uv'#
+opPrint r#'cli-nu'#
+opPrint r#'  nu'#
+opPrint r#'cli-perl'#
+opPrint r#'  perl'#
+opPrint r#'cli-python-uv'#
 opPrint r#'  astral-sh.uv'#
-opPrint r#'dev-py'#
+opPrint r#'cli-python'#
 opPrint r#'  python'#
-opPrint r#'dev-ruby'#
+opPrint r#'cli-ruby'#
 opPrint r#'  ruby'#
-opPrint r#'dev-rust'#
-opPrint r#'  rustlang.rustup'#
-opPrint r#'dev'#
-opPrint r#'  msys2'#
+opPrint r#'cli-rust'#
+opPrint r#'  iwr "https://win.rustup.rs/\${SYS_CPU_ARCH}" -OutFile "\$env:TEMP\\\\rustup-init.exe", & "\$env:TEMP\\\\rustup-init.exe", ri "\$env:TEMP\\\\rustup-init.exe"'#
+opPrint r#'cli'#
+opPrint r#'  7zip.7zip, git.git, gnupg.gnupg, junegunn.fzf, meta.zstandard, microsoft.appinstaller, microsoft.powershell, neovim.neovim'#
+opPrint r#'gui-game-oculus'#
+opPrint r#'  meta.oculus'#
+opPrint r#'gui-game-steam'#
+opPrint r#'  valve.steam'#
 opPrint r#'gui-game'#
-opPrint r#'  eden, pcsx2, rpcs3, shadps4, xemu, xenia-canary, meta.oculus, microsoft.directx, microsoft.vcredist.2005.x64, microsoft.vcredist.2005.x86, microsoft.vcredist.2008.x64, microsoft.vcredist.2008.x86, microsoft.vcredist.2010.x64, microsoft.vcredist.2010.x86, microsoft.vcredist.2012.x64, microsoft.vcredist.2012.x86, microsoft.vcredist.2013.x64, microsoft.vcredist.2013.x86, microsoft.vcredist.2015+.x64, microsoft.vcredist.2015+.x86, valve.steam'#
+opPrint r#'  eden, pcsx2, rpcs3, shadps4, xemu, xenia-canary, microsoft.directx, microsoft.vcredist.2005.x64, microsoft.vcredist.2005.x86, microsoft.vcredist.2008.x64, microsoft.vcredist.2008.x86, microsoft.vcredist.2010.x64, microsoft.vcredist.2010.x86, microsoft.vcredist.2012.x64, microsoft.vcredist.2012.x86, microsoft.vcredist.2013.x64, microsoft.vcredist.2013.x86, microsoft.vcredist.2015+.x64, microsoft.vcredist.2015+.x86'#
 opPrint r#'gui-ide-androidstudio'#
 opPrint r#'  google.androidstudio'#
 opPrint r#'gui-ide-vscode'#
 opPrint r#'  microsoft.visualstudiocode'#
 opPrint r#'gui-ide-zed'#
 opPrint r#'  zedindustries.zed'#
+opPrint r#'gui-media-mpc'#
+opPrint r#'  clsid2.mpc-hc'#
 opPrint r#'gui-media-vlc'#
 opPrint r#'  videolan.vlc'#
-opPrint r#'gui-media'#
-opPrint r#'  clsid2.mpc-hc'#
 opPrint r#'gui-net-wireshark'#
 opPrint r#'  wiresharkfoundation.wireshark'#
 opPrint r#'gui-note-obsidian'#
 opPrint r#'  obsidian.obsidian'#
-opPrint r#'gui-term'#
+opPrint r#'gui-term-windows-terminal'#
 opPrint r#'  microsoft.windowsterminal'#
 opPrint r#'gui-web-brave'#
 opPrint r#'  brave.brave'#
@@ -11788,10 +11670,30 @@ opPrint r#'gui'#
 opPrint r#'  arminosaj.autodarkmode, glavsoft.tightvnc, microsoft.powertoys, microsoft.sysinternals.suite, microsoft.windowsapp, rufus.rufus, voidtools.everything, windirstat.windirstat'#
 opPrint r#'os-font'#
 opPrint r#'  firacode-nf-mono, hack-nf-mono'#
+opPrint r#'os-llm-llama'#
+opPrint r#'  cfg/script/pwsh/install/llama.ps1'#
 opPrint r#'os-llm-lmstudio'#
 opPrint r#'  elementlabs.lmstudio'#
 opPrint r#'os-llm-ollama'#
 opPrint r#'  ollama.ollama'#
+opPrint r#'os-net-ssh'#
+opPrint r#'  Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0, Start-Service sshd, Set-Service -Name sshd -StartupType 'Automatic''#
+opPrint r#'os-shell-starship'#
+opPrint r#'  starship.starship'#
+opPrint r#'os-shell-zoxide'#
+opPrint r#'  ajeetdsouza.zoxide'#
+opPrint r#'os-tool'#
+opPrint r#'  bottom, fd-find, ripgrep, tokei, zellij'#
+opPrint r#'os-virt-hyper-v'#
+opPrint r#'  Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All, Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-Tools-All'#
+opPrint r#'os'#
+opPrint r#'  7zip, msys2, vcpkg'#
+opPrint r#'tui-claude'#
+opPrint r#'  irm https://claude.ai/install.ps1 | iex'#
+opPrint r#'tui-codex'#
+opPrint r#'  openai.codex'#
+opPrint r#'tui-opencode'#
+opPrint r#'  sst.opencode'#
   }
 }
 \`
@@ -11978,46 +11880,34 @@ do {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+    \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
-opPrint r#'cli'#
-opPrint r#'  bottom, cargo-update, fd-find, ripgrep, starship, tokei, zellij, zoxide, ca-certificates, coreutils, curl, fzf, git, gnupg, neovim, nushell, openssh, openssl, powershell, sevenzip, zstd'#
-opPrint r#'dev-ai-claude'#
-opPrint r#'  --cask, claude-code'#
-opPrint r#'dev-ai-codex'#
-opPrint r#'  codex'#
-opPrint r#'dev-ai-gemini'#
-opPrint r#'  gemini-cli'#
-opPrint r#'dev-ai-opencode'#
-opPrint r#'  opencode'#
-opPrint r#'dev-ai-qwen'#
-opPrint r#'  qwen-code'#
-opPrint r#'dev-dotnet'#
+opPrint r#'cli-dotnet'#
 opPrint r#'  --cask, dotnet-sdk'#
-opPrint r#'dev-github'#
+opPrint r#'cli-github'#
 opPrint r#'  gh'#
-opPrint r#'dev-go'#
+opPrint r#'cli-go'#
 opPrint r#'  go'#
-opPrint r#'dev-js-bun'#
-opPrint r#'  bun'#
-opPrint r#'dev-js-deno'#
-opPrint r#'  deno'#
-opPrint r#'dev-js-node'#
+opPrint r#'cli-javascript-bun'#
+opPrint r#'  curl -fsSL https://bun.sh/install | bash'#
+opPrint r#'cli-javascript-deno'#
+opPrint r#'  curl -fsSL https://deno.land/install.sh | bash'#
+opPrint r#'cli-javascript-node'#
 opPrint r#'  node, pnpm'#
-opPrint r#'dev-py-uv'#
-opPrint r#'  uv'#
-opPrint r#'dev-py'#
+opPrint r#'cli-nu'#
+opPrint r#'  nu'#
+opPrint r#'cli-python-uv'#
+opPrint r#'  curl -fsSL https://astral.sh/uv/install.sh | bash'#
+opPrint r#'cli-python'#
 opPrint r#'  python'#
-opPrint r#'dev-ruby'#
+opPrint r#'cli-ruby'#
 opPrint r#'  ruby'#
-opPrint r#'dev-rust'#
-opPrint r#'  rustup'#
-opPrint r#'dev'#
-opPrint r#'  autoconf, automake'#
-opPrint r#'gui-displaylink'#
-opPrint r#'  --cask, displaylink'#
-opPrint r#'gui-game'#
+opPrint r#'cli-rust'#
+opPrint r#'  curl -fsSL https://sh.rustup.rs | bash'#
+opPrint r#'cli'#
+opPrint r#'  ca-certificates, coreutils, curl, fzf, git, gnupg, neovim, openssl, powershell, sevenzip, zstd'#
+opPrint r#'gui-game-steam'#
 opPrint r#'  --cask, steam'#
 opPrint r#'gui-ide-androidstudio'#
 opPrint r#'  --cask, android-studio'#
@@ -12025,17 +11915,17 @@ opPrint r#'gui-ide-vscode'#
 opPrint r#'  --cask, visual-studio-code'#
 opPrint r#'gui-ide-zed'#
 opPrint r#'  --cask, zed'#
+opPrint r#'gui-media-iina'#
+opPrint r#'  --cask, iina'#
 opPrint r#'gui-media-vlc'#
 opPrint r#'  --cask, vlc'#
-opPrint r#'gui-media'#
-opPrint r#'  --cask, iina'#
 opPrint r#'gui-net-wireshark'#
 opPrint r#'  --cask, wireshark'#
 opPrint r#'gui-note-obsidian'#
 opPrint r#'  --cask, obsidian'#
 opPrint r#'gui-term-ghostty'#
 opPrint r#'  --cask, ghostty'#
-opPrint r#'gui-term'#
+opPrint r#'gui-term-iterm'#
 opPrint r#'  --cask, iterm2'#
 opPrint r#'gui-web-brave'#
 opPrint r#'  --cask, brave-browser'#
@@ -12045,6 +11935,8 @@ opPrint r#'gui-web-vivaldi'#
 opPrint r#'  --cask, vivaldi'#
 opPrint r#'gui'#
 opPrint r#'  --cask, flux, grandperspective, karabiner-elements, keka, rectangle, vnc-viewer, windows-app'#
+opPrint r#'os-displaylink'#
+opPrint r#'  --cask, displaylink'#
 opPrint r#'os-font'#
 opPrint r#'  --cask, font-fira-code-nerd-font, font-hack-nerd-font'#
 opPrint r#'os-llm-llama-swap'#
@@ -12055,8 +11947,28 @@ opPrint r#'os-llm-lmstudio'#
 opPrint r#'  --cask, lm-studio'#
 opPrint r#'os-llm-ollama'#
 opPrint r#'  --cask, ollama-app'#
+opPrint r#'os-net-ssh'#
+opPrint r#'  openssh'#
+opPrint r#'os-shell-starship'#
+opPrint r#'  curl -fsSL https://starship.rs/install.sh | bash -s -- -b ~/.local/bin'#
+opPrint r#'os-shell-zoxide'#
+opPrint r#'  curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/HEAD/install.sh | bash'#
+opPrint r#'os-tool'#
+opPrint r#'  bottom, fd-find, ripgrep, tokei, zellij'#
 opPrint r#'os-virt-qemu'#
 opPrint r#'  swtpm, utm'#
+opPrint r#'os'#
+opPrint r#'  autoconf, automake, openssl@3'#
+opPrint r#'tui-claude'#
+opPrint r#'  curl -fsSL https://claude.ai/install.sh | bash'#
+opPrint r#'tui-codex'#
+opPrint r#'  codex'#
+opPrint r#'tui-gemini'#
+opPrint r#'  gemini-cli'#
+opPrint r#'tui-opencode'#
+opPrint r#'  opencode'#
+opPrint r#'tui-qwen'#
+opPrint r#'  qwen-code'#
   }
 }
 \`
@@ -12188,9 +12100,121 @@ do {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+    \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
+opPrint r#'cli-dotnet'#
+opPrint r#'  --cask, dotnet-sdk, dotnet-sdk-9.0'#
+opPrint r#'cli-github'#
+opPrint r#'  gh, github-cli, github.cli'#
+opPrint r#'cli-go'#
+opPrint r#'  go, golang, golang.go'#
+opPrint r#'cli-javascript-bun'#
+opPrint r#'  curl -fsSL https://bun.sh/install | bash'#
+opPrint r#'cli-javascript-deno'#
+opPrint r#'  curl -fsSL https://deno.land/install.sh | bash'#
+opPrint r#'cli-javascript-node'#
+opPrint r#'  node, pnpm, nodejs, nodejs-npm, nodejs-pnpm, npm, openjs.nodejs, pnpm.pnpm'#
+opPrint r#'cli-nu'#
+opPrint r#'  nu'#
+opPrint r#'cli-perl'#
+opPrint r#'  perl, perl-core'#
+opPrint r#'cli-python-uv'#
+opPrint r#'  curl -fsSL https://astral.sh/uv/install.sh | bash'#
+opPrint r#'cli-python'#
+opPrint r#'  python, python3'#
+opPrint r#'cli-ruby'#
+opPrint r#'  ruby, ruby-full'#
+opPrint r#'cli-rust'#
+opPrint r#'  curl -fsSL https://sh.rustup.rs | bash'#
+opPrint r#'cli'#
+opPrint r#'  ca-certificates, coreutils, curl, fzf, git, gnupg, neovim, openssl, powershell, sevenzip, zstd, 7zip, 7zip-rar, gnupg-utils, python3-pynvim, sudo, zsh, python3-neovim, python-pynvim, powershell-bin, 7zip.7zip, git.git, gnupg.gnupg, junegunn.fzf, meta.zstandard, microsoft.appinstaller, microsoft.powershell, neovim.neovim'#
+opPrint r#'gui-game-oculus'#
+opPrint r#'  meta.oculus'#
+opPrint r#'gui-game-steam'#
+opPrint r#'  --cask, steam, valve.steam'#
+opPrint r#'gui-game'#
+opPrint r#'  eden, pcsx2, rpcs3, shadps4, xemu, xenia-canary, microsoft.directx, microsoft.vcredist.2005.x64, microsoft.vcredist.2005.x86, microsoft.vcredist.2008.x64, microsoft.vcredist.2008.x86, microsoft.vcredist.2010.x64, microsoft.vcredist.2010.x86, microsoft.vcredist.2012.x64, microsoft.vcredist.2012.x86, microsoft.vcredist.2013.x64, microsoft.vcredist.2013.x86, microsoft.vcredist.2015+.x64, microsoft.vcredist.2015+.x86'#
+opPrint r#'gui-ide-androidstudio'#
+opPrint r#'  --cask, android-studio, google.androidstudio'#
+opPrint r#'gui-ide-vscode'#
+opPrint r#'  --cask, visual-studio-code, visual-studio-code-bin, microsoft.visualstudiocode'#
+opPrint r#'gui-ide-zed'#
+opPrint r#'  --cask, zed, zedindustries.zed'#
+opPrint r#'gui-media-iina'#
+opPrint r#'  --cask, iina'#
+opPrint r#'gui-media-mpc'#
+opPrint r#'  clsid2.mpc-hc'#
+opPrint r#'gui-media-vlc'#
+opPrint r#'  --cask, vlc, vlc-plugins-all, videolan.vlc'#
+opPrint r#'gui-net-wireshark'#
+opPrint r#'  --cask, wireshark, wireshark-qt, wiresharkfoundation.wireshark'#
+opPrint r#'gui-note-obsidian'#
+opPrint r#'  --cask, obsidian, obsidian.obsidian'#
+opPrint r#'gui-term-ghostty'#
+opPrint r#'  --cask, ghostty'#
+opPrint r#'gui-term-gnome-terminal'#
+opPrint r#'  gnome-terminal'#
+opPrint r#'gui-term-iterm'#
+opPrint r#'  --cask, iterm2'#
+opPrint r#'gui-term-lxterminal'#
+opPrint r#'  lxterminal'#
+opPrint r#'gui-term-windows-terminal'#
+opPrint r#'  microsoft.windowsterminal'#
+opPrint r#'gui-web-brave'#
+opPrint r#'  --cask, brave-browser, brave-bin, brave.brave'#
+opPrint r#'gui-web-edge'#
+opPrint r#'  --cask, microsoft-edge, microsoft-edge-stable-bin, microsoft.edge'#
+opPrint r#'gui-web-vivaldi'#
+opPrint r#'  --cask, vivaldi, vivaldi.vivaldi'#
+opPrint r#'gui'#
+opPrint r#'  --cask, flux, grandperspective, karabiner-elements, keka, rectangle, vnc-viewer, windows-app, gparted, remmina, arminosaj.autodarkmode, glavsoft.tightvnc, microsoft.powertoys, microsoft.sysinternals.suite, microsoft.windowsapp, rufus.rufus, voidtools.everything, windirstat.windirstat'#
+opPrint r#'os-de-gnome'#
+opPrint r#'  gnome, gnome-extra, gnome-shell-extensions, gnome-terminal, gnome-tweaks'#
+opPrint r#'os-de-kde'#
+opPrint r#'  dbus, elogind, kde-baseapps, kde-plasma, mesa-dri, sddm, qt6-dbus, qt6-wayland, wayland, xorg-minimal'#
+opPrint r#'os-displaylink'#
+opPrint r#'  --cask, displaylink'#
+opPrint r#'os-font'#
+opPrint r#'  --cask, font-fira-code-nerd-font, font-hack-nerd-font, ttf-firacode-nerd, ttf-hack-nerd, firacode-nf-mono, hack-nf-mono'#
+opPrint r#'os-llm-llama-swap'#
+opPrint r#'  llama-swap'#
+opPrint r#'os-llm-llama'#
+opPrint r#'  llama.cpp, llama.cpp-vulkan'#
+opPrint r#'os-llm-lmstudio'#
+opPrint r#'  --cask, lm-studio, lmstudio-bin, elementlabs.lmstudio'#
+opPrint r#'os-llm-ollama'#
+opPrint r#'  --cask, ollama-app, ollama-vulkan, ollama.ollama'#
+opPrint r#'os-net-ssh'#
+opPrint r#'  openssh, openssh-client, openssh-server'#
+opPrint r#'os-net'#
+opPrint r#'  bind9, bind9-dnsutils, bridge-utils, cifs-utils, nfs-kernel-server, bind, nfs-utils'#
+opPrint r#'os-shell-starship'#
+opPrint r#'  curl -fsSL https://starship.rs/install.sh | bash -s -- -b ~/.local/bin'#
+opPrint r#'os-shell-zoxide'#
+opPrint r#'  curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/HEAD/install.sh | bash'#
+opPrint r#'os-tool'#
+opPrint r#'  bottom, fd-find, ripgrep, tokei, zellij'#
+opPrint r#'os-virt-docker'#
+opPrint r#'  docker, docker-compose'#
+opPrint r#'os-virt-lxc'#
+opPrint r#'  lxc, lxcfs'#
+opPrint r#'os-virt-podman'#
+opPrint r#'  netavark, podman'#
+opPrint r#'os-virt-qemu'#
+opPrint r#'  swtpm, utm, qemu-full'#
+opPrint r#'os'#
+opPrint r#'  autoconf, automake, openssl@3, openssl-dev, pkgconf, apt-utils, build-essential, libssl-dev, pkg-config, gcc, gcc-c++, kernel-devel, openssl-devel, base-devel, openssl, linux-headers, libopenssl-devel, 7zip, msys2, vcpkg'#
+opPrint r#'tui-claude'#
+opPrint r#'  curl -fsSL https://claude.ai/install.sh | bash'#
+opPrint r#'tui-codex'#
+opPrint r#'  codex, openai-codex, openai.codex'#
+opPrint r#'tui-gemini'#
+opPrint r#'  gemini-cli'#
+opPrint r#'tui-opencode'#
+opPrint r#'  opencode, sst.opencode'#
+opPrint r#'tui-qwen'#
+opPrint r#'  qwen-code'#
   }
 }
 \`
@@ -12356,15 +12380,19 @@ do {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use pack (remote) [y, [n]]: '#
+    \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
+opPrint r#'cli-javascript-bun'#
+opPrint r#'  curl -fsSL https://bun.sh/install | bash'#
+opPrint r#'cli-javascript-deno'#
+opPrint r#'  curl -fsSL https://deno.land/install.sh | bash'#
+opPrint r#'cli-python-uv'#
+opPrint r#'  curl -fsSL https://astral.sh/uv/install.sh | bash'#
+opPrint r#'cli-rust'#
+opPrint r#'  curl -fsSL https://sh.rustup.rs | bash'#
 opPrint r#'cli'#
 opPrint r#'  powershell-bin'#
-opPrint r#'dev-ai-claude'#
-opPrint r#'  claude-code'#
-opPrint r#'dev-js-bun'#
-opPrint r#'  bun-bin'#
 opPrint r#'gui-ide-androidstudio'#
 opPrint r#'  android-studio'#
 opPrint r#'gui-ide-vscode'#
@@ -12373,12 +12401,20 @@ opPrint r#'gui-web-brave'#
 opPrint r#'  brave-bin'#
 opPrint r#'gui-web-edge'#
 opPrint r#'  microsoft-edge-stable-bin'#
+opPrint r#'os-font'#
+opPrint r#'  cfg/script/zsh/install/font.zsh'#
 opPrint r#'os-llm-llama-swap'#
 opPrint r#'  llama-swap'#
 opPrint r#'os-llm-llama'#
 opPrint r#'  llama.cpp-vulkan'#
 opPrint r#'os-llm-lmstudio'#
 opPrint r#'  lmstudio-bin'#
+opPrint r#'os-shell-starship'#
+opPrint r#'  curl -fsSL https://starship.rs/install.sh | bash -s -- -b ~/.local/bin'#
+opPrint r#'os-shell-zoxide'#
+opPrint r#'  curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/HEAD/install.sh | bash'#
+opPrint r#'tui-claude'#
+opPrint r#'  curl -fsSL https://claude.ai/install.sh | bash'#
   }
 }
 \`

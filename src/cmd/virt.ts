@@ -141,7 +141,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
         }
       }
     }
-    _shell = _shell.with(_shell.gatedFunc('use virt (remote)', shellLines))
+    _shell = _shell.with(_shell.gatedFunc('use virt', shellLines))
   } else {
     _shell = _shell.with(
       await _shell.fileLoad(
@@ -170,9 +170,13 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     }
 
     if (supportedManagers.includes('podman')) {
-      const podmanConfig = await getCfgFileLoad([VIRT_KEY, 'podman'], { extension: Fmt.yaml })
+      const podmanConfig = await getCfgFileLoad([VIRT_KEY, 'podman'], {
+        extension: Fmt.yaml,
+      })
       const networks = podmanConfig?.podman?.networks ?? {}
-      _shell = _shell.with(_shell.varSetStr(VIRT_PODMAN_NETWORKS_KEY, JSON.stringify(networks)))
+      _shell = _shell.with(
+        _shell.varSetStr(VIRT_PODMAN_NETWORKS_KEY, JSON.stringify(networks)),
+      )
     }
 
     const applyResults = (results: Array<Array<string>>) => {
@@ -217,7 +221,9 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
         : supportedManagers
       for (const supportedManager of managersToOp) {
         if (supportedManagers.length > 1) {
-          _shell = _shell.with(_shell.varSetStr(VIRT_MANAGER_KEY, supportedManager))
+          _shell = _shell.with(
+            _shell.varSetStr(VIRT_MANAGER_KEY, supportedManager),
+          )
         }
         _shell = _shell
           .with(_shell.varSetArr(VIRT_INSTANCES_KEY, instanceFilters))
@@ -228,9 +234,16 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       }
     } else if (op === 'add' && filters.length > 0) {
       const allResults = await getCfgDirDump(dirParts, { extension: Fmt.yaml })
-      applyResults(allResults.filter((parts) => filters.every((f, i) => parts[i] === f)))
+      applyResults(
+        allResults.filter((parts) => filters.every((f, i) => parts[i] === f)),
+      )
     } else {
-      applyResults(await getCfgDirDump(dirParts, { extension: Fmt.yaml, filters: filters.slice(0, 2) }))
+      applyResults(
+        await getCfgDirDump(dirParts, {
+          extension: Fmt.yaml,
+          filters: filters.slice(0, 2),
+        }),
+      )
     }
   }
 

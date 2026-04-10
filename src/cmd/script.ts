@@ -75,7 +75,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
 
     _shell = _shell.with(
       _shell.gatedFunc(
-        'use script (remote)',
+        'use script',
         shellLines,
       ),
     )
