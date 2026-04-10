@@ -294,7 +294,7 @@ function opPrintCmd {
 }
 
 function opRunCmd {
-  Invoke-Expression "\$(\$args -join ' ')"
+  iex "\$(\$args -join ' ')"
 }
 
 function opPrintRunCmd {
@@ -441,7 +441,7 @@ if (\$IsWindows) {
 \$REQ_URL_SH = "\${REQ_URL_SH}&sysUser=\${SYS_USER}"
 
 
-Invoke-Expression "\$( Invoke-RestMethod -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "\${REQ_URL_SH}" )"
+iex "\$( irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "\${REQ_URL_SH}" )"
 
 \`
 `;

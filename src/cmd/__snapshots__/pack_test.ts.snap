@@ -11612,88 +11612,116 @@ do {
     \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
-opPrint r#'cli-dotnet'#
-opPrint r#'  dotnet-sdk'#
-opPrint r#'cli-github'#
-opPrint r#'  github.cli'#
-opPrint r#'cli-go'#
-opPrint r#'  golang.go'#
-opPrint r#'cli-javascript-bun'#
-opPrint r#'  irm https://bun.sh/install.ps1 | iex'#
-opPrint r#'cli-javascript-deno'#
-opPrint r#'  irm https://deno.land/install.ps1 | iex'#
-opPrint r#'cli-javascript-node'#
-opPrint r#'  openjs.nodejs, pnpm.pnpm'#
-opPrint r#'cli-nu'#
-opPrint r#'  nu'#
-opPrint r#'cli-perl'#
-opPrint r#'  perl'#
-opPrint r#'cli-python-uv'#
-opPrint r#'  astral-sh.uv'#
-opPrint r#'cli-python'#
-opPrint r#'  python'#
-opPrint r#'cli-ruby'#
-opPrint r#'  ruby'#
-opPrint r#'cli-rust'#
-opPrint r#'  iwr "https://win.rustup.rs/\${SYS_CPU_ARCH}" -OutFile "\$env:TEMP\\\\rustup-init.exe", & "\$env:TEMP\\\\rustup-init.exe", ri "\$env:TEMP\\\\rustup-init.exe"'#
-opPrint r#'cli'#
-opPrint r#'  7zip.7zip, git.git, gnupg.gnupg, junegunn.fzf, meta.zstandard, microsoft.appinstaller, microsoft.powershell, neovim.neovim'#
-opPrint r#'gui-game-oculus'#
-opPrint r#'  meta.oculus'#
-opPrint r#'gui-game-steam'#
-opPrint r#'  valve.steam'#
-opPrint r#'gui-game'#
-opPrint r#'  eden, pcsx2, rpcs3, shadps4, xemu, xenia-canary, microsoft.directx, microsoft.vcredist.2005.x64, microsoft.vcredist.2005.x86, microsoft.vcredist.2008.x64, microsoft.vcredist.2008.x86, microsoft.vcredist.2010.x64, microsoft.vcredist.2010.x86, microsoft.vcredist.2012.x64, microsoft.vcredist.2012.x86, microsoft.vcredist.2013.x64, microsoft.vcredist.2013.x86, microsoft.vcredist.2015+.x64, microsoft.vcredist.2015+.x86'#
-opPrint r#'gui-ide-androidstudio'#
-opPrint r#'  google.androidstudio'#
-opPrint r#'gui-ide-vscode'#
-opPrint r#'  microsoft.visualstudiocode'#
-opPrint r#'gui-ide-zed'#
-opPrint r#'  zedindustries.zed'#
-opPrint r#'gui-media-mpc'#
-opPrint r#'  clsid2.mpc-hc'#
-opPrint r#'gui-media-vlc'#
-opPrint r#'  videolan.vlc'#
-opPrint r#'gui-net-wireshark'#
-opPrint r#'  wiresharkfoundation.wireshark'#
-opPrint r#'gui-note-obsidian'#
-opPrint r#'  obsidian.obsidian'#
-opPrint r#'gui-term-windows-terminal'#
-opPrint r#'  microsoft.windowsterminal'#
-opPrint r#'gui-web-brave'#
-opPrint r#'  brave.brave'#
-opPrint r#'gui-web-edge'#
-opPrint r#'  microsoft.edge'#
-opPrint r#'gui-web-vivaldi'#
-opPrint r#'  vivaldi.vivaldi'#
-opPrint r#'gui'#
-opPrint r#'  arminosaj.autodarkmode, glavsoft.tightvnc, microsoft.powertoys, microsoft.sysinternals.suite, microsoft.windowsapp, rufus.rufus, voidtools.everything, windirstat.windirstat'#
-opPrint r#'os-font'#
-opPrint r#'  firacode-nf-mono, hack-nf-mono'#
-opPrint r#'os-llm-llama'#
-opPrint r#'  cfg/script/pwsh/install/llama.ps1'#
-opPrint r#'os-llm-lmstudio'#
-opPrint r#'  elementlabs.lmstudio'#
-opPrint r#'os-llm-ollama'#
-opPrint r#'  ollama.ollama'#
-opPrint r#'os-net-ssh'#
-opPrint r#'  Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0, Start-Service sshd, Set-Service -Name sshd -StartupType 'Automatic''#
-opPrint r#'os-shell-starship'#
-opPrint r#'  starship.starship'#
-opPrint r#'os-shell-zoxide'#
-opPrint r#'  ajeetdsouza.zoxide'#
-opPrint r#'os-tool'#
-opPrint r#'  bottom, fd-find, ripgrep, tokei, zellij'#
-opPrint r#'os-virt-hyper-v'#
-opPrint r#'  Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All, Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-Tools-All'#
-opPrint r#'os'#
-opPrint r#'  7zip, msys2, vcpkg'#
-opPrint r#'tui-claude'#
-opPrint r#'  irm https://claude.ai/install.ps1 | iex'#
-opPrint r#'tui-codex'#
+opPrint r#'ai-code-claude'#
+opPrint r#'  irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri https://claude.ai/install.ps1 | iex'#
+opPrint r#'ai-code-codex'#
 opPrint r#'  openai.codex'#
-opPrint r#'tui-opencode'#
+opPrint r#'ai-code-opencode'#
 opPrint r#'  sst.opencode'#
+opPrint r#'ai-llm-llama'#
+opPrint r#'  cfg/script/pwsh/install/llama.ps1'#
+opPrint r#'ai-llm-lmstudio'#
+opPrint r#'  elementlabs.lmstudio'#
+opPrint r#'ai-llm-ollama'#
+opPrint r#'  ollama.ollama'#
+opPrint r#'browser-brave'#
+opPrint r#'  brave.brave'#
+opPrint r#'browser-edge'#
+opPrint r#'  microsoft.edge'#
+opPrint r#'browser-vivaldi'#
+opPrint r#'  vivaldi.vivaldi'#
+opPrint r#'desktop-tool-extra'#
+opPrint r#'  arminosaj.autodarkmode, glavsoft.tightvnc, meop.winenvedit, microsoft.powertoys, microsoft.sysinternals.suite, microsoft.windowsapp, rufus.rufus, voidtools.everything, windirstat.windirstat'#
+opPrint r#'dev-gh'#
+opPrint r#'  github.cli'#
+opPrint r#'dev-git'#
+opPrint r#'  git.git'#
+opPrint r#'dev-tokei'#
+opPrint r#'  tokei'#
+opPrint r#'editor-androidstudio'#
+opPrint r#'  google.androidstudio'#
+opPrint r#'editor-neovim'#
+opPrint r#'  neovim.neovim'#
+opPrint r#'editor-vscode'#
+opPrint r#'  microsoft.visualstudiocode'#
+opPrint r#'editor-zed'#
+opPrint r#'  zedindustries.zed'#
+opPrint r#'font-nerd'#
+opPrint r#'  firacode-nf-mono, hack-nf-mono'#
+opPrint r#'game-emulator'#
+opPrint r#'  eden, pcsx2, rpcs3, shadps4, xemu, xenia-canary'#
+opPrint r#'game-oculus'#
+opPrint r#'  meta.oculus'#
+opPrint r#'game-runtime'#
+opPrint r#'  microsoft.directx, microsoft.vcredist.2005.x64, microsoft.vcredist.2005.x86, microsoft.vcredist.2008.x64, microsoft.vcredist.2008.x86, microsoft.vcredist.2010.x64, microsoft.vcredist.2010.x86, microsoft.vcredist.2012.x64, microsoft.vcredist.2012.x86, microsoft.vcredist.2013.x64, microsoft.vcredist.2013.x86, microsoft.vcredist.2015+.x64, microsoft.vcredist.2015+.x86'#
+opPrint r#'game-steam'#
+opPrint r#'  valve.steam'#
+opPrint r#'lang-dotnet'#
+opPrint r#'  dotnet-sdk'#
+opPrint r#'lang-golang'#
+opPrint r#'  golang.go'#
+opPrint r#'lang-js-bun'#
+opPrint r#'  irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri https://bun.sh/install.ps1 | iex'#
+opPrint r#'lang-js-deno'#
+opPrint r#'  irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri https://deno.land/install.ps1 | iex'#
+opPrint r#'lang-js-node'#
+opPrint r#'  openjs.nodejs, pnpm.pnpm'#
+opPrint r#'lang-perl'#
+opPrint r#'  perl'#
+opPrint r#'lang-python-uv'#
+opPrint r#'  astral-sh.uv'#
+opPrint r#'lang-python'#
+opPrint r#'  python'#
+opPrint r#'lang-ruby'#
+opPrint r#'  ruby'#
+opPrint r#'lang-rust'#
+opPrint r#'  iwr "https://win.rustup.rs/\${SYS_CPU_ARCH}" -OutFile "\$env:TEMP\\\\rustup-init.exe", & "\$env:TEMP\\\\rustup-init.exe", ri "\$env:TEMP\\\\rustup-init.exe"'#
+opPrint r#'media-mpc'#
+opPrint r#'  clsid2.mpc-hc'#
+opPrint r#'media-vlc'#
+opPrint r#'  videolan.vlc'#
+opPrint r#'net-gnupg'#
+opPrint r#'  gnupg.gnupg'#
+opPrint r#'net-ssh-server'#
+opPrint r#'  Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0, Start-Service sshd, Set-Service -Name sshd -StartupType 'Automatic''#
+opPrint r#'net-wireshark'#
+opPrint r#'  wiresharkfoundation.wireshark'#
+opPrint r#'note-obsidian'#
+opPrint r#'  obsidian.obsidian'#
+opPrint r#'shell-nushell'#
+opPrint r#'  nu'#
+opPrint r#'shell-powershell'#
+opPrint r#'  microsoft.powershell'#
+opPrint r#'shell-tool-starship'#
+opPrint r#'  starship'#
+opPrint r#'shell-tool-zoxide'#
+opPrint r#'  zoxide'#
+opPrint r#'sys-build'#
+opPrint r#'  msys2.msys2'#
+opPrint r#'sys-pack'#
+opPrint r#'  vcpkg, microsoft.appinstaller'#
+opPrint r#'sys-tool-7zip'#
+opPrint r#'  7zip.7zip'#
+opPrint r#'sys-tool-bottom'#
+opPrint r#'  bottom'#
+opPrint r#'sys-tool-fd'#
+opPrint r#'  fd-find'#
+opPrint r#'sys-tool-fzf'#
+opPrint r#'  junegunn.fzf'#
+opPrint r#'sys-tool-ripgrep'#
+opPrint r#'  ripgrep'#
+opPrint r#'sys-tool-sudo'#
+opPrint r#'  Add-WindowsCapability -Online -Name DeveloperMode~~~~0.0.1.0'#
+opPrint r#'sys-tool-zstd'#
+opPrint r#'  meta.zstandard'#
+opPrint r#'term-tool-zellij'#
+opPrint r#'  zellij'#
+opPrint r#'term-windows-terminal'#
+opPrint r#'  microsoft.windowsterminal'#
+opPrint r#'virt-hyper-v'#
+opPrint r#'  Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All, Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-Tools-All'#
+opPrint r#'virt-wsl'#
+opPrint r#'  Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux'#
   }
 }
 \`
@@ -11883,92 +11911,122 @@ do {
     \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
-opPrint r#'cli-dotnet'#
-opPrint r#'  --cask, dotnet-sdk'#
-opPrint r#'cli-github'#
-opPrint r#'  gh'#
-opPrint r#'cli-go'#
-opPrint r#'  go'#
-opPrint r#'cli-javascript-bun'#
-opPrint r#'  curl -fsSL https://bun.sh/install | bash'#
-opPrint r#'cli-javascript-deno'#
-opPrint r#'  curl -fsSL https://deno.land/install.sh | bash'#
-opPrint r#'cli-javascript-node'#
-opPrint r#'  node, pnpm'#
-opPrint r#'cli-nu'#
-opPrint r#'  nu'#
-opPrint r#'cli-python-uv'#
-opPrint r#'  curl -fsSL https://astral.sh/uv/install.sh | bash'#
-opPrint r#'cli-python'#
-opPrint r#'  python'#
-opPrint r#'cli-ruby'#
-opPrint r#'  ruby'#
-opPrint r#'cli-rust'#
-opPrint r#'  curl -fsSL https://sh.rustup.rs | bash'#
-opPrint r#'cli'#
-opPrint r#'  ca-certificates, coreutils, curl, fzf, git, gnupg, neovim, openssl, powershell, sevenzip, zstd'#
-opPrint r#'gui-game-steam'#
-opPrint r#'  --cask, steam'#
-opPrint r#'gui-ide-androidstudio'#
-opPrint r#'  --cask, android-studio'#
-opPrint r#'gui-ide-vscode'#
-opPrint r#'  --cask, visual-studio-code'#
-opPrint r#'gui-ide-zed'#
-opPrint r#'  --cask, zed'#
-opPrint r#'gui-media-iina'#
-opPrint r#'  --cask, iina'#
-opPrint r#'gui-media-vlc'#
-opPrint r#'  --cask, vlc'#
-opPrint r#'gui-net-wireshark'#
-opPrint r#'  --cask, wireshark'#
-opPrint r#'gui-note-obsidian'#
-opPrint r#'  --cask, obsidian'#
-opPrint r#'gui-term-ghostty'#
-opPrint r#'  --cask, ghostty'#
-opPrint r#'gui-term-iterm'#
-opPrint r#'  --cask, iterm2'#
-opPrint r#'gui-web-brave'#
-opPrint r#'  --cask, brave-browser'#
-opPrint r#'gui-web-edge'#
-opPrint r#'  --cask, microsoft-edge'#
-opPrint r#'gui-web-vivaldi'#
-opPrint r#'  --cask, vivaldi'#
-opPrint r#'gui'#
-opPrint r#'  --cask, flux, grandperspective, karabiner-elements, keka, rectangle, vnc-viewer, windows-app'#
-opPrint r#'os-displaylink'#
-opPrint r#'  --cask, displaylink'#
-opPrint r#'os-font'#
-opPrint r#'  --cask, font-fira-code-nerd-font, font-hack-nerd-font'#
-opPrint r#'os-llm-llama-swap'#
-opPrint r#'  llama-swap'#
-opPrint r#'os-llm-llama'#
-opPrint r#'  llama.cpp'#
-opPrint r#'os-llm-lmstudio'#
-opPrint r#'  --cask, lm-studio'#
-opPrint r#'os-llm-ollama'#
-opPrint r#'  --cask, ollama-app'#
-opPrint r#'os-net-ssh'#
-opPrint r#'  openssh'#
-opPrint r#'os-shell-starship'#
-opPrint r#'  curl -fsSL https://starship.rs/install.sh | bash -s -- -b ~/.local/bin'#
-opPrint r#'os-shell-zoxide'#
-opPrint r#'  curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/HEAD/install.sh | bash'#
-opPrint r#'os-tool'#
-opPrint r#'  bottom, fd-find, ripgrep, tokei, zellij'#
-opPrint r#'os-virt-qemu'#
-opPrint r#'  swtpm, utm'#
-opPrint r#'os'#
-opPrint r#'  autoconf, automake, openssl@3'#
-opPrint r#'tui-claude'#
-opPrint r#'  curl -fsSL https://claude.ai/install.sh | bash'#
-opPrint r#'tui-codex'#
+opPrint r#'ai-code-claude'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'#
+opPrint r#'ai-code-codex'#
 opPrint r#'  codex'#
-opPrint r#'tui-gemini'#
+opPrint r#'ai-code-gemini'#
 opPrint r#'  gemini-cli'#
-opPrint r#'tui-opencode'#
+opPrint r#'ai-code-opencode'#
 opPrint r#'  opencode'#
-opPrint r#'tui-qwen'#
+opPrint r#'ai-code-qwen'#
 opPrint r#'  qwen-code'#
+opPrint r#'ai-llm-llama-swap'#
+opPrint r#'  llama-swap'#
+opPrint r#'ai-llm-llama'#
+opPrint r#'  llama.cpp'#
+opPrint r#'ai-llm-lmstudio'#
+opPrint r#'  --cask, lm-studio'#
+opPrint r#'ai-llm-ollama'#
+opPrint r#'  --cask, ollama-app'#
+opPrint r#'browser-brave'#
+opPrint r#'  --cask, brave-browser'#
+opPrint r#'browser-edge'#
+opPrint r#'  --cask, microsoft-edge'#
+opPrint r#'browser-vivaldi'#
+opPrint r#'  --cask, vivaldi'#
+opPrint r#'desktop-tool-extra'#
+opPrint r#'  --cask, flux, grandperspective, karabiner-elements, keka, rectangle, vnc-viewer, windows-app'#
+opPrint r#'dev-gh'#
+opPrint r#'  gh'#
+opPrint r#'dev-git'#
+opPrint r#'  git'#
+opPrint r#'dev-tokei'#
+opPrint r#'  tokei'#
+opPrint r#'editor-androidstudio'#
+opPrint r#'  --cask, android-studio'#
+opPrint r#'editor-neovim'#
+opPrint r#'  neovim'#
+opPrint r#'editor-vscode'#
+opPrint r#'  --cask, visual-studio-code'#
+opPrint r#'editor-zed'#
+opPrint r#'  --cask, zed'#
+opPrint r#'font-nerd'#
+opPrint r#'  --cask, font-fira-code-nerd-font, font-hack-nerd-font'#
+opPrint r#'game-steam'#
+opPrint r#'  --cask, steam'#
+opPrint r#'gpu-displaylink'#
+opPrint r#'  --cask, displaylink'#
+opPrint r#'lang-dotnet'#
+opPrint r#'  --cask, dotnet-sdk'#
+opPrint r#'lang-golang'#
+opPrint r#'  go'#
+opPrint r#'lang-js-bun'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://bun.sh/install | bash'#
+opPrint r#'lang-js-deno'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://deno.land/install.sh | bash'#
+opPrint r#'lang-js-node'#
+opPrint r#'  node, pnpm'#
+opPrint r#'lang-python-uv'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://astral.sh/uv/install.sh | bash'#
+opPrint r#'lang-python'#
+opPrint r#'  python'#
+opPrint r#'lang-ruby'#
+opPrint r#'  ruby'#
+opPrint r#'lang-rust'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://sh.rustup.rs | bash'#
+opPrint r#'media-iina'#
+opPrint r#'  --cask, iina'#
+opPrint r#'media-vlc'#
+opPrint r#'  --cask, vlc'#
+opPrint r#'net-ca-cert'#
+opPrint r#'  ca-certificates'#
+opPrint r#'net-gnupg'#
+opPrint r#'  gnupg'#
+opPrint r#'net-openssl'#
+opPrint r#'  openssl'#
+opPrint r#'net-ssh-server'#
+opPrint r#'  openssh'#
+opPrint r#'net-wireshark'#
+opPrint r#'  --cask, wireshark'#
+opPrint r#'note-obsidian'#
+opPrint r#'  --cask, obsidian'#
+opPrint r#'shell-nushell'#
+opPrint r#'  nu'#
+opPrint r#'shell-powershell'#
+opPrint r#'  --cask, powershell'#
+opPrint r#'shell-tool-starship'#
+opPrint r#'  starship'#
+opPrint r#'shell-tool-zoxide'#
+opPrint r#'  zoxide'#
+opPrint r#'sys-build'#
+opPrint r#'  autoconf, automake, openssl@3'#
+opPrint r#'sys-core'#
+opPrint r#'  coreutils'#
+opPrint r#'sys-tool-7zip'#
+opPrint r#'  sevenzip'#
+opPrint r#'sys-tool-bottom'#
+opPrint r#'  bottom'#
+opPrint r#'sys-tool-curl'#
+opPrint r#'  curl'#
+opPrint r#'sys-tool-fd'#
+opPrint r#'  fd-find'#
+opPrint r#'sys-tool-fzf'#
+opPrint r#'  fzf'#
+opPrint r#'sys-tool-ripgrep'#
+opPrint r#'  ripgrep'#
+opPrint r#'sys-tool-zstd'#
+opPrint r#'  zstd'#
+opPrint r#'term-ghostty'#
+opPrint r#'  --cask, ghostty'#
+opPrint r#'term-iterm'#
+opPrint r#'  --cask, iterm2'#
+opPrint r#'term-tool-zellij'#
+opPrint r#'  zellij'#
+opPrint r#'virt-qemu'#
+opPrint r#'  --cask, utm'#
+opPrint r#'virt-swtpm'#
+opPrint r#'  swtpm'#
   }
 }
 \`
@@ -12103,118 +12161,156 @@ do {
     \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
-opPrint r#'cli-dotnet'#
-opPrint r#'  --cask, dotnet-sdk, dotnet-sdk-9.0'#
-opPrint r#'cli-github'#
-opPrint r#'  gh, github-cli, github.cli'#
-opPrint r#'cli-go'#
-opPrint r#'  go, golang, golang.go'#
-opPrint r#'cli-javascript-bun'#
-opPrint r#'  curl -fsSL https://bun.sh/install | bash'#
-opPrint r#'cli-javascript-deno'#
-opPrint r#'  curl -fsSL https://deno.land/install.sh | bash'#
-opPrint r#'cli-javascript-node'#
-opPrint r#'  node, pnpm, nodejs, nodejs-npm, nodejs-pnpm, npm, openjs.nodejs, pnpm.pnpm'#
-opPrint r#'cli-nu'#
-opPrint r#'  nu'#
-opPrint r#'cli-perl'#
-opPrint r#'  perl, perl-core'#
-opPrint r#'cli-python-uv'#
-opPrint r#'  curl -fsSL https://astral.sh/uv/install.sh | bash'#
-opPrint r#'cli-python'#
-opPrint r#'  python, python3'#
-opPrint r#'cli-ruby'#
-opPrint r#'  ruby, ruby-full'#
-opPrint r#'cli-rust'#
-opPrint r#'  curl -fsSL https://sh.rustup.rs | bash'#
-opPrint r#'cli'#
-opPrint r#'  ca-certificates, coreutils, curl, fzf, git, gnupg, neovim, openssl, powershell, sevenzip, zstd, 7zip, 7zip-rar, gnupg-utils, python3-pynvim, sudo, zsh, python3-neovim, python-pynvim, powershell-bin, 7zip.7zip, git.git, gnupg.gnupg, junegunn.fzf, meta.zstandard, microsoft.appinstaller, microsoft.powershell, neovim.neovim'#
-opPrint r#'gui-game-oculus'#
-opPrint r#'  meta.oculus'#
-opPrint r#'gui-game-steam'#
-opPrint r#'  --cask, steam, valve.steam'#
-opPrint r#'gui-game'#
-opPrint r#'  eden, pcsx2, rpcs3, shadps4, xemu, xenia-canary, microsoft.directx, microsoft.vcredist.2005.x64, microsoft.vcredist.2005.x86, microsoft.vcredist.2008.x64, microsoft.vcredist.2008.x86, microsoft.vcredist.2010.x64, microsoft.vcredist.2010.x86, microsoft.vcredist.2012.x64, microsoft.vcredist.2012.x86, microsoft.vcredist.2013.x64, microsoft.vcredist.2013.x86, microsoft.vcredist.2015+.x64, microsoft.vcredist.2015+.x86'#
-opPrint r#'gui-ide-androidstudio'#
-opPrint r#'  --cask, android-studio, google.androidstudio'#
-opPrint r#'gui-ide-vscode'#
-opPrint r#'  --cask, visual-studio-code, visual-studio-code-bin, microsoft.visualstudiocode'#
-opPrint r#'gui-ide-zed'#
-opPrint r#'  --cask, zed, zedindustries.zed'#
-opPrint r#'gui-media-iina'#
-opPrint r#'  --cask, iina'#
-opPrint r#'gui-media-mpc'#
-opPrint r#'  clsid2.mpc-hc'#
-opPrint r#'gui-media-vlc'#
-opPrint r#'  --cask, vlc, vlc-plugins-all, videolan.vlc'#
-opPrint r#'gui-net-wireshark'#
-opPrint r#'  --cask, wireshark, wireshark-qt, wiresharkfoundation.wireshark'#
-opPrint r#'gui-note-obsidian'#
-opPrint r#'  --cask, obsidian, obsidian.obsidian'#
-opPrint r#'gui-term-ghostty'#
-opPrint r#'  --cask, ghostty'#
-opPrint r#'gui-term-gnome-terminal'#
-opPrint r#'  gnome-terminal'#
-opPrint r#'gui-term-iterm'#
-opPrint r#'  --cask, iterm2'#
-opPrint r#'gui-term-lxterminal'#
-opPrint r#'  lxterminal'#
-opPrint r#'gui-term-windows-terminal'#
-opPrint r#'  microsoft.windowsterminal'#
-opPrint r#'gui-web-brave'#
-opPrint r#'  --cask, brave-browser, brave-bin, brave.brave'#
-opPrint r#'gui-web-edge'#
-opPrint r#'  --cask, microsoft-edge, microsoft-edge-stable-bin, microsoft.edge'#
-opPrint r#'gui-web-vivaldi'#
-opPrint r#'  --cask, vivaldi, vivaldi.vivaldi'#
-opPrint r#'gui'#
-opPrint r#'  --cask, flux, grandperspective, karabiner-elements, keka, rectangle, vnc-viewer, windows-app, gparted, remmina, arminosaj.autodarkmode, glavsoft.tightvnc, microsoft.powertoys, microsoft.sysinternals.suite, microsoft.windowsapp, rufus.rufus, voidtools.everything, windirstat.windirstat'#
-opPrint r#'os-de-gnome'#
-opPrint r#'  gnome, gnome-extra, gnome-shell-extensions, gnome-terminal, gnome-tweaks'#
-opPrint r#'os-de-kde'#
-opPrint r#'  dbus, elogind, kde-baseapps, kde-plasma, mesa-dri, sddm, qt6-dbus, qt6-wayland, wayland, xorg-minimal'#
-opPrint r#'os-displaylink'#
-opPrint r#'  --cask, displaylink'#
-opPrint r#'os-font'#
-opPrint r#'  --cask, font-fira-code-nerd-font, font-hack-nerd-font, ttf-firacode-nerd, ttf-hack-nerd, firacode-nf-mono, hack-nf-mono'#
-opPrint r#'os-llm-llama-swap'#
-opPrint r#'  llama-swap'#
-opPrint r#'os-llm-llama'#
-opPrint r#'  llama.cpp, llama.cpp-vulkan'#
-opPrint r#'os-llm-lmstudio'#
-opPrint r#'  --cask, lm-studio, lmstudio-bin, elementlabs.lmstudio'#
-opPrint r#'os-llm-ollama'#
-opPrint r#'  --cask, ollama-app, ollama-vulkan, ollama.ollama'#
-opPrint r#'os-net-ssh'#
-opPrint r#'  openssh, openssh-client, openssh-server'#
-opPrint r#'os-net'#
-opPrint r#'  bind9, bind9-dnsutils, bridge-utils, cifs-utils, nfs-kernel-server, bind, nfs-utils'#
-opPrint r#'os-shell-starship'#
-opPrint r#'  curl -fsSL https://starship.rs/install.sh | bash -s -- -b ~/.local/bin'#
-opPrint r#'os-shell-zoxide'#
-opPrint r#'  curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/HEAD/install.sh | bash'#
-opPrint r#'os-tool'#
-opPrint r#'  bottom, fd-find, ripgrep, tokei, zellij'#
-opPrint r#'os-virt-docker'#
-opPrint r#'  docker, docker-compose'#
-opPrint r#'os-virt-lxc'#
-opPrint r#'  lxc, lxcfs'#
-opPrint r#'os-virt-podman'#
-opPrint r#'  netavark, podman'#
-opPrint r#'os-virt-qemu'#
-opPrint r#'  swtpm, utm, qemu-full'#
-opPrint r#'os'#
-opPrint r#'  autoconf, automake, openssl@3, openssl-dev, pkgconf, apt-utils, build-essential, libssl-dev, pkg-config, gcc, gcc-c++, kernel-devel, openssl-devel, base-devel, openssl, linux-headers, libopenssl-devel, 7zip, msys2, vcpkg'#
-opPrint r#'tui-claude'#
-opPrint r#'  curl -fsSL https://claude.ai/install.sh | bash'#
-opPrint r#'tui-codex'#
+opPrint r#'ai-code-claude'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'#
+opPrint r#'ai-code-codex'#
 opPrint r#'  codex, openai-codex, openai.codex'#
-opPrint r#'tui-gemini'#
+opPrint r#'ai-code-gemini'#
 opPrint r#'  gemini-cli'#
-opPrint r#'tui-opencode'#
+opPrint r#'ai-code-opencode'#
 opPrint r#'  opencode, sst.opencode'#
-opPrint r#'tui-qwen'#
+opPrint r#'ai-code-qwen'#
 opPrint r#'  qwen-code'#
+opPrint r#'ai-llm-llama-swap'#
+opPrint r#'  llama-swap'#
+opPrint r#'ai-llm-llama'#
+opPrint r#'  llama.cpp, llama.cpp-vulkan'#
+opPrint r#'ai-llm-lmstudio'#
+opPrint r#'  --cask, lm-studio, lmstudio-bin, elementlabs.lmstudio'#
+opPrint r#'ai-llm-ollama'#
+opPrint r#'  --cask, ollama-app, ollama-vulkan, ollama.ollama'#
+opPrint r#'browser-brave'#
+opPrint r#'  --cask, brave-browser, brave-bin, brave.brave'#
+opPrint r#'browser-edge'#
+opPrint r#'  --cask, microsoft-edge, microsoft-edge-stable-bin, microsoft.edge'#
+opPrint r#'browser-vivaldi'#
+opPrint r#'  --cask, vivaldi, vivaldi.vivaldi'#
+opPrint r#'desktop-gnome'#
+opPrint r#'  gnome, gnome-extra, gnome-shell-extensions, gnome-terminal, gnome-tweaks'#
+opPrint r#'desktop-plasma'#
+opPrint r#'  dbus, elogind, kde-baseapps, kde-plasma, mesa-dri, sddm, qt6-dbus, qt6-wayland, wayland, xorg-minimal'#
+opPrint r#'desktop-tool-extra'#
+opPrint r#'  --cask, flux, grandperspective, karabiner-elements, keka, rectangle, vnc-viewer, windows-app, gparted, remmina, arminosaj.autodarkmode, glavsoft.tightvnc, meop.winenvedit, microsoft.powertoys, microsoft.sysinternals.suite, microsoft.windowsapp, rufus.rufus, voidtools.everything, windirstat.windirstat'#
+opPrint r#'dev-gh'#
+opPrint r#'  gh, github-cli, github.cli'#
+opPrint r#'dev-git'#
+opPrint r#'  git, git.git'#
+opPrint r#'dev-tokei'#
+opPrint r#'  tokei'#
+opPrint r#'editor-androidstudio'#
+opPrint r#'  --cask, android-studio, google.androidstudio'#
+opPrint r#'editor-neovim'#
+opPrint r#'  neovim, python3-pynvim, python3-neovim, python-pynvim, neovim.neovim'#
+opPrint r#'editor-vscode'#
+opPrint r#'  --cask, visual-studio-code, visual-studio-code-bin, microsoft.visualstudiocode'#
+opPrint r#'editor-zed'#
+opPrint r#'  --cask, zed, zedindustries.zed'#
+opPrint r#'font-nerd'#
+opPrint r#'  cfg/script/zsh/install/font-nerd.zsh'#
+opPrint r#'game-emulator'#
+opPrint r#'  eden, pcsx2, rpcs3, shadps4, xemu, xenia-canary'#
+opPrint r#'game-oculus'#
+opPrint r#'  meta.oculus'#
+opPrint r#'game-runtime'#
+opPrint r#'  microsoft.directx, microsoft.vcredist.2005.x64, microsoft.vcredist.2005.x86, microsoft.vcredist.2008.x64, microsoft.vcredist.2008.x86, microsoft.vcredist.2010.x64, microsoft.vcredist.2010.x86, microsoft.vcredist.2012.x64, microsoft.vcredist.2012.x86, microsoft.vcredist.2013.x64, microsoft.vcredist.2013.x86, microsoft.vcredist.2015+.x64, microsoft.vcredist.2015+.x86'#
+opPrint r#'game-steam'#
+opPrint r#'  --cask, steam, valve.steam'#
+opPrint r#'gpu-displaylink'#
+opPrint r#'  --cask, displaylink'#
+opPrint r#'lang-dotnet'#
+opPrint r#'  --cask, dotnet-sdk, dotnet-sdk-9.0'#
+opPrint r#'lang-golang'#
+opPrint r#'  go, golang, golang.go'#
+opPrint r#'lang-js-bun'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://bun.sh/install | bash'#
+opPrint r#'lang-js-deno'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://deno.land/install.sh | bash'#
+opPrint r#'lang-js-node'#
+opPrint r#'  node, pnpm, nodejs, nodejs-npm, nodejs-pnpm, npm, openjs.nodejs, pnpm.pnpm'#
+opPrint r#'lang-perl'#
+opPrint r#'  perl, perl-core'#
+opPrint r#'lang-python-uv'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://astral.sh/uv/install.sh | bash'#
+opPrint r#'lang-python'#
+opPrint r#'  python, python3'#
+opPrint r#'lang-ruby'#
+opPrint r#'  ruby, ruby-full'#
+opPrint r#'lang-rust'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://sh.rustup.rs | bash'#
+opPrint r#'media-iina'#
+opPrint r#'  --cask, iina'#
+opPrint r#'media-mpc'#
+opPrint r#'  clsid2.mpc-hc'#
+opPrint r#'media-vlc'#
+opPrint r#'  --cask, vlc, vlc-plugins-all, videolan.vlc'#
+opPrint r#'net-bind'#
+opPrint r#'  bind9, bind9-dnsutils, bind'#
+opPrint r#'net-ca-cert'#
+opPrint r#'  ca-certificates'#
+opPrint r#'net-gnupg'#
+opPrint r#'  gnupg, gnupg-utils, gnupg.gnupg'#
+opPrint r#'net-openssl'#
+opPrint r#'  openssl'#
+opPrint r#'net-ssh-server'#
+opPrint r#'  openssh, openssh-client, openssh-server'#
+opPrint r#'net-wireshark'#
+opPrint r#'  --cask, wireshark, wireshark-qt, wiresharkfoundation.wireshark'#
+opPrint r#'note-obsidian'#
+opPrint r#'  --cask, obsidian, obsidian.obsidian'#
+opPrint r#'shell-nushell'#
+opPrint r#'  nu'#
+opPrint r#'shell-powershell'#
+opPrint r#'  --cask, powershell, powershell-bin, microsoft.powershell'#
+opPrint r#'shell-tool-starship'#
+opPrint r#'  starship'#
+opPrint r#'shell-tool-zoxide'#
+opPrint r#'  zoxide'#
+opPrint r#'shell-zsh'#
+opPrint r#'  zsh'#
+opPrint r#'sys-build'#
+opPrint r#'  autoconf, automake, openssl@3, openssl-dev, build-essential, libssl-dev, gcc, gcc-c++, kernel-devel, openssl-devel, base-devel, openssl, linux-headers, libopenssl-devel, msys2.msys2'#
+opPrint r#'sys-core'#
+opPrint r#'  coreutils'#
+opPrint r#'sys-pack'#
+opPrint r#'  pkgconf, apt-utils, pkg-config, vcpkg, microsoft.appinstaller'#
+opPrint r#'sys-tool-7zip'#
+opPrint r#'  sevenzip, 7zip, 7zip-rar, 7zip.7zip'#
+opPrint r#'sys-tool-bottom'#
+opPrint r#'  bottom'#
+opPrint r#'sys-tool-curl'#
+opPrint r#'  curl'#
+opPrint r#'sys-tool-fd'#
+opPrint r#'  fd-find'#
+opPrint r#'sys-tool-fzf'#
+opPrint r#'  fzf, junegunn.fzf'#
+opPrint r#'sys-tool-ripgrep'#
+opPrint r#'  ripgrep'#
+opPrint r#'sys-tool-sudo'#
+opPrint r#'  sudo'#
+opPrint r#'sys-tool-zstd'#
+opPrint r#'  zstd, meta.zstandard'#
+opPrint r#'term-ghostty'#
+opPrint r#'  --cask, ghostty'#
+opPrint r#'term-gnome-terminal'#
+opPrint r#'  gnome-terminal'#
+opPrint r#'term-iterm'#
+opPrint r#'  --cask, iterm2'#
+opPrint r#'term-lxterminal'#
+opPrint r#'  lxterminal'#
+opPrint r#'term-tool-zellij'#
+opPrint r#'  zellij'#
+opPrint r#'term-windows-terminal'#
+opPrint r#'  microsoft.windowsterminal'#
+opPrint r#'virt-docker'#
+opPrint r#'  docker, docker-compose'#
+opPrint r#'virt-lxc'#
+opPrint r#'  lxc, lxcfs'#
+opPrint r#'virt-podman'#
+opPrint r#'  netavark, podman'#
+opPrint r#'virt-qemu'#
+opPrint r#'  --cask, utm, qemu-full'#
+opPrint r#'virt-swtpm'#
+opPrint r#'  swtpm'#
   }
 }
 \`
@@ -12383,38 +12479,38 @@ do {
     \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
-opPrint r#'cli-javascript-bun'#
-opPrint r#'  curl -fsSL https://bun.sh/install | bash'#
-opPrint r#'cli-javascript-deno'#
-opPrint r#'  curl -fsSL https://deno.land/install.sh | bash'#
-opPrint r#'cli-python-uv'#
-opPrint r#'  curl -fsSL https://astral.sh/uv/install.sh | bash'#
-opPrint r#'cli-rust'#
-opPrint r#'  curl -fsSL https://sh.rustup.rs | bash'#
-opPrint r#'cli'#
-opPrint r#'  powershell-bin'#
-opPrint r#'gui-ide-androidstudio'#
-opPrint r#'  android-studio'#
-opPrint r#'gui-ide-vscode'#
-opPrint r#'  visual-studio-code-bin'#
-opPrint r#'gui-web-brave'#
-opPrint r#'  brave-bin'#
-opPrint r#'gui-web-edge'#
-opPrint r#'  microsoft-edge-stable-bin'#
-opPrint r#'os-font'#
-opPrint r#'  cfg/script/zsh/install/font.zsh'#
-opPrint r#'os-llm-llama-swap'#
+opPrint r#'ai-code-claude'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'#
+opPrint r#'ai-llm-llama-swap'#
 opPrint r#'  llama-swap'#
-opPrint r#'os-llm-llama'#
+opPrint r#'ai-llm-llama'#
 opPrint r#'  llama.cpp-vulkan'#
-opPrint r#'os-llm-lmstudio'#
+opPrint r#'ai-llm-lmstudio'#
 opPrint r#'  lmstudio-bin'#
-opPrint r#'os-shell-starship'#
-opPrint r#'  curl -fsSL https://starship.rs/install.sh | bash -s -- -b ~/.local/bin'#
-opPrint r#'os-shell-zoxide'#
-opPrint r#'  curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/HEAD/install.sh | bash'#
-opPrint r#'tui-claude'#
-opPrint r#'  curl -fsSL https://claude.ai/install.sh | bash'#
+opPrint r#'browser-brave'#
+opPrint r#'  brave-bin'#
+opPrint r#'browser-edge'#
+opPrint r#'  microsoft-edge-stable-bin'#
+opPrint r#'editor-androidstudio'#
+opPrint r#'  android-studio'#
+opPrint r#'editor-vscode'#
+opPrint r#'  visual-studio-code-bin'#
+opPrint r#'font-nerd'#
+opPrint r#'  cfg/script/zsh/install/font-nerd.zsh'#
+opPrint r#'lang-js-bun'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://bun.sh/install | bash'#
+opPrint r#'lang-js-deno'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://deno.land/install.sh | bash'#
+opPrint r#'lang-python-uv'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://astral.sh/uv/install.sh | bash'#
+opPrint r#'lang-rust'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://sh.rustup.rs | bash'#
+opPrint r#'shell-powershell'#
+opPrint r#'  powershell-bin'#
+opPrint r#'shell-tool-starship'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://starship.rs/install.sh | bash -s -- -b ~/.local/bin'#
+opPrint r#'shell-tool-zoxide'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://raw.githubusercontent.com/ajeetdsouza/zoxide/HEAD/install.sh | bash'#
   }
 }
 \`

@@ -64,7 +64,7 @@ function wut {
   $url = "${url}/sh/pwsh"
   $url = "${url}/$($args -Join '/')".TrimEnd('/')
 
-  pwsh -noprofile -c "$( Invoke-RestMethod -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "${url}" )"
+  pwsh -noprofile -c "$( irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "${url}" )"
 }
 ```
 
