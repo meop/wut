@@ -147,162 +147,14 @@ function opPrintMaybeRunCmd {
     \$yn = Read-Host "? use script [y, [n]]"
   }
   if (\$yn -ne 'n') {
-opPrint 'bootstrap'
-opPrint '  choco, scoop'
 opPrint 'install'
 opPrint '  llama'
 opPrint 'repair'
 opPrint '  gpu'
 opPrint 'setup'
-opPrint '  clock, fs, llama, rust, ssh-server, webdav, windows-terminal, wsl'
+opPrint '  clock, fs, rust, ssh-server, webdav, windows-terminal, wsl'
   }
 }
-\`
-`;
-
-snapshot[`pwsh / winnt / exec (bootstrap/choco) 1`] = `
-\`\$REQ_URL_CFG = 'http://x/cfg'
-
-\$REQ_URL_SH = 'http://x/sh/pwsh/script/exec/bootstrap/choco?sysOsPlat=winnt'
-
-function opPrint {
-  if (\$SUCCINCT) {
-    return
-  }
-  [Console]::WriteLine(\$(\$args -join ' '))
-}
-
-function opPrintErr {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::Error.WriteLine(\$(\$args -join ' '))
-    return
-  }
-  [Console]::ForegroundColor = 'red'
-  [Console]::Error.WriteLine(\$(\$args -join ' '))
-  [Console]::ResetColor()
-}
-
-function opPrintSucc {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::WriteLine(\$(\$args -join ' '))
-    return
-  }
-  [Console]::ForegroundColor = 'green'
-  [Console]::WriteLine(\$(\$args -join ' '))
-  [Console]::ResetColor()
-}
-
-function opPrintWarn {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::WriteLine(\$(\$args -join ' '))
-    return
-  }
-  [Console]::ForegroundColor = 'yellow'
-  [Console]::WriteLine(\$(\$args -join ' '))
-  [Console]::ResetColor()
-}
-
-function opPrintInfo {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::WriteLine(\$(\$args -join ' '))
-    return
-  }
-  [Console]::ForegroundColor = 'blue'
-  [Console]::WriteLine(\$(\$args -join ' '))
-  [Console]::ResetColor()
-}
-
-function opPrintCmd {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::WriteLine(\$(\$args -join ' '))
-    return
-  }
-  [Console]::ForegroundColor = 'magenta'
-  [Console]::Write(\$args[0])
-  [Console]::ResetColor()
-  if (\$args.Length -gt 1) {
-    [Console]::Write(' ')
-    [Console]::ForegroundColor = 'cyan'
-    [Console]::WriteLine(\$(\$(\$args | Select-Object -Skip 1) -join ' '))
-    [Console]::ResetColor()
-  }
-}
-
-function opRunCmd {
-  iex "\$(\$args -join ' ')"
-}
-
-function opPrintRunCmd {
-  opPrintCmd @args
-  opRunCmd @args
-}
-
-function opPrintMaybeRunCmd {
-  opPrintCmd @args
-  if (-not \$NOOP) {
-    opRunCmd @args
-  }
-}
-
-
-\$SH_VERS_MAJOR = 7
-
-\$SH_VERS_MINOR = 5
-
-& {
-  \$major = \$SH_VERS_MAJOR -as [int]
-  \$minor = \$SH_VERS_MINOR -as [int]
-
-  if (\$PSVersionTable.PSVersion.Major -lt \$major -or \$PSVersionTable.PSVersion.Minor -lt \$minor) {
-    opPrintErr "pwsh must be >= '\${major}.\${minor}' .. found '\$(\$PSVersionTable.PSVersion)' .. aborting"
-    exit 1
-  }
-}
-
-
-\$REQ_ORIG = 'http://x'
-
-\$SYS_OS_PLAT = 'winnt'
-
-\$REQ_PATH = '/sh/pwsh/script/exec/bootstrap/choco'
-
-\$REQ_SRCH = '?sysOsPlat=winnt'
-
-\$SCRIPT_EXEC_PARTS = 'bootstrap|choco'
-
-& {
-  if (-not \$IsWindows) {
-    opPrintWarn 'script is for winnt'
-    return
-  }
-  \$yn = ''
-  if (\$YES) {
-    \$yn = 'y'
-  } else {
-    \$yn = Read-Host '? bootstrap choco - (user) [y, [n]]'
-  }
-  if (\$yn -eq 'n') {
-    return
-  }
-  \$url = 'https://community.chocolatey.org/install.ps1'
-  opPrintMaybeRunCmd iex '"\$(' irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "\${url}" ')"'
-}
-
 \`
 `;
 
@@ -438,14 +290,12 @@ function () {
     read "yn?? use script [y, [n]]: "
   fi
   if [[ \$yn != 'n' ]]; then
-opPrint 'bootstrap'
-opPrint '  brew'
 opPrint 'install'
 opPrint '  font-nerd'
 opPrint 'repair'
 opPrint '  brew, copyq'
 opPrint 'setup'
-opPrint '  iterm, llama-swap, rust'
+opPrint '  iterm, rust'
   fi
 }
 \`
@@ -586,7 +436,7 @@ function () {
 opPrint 'install'
 opPrint '  font-nerd'
 opPrint 'setup'
-opPrint '  docker, llama-swap, lxc, ollama, podman, rust'
+opPrint '  docker, lxc, podman, rust'
   fi
 }
 \`
@@ -730,168 +580,5 @@ opPrint 'install'
 opPrint '  font-nerd'
   fi
 }
-\`
-`;
-
-snapshot[`zsh / linux / exec (bootstrap/yay arch) 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
-
-REQ_URL_SH='http://x/sh/zsh/script/exec/bootstrap/yay?sysOsPlat=linux&sysOsLike=arch'
-
-function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  print -r -- "\$*"
-}
-
-function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
-    return
-  fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
-}
-
-function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
-  shift 1
-  if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
-  fi
-}
-
-function opRunCmd {
-  eval "\$*"
-}
-
-function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
-}
-
-function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
-  fi
-}
-
-
-SH_VERS_MAJOR=5
-
-SH_VERS_MINOR=9
-
-function () {
-  local major=\$SH_VERS_MAJOR
-  local minor=\$SH_VERS_MINOR
-
-  autoload is-at-least
-  if ! is-at-least "\${major}.\${minor}"; then
-    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
-    exit 1
-  fi
-}
-
-
-REQ_ORIG='http://x'
-
-SYS_OS_LIKE='arch'
-
-SYS_OS_PLAT='linux'
-
-REQ_PATH='/sh/zsh/script/exec/bootstrap/yay'
-
-REQ_SRCH='?sysOsPlat=linux&sysOsLike=arch'
-
-SCRIPT_EXEC_PARTS='bootstrap|yay'
-
-function () {
-  if [[ \$SYS_OS_PLAT != 'linux' ]]; then
-    opPrintWarn 'script is for linux'
-    return
-  fi
-  if [[ \$SYS_OS_LIKE != *'arch'* ]]; then
-    opPrintWarn 'script is for arch-like'
-    return
-  fi
-  local yn=''
-  if [[ \$YES ]]; then
-    yn='y'
-  else
-    read 'yn?? bootstrap yay - (user) [y, [n]]: '
-  fi
-  if [[ \$yn == 'n' ]]; then
-    return
-  fi
-  local repo_dir_path="\${HOME}/.yay-bin"
-  if [[ -d "\${repo_dir_path}" ]]; then
-    opPrintMaybeRunCmd git -C "\${repo_dir_path}" pull --prune '>' /dev/null '2>&1'
-  else
-    local url='https://aur.archlinux.org/yay-bin.git'
-    opPrintMaybeRunCmd git clone --depth 1 --quiet "\${url}" "\${repo_dir_path}"
-  fi
-  (
-    opPrintMaybeRunCmd pushd "\${repo_dir_path}" '>' /dev/null '2>&1'
-    opPrintMaybeRunCmd makepkg --install --syncdeps
-    opPrintMaybeRunCmd popd '>' /dev/null '2>&1'
-  )
-}
-
 \`
 `;

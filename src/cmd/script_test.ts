@@ -21,12 +21,6 @@ Deno.test('pwsh / winnt / find', async (t) => {
   await assertSnapshot(t, body)
   await checkSyntax('pwsh', body)
 })
-Deno.test('pwsh / winnt / exec (bootstrap/choco)', async (t) => {
-  const body = await (await runSrv(req('/sh/pwsh/script/exec/bootstrap/choco?sysOsPlat=winnt'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('pwsh', body)
-})
-
 // zsh × darwin
 Deno.test('zsh / darwin / find', async (t) => {
   const body = await (await runSrv(req('/sh/zsh/script/find?sysOsPlat=darwin'))).text()
@@ -42,11 +36,6 @@ Deno.test('zsh / linux / find', async (t) => {
 })
 Deno.test('zsh / linux / find (install filter)', async (t) => {
   const body = await (await runSrv(req('/sh/zsh/script/find/install?sysOsPlat=linux'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('zsh', body)
-})
-Deno.test('zsh / linux / exec (bootstrap/yay arch)', async (t) => {
-  const body = await (await runSrv(req('/sh/zsh/script/exec/bootstrap/yay?sysOsPlat=linux&sysOsLike=arch'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('zsh', body)
 })

@@ -11698,6 +11698,10 @@ opPrint r#'shell-tool-zoxide'#
 opPrint r#'  zoxide'#
 opPrint r#'sys-build'#
 opPrint r#'  msys2.msys2'#
+opPrint r#'sys-manager-choco'#
+opPrint r#'  irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri https://community.chocolatey.org/install.ps1 | iex'#
+opPrint r#'sys-manager-scoop'#
+opPrint r#'  irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri https://get.scoop.sh | iex'#
 opPrint r#'sys-pack'#
 opPrint r#'  vcpkg, microsoft.appinstaller'#
 opPrint r#'sys-tool-7zip'#
@@ -12003,6 +12007,8 @@ opPrint r#'sys-build'#
 opPrint r#'  autoconf, automake, openssl@3'#
 opPrint r#'sys-core'#
 opPrint r#'  coreutils'#
+opPrint r#'sys-manager-brew'#
+opPrint r#'  bash -c "\$(curl --fail-with-body --location --no-progress-meter --url https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'#
 opPrint r#'sys-tool-7zip'#
 opPrint r#'  sevenzip'#
 opPrint r#'sys-tool-bottom'#
