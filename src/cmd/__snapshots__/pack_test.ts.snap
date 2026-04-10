@@ -12516,6 +12516,1499 @@ opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://
 \`
 `;
 
+snapshot[`nu / darwin / add (claude) 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/claude?sysOsPlat=darwin'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'darwin'#
+
+\$env.REQ_PATH = r#'/sh/nu/pack/add/claude'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
+
+\$env.PACK_ADD_NAMES = r#'claude'#
+
+\$env.PACK_OP = r#'add'#
+
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd binstall --locked \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
+def --env packBrewOp [cmd] {
+  opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packBrew [] {
+  let cmd = 'brew'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
+    opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
+  }
+  packBrewOp \$cmd
+}
+
+
+do {
+mut yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (script) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'ai-code-claude'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'#
+if 'NOOP' not-in \$env { zsh --no-rcs -c r#'curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'# }
+} else {
+\$yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (system) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'ai-code-claude'#
+opPrint r#'  --cask, claude-code'#
+\$env.PACK_MANAGER = r#'brew'#
+\$env.PACK_ADD_NAMES = r#'--cask claude-code'#
+packBrew
+hide-env PACK_MANAGER
+}
+}
+}
+\`
+`;
+
+snapshot[`nu / winnt / add (claude) 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/claude?sysOsPlat=winnt'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'winnt'#
+
+\$env.REQ_PATH = r#'/sh/nu/pack/add/claude'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
+
+\$env.PACK_ADD_NAMES = r#'claude'#
+
+\$env.PACK_OP = r#'add'#
+
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd binstall --locked \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
+def --env packChocoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packChoco [] {
+  let cmd = 'choco'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  let cmd = if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
+  packChocoOp \$cmd
+}
+
+
+def --env packScoopOp [cmd] {
+  opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packScoop [] {
+  let cmd = 'scoop'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
+    opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
+  }
+  packScoopOp \$cmd
+}
+
+
+def --env packWingetOp [cmd] {
+  opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packWinget [] {
+  let cmd = 'winget'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if \$env.PACK_OP == 'tidy' {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(system/user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packWingetOp \$cmd
+}
+
+
+do {
+mut yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (script) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'ai-code-claude'#
+opPrint r#'  irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri https://claude.ai/install.ps1 | iex'#
+if 'NOOP' not-in \$env { pwsh -noprofile -c r#'irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri https://claude.ai/install.ps1 | iex'# }
+} else {
+\$yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (system) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'ai-code-claude'#
+opPrint r#'  anthropic.claudecode'#
+\$env.PACK_MANAGER = r#'winget'#
+\$env.PACK_ADD_NAMES = r#'anthropic.claudecode'#
+packWinget
+hide-env PACK_MANAGER
+}
+}
+}
+\`
+`;
+
+snapshot[`nu / darwin / add (rust) 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/rust?sysOsPlat=darwin'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'darwin'#
+
+\$env.REQ_PATH = r#'/sh/nu/pack/add/rust'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
+
+\$env.PACK_ADD_NAMES = r#'rust'#
+
+\$env.PACK_OP = r#'add'#
+
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd binstall --locked \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
+def --env packBrewOp [cmd] {
+  opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packBrew [] {
+  let cmd = 'brew'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
+    opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
+  }
+  packBrewOp \$cmd
+}
+
+
+do {
+mut yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (script) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'lang-rust'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://sh.rustup.rs | bash'#
+if 'NOOP' not-in \$env { zsh --no-rcs -c r#'curl --fail-with-body --location --no-progress-meter --url https://sh.rustup.rs | bash'# }
+} else {
+\$yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (system) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'lang-rust'#
+opPrint r#'  rustup'#
+\$env.PACK_MANAGER = r#'brew'#
+\$env.PACK_ADD_NAMES = r#'rustup'#
+packBrew
+hide-env PACK_MANAGER
+}
+}
+}
+\`
+`;
+
+snapshot[`nu / arch / add (nushell) 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/nushell?sysOsPlat=linux&sysOs=arch'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS = r#'arch'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/pack/add/nushell'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=arch'#
+
+\$env.PACK_ADD_NAMES = r#'nushell'#
+
+\$env.PACK_OP = r#'add'#
+
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd binstall --locked \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
+def --env packPacmanOp [cmd] {
+  opPrintMaybeRunCmd \$cmd --sync --needed \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packPacman [] {
+  let cmd = 'pacman'
+  if 'PACK_MANAGER' not-in \$env and ((which yay | is-not-empty) or (which paru | is-not-empty)) {
+    return
+  }
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  let cmd = if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
+  if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
+    opPrintMaybeRunCmd \$cmd --sync --refresh '|' complete '|' ignore
+  }
+  packPacmanOp \$cmd
+}
+
+
+
+
+def --env packParu [] {
+  let cmd = 'paru'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
+    opPrintMaybeRunCmd \$cmd --sync --refresh '|' complete '|' ignore
+  }
+  packPacmanOp \$cmd
+}
+
+
+
+
+def --env packYay [] {
+  let cmd = 'yay'
+  if 'PACK_MANAGER' not-in \$env and (which paru | is-not-empty) {
+    return
+  }
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
+    opPrintMaybeRunCmd \$cmd --sync --refresh '|' complete '|' ignore
+  }
+  packPacmanOp \$cmd
+}
+
+
+do {
+mut yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (user) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'shell-nushell'#
+opPrint r#'  nu'#
+\$env.PACK_MANAGER = r#'cargo'#
+\$env.PACK_ADD_NAMES = r#'nu'#
+packCargo
+hide-env PACK_MANAGER
+} else {
+\$yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (system) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'shell-nushell'#
+opPrint r#'  nushell'#
+\$env.PACK_MANAGER = r#'pacman'#
+\$env.PACK_ADD_NAMES = r#'nushell'#
+packPacman
+hide-env PACK_MANAGER
+}
+}
+}
+\`
+`;
+
+snapshot[`nu / ubuntu / add (nushell) 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/nushell?sysOsPlat=linux&sysOs=ubuntu&sysOsLike=debian'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS = r#'ubuntu'#
+
+\$env.SYS_OS_LIKE = r#'debian'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/pack/add/nushell'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=ubuntu&sysOsLike=debian'#
+
+\$env.PACK_ADD_NAMES = r#'nushell'#
+
+\$env.PACK_OP = r#'add'#
+
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd binstall --locked \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
+def --env packAptOp [cmd] {
+  opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packApt [] {
+  let cmd = 'apt'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  let cmd = if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
+  if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
+    opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
+  }
+  packAptOp \$cmd
+}
+
+
+do {
+mut yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (user) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'shell-nushell'#
+opPrint r#'  nu'#
+\$env.PACK_MANAGER = r#'cargo'#
+\$env.PACK_ADD_NAMES = r#'nu'#
+packCargo
+hide-env PACK_MANAGER
+} else {
+\$yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (script) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'shell-nushell'#
+opPrint r#'  cfg/script/zsh/install/nu.zsh'#
+if 'NOOP' not-in \$env { zsh --no-rcs -c r#'# https://www.nushell.sh/book/installation.html#pre-built-binaries
+function () {
+  if [[ \$SYS_OS_PLAT != 'linux' ]]; then
+    echo 'script is for linux'
+    return
+  fi
+  if [[ \$SYS_OS_LIKE != *'debian'* && \$SYS_OS_LIKE != *'rhel'* && \$SYS_OS_LIKE != *'suse'* ]]; then
+    echo 'script is for debian-like or rhel-like or suse-like'
+    return
+  fi
+  local yn=''
+  if [[ \$YES ]]; then
+    yn='y'
+  else
+    read 'yn?? install nu - (system) [y, [n]]: '
+  fi
+  if [[ \$yn == 'n' ]]; then
+    return
+  fi
+  if [[ \$SYS_OS_LIKE == *'debian'* ]]; then
+    function install_repo {
+      local sources_file_path="/etc/apt/sources.list.d/fury-nushell.sources"
+      local gpg_file_path='/etc/apt/trusted.gpg.d/fury-nushell.gpg'
+      local url='https://apt.fury.io/nushell'
+      opPrintMaybeRunCmd sudo --preserve-env bash -c '"'curl --fail-with-body --location --no-progress-meter --url "\${url}/gpg.key" '|' gpg --dearmor -o "\${gpg_file_path}"'"'
+      local apt_lines=(
+        'Types: deb'
+        'URIs: https://apt.fury.io/nushell/'
+        'Suites: /'
+        'Components: '
+        'Signed-By: /etc/apt/trusted.gpg.d/fury-nushell.gpg'
+      )
+      opPrintMaybeRunCmd sudo --preserve-env bash -c '"'printf "'""\${(j:\\\\n:)apt_lines}"'\\\\n'"'" '>' "\${sources_file_path}"'"'
+    }
+    install_repo
+    opPrintMaybeRunCmd sudo apt update '>' /dev/null '2>&1'
+    opPrintMaybeRunCmd sudo apt install nushell
+  elif [[ \$SYS_OS_LIKE == *'rhel'* || \$SYS_OS_LIKE == *'suse'* ]]; then
+    function install_repo {
+      local repo_file_path='/etc/yum.repos.d/fury-nushell.repo'
+      local url='https://yum.fury.io/nushell'
+      local yum_lines=(
+        '[gemfury-nushell]'
+        'name=Gemfury Nushell Repo'
+        'baseurl='"\${url}"'/'
+        'enabled=1'
+        'gpgcheck=0'
+        'gpgkey='"\${url}"'/gpg.key'
+      )
+      opPrintMaybeRunCmd sudo --preserve-env bash -c '"'printf "'""\${(j:\\\\n:)yum_lines}"'\\\\n'"'" '>' "\${repo_file_path}"'"'
+    }
+    install_repo
+    opPrintMaybeRunCmd sudo dnf check-upgrade '>' /dev/null '2>&1'
+    opPrintMaybeRunCmd sudo dnf install nushell
+  fi
+}
+'# }
+}
+}
+}
+\`
+`;
+
+snapshot[`nu / darwin / add (ai-code) 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/ai-code?sysOsPlat=darwin'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$"(\$args | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print --stderr
+    return
+  }
+
+  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$"(\$args | str join ' ')" | print
+    return
+  }
+
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | str join ' ')"
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'darwin'#
+
+\$env.REQ_PATH = r#'/sh/nu/pack/add/ai-code'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
+
+\$env.PACK_ADD_NAMES = r#'ai-code'#
+
+\$env.PACK_OP = r#'add'#
+
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd binstall --locked \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(user\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  packCargoOp \$cmd
+}
+
+
+def --env packBrewOp [cmd] {
+  opPrintMaybeRunCmd \$cmd install \$env.PACK_ADD_NAMES
+  \$env.PACKED = true
+}
+
+
+def --env packBrew [] {
+  let cmd = 'brew'
+  if ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if ('PACK_OP' in \$env) and (\$env.PACK_OP in ['add', 'rem']) and (\$env.PACKED? | default false) {
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"? use (\$cmd) \\\\(system\\\\) [y, [n]]: "
+  }
+  if \$yn == 'n' {
+    return
+  }
+  if 'PACK_OP' in \$env and (\$env.PACK_OP == 'add' or \$env.PACK_OP == 'find' or \$env.PACK_OP == 'out' or \$env.PACK_OP == 'sync') {
+    opPrintMaybeRunCmd \$cmd update '|' complete '|' ignore
+  }
+  packBrewOp \$cmd
+}
+
+
+do {
+mut yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (script) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'ai-code-claude'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'#
+if 'NOOP' not-in \$env { zsh --no-rcs -c r#'curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'# }
+} else {
+\$yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (system) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'ai-code-claude'#
+opPrint r#'  --cask, claude-code'#
+\$env.PACK_MANAGER = r#'brew'#
+\$env.PACK_ADD_NAMES = r#'--cask claude-code'#
+packBrew
+hide-env PACK_MANAGER
+}
+}
+}
+
+do {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'? use pack (system) [y, [n]]: '#
+  }
+  if \$yn != 'n' {
+opPrint r#'ai-code-codex'#
+opPrint r#'  codex'#
+\$env.PACK_MANAGER = r#'brew'#
+\$env.PACK_ADD_NAMES = r#'codex'#
+packBrew
+hide-env PACK_MANAGER
+  }
+}
+
+do {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'? use pack (system) [y, [n]]: '#
+  }
+  if \$yn != 'n' {
+opPrint r#'ai-code-gemini'#
+opPrint r#'  gemini-cli'#
+\$env.PACK_MANAGER = r#'brew'#
+\$env.PACK_ADD_NAMES = r#'gemini-cli'#
+packBrew
+hide-env PACK_MANAGER
+  }
+}
+
+do {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'? use pack (system) [y, [n]]: '#
+  }
+  if \$yn != 'n' {
+opPrint r#'ai-code-opencode'#
+opPrint r#'  opencode'#
+\$env.PACK_MANAGER = r#'brew'#
+\$env.PACK_ADD_NAMES = r#'opencode'#
+packBrew
+hide-env PACK_MANAGER
+  }
+}
+
+do {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'? use pack (system) [y, [n]]: '#
+  }
+  if \$yn != 'n' {
+opPrint r#'ai-code-qwen'#
+opPrint r#'  qwen-code'#
+\$env.PACK_MANAGER = r#'brew'#
+\$env.PACK_ADD_NAMES = r#'qwen-code'#
+packBrew
+hide-env PACK_MANAGER
+  }
+}
+\`
+`;
+
 snapshot[`nu / no-sys / add 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 

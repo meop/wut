@@ -327,6 +327,48 @@ Deno.test('nu / arch / find (-m yay)', async (t) => {
   await checkSyntax('nu', body)
 })
 
+// nu × darwin × add (claude) — multi-tier: script + system
+Deno.test('nu / darwin / add (claude)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/claude?sysOsPlat=darwin'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+
+// nu × winnt × add (claude) — buildTierChain on winnt: script(pwsh) + system(winget)
+Deno.test('nu / winnt / add (claude)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/claude?sysOsPlat=winnt'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+
+// nu × darwin × add (rust) — buildTierChain: script(zsh) + system(brew) + setup block
+Deno.test('nu / darwin / add (rust)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/rust?sysOsPlat=darwin'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+
+// nu × arch × add (nushell) — buildTierChain: user(cargo) + system(pacman)
+Deno.test('nu / arch / add (nushell)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/nushell?sysOsPlat=linux&sysOs=arch'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+
+// nu × ubuntu × add (nushell) — gate(sys_os_like) + file script entry: user(cargo) + script(file, gate debian)
+Deno.test('nu / ubuntu / add (nushell)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/nushell?sysOsPlat=linux&sysOs=ubuntu&sysOsLike=debian'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+
+// nu × darwin × add (ai-code) — prefix resolution: expands to all files under ai/code/
+Deno.test('nu / darwin / add (ai-code)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/ai-code?sysOsPlat=darwin'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+
 // nu × no-sys (bootstrap path)
 Deno.test('nu / no-sys / add', async (t) => {
   const body = await (await runSrv(req('/sh/nu/pack/add/firefox'))).text()

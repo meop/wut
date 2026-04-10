@@ -150,7 +150,7 @@ function getManagerFuncName(manager: string, prefix = PACK_KEY) {
 function buildCmdRunLines(shell: Sh, plat: string, commands: Array<string>): Array<string> {
   return [
     ...commands.flatMap((cmd) => shell.print(`  ${cmd}`)),
-    `if 'NOOP' not-in $env { opRunCmd ${execNativeShell(shell, plat, commands.join('\n'))} }`,
+    `if 'NOOP' not-in $env { ${execNativeShell(shell, plat, commands.join('\n'))} }`,
   ]
 }
 
@@ -166,7 +166,7 @@ async function buildFileRunLines(
   }
   return [
     ...shell.print(`  ${filePath}`),
-    `if 'NOOP' not-in $env { opRunCmd ${execNativeShell(shell, plat, fileContent)} }`,
+    `if 'NOOP' not-in $env { ${execNativeShell(shell, plat, fileContent)} }`,
   ]
 }
 
@@ -408,36 +408,26 @@ function processManagerEntryLines(
   return lines
 }
 
-async function processSetupLines(
-  shell: Sh,
-  context: Ctx,
-  content: Record<string, unknown>,
-  name: string,
-): Promise<Array<string>> {
-  const setupConfig = content.setup as {
-    script?: Record<string, ScriptEntry>
-  } | undefined
-  if (!setupConfig?.script) {
-    return []
-  }
-  const nativeShell = getNativeShellForPlat(context.sys_os_plat ?? '')
-  const entry = setupConfig.script[nativeShell] as ScriptEntry | undefined
-  if (!entry || !evaluateGate(entry.gate, context)) {
-    return []
-  }
+type TierBlock = { label: string; lines: Array<string> }
 
-  const plat = context.sys_os_plat ?? ''
-  if (entry.commands?.length) {
-    return shell.gatedFunc(`setup ${name}`, buildCmdRunLines(shell, plat, entry.commands))
-  } else if (entry.file) {
-    const fileLines = await buildFileRunLines(shell, plat, entry.file)
-    if (!fileLines) {
-      return []
+function buildTierChain(tiers: Array<TierBlock>): Array<string> {
+  function buildChain(i: number): Array<string> {
+    const { label, lines } = tiers[i]
+    const assign = i === 0 ? `mut yn = ''` : `$yn = ''`
+    const prompt = [
+      assign,
+      `if 'YES' in $env {`,
+      `  $yn = 'y'`,
+      `} else {`,
+      `  $yn = input r#'? ${label} [y, [n]]: '#`,
+      `}`,
+    ]
+    if (i === tiers.length - 1) {
+      return [...prompt, `if $yn != 'n' {`, ...lines, `}`]
     }
-    return shell.gatedFunc(`setup ${name}`, fileLines)
+    return [...prompt, `if $yn != 'n' {`, ...lines, `} else {`, ...buildChain(i + 1), `}`]
   }
-
-  return []
+  return ['do {', ...buildChain(0), '}']
 }
 
 async function processGroupConfig(
@@ -462,6 +452,7 @@ async function processGroupConfig(
   let _shell = shell
   let found = false
   const plat = context.sys_os_plat ?? ''
+  const tierBlocks: Array<TierBlock> = []
 
   for (const tier of Object.keys(addConfig ?? {})) {
     if (tier === 'script') {
@@ -477,13 +468,13 @@ async function processGroupConfig(
       const scriptLines: Array<string> = [..._shell.print(name)]
       if (entry.commands?.length) {
         scriptLines.push(...buildCmdRunLines(_shell, plat, entry.commands))
-        _shell = _shell.with(_shell.gatedFunc('use pack (script)', scriptLines))
+        tierBlocks.push({ label: 'use pack (script)', lines: scriptLines })
         found = true
       } else if (entry.file) {
         const fileLines = await buildFileRunLines(_shell, plat, entry.file)
         if (fileLines) {
           scriptLines.push(...fileLines)
-          _shell = _shell.with(_shell.gatedFunc('use pack (script)', scriptLines))
+          tierBlocks.push({ label: 'use pack (script)', lines: scriptLines })
           found = true
         }
       }
@@ -494,13 +485,14 @@ async function processGroupConfig(
         if (!entry?.names?.length) {
           continue
         }
-        _shell = _shell.with(
-          _shell.gatedFunc('use pack (user)', [
+        tierBlocks.push({
+          label: 'use pack (user)',
+          lines: [
             ..._shell.print(name),
             ..._shell.print(`  ${entry.names.join(', ')}`),
             ...processManagerEntryLines(_shell, context, op, tool, entry, remConfig?.user?.[tool]),
-          ]),
-        )
+          ],
+        })
         found = true
         if (op === 'add') {
           break
@@ -516,23 +508,23 @@ async function processGroupConfig(
         if (!entry?.names?.length) {
           continue
         }
-        _shell = _shell.with(
-          _shell.gatedFunc('use pack (system)', [
+        tierBlocks.push({
+          label: 'use pack (system)',
+          lines: [
             ..._shell.print(name),
             ..._shell.print(`  ${entry.names.join(', ')}`),
             ...processManagerEntryLines(_shell, context, op, key, entry, remConfig?.system?.[key]),
-          ]),
-        )
+          ],
+        })
         found = true
       }
     }
   }
 
-  if (op === 'add' && found) {
-    const setupLines = await processSetupLines(_shell, context, content, name)
-    if (setupLines.length) {
-      _shell = _shell.with(setupLines)
-    }
+  if (tierBlocks.length === 1) {
+    _shell = _shell.with(_shell.gatedFunc(tierBlocks[0].label, tierBlocks[0].lines))
+  } else if (tierBlocks.length > 1) {
+    _shell = _shell.with(buildTierChain(tierBlocks))
   }
 
   return { shell: _shell, found }
@@ -549,9 +541,14 @@ async function resolveGroupName(name: string): Promise<Array<string>> {
     if (nameParts.length > parts.length) {
       continue
     }
-    const suffix = parts.slice(parts.length - nameParts.length)
-    if (suffix.every((p, i) => p === nameParts[i])) {
-      matched.push(parts.join('-'))
+    const resolvedName = parts.join('-')
+    if (matched.includes(resolvedName)) {
+      continue
+    }
+    const isPrefix = parts.slice(0, nameParts.length).every((p, i) => p === nameParts[i])
+    const isSuffix = parts.slice(parts.length - nameParts.length).every((p, i) => p === nameParts[i])
+    if (isPrefix || isSuffix) {
+      matched.push(resolvedName)
     }
   }
   return matched

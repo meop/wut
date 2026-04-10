@@ -154,7 +154,7 @@ opPrint '  llama'
 opPrint 'repair'
 opPrint '  gpu'
 opPrint 'setup'
-opPrint '  clock, fs, llama, ssh-server, webdav, windows-terminal, wsl'
+opPrint '  clock, fs, llama, rust, ssh-server, webdav, windows-terminal, wsl'
   }
 }
 \`
@@ -445,7 +445,7 @@ opPrint '  font-nerd'
 opPrint 'repair'
 opPrint '  brew, copyq'
 opPrint 'setup'
-opPrint '  iterm, llama'
+opPrint '  iterm, llama-swap, rust'
   fi
 }
 \`
@@ -586,7 +586,7 @@ function () {
 opPrint 'install'
 opPrint '  font-nerd'
 opPrint 'setup'
-opPrint '  llama'
+opPrint '  docker, llama-swap, lxc, ollama, podman, rust'
   fi
 }
 \`
