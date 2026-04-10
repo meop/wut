@@ -51,6 +51,20 @@ Deno.test('nu / linux / find (with sysHost)', async (t) => {
   await checkSyntax('nu', body)
 })
 
+// nu × darwin / list
+Deno.test('nu / darwin / list', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/file/list?sysOsPlat=darwin'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+
+// nu × linux / list
+Deno.test('nu / linux / list', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/file/list?sysOsPlat=linux'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+
 // nu × winnt
 Deno.test('nu / winnt / diff', async (t) => {
   const body = await (await runSrv(req('/sh/nu/file/diff?sysOsPlat=winnt'))).text()
@@ -64,6 +78,13 @@ Deno.test('nu / winnt / find', async (t) => {
 })
 Deno.test('nu / winnt / sync', async (t) => {
   const body = await (await runSrv(req('/sh/nu/file/sync?sysOsPlat=winnt'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+
+// nu × winnt / list
+Deno.test('nu / winnt / list', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/file/list?sysOsPlat=winnt'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })

@@ -39,3 +39,30 @@ Deno.test('zsh / linux / find (install filter)', async (t) => {
   await assertSnapshot(t, body)
   await checkSyntax('zsh', body)
 })
+
+// exec tests
+Deno.test('nu / linux / exec (redirect)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/script/exec/install?sysOsPlat=linux'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / winnt / exec (redirect)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/script/exec/install?sysOsPlat=winnt'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('pwsh / winnt / exec', async (t) => {
+  const body = await (await runSrv(req('/sh/pwsh/script/exec/install?sysOsPlat=winnt'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('pwsh', body)
+})
+Deno.test('zsh / darwin / exec', async (t) => {
+  const body = await (await runSrv(req('/sh/zsh/script/exec/setup/docker?sysOsPlat=darwin'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('zsh', body)
+})
+Deno.test('zsh / linux / exec', async (t) => {
+  const body = await (await runSrv(req('/sh/zsh/script/exec/setup/docker?sysOsPlat=linux'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('zsh', body)
+})
