@@ -1,4 +1,5 @@
 def --env packDnfOp [cmd] {
-  opPrintMaybeRunCmd $cmd autoremove
   opPrintMaybeRunCmd $cmd clean packages
+  opPrintMaybeRunCmd $cmd clean all
+  opPrintMaybeRunCmd $cmd autoremove
 }

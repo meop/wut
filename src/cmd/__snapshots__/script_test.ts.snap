@@ -148,7 +148,7 @@ function opPrintMaybeRunCmd {
   }
   if (\$yn -ne 'n') {
 opPrint 'install'
-opPrint '  llama'
+opPrint '  llama-swap'
 opPrint 'repair'
 opPrint '  gpu'
 opPrint 'setup'
@@ -781,7 +781,7 @@ function opPrintMaybeRunCmd {
   if (\$YES) {
     \$yn = 'y'
   } else {
-    \$yn = Read-Host '? install llama - llama.cpp (user) [y, [n]]'
+    \$yn = Read-Host '? install llama - llama-cpp (user) [y, [n]]'
   }
   if (\$yn -ne 'n') {
     \$arch = if (\$SYS_CPU_ARCH -eq 'x86_64') {

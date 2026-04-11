@@ -1262,7 +1262,9 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
-def --env packCargoOp [cmd] {}
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd cache --autoclean
+}
 
 
 def --env packCargo [] {
@@ -2936,7 +2938,9 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
-def --env packCargoOp [cmd] {}
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd cache --autoclean
+}
 
 
 def --env packCargo [] {
@@ -2964,6 +2968,8 @@ def --env packPacmanOp [cmd] {
   # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
   opPrintMaybeRunCmd sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete
   opPrintMaybeRunCmd \$cmd --sync --clean
+  opPrintMaybeRunCmd \$cmd --sync --clean --clean
+  opPrintMaybeRunCmd \$cmd --query --deps --unrequired --quiet '|' \$cmd --remove --nosave --recursive '-'
 }
 
 
@@ -4316,7 +4322,9 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
-def --env packCargoOp [cmd] {}
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd cache --autoclean
+}
 
 
 def --env packCargo [] {
@@ -4341,8 +4349,9 @@ def --env packCargo [] {
 
 
 def --env packDnfOp [cmd] {
-  opPrintMaybeRunCmd \$cmd autoremove
   opPrintMaybeRunCmd \$cmd clean packages
+  opPrintMaybeRunCmd \$cmd clean all
+  opPrintMaybeRunCmd \$cmd autoremove
 }
 
 
@@ -5635,7 +5644,9 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
-def --env packCargoOp [cmd] {}
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd cache --autoclean
+}
 
 
 def --env packCargo [] {
@@ -5661,6 +5672,7 @@ def --env packCargo [] {
 
 def --env packAptOp [cmd] {
   opPrintMaybeRunCmd \$cmd autoclean
+  opPrintMaybeRunCmd \$cmd clean
   opPrintMaybeRunCmd \$cmd autoremove
 }
 
@@ -6956,7 +6968,9 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
-def --env packCargoOp [cmd] {}
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd cache --autoclean
+}
 
 
 def --env packCargo [] {
@@ -6981,6 +6995,8 @@ def --env packCargo [] {
 
 
 def --env packXbpsOp [cmd] {
+  opPrintMaybeRunCmd \$"(\$cmd)-remove" --clean-cache
+  opPrintMaybeRunCmd \$"(\$cmd)-remove" --clean-cache --clean-cache
   opPrintMaybeRunCmd \$"(\$cmd)-remove" --remove-orphans
 }
 
@@ -8276,7 +8292,9 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
-def --env packCargoOp [cmd] {}
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd cache --autoclean
+}
 
 
 def --env packCargo [] {
@@ -8301,7 +8319,7 @@ def --env packCargo [] {
 
 
 def --env packZypperOp [cmd] {
-  opPrintMaybeRunCmd \$cmd clean --only-unneeded
+  opPrintMaybeRunCmd \$cmd clean
 }
 
 
@@ -9572,7 +9590,9 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
-def --env packCargoOp [cmd] {}
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd cache --autoclean
+}
 
 
 def --env packCargo [] {
@@ -9597,7 +9617,9 @@ def --env packCargo [] {
 
 
 def --env packBrewOp [cmd] {
-  opPrintMaybeRunCmd \$cmd cleanup --prune=all
+  opPrintMaybeRunCmd \$cmd cleanup
+  opPrintMaybeRunCmd \$cmd cleanup --prune=all --scrub
+  opPrintMaybeRunCmd \$cmd autoremove
 }
 
 
@@ -10819,7 +10841,7 @@ def --env packChoco [] {
 
 
 def --env packScoopOp [cmd] {
-  opPrintMaybeRunCmd \$cmd uninstall \$env.PACK_REM_NAMES
+  opPrintMaybeRunCmd \$cmd uninstall --purge \$env.PACK_REM_NAMES
   \$env.PACKED = true
 }
 
@@ -11255,7 +11277,9 @@ do {
 
 \$env.PACK_OP = r#'tidy'#
 
-def --env packCargoOp [cmd] {}
+def --env packCargoOp [cmd] {
+  opPrintMaybeRunCmd \$cmd cache --autoclean
+}
 
 
 def --env packCargo [] {
@@ -11281,6 +11305,12 @@ def --env packCargo [] {
 
 def --env packChocoOp [cmd] {
   opPrintMaybeRunCmd \$cmd cache remove
+  let orphans = (glob 'C:\\\\ProgramData\\\\chocolatey\\\\lib\\\\**\\\\*.nuspec' | where { |f|
+    (open --raw \$f | str contains '<dependency') == false
+  } | each { |f| \$f | path basename | str replace '.nuspec' '' })
+  if (\$orphans | is-not-empty) {
+    opPrintMaybeRunCmd \$cmd uninstall ...\$orphans --force-dependencies
+  }
 }
 
 
@@ -11612,14 +11642,14 @@ do {
     \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
-opPrint r#'ai-code-claude'#
+opPrint r#'ai-code-claude-code'#
 opPrint r#'  irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri https://claude.ai/install.ps1 | iex'#
 opPrint r#'ai-code-codex'#
 opPrint r#'  openai.codex'#
 opPrint r#'ai-code-opencode'#
 opPrint r#'  sst.opencode'#
-opPrint r#'ai-llm-llama'#
-opPrint r#'  cfg/script/pwsh/install/llama.ps1'#
+opPrint r#'ai-llm-llama-swap'#
+opPrint r#'  cfg/script/pwsh/install/llama-swap.ps1'#
 opPrint r#'ai-llm-lmstudio'#
 opPrint r#'  elementlabs.lmstudio'#
 opPrint r#'ai-llm-ollama'#
@@ -11635,7 +11665,7 @@ opPrint r#'  arminosaj.autodarkmode, glavsoft.tightvnc, meop.winenvedit, microso
 opPrint r#'dev-gh'#
 opPrint r#'  github.cli'#
 opPrint r#'dev-git'#
-opPrint r#'  git.git'#
+opPrint r#'  git-filter-repo, git.git'#
 opPrint r#'dev-tokei'#
 opPrint r#'  tokei'#
 opPrint r#'editor-androidstudio'#
@@ -11675,7 +11705,7 @@ opPrint r#'  python'#
 opPrint r#'lang-ruby'#
 opPrint r#'  ruby'#
 opPrint r#'lang-rust'#
-opPrint r#'  iwr "https://win.rustup.rs/\${SYS_CPU_ARCH}" -OutFile "\$env:TEMP\\\\rustup-init.exe", & "\$env:TEMP\\\\rustup-init.exe", ri "\$env:TEMP\\\\rustup-init.exe"'#
+opPrint r#'  iwr "https://win.rustup.rs/\${SYS_CPU_ARCH}" -OutFile "\${HOME}\\\\rustup-init.exe", & "\${HOME}\\\\rustup-init.exe", ri "\${HOME}\\\\rustup-init.exe"'#
 opPrint r#'media-mpc'#
 opPrint r#'  clsid2.mpc-hc'#
 opPrint r#'media-vlc'#
@@ -11915,7 +11945,7 @@ do {
     \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
-opPrint r#'ai-code-claude'#
+opPrint r#'ai-code-claude-code'#
 opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'#
 opPrint r#'ai-code-codex'#
 opPrint r#'  codex'#
@@ -11926,9 +11956,7 @@ opPrint r#'  opencode'#
 opPrint r#'ai-code-qwen'#
 opPrint r#'  qwen-code'#
 opPrint r#'ai-llm-llama-swap'#
-opPrint r#'  llama-swap'#
-opPrint r#'ai-llm-llama'#
-opPrint r#'  llama.cpp'#
+opPrint r#'  llama.cpp, llama-swap'#
 opPrint r#'ai-llm-lmstudio'#
 opPrint r#'  --cask, lm-studio'#
 opPrint r#'ai-llm-ollama'#
@@ -11944,7 +11972,7 @@ opPrint r#'  --cask, flux, grandperspective, karabiner-elements, keka, rectangle
 opPrint r#'dev-gh'#
 opPrint r#'  gh'#
 opPrint r#'dev-git'#
-opPrint r#'  git'#
+opPrint r#'  git, git-filter-repo'#
 opPrint r#'dev-tokei'#
 opPrint r#'  tokei'#
 opPrint r#'editor-androidstudio'#
@@ -11978,7 +12006,7 @@ opPrint r#'  python'#
 opPrint r#'lang-ruby'#
 opPrint r#'  ruby'#
 opPrint r#'lang-rust'#
-opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://sh.rustup.rs | bash'#
+opPrint r#'  mkdir -p "\${HOME}/rustup-init", (export TMPDIR="\${HOME}/rustup-init"; curl --fail-with-body --location --no-progress-meter --url https://sh.rustup.rs | bash), rm -rf "\${HOME}/rustup-init"'#
 opPrint r#'media-iina'#
 opPrint r#'  --cask, iina'#
 opPrint r#'media-vlc'#
@@ -12167,7 +12195,7 @@ do {
     \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
-opPrint r#'ai-code-claude'#
+opPrint r#'ai-code-claude-code'#
 opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'#
 opPrint r#'ai-code-codex'#
 opPrint r#'  codex, openai-codex, openai.codex'#
@@ -12178,9 +12206,7 @@ opPrint r#'  opencode, sst.opencode'#
 opPrint r#'ai-code-qwen'#
 opPrint r#'  qwen-code'#
 opPrint r#'ai-llm-llama-swap'#
-opPrint r#'  llama-swap'#
-opPrint r#'ai-llm-llama'#
-opPrint r#'  llama.cpp, llama.cpp-vulkan'#
+opPrint r#'  llama.cpp, llama-swap, llama.cpp-vulkan'#
 opPrint r#'ai-llm-lmstudio'#
 opPrint r#'  --cask, lm-studio, lmstudio-bin, elementlabs.lmstudio'#
 opPrint r#'ai-llm-ollama'#
@@ -12200,7 +12226,7 @@ opPrint r#'  --cask, flux, grandperspective, karabiner-elements, keka, rectangle
 opPrint r#'dev-gh'#
 opPrint r#'  gh, github-cli, github.cli'#
 opPrint r#'dev-git'#
-opPrint r#'  git, git.git'#
+opPrint r#'  git, git-filter-repo, git.git'#
 opPrint r#'dev-tokei'#
 opPrint r#'  tokei'#
 opPrint r#'editor-androidstudio'#
@@ -12242,7 +12268,7 @@ opPrint r#'  python, python3'#
 opPrint r#'lang-ruby'#
 opPrint r#'  ruby, ruby-full'#
 opPrint r#'lang-rust'#
-opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://sh.rustup.rs | bash'#
+opPrint r#'  mkdir -p "\${HOME}/rustup-init", (export TMPDIR="\${HOME}/rustup-init"; curl --fail-with-body --location --no-progress-meter --url https://sh.rustup.rs | bash), rm -rf "\${HOME}/rustup-init"'#
 opPrint r#'media-iina'#
 opPrint r#'  --cask, iina'#
 opPrint r#'media-mpc'#
@@ -12485,12 +12511,10 @@ do {
     \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
-opPrint r#'ai-code-claude'#
+opPrint r#'ai-code-claude-code'#
 opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'#
 opPrint r#'ai-llm-llama-swap'#
-opPrint r#'  llama-swap'#
-opPrint r#'ai-llm-llama'#
-opPrint r#'  llama.cpp-vulkan'#
+opPrint r#'  llama.cpp-vulkan, llama-swap'#
 opPrint r#'ai-llm-lmstudio'#
 opPrint r#'  lmstudio-bin'#
 opPrint r#'browser-brave'#
@@ -12510,7 +12534,7 @@ opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://
 opPrint r#'lang-python-uv'#
 opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://astral.sh/uv/install.sh | bash'#
 opPrint r#'lang-rust'#
-opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://sh.rustup.rs | bash'#
+opPrint r#'  mkdir -p "\${HOME}/rustup-init", (export TMPDIR="\${HOME}/rustup-init"; curl --fail-with-body --location --no-progress-meter --url https://sh.rustup.rs | bash), rm -rf "\${HOME}/rustup-init"'#
 opPrint r#'shell-powershell'#
 opPrint r#'  powershell-bin'#
 opPrint r#'shell-tool-starship'#
@@ -12698,34 +12722,10 @@ def --env packBrew [] {
 }
 
 
-do {
-mut yn = ''
-if 'YES' in \$env {
-  \$yn = 'y'
-} else {
-  \$yn = input r#'? use pack (script) [y, [n]]: '#
-}
-if \$yn != 'n' {
-opPrint r#'ai-code-claude'#
-opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'#
-if 'NOOP' not-in \$env { zsh --no-rcs -c r#'curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'# }
-} else {
-\$yn = ''
-if 'YES' in \$env {
-  \$yn = 'y'
-} else {
-  \$yn = input r#'? use pack (system) [y, [n]]: '#
-}
-if \$yn != 'n' {
-opPrint r#'ai-code-claude'#
-opPrint r#'  --cask, claude-code'#
-\$env.PACK_MANAGER = r#'brew'#
-\$env.PACK_ADD_NAMES = r#'--cask claude-code'#
+\$env.PACK_ADD_NAMES = r#'claude'#
+
+packCargo
 packBrew
-hide-env PACK_MANAGER
-}
-}
-}
 \`
 `;
 
@@ -12963,34 +12963,12 @@ def --env packWinget [] {
 }
 
 
-do {
-mut yn = ''
-if 'YES' in \$env {
-  \$yn = 'y'
-} else {
-  \$yn = input r#'? use pack (script) [y, [n]]: '#
-}
-if \$yn != 'n' {
-opPrint r#'ai-code-claude'#
-opPrint r#'  irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri https://claude.ai/install.ps1 | iex'#
-if 'NOOP' not-in \$env { pwsh -noprofile -c r#'irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri https://claude.ai/install.ps1 | iex'# }
-} else {
-\$yn = ''
-if 'YES' in \$env {
-  \$yn = 'y'
-} else {
-  \$yn = input r#'? use pack (system) [y, [n]]: '#
-}
-if \$yn != 'n' {
-opPrint r#'ai-code-claude'#
-opPrint r#'  anthropic.claudecode'#
-\$env.PACK_MANAGER = r#'winget'#
-\$env.PACK_ADD_NAMES = r#'anthropic.claudecode'#
+\$env.PACK_ADD_NAMES = r#'claude'#
+
+packCargo
+packChoco
+packScoop
 packWinget
-hide-env PACK_MANAGER
-}
-}
-}
 \`
 `;
 
@@ -13179,8 +13157,12 @@ if 'YES' in \$env {
 }
 if \$yn != 'n' {
 opPrint r#'lang-rust'#
-opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://sh.rustup.rs | bash'#
-if 'NOOP' not-in \$env { zsh --no-rcs -c r#'curl --fail-with-body --location --no-progress-meter --url https://sh.rustup.rs | bash'# }
+opPrint r#'  mkdir -p "\${HOME}/rustup-init"'#
+opPrint r#'  (export TMPDIR="\${HOME}/rustup-init"; curl --fail-with-body --location --no-progress-meter --url https://sh.rustup.rs | bash)'#
+opPrint r#'  rm -rf "\${HOME}/rustup-init"'#
+if 'NOOP' not-in \$env { zsh --no-rcs -c r#'mkdir -p "\${HOME}/rustup-init"
+(export TMPDIR="\${HOME}/rustup-init"; curl --fail-with-body --location --no-progress-meter --url https://sh.rustup.rs | bash)
+rm -rf "\${HOME}/rustup-init"'# }
 } else {
 \$yn = ''
 if 'YES' in \$env {
@@ -13915,35 +13897,6 @@ def --env packBrew [] {
   packBrewOp \$cmd
 }
 
-
-do {
-mut yn = ''
-if 'YES' in \$env {
-  \$yn = 'y'
-} else {
-  \$yn = input r#'? use pack (script) [y, [n]]: '#
-}
-if \$yn != 'n' {
-opPrint r#'ai-code-claude'#
-opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'#
-if 'NOOP' not-in \$env { zsh --no-rcs -c r#'curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'# }
-} else {
-\$yn = ''
-if 'YES' in \$env {
-  \$yn = 'y'
-} else {
-  \$yn = input r#'? use pack (system) [y, [n]]: '#
-}
-if \$yn != 'n' {
-opPrint r#'ai-code-claude'#
-opPrint r#'  --cask, claude-code'#
-\$env.PACK_MANAGER = r#'brew'#
-\$env.PACK_ADD_NAMES = r#'--cask claude-code'#
-packBrew
-hide-env PACK_MANAGER
-}
-}
-}
 
 do {
   mut yn = ''
