@@ -1,377 +1,304 @@
-import { assertSnapshot } from '@std/testing/snapshot'
+import type { Ctx } from '@meop/shire/ctx'
+import type { Env } from '@meop/shire/env'
+import { assertEquals } from '@std/assert'
 
-import { checkSyntax, req } from '../_test.ts'
-import { runSrv } from '../srv.ts'
+import { buildTierChain, evaluateGate, getSupportedManagers, type TierBlock } from './pack.ts'
 
-// nu × alpine (apk)
-Deno.test('nu / alpine / add', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=alpine'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / alpine / find', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=alpine'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / alpine / list', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/list?sysOsPlat=linux&sysOs=alpine'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / alpine / out', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/out?sysOsPlat=linux&sysOs=alpine'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / alpine / rem', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOs=alpine'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / alpine / sync', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/sync?sysOsPlat=linux&sysOs=alpine'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / alpine / tidy', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=alpine'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+// --- helpers ---
+
+function mkCtx(overrides: Partial<Ctx> = {}): Ctx {
+  return {
+    req_orig: 'http://x',
+    req_path: '/',
+    req_srch: '',
+    ...overrides,
+  }
+}
+
+function mkEnv(packManager?: string): Env {
+  return {
+    store: {},
+    get(key: Array<string>): string | undefined {
+      return key.join('.') === 'pack.manager' ? packManager : undefined
+    },
+    getSplit(_key: Array<string>): Array<string> {
+      return []
+    },
+    set(_key: Array<string>, _value: string): void {},
+    setAppend(_key: Array<string>, _value: string): void {},
+  }
+}
+
+// --- evaluateGate ---
+
+Deno.test('evaluateGate - null gate passes', () => {
+  assertEquals(evaluateGate(null, mkCtx()), true)
 })
 
-// nu × arch (pacman + paru + yay)
-Deno.test('nu / arch / add', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / arch / find', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / arch / list', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/list?sysOsPlat=linux&sysOs=arch'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / arch / out', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/out?sysOsPlat=linux&sysOs=arch'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / arch / rem', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOs=arch'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / arch / sync', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/sync?sysOsPlat=linux&sysOs=arch'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / arch / tidy', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=arch'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+Deno.test('evaluateGate - undefined gate passes', () => {
+  assertEquals(evaluateGate(undefined, mkCtx()), true)
 })
 
-// nu × rocky (dnf)
-Deno.test('nu / rocky / add', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=rocky'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / rocky / find', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=rocky'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / rocky / list', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/list?sysOsPlat=linux&sysOs=rocky'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / rocky / out', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/out?sysOsPlat=linux&sysOs=rocky'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / rocky / rem', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOs=rocky'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / rocky / sync', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/sync?sysOsPlat=linux&sysOs=rocky'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / rocky / tidy', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=rocky'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+Deno.test('evaluateGate - empty gate passes', () => {
+  assertEquals(evaluateGate({}, mkCtx()), true)
 })
 
-// nu × ubuntu (apt)
-Deno.test('nu / ubuntu / add', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=ubuntu'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / ubuntu / find', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=ubuntu'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / ubuntu / list', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/list?sysOsPlat=linux&sysOs=ubuntu'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / ubuntu / out', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/out?sysOsPlat=linux&sysOs=ubuntu'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / ubuntu / rem', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOs=ubuntu'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / ubuntu / sync', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/sync?sysOsPlat=linux&sysOs=ubuntu'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / ubuntu / tidy', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=ubuntu'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+Deno.test('evaluateGate - matching plat passes', () => {
+  assertEquals(
+    evaluateGate({ sys_os_plat: ['linux'] }, mkCtx({ sys_os_plat: 'linux' })),
+    true,
+  )
 })
 
-// nu × void (xbps)
-Deno.test('nu / void / add', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=void'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / void / find', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=void'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / void / list', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/list?sysOsPlat=linux&sysOs=void'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / void / out', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/out?sysOsPlat=linux&sysOs=void'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / void / rem', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOs=void'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / void / sync', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/sync?sysOsPlat=linux&sysOs=void'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / void / tidy', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=void'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+Deno.test('evaluateGate - mismatched plat fails', () => {
+  assertEquals(
+    evaluateGate({ sys_os_plat: ['linux'] }, mkCtx({ sys_os_plat: 'winnt' })),
+    false,
+  )
 })
 
-// nu × suse (zypper)
-Deno.test('nu / suse / add', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=suse'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / suse / find', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=suse'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / suse / list', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/list?sysOsPlat=linux&sysOs=suse'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / suse / out', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/out?sysOsPlat=linux&sysOs=suse'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / suse / rem', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOs=suse'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / suse / sync', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/sync?sysOsPlat=linux&sysOs=suse'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / suse / tidy', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=suse'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+Deno.test('evaluateGate - multiple values in gate, one matches', () => {
+  assertEquals(
+    evaluateGate(
+      { sys_os_plat: ['linux', 'darwin'] },
+      mkCtx({ sys_os_plat: 'darwin' }),
+    ),
+    true,
+  )
 })
 
-// nu × darwin (brew)
-Deno.test('nu / darwin / add', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=darwin'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / darwin / find', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/find/firefox?sysOsPlat=darwin'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / darwin / list', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/list?sysOsPlat=darwin'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / darwin / out', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/out?sysOsPlat=darwin'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / darwin / rem', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/rem/firefox?sysOsPlat=darwin'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / darwin / sync', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/sync?sysOsPlat=darwin'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / darwin / tidy', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=darwin'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+Deno.test('evaluateGate - missing ctx field fails', () => {
+  assertEquals(
+    evaluateGate({ sys_os_plat: ['linux'] }, mkCtx()),
+    false,
+  )
 })
 
-// nu × winnt (choco + scoop + winget)
-Deno.test('nu / winnt / add', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=winnt'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / winnt / find', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/find/firefox?sysOsPlat=winnt'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / winnt / list', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/list?sysOsPlat=winnt'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / winnt / out', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/out?sysOsPlat=winnt'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / winnt / rem', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/rem/firefox?sysOsPlat=winnt'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / winnt / sync', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/sync?sysOsPlat=winnt'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-Deno.test('nu / winnt / tidy', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=winnt'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+Deno.test('evaluateGate - sys_os_like substring match passes', () => {
+  assertEquals(
+    evaluateGate(
+      { sys_os_like: ['debian'] },
+      mkCtx({ sys_os_like: 'debian ubuntu' }),
+    ),
+    true,
+  )
 })
 
-// nu × winnt × find (no names — exercises PACK_FIND_NAMES='')
-Deno.test('nu / winnt / find (no names)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/find?sysOsPlat=winnt'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+Deno.test('evaluateGate - sys_os_like no substring match fails', () => {
+  assertEquals(
+    evaluateGate(
+      { sys_os_like: ['fedora'] },
+      mkCtx({ sys_os_like: 'debian ubuntu' }),
+    ),
+    false,
+  )
 })
 
-// nu × darwin × find (no names)
-Deno.test('nu / darwin / find (no names)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/find?sysOsPlat=darwin'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+Deno.test('evaluateGate - sys_os_like missing from ctx fails', () => {
+  assertEquals(
+    evaluateGate({ sys_os_like: ['debian'] }, mkCtx()),
+    false,
+  )
 })
 
-// nu × arch × find with unsupported manager (-m apt on arch → empty group list)
-Deno.test('nu / arch / find (-m apt)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/-m/apt/find?sysOsPlat=linux&sysOs=arch'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+Deno.test('evaluateGate - multiple conditions all match passes', () => {
+  assertEquals(
+    evaluateGate(
+      { sys_os_plat: ['linux'], sys_os: ['ubuntu'] },
+      mkCtx({ sys_os_plat: 'linux', sys_os: 'ubuntu' }),
+    ),
+    true,
+  )
 })
 
-// nu × arch × find with supported manager (-m yay on arch → yay-keyed groups only)
-Deno.test('nu / arch / find (-m yay)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/-m/yay/find?sysOsPlat=linux&sysOs=arch'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+Deno.test('evaluateGate - multiple conditions one fails', () => {
+  assertEquals(
+    evaluateGate(
+      { sys_os_plat: ['linux'], sys_os: ['arch'] },
+      mkCtx({ sys_os_plat: 'linux', sys_os: 'ubuntu' }),
+    ),
+    false,
+  )
 })
 
-// nu × darwin × add (claude) — multi-tier: script + system
-Deno.test('nu / darwin / add (claude)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/claude?sysOsPlat=darwin'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+// --- getSupportedManagers ---
+
+const platMap: Record<string, Array<string>> = {
+  darwin: ['brew'],
+  linux: ['apk', 'apt', 'pacman'],
+  winnt: ['choco', 'scoop', 'winget'],
+}
+
+const osMap: Record<string, Array<string>> = {
+  alpine: ['apk'],
+  arch: ['pacman'],
+  ubuntu: ['apt'],
+}
+
+Deno.test('getSupportedManagers - plat only returns all plat managers', () => {
+  assertEquals(
+    getSupportedManagers(platMap, osMap, mkCtx({ sys_os_plat: 'linux' }), mkEnv()),
+    ['apk', 'apt', 'pacman'],
+  )
 })
 
-// nu × winnt × add (claude) — buildTierChain on winnt: script(pwsh) + system(winget)
-Deno.test('nu / winnt / add (claude)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/claude?sysOsPlat=winnt'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+Deno.test('getSupportedManagers - plat + OS filters to intersection', () => {
+  assertEquals(
+    getSupportedManagers(
+      platMap,
+      osMap,
+      mkCtx({ sys_os_plat: 'linux', sys_os: 'ubuntu' }),
+      mkEnv(),
+    ),
+    ['apt'],
+  )
 })
 
-// nu × darwin × add (rust) — buildTierChain: script(zsh) + system(brew) + setup block
-Deno.test('nu / darwin / add (rust)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/rust?sysOsPlat=darwin'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+Deno.test('getSupportedManagers - OS not in map returns all plat managers', () => {
+  assertEquals(
+    getSupportedManagers(
+      platMap,
+      osMap,
+      mkCtx({ sys_os_plat: 'linux', sys_os: 'void' }),
+      mkEnv(),
+    ),
+    ['apk', 'apt', 'pacman'],
+  )
 })
 
-// nu × arch × add (nushell) — buildTierChain: user(cargo) + system(pacman)
-Deno.test('nu / arch / add (nushell)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/nushell?sysOsPlat=linux&sysOs=arch'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+Deno.test('getSupportedManagers - OS substring match (sys_os contains key)', () => {
+  assertEquals(
+    getSupportedManagers(
+      platMap,
+      osMap,
+      mkCtx({ sys_os_plat: 'linux', sys_os: 'ubuntu 22.04' }),
+      mkEnv(),
+    ),
+    ['apt'],
+  )
 })
 
-// nu × ubuntu × add (nushell) — gate(sys_os_like) + file script entry: user(cargo) + script(file, gate debian)
-Deno.test('nu / ubuntu / add (nushell)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/nushell?sysOsPlat=linux&sysOs=ubuntu&sysOsLike=debian'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+Deno.test('getSupportedManagers - OS longest key wins', () => {
+  const osMapWithSubkey: Record<string, Array<string>> = {
+    ubuntu: ['apt'],
+    'ubuntu 22': ['apt'],
+  }
+  assertEquals(
+    getSupportedManagers(
+      platMap,
+      osMapWithSubkey,
+      mkCtx({ sys_os_plat: 'linux', sys_os: 'ubuntu 22.04' }),
+      mkEnv(),
+    ),
+    ['apt'],
+  )
 })
 
-// nu × darwin × add (ai-code) — prefix resolution: expands to all files under ai/code/
-Deno.test('nu / darwin / add (ai-code)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/ai-code?sysOsPlat=darwin'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+Deno.test('getSupportedManagers - no plat returns empty', () => {
+  assertEquals(
+    getSupportedManagers(platMap, osMap, mkCtx(), mkEnv()),
+    [],
+  )
 })
 
-// nu × no-sys (bootstrap path)
-Deno.test('nu / no-sys / add', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/firefox'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
+Deno.test('getSupportedManagers - unknown plat returns empty', () => {
+  assertEquals(
+    getSupportedManagers(
+      platMap,
+      osMap,
+      mkCtx({ sys_os_plat: 'freebsd' }),
+      mkEnv(),
+    ),
+    [],
+  )
+})
+
+Deno.test('getSupportedManagers - PACK_MANAGER filter narrows to one', () => {
+  assertEquals(
+    getSupportedManagers(
+      platMap,
+      osMap,
+      mkCtx({ sys_os_plat: 'linux' }),
+      mkEnv('apt'),
+    ),
+    ['apt'],
+  )
+})
+
+Deno.test('getSupportedManagers - PACK_MANAGER filter not in plat returns empty', () => {
+  assertEquals(
+    getSupportedManagers(
+      platMap,
+      osMap,
+      mkCtx({ sys_os_plat: 'darwin' }),
+      mkEnv('apt'),
+    ),
+    [],
+  )
+})
+
+// --- buildTierChain ---
+
+Deno.test('buildTierChain - two tiers produce correct nushell structure', () => {
+  const tiers: Array<TierBlock> = [
+    { label: 'tier-a', lines: ['doA'] },
+    { label: 'tier-b', lines: ['doB'] },
+  ]
+  assertEquals(buildTierChain(tiers), [
+    'do --env {',
+    `mut yn = ''`,
+    `if 'YES' in $env {`,
+    `  $yn = 'y'`,
+    `} else {`,
+    `  $yn = input r#'? tier-a [y, [n]]: '#`,
+    `}`,
+    `if $yn != 'n' {`,
+    'doA',
+    `} else {`,
+    `$yn = ''`,
+    `if 'YES' in $env {`,
+    `  $yn = 'y'`,
+    `} else {`,
+    `  $yn = input r#'? tier-b [y, [n]]: '#`,
+    `}`,
+    `if $yn != 'n' {`,
+    'doB',
+    `}`,
+    `}`,
+    `}`,
+  ])
+})
+
+Deno.test('buildTierChain - three tiers have two nested else branches', () => {
+  const tiers: Array<TierBlock> = [
+    { label: 'a', lines: ['lineA'] },
+    { label: 'b', lines: ['lineB'] },
+    { label: 'c', lines: ['lineC'] },
+  ]
+  const result = buildTierChain(tiers)
+  // Outer wrapper
+  assertEquals(result[0], 'do --env {')
+  assertEquals(result[result.length - 1], '}')
+  // First tier uses mut, subsequent use assignment
+  assertEquals(result[1], `mut yn = ''`)
+  const ynAssigns = result.filter((l) => l === `$yn = ''`)
+  assertEquals(ynAssigns.length, 2)
+  // All three prompts present
+  const prompts = result.filter((l) => l.includes(`input r#'?`))
+  assertEquals(prompts.length, 3)
+  // tier bodies present
+  assertEquals(result.includes('lineA'), true)
+  assertEquals(result.includes('lineB'), true)
+  assertEquals(result.includes('lineC'), true)
+})
+
+Deno.test('buildTierChain - tier lines are preserved verbatim', () => {
+  const tiers: Array<TierBlock> = [
+    { label: 'x', lines: ['$env.FOO = "bar"', 'someFunc'] },
+    { label: 'y', lines: ['otherFunc'] },
+  ]
+  const result = buildTierChain(tiers)
+  assertEquals(result.includes('$env.FOO = "bar"'), true)
+  assertEquals(result.includes('someFunc'), true)
+  assertEquals(result.includes('otherFunc'), true)
 })

@@ -239,7 +239,7 @@ do {
 
 \$env.VIRT_OP = r#'find'#
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -1452,7 +1452,7 @@ do {
 
 \$env.VIRT_OP = r#'find'#
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -2249,7 +2249,7 @@ do {
 
 \$env.VIRT_OP = r#'find'#
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -3050,7 +3050,7 @@ do {
 
 \$env.VIRT_OP = r#'find'#
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -4233,7 +4233,7 @@ do {
 
 \$env.VIRT_OP = r#'find'#
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -4369,7 +4369,7 @@ do {
 
 \$env.VIRT_OP = r#'find'#
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'

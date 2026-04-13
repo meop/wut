@@ -147,8 +147,6 @@ function opPrintMaybeRunCmd {
     \$yn = Read-Host "? use script [y, [n]]"
   }
   if (\$yn -ne 'n') {
-opPrint 'install'
-opPrint '  llama-swap'
 opPrint 'repair'
 opPrint '  gpu'
 opPrint 'setup'
@@ -723,82 +721,6 @@ function opPrintMaybeRunCmd {
 \$REQ_SRCH = '?sysOsPlat=winnt'
 
 \$SCRIPT_EXEC_PARTS = 'install'
-
-& {
-  if (-not \$IsWindows) {
-    opPrintWarn 'script is for winnt'
-    return
-  }
-  function expand_release_assets ([string]\$url, [string[]]\$patterns) {
-    \$res = (opPrintMaybeRunCmd irm -ErrorAction Stop -Uri "\${url}")
-    if (-not \$NOOP) {
-      \$task = 'llama-swap'
-      \$taskWasRunning = \$false
-      \$taskObj = Get-ScheduledTask -TaskName \$task -ErrorAction SilentlyContinue
-      if (\$taskObj -and (\$taskObj.State -eq 'running')) {
-        \$taskWasRunning = \$true
-        opPrintMaybeRunCmd Stop-ScheduledTask -TaskName \$task
-        opPrintMaybeRunCmd Start-Sleep -Seconds 2
-      }
-      \$url_assets = @()
-      foreach (\$pattern in \$patterns) {
-        \$url_assets += \$res.assets
-        | Where-Object { \$_.browser_download_url -like \$pattern }
-        | Select-Object -ExpandProperty browser_download_url
-      }
-      foreach (\$url_asset in \$url_assets) {
-        \$outputFilePath = "\${HOME}\\\\\$(\$url_asset.Split('/')[-1])"
-        opPrintRunCmd iwr -ErrorAction Stop -ProgressAction SilentlyContinue -OutFile "\${outputFilePath}" -Uri "\${url_asset}"
-        opPrintRunCmd Expand-Archive -Force -Path "\${outputFilePath}" -DestinationPath "\${env:HOME}\\\\.local\\\\bin"
-        opPrintRunCmd Remove-Item -Path "\${outputFilePath}"
-      }
-      if (\$taskWasRunning) {
-        opPrintMaybeRunCmd Start-ScheduledTask -TaskName \$task
-        opPrintMaybeRunCmd Start-Sleep -Seconds 2
-      }
-    }
-  }
-  \$yn = ''
-  if (\$YES) {
-    \$yn = 'y'
-  } else {
-    \$yn = Read-Host '? install llama - llama-swap (user) [y, [n]]'
-  }
-  if (\$yn -ne 'n') {
-    \$arch = if (\$SYS_CPU_ARCH -eq 'x86_64') {
-      'amd64'
-    } elseif (\$SYS_CPU_ARCH -eq 'aarch64') {
-      'arm64'
-    } else {
-      \$SYS_CPU_ARCH
-    }
-    \$url = 'https://api.github.com/repos/mostlygeek/llama-swap/releases/latest'
-    \$patterns = @(
-      , "*windows*\${arch}.zip"
-    )
-    expand_release_assets \$url \$patterns
-  }
-  if (\$YES) {
-    \$yn = 'y'
-  } else {
-    \$yn = Read-Host '? install llama - llama-cpp (user) [y, [n]]'
-  }
-  if (\$yn -ne 'n') {
-    \$arch = if (\$SYS_CPU_ARCH -eq 'x86_64') {
-      'x64'
-    } elseif (\$SYS_CPU_ARCH -eq 'aarch64') {
-      'arm64'
-    } else {
-      \$SYS_CPU_ARCH
-    }
-    \$url = 'https://api.github.com/repos/ggml-org/llama.cpp/releases/latest'
-    \$patterns = @(
-      , "*win-cuda*\${arch}.zip"
-      # , "*win-vulkan*\${llama_cpp_arch}.zip"
-    )
-    expand_release_assets \$url \$patterns
-  }
-}
 
 \`
 `;

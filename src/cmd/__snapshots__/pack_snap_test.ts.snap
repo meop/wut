@@ -367,7 +367,7 @@ def --env packApk [] {
 }
 
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -1318,6 +1318,7 @@ def --env packApk [] {
 }
 
 
+packCargo
 packApk
 \`
 `;
@@ -1805,7 +1806,7 @@ def --env packYay [] {
 }
 
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -2967,7 +2968,6 @@ def --env packCargo [] {
 def --env packPacmanOp [cmd] {
   # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
   opPrintMaybeRunCmd sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete
-  opPrintMaybeRunCmd \$cmd --sync --clean
   opPrintMaybeRunCmd \$cmd --sync --clean --clean
   opPrintMaybeRunCmd \$cmd --query --deps --unrequired --quiet '|' \$cmd --remove --nosave --recursive '-'
 }
@@ -3056,6 +3056,7 @@ def --env packYay [] {
 }
 
 
+packCargo
 packPacman
 packParu
 packYay
@@ -3427,7 +3428,7 @@ def --env packDnf [] {
 }
 
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -4349,7 +4350,6 @@ def --env packCargo [] {
 
 
 def --env packDnfOp [cmd] {
-  opPrintMaybeRunCmd \$cmd clean packages
   opPrintMaybeRunCmd \$cmd clean all
   opPrintMaybeRunCmd \$cmd autoremove
 }
@@ -4380,6 +4380,7 @@ def --env packDnf [] {
 }
 
 
+packCargo
 packDnf
 \`
 `;
@@ -4749,7 +4750,7 @@ def --env packApt [] {
 }
 
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -5671,7 +5672,6 @@ def --env packCargo [] {
 
 
 def --env packAptOp [cmd] {
-  opPrintMaybeRunCmd \$cmd autoclean
   opPrintMaybeRunCmd \$cmd clean
   opPrintMaybeRunCmd \$cmd autoremove
 }
@@ -5702,6 +5702,7 @@ def --env packApt [] {
 }
 
 
+packCargo
 packApt
 \`
 `;
@@ -6073,7 +6074,7 @@ def --env packXbps [] {
 }
 
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -6995,7 +6996,6 @@ def --env packCargo [] {
 
 
 def --env packXbpsOp [cmd] {
-  opPrintMaybeRunCmd \$"(\$cmd)-remove" --clean-cache
   opPrintMaybeRunCmd \$"(\$cmd)-remove" --clean-cache --clean-cache
   opPrintMaybeRunCmd \$"(\$cmd)-remove" --remove-orphans
 }
@@ -7026,6 +7026,7 @@ def --env packXbps [] {
 }
 
 
+packCargo
 packXbps
 \`
 `;
@@ -7397,7 +7398,7 @@ def --env packZypper [] {
 }
 
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -8348,6 +8349,7 @@ def --env packZypper [] {
 }
 
 
+packCargo
 packZypper
 \`
 `;
@@ -8713,7 +8715,7 @@ def --env packBrew [] {
 }
 
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -9617,7 +9619,6 @@ def --env packCargo [] {
 
 
 def --env packBrewOp [cmd] {
-  opPrintMaybeRunCmd \$cmd cleanup
   opPrintMaybeRunCmd \$cmd cleanup --prune=all --scrub
   opPrintMaybeRunCmd \$cmd autoremove
 }
@@ -9647,6 +9648,7 @@ def --env packBrew [] {
 }
 
 
+packCargo
 packBrew
 \`
 `;
@@ -10132,7 +10134,7 @@ def --env packWinget [] {
 }
 
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -11392,6 +11394,7 @@ def --env packWinget [] {
 }
 
 
+packCargo
 packChoco
 packScoop
 packWinget
@@ -11634,7 +11637,7 @@ def --env packWinget [] {
 }
 
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -11642,7 +11645,7 @@ do {
     \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
-opPrint r#'ai-code-claude-code'#
+opPrint r#'ai-code-claude'#
 opPrint r#'  irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri https://claude.ai/install.ps1 | iex'#
 opPrint r#'ai-code-codex'#
 opPrint r#'  openai.codex'#
@@ -11937,7 +11940,7 @@ def --env packBrew [] {
 }
 
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -11945,7 +11948,7 @@ do {
     \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
-opPrint r#'ai-code-claude-code'#
+opPrint r#'ai-code-claude'#
 opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'#
 opPrint r#'ai-code-codex'#
 opPrint r#'  codex'#
@@ -12187,7 +12190,7 @@ do {
 
 \$env.PACK_OP = r#'find'#
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -12195,7 +12198,7 @@ do {
     \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
-opPrint r#'ai-code-claude-code'#
+opPrint r#'ai-code-claude'#
 opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'#
 opPrint r#'ai-code-codex'#
 opPrint r#'  codex, openai-codex, openai.codex'#
@@ -12503,7 +12506,7 @@ def --env packYay [] {
 }
 
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -12511,7 +12514,7 @@ do {
     \$yn = input r#'? use pack [y, [n]]: '#
   }
   if \$yn != 'n' {
-opPrint r#'ai-code-claude-code'#
+opPrint r#'ai-code-claude'#
 opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'#
 opPrint r#'ai-llm-llama-swap'#
 opPrint r#'  llama.cpp-vulkan, llama-swap'#
@@ -12721,6 +12724,36 @@ def --env packBrew [] {
   packBrewOp \$cmd
 }
 
+
+do --env {
+mut yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (script) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'ai-code-claude'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'#
+if 'NOOP' not-in \$env { zsh --no-rcs -c r#'curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'# }
+} else {
+\$yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (system) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'ai-code-claude'#
+opPrint r#'  --cask, claude-code'#
+\$env.PACK_MANAGER = r#'brew'#
+\$env.PACK_ADD_NAMES = r#'--cask claude-code'#
+packBrew
+hide-env PACK_MANAGER
+\$env.PACKED = true
+}
+}
+}
 
 \$env.PACK_ADD_NAMES = r#'claude'#
 
@@ -12963,6 +12996,36 @@ def --env packWinget [] {
 }
 
 
+do --env {
+mut yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (script) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'ai-code-claude'#
+opPrint r#'  irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri https://claude.ai/install.ps1 | iex'#
+if 'NOOP' not-in \$env { pwsh -noprofile -c r#'irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri https://claude.ai/install.ps1 | iex'# }
+} else {
+\$yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (system) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'ai-code-claude'#
+opPrint r#'  anthropic.claudecode'#
+\$env.PACK_MANAGER = r#'winget'#
+\$env.PACK_ADD_NAMES = r#'anthropic.claudecode'#
+packWinget
+hide-env PACK_MANAGER
+\$env.PACKED = true
+}
+}
+}
+
 \$env.PACK_ADD_NAMES = r#'claude'#
 
 packCargo
@@ -13148,7 +13211,7 @@ def --env packBrew [] {
 }
 
 
-do {
+do --env {
 mut yn = ''
 if 'YES' in \$env {
   \$yn = 'y'
@@ -13177,9 +13240,15 @@ opPrint r#'  rustup'#
 \$env.PACK_ADD_NAMES = r#'rustup'#
 packBrew
 hide-env PACK_MANAGER
+\$env.PACKED = true
 }
 }
 }
+
+\$env.PACK_ADD_NAMES = r#'rust'#
+
+packCargo
+packBrew
 \`
 `;
 
@@ -13420,7 +13489,7 @@ def --env packYay [] {
 }
 
 
-do {
+do --env {
 mut yn = ''
 if 'YES' in \$env {
   \$yn = 'y'
@@ -13434,6 +13503,7 @@ opPrint r#'  nu'#
 \$env.PACK_ADD_NAMES = r#'nu'#
 packCargo
 hide-env PACK_MANAGER
+\$env.PACKED = true
 } else {
 \$yn = ''
 if 'YES' in \$env {
@@ -13448,9 +13518,17 @@ opPrint r#'  nushell'#
 \$env.PACK_ADD_NAMES = r#'nushell'#
 packPacman
 hide-env PACK_MANAGER
+\$env.PACKED = true
 }
 }
 }
+
+\$env.PACK_ADD_NAMES = r#'nushell'#
+
+packCargo
+packPacman
+packParu
+packYay
 \`
 `;
 
@@ -13635,7 +13713,7 @@ def --env packApt [] {
 }
 
 
-do {
+do --env {
 mut yn = ''
 if 'YES' in \$env {
   \$yn = 'y'
@@ -13649,6 +13727,7 @@ opPrint r#'  nu'#
 \$env.PACK_ADD_NAMES = r#'nu'#
 packCargo
 hide-env PACK_MANAGER
+\$env.PACKED = true
 } else {
 \$yn = ''
 if 'YES' in \$env {
@@ -13719,6 +13798,11 @@ function () {
 }
 }
 }
+
+\$env.PACK_ADD_NAMES = r#'nushell'#
+
+packCargo
+packApt
 \`
 `;
 
@@ -13898,7 +13982,37 @@ def --env packBrew [] {
 }
 
 
-do {
+do --env {
+mut yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (script) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'ai-code-claude'#
+opPrint r#'  curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'#
+if 'NOOP' not-in \$env { zsh --no-rcs -c r#'curl --fail-with-body --location --no-progress-meter --url https://claude.ai/install.sh | bash'# }
+} else {
+\$yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'? use pack (system) [y, [n]]: '#
+}
+if \$yn != 'n' {
+opPrint r#'ai-code-claude'#
+opPrint r#'  --cask, claude-code'#
+\$env.PACK_MANAGER = r#'brew'#
+\$env.PACK_ADD_NAMES = r#'--cask claude-code'#
+packBrew
+hide-env PACK_MANAGER
+\$env.PACKED = true
+}
+}
+}
+
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -13912,10 +14026,11 @@ opPrint r#'  codex'#
 \$env.PACK_ADD_NAMES = r#'codex'#
 packBrew
 hide-env PACK_MANAGER
+\$env.PACKED = true
   }
 }
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -13929,10 +14044,11 @@ opPrint r#'  gemini-cli'#
 \$env.PACK_ADD_NAMES = r#'gemini-cli'#
 packBrew
 hide-env PACK_MANAGER
+\$env.PACKED = true
   }
 }
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -13946,10 +14062,11 @@ opPrint r#'  opencode'#
 \$env.PACK_ADD_NAMES = r#'opencode'#
 packBrew
 hide-env PACK_MANAGER
+\$env.PACKED = true
   }
 }
 
-do {
+do --env {
   mut yn = ''
   if 'YES' in \$env {
     \$yn = 'y'
@@ -13963,8 +14080,14 @@ opPrint r#'  qwen-code'#
 \$env.PACK_ADD_NAMES = r#'qwen-code'#
 packBrew
 hide-env PACK_MANAGER
+\$env.PACKED = true
   }
 }
+
+\$env.PACK_ADD_NAMES = r#'ai-code'#
+
+packCargo
+packBrew
 \`
 `;
 

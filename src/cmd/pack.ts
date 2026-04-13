@@ -66,7 +66,7 @@ const PACK_MANAGER_KEY = [PACK_KEY, 'manager']
 const PACK_OP_KEY = [PACK_KEY, 'op']
 const PACK_OP_NAMES_KEY = (op: string) => [PACK_KEY, op, 'names']
 
-function getSupportedManagers(
+export function getSupportedManagers(
   platMap: Record<string, Array<string>>,
   osMap: Record<string, Array<string>>,
   context: Ctx,
@@ -91,18 +91,28 @@ function getSupportedManagers(
 }
 
 function getSupportedSysManagers(context: Ctx, environment: Env) {
-  return getSupportedManagers(sysOsPlatToSysManagers, sysOsToSysManagers, context, environment)
+  return getSupportedManagers(
+    sysOsPlatToSysManagers,
+    sysOsToSysManagers,
+    context,
+    environment,
+  )
 }
 
 function getSupportedUserManagers(context: Ctx, environment: Env) {
-  return getSupportedManagers(sysOsPlatToUserManagers, sysOsToUserManagers, context, environment)
+  return getSupportedManagers(
+    sysOsPlatToUserManagers,
+    sysOsToUserManagers,
+    context,
+    environment,
+  )
 }
 
 function getNativeShellForPlat(plat: string): string {
   return plat === 'winnt' ? 'pwsh' : 'zsh'
 }
 
-function evaluateGate(
+export function evaluateGate(
   gate: Record<string, Array<string>> | null | undefined,
   context: Ctx,
 ): boolean {
@@ -147,7 +157,11 @@ function getManagerFuncName(manager: string, prefix = PACK_KEY) {
     : ''
 }
 
-function buildCmdRunLines(shell: Sh, plat: string, commands: Array<string>): Array<string> {
+function buildCmdRunLines(
+  shell: Sh,
+  plat: string,
+  commands: Array<string>,
+): Array<string> {
   return [
     ...commands.flatMap((cmd) => shell.print(`  ${cmd}`)),
     `if 'NOOP' not-in $env { ${execNativeShell(shell, plat, commands.join('\n'))} }`,
@@ -221,17 +235,19 @@ async function initOp(
   environment: Env,
   op: string,
 ): Promise<
-  { shell: Sh; sysManagers: Array<string>; userManagers: Array<string> }
+  {
+    shell: Sh
+    allManagers: Array<string>
+    userManagers: Array<string>
+    sysManagers: Array<string>
+  }
 > {
   let _shell = shell.with(shell.varSetStr(PACK_OP_KEY, op))
   const sysManagers = getSupportedSysManagers(context, environment)
   const userManagers = getSupportedUserManagers(context, environment)
-  _shell = await loadManagerFiles(
-    _shell,
-    [...userManagers, ...sysManagers],
-    op,
-  )
-  return { shell: _shell, sysManagers, userManagers }
+  const allManagers = [...userManagers, ...sysManagers]
+  _shell = await loadManagerFiles(_shell, allManagers, op)
+  return { shell: _shell, allManagers, userManagers, sysManagers }
 }
 
 async function loadGroupConfig(parts: Array<string>) {
@@ -240,8 +256,7 @@ async function loadGroupConfig(parts: Array<string>) {
 
 async function findGroupsWithNames(
   filters: Array<string> | undefined,
-  sysManagers: Array<string> | null,
-  userManagers: Array<string> | null,
+  allManagers: Array<string> | null,
   context: Ctx | null,
 ): Promise<{ entries: Array<string>; found: Array<string> }> {
   const results = await getCfgDirDump([PACK_KEY], {
@@ -296,11 +311,7 @@ async function findGroupsWithNames(
             continue
           }
           for (const key of Object.keys(tierContent)) {
-            const allManagers = [
-              ...(sysManagers ?? []),
-              ...(userManagers ?? []),
-            ]
-            if (allManagers.length && !allManagers.includes(key)) {
+            if (allManagers?.length && !allManagers.includes(key)) {
               continue
             }
             for (const n of tierContent[key]?.names ?? []) {
@@ -404,13 +415,16 @@ function processManagerEntryLines(
   }
 
   lines.push(shell.varUnSet(PACK_MANAGER_KEY))
+  if (op === 'add' || op === 'rem') {
+    lines.push('$env.PACKED = true')
+  }
 
   return lines
 }
 
-type TierBlock = { label: string; lines: Array<string> }
+export type TierBlock = { label: string; lines: Array<string> }
 
-function buildTierChain(tiers: Array<TierBlock>): Array<string> {
+export function buildTierChain(tiers: Array<TierBlock>): Array<string> {
   function buildChain(i: number): Array<string> {
     const { label, lines } = tiers[i]
     const assign = i === 0 ? `mut yn = ''` : `$yn = ''`
@@ -425,17 +439,24 @@ function buildTierChain(tiers: Array<TierBlock>): Array<string> {
     if (i === tiers.length - 1) {
       return [...prompt, `if $yn != 'n' {`, ...lines, `}`]
     }
-    return [...prompt, `if $yn != 'n' {`, ...lines, `} else {`, ...buildChain(i + 1), `}`]
+    return [
+      ...prompt,
+      `if $yn != 'n' {`,
+      ...lines,
+      `} else {`,
+      ...buildChain(i + 1),
+      `}`,
+    ]
   }
-  return ['do {', ...buildChain(0), '}']
+  return ['do --env {', ...buildChain(0), '}']
 }
 
 async function processGroupConfig(
   shell: Sh,
   context: Ctx,
   op: string,
-  sysManagers: Array<string>,
   userManagers: Array<string>,
+  sysManagers: Array<string>,
   name: string,
 ): Promise<{ shell: Sh; found: boolean }> {
   const content = await loadGroupConfig(name.split('-'))
@@ -460,7 +481,9 @@ async function processGroupConfig(
         continue
       }
       const nativeShell = getNativeShellForPlat(plat)
-      const scriptConfig = addConfig![tier] as Record<string, ScriptEntry> | undefined
+      const scriptConfig = addConfig![tier] as
+        | Record<string, ScriptEntry>
+        | undefined
       const entry = scriptConfig?.[nativeShell]
       if (!entry || !evaluateGate(entry.gate, context)) {
         continue
@@ -479,7 +502,9 @@ async function processGroupConfig(
         }
       }
     } else if (tier === 'user') {
-      const userConfig = addConfig![tier] as Record<string, ManagerEntry> | undefined
+      const userConfig = addConfig![tier] as
+        | Record<string, ManagerEntry>
+        | undefined
       for (const tool of userManagers) {
         const entry = userConfig?.[tool]
         if (!entry?.names?.length) {
@@ -490,16 +515,22 @@ async function processGroupConfig(
           lines: [
             ..._shell.print(name),
             ..._shell.print(`  ${entry.names.join(', ')}`),
-            ...processManagerEntryLines(_shell, context, op, tool, entry, remConfig?.user?.[tool]),
+            ...processManagerEntryLines(
+              _shell,
+              context,
+              op,
+              tool,
+              entry,
+              remConfig?.user?.[tool],
+            ),
           ],
         })
         found = true
-        if (op === 'add') {
-          break
-        }
       }
     } else if (tier === 'system') {
-      const systemConfig = addConfig![tier] as Record<string, ManagerEntry> | undefined
+      const systemConfig = addConfig![tier] as
+        | Record<string, ManagerEntry>
+        | undefined
       for (const key of Object.keys(systemConfig ?? {})) {
         if (!sysManagers.includes(key)) {
           continue
@@ -513,7 +544,14 @@ async function processGroupConfig(
           lines: [
             ..._shell.print(name),
             ..._shell.print(`  ${entry.names.join(', ')}`),
-            ...processManagerEntryLines(_shell, context, op, key, entry, remConfig?.system?.[key]),
+            ...processManagerEntryLines(
+              _shell,
+              context,
+              op,
+              key,
+              entry,
+              remConfig?.system?.[key],
+            ),
           ],
         })
         found = true
@@ -522,7 +560,9 @@ async function processGroupConfig(
   }
 
   if (tierBlocks.length === 1) {
-    _shell = _shell.with(_shell.gatedFunc(tierBlocks[0].label, tierBlocks[0].lines))
+    _shell = _shell.with(
+      _shell.gatedFunc(tierBlocks[0].label, tierBlocks[0].lines),
+    )
   } else if (tierBlocks.length > 1) {
     _shell = _shell.with(buildTierChain(tierBlocks))
   }
@@ -546,7 +586,10 @@ async function resolveGroupName(name: string): Promise<Array<string>> {
       continue
     }
     const isPrefix = parts.slice(0, nameParts.length).every((p, i) => p === nameParts[i])
-    const isSuffix = parts.slice(parts.length - nameParts.length).every((p, i) => p === nameParts[i])
+    const isSuffix = parts.slice(parts.length - nameParts.length).every((
+      p,
+      i,
+    ) => p === nameParts[i])
     if (isPrefix || isSuffix) {
       matched.push(resolvedName)
     }
@@ -558,8 +601,8 @@ async function processGroupNames(
   shell: Sh,
   context: Ctx,
   op: string,
-  sysManagers: Array<string>,
   userManagers: Array<string>,
+  sysManagers: Array<string>,
   names: Array<string>,
 ): Promise<{ shell: Sh; found: Array<string> }> {
   let _shell = shell
@@ -572,8 +615,8 @@ async function processGroupNames(
         _shell,
         context,
         op,
-        sysManagers,
         userManagers,
+        sysManagers,
         resolvedName,
       )
       _shell = result.shell
@@ -597,7 +640,7 @@ async function execOp(
     return redirect
   }
 
-  const { shell: _shell, sysManagers, userManagers } = await initOp(
+  const { shell: _shell, allManagers, userManagers, sysManagers } = await initOp(
     shell,
     context,
     environment,
@@ -606,7 +649,7 @@ async function execOp(
   let result = _shell
 
   if (op === 'tidy') {
-    return buildAndLog(callManagers(result, sysManagers), environment)
+    return buildAndLog(callManagers(result, allManagers), environment)
   }
 
   const names = environment.getSplit(PACK_OP_NAMES_KEY(op))
@@ -617,8 +660,7 @@ async function execOp(
       environment.get(PACK_MANAGER_KEY)
     const { entries: groupEntries, found: groupFilterFound } = await findGroupsWithNames(
       names.length ? names : undefined,
-      hasContext ? sysManagers : null,
-      hasContext ? userManagers : null,
+      hasContext ? allManagers : null,
       hasContext ? context : null,
     )
     found = groupFilterFound
@@ -628,8 +670,8 @@ async function execOp(
       result,
       context,
       op,
-      sysManagers,
       userManagers,
+      sysManagers,
       names,
     )
     result = groupResult.shell
@@ -640,10 +682,13 @@ async function execOp(
 
   if ((op === 'find' && names.length) || op === 'list' || op === 'out') {
     result = setOpNames(result, op, names.join(' '))
-    result = callManagers(result, [...userManagers, ...sysManagers])
-  } else if (op !== 'find' && (remaining.length || !names.length)) {
-    result = remaining.length ? setOpNames(result, op, remaining.join(' ')) : result
-    result = callManagers(result, [...userManagers, ...sysManagers])
+    result = callManagers(result, allManagers)
+  } else if (op !== 'find') {
+    const managerNames = remaining.length ? remaining : names
+    if (managerNames.length) {
+      result = setOpNames(result, op, managerNames.join(' '))
+    }
+    result = callManagers(result, allManagers)
   }
 
   return buildAndLog(result, environment)
