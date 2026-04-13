@@ -132,7 +132,7 @@ export function evaluateGate(
   return true
 }
 
-function parseScriptFilePath(
+export function parseScriptFilePath(
   filePath: string,
 ): { parts: Array<string>; ext: string } {
   const stripped = filePath.replace(/^cfg\//, '')
@@ -151,7 +151,7 @@ const managerOpDeps: Record<string, string> = {
   yay: 'pacman',
 }
 
-function getManagerFuncName(manager: string, prefix = PACK_KEY) {
+export function getManagerFuncName(manager: string, prefix = PACK_KEY) {
   return manager
     ? `${prefix}${manager[0].toUpperCase()}${manager.slice(1).replaceAll('-', '').replaceAll('_', '').toLowerCase()}`
     : ''
@@ -570,7 +570,7 @@ async function processGroupConfig(
   return { shell: _shell, found }
 }
 
-async function resolveGroupName(name: string): Promise<Array<string>> {
+export async function resolveGroupName(name: string): Promise<Array<string>> {
   const nameParts = name.split('-')
   const results = await getCfgDirDump([PACK_KEY], {
     extension: Fmt.yaml,

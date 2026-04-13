@@ -2,7 +2,15 @@ import type { Ctx } from '@meop/shire/ctx'
 import type { Env } from '@meop/shire/env'
 import { assertEquals } from '@std/assert'
 
-import { buildTierChain, evaluateGate, getSupportedManagers, type TierBlock } from './pack.ts'
+import {
+  buildTierChain,
+  evaluateGate,
+  getManagerFuncName,
+  getSupportedManagers,
+  parseScriptFilePath,
+  resolveGroupName,
+  type TierBlock,
+} from './pack.ts'
 
 // --- helpers ---
 
@@ -301,4 +309,142 @@ Deno.test('buildTierChain - tier lines are preserved verbatim', () => {
   assertEquals(result.includes('$env.FOO = "bar"'), true)
   assertEquals(result.includes('someFunc'), true)
   assertEquals(result.includes('otherFunc'), true)
+})
+
+Deno.test('buildTierChain - single tier produces direct if branch', () => {
+  const tiers: Array<TierBlock> = [
+    { label: 'only', lines: ['doOnly'] },
+  ]
+  assertEquals(buildTierChain(tiers), [
+    'do --env {',
+    `mut yn = ''`,
+    `if 'YES' in $env {`,
+    `  $yn = 'y'`,
+    `} else {`,
+    `  $yn = input r#'? only [y, [n]]: '#`,
+    `}`,
+    `if $yn != 'n' {`,
+    'doOnly',
+    `}`,
+    `}`,
+  ])
+})
+
+Deno.test('buildTierChain - many lines per tier are all present', () => {
+  const tiers: Array<TierBlock> = [
+    { label: 'a', lines: ['line1', 'line2', 'line3'] },
+    { label: 'b', lines: ['line4'] },
+  ]
+  const result = buildTierChain(tiers)
+  for (const line of ['line1', 'line2', 'line3', 'line4']) {
+    assertEquals(result.includes(line), true)
+  }
+})
+
+Deno.test('buildTierChain - first tier uses mut, rest use assignment', () => {
+  const tiers: Array<TierBlock> = [
+    { label: 'a', lines: ['doA'] },
+    { label: 'b', lines: ['doB'] },
+    { label: 'c', lines: ['doC'] },
+  ]
+  const result = buildTierChain(tiers)
+  assertEquals(result.filter((l) => l === `mut yn = ''`).length, 1)
+  assertEquals(result.filter((l) => l === `$yn = ''`).length, 2)
+})
+
+// --- parseScriptFilePath ---
+
+Deno.test('parseScriptFilePath - strips cfg/ prefix and splits path', () => {
+  assertEquals(parseScriptFilePath('cfg/script/zsh/setup/rust.zsh'), {
+    parts: ['script', 'zsh', 'setup', 'rust'],
+    ext: 'zsh',
+  })
+})
+
+Deno.test('parseScriptFilePath - no cfg/ prefix still works', () => {
+  assertEquals(parseScriptFilePath('script/zsh/rust.sh'), {
+    parts: ['script', 'zsh', 'rust'],
+    ext: 'sh',
+  })
+})
+
+Deno.test('parseScriptFilePath - no extension returns empty ext', () => {
+  assertEquals(parseScriptFilePath('cfg/some/file'), {
+    parts: ['some', 'file'],
+    ext: '',
+  })
+})
+
+Deno.test('parseScriptFilePath - last dot determines extension', () => {
+  assertEquals(parseScriptFilePath('cfg/file.tar.gz'), {
+    parts: ['file.tar'],
+    ext: 'gz',
+  })
+})
+
+Deno.test('parseScriptFilePath - single filename', () => {
+  assertEquals(parseScriptFilePath('cfg/script.ps1'), {
+    parts: ['script'],
+    ext: 'ps1',
+  })
+})
+
+// --- getManagerFuncName ---
+
+Deno.test('getManagerFuncName - basic name', () => {
+  assertEquals(getManagerFuncName('pacman'), 'packPacman')
+})
+
+Deno.test('getManagerFuncName - empty string returns empty', () => {
+  assertEquals(getManagerFuncName(''), '')
+})
+
+Deno.test('getManagerFuncName - strips hyphens', () => {
+  assertEquals(getManagerFuncName('some-manager'), 'packSomemanager')
+})
+
+Deno.test('getManagerFuncName - strips underscores', () => {
+  assertEquals(getManagerFuncName('some_manager'), 'packSomemanager')
+})
+
+Deno.test('getManagerFuncName - uppercases first letter only', () => {
+  assertEquals(getManagerFuncName('ABC'), 'packAbc')
+})
+
+Deno.test('getManagerFuncName - custom prefix', () => {
+  assertEquals(getManagerFuncName('docker', 'virt'), 'virtDocker')
+})
+
+// --- resolveGroupName ---
+
+Deno.test('resolveGroupName - suffix match finds group', async () => {
+  const result = await resolveGroupName('rust')
+  assertEquals(result.includes('lang-rust'), true)
+})
+
+Deno.test('resolveGroupName - prefix match finds multiple groups', async () => {
+  const result = await resolveGroupName('lang')
+  assertEquals(result.length > 1, true)
+  assertEquals(result.includes('lang-rust'), true)
+})
+
+Deno.test('resolveGroupName - multi-part prefix match', async () => {
+  const result = await resolveGroupName('ai-code')
+  assertEquals(result.length >= 1, true)
+  assertEquals(result.every((r) => r.startsWith('ai-code-')), true)
+})
+
+Deno.test('resolveGroupName - no match returns empty', async () => {
+  const result = await resolveGroupName('xyznonexistent')
+  assertEquals(result, [])
+})
+
+Deno.test('resolveGroupName - full name exact match', async () => {
+  const result = await resolveGroupName('lang-rust')
+  assertEquals(result.includes('lang-rust'), true)
+})
+
+Deno.test('resolveGroupName - name longer than any path returns empty', async () => {
+  const result = await resolveGroupName('a-b-c-d-e-f-g')
+  assertEquals(result, [])
 })
