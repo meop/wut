@@ -2807,10 +2807,10 @@ def deepMerge [base, override] {
 \`
 `;
 
-snapshot[`nu / linux / add (arch) 1`] = `
+snapshot[`nu / linux / add (host) 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/add?sysOsPlat=linux&sysHost=arch'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/add?sysOsPlat=linux&sysHost=host'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -2914,7 +2914,7 @@ do {
 }
 
 
-\$env.SYS_HOST = r#'arch'#
+\$env.SYS_HOST = r#'host'#
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -2922,7 +2922,7 @@ do {
 
 \$env.REQ_PATH = r#'/sh/nu/virt/add'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=arch'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=host'#
 
 opPrintInfo r#'id: wut virt add | add on local
 aliases: a, ad, in, install
@@ -2931,10 +2931,10 @@ arguments:
 \`
 `;
 
-snapshot[`nu / linux / find (arch) 1`] = `
+snapshot[`nu / linux / find (host) 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find?sysOsPlat=linux&sysHost=arch'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find?sysOsPlat=linux&sysHost=host'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -3038,7 +3038,7 @@ do {
 }
 
 
-\$env.SYS_HOST = r#'arch'#
+\$env.SYS_HOST = r#'host'#
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -3046,7 +3046,7 @@ do {
 
 \$env.REQ_PATH = r#'/sh/nu/virt/find'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=arch'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=host'#
 
 \$env.VIRT_OP = r#'find'#
 
@@ -3059,21 +3059,21 @@ do --env {
   }
   if \$yn != 'n' {
 opPrint r#'lxc'#
-opPrint r#'  alma, kali, void'#
+opPrint r#'  dev'#
 opPrint r#'podman'#
-opPrint r#'  home'#
-opPrint r#'    ftpd, nfsd, smbd'#
+opPrint r#'  web'#
+opPrint r#'    app'#
 opPrint r#'qemu'#
-opPrint r#'  glass'#
+opPrint r#'  test'#
   }
 }
 \`
 `;
 
-snapshot[`nu / linux / list (arch) 1`] = `
+snapshot[`nu / linux / list (host) 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/list?sysOsPlat=linux&sysHost=arch'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/list?sysOsPlat=linux&sysHost=host'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -3177,7 +3177,7 @@ do {
 }
 
 
-\$env.SYS_HOST = r#'arch'#
+\$env.SYS_HOST = r#'host'#
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -3185,7 +3185,7 @@ do {
 
 \$env.REQ_PATH = r#'/sh/nu/virt/list'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=arch'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=host'#
 
 \$env.VIRT_OP = r#'list'#
 
@@ -3384,10 +3384,10 @@ hide-env VIRT_MANAGER
 \`
 `;
 
-snapshot[`nu / linux / list (arch podman) 1`] = `
+snapshot[`nu / linux / list (host podman) 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/list/podman?sysOsPlat=linux&sysHost=arch'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/list/podman?sysOsPlat=linux&sysHost=host'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -3491,7 +3491,7 @@ do {
 }
 
 
-\$env.SYS_HOST = r#'arch'#
+\$env.SYS_HOST = r#'host'#
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -3499,7 +3499,7 @@ do {
 
 \$env.REQ_PATH = r#'/sh/nu/virt/list/podman'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=arch'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=host'#
 
 \$env.VIRT_LIST_PARTS = r#'podman'#
 
@@ -3676,10 +3676,10 @@ hide-env VIRT_MANAGER
 \`
 `;
 
-snapshot[`nu / linux / rem (arch) 1`] = `
+snapshot[`nu / linux / rem (host) 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/rem?sysOsPlat=linux&sysHost=arch'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/rem?sysOsPlat=linux&sysHost=host'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -3783,7 +3783,7 @@ do {
 }
 
 
-\$env.SYS_HOST = r#'arch'#
+\$env.SYS_HOST = r#'host'#
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -3791,7 +3791,7 @@ do {
 
 \$env.REQ_PATH = r#'/sh/nu/virt/rem'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=arch'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=host'#
 
 opPrintInfo r#'id: wut virt rem | remove on local
 aliases: r, rm, rem, remove, un, unin, uninstall
@@ -3800,10 +3800,10 @@ arguments:
 \`
 `;
 
-snapshot[`nu / linux / sync (arch) 1`] = `
+snapshot[`nu / linux / sync (host) 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/sync?sysOsPlat=linux&sysHost=arch'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/sync?sysOsPlat=linux&sysHost=host'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -3907,7 +3907,7 @@ do {
 }
 
 
-\$env.SYS_HOST = r#'arch'#
+\$env.SYS_HOST = r#'host'#
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -3915,7 +3915,7 @@ do {
 
 \$env.REQ_PATH = r#'/sh/nu/virt/sync'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=arch'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=host'#
 
 \$env.VIRT_OP = r#'sync'#
 
@@ -4088,7 +4088,7 @@ def virtQemu [] {
 
 \$env.VIRT_MANAGER = r#'lxc'#
 
-\$env.VIRT_INSTANCES = [ r#'alma'#, r#'kali'#, r#'void'# ]
+\$env.VIRT_INSTANCES = [ r#'dev'# ]
 
 virtLxc
 
@@ -4096,7 +4096,7 @@ hide-env VIRT_MANAGER
 
 \$env.VIRT_MANAGER = r#'podman'#
 
-\$env.VIRT_INSTANCES = [ r#'home/ftpd'#, r#'home/nfsd'#, r#'home/smbd'# ]
+\$env.VIRT_INSTANCES = [ r#'web/app'# ]
 
 virtPodman
 
@@ -4104,7 +4104,7 @@ hide-env VIRT_MANAGER
 
 \$env.VIRT_MANAGER = r#'qemu'#
 
-\$env.VIRT_INSTANCES = [ r#'glass'# ]
+\$env.VIRT_INSTANCES = [ r#'test'# ]
 
 virtQemu
 
@@ -4112,10 +4112,10 @@ hide-env VIRT_MANAGER
 \`
 `;
 
-snapshot[`nu / linux / find (arch glass) 1`] = `
+snapshot[`nu / linux / find (host test) 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find/glass?sysOsPlat=linux&sysHost=arch'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find/test?sysOsPlat=linux&sysHost=host'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -4219,17 +4219,17 @@ do {
 }
 
 
-\$env.SYS_HOST = r#'arch'#
+\$env.SYS_HOST = r#'host'#
 
 \$env.REQ_ORIG = r#'http://x'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
-\$env.REQ_PATH = r#'/sh/nu/virt/find/glass'#
+\$env.REQ_PATH = r#'/sh/nu/virt/find/test'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=arch'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=host'#
 
-\$env.VIRT_FIND_PARTS = r#'glass'#
+\$env.VIRT_FIND_PARTS = r#'test'#
 
 \$env.VIRT_OP = r#'find'#
 
@@ -4242,16 +4242,16 @@ do --env {
   }
   if \$yn != 'n' {
 opPrint r#'qemu'#
-opPrint r#'  glass'#
+opPrint r#'  test'#
   }
 }
 \`
 `;
 
-snapshot[`nu / linux / find (arch glass2) 1`] = `
+snapshot[`nu / linux / find (host test2) 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find/glass2?sysOsPlat=linux&sysHost=arch'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find/test2?sysOsPlat=linux&sysHost=host'#
 
 def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
@@ -4355,17 +4355,17 @@ do {
 }
 
 
-\$env.SYS_HOST = r#'arch'#
+\$env.SYS_HOST = r#'host'#
 
 \$env.REQ_ORIG = r#'http://x'#
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
-\$env.REQ_PATH = r#'/sh/nu/virt/find/glass2'#
+\$env.REQ_PATH = r#'/sh/nu/virt/find/test2'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=arch'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=host'#
 
-\$env.VIRT_FIND_PARTS = r#'glass2'#
+\$env.VIRT_FIND_PARTS = r#'test2'#
 
 \$env.VIRT_OP = r#'find'#
 

@@ -147,10 +147,8 @@ function opPrintMaybeRunCmd {
     \$yn = Read-Host "? use script [y, [n]]"
   }
   if (\$yn -ne 'n') {
-opPrint 'repair'
-opPrint '  gpu'
 opPrint 'setup'
-opPrint '  clock, fs, rust, ssh-server, webdav, windows-terminal, wsl'
+opPrint '  rust'
   }
 }
 \`
@@ -288,12 +286,10 @@ function () {
     read "yn?? use script [y, [n]]: "
   fi
   if [[ \$yn != 'n' ]]; then
-opPrint 'install'
-opPrint '  font-nerd'
 opPrint 'repair'
-opPrint '  brew, copyq'
+opPrint '  brew'
 opPrint 'setup'
-opPrint '  iterm, rust'
+opPrint '  rust'
   fi
 }
 \`
@@ -431,10 +427,8 @@ function () {
     read "yn?? use script [y, [n]]: "
   fi
   if [[ \$yn != 'n' ]]; then
-opPrint 'install'
-opPrint '  font-nerd'
 opPrint 'setup'
-opPrint '  docker, lxc, podman, rust'
+opPrint '  docker, rust'
   fi
 }
 \`
@@ -574,8 +568,6 @@ function () {
     read "yn?? use script [y, [n]]: "
   fi
   if [[ \$yn != 'n' ]]; then
-opPrint 'install'
-opPrint '  font-nerd'
   fi
 }
 \`

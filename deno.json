@@ -6,7 +6,6 @@
     "trailingCommas": "onlyMultiLine"
   },
   "imports": {
-    "@cross/deepmerge": "jsr:@cross/deepmerge@^1.0.1",
     "@eemeli/yaml": "jsr:@eemeli/yaml@^2.8.2",
     "@meop/shire": "jsr:@meop/shire@^0.6.4",
     "@std/assert": "jsr:@std/assert@^1.0.19",

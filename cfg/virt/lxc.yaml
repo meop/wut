@@ -1,0 +1,16 @@
+---
+environment:
+  - VIRT_LXC_DIR_PATH=/srv/virt/lxc
+lxc:
+  autostart: true
+  config:
+    apparmor:
+      profile: unconfined
+    pty:
+      max: 1024
+    seccomp:
+      profile: ''
+    mount:
+      auto: 'cgroup:mixed proc:mixed sys:mixed'
+    tty:
+      max: 4

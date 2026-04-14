@@ -1,0 +1,9 @@
+---
+podman:
+  networks:
+    net0:
+      driver: bridge
+      interface: br0
+      ipam: dhcp
+      options:
+        mode: unmanaged

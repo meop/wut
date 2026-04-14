@@ -1,0 +1,33 @@
+---
+lxc:
+  config:
+    cgroup:
+      devices:
+        allow: a
+    cgroup2:
+      devices:
+        allow: a
+    mount:
+      entry:
+        - '/dev/net/tun dev/net/tun none bind,create=file'
+        - '/sys/fs/fuse/connections sys/fs/fuse/connections none bind,optional 0 0'
+  create:
+    template:
+      download:
+        arch: amd64
+        dist: ubuntu
+        release: '24.04'
+        server: images.linuxcontainers.org
+        variant: default
+  network:
+    name: eth0
+    hwaddr: 00:16:3e:64:65:76
+    ## bridge
+    link: br0
+    type: veth
+    ## macvlan
+    # link: mvl0
+    # type: macvlan
+  mounts:
+    - source: /srv/code
+      target: /srv/code

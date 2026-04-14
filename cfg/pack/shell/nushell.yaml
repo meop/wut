@@ -1,0 +1,29 @@
+---
+add:
+  user:
+    cargo:
+      names:
+        - nu
+  script:
+    zsh:
+      file: cfg/script/zsh/install/nushell.zsh
+      gate:
+        sys_os_like:
+          - debian
+          - rhel
+          - suse
+        sys_os_plat:
+          - linux
+  system:
+    brew:
+      names:
+        - nushell
+    pacman:
+      names:
+        - nushell
+    xbps:
+      names:
+        - nushell
+    winget:
+      names:
+        - nushell.nushell

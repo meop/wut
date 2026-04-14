@@ -7,7 +7,7 @@ export interface Stng {
     port: number
   }
   cfg: {
-    dirs: string[]
+    dir: string
   }
 }
 
@@ -24,6 +24,6 @@ export const SETTINGS: Stng = {
     port: raw.srv?.port ?? 80,
   },
   cfg: {
-    dirs: raw.cfg?.dirs ?? [],
+    dir: Deno.env.get('WUT_CFG_DIR') ?? raw.cfg?.dir ?? 'cfg',
   },
 }

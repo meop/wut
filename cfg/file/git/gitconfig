@@ -1,0 +1,17 @@
+[commit]
+  gpgsign = true
+[core]
+  autocrlf = false
+[filter "lfs"]
+  clean = git-lfs clean -- %f
+  smudge = git-lfs smudge -- %f
+  process = git-lfs filter-process
+  required = true
+[gpg]
+  format = ssh
+[init]
+  defaultBranch = main
+[user]
+  email = user@example.com
+  name = User Name
+  signingkey = ~/.ssh/id_ed25519.pub

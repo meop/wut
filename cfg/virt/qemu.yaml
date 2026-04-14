@@ -1,0 +1,46 @@
+---
+environment:
+  - WARE_IMAGES_DIR_PATH=/srv/ware/images
+  - TMP_QEMU_DIR_PATH=/tmp/qemu
+  - VIRT_QEMU_DIR_PATH=/srv/virt/qemu
+qemu:
+  architecture:
+    x86_64:
+      cpu:
+        flags:
+          - +invtsc
+          - +topoext
+        pin: true
+        platform:
+          winnt:
+            flags:
+              - hv-relaxed
+              - hv-vapic
+              - hv-spinlocks=0x1fff
+              - hv-vpindex
+              - hv-runtime
+              - hv-time
+              - hv-synic
+              - hv-stimer
+              - hv-tlbflush
+              - hv-ipi
+              - hv-frequencies
+              - hv-reenlightenment
+              - hv-stimer-direct
+              - hv-avic
+              - hv-no-nonarch-coresharing=on
+              - hv-emsr-bitmap
+              - hv-xmm-input
+              - hv-tlbflush-ext
+              - hv-tlbflush-direct
+        vendor:
+          amd:
+            flags:
+              - +svm
+          intel:
+            flags:
+              - +vmx
+            platform:
+              winnt:
+                flags:
+                  - hv-evmcs

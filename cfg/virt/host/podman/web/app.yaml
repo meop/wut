@@ -1,0 +1,25 @@
+---
+kind: Pod
+metadata:
+  annotations:
+    io.podman.annotations.uts/{instance}-app: private
+    io.podman.annotations.hostname/{instance}-app: '{pod}-{instance}-app'
+spec:
+  containers:
+    - name: '{instance}-app'
+      image: lscr.io/linuxserver/nginx:latest
+      env:
+        - name: PGID
+          value: '10000'
+        - name: PUID
+          value: '9000'
+        - name: TZ
+          value: 'UTC'
+      volumeMounts:
+        - name: '{instance}-app-config'
+          mountPath: /config
+  volumes:
+    - name: '{instance}-app-config'
+      hostPath:
+        path: '/srv/virt/podman/{host}/{pod}/{instance}/app/config'
+        type: DirectoryOrCreate

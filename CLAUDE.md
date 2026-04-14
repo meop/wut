@@ -8,8 +8,7 @@ complete shell scripts that the shell executes locally. Supports nushell, PowerS
 **Dependencies:**
 
 - **shire** (`@meop/shire`) — shell abstraction library (cmd parsing, shell-specific syntax generation)
-- **wut-config** — config files (package definitions, dotfile mappings, scripts)
-- **wut-config-secret** — private config (optional, overlays wut-config)
+- **wut-config** — config files (package definitions, dotfile mappings, scripts) — loaded via `WUT_CFG_DIR` env var
 
 ## Development Commands
 
@@ -71,16 +70,15 @@ import { SETTINGS } from './stng.ts'
 
 ## Configuration Loading (`src/cfg.ts`)
 
+Config is loaded from a single directory specified by `cfg.dir` in `settings.toml`, overrideable via the `WUT_CFG_DIR`
+environment variable. The in-repo `cfg/` directory contains minimal example configs used by tests.
+
 Two distinct loading functions:
 
-- **`getCfgFileContent(parts)`** — raw content of the first matching file (wut-config-secret wins). Used by the `/cfg`
-  HTTP route for files fetched at runtime by nushell scripts (containerfiles, pod YAMLs).
-- **`getCfgFileLoad(parts, {extension})`** — loads ALL matching files across ALL cfg dirs and deep-merges them. Used by
-  commands that process config server-side (pack, file, script, virt). Makes commands "stitch-capable" —
-  `wut-config-secret` automatically merges with `wut-config`.
-
-Deep merge (`@cross/deepmerge`): records merge recursively, arrays append (later dirs append to earlier), scalars: later
-wins.
+- **`getCfgFileContent(parts)`** — raw file content. Used by the `/cfg` HTTP route for files fetched at runtime by
+  nushell scripts (containerfiles, pod YAMLs).
+- **`getCfgFileLoad(parts, {extension})`** — loads and parses a single config file (YAML/JSON). Used by commands that
+  process config server-side (pack, file, script, virt).
 
 ## Filter Semantics
 

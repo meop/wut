@@ -1,0 +1,33 @@
+---
+pwsh:
+  setup:
+    rust:
+      sys_os_plat:
+        - winnt
+zsh:
+  install:
+    docker:
+      sys_os:
+        - debian
+        - ubuntu
+      sys_os_plat:
+        - linux
+    nushell:
+      sys_os_like:
+        - debian
+        - rhel
+        - suse
+      sys_os_plat:
+        - linux
+  repair:
+    brew:
+      sys_os_plat:
+        - darwin
+  setup:
+    docker:
+      sys_os_plat:
+        - linux
+    rust:
+      sys_os_plat:
+        - darwin
+        - linux

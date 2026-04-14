@@ -1,0 +1,25 @@
+---
+kind: Pod
+metadata:
+  annotations:
+    io.podman.annotations.uts/{instance}-web: private
+    io.podman.annotations.hostname/{instance}-web: '{pod}-{instance}-web'
+spec:
+  containers:
+    - name: '{instance}-web'
+      image: lscr.io/linuxserver/heimdall:latest
+      env:
+        - name: PGID
+          value: '10000'
+        - name: PUID
+          value: '9000'
+        - name: TZ
+          value: 'UTC'
+      volumeMounts:
+        - name: '{instance}-web-config'
+          mountPath: /config
+  volumes:
+    - name: '{instance}-web-config'
+      hostPath:
+        path: '/srv/virt/podman/{host}/{pod}/{instance}/web/config'
+        type: DirectoryOrCreate

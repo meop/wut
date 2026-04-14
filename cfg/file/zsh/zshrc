@@ -1,0 +1,80 @@
+## history size
+HISTFILE=${ZDOTDIR:-${HOME}}/.zsh_history
+HISTSIZE=9000
+SAVEHIST=${HISTSIZE}
+
+## history sharing
+#unsetopt append_history
+#unsetopt inc_append_history
+#unsetopt inc_append_history_time
+#setopt share_history
+
+## prompt string substitution
+setopt prompt_subst
+
+## no beep
+unsetopt beep
+
+## no error and quit if glob fails
+## just exec command, like bash or pwsh do
+unsetopt nomatch
+
+## case insensitive matching
+zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}'
+
+## plugin manager
+function () {
+  local output="${HOME}/.zsh-plugins/znap"
+  if [[ ! -d "${output}" ]]; then
+    local url='https://github.com/marlonrichert/zsh-snap.git'
+    git clone --depth 1 --quiet "${url}" "${output}"
+  fi
+  . "${output}/znap.zsh"
+}
+
+znap source zsh-users/zsh-completions
+znap source zsh-users/zsh-autosuggestions
+znap source zsh-users/zsh-syntax-highlighting
+
+znap source zsh-users/zsh-history-substring-search
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
+
+## prompt
+eval "$(starship init zsh)"
+
+## jump
+eval "$(zoxide init zsh)"
+
+## aliases
+alias bd='cd -'
+alias ud='cd ..'
+alias df='df -h'
+alias du='du -h'
+alias grep='grep --color=auto'
+alias g='grep'
+alias ls='ls --color=auto -h'
+alias ll='ls -lAs'
+alias md='mkdir -p'
+alias rd='rmdir'
+
+## functions
+function v() {
+  eval "$VISUAL $*"
+}
+
+## bindkeys
+bindkey '^?' backward-delete-char
+bindkey '^[[3~' delete-char
+
+bindkey '^[[H' beginning-of-line
+bindkey '^[[F' end-of-line
+bindkey '^[[1~' beginning-of-line
+bindkey '^[[4~' end-of-line
+
+bindkey '^[[1;3D' backward-word
+bindkey '^[[1;3C' forward-word
+bindkey '^[[1;5D' backward-word
+bindkey '^[[1;5C' forward-word
+
+bindkey '^[[3;5~' kill-word

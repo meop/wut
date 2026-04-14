@@ -1,4 +1,3 @@
-import { deepMerge } from '@cross/deepmerge'
 import type { Ctx } from '@meop/shire/ctx'
 import { Fmt, parse } from '@meop/shire/serde'
 import { join } from '@std/path'
@@ -11,28 +10,20 @@ export type CtxFilter = {
   [key: string]: CtxFilter | Array<string>
 }
 
-const cfgDirPaths = [
-  join(import.meta.dirname ?? '', '..', 'cfg'),
-  ...SETTINGS.cfg.dirs.map((dir) => join(import.meta.dirname ?? '', '..', '..', dir, 'cfg')),
-].reverse()
+const cfgBasePath = SETTINGS.cfg.dir.startsWith('/')
+  ? SETTINGS.cfg.dir
+  : join(import.meta.dirname ?? '', '..', SETTINGS.cfg.dir)
+
+function cfgPath(parts: Array<string>, extension?: string) {
+  return `${join(cfgBasePath, ...parts)}${extension ? `.${extension}` : ''}`
+}
 
 export async function localCfgPaths(parts: Array<string>, extension?: string) {
-  const validDirs: Array<string> = []
-  const validCfgPaths: Array<string> = []
-
-  for (const maybeDir of cfgDirPaths) {
-    if (await isDirPath(maybeDir)) {
-      validDirs.push(maybeDir)
-    }
+  const maybeCfgPath = cfgPath(parts, extension)
+  if (await isPath(maybeCfgPath)) {
+    return [maybeCfgPath]
   }
-
-  for (const validDir of validDirs) {
-    const maybeCfgPath = `${join(validDir, ...parts)}${extension ? `.${extension}` : ''}`
-    if (await isPath(maybeCfgPath)) {
-      validCfgPaths.push(maybeCfgPath)
-    }
-  }
-  return validCfgPaths
+  return []
 }
 
 export async function getCfgDirDump(
@@ -45,19 +36,18 @@ export async function getCfgDirDump(
     flexible?: boolean
   },
 ) {
-  const dirFileParts: Array<Array<string>> = []
-  for (const dirPath of await localCfgPaths(parts)) {
-    if (!(await isDirPath(dirPath))) {
-      continue
-    }
-    dirFileParts.push(...(
-      await getFilePaths(dirPath, {
-        extension: options?.extension,
-        filters: options?.filters ?? undefined,
-        flexible: options?.flexible,
-      })
-    ).map((p) => toRelParts(dirPath, p)))
+  const dirPath = cfgPath(parts)
+  if (!(await isDirPath(dirPath))) {
+    return []
   }
+
+  const dirFileParts = (
+    await getFilePaths(dirPath, {
+      extension: options?.extension,
+      filters: options?.filters ?? undefined,
+      flexible: options?.flexible,
+    })
+  ).map((p) => toRelParts(dirPath, p))
 
   if (options?.context && options.contextFilter) {
     const dirFilePartsFiltered: Array<Array<string>> = []
@@ -145,23 +135,12 @@ export async function getCfgFileLoad(
     extension?: string
   },
 ) {
-  // deno-lint-ignore no-explicit-any
-  let content: any = null
-
-  for (const localCfgPath of (await localCfgPaths(parts, options?.extension))) {
-    const contentRaw = await getFileContent(localCfgPath)
-    if (contentRaw != null) {
-      const contentRawFmt = parse(
-        contentRaw,
-        options?.extension as Fmt ?? Fmt.yaml,
-      )
-      if (content == null) {
-        content = contentRawFmt
-      } else {
-        content = deepMerge(content, contentRawFmt)
-      }
-    }
+  const contentRaw = await getFileContent((await localCfgPaths(parts, options?.extension))[0] ?? '')
+  if (contentRaw == null) {
+    return null
   }
-
-  return content
+  return parse(
+    contentRaw,
+    options?.extension as Fmt ?? Fmt.yaml,
+  )
 }

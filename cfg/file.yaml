@@ -1,0 +1,81 @@
+---
+fzf:
+  maps:
+    - in: theme.zsh
+      out:
+        darwin: '{HOME}/.fzf/theme.zsh'
+        linux: '{HOME}/.fzf/theme.zsh'
+    - in: theme.ps1
+      out:
+        winnt: '{HOME}/.fzf/theme.ps1'
+git:
+  maps:
+    - in: gitconfig
+      out:
+        darwin: '{HOME}/.gitconfig'
+        linux: '{HOME}/.gitconfig'
+        winnt: '{HOME}/.gitconfig'
+nu:
+  maps:
+    - in: nu
+      out:
+        darwin: '{HOME}/.config/nushell/autoload'
+        linux: '{HOME}/.config/nushell/autoload'
+        winnt: '{HOME}/AppData/Roaming/nushell/autoload'
+    - in: env.nu
+      out:
+        darwin: '{HOME}/.config/nushell/env.nu'
+        linux: '{HOME}/.config/nushell/env.nu'
+        winnt: '{HOME}/AppData/Roaming/nushell/env.nu'
+    - in: config.nu
+      out:
+        darwin: '{HOME}/.config/nushell/config.nu'
+        linux: '{HOME}/.config/nushell/config.nu'
+        winnt: '{HOME}/AppData/Roaming/nushell/config.nu'
+pwsh:
+  maps:
+    - in: pwsh
+      out:
+        darwin: '{HOME}/.pwsh'
+        linux: '{HOME}/.pwsh'
+        winnt: '{HOME}/.pwsh'
+    - in: env.ps1
+      out:
+        darwin: '{HOME}/.config/powershell/env.ps1'
+        linux: '{HOME}/.config/powershell/env.ps1'
+        winnt: '{HOME}/Documents/PowerShell/env.ps1'
+    - in: profile.ps1
+      out:
+        darwin: '{HOME}/.config/powershell/profile.ps1'
+        linux: '{HOME}/.config/powershell/profile.ps1'
+        winnt: '{HOME}/Documents/PowerShell/profile.ps1'
+ssh:
+  maps:
+    - in: hushlogin
+      out:
+        darwin: '{HOME}/.hushlogin'
+        linux: '{HOME}/.hushlogin'
+        winnt: '{HOME}/.hushlogin'
+    - in: config
+      out:
+        darwin: '{HOME}/.ssh/config'
+        linux: '{HOME}/.ssh/config'
+        winnt: '{HOME}/.ssh/config'
+      permission:
+        user:
+          read: true
+          write: true
+zsh:
+  maps:
+    - in: zsh
+      out:
+        darwin: '{HOME}/.zsh'
+        linux: '{HOME}/.zsh'
+    - in: zshenv
+      out:
+        darwin: '{HOME}/.zshenv'
+        linux: '{HOME}/.zshenv'
+    - in: zshrc
+      out:
+        darwin: '{HOME}/.zshrc'
+        linux: '{HOME}/.zshrc'

@@ -1,0 +1,6 @@
+CanonicalDomains lan
+CanonicalizeHostname yes
+LogLevel QUIET
+
+Match Host *.lan
+  User user

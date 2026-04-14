@@ -1,7 +1,6 @@
 {
   "version": "5",
   "specifiers": {
-    "jsr:@cross/deepmerge@^1.0.1": "1.0.1",
     "jsr:@eemeli/yaml@^2.8.2": "2.8.2",
     "jsr:@meop/shire@~0.6.4": "0.6.4",
     "jsr:@std/assert@^1.0.17": "1.0.19",
@@ -16,9 +15,6 @@
     "jsr:@std/toml@^1.0.11": "1.0.11"
   },
   "jsr": {
-    "@cross/deepmerge@1.0.1": {
-      "integrity": "7a224229f1a463087d62cef8729d26263ed4f5e3c2f2bfec64fc0a16a9dbc754"
-    },
     "@eemeli/yaml@2.8.2": {
       "integrity": "58f95e7b82f2717963d31f350a9c7cdc098a7b481a3f64c58e979e2e999db0b0"
     },
@@ -75,7 +71,6 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@cross/deepmerge@^1.0.1",
       "jsr:@eemeli/yaml@^2.8.2",
       "jsr:@meop/shire@~0.6.4",
       "jsr:@std/assert@^1.0.19",

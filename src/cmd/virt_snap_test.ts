@@ -99,46 +99,46 @@ Deno.test('nu / winnt / tidy', async (t) => {
   await checkSyntax('nu', body)
 })
 
-// nu × linux × arch (with sysHost — exercises real instance config loading)
-Deno.test('nu / linux / add (arch)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/virt/add?sysOsPlat=linux&sysHost=arch'))).text()
+// nu × linux × host (with sysHost — exercises real instance config loading)
+Deno.test('nu / linux / add (host)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/virt/add?sysOsPlat=linux&sysHost=host'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / linux / find (arch)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/virt/find?sysOsPlat=linux&sysHost=arch'))).text()
+Deno.test('nu / linux / find (host)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/virt/find?sysOsPlat=linux&sysHost=host'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / linux / list (arch)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/virt/list?sysOsPlat=linux&sysHost=arch'))).text()
+Deno.test('nu / linux / list (host)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/virt/list?sysOsPlat=linux&sysHost=host'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / linux / list (arch podman)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/virt/list/podman?sysOsPlat=linux&sysHost=arch'))).text()
+Deno.test('nu / linux / list (host podman)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/virt/list/podman?sysOsPlat=linux&sysHost=host'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / linux / rem (arch)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/virt/rem?sysOsPlat=linux&sysHost=arch'))).text()
+Deno.test('nu / linux / rem (host)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/virt/rem?sysOsPlat=linux&sysHost=host'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / linux / sync (arch)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/virt/sync?sysOsPlat=linux&sysHost=arch'))).text()
+Deno.test('nu / linux / sync (host)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/virt/sync?sysOsPlat=linux&sysHost=host'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
 
-// nu × linux × arch × find with filter (exercises substring filter direction)
-Deno.test('nu / linux / find (arch glass)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/virt/find/glass?sysOsPlat=linux&sysHost=arch'))).text()
+// nu × linux × host × find with filter (exercises substring filter direction)
+Deno.test('nu / linux / find (host test)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/virt/find/test?sysOsPlat=linux&sysHost=host'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / linux / find (arch glass2)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/virt/find/glass2?sysOsPlat=linux&sysHost=arch'))).text()
+Deno.test('nu / linux / find (host test2)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/virt/find/test2?sysOsPlat=linux&sysHost=host'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })

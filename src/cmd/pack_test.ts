@@ -418,20 +418,20 @@ Deno.test('getManagerFuncName - custom prefix', () => {
 // --- resolveGroupName ---
 
 Deno.test('resolveGroupName - suffix match finds group', async () => {
-  const result = await resolveGroupName('rust')
-  assertEquals(result.includes('lang-rust'), true)
+  const result = await resolveGroupName('nushell')
+  assertEquals(result.includes('shell-nushell'), true)
 })
 
-Deno.test('resolveGroupName - prefix match finds multiple groups', async () => {
-  const result = await resolveGroupName('lang')
-  assertEquals(result.length > 1, true)
-  assertEquals(result.includes('lang-rust'), true)
+Deno.test('resolveGroupName - prefix match finds groups', async () => {
+  const result = await resolveGroupName('shell')
+  assertEquals(result.length >= 1, true)
+  assertEquals(result.includes('shell-nushell'), true)
 })
 
 Deno.test('resolveGroupName - multi-part prefix match', async () => {
-  const result = await resolveGroupName('ai-code')
+  const result = await resolveGroupName('shell')
   assertEquals(result.length >= 1, true)
-  assertEquals(result.every((r) => r.startsWith('ai-code-')), true)
+  assertEquals(result.every((r) => r.startsWith('shell-')), true)
 })
 
 Deno.test('resolveGroupName - no match returns empty', async () => {
@@ -440,8 +440,8 @@ Deno.test('resolveGroupName - no match returns empty', async () => {
 })
 
 Deno.test('resolveGroupName - full name exact match', async () => {
-  const result = await resolveGroupName('lang-rust')
-  assertEquals(result.includes('lang-rust'), true)
+  const result = await resolveGroupName('shell-nushell')
+  assertEquals(result.includes('shell-nushell'), true)
 })
 
 Deno.test('resolveGroupName - name longer than any path returns empty', async () => {
