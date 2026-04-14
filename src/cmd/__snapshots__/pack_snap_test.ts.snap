@@ -12993,6 +12993,8 @@ def --env packYay [] {
 }
 
 
+\$env.PACKED = false
+
 do --env {
 mut yn = ''
 if 'YES' in \$env {
@@ -13216,6 +13218,8 @@ def --env packApt [] {
   packAptOp \$cmd
 }
 
+
+\$env.PACKED = false
 
 do --env {
 mut yn = ''

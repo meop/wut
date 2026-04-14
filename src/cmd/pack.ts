@@ -522,12 +522,15 @@ async function processGroupConfig(
     }
   }
 
-  if (tierBlocks.length === 1) {
-    _shell = _shell.with(
-      _shell.gatedFunc(tierBlocks[0].label, tierBlocks[0].lines),
-    )
-  } else if (tierBlocks.length > 1) {
-    _shell = _shell.with(buildTierChain(tierBlocks))
+  if (tierBlocks.length > 0) {
+    _shell = _shell.with('$env.PACKED = false')
+    if (tierBlocks.length === 1) {
+      _shell = _shell.with(
+        _shell.gatedFunc(tierBlocks[0].label, tierBlocks[0].lines),
+      )
+    } else {
+      _shell = _shell.with(buildTierChain(tierBlocks))
+    }
   }
 
   return { shell: _shell, found }
