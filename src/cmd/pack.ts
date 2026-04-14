@@ -292,17 +292,14 @@ async function findGroupsWithNames(
           }
           if (entry.commands?.length) {
             for (const cmd of entry.commands) {
-              if (!allNames.includes(cmd)) {
-                allNames.push(cmd)
-              }
+              if (!allNames.includes(cmd)) allNames.push(cmd)
             }
-            tierFound = true
           } else if (entry.file) {
-            if (!allNames.includes(entry.file)) {
-              allNames.push(entry.file)
-            }
-            tierFound = true
+            if (!allNames.includes(entry.file)) allNames.push(entry.file)
+          } else {
+            continue
           }
+          tierFound = true
         } else {
           const tierContent = addConfig[tier] as
             | Record<string, ManagerEntry>
@@ -373,6 +370,8 @@ function setOpNames(shell: Sh, op: string, names: string) {
 
 interface ManagerEntry {
   names: Array<string>
+  pwsh?: ScriptEntry
+  zsh?: ScriptEntry
 }
 
 type RemManagerEntry = Record<string, ScriptEntry>
@@ -398,7 +397,7 @@ function processManagerEntryLines(
   lines.push(shell.varSetStr(PACK_MANAGER_KEY, manager))
 
   if (op === 'add') {
-    const preScript = (entry as unknown as Record<string, ScriptEntry>)[nativeShell]
+    const preScript = entry[nativeShell as 'pwsh' | 'zsh']
     if (preScript?.commands?.length) {
       lines.push(...buildCmdRunLines(shell, plat, preScript.commands))
     }
@@ -488,70 +487,34 @@ async function processGroupConfig(
       if (!entry || !evaluateGate(entry.gate, context)) {
         continue
       }
-      const scriptLines: Array<string> = [..._shell.print(name)]
+      let scriptBodyLines: Array<string> | null = null
       if (entry.commands?.length) {
-        scriptLines.push(...buildCmdRunLines(_shell, plat, entry.commands))
-        tierBlocks.push({ label: 'use pack (script)', lines: scriptLines })
-        found = true
+        scriptBodyLines = buildCmdRunLines(_shell, plat, entry.commands)
       } else if (entry.file) {
-        const fileLines = await buildFileRunLines(_shell, plat, entry.file)
-        if (fileLines) {
-          scriptLines.push(...fileLines)
-          tierBlocks.push({ label: 'use pack (script)', lines: scriptLines })
-          found = true
-        }
+        scriptBodyLines = await buildFileRunLines(_shell, plat, entry.file)
       }
-    } else if (tier === 'user') {
-      const userConfig = addConfig![tier] as
-        | Record<string, ManagerEntry>
-        | undefined
-      for (const tool of userManagers) {
-        const entry = userConfig?.[tool]
-        if (!entry?.names?.length) {
-          continue
-        }
+      if (scriptBodyLines) {
         tierBlocks.push({
-          label: 'use pack (user)',
-          lines: [
-            ..._shell.print(name),
-            ..._shell.print(`  ${entry.names.join(', ')}`),
-            ...processManagerEntryLines(
-              _shell,
-              context,
-              op,
-              tool,
-              entry,
-              remConfig?.user?.[tool],
-            ),
-          ],
+          label: 'use pack (script)',
+          lines: [..._shell.print(name), ...scriptBodyLines, '$env.PACKED = true'],
         })
         found = true
       }
-    } else if (tier === 'system') {
-      const systemConfig = addConfig![tier] as
-        | Record<string, ManagerEntry>
-        | undefined
-      for (const key of Object.keys(systemConfig ?? {})) {
-        if (!sysManagers.includes(key)) {
-          continue
-        }
-        const entry = systemConfig![key]
+    } else if (tier === 'user' || tier === 'system') {
+      const managers = tier === 'user' ? userManagers : sysManagers
+      const tierConfig = addConfig?.[tier] as Record<string, ManagerEntry> | undefined
+      const tierRemConfig = tier === 'user' ? remConfig?.user : remConfig?.system
+      for (const manager of managers) {
+        const entry = tierConfig?.[manager]
         if (!entry?.names?.length) {
           continue
         }
         tierBlocks.push({
-          label: 'use pack (system)',
+          label: `use pack (${tier})`,
           lines: [
             ..._shell.print(name),
             ..._shell.print(`  ${entry.names.join(', ')}`),
-            ...processManagerEntryLines(
-              _shell,
-              context,
-              op,
-              key,
-              entry,
-              remConfig?.system?.[key],
-            ),
+            ...processManagerEntryLines(_shell, context, op, manager, entry, tierRemConfig?.[manager]),
           ],
         })
         found = true
