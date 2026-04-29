@@ -1,5 +1,5 @@
-def --env packBrew [] {
-  let cmd = 'brew'
+def --env packGhpm [] {
+  let cmd = 'ghpm'
   if (
     (which $cmd | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
@@ -14,30 +14,25 @@ def --env packBrew [] {
 
   match $env.PACK_OP {
     'add' => {
-      packOpUp [$cmd update]
       packOpAdd [$cmd search] [$cmd install]
     }
     'find' => {
-      packOpUp [$cmd update]
       packOpFind [$cmd search]
     }
     'list' => {
       packOpList [$cmd list]
     }
     'out' => {
-      packOpUp [$cmd update]
       packOpOut [$cmd outdated]
     }
     'rem' => {
       packOpRem [$cmd list] [$cmd uninstall]
     }
     'sync' => {
-      packOpUp [$cmd update]
-      packOpSync [$cmd upgrade --greedy] [$cmd upgrade --greedy]
+      packOpSync [$cmd update] [$cmd sync]
     }
     'tidy' => {
-      opPrintMaybeRunCmd $cmd cleanup --prune=all --scrub
-      opPrintMaybeRunCmd $cmd autoremove
+      packOpTidy [$cmd clean]
     }
   }
 }

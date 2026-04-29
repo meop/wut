@@ -1,33 +1,21 @@
 ---
 pwsh:
+  install:
+    rustup:
+      sys_os_plat:
+        - winnt
   setup:
-    rust:
+    cargo:
       sys_os_plat:
         - winnt
 zsh:
   install:
-    docker:
-      sys_os:
-        - debian
-        - ubuntu
-      sys_os_plat:
-        - linux
-    nushell:
-      sys_os_like:
-        - debian
-        - rhel
-        - suse
-      sys_os_plat:
-        - linux
-  repair:
-    brew:
+    rustup:
       sys_os_plat:
         - darwin
-  setup:
-    docker:
-      sys_os_plat:
         - linux
-    rust:
+  setup:
+    cargo:
       sys_os_plat:
         - darwin
         - linux

@@ -9,7 +9,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$\\"(\$args | str join ' ')\\" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -17,11 +17,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-
-  \$\\"(ansi red)(\$args | str join ' ')(ansi reset)\\" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -29,11 +28,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$\\"(ansi green)(\$args | str join ' ')(ansi reset)\\" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -41,11 +39,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$\\"(ansi yellow)(\$args | str join ' ')(ansi reset)\\" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -53,11 +50,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$\\"(ansi blue)(\$args | str join ' ')(ansi reset)\\" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -65,18 +61,40 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
+  let args = \$args | flatten
   \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
     \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   }
 }
 
+def opMaybePrintCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$\\"(\$args | str join ' ')\\"
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunSilentCmd ...\$args
+  }
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -86,9 +104,7 @@ def opPrintRunCmd --wrapped [...args] {
 
 def opPrintMaybeRunCmd --wrapped [...args] {
   opPrintCmd ...\$args
-  if 'NOOP' not-in \$env {
-    opRunCmd ...\$args
-  }
+  opMaybeRunCmd ...\$args
 }
 
 
@@ -115,41 +131,312 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
 
-def fileOp [] {
-  for pair in \$env.FILE_DIFF_PATH_PAIRS {
-    let pairParts = \$pair | split row '|'
+def replaceEnv [line] {
+  mut l = \$line
+  if (\$l | str contains '{') {
+    let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
+    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
+      \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
+    }
+  }
+  return \$l
+}
+def file [] {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'use file (user) [y,[n]]: '#
+  }
+  if \$yn == 'n' {
+    return
+  }
+  match \$env.FILE_OP {
+    'diff' => {
+      for pair in \$env.FILE_DIFF_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
 
-    mut bin = ''
-    for alias in (\$pairParts.0 | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
+        opPrintRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$tmpFilePath)'#\\"
+
+        let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
+
+        if (\$dstFilePath | path exists) {
+          opPrintRunCmd \$diffCmd \$\\"r#'(\$dstFilePath)'#\\" \$\\"r#'(\$tmpFilePath)'#\\" '|' complete '|' get stdout '|' str trim --right
+        } else {
+          opPrintWarn \$\\"\`(\$dstFilePath)\` does not exist\\"
+        }
+
+        opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    if (\$bin | is-empty) {
-      continue
+    'find' => {
+      for entry in \$env.FILE_FIND_KEYS {
+        let parts = \$entry | split row '|'
+        let keys = \$parts | get 0
+        let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
+
+        mut bin = ''
+        for alias in (\$keys | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        opPrint \$bin
+        if (\$ins | is-not-empty) {
+          opPrint \$\\"  (\$ins)\\"
+        }
+      }
     }
+    'list' => {
+      for pair in \$env.FILE_LIST_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
 
-    let src = \$pairParts.1 | str trim --left --char '/'
-    let dstFilePath = replaceEnv \$pairParts.2 | path expand
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
 
-    let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
 
-    let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
-    opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$tmpFilePath)'#\\"
-
-    let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
-
-    if (\$dstFilePath | path exists) {
-      opPrintMaybeRunCmd \$diffCmd \$\\"r#'(\$dstFilePath)'#\\" \$\\"r#'(\$tmpFilePath)'#\\" '|' complete '|' get stdout '|' str trim --right
-    } else {
-      opPrintWarn \$\\"\`(\$dstFilePath)\` does not exist\\"
+        opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
+      }
     }
+    'sync' => {
+      for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
+        let dirParts = \$dir | split row '|'
 
-    opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
+        mut bin = ''
+        for alias in (\$dirParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let dstFilePath = replaceEnv \$dirParts.1 | path expand
+        opPrintMaybeRunCmd rm --force --permanent --recursive \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      mut createdDirs = []
+      for pair in \$env.FILE_SYNC_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let dstParentDirPath = \$dstFilePath | path dirname
+        if (\$dstParentDirPath not-in \$createdDirs) {
+          \$createdDirs = \$createdDirs ++ [\$dstParentDirPath]
+          opPrintMaybeRunCmd mkdir \$\\"r#'(\$dstParentDirPath)'#\\"
+        }
+        opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      for perm in (\$env.FILE_SYNC_PATH_PERMS? | default []) {
+        let permParts = \$perm | split row '|'
+
+        mut bin = ''
+        for alias in (\$permParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let cmd = replaceEnv \$permParts.1
+        opPrintMaybeRunCmd ...(\$cmd | split row ' ')
+      }
+    }
   }
 }
 
+
+\$env.FILE_DIFF_PATH_PAIRS = [ r#'fzf|fzf/theme.zsh|{HOME}/.fzf/theme.zsh'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
+
+\$env.FILE_OP = r#'diff'#
+
+file
+"
+`;
+
+snapshot[`nu / darwin / find 1`] = `
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=darwin'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$\\"(\$args | flatten | str join ' ')\\" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+    return
+  }
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  let args = \$args | flatten
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
+  if (\$args | length) > 1 {
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunSilentCmd ...\$args
+  }
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opMaybeRunCmd ...\$args
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'darwin'#
+
+\$env.REQ_PATH = r#'/sh/nu/file/find'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
 
 def replaceEnv [line] {
   mut l = \$line
@@ -166,193 +453,169 @@ def file [] {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use file (user) [y, [n]]: '#
+    \$yn = input r#'use file (user) [y,[n]]: '#
   }
   if \$yn == 'n' {
     return
   }
-  fileOp
-}
+  match \$env.FILE_OP {
+    'diff' => {
+      for pair in \$env.FILE_DIFF_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
 
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
 
-\$env.FILE_DIFF_PATH_PAIRS = [ r#'fzf|fzf/theme.zsh|{HOME}/.fzf/theme.zsh'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
 
-file
-"
-`;
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
 
-snapshot[`nu / darwin / find 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+        let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
+        opPrintRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$tmpFilePath)'#\\"
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=darwin'#
+        let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
 
-def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  \$"(\$args | str join ' ')" | print
-}
+        if (\$dstFilePath | path exists) {
+          opPrintRunCmd \$diffCmd \$\\"r#'(\$dstFilePath)'#\\" \$\\"r#'(\$tmpFilePath)'#\\" '|' complete '|' get stdout '|' str trim --right
+        } else {
+          opPrintWarn \$\\"\`(\$dstFilePath)\` does not exist\\"
+        }
 
-def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print --stderr
-    return
-  }
-
-  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
-}
-
-def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
-    return
-  }
-
-  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
-}
-
-def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
-    return
-  }
-
-  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
-}
-
-def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
-    return
-  }
-
-  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
-}
-
-def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
-    return
-  }
-
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
-  if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
-  }
-}
-
-def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$"(\$args | str join ' ')"
-}
-
-def opPrintRunCmd --wrapped [...args] {
-  opPrintCmd ...\$args
-  opRunCmd ...\$args
-}
-
-def opPrintMaybeRunCmd --wrapped [...args] {
-  opPrintCmd ...\$args
-  if 'NOOP' not-in \$env {
-    opRunCmd ...\$args
-  }
-}
-
-
-\$env.SH_VERS_MAJOR = 0
-
-\$env.SH_VERS_MINOR = 111
-
-do {
-  let major = \$env.SH_VERS_MAJOR | into int
-  let minor = \$env.SH_VERS_MINOR | into int
-
-  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
-    exit 1
-  }
-}
-
-
-\$env.REQ_ORIG = r#'http://x'#
-
-\$env.SYS_OS_PLAT = r#'darwin'#
-
-\$env.REQ_PATH = r#'/sh/nu/file/find'#
-
-\$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
-
-def fileOp [] {
-  for entry in \$env.FILE_FIND_KEYS {
-    let parts = \$entry | split row '|'
-    let keys = \$parts | get 0
-    let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
-
-    mut bin = ''
-    for alias in (\$keys | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
+        opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    if (\$bin | is-empty) {
-      continue
-    }
+    'find' => {
+      for entry in \$env.FILE_FIND_KEYS {
+        let parts = \$entry | split row '|'
+        let keys = \$parts | get 0
+        let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
 
-    opPrint \$bin
-    if (\$ins | is-not-empty) {
-      opPrint \$"  (\$ins)"
+        mut bin = ''
+        for alias in (\$keys | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        opPrint \$bin
+        if (\$ins | is-not-empty) {
+          opPrint \$\\"  (\$ins)\\"
+        }
+      }
+    }
+    'list' => {
+      for pair in \$env.FILE_LIST_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
+      }
+    }
+    'sync' => {
+      for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
+        let dirParts = \$dir | split row '|'
+
+        mut bin = ''
+        for alias in (\$dirParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let dstFilePath = replaceEnv \$dirParts.1 | path expand
+        opPrintMaybeRunCmd rm --force --permanent --recursive \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      mut createdDirs = []
+      for pair in \$env.FILE_SYNC_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let dstParentDirPath = \$dstFilePath | path dirname
+        if (\$dstParentDirPath not-in \$createdDirs) {
+          \$createdDirs = \$createdDirs ++ [\$dstParentDirPath]
+          opPrintMaybeRunCmd mkdir \$\\"r#'(\$dstParentDirPath)'#\\"
+        }
+        opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      for perm in (\$env.FILE_SYNC_PATH_PERMS? | default []) {
+        let permParts = \$perm | split row '|'
+
+        mut bin = ''
+        for alias in (\$permParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let cmd = replaceEnv \$permParts.1
+        opPrintMaybeRunCmd ...(\$cmd | split row ' ')
+      }
     }
   }
-}
-
-
-def replaceEnv [line] {
-  mut l = \$line
-  if (\$l | str contains '{') {
-    let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
-    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
-      \$l = \$l | str replace --all \$"{(\$e.0)}" (\$e.1)
-    }
-  }
-  return \$l
-}
-def file [] {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input r#'? use file (user) [y, [n]]: '#
-  }
-  if \$yn == 'n' {
-    return
-  }
-  fileOp
 }
 
 
 \$env.FILE_FIND_KEYS = [ r#'fzf|theme.zsh, theme.ps1'#, r#'git|gitconfig'#, r#'nu|nu, env.nu, config.nu'#, r#'pwsh|pwsh, env.ps1, profile.ps1'#, r#'ssh|hushlogin, config'#, r#'zsh|zsh, zshenv, zshrc'# ]
 
+\$env.FILE_OP = r#'find'#
+
 file
-\`
+"
 `;
 
 snapshot[`nu / darwin / sync 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=darwin'#
 
@@ -360,7 +623,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$"(\$args | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -368,11 +631,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-
-  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -380,11 +642,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -392,11 +653,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -404,11 +664,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -416,18 +675,40 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  let args = \$args | flatten
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opPrintCmd ...\$args
   }
 }
 
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$"(\$args | str join ' ')"
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunSilentCmd ...\$args
+  }
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -437,9 +718,7 @@ def opPrintRunCmd --wrapped [...args] {
 
 def opPrintMaybeRunCmd --wrapped [...args] {
   opPrintCmd ...\$args
-  if 'NOOP' not-in \$env {
-    opRunCmd ...\$args
-  }
+  opMaybeRunCmd ...\$args
 }
 
 
@@ -452,7 +731,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -466,79 +745,12 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
 
-def fileOp [] {
-  for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
-    let dirParts = \$dir | split row '|'
-
-    mut bin = ''
-    for alias in (\$dirParts.0 | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
-      }
-    }
-    if (\$bin | is-empty) {
-      continue
-    }
-
-    let dstFilePath = replaceEnv \$dirParts.1 | path expand
-    opPrintMaybeRunCmd rm --force --permanent --recursive \$"r#'(\$dstFilePath)'#"
-  }
-
-  mut createdDirs = []
-  for pair in \$env.FILE_SYNC_PATH_PAIRS {
-    let pairParts = \$pair | split row '|'
-
-    mut bin = ''
-    for alias in (\$pairParts.0 | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
-      }
-    }
-    if (\$bin | is-empty) {
-      continue
-    }
-
-    let src = \$pairParts.1 | str trim --left --char '/'
-    let dstFilePath = replaceEnv \$pairParts.2 | path expand
-
-    let srcUrl = \$"(\$env.REQ_URL_CFG)/file/(\$src)"
-
-    let dstParentDirPath = \$dstFilePath | path dirname
-    if (\$dstParentDirPath not-in \$createdDirs) {
-      \$createdDirs = \$createdDirs ++ [\$dstParentDirPath]
-      opPrintMaybeRunCmd mkdir \$"r#'(\$dstParentDirPath)'#"
-    }
-    opPrintMaybeRunCmd '\$"(' http get --raw --redirect-mode follow \$"r#'(\$srcUrl)'#" ')"' '|' save --force \$"r#'(\$dstFilePath)'#"
-  }
-
-  for perm in (\$env.FILE_SYNC_PATH_PERMS? | default []) {
-    let permParts = \$perm | split row '|'
-
-    mut bin = ''
-    for alias in (\$permParts.0 | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
-      }
-    }
-    if (\$bin | is-empty) {
-      continue
-    }
-
-    let cmd = replaceEnv \$permParts.1
-    opPrintMaybeRunCmd ...(\$cmd | split row ' ')
-  }
-}
-
-
 def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
     for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
-      \$l = \$l | str replace --all \$"{(\$e.0)}" (\$e.1)
+      \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
   return \$l
@@ -548,12 +760,156 @@ def file [] {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use file (user) [y, [n]]: '#
+    \$yn = input r#'use file (user) [y,[n]]: '#
   }
   if \$yn == 'n' {
     return
   }
-  fileOp
+  match \$env.FILE_OP {
+    'diff' => {
+      for pair in \$env.FILE_DIFF_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
+        opPrintRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$tmpFilePath)'#\\"
+
+        let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
+
+        if (\$dstFilePath | path exists) {
+          opPrintRunCmd \$diffCmd \$\\"r#'(\$dstFilePath)'#\\" \$\\"r#'(\$tmpFilePath)'#\\" '|' complete '|' get stdout '|' str trim --right
+        } else {
+          opPrintWarn \$\\"\`(\$dstFilePath)\` does not exist\\"
+        }
+
+        opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
+      }
+    }
+    'find' => {
+      for entry in \$env.FILE_FIND_KEYS {
+        let parts = \$entry | split row '|'
+        let keys = \$parts | get 0
+        let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
+
+        mut bin = ''
+        for alias in (\$keys | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        opPrint \$bin
+        if (\$ins | is-not-empty) {
+          opPrint \$\\"  (\$ins)\\"
+        }
+      }
+    }
+    'list' => {
+      for pair in \$env.FILE_LIST_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
+      }
+    }
+    'sync' => {
+      for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
+        let dirParts = \$dir | split row '|'
+
+        mut bin = ''
+        for alias in (\$dirParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let dstFilePath = replaceEnv \$dirParts.1 | path expand
+        opPrintMaybeRunCmd rm --force --permanent --recursive \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      mut createdDirs = []
+      for pair in \$env.FILE_SYNC_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let dstParentDirPath = \$dstFilePath | path dirname
+        if (\$dstParentDirPath not-in \$createdDirs) {
+          \$createdDirs = \$createdDirs ++ [\$dstParentDirPath]
+          opPrintMaybeRunCmd mkdir \$\\"r#'(\$dstParentDirPath)'#\\"
+        }
+        opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      for perm in (\$env.FILE_SYNC_PATH_PERMS? | default []) {
+        let permParts = \$perm | split row '|'
+
+        mut bin = ''
+        for alias in (\$permParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let cmd = replaceEnv \$permParts.1
+        opPrintMaybeRunCmd ...(\$cmd | split row ' ')
+      }
+    }
+  }
 }
 
 
@@ -563,8 +919,10 @@ def file [] {
 
 \$env.FILE_SYNC_PATH_PERMS = [ r##'ssh|zsh --no-rcs -c r#'chmod -R a-s,u=rw,g=,o= '{HOME}/.ssh/config''#'## ]
 
+\$env.FILE_OP = r#'sync'#
+
 file
-\`
+"
 `;
 
 snapshot[`nu / linux / diff 1`] = `
@@ -576,7 +934,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$\\"(\$args | str join ' ')\\" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -584,11 +942,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-
-  \$\\"(ansi red)(\$args | str join ' ')(ansi reset)\\" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -596,11 +953,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$\\"(ansi green)(\$args | str join ' ')(ansi reset)\\" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -608,11 +964,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$\\"(ansi yellow)(\$args | str join ' ')(ansi reset)\\" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -620,11 +975,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$\\"(ansi blue)(\$args | str join ' ')(ansi reset)\\" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -632,18 +986,40 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
+  let args = \$args | flatten
   \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
     \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   }
 }
 
+def opMaybePrintCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$\\"(\$args | str join ' ')\\"
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunSilentCmd ...\$args
+  }
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -653,9 +1029,7 @@ def opPrintRunCmd --wrapped [...args] {
 
 def opPrintMaybeRunCmd --wrapped [...args] {
   opPrintCmd ...\$args
-  if 'NOOP' not-in \$env {
-    opRunCmd ...\$args
-  }
+  opMaybeRunCmd ...\$args
 }
 
 
@@ -682,41 +1056,312 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux'#
 
-def fileOp [] {
-  for pair in \$env.FILE_DIFF_PATH_PAIRS {
-    let pairParts = \$pair | split row '|'
+def replaceEnv [line] {
+  mut l = \$line
+  if (\$l | str contains '{') {
+    let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
+    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
+      \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
+    }
+  }
+  return \$l
+}
+def file [] {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'use file (user) [y,[n]]: '#
+  }
+  if \$yn == 'n' {
+    return
+  }
+  match \$env.FILE_OP {
+    'diff' => {
+      for pair in \$env.FILE_DIFF_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
 
-    mut bin = ''
-    for alias in (\$pairParts.0 | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
+        opPrintRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$tmpFilePath)'#\\"
+
+        let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
+
+        if (\$dstFilePath | path exists) {
+          opPrintRunCmd \$diffCmd \$\\"r#'(\$dstFilePath)'#\\" \$\\"r#'(\$tmpFilePath)'#\\" '|' complete '|' get stdout '|' str trim --right
+        } else {
+          opPrintWarn \$\\"\`(\$dstFilePath)\` does not exist\\"
+        }
+
+        opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    if (\$bin | is-empty) {
-      continue
+    'find' => {
+      for entry in \$env.FILE_FIND_KEYS {
+        let parts = \$entry | split row '|'
+        let keys = \$parts | get 0
+        let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
+
+        mut bin = ''
+        for alias in (\$keys | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        opPrint \$bin
+        if (\$ins | is-not-empty) {
+          opPrint \$\\"  (\$ins)\\"
+        }
+      }
     }
+    'list' => {
+      for pair in \$env.FILE_LIST_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
 
-    let src = \$pairParts.1 | str trim --left --char '/'
-    let dstFilePath = replaceEnv \$pairParts.2 | path expand
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
 
-    let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
 
-    let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
-    opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$tmpFilePath)'#\\"
-
-    let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
-
-    if (\$dstFilePath | path exists) {
-      opPrintMaybeRunCmd \$diffCmd \$\\"r#'(\$dstFilePath)'#\\" \$\\"r#'(\$tmpFilePath)'#\\" '|' complete '|' get stdout '|' str trim --right
-    } else {
-      opPrintWarn \$\\"\`(\$dstFilePath)\` does not exist\\"
+        opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
+      }
     }
+    'sync' => {
+      for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
+        let dirParts = \$dir | split row '|'
 
-    opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
+        mut bin = ''
+        for alias in (\$dirParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let dstFilePath = replaceEnv \$dirParts.1 | path expand
+        opPrintMaybeRunCmd rm --force --permanent --recursive \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      mut createdDirs = []
+      for pair in \$env.FILE_SYNC_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let dstParentDirPath = \$dstFilePath | path dirname
+        if (\$dstParentDirPath not-in \$createdDirs) {
+          \$createdDirs = \$createdDirs ++ [\$dstParentDirPath]
+          opPrintMaybeRunCmd mkdir \$\\"r#'(\$dstParentDirPath)'#\\"
+        }
+        opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      for perm in (\$env.FILE_SYNC_PATH_PERMS? | default []) {
+        let permParts = \$perm | split row '|'
+
+        mut bin = ''
+        for alias in (\$permParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let cmd = replaceEnv \$permParts.1
+        opPrintMaybeRunCmd ...(\$cmd | split row ' ')
+      }
+    }
   }
 }
 
+
+\$env.FILE_DIFF_PATH_PAIRS = [ r#'fzf|fzf/theme.zsh|{HOME}/.fzf/theme.zsh'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
+
+\$env.FILE_OP = r#'diff'#
+
+file
+"
+`;
+
+snapshot[`nu / linux / find 1`] = `
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=linux'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$\\"(\$args | flatten | str join ' ')\\" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+    return
+  }
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  let args = \$args | flatten
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
+  if (\$args | length) > 1 {
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunSilentCmd ...\$args
+  }
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opMaybeRunCmd ...\$args
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/file/find'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux'#
 
 def replaceEnv [line] {
   mut l = \$line
@@ -733,193 +1378,169 @@ def file [] {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use file (user) [y, [n]]: '#
+    \$yn = input r#'use file (user) [y,[n]]: '#
   }
   if \$yn == 'n' {
     return
   }
-  fileOp
-}
+  match \$env.FILE_OP {
+    'diff' => {
+      for pair in \$env.FILE_DIFF_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
 
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
 
-\$env.FILE_DIFF_PATH_PAIRS = [ r#'fzf|fzf/theme.zsh|{HOME}/.fzf/theme.zsh'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
 
-file
-"
-`;
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
 
-snapshot[`nu / linux / find 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+        let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
+        opPrintRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$tmpFilePath)'#\\"
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=linux'#
+        let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
 
-def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  \$"(\$args | str join ' ')" | print
-}
+        if (\$dstFilePath | path exists) {
+          opPrintRunCmd \$diffCmd \$\\"r#'(\$dstFilePath)'#\\" \$\\"r#'(\$tmpFilePath)'#\\" '|' complete '|' get stdout '|' str trim --right
+        } else {
+          opPrintWarn \$\\"\`(\$dstFilePath)\` does not exist\\"
+        }
 
-def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print --stderr
-    return
-  }
-
-  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
-}
-
-def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
-    return
-  }
-
-  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
-}
-
-def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
-    return
-  }
-
-  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
-}
-
-def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
-    return
-  }
-
-  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
-}
-
-def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
-    return
-  }
-
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
-  if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
-  }
-}
-
-def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$"(\$args | str join ' ')"
-}
-
-def opPrintRunCmd --wrapped [...args] {
-  opPrintCmd ...\$args
-  opRunCmd ...\$args
-}
-
-def opPrintMaybeRunCmd --wrapped [...args] {
-  opPrintCmd ...\$args
-  if 'NOOP' not-in \$env {
-    opRunCmd ...\$args
-  }
-}
-
-
-\$env.SH_VERS_MAJOR = 0
-
-\$env.SH_VERS_MINOR = 111
-
-do {
-  let major = \$env.SH_VERS_MAJOR | into int
-  let minor = \$env.SH_VERS_MINOR | into int
-
-  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
-    exit 1
-  }
-}
-
-
-\$env.REQ_ORIG = r#'http://x'#
-
-\$env.SYS_OS_PLAT = r#'linux'#
-
-\$env.REQ_PATH = r#'/sh/nu/file/find'#
-
-\$env.REQ_SRCH = r#'?sysOsPlat=linux'#
-
-def fileOp [] {
-  for entry in \$env.FILE_FIND_KEYS {
-    let parts = \$entry | split row '|'
-    let keys = \$parts | get 0
-    let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
-
-    mut bin = ''
-    for alias in (\$keys | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
+        opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    if (\$bin | is-empty) {
-      continue
-    }
+    'find' => {
+      for entry in \$env.FILE_FIND_KEYS {
+        let parts = \$entry | split row '|'
+        let keys = \$parts | get 0
+        let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
 
-    opPrint \$bin
-    if (\$ins | is-not-empty) {
-      opPrint \$"  (\$ins)"
+        mut bin = ''
+        for alias in (\$keys | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        opPrint \$bin
+        if (\$ins | is-not-empty) {
+          opPrint \$\\"  (\$ins)\\"
+        }
+      }
+    }
+    'list' => {
+      for pair in \$env.FILE_LIST_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
+      }
+    }
+    'sync' => {
+      for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
+        let dirParts = \$dir | split row '|'
+
+        mut bin = ''
+        for alias in (\$dirParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let dstFilePath = replaceEnv \$dirParts.1 | path expand
+        opPrintMaybeRunCmd rm --force --permanent --recursive \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      mut createdDirs = []
+      for pair in \$env.FILE_SYNC_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let dstParentDirPath = \$dstFilePath | path dirname
+        if (\$dstParentDirPath not-in \$createdDirs) {
+          \$createdDirs = \$createdDirs ++ [\$dstParentDirPath]
+          opPrintMaybeRunCmd mkdir \$\\"r#'(\$dstParentDirPath)'#\\"
+        }
+        opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      for perm in (\$env.FILE_SYNC_PATH_PERMS? | default []) {
+        let permParts = \$perm | split row '|'
+
+        mut bin = ''
+        for alias in (\$permParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let cmd = replaceEnv \$permParts.1
+        opPrintMaybeRunCmd ...(\$cmd | split row ' ')
+      }
     }
   }
-}
-
-
-def replaceEnv [line] {
-  mut l = \$line
-  if (\$l | str contains '{') {
-    let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
-    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
-      \$l = \$l | str replace --all \$"{(\$e.0)}" (\$e.1)
-    }
-  }
-  return \$l
-}
-def file [] {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input r#'? use file (user) [y, [n]]: '#
-  }
-  if \$yn == 'n' {
-    return
-  }
-  fileOp
 }
 
 
 \$env.FILE_FIND_KEYS = [ r#'fzf|theme.zsh, theme.ps1'#, r#'git|gitconfig'#, r#'nu|nu, env.nu, config.nu'#, r#'pwsh|pwsh, env.ps1, profile.ps1'#, r#'ssh|hushlogin, config'#, r#'zsh|zsh, zshenv, zshrc'# ]
 
+\$env.FILE_OP = r#'find'#
+
 file
-\`
+"
 `;
 
 snapshot[`nu / linux / sync 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=linux'#
 
@@ -927,7 +1548,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$"(\$args | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -935,11 +1556,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-
-  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -947,11 +1567,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -959,11 +1578,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -971,11 +1589,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -983,18 +1600,40 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  let args = \$args | flatten
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opPrintCmd ...\$args
   }
 }
 
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$"(\$args | str join ' ')"
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunSilentCmd ...\$args
+  }
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -1004,9 +1643,7 @@ def opPrintRunCmd --wrapped [...args] {
 
 def opPrintMaybeRunCmd --wrapped [...args] {
   opPrintCmd ...\$args
-  if 'NOOP' not-in \$env {
-    opRunCmd ...\$args
-  }
+  opMaybeRunCmd ...\$args
 }
 
 
@@ -1019,7 +1656,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -1033,79 +1670,12 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux'#
 
-def fileOp [] {
-  for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
-    let dirParts = \$dir | split row '|'
-
-    mut bin = ''
-    for alias in (\$dirParts.0 | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
-      }
-    }
-    if (\$bin | is-empty) {
-      continue
-    }
-
-    let dstFilePath = replaceEnv \$dirParts.1 | path expand
-    opPrintMaybeRunCmd rm --force --permanent --recursive \$"r#'(\$dstFilePath)'#"
-  }
-
-  mut createdDirs = []
-  for pair in \$env.FILE_SYNC_PATH_PAIRS {
-    let pairParts = \$pair | split row '|'
-
-    mut bin = ''
-    for alias in (\$pairParts.0 | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
-      }
-    }
-    if (\$bin | is-empty) {
-      continue
-    }
-
-    let src = \$pairParts.1 | str trim --left --char '/'
-    let dstFilePath = replaceEnv \$pairParts.2 | path expand
-
-    let srcUrl = \$"(\$env.REQ_URL_CFG)/file/(\$src)"
-
-    let dstParentDirPath = \$dstFilePath | path dirname
-    if (\$dstParentDirPath not-in \$createdDirs) {
-      \$createdDirs = \$createdDirs ++ [\$dstParentDirPath]
-      opPrintMaybeRunCmd mkdir \$"r#'(\$dstParentDirPath)'#"
-    }
-    opPrintMaybeRunCmd '\$"(' http get --raw --redirect-mode follow \$"r#'(\$srcUrl)'#" ')"' '|' save --force \$"r#'(\$dstFilePath)'#"
-  }
-
-  for perm in (\$env.FILE_SYNC_PATH_PERMS? | default []) {
-    let permParts = \$perm | split row '|'
-
-    mut bin = ''
-    for alias in (\$permParts.0 | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
-      }
-    }
-    if (\$bin | is-empty) {
-      continue
-    }
-
-    let cmd = replaceEnv \$permParts.1
-    opPrintMaybeRunCmd ...(\$cmd | split row ' ')
-  }
-}
-
-
 def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
     for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
-      \$l = \$l | str replace --all \$"{(\$e.0)}" (\$e.1)
+      \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
   return \$l
@@ -1115,12 +1685,156 @@ def file [] {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use file (user) [y, [n]]: '#
+    \$yn = input r#'use file (user) [y,[n]]: '#
   }
   if \$yn == 'n' {
     return
   }
-  fileOp
+  match \$env.FILE_OP {
+    'diff' => {
+      for pair in \$env.FILE_DIFF_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
+        opPrintRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$tmpFilePath)'#\\"
+
+        let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
+
+        if (\$dstFilePath | path exists) {
+          opPrintRunCmd \$diffCmd \$\\"r#'(\$dstFilePath)'#\\" \$\\"r#'(\$tmpFilePath)'#\\" '|' complete '|' get stdout '|' str trim --right
+        } else {
+          opPrintWarn \$\\"\`(\$dstFilePath)\` does not exist\\"
+        }
+
+        opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
+      }
+    }
+    'find' => {
+      for entry in \$env.FILE_FIND_KEYS {
+        let parts = \$entry | split row '|'
+        let keys = \$parts | get 0
+        let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
+
+        mut bin = ''
+        for alias in (\$keys | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        opPrint \$bin
+        if (\$ins | is-not-empty) {
+          opPrint \$\\"  (\$ins)\\"
+        }
+      }
+    }
+    'list' => {
+      for pair in \$env.FILE_LIST_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
+      }
+    }
+    'sync' => {
+      for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
+        let dirParts = \$dir | split row '|'
+
+        mut bin = ''
+        for alias in (\$dirParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let dstFilePath = replaceEnv \$dirParts.1 | path expand
+        opPrintMaybeRunCmd rm --force --permanent --recursive \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      mut createdDirs = []
+      for pair in \$env.FILE_SYNC_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let dstParentDirPath = \$dstFilePath | path dirname
+        if (\$dstParentDirPath not-in \$createdDirs) {
+          \$createdDirs = \$createdDirs ++ [\$dstParentDirPath]
+          opPrintMaybeRunCmd mkdir \$\\"r#'(\$dstParentDirPath)'#\\"
+        }
+        opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      for perm in (\$env.FILE_SYNC_PATH_PERMS? | default []) {
+        let permParts = \$perm | split row '|'
+
+        mut bin = ''
+        for alias in (\$permParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let cmd = replaceEnv \$permParts.1
+        opPrintMaybeRunCmd ...(\$cmd | split row ' ')
+      }
+    }
+  }
 }
 
 
@@ -1130,12 +1844,14 @@ def file [] {
 
 \$env.FILE_SYNC_PATH_PERMS = [ r##'ssh|zsh --no-rcs -c r#'chmod -R a-s,u=rw,g=,o= '{HOME}/.ssh/config''#'## ]
 
+\$env.FILE_OP = r#'sync'#
+
 file
-\`
+"
 `;
 
 snapshot[`nu / linux / find (with filter) 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/find/git?sysOsPlat=linux'#
 
@@ -1143,7 +1859,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$"(\$args | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -1151,11 +1867,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-
-  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -1163,11 +1878,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -1175,11 +1889,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -1187,11 +1900,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -1199,18 +1911,40 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  let args = \$args | flatten
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opPrintCmd ...\$args
   }
 }
 
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$"(\$args | str join ' ')"
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunSilentCmd ...\$args
+  }
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -1220,9 +1954,7 @@ def opPrintRunCmd --wrapped [...args] {
 
 def opPrintMaybeRunCmd --wrapped [...args] {
   opPrintCmd ...\$args
-  if 'NOOP' not-in \$env {
-    opRunCmd ...\$args
-  }
+  opMaybeRunCmd ...\$args
 }
 
 
@@ -1235,7 +1967,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -1251,37 +1983,12 @@ do {
 
 \$env.FILE_FIND_PARTS = r#'git'#
 
-def fileOp [] {
-  for entry in \$env.FILE_FIND_KEYS {
-    let parts = \$entry | split row '|'
-    let keys = \$parts | get 0
-    let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
-
-    mut bin = ''
-    for alias in (\$keys | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
-      }
-    }
-    if (\$bin | is-empty) {
-      continue
-    }
-
-    opPrint \$bin
-    if (\$ins | is-not-empty) {
-      opPrint \$"  (\$ins)"
-    }
-  }
-}
-
-
 def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
     for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
-      \$l = \$l | str replace --all \$"{(\$e.0)}" (\$e.1)
+      \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
   return \$l
@@ -1291,23 +1998,169 @@ def file [] {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use file (user) [y, [n]]: '#
+    \$yn = input r#'use file (user) [y,[n]]: '#
   }
   if \$yn == 'n' {
     return
   }
-  fileOp
+  match \$env.FILE_OP {
+    'diff' => {
+      for pair in \$env.FILE_DIFF_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
+        opPrintRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$tmpFilePath)'#\\"
+
+        let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
+
+        if (\$dstFilePath | path exists) {
+          opPrintRunCmd \$diffCmd \$\\"r#'(\$dstFilePath)'#\\" \$\\"r#'(\$tmpFilePath)'#\\" '|' complete '|' get stdout '|' str trim --right
+        } else {
+          opPrintWarn \$\\"\`(\$dstFilePath)\` does not exist\\"
+        }
+
+        opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
+      }
+    }
+    'find' => {
+      for entry in \$env.FILE_FIND_KEYS {
+        let parts = \$entry | split row '|'
+        let keys = \$parts | get 0
+        let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
+
+        mut bin = ''
+        for alias in (\$keys | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        opPrint \$bin
+        if (\$ins | is-not-empty) {
+          opPrint \$\\"  (\$ins)\\"
+        }
+      }
+    }
+    'list' => {
+      for pair in \$env.FILE_LIST_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
+      }
+    }
+    'sync' => {
+      for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
+        let dirParts = \$dir | split row '|'
+
+        mut bin = ''
+        for alias in (\$dirParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let dstFilePath = replaceEnv \$dirParts.1 | path expand
+        opPrintMaybeRunCmd rm --force --permanent --recursive \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      mut createdDirs = []
+      for pair in \$env.FILE_SYNC_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let dstParentDirPath = \$dstFilePath | path dirname
+        if (\$dstParentDirPath not-in \$createdDirs) {
+          \$createdDirs = \$createdDirs ++ [\$dstParentDirPath]
+          opPrintMaybeRunCmd mkdir \$\\"r#'(\$dstParentDirPath)'#\\"
+        }
+        opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      for perm in (\$env.FILE_SYNC_PATH_PERMS? | default []) {
+        let permParts = \$perm | split row '|'
+
+        mut bin = ''
+        for alias in (\$permParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let cmd = replaceEnv \$permParts.1
+        opPrintMaybeRunCmd ...(\$cmd | split row ' ')
+      }
+    }
+  }
 }
 
 
 \$env.FILE_FIND_KEYS = [ r#'git|gitconfig'# ]
 
+\$env.FILE_OP = r#'find'#
+
 file
-\`
+"
 `;
 
 snapshot[`nu / linux / find (with sysHost) 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=linux&sysHost=testhost'#
 
@@ -1315,7 +2168,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$"(\$args | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -1323,11 +2176,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-
-  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -1335,11 +2187,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -1347,11 +2198,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -1359,11 +2209,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -1371,18 +2220,40 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  let args = \$args | flatten
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opPrintCmd ...\$args
   }
 }
 
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$"(\$args | str join ' ')"
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunSilentCmd ...\$args
+  }
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -1392,9 +2263,7 @@ def opPrintRunCmd --wrapped [...args] {
 
 def opPrintMaybeRunCmd --wrapped [...args] {
   opPrintCmd ...\$args
-  if 'NOOP' not-in \$env {
-    opRunCmd ...\$args
-  }
+  opMaybeRunCmd ...\$args
 }
 
 
@@ -1407,7 +2276,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -1423,37 +2292,12 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=testhost'#
 
-def fileOp [] {
-  for entry in \$env.FILE_FIND_KEYS {
-    let parts = \$entry | split row '|'
-    let keys = \$parts | get 0
-    let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
-
-    mut bin = ''
-    for alias in (\$keys | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
-      }
-    }
-    if (\$bin | is-empty) {
-      continue
-    }
-
-    opPrint \$bin
-    if (\$ins | is-not-empty) {
-      opPrint \$"  (\$ins)"
-    }
-  }
-}
-
-
 def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
     for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
-      \$l = \$l | str replace --all \$"{(\$e.0)}" (\$e.1)
+      \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
   return \$l
@@ -1463,23 +2307,169 @@ def file [] {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use file (user) [y, [n]]: '#
+    \$yn = input r#'use file (user) [y,[n]]: '#
   }
   if \$yn == 'n' {
     return
   }
-  fileOp
+  match \$env.FILE_OP {
+    'diff' => {
+      for pair in \$env.FILE_DIFF_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
+        opPrintRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$tmpFilePath)'#\\"
+
+        let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
+
+        if (\$dstFilePath | path exists) {
+          opPrintRunCmd \$diffCmd \$\\"r#'(\$dstFilePath)'#\\" \$\\"r#'(\$tmpFilePath)'#\\" '|' complete '|' get stdout '|' str trim --right
+        } else {
+          opPrintWarn \$\\"\`(\$dstFilePath)\` does not exist\\"
+        }
+
+        opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
+      }
+    }
+    'find' => {
+      for entry in \$env.FILE_FIND_KEYS {
+        let parts = \$entry | split row '|'
+        let keys = \$parts | get 0
+        let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
+
+        mut bin = ''
+        for alias in (\$keys | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        opPrint \$bin
+        if (\$ins | is-not-empty) {
+          opPrint \$\\"  (\$ins)\\"
+        }
+      }
+    }
+    'list' => {
+      for pair in \$env.FILE_LIST_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
+      }
+    }
+    'sync' => {
+      for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
+        let dirParts = \$dir | split row '|'
+
+        mut bin = ''
+        for alias in (\$dirParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let dstFilePath = replaceEnv \$dirParts.1 | path expand
+        opPrintMaybeRunCmd rm --force --permanent --recursive \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      mut createdDirs = []
+      for pair in \$env.FILE_SYNC_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let dstParentDirPath = \$dstFilePath | path dirname
+        if (\$dstParentDirPath not-in \$createdDirs) {
+          \$createdDirs = \$createdDirs ++ [\$dstParentDirPath]
+          opPrintMaybeRunCmd mkdir \$\\"r#'(\$dstParentDirPath)'#\\"
+        }
+        opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      for perm in (\$env.FILE_SYNC_PATH_PERMS? | default []) {
+        let permParts = \$perm | split row '|'
+
+        mut bin = ''
+        for alias in (\$permParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let cmd = replaceEnv \$permParts.1
+        opPrintMaybeRunCmd ...(\$cmd | split row ' ')
+      }
+    }
+  }
 }
 
 
 \$env.FILE_FIND_KEYS = [ r#'fzf|theme.zsh, theme.ps1'#, r#'git|gitconfig'#, r#'nu|nu, env.nu, config.nu'#, r#'pwsh|pwsh, env.ps1, profile.ps1'#, r#'ssh|hushlogin, config'#, r#'zsh|zsh, zshenv, zshrc'# ]
 
+\$env.FILE_OP = r#'find'#
+
 file
-\`
+"
 `;
 
 snapshot[`nu / darwin / list 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=darwin'#
 
@@ -1487,7 +2477,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$"(\$args | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -1495,11 +2485,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-
-  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -1507,11 +2496,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -1519,11 +2507,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -1531,11 +2518,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -1543,18 +2529,40 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  let args = \$args | flatten
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opPrintCmd ...\$args
   }
 }
 
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$"(\$args | str join ' ')"
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunSilentCmd ...\$args
+  }
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -1564,9 +2572,7 @@ def opPrintRunCmd --wrapped [...args] {
 
 def opPrintMaybeRunCmd --wrapped [...args] {
   opPrintCmd ...\$args
-  if 'NOOP' not-in \$env {
-    opRunCmd ...\$args
-  }
+  opMaybeRunCmd ...\$args
 }
 
 
@@ -1579,7 +2585,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -1593,35 +2599,12 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
 
-def fileOp [] {
-  for pair in \$env.FILE_LIST_PATH_PAIRS {
-    let pairParts = \$pair | split row '|'
-
-    mut bin = ''
-    for alias in (\$pairParts.0 | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
-      }
-    }
-    if (\$bin | is-empty) {
-      continue
-    }
-
-    let src = \$pairParts.1 | str trim --left --char '/'
-    let dstFilePath = replaceEnv \$pairParts.2 | path expand
-
-    opPrint \$"(\$src) -> (\$dstFilePath)"
-  }
-}
-
-
 def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
     for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
-      \$l = \$l | str replace --all \$"{(\$e.0)}" (\$e.1)
+      \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
   return \$l
@@ -1631,23 +2614,169 @@ def file [] {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use file (user) [y, [n]]: '#
+    \$yn = input r#'use file (user) [y,[n]]: '#
   }
   if \$yn == 'n' {
     return
   }
-  fileOp
+  match \$env.FILE_OP {
+    'diff' => {
+      for pair in \$env.FILE_DIFF_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
+        opPrintRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$tmpFilePath)'#\\"
+
+        let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
+
+        if (\$dstFilePath | path exists) {
+          opPrintRunCmd \$diffCmd \$\\"r#'(\$dstFilePath)'#\\" \$\\"r#'(\$tmpFilePath)'#\\" '|' complete '|' get stdout '|' str trim --right
+        } else {
+          opPrintWarn \$\\"\`(\$dstFilePath)\` does not exist\\"
+        }
+
+        opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
+      }
+    }
+    'find' => {
+      for entry in \$env.FILE_FIND_KEYS {
+        let parts = \$entry | split row '|'
+        let keys = \$parts | get 0
+        let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
+
+        mut bin = ''
+        for alias in (\$keys | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        opPrint \$bin
+        if (\$ins | is-not-empty) {
+          opPrint \$\\"  (\$ins)\\"
+        }
+      }
+    }
+    'list' => {
+      for pair in \$env.FILE_LIST_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
+      }
+    }
+    'sync' => {
+      for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
+        let dirParts = \$dir | split row '|'
+
+        mut bin = ''
+        for alias in (\$dirParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let dstFilePath = replaceEnv \$dirParts.1 | path expand
+        opPrintMaybeRunCmd rm --force --permanent --recursive \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      mut createdDirs = []
+      for pair in \$env.FILE_SYNC_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let dstParentDirPath = \$dstFilePath | path dirname
+        if (\$dstParentDirPath not-in \$createdDirs) {
+          \$createdDirs = \$createdDirs ++ [\$dstParentDirPath]
+          opPrintMaybeRunCmd mkdir \$\\"r#'(\$dstParentDirPath)'#\\"
+        }
+        opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      for perm in (\$env.FILE_SYNC_PATH_PERMS? | default []) {
+        let permParts = \$perm | split row '|'
+
+        mut bin = ''
+        for alias in (\$permParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let cmd = replaceEnv \$permParts.1
+        opPrintMaybeRunCmd ...(\$cmd | split row ' ')
+      }
+    }
+  }
 }
 
 
 \$env.FILE_LIST_PATH_PAIRS = [ r#'fzf|fzf/theme.zsh|{HOME}/.fzf/theme.zsh'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
 
+\$env.FILE_OP = r#'list'#
+
 file
-\`
+"
 `;
 
 snapshot[`nu / linux / list 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=linux'#
 
@@ -1655,7 +2784,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$"(\$args | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -1663,11 +2792,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-
-  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -1675,11 +2803,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -1687,11 +2814,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -1699,11 +2825,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -1711,18 +2836,40 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  let args = \$args | flatten
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opPrintCmd ...\$args
   }
 }
 
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$"(\$args | str join ' ')"
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunSilentCmd ...\$args
+  }
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -1732,9 +2879,7 @@ def opPrintRunCmd --wrapped [...args] {
 
 def opPrintMaybeRunCmd --wrapped [...args] {
   opPrintCmd ...\$args
-  if 'NOOP' not-in \$env {
-    opRunCmd ...\$args
-  }
+  opMaybeRunCmd ...\$args
 }
 
 
@@ -1747,7 +2892,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -1761,35 +2906,12 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux'#
 
-def fileOp [] {
-  for pair in \$env.FILE_LIST_PATH_PAIRS {
-    let pairParts = \$pair | split row '|'
-
-    mut bin = ''
-    for alias in (\$pairParts.0 | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
-      }
-    }
-    if (\$bin | is-empty) {
-      continue
-    }
-
-    let src = \$pairParts.1 | str trim --left --char '/'
-    let dstFilePath = replaceEnv \$pairParts.2 | path expand
-
-    opPrint \$"(\$src) -> (\$dstFilePath)"
-  }
-}
-
-
 def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
     for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
-      \$l = \$l | str replace --all \$"{(\$e.0)}" (\$e.1)
+      \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
   return \$l
@@ -1799,19 +2921,165 @@ def file [] {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use file (user) [y, [n]]: '#
+    \$yn = input r#'use file (user) [y,[n]]: '#
   }
   if \$yn == 'n' {
     return
   }
-  fileOp
+  match \$env.FILE_OP {
+    'diff' => {
+      for pair in \$env.FILE_DIFF_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
+        opPrintRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$tmpFilePath)'#\\"
+
+        let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
+
+        if (\$dstFilePath | path exists) {
+          opPrintRunCmd \$diffCmd \$\\"r#'(\$dstFilePath)'#\\" \$\\"r#'(\$tmpFilePath)'#\\" '|' complete '|' get stdout '|' str trim --right
+        } else {
+          opPrintWarn \$\\"\`(\$dstFilePath)\` does not exist\\"
+        }
+
+        opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
+      }
+    }
+    'find' => {
+      for entry in \$env.FILE_FIND_KEYS {
+        let parts = \$entry | split row '|'
+        let keys = \$parts | get 0
+        let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
+
+        mut bin = ''
+        for alias in (\$keys | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        opPrint \$bin
+        if (\$ins | is-not-empty) {
+          opPrint \$\\"  (\$ins)\\"
+        }
+      }
+    }
+    'list' => {
+      for pair in \$env.FILE_LIST_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
+      }
+    }
+    'sync' => {
+      for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
+        let dirParts = \$dir | split row '|'
+
+        mut bin = ''
+        for alias in (\$dirParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let dstFilePath = replaceEnv \$dirParts.1 | path expand
+        opPrintMaybeRunCmd rm --force --permanent --recursive \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      mut createdDirs = []
+      for pair in \$env.FILE_SYNC_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let dstParentDirPath = \$dstFilePath | path dirname
+        if (\$dstParentDirPath not-in \$createdDirs) {
+          \$createdDirs = \$createdDirs ++ [\$dstParentDirPath]
+          opPrintMaybeRunCmd mkdir \$\\"r#'(\$dstParentDirPath)'#\\"
+        }
+        opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      for perm in (\$env.FILE_SYNC_PATH_PERMS? | default []) {
+        let permParts = \$perm | split row '|'
+
+        mut bin = ''
+        for alias in (\$permParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let cmd = replaceEnv \$permParts.1
+        opPrintMaybeRunCmd ...(\$cmd | split row ' ')
+      }
+    }
+  }
 }
 
 
 \$env.FILE_LIST_PATH_PAIRS = [ r#'fzf|fzf/theme.zsh|{HOME}/.fzf/theme.zsh'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
 
+\$env.FILE_OP = r#'list'#
+
 file
-\`
+"
 `;
 
 snapshot[`nu / winnt / diff 1`] = `
@@ -1823,7 +3091,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$\\"(\$args | str join ' ')\\" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -1831,11 +3099,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-
-  \$\\"(ansi red)(\$args | str join ' ')(ansi reset)\\" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -1843,11 +3110,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$\\"(ansi green)(\$args | str join ' ')(ansi reset)\\" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -1855,11 +3121,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$\\"(ansi yellow)(\$args | str join ' ')(ansi reset)\\" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -1867,11 +3132,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$\\"(ansi blue)(\$args | str join ' ')(ansi reset)\\" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -1879,18 +3143,40 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$\\"(\$args | str join ' ')\\" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
+  let args = \$args | flatten
   \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
     \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   }
 }
 
+def opMaybePrintCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$\\"(\$args | str join ' ')\\"
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunSilentCmd ...\$args
+  }
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -1900,9 +3186,7 @@ def opPrintRunCmd --wrapped [...args] {
 
 def opPrintMaybeRunCmd --wrapped [...args] {
   opPrintCmd ...\$args
-  if 'NOOP' not-in \$env {
-    opRunCmd ...\$args
-  }
+  opMaybeRunCmd ...\$args
 }
 
 
@@ -1929,41 +3213,312 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
 
-def fileOp [] {
-  for pair in \$env.FILE_DIFF_PATH_PAIRS {
-    let pairParts = \$pair | split row '|'
+def replaceEnv [line] {
+  mut l = \$line
+  if (\$l | str contains '{') {
+    let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
+    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
+      \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
+    }
+  }
+  return \$l
+}
+def file [] {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'use file (user) [y,[n]]: '#
+  }
+  if \$yn == 'n' {
+    return
+  }
+  match \$env.FILE_OP {
+    'diff' => {
+      for pair in \$env.FILE_DIFF_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
 
-    mut bin = ''
-    for alias in (\$pairParts.0 | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
+        opPrintRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$tmpFilePath)'#\\"
+
+        let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
+
+        if (\$dstFilePath | path exists) {
+          opPrintRunCmd \$diffCmd \$\\"r#'(\$dstFilePath)'#\\" \$\\"r#'(\$tmpFilePath)'#\\" '|' complete '|' get stdout '|' str trim --right
+        } else {
+          opPrintWarn \$\\"\`(\$dstFilePath)\` does not exist\\"
+        }
+
+        opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    if (\$bin | is-empty) {
-      continue
+    'find' => {
+      for entry in \$env.FILE_FIND_KEYS {
+        let parts = \$entry | split row '|'
+        let keys = \$parts | get 0
+        let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
+
+        mut bin = ''
+        for alias in (\$keys | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        opPrint \$bin
+        if (\$ins | is-not-empty) {
+          opPrint \$\\"  (\$ins)\\"
+        }
+      }
     }
+    'list' => {
+      for pair in \$env.FILE_LIST_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
 
-    let src = \$pairParts.1 | str trim --left --char '/'
-    let dstFilePath = replaceEnv \$pairParts.2 | path expand
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
 
-    let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
 
-    let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
-    opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$tmpFilePath)'#\\"
-
-    let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
-
-    if (\$dstFilePath | path exists) {
-      opPrintMaybeRunCmd \$diffCmd \$\\"r#'(\$dstFilePath)'#\\" \$\\"r#'(\$tmpFilePath)'#\\" '|' complete '|' get stdout '|' str trim --right
-    } else {
-      opPrintWarn \$\\"\`(\$dstFilePath)\` does not exist\\"
+        opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
+      }
     }
+    'sync' => {
+      for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
+        let dirParts = \$dir | split row '|'
 
-    opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
+        mut bin = ''
+        for alias in (\$dirParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let dstFilePath = replaceEnv \$dirParts.1 | path expand
+        opPrintMaybeRunCmd rm --force --permanent --recursive \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      mut createdDirs = []
+      for pair in \$env.FILE_SYNC_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let dstParentDirPath = \$dstFilePath | path dirname
+        if (\$dstParentDirPath not-in \$createdDirs) {
+          \$createdDirs = \$createdDirs ++ [\$dstParentDirPath]
+          opPrintMaybeRunCmd mkdir \$\\"r#'(\$dstParentDirPath)'#\\"
+        }
+        opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      for perm in (\$env.FILE_SYNC_PATH_PERMS? | default []) {
+        let permParts = \$perm | split row '|'
+
+        mut bin = ''
+        for alias in (\$permParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let cmd = replaceEnv \$permParts.1
+        opPrintMaybeRunCmd ...(\$cmd | split row ' ')
+      }
+    }
   }
 }
 
+
+\$env.FILE_DIFF_PATH_PAIRS = [ r#'fzf|fzf/theme.ps1|{HOME}/.fzf/theme.ps1'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/AppData/Roaming/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/AppData/Roaming/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/AppData/Roaming/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/Documents/PowerShell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/Documents/PowerShell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'# ]
+
+\$env.FILE_OP = r#'diff'#
+
+file
+"
+`;
+
+snapshot[`nu / winnt / find 1`] = `
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=winnt'#
+
+def opPrint --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  \$\\"(\$args | flatten | str join ' ')\\" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+    return
+  }
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if 'SUCCINCT' in \$env {
+    return
+  }
+  if 'GRAYSCALE' in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  let args = \$args | flatten
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
+  if (\$args | length) > 1 {
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunSilentCmd ...\$args
+  }
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opMaybeRunCmd ...\$args
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'winnt'#
+
+\$env.REQ_PATH = r#'/sh/nu/file/find'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
 
 def replaceEnv [line] {
   mut l = \$line
@@ -1980,193 +3535,169 @@ def file [] {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use file (user) [y, [n]]: '#
+    \$yn = input r#'use file (user) [y,[n]]: '#
   }
   if \$yn == 'n' {
     return
   }
-  fileOp
-}
+  match \$env.FILE_OP {
+    'diff' => {
+      for pair in \$env.FILE_DIFF_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
 
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
 
-\$env.FILE_DIFF_PATH_PAIRS = [ r#'fzf|fzf/theme.ps1|{HOME}/.fzf/theme.ps1'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/AppData/Roaming/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/AppData/Roaming/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/AppData/Roaming/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/Documents/PowerShell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/Documents/PowerShell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'# ]
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
 
-file
-"
-`;
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
 
-snapshot[`nu / winnt / find 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+        let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
+        opPrintRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$tmpFilePath)'#\\"
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=winnt'#
+        let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
 
-def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  \$"(\$args | str join ' ')" | print
-}
+        if (\$dstFilePath | path exists) {
+          opPrintRunCmd \$diffCmd \$\\"r#'(\$dstFilePath)'#\\" \$\\"r#'(\$tmpFilePath)'#\\" '|' complete '|' get stdout '|' str trim --right
+        } else {
+          opPrintWarn \$\\"\`(\$dstFilePath)\` does not exist\\"
+        }
 
-def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print --stderr
-    return
-  }
-
-  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
-}
-
-def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
-    return
-  }
-
-  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
-}
-
-def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
-    return
-  }
-
-  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
-}
-
-def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
-    return
-  }
-
-  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
-}
-
-def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
-    return
-  }
-  if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
-    return
-  }
-
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
-  if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
-  }
-}
-
-def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$"(\$args | str join ' ')"
-}
-
-def opPrintRunCmd --wrapped [...args] {
-  opPrintCmd ...\$args
-  opRunCmd ...\$args
-}
-
-def opPrintMaybeRunCmd --wrapped [...args] {
-  opPrintCmd ...\$args
-  if 'NOOP' not-in \$env {
-    opRunCmd ...\$args
-  }
-}
-
-
-\$env.SH_VERS_MAJOR = 0
-
-\$env.SH_VERS_MINOR = 111
-
-do {
-  let major = \$env.SH_VERS_MAJOR | into int
-  let minor = \$env.SH_VERS_MINOR | into int
-
-  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
-    exit 1
-  }
-}
-
-
-\$env.REQ_ORIG = r#'http://x'#
-
-\$env.SYS_OS_PLAT = r#'winnt'#
-
-\$env.REQ_PATH = r#'/sh/nu/file/find'#
-
-\$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
-
-def fileOp [] {
-  for entry in \$env.FILE_FIND_KEYS {
-    let parts = \$entry | split row '|'
-    let keys = \$parts | get 0
-    let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
-
-    mut bin = ''
-    for alias in (\$keys | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
+        opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    if (\$bin | is-empty) {
-      continue
-    }
+    'find' => {
+      for entry in \$env.FILE_FIND_KEYS {
+        let parts = \$entry | split row '|'
+        let keys = \$parts | get 0
+        let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
 
-    opPrint \$bin
-    if (\$ins | is-not-empty) {
-      opPrint \$"  (\$ins)"
+        mut bin = ''
+        for alias in (\$keys | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        opPrint \$bin
+        if (\$ins | is-not-empty) {
+          opPrint \$\\"  (\$ins)\\"
+        }
+      }
+    }
+    'list' => {
+      for pair in \$env.FILE_LIST_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
+      }
+    }
+    'sync' => {
+      for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
+        let dirParts = \$dir | split row '|'
+
+        mut bin = ''
+        for alias in (\$dirParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let dstFilePath = replaceEnv \$dirParts.1 | path expand
+        opPrintMaybeRunCmd rm --force --permanent --recursive \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      mut createdDirs = []
+      for pair in \$env.FILE_SYNC_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let dstParentDirPath = \$dstFilePath | path dirname
+        if (\$dstParentDirPath not-in \$createdDirs) {
+          \$createdDirs = \$createdDirs ++ [\$dstParentDirPath]
+          opPrintMaybeRunCmd mkdir \$\\"r#'(\$dstParentDirPath)'#\\"
+        }
+        opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      for perm in (\$env.FILE_SYNC_PATH_PERMS? | default []) {
+        let permParts = \$perm | split row '|'
+
+        mut bin = ''
+        for alias in (\$permParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let cmd = replaceEnv \$permParts.1
+        opPrintMaybeRunCmd ...(\$cmd | split row ' ')
+      }
     }
   }
-}
-
-
-def replaceEnv [line] {
-  mut l = \$line
-  if (\$l | str contains '{') {
-    let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
-    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
-      \$l = \$l | str replace --all \$"{(\$e.0)}" (\$e.1)
-    }
-  }
-  return \$l
-}
-def file [] {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input r#'? use file (user) [y, [n]]: '#
-  }
-  if \$yn == 'n' {
-    return
-  }
-  fileOp
 }
 
 
 \$env.FILE_FIND_KEYS = [ r#'fzf|theme.zsh, theme.ps1'#, r#'git|gitconfig'#, r#'nu|nu, env.nu, config.nu'#, r#'pwsh|pwsh, env.ps1, profile.ps1'#, r#'ssh|hushlogin, config'# ]
 
+\$env.FILE_OP = r#'find'#
+
 file
-\`
+"
 `;
 
 snapshot[`nu / winnt / sync 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=winnt'#
 
@@ -2174,7 +3705,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$"(\$args | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -2182,11 +3713,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-
-  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -2194,11 +3724,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -2206,11 +3735,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -2218,11 +3746,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -2230,18 +3757,40 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  let args = \$args | flatten
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opPrintCmd ...\$args
   }
 }
 
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$"(\$args | str join ' ')"
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunSilentCmd ...\$args
+  }
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -2251,9 +3800,7 @@ def opPrintRunCmd --wrapped [...args] {
 
 def opPrintMaybeRunCmd --wrapped [...args] {
   opPrintCmd ...\$args
-  if 'NOOP' not-in \$env {
-    opRunCmd ...\$args
-  }
+  opMaybeRunCmd ...\$args
 }
 
 
@@ -2266,7 +3813,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -2280,79 +3827,12 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
 
-def fileOp [] {
-  for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
-    let dirParts = \$dir | split row '|'
-
-    mut bin = ''
-    for alias in (\$dirParts.0 | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
-      }
-    }
-    if (\$bin | is-empty) {
-      continue
-    }
-
-    let dstFilePath = replaceEnv \$dirParts.1 | path expand
-    opPrintMaybeRunCmd rm --force --permanent --recursive \$"r#'(\$dstFilePath)'#"
-  }
-
-  mut createdDirs = []
-  for pair in \$env.FILE_SYNC_PATH_PAIRS {
-    let pairParts = \$pair | split row '|'
-
-    mut bin = ''
-    for alias in (\$pairParts.0 | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
-      }
-    }
-    if (\$bin | is-empty) {
-      continue
-    }
-
-    let src = \$pairParts.1 | str trim --left --char '/'
-    let dstFilePath = replaceEnv \$pairParts.2 | path expand
-
-    let srcUrl = \$"(\$env.REQ_URL_CFG)/file/(\$src)"
-
-    let dstParentDirPath = \$dstFilePath | path dirname
-    if (\$dstParentDirPath not-in \$createdDirs) {
-      \$createdDirs = \$createdDirs ++ [\$dstParentDirPath]
-      opPrintMaybeRunCmd mkdir \$"r#'(\$dstParentDirPath)'#"
-    }
-    opPrintMaybeRunCmd '\$"(' http get --raw --redirect-mode follow \$"r#'(\$srcUrl)'#" ')"' '|' save --force \$"r#'(\$dstFilePath)'#"
-  }
-
-  for perm in (\$env.FILE_SYNC_PATH_PERMS? | default []) {
-    let permParts = \$perm | split row '|'
-
-    mut bin = ''
-    for alias in (\$permParts.0 | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
-      }
-    }
-    if (\$bin | is-empty) {
-      continue
-    }
-
-    let cmd = replaceEnv \$permParts.1
-    opPrintMaybeRunCmd ...(\$cmd | split row ' ')
-  }
-}
-
-
 def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
     for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
-      \$l = \$l | str replace --all \$"{(\$e.0)}" (\$e.1)
+      \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
   return \$l
@@ -2362,12 +3842,156 @@ def file [] {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use file (user) [y, [n]]: '#
+    \$yn = input r#'use file (user) [y,[n]]: '#
   }
   if \$yn == 'n' {
     return
   }
-  fileOp
+  match \$env.FILE_OP {
+    'diff' => {
+      for pair in \$env.FILE_DIFF_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
+        opPrintRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$tmpFilePath)'#\\"
+
+        let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
+
+        if (\$dstFilePath | path exists) {
+          opPrintRunCmd \$diffCmd \$\\"r#'(\$dstFilePath)'#\\" \$\\"r#'(\$tmpFilePath)'#\\" '|' complete '|' get stdout '|' str trim --right
+        } else {
+          opPrintWarn \$\\"\`(\$dstFilePath)\` does not exist\\"
+        }
+
+        opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
+      }
+    }
+    'find' => {
+      for entry in \$env.FILE_FIND_KEYS {
+        let parts = \$entry | split row '|'
+        let keys = \$parts | get 0
+        let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
+
+        mut bin = ''
+        for alias in (\$keys | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        opPrint \$bin
+        if (\$ins | is-not-empty) {
+          opPrint \$\\"  (\$ins)\\"
+        }
+      }
+    }
+    'list' => {
+      for pair in \$env.FILE_LIST_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
+      }
+    }
+    'sync' => {
+      for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
+        let dirParts = \$dir | split row '|'
+
+        mut bin = ''
+        for alias in (\$dirParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let dstFilePath = replaceEnv \$dirParts.1 | path expand
+        opPrintMaybeRunCmd rm --force --permanent --recursive \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      mut createdDirs = []
+      for pair in \$env.FILE_SYNC_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let dstParentDirPath = \$dstFilePath | path dirname
+        if (\$dstParentDirPath not-in \$createdDirs) {
+          \$createdDirs = \$createdDirs ++ [\$dstParentDirPath]
+          opPrintMaybeRunCmd mkdir \$\\"r#'(\$dstParentDirPath)'#\\"
+        }
+        opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      for perm in (\$env.FILE_SYNC_PATH_PERMS? | default []) {
+        let permParts = \$perm | split row '|'
+
+        mut bin = ''
+        for alias in (\$permParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let cmd = replaceEnv \$permParts.1
+        opPrintMaybeRunCmd ...(\$cmd | split row ' ')
+      }
+    }
+  }
 }
 
 
@@ -2375,14 +3999,16 @@ def file [] {
 
 \$env.FILE_SYNC_CLEAR_DIRS = [ r#'nu|{HOME}/AppData/Roaming/nushell/autoload'#, r#'pwsh|{HOME}/.pwsh'# ]
 
-\$env.FILE_SYNC_PATH_PERMS = [ r##'ssh|pwsh -noprofile -c r#'icacls '{HOME}\\\\.ssh\\\\config' /t /reset'#'##, r##'ssh|pwsh -noprofile -c r#'icacls '{HOME}\\\\.ssh\\\\config' /t /inheritance:r /grant ":(gr,gw)"'#'## ]
+\$env.FILE_SYNC_PATH_PERMS = [ r##'ssh|pwsh -noprofile -c r#'icacls '{HOME}\\\\.ssh\\\\config' /t /reset'#'##, r##'ssh|pwsh -noprofile -c r#'icacls '{HOME}\\\\.ssh\\\\config' /t /inheritance:r /grant \\":(gr,gw)\\"'#'## ]
+
+\$env.FILE_OP = r#'sync'#
 
 file
-\`
+"
 `;
 
 snapshot[`nu / winnt / list 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=winnt'#
 
@@ -2390,7 +4016,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$"(\$args | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -2398,11 +4024,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-
-  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -2410,11 +4035,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -2422,11 +4046,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -2434,11 +4057,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -2446,18 +4068,40 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  let args = \$args | flatten
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opPrintCmd ...\$args
   }
 }
 
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$"(\$args | str join ' ')"
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunSilentCmd ...\$args
+  }
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -2467,9 +4111,7 @@ def opPrintRunCmd --wrapped [...args] {
 
 def opPrintMaybeRunCmd --wrapped [...args] {
   opPrintCmd ...\$args
-  if 'NOOP' not-in \$env {
-    opRunCmd ...\$args
-  }
+  opMaybeRunCmd ...\$args
 }
 
 
@@ -2482,7 +4124,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -2496,35 +4138,12 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
 
-def fileOp [] {
-  for pair in \$env.FILE_LIST_PATH_PAIRS {
-    let pairParts = \$pair | split row '|'
-
-    mut bin = ''
-    for alias in (\$pairParts.0 | split row ',') {
-      if (which \$alias | is-not-empty) {
-        \$bin = \$alias
-        break
-      }
-    }
-    if (\$bin | is-empty) {
-      continue
-    }
-
-    let src = \$pairParts.1 | str trim --left --char '/'
-    let dstFilePath = replaceEnv \$pairParts.2 | path expand
-
-    opPrint \$"(\$src) -> (\$dstFilePath)"
-  }
-}
-
-
 def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
     for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
-      \$l = \$l | str replace --all \$"{(\$e.0)}" (\$e.1)
+      \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
   return \$l
@@ -2534,17 +4153,163 @@ def file [] {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input r#'? use file (user) [y, [n]]: '#
+    \$yn = input r#'use file (user) [y,[n]]: '#
   }
   if \$yn == 'n' {
     return
   }
-  fileOp
+  match \$env.FILE_OP {
+    'diff' => {
+      for pair in \$env.FILE_DIFF_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
+        opPrintRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$tmpFilePath)'#\\"
+
+        let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
+
+        if (\$dstFilePath | path exists) {
+          opPrintRunCmd \$diffCmd \$\\"r#'(\$dstFilePath)'#\\" \$\\"r#'(\$tmpFilePath)'#\\" '|' complete '|' get stdout '|' str trim --right
+        } else {
+          opPrintWarn \$\\"\`(\$dstFilePath)\` does not exist\\"
+        }
+
+        opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
+      }
+    }
+    'find' => {
+      for entry in \$env.FILE_FIND_KEYS {
+        let parts = \$entry | split row '|'
+        let keys = \$parts | get 0
+        let ins = if (\$parts | length) > 1 { \$parts | get 1 } else { '' }
+
+        mut bin = ''
+        for alias in (\$keys | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        opPrint \$bin
+        if (\$ins | is-not-empty) {
+          opPrint \$\\"  (\$ins)\\"
+        }
+      }
+    }
+    'list' => {
+      for pair in \$env.FILE_LIST_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
+      }
+    }
+    'sync' => {
+      for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
+        let dirParts = \$dir | split row '|'
+
+        mut bin = ''
+        for alias in (\$dirParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let dstFilePath = replaceEnv \$dirParts.1 | path expand
+        opPrintMaybeRunCmd rm --force --permanent --recursive \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      mut createdDirs = []
+      for pair in \$env.FILE_SYNC_PATH_PAIRS {
+        let pairParts = \$pair | split row '|'
+
+        mut bin = ''
+        for alias in (\$pairParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let src = \$pairParts.1 | str trim --left --char '/'
+        let dstFilePath = replaceEnv \$pairParts.2 | path expand
+
+        let srcUrl = \$\\"(\$env.REQ_URL_CFG)/file/(\$src)\\"
+
+        let dstParentDirPath = \$dstFilePath | path dirname
+        if (\$dstParentDirPath not-in \$createdDirs) {
+          \$createdDirs = \$createdDirs ++ [\$dstParentDirPath]
+          opPrintMaybeRunCmd mkdir \$\\"r#'(\$dstParentDirPath)'#\\"
+        }
+        opPrintMaybeRunCmd '\$\\"(' http get --raw --redirect-mode follow \$\\"r#'(\$srcUrl)'#\\" ')\\"' '|' save --force \$\\"r#'(\$dstFilePath)'#\\"
+      }
+
+      for perm in (\$env.FILE_SYNC_PATH_PERMS? | default []) {
+        let permParts = \$perm | split row '|'
+
+        mut bin = ''
+        for alias in (\$permParts.0 | split row ',') {
+          if (which \$alias | is-not-empty) {
+            \$bin = \$alias
+            break
+          }
+        }
+        if (\$bin | is-empty) {
+          continue
+        }
+
+        let cmd = replaceEnv \$permParts.1
+        opPrintMaybeRunCmd ...(\$cmd | split row ' ')
+      }
+    }
+  }
 }
 
 
 \$env.FILE_LIST_PATH_PAIRS = [ r#'fzf|fzf/theme.ps1|{HOME}/.fzf/theme.ps1'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/AppData/Roaming/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/AppData/Roaming/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/AppData/Roaming/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/Documents/PowerShell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/Documents/PowerShell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'# ]
 
+\$env.FILE_OP = r#'list'#
+
 file
-\`
+"
 `;

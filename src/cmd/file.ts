@@ -38,6 +38,7 @@ const KEY_SPLIT = ','
 
 const FILE_KEY = 'file'
 
+const FILE_OP_KEY = [FILE_KEY, 'op']
 const FILE_OP_KEYS_KEY = (op: string) => [FILE_KEY, op, 'keys']
 const FILE_OP_PARTS_KEY = (op: string) => [FILE_KEY, op, 'parts']
 const FILE_OP_CLEAR_DIRS_KEY = (op: string) => [FILE_KEY, op, 'clear', 'dirs']
@@ -85,21 +86,13 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     }
   }
 
-  _shell = _shell
-    .with(
-      await _shell.fileLoad(
-        [FILE_KEY, FILE_KEY, op],
-        import.meta.resolve,
-        ['..'],
-      ),
-    )
-    .with(
-      await _shell.fileLoad(
-        [FILE_KEY, FILE_KEY],
-        import.meta.resolve,
-        ['..'],
-      ),
-    )
+  _shell = _shell.with(
+    await _shell.fileLoad(
+      [FILE_KEY, FILE_KEY],
+      import.meta.resolve,
+      ['..'],
+    ),
+  )
 
   if (op === 'find') {
     _shell = _shell.with(
@@ -184,6 +177,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     }
   }
 
+  _shell = _shell.with(_shell.varSetStr(FILE_OP_KEY, op))
   _shell = _shell.with([FILE_KEY])
 
   const body = _shell.build()

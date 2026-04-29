@@ -1,5 +1,5 @@
-def --env packCargo [] {
-  let cmd = 'cargo'
+def --env packBun [] {
+  let cmd = 'bun'
   if (
     (which $cmd | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
@@ -14,25 +14,22 @@ def --env packCargo [] {
 
   match $env.PACK_OP {
     'add' => {
-      packOpAdd [$cmd search] [$cmd binstall --locked]
+      opPrintMaybeRunCmd $cmd add -g $env.PACK_ADD_NAMES
+      hide-env PACK_ADD_NAMES
     }
     'find' => {
-      packOpFind [$cmd search]
+      for term in $env.PACK_FIND_NAMES {
+        [(packQueryNpm $term), (packQueryJsr $term)] | flatten | print
+      }
     }
     'list' => {
-      packOpList [$cmd install --list]
-    }
-    'out' => {
-      packOpOut [$cmd install-update --list]
+      packOpList [$cmd pm ls -g]
     }
     'rem' => {
-      packOpRem [$cmd install --list] [$cmd uninstall]
-    }
-    'sync' => {
-      packOpSync [$cmd install-update --all] [$cmd install-update]
+      packOpRem [$cmd pm ls -g] [$cmd remove -g]
     }
     'tidy' => {
-      packOpTidy [$cmd cache --autoclean]
+      packOpTidy [$cmd pm cache rm]
     }
   }
 }

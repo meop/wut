@@ -28,22 +28,21 @@ export class PackCmd extends CmdBase implements Cmd {
   }
 }
 
-// System managers (OS-level, including AUR wrappers)
 const sysOsPlatToSysManagers: Record<string, Array<string>> = {
   darwin: ['brew'],
-  linux: ['apk', 'apt', 'dnf', 'pacman', 'paru', 'yay', 'xbps', 'zypper'],
+  linux: ['apk', 'apt', 'dnf', 'yay', 'paru', 'pacman', 'xbps', 'zypper'],
   winnt: ['choco', 'scoop', 'winget'],
 }
 
 const sysOsToSysManagers: Record<string, Array<string>> = {
   alma: ['dnf'],
   alpine: ['apk'],
-  arch: ['pacman', 'paru', 'yay'],
+  arch: ['yay', 'paru', 'pacman'],
   centos: ['dnf'],
   debian: ['apt'],
   fedora: ['dnf'],
   kali: ['apt'],
-  manjaro: ['pacman', 'paru', 'yay'],
+  manjaro: ['yay', 'paru', 'pacman'],
   mint: ['apt'],
   rhel: ['dnf'],
   rocky: ['dnf'],
@@ -52,11 +51,10 @@ const sysOsToSysManagers: Record<string, Array<string>> = {
   void: ['xbps'],
 }
 
-// User managers (language-native: cargo, npx, bunx, pipx, uvx…)
 const sysOsPlatToUserManagers: Record<string, Array<string>> = {
-  darwin: ['cargo'],
-  linux: ['cargo'],
-  winnt: ['cargo'],
+  darwin: ['ghpm', 'cargo', 'uv', 'pnpm', 'bun', 'deno'],
+  linux: ['ghpm', 'cargo', 'uv', 'pnpm', 'bun', 'deno'],
+  winnt: ['ghpm', 'cargo', 'uv', 'pnpm', 'bun', 'deno'],
 }
 
 const sysOsToUserManagers: Record<string, Array<string>> = {}
@@ -146,7 +144,7 @@ export function parseScriptFilePath(
   return { parts, ext: '' }
 }
 
-const managerOpDeps: Record<string, string> = {
+const managerAliasMap: Record<string, string> = {
   paru: 'pacman',
   yay: 'pacman',
 }
@@ -155,6 +153,10 @@ export function getManagerFuncName(manager: string, prefix = PACK_KEY) {
   return manager
     ? `${prefix}${manager[0].toUpperCase()}${manager.slice(1).replaceAll('-', '').replaceAll('_', '').toLowerCase()}`
     : ''
+}
+
+function getManagerCallName(manager: string): string {
+  return getManagerFuncName(managerAliasMap[manager] ?? manager)
 }
 
 function buildCmdRunLines(
@@ -187,36 +189,22 @@ async function buildFileRunLines(
 async function loadManagerFiles(
   shell: Sh,
   managers: Array<string>,
-  op: string,
 ) {
-  let _shell = shell
+  let _shell = shell.with(await shell.fileLoad([PACK_KEY], import.meta.resolve, ['..']))
+  const loadedFiles = new Set<string>()
   for (const manager of managers) {
-    const dep = managerOpDeps[manager]
-    if (dep && !managers.includes(dep)) {
+    const fileKey = managerAliasMap[manager] ?? manager
+    if (!loadedFiles.has(fileKey)) {
       _shell = _shell
         .with(
           await _shell.fileLoad(
-            [PACK_KEY, dep, op],
+            [PACK_KEY, fileKey],
             import.meta.resolve,
             ['..'],
           ),
         )
+      loadedFiles.add(fileKey)
     }
-    _shell = _shell
-      .with(
-        await _shell.fileLoad(
-          [PACK_KEY, manager, op],
-          import.meta.resolve,
-          ['..'],
-        ),
-      )
-      .with(
-        await _shell.fileLoad(
-          [PACK_KEY, manager],
-          import.meta.resolve,
-          ['..'],
-        ),
-      )
   }
   return _shell
 }
@@ -246,7 +234,7 @@ async function initOp(
   const sysManagers = getSupportedSysManagers(context, environment)
   const userManagers = getSupportedUserManagers(context, environment)
   const allManagers = [...userManagers, ...sysManagers]
-  _shell = await loadManagerFiles(_shell, allManagers, op)
+  _shell = await loadManagerFiles(_shell, allManagers)
   return { shell: _shell, allManagers, userManagers, sysManagers }
 }
 
@@ -359,12 +347,21 @@ function printGroups(shell: Sh, entries: Array<string>) {
 }
 
 function callManagers(shell: Sh, managers: Array<string>) {
-  return shell.with(managers.map((m) => getManagerFuncName(m)))
+  const seen = new Set<string>()
+  const calls: Array<string> = []
+  for (const m of managers) {
+    const fn = getManagerCallName(m)
+    if (!seen.has(fn)) {
+      seen.add(fn)
+      calls.push(fn)
+    }
+  }
+  return shell.with(calls)
 }
 
-function setOpNames(shell: Sh, op: string, names: string) {
+function setOpNames(shell: Sh, op: string, names: Array<string>) {
   return shell.with(
-    shell.varSetStr(PACK_OP_NAMES_KEY(op), names),
+    shell.varSetArr(PACK_OP_NAMES_KEY(op), names),
   )
 }
 
@@ -403,8 +400,8 @@ function processManagerEntryLines(
     }
   }
 
-  lines.push(shell.varSetStr(PACK_OP_NAMES_KEY(op), entry.names.join(' ')))
-  lines.push(getManagerFuncName(manager))
+  lines.push(shell.varSetArr(PACK_OP_NAMES_KEY(op), entry.names))
+  lines.push(getManagerCallName(manager))
 
   if (op === 'rem') {
     const postScript = remEntry?.[nativeShell]
@@ -414,31 +411,29 @@ function processManagerEntryLines(
   }
 
   lines.push(shell.varUnSet(PACK_MANAGER_KEY))
-  if (op === 'add' || op === 'rem') {
-    lines.push('$env.PACKED = true')
-  }
 
   return lines
 }
 
-export type TierBlock = { label: string; lines: Array<string> }
+export type TierBlock = { label: string; pre?: Array<string>; lines: Array<string> }
 
 export function buildTierChain(tiers: Array<TierBlock>): Array<string> {
   function buildChain(i: number): Array<string> {
-    const { label, lines } = tiers[i]
+    const { label, pre = [], lines } = tiers[i]
     const assign = i === 0 ? `mut yn = ''` : `$yn = ''`
     const prompt = [
       assign,
       `if 'YES' in $env {`,
       `  $yn = 'y'`,
       `} else {`,
-      `  $yn = input r#'? ${label} [y, [n]]: '#`,
+      `  $yn = input r#'${label} [y,[n]]: '#`,
       `}`,
     ]
     if (i === tiers.length - 1) {
-      return [...prompt, `if $yn != 'n' {`, ...lines, `}`]
+      return [...pre, ...prompt, `if $yn != 'n' {`, ...lines, `}`]
     }
     return [
+      ...pre,
       ...prompt,
       `if $yn != 'n' {`,
       ...lines,
@@ -494,9 +489,15 @@ async function processGroupConfig(
         scriptBodyLines = await buildFileRunLines(_shell, plat, entry.file)
       }
       if (scriptBodyLines) {
+        const scriptPre = entry.file
+          ? [..._shell.print('file'), ..._shell.print(`  ${entry.file}`)]
+          : entry.commands?.length
+          ? [..._shell.print('commands'), ..._shell.print(`  ${entry.commands.join(' ')}`)]
+          : []
         tierBlocks.push({
-          label: 'use pack (script)',
-          lines: [..._shell.print(name), ...scriptBodyLines, '$env.PACKED = true'],
+          label: 'use script (user/system)',
+          pre: scriptPre,
+          lines: [...scriptBodyLines, '$env.PACKED = true'],
         })
         found = true
       }
@@ -510,12 +511,9 @@ async function processGroupConfig(
           continue
         }
         tierBlocks.push({
-          label: `use pack (${tier})`,
-          lines: [
-            ..._shell.print(name),
-            ..._shell.print(`  ${entry.names.join(', ')}`),
-            ...processManagerEntryLines(_shell, context, op, manager, entry, tierRemConfig?.[manager]),
-          ],
+          label: `use ${manager} (${tier})`,
+          pre: [..._shell.print('names'), ..._shell.print(`  ${entry.names.join(' ')}`)],
+          lines: processManagerEntryLines(_shell, context, op, manager, entry, tierRemConfig?.[manager]),
         })
         found = true
       }
@@ -523,8 +521,11 @@ async function processGroupConfig(
   }
 
   if (tierBlocks.length > 0) {
-    _shell = _shell.with('$env.PACKED = false')
+    _shell = _shell.with([..._shell.print('alias'), ..._shell.print(`  ${name}`)])
     if (tierBlocks.length === 1) {
+      if (tierBlocks[0].pre?.length) {
+        _shell = _shell.with(tierBlocks[0].pre)
+      }
       _shell = _shell.with(
         _shell.gatedFunc(tierBlocks[0].label, tierBlocks[0].lines),
       )
@@ -556,7 +557,8 @@ export async function resolveGroupName(name: string): Promise<Array<string>> {
       p,
       i,
     ) => p === nameParts[i])
-    if (isPrefix || isSuffix) {
+    const isLastPart = parts[parts.length - 1] === name
+    if (isPrefix || isSuffix || isLastPart) {
       matched.push(resolvedName)
     }
   }
@@ -647,12 +649,12 @@ async function execOp(
   const remaining = names.filter((n) => !found.includes(n))
 
   if ((op === 'find' && names.length) || op === 'list' || op === 'out') {
-    result = setOpNames(result, op, names.join(' '))
+    result = setOpNames(result, op, names)
     result = callManagers(result, allManagers)
   } else if (op !== 'find') {
     const managerNames = remaining.length ? remaining : names
     if (managerNames.length) {
-      result = setOpNames(result, op, managerNames.join(' '))
+      result = setOpNames(result, op, managerNames)
     }
     result = callManagers(result, allManagers)
   }

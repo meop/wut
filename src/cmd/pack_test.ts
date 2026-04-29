@@ -258,7 +258,7 @@ Deno.test('buildTierChain - two tiers produce correct nushell structure', () => 
     `if 'YES' in $env {`,
     `  $yn = 'y'`,
     `} else {`,
-    `  $yn = input r#'? tier-a [y, [n]]: '#`,
+    `  $yn = input r#'tier-a [y,[n]]: '#`,
     `}`,
     `if $yn != 'n' {`,
     'doA',
@@ -267,7 +267,7 @@ Deno.test('buildTierChain - two tiers produce correct nushell structure', () => 
     `if 'YES' in $env {`,
     `  $yn = 'y'`,
     `} else {`,
-    `  $yn = input r#'? tier-b [y, [n]]: '#`,
+    `  $yn = input r#'tier-b [y,[n]]: '#`,
     `}`,
     `if $yn != 'n' {`,
     'doB',
@@ -292,7 +292,7 @@ Deno.test('buildTierChain - three tiers have two nested else branches', () => {
   const ynAssigns = result.filter((l) => l === `$yn = ''`)
   assertEquals(ynAssigns.length, 2)
   // All three prompts present
-  const prompts = result.filter((l) => l.includes(`input r#'?`))
+  const prompts = result.filter((l) => l.includes(`input r#'`))
   assertEquals(prompts.length, 3)
   // tier bodies present
   assertEquals(result.includes('lineA'), true)
@@ -321,7 +321,7 @@ Deno.test('buildTierChain - single tier produces direct if branch', () => {
     `if 'YES' in $env {`,
     `  $yn = 'y'`,
     `} else {`,
-    `  $yn = input r#'? only [y, [n]]: '#`,
+    `  $yn = input r#'only [y,[n]]: '#`,
     `}`,
     `if $yn != 'n' {`,
     'doOnly',
@@ -418,14 +418,14 @@ Deno.test('getManagerFuncName - custom prefix', () => {
 // --- resolveGroupName ---
 
 Deno.test('resolveGroupName - suffix match finds group', async () => {
-  const result = await resolveGroupName('nushell')
-  assertEquals(result.includes('shell-nushell'), true)
+  const result = await resolveGroupName('nu')
+  assertEquals(result.includes('shell-nu'), true)
 })
 
 Deno.test('resolveGroupName - prefix match finds groups', async () => {
   const result = await resolveGroupName('shell')
   assertEquals(result.length >= 1, true)
-  assertEquals(result.includes('shell-nushell'), true)
+  assertEquals(result.includes('shell-nu'), true)
 })
 
 Deno.test('resolveGroupName - multi-part prefix match', async () => {
@@ -440,8 +440,8 @@ Deno.test('resolveGroupName - no match returns empty', async () => {
 })
 
 Deno.test('resolveGroupName - full name exact match', async () => {
-  const result = await resolveGroupName('shell-nushell')
-  assertEquals(result.includes('shell-nushell'), true)
+  const result = await resolveGroupName('shell-nu')
+  assertEquals(result.includes('shell-nu'), true)
 })
 
 Deno.test('resolveGroupName - name longer than any path returns empty', async () => {

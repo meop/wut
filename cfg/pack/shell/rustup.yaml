@@ -1,0 +1,26 @@
+---
+add:
+  script:
+    pwsh:
+      file: cfg/script/pwsh/install/rustup.ps1
+    zsh:
+      file: cfg/script/zsh/install/rustup.zsh
+  system:
+    brew:
+      names:
+        - rustup
+    apt:
+      names:
+        - rustup
+    dnf:
+      names:
+        - rustup
+    pacman:
+      names:
+        - rustup
+    xbps:
+      names:
+        - rustup
+    winget:
+      names:
+        - rustlang.rustup

@@ -48,7 +48,7 @@ def wut --wrapped [...args] {
   mut url = $"($url)/sh/nu"
   mut url = $"($url)/($args | str join '/')" | str trim --right --char '/'
 
-  nu --no-config-file -c $"( http get --raw --redirect-mode follow $"($url)" )"
+  nu --no-config-file -c $"( http get --raw --redirect-mode follow $url )"
 }
 ```
 
@@ -64,7 +64,7 @@ function wut {
   $url = "${url}/sh/pwsh"
   $url = "${url}/$($args -Join '/')".TrimEnd('/')
 
-  pwsh -noprofile -c "$( irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "${url}" )"
+  pwsh -noprofile -c "$( irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri $url )"
 }
 ```
 
@@ -80,7 +80,7 @@ function wut {
   local url=$(echo "${url}/sh/zsh")
   local url=$(echo "${url}/$(echo "$*" | sed 's/ /\//g')" | sed 's:/*$::')
 
-  zsh --no-rcs -c "$( curl --fail-with-body --location --no-progress-meter --url "${url}" )"
+  zsh --no-rcs -c "$( curl --fail-with-body --location --no-progress-meter --url $url )"
 }
 ```
 

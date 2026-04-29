@@ -17,7 +17,7 @@ def opPrint --wrapped [...args] {
   if 'SUCCINCT' in \$env {
     return
   }
-  \$"(\$args | str join ' ')" | print
+  \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -25,11 +25,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print --stderr
+    \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
-
-  \$"(ansi red)(\$args | str join ' ')(ansi reset)" | print --stderr
+  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -37,11 +36,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$"(\$args | flatten | str join ' ')" | print
     return
   }
-
-  \$"(ansi green)(\$args | str join ' ')(ansi reset)" | print
+  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -49,11 +47,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$"(\$args | flatten | str join ' ')" | print
     return
   }
-
-  \$"(ansi yellow)(\$args | str join ' ')(ansi reset)" | print
+  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -61,11 +58,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$"(\$args | flatten | str join ' ')" | print
     return
   }
-
-  \$"(ansi blue)(\$args | str join ' ')(ansi reset)" | print
+  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -73,18 +69,40 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if 'GRAYSCALE' in \$env {
-    \$"(\$args | str join ' ')" | print
+    \$"(\$args | flatten | str join ' ')" | print
     return
   }
-
+  let args = \$args | flatten
   \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
   if (\$args | length) > 1 {
     \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
   }
 }
 
+def opMaybePrintCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
 def opRunCmd --wrapped [...args] {
-  nu --no-config-file -c \$"(\$args | str join ' ')"
+  nu --no-config-file -c \$"(\$args | flatten | str join ' ')"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if 'NOOP' not-in \$env {
+    opRunSilentCmd ...\$args
+  }
 }
 
 def opPrintRunCmd --wrapped [...args] {
@@ -94,9 +112,7 @@ def opPrintRunCmd --wrapped [...args] {
 
 def opPrintMaybeRunCmd --wrapped [...args] {
   opPrintCmd ...\$args
-  if 'NOOP' not-in \$env {
-    opRunCmd ...\$args
-  }
+  opMaybeRunCmd ...\$args
 }
 
 
@@ -122,13 +138,16 @@ do {
 }
 \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)?sysCpuArch=(\$env.SYS_CPU_ARCH)"
 
-\$env.SYS_CPU_VEND = match (sys cpu | first | get vendor_id | split words | first | str downcase) {
-  'genuineintel' => 'intel',
-  'authenticamd' => 'amd',
-  'qemu' => 'apple',
-  \$x => \$x,
+let _raw_vend = sys cpu | first | get name | str downcase
+\$env.SYS_CPU_VEND = match \$_raw_vend {
+  \$x if (\$x | str starts-with 'amd') => 'amd',
+  \$x if (\$x | str starts-with 'apple') => 'apple',
+  \$x if (\$x | str starts-with 'arm') => 'arm',
+  \$x if (\$x | str starts-with 'intel') => 'intel',
 }
-\$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysCpuVend=(\$env.SYS_CPU_VEND)"
+if \$env.SYS_CPU_VEND != null {
+  \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysCpuVend=(\$env.SYS_CPU_VEND)"
+}
 
 \$env.SYS_HOST = sys host | get hostname | str downcase
 \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysHost=(\$env.SYS_HOST)"
@@ -142,18 +161,13 @@ do {
 \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsPlat=(\$env.SYS_OS_PLAT)"
 
 if \$env.SYS_OS_PLAT == 'linux' {
-  if 'SYS_OS_DE' not-in \$env {
-    if 'XDG_SESSION_DESKTOP' in \$env {
-      \$env.SYS_OS_DE = \$env.XDG_SESSION_DESKTOP | str downcase
+  if 'SYS_OS_DE' not-in \$env and 'XDG_SESSION_DESKTOP' in \$env {
+    \$env.SYS_OS_DE = match (\$env.XDG_SESSION_DESKTOP | str downcase) {
+      'kde' => 'plasma',
+      'rpd' | 'rpd-labwc' => 'lxde',
+      \$x => \$x,
     }
-    if 'SYS_OS_DE' in \$env {
-      \$env.SYS_OS_DE = match \$env.SYS_OS_DE {
-        'kde' => 'plasma',
-        'rpd' | 'rpd-labwc' => 'lxde',
-        \$x => \$x,
-      }
-      \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsDe=(\$env.SYS_OS_DE)"
-    }
+    \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsDe=(\$env.SYS_OS_DE)"
   }
 
   if ('/etc/os-release' | path exists) {
@@ -164,39 +178,24 @@ if \$env.SYS_OS_PLAT == 'linux' {
       | transpose --as-record --header-row
       | load-env
 
-    if 'SYS_OS' not-in \$env {
-      if 'ID' in \$env {
-        \$env.SYS_OS = \$env.ID | str downcase
-      }
-      if 'SYS_OS' in \$env {
-        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOs=(\$env.SYS_OS)"
-      }
+    if 'SYS_OS' not-in \$env and 'ID' in \$env {
+      \$env.SYS_OS = \$env.ID | str downcase
+      \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOs=(\$env.SYS_OS)"
     }
 
-    if 'SYS_OS_LIKE' not-in \$env {
-      if 'SYS_OS' in \$env {
-        let _parts = if 'ID_LIKE' in \$env { \$env.ID_LIKE | str downcase | split words } else { [] }
-        \$env.SYS_OS_LIKE = ([\$env.SYS_OS] ++ \$_parts) | str join '-'
-        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsLike=(\$env.SYS_OS_LIKE)"
-      }
+    if 'SYS_OS_LIKE' not-in \$env and 'SYS_OS' in \$env {
+      \$env.SYS_OS_LIKE = if 'ID_LIKE' in \$env { \$"(\$env.SYS_OS)_(\$env.ID_LIKE | str downcase)" } else { \$env.SYS_OS } | str replace --all ' ' '_'
+      \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsLike=(\$env.SYS_OS_LIKE)"
     }
 
-    if 'SYS_OS_VERS' not-in \$env {
-      if 'VERSION_ID' in \$env {
-        \$env.SYS_OS_VERS = \$env.VERSION_ID | str downcase
-      }
-      if 'SYS_OS_VERS' in \$env {
-        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsVers=(\$env.SYS_OS_VERS)"
-      }
+    if 'SYS_OS_VERS' not-in \$env and 'VERSION_ID' in \$env {
+      \$env.SYS_OS_VERS = \$env.VERSION_ID | str downcase
+      \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsVers=(\$env.SYS_OS_VERS)"
     }
 
-    if 'SYS_OS_VERS_CODE' not-in \$env {
-      if 'VERSION_CODENAME' in \$env {
-        \$env.SYS_OS_VERS_CODE = \$env.VERSION_CODENAME | str downcase
-      }
-      if 'SYS_OS_VERS_CODE' in \$env {
-        \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsVersCode=(\$env.SYS_OS_VERS_CODE)"
-      }
+    if 'SYS_OS_VERS_CODE' not-in \$env and 'VERSION_CODENAME' in \$env {
+      \$env.SYS_OS_VERS_CODE = \$env.VERSION_CODENAME | str downcase
+      \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsVersCode=(\$env.SYS_OS_VERS_CODE)"
     }
   }
 }
@@ -205,7 +204,7 @@ if \$env.SYS_OS_PLAT == 'linux' {
 \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysUser=(\$env.SYS_USER)"
 
 
-nu --no-config-file -c \$"( http get --raw --redirect-mode follow \$"(\$env.REQ_URL_SH)" )"
+nu --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
 \`
 `;
@@ -219,7 +218,7 @@ function opPrint {
   if (\$SUCCINCT) {
     return
   }
-  [Console]::WriteLine(\$(\$args -join ' '))
+  [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
 }
 
 function opPrintErr {
@@ -227,11 +226,11 @@ function opPrintErr {
     return
   }
   if (\$GRAYSCALE) {
-    [Console]::Error.WriteLine(\$(\$args -join ' '))
+    [Console]::Error.WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
   }
   [Console]::ForegroundColor = 'red'
-  [Console]::Error.WriteLine(\$(\$args -join ' '))
+  [Console]::Error.WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
   [Console]::ResetColor()
 }
 
@@ -240,11 +239,11 @@ function opPrintSucc {
     return
   }
   if (\$GRAYSCALE) {
-    [Console]::WriteLine(\$(\$args -join ' '))
+    [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
   }
   [Console]::ForegroundColor = 'green'
-  [Console]::WriteLine(\$(\$args -join ' '))
+  [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
   [Console]::ResetColor()
 }
 
@@ -253,11 +252,11 @@ function opPrintWarn {
     return
   }
   if (\$GRAYSCALE) {
-    [Console]::WriteLine(\$(\$args -join ' '))
+    [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
   }
   [Console]::ForegroundColor = 'yellow'
-  [Console]::WriteLine(\$(\$args -join ' '))
+  [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
   [Console]::ResetColor()
 }
 
@@ -266,11 +265,11 @@ function opPrintInfo {
     return
   }
   if (\$GRAYSCALE) {
-    [Console]::WriteLine(\$(\$args -join ' '))
+    [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
   }
   [Console]::ForegroundColor = 'blue'
-  [Console]::WriteLine(\$(\$args -join ' '))
+  [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
   [Console]::ResetColor()
 }
 
@@ -279,22 +278,45 @@ function opPrintCmd {
     return
   }
   if (\$GRAYSCALE) {
-    [Console]::WriteLine(\$(\$args -join ' '))
+    [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
   }
+  \$_args = \$args | ForEach-Object { \$_ }
   [Console]::ForegroundColor = 'magenta'
-  [Console]::Write(\$args[0])
+  [Console]::Write(\$_args[0])
   [Console]::ResetColor()
   if (\$args.Length -gt 1) {
     [Console]::Write(' ')
     [Console]::ForegroundColor = 'cyan'
-    [Console]::WriteLine(\$(\$(\$args | Select-Object -Skip 1) -join ' '))
+    [Console]::WriteLine(((\$_args | Select-Object -Skip 1) -join ' '))
     [Console]::ResetColor()
   }
 }
 
+function opMaybePrintCmd {
+  if (-not \$NOOP) {
+    opPrintCmd @args
+  }
+}
+
 function opRunCmd {
-  iex "\$(\$args -join ' ')"
+  Invoke-Expression "\$((\$args | ForEach-Object { \$_ }) -join ' ')"
+}
+
+function opRunSilentCmd {
+  Invoke-Expression "\$((\$args | ForEach-Object { \$_ }) -join ' ') 6>&1 5>&1 4>&1 3>&1 2>&1 | Out-Null"
+}
+
+function opMaybeRunCmd {
+  if (-not \$NOOP) {
+    opRunCmd @args
+  }
+}
+
+function opMaybeRunSilentCmd {
+  if (-not \$NOOP) {
+    opRunSilentCmd @args
+  }
 }
 
 function opPrintRunCmd {
@@ -304,9 +326,7 @@ function opPrintRunCmd {
 
 function opPrintMaybeRunCmd {
   opPrintCmd @args
-  if (-not \$NOOP) {
-    opRunCmd @args
-  }
+  opMaybeRunCmd @args
 }
 
 
@@ -326,34 +346,33 @@ function opPrintMaybeRunCmd {
 
 
 if (\$IsWindows) {
-  \$SYS_CPU_ARCH = "\${env:PROCESSOR_ARCHITECTURE}".ToLower()
+  \$_raw_arch = "\${env:PROCESSOR_ARCHITECTURE}".ToLower()
 } else {
-  \$SYS_CPU_ARCH = "\$(uname -m)".ToLower()
+  \$_raw_arch = "\$(uname -m)".ToLower()
 }
-\$SYS_CPU_ARCH = switch (\$SYS_CPU_ARCH) {
+\$SYS_CPU_ARCH = switch (\$_raw_arch) {
   'arm64' { 'aarch64' }
   'amd64' { 'x86_64' }
-  default { \$SYS_CPU_ARCH }
+  default { \$_raw_arch }
 }
 \$REQ_URL_SH = "\${REQ_URL_SH}?sysCpuArch=\${SYS_CPU_ARCH}"
 
 if (\$IsWindows) {
-  \$_raw_ven = "\$(Get-WmiObject -Class Win32_Processor | Select-Object -ExpandProperty Manufacturer)".ToLower()
+  \$_raw_vend = "\$(Get-WmiObject -Class Win32_Processor | Select-Object -ExpandProperty Caption)".ToLower()
 } elseif (\$IsLinux) {
-  \$_raw_ven = "\$(lscpu | grep --ignore-case 'vendor id' | cut -d ':' -f 2 | xargs)".ToLower()
+  \$_raw_vend = "\$(lscpu | grep --ignore-case 'model name' | cut -d ':' -f 2 | xargs)".ToLower()
 } else {
-  \$_raw_ven = "\$(sysctl machdep.cpu.vendor 2> /dev/null | cut -d ':' -f 2 | xargs)".ToLower()
-  if (-not \$_raw_ven) {
-    \$_raw_ven = 'apple'
-  }
+  \$_raw_vend = "\$(sysctl machdep.cpu.brand_string 2> /dev/null | cut -d ':' -f 2 | xargs)".ToLower()
 }
-\$SYS_CPU_VEND = switch (\$_raw_ven) {
-  'genuineintel' { 'intel' }
-  'authenticamd' { 'amd' }
-  'qemu'         { 'apple' }
-  default        { \$_raw_ven }
+\$SYS_CPU_VEND = switch -Wildcard (\$_raw_vend) {
+  'amd*' { 'amd' }
+  'apple*' { 'apple' }
+  'arm*' { 'arm' }
+  'intel*' { 'intel' }
 }
-\$REQ_URL_SH = "\${REQ_URL_SH}&sysCpuVend=\${SYS_CPU_VEND}"
+if (\$SYS_CPU_VEND) {
+  \$REQ_URL_SH = "\${REQ_URL_SH}&sysCpuVend=\${SYS_CPU_VEND}"
+}
 
 if (\$IsWindows) {
   \$SYS_HOST = "\${env:COMPUTERNAME}".ToLower()
@@ -362,29 +381,19 @@ if (\$IsWindows) {
 }
 \$REQ_URL_SH = "\${REQ_URL_SH}&sysHost=\${SYS_HOST}"
 
-\$_raw_plat = if (\$IsMacOS) { 'darwin' } elseif (\$IsLinux) { 'linux' } elseif (\$IsWindows) { 'winnt' } else { 'unknown' }
-\$SYS_OS_PLAT = switch (\$_raw_plat) {
-  'darwin' { 'darwin' }
-  'linux'  { 'linux' }
-  'winnt'  { 'winnt' }
-  default  { \$_raw_plat }
-}
+\$SYS_OS_PLAT = if (\$IsMacOS) { 'darwin' } elseif (\$IsLinux) { 'linux' } elseif (\$IsWindows) { 'winnt' } else { 'unknown' }
 \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsPlat=\${SYS_OS_PLAT}"
 
 if (\$SYS_OS_PLAT -eq 'linux') {
-  if (-not \$SYS_OS_DE) {
-    if (\$XDG_SESSION_DESKTOP) {
-      \$SYS_OS_DE = "\${XDG_SESSION_DESKTOP}".ToLower()
+  if (-not \$SYS_OS_DE -and \$XDG_SESSION_DESKTOP) {
+    \$_de = "\${XDG_SESSION_DESKTOP}".ToLower()
+    \$SYS_OS_DE = switch (\$_de) {
+      'kde' { 'plasma' }
+      'rpd' { 'lxde' }
+      'rpd-labwc' { 'lxde' }
+      default { \$_de }
     }
-    if (\$SYS_OS_DE) {
-      \$SYS_OS_DE = switch (\$SYS_OS_DE) {
-        'kde'       { 'plasma' }
-        'rpd'       { 'lxde' }
-        'rpd-labwc' { 'lxde' }
-        default     { \$SYS_OS_DE }
-      }
-      \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsDe=\${SYS_OS_DE}"
-    }
+    \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsDe=\${SYS_OS_DE}"
   }
 
   if (Test-Path /etc/os-release) {
@@ -393,42 +402,24 @@ if (\$SYS_OS_PLAT -eq 'linux') {
       Set-Variable -Name "\$(\$_.Name)" -Value "\$(\$_.Value)".Trim('"')
     }
 
-    if (-not \$SYS_OS) {
-      if (\$ID) {
-        \$SYS_OS = "\${ID}".ToLower()
-      }
-      if (\$SYS_OS) {
-        \$REQ_URL_SH = "\${REQ_URL_SH}&sysOs=\${SYS_OS}"
-      }
+    if (-not \$SYS_OS -and \$ID) {
+      \$SYS_OS = "\${ID}".ToLower()
+      \$REQ_URL_SH = "\${REQ_URL_SH}&sysOs=\${SYS_OS}"
     }
 
-    if (-not \$SYS_OS_LIKE) {
-      if (\$SYS_OS) {
-        \$SYS_OS_LIKE = if (\$ID_LIKE) {
-          "\${SYS_OS}-\${ID_LIKE}".ToLower().Replace(' ', '-')
-        } else {
-          \$SYS_OS
-        }
-        \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsLike=\${SYS_OS_LIKE}"
-      }
+    if (-not \$SYS_OS_LIKE -and \$SYS_OS) {
+      \$SYS_OS_LIKE = "\$(if (\$ID_LIKE) { "\${SYS_OS}_\${ID_LIKE}" } else { "\${SYS_OS}" })".ToLower().Replace(' ', '_')
+      \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsLike=\${SYS_OS_LIKE}"
     }
 
-    if (-not \$SYS_OS_VERS) {
-      if (\$VERSION_ID) {
-        \$SYS_OS_VERS = "\${VERSION_ID}".ToLower()
-      }
-      if (\$SYS_OS_VERS) {
-        \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsVers=\${SYS_OS_VERS}"
-      }
+    if (-not \$SYS_OS_VERS -and \$VERSION_ID) {
+      \$SYS_OS_VERS = "\${VERSION_ID}".ToLower()
+      \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsVers=\${SYS_OS_VERS}"
     }
 
-    if (-not \$SYS_OS_VERS_CODE) {
-      if (\$VERSION_CODENAME) {
-        \$SYS_OS_VERS_CODE = "\${VERSION_CODENAME}".ToLower()
-      }
-      if (\$SYS_OS_VERS_CODE) {
-        \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsVersCode=\${SYS_OS_VERS_CODE}"
-      }
+    if (-not \$SYS_OS_VERS_CODE -and \$VERSION_CODENAME) {
+      \$SYS_OS_VERS_CODE = "\${VERSION_CODENAME}".ToLower()
+      \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsVersCode=\${SYS_OS_VERS_CODE}"
     }
   }
 }
@@ -441,7 +432,7 @@ if (\$IsWindows) {
 \$REQ_URL_SH = "\${REQ_URL_SH}&sysUser=\${SYS_USER}"
 
 
-iex "\$( irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri "\${REQ_URL_SH}" )"
+Invoke-Expression "\$( Invoke-RestMethod -ErrorAction Stop -ProgressAction SilentlyContinue -Uri \$REQ_URL_SH )"
 
 \`
 `;
@@ -529,8 +520,30 @@ function opPrintCmd {
   fi
 }
 
+function opMaybePrintCmd {
+  if [[ -z \$NOOP ]]; then
+    opPrintCmd "\$@"
+  fi
+}
+
 function opRunCmd {
   eval "\$*"
+}
+
+function opRunSilentCmd {
+  eval "\$*" &> /dev/null
+}
+
+function opMaybeRunCmd {
+  if [[ -z \$NOOP ]]; then
+    opRunCmd "\$@"
+  fi
+}
+
+function opMaybeRunSilentCmd {
+  if [[ -z \$NOOP ]]; then
+    opRunSilentCmd "\$@"
+  fi
 }
 
 function opPrintRunCmd {
@@ -540,9 +553,7 @@ function opPrintRunCmd {
 
 function opPrintMaybeRunCmd {
   opPrintCmd "\$@"
-  if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
-  fi
+  opMaybeRunCmd "\$@"
 }
 
 
@@ -564,27 +575,26 @@ function () {
 
 _raw_arch="\${(L)\$(uname -m)}"
 case "\$_raw_arch" in
-  arm64)   export SYS_CPU_ARCH='aarch64' ;;
-  amd64)   export SYS_CPU_ARCH='x86_64' ;;
-  *)       export SYS_CPU_ARCH="\$_raw_arch" ;;
+  arm64) export SYS_CPU_ARCH='aarch64' ;;
+  amd64) export SYS_CPU_ARCH='x86_64' ;;
+  *) export SYS_CPU_ARCH="\$_raw_arch" ;;
 esac
 export REQ_URL_SH="\${REQ_URL_SH}?sysCpuArch=\${SYS_CPU_ARCH}"
 
 if type lscpu > /dev/null; then
-  _raw_ven="\${(L)\$(lscpu | grep --ignore-case 'vendor id' | cut -d ':' -f 2 | xargs)}"
+  _raw_vend="\${(L)\$(lscpu | grep --ignore-case 'model name' | cut -d ':' -f 2 | xargs)}"
 elif type sysctl > /dev/null; then
-  _raw_ven="\${(L)\$(sysctl machdep.cpu.vendor 2> /dev/null | cut -d ':' -f 2 | xargs)}"
-  if [[ -z \$_raw_ven ]]; then
-    _raw_ven='apple'
-  fi
+  _raw_vend="\${(L)\$(sysctl machdep.cpu.brand_string 2> /dev/null | cut -d ':' -f 2 | xargs)}"
 fi
-case "\$_raw_ven" in
-  genuineintel) export SYS_CPU_VEND='intel' ;;
-  authenticamd) export SYS_CPU_VEND='amd' ;;
-  qemu)         export SYS_CPU_VEND='apple' ;;
-  *)            export SYS_CPU_VEND="\$_raw_ven" ;;
+case "\$_raw_vend" in
+  amd*) export SYS_CPU_VEND='amd' ;;
+  apple*) export SYS_CPU_VEND='apple' ;;
+  arm*) export SYS_CPU_VEND='arm' ;;
+  intel*) export SYS_CPU_VEND='intel' ;;
 esac
-export REQ_URL_SH="\${REQ_URL_SH}&sysCpuVend=\${SYS_CPU_VEND}"
+if [[ \$SYS_CPU_VEND ]]; then
+  export REQ_URL_SH="\${REQ_URL_SH}&sysCpuVend=\${SYS_CPU_VEND}"
+fi
 
 export SYS_HOST="\${(L)\$(hostname)}"
 export REQ_URL_SH="\${REQ_URL_SH}&sysHost=\${SYS_HOST}"
@@ -592,60 +602,43 @@ export REQ_URL_SH="\${REQ_URL_SH}&sysHost=\${SYS_HOST}"
 _raw_plat="\${(L)\$(uname)}"
 case "\$_raw_plat" in
   darwin) export SYS_OS_PLAT='darwin' ;;
-  linux)  export SYS_OS_PLAT='linux' ;;
-  *)      export SYS_OS_PLAT="\$_raw_plat" ;;
+  linux) export SYS_OS_PLAT='linux' ;;
+  *) export SYS_OS_PLAT="\$_raw_plat" ;;
 esac
 export REQ_URL_SH="\${REQ_URL_SH}&sysOsPlat=\${SYS_OS_PLAT}"
 
 if [[ \$SYS_OS_PLAT == 'linux' ]]; then
-  if [[ -z \$SYS_OS_DE ]]; then
-    if [[ \$XDG_SESSION_DESKTOP ]]; then
-      export SYS_OS_DE="\${(L)XDG_SESSION_DESKTOP}"
-    fi
-    if [[ \$SYS_OS_DE ]]; then
-      case "\$SYS_OS_DE" in
-        kde)       export SYS_OS_DE='plasma' ;;
-        rpd|rpd-labwc) export SYS_OS_DE='lxde' ;;
-      esac
-      export REQ_URL_SH="\${REQ_URL_SH}&sysOsDe=\${SYS_OS_DE}"
-    fi
+  if [[ -z \$SYS_OS_DE ]] && [[ \$XDG_SESSION_DESKTOP ]]; then
+    _raw_de="\${(L)XDG_SESSION_DESKTOP}"
+    case "\$_raw_de" in
+      kde) export SYS_OS_DE='plasma' ;;
+      rpd|rpd-labwc) export SYS_OS_DE='lxde' ;;
+      *) export SYS_OS_DE="\$_raw_de" ;;
+    esac
+    export REQ_URL_SH="\${REQ_URL_SH}&sysOsDe=\${SYS_OS_DE}"
   fi
 
   if [[ -f /etc/os-release ]]; then
     source /etc/os-release
 
-    if [[ -z \$SYS_OS ]]; then
-      if [[ \$ID ]]; then
-        export SYS_OS="\${(L)ID}"
-      fi
-      if [[ \$SYS_OS ]]; then
-        export REQ_URL_SH="\${REQ_URL_SH}&sysOs=\${SYS_OS}"
-      fi
+    if [[ -z \$SYS_OS ]] && [[ \$ID ]]; then
+      export SYS_OS="\${(L)ID}"
+      export REQ_URL_SH="\${REQ_URL_SH}&sysOs=\${SYS_OS}"
     fi
 
-    if [[ -z \$SYS_OS_LIKE ]]; then
-      if [[ \$SYS_OS ]]; then
-        export SYS_OS_LIKE="\${SYS_OS}\${ID_LIKE:+-\${(L)\${ID_LIKE// /-}}}"
-        export REQ_URL_SH="\${REQ_URL_SH}&sysOsLike=\${SYS_OS_LIKE}"
-      fi
+    if [[ -z \$SYS_OS_LIKE ]] && [[ \$SYS_OS ]]; then
+      export SYS_OS_LIKE="\${SYS_OS}\${ID_LIKE:+_\${(L)\${ID_LIKE// /_}}}"
+      export REQ_URL_SH="\${REQ_URL_SH}&sysOsLike=\${SYS_OS_LIKE}"
     fi
 
-    if [[ -z \$SYS_OS_VERS ]]; then
-      if [[ \$VERSION_ID ]]; then
-        export SYS_OS_VERS="\${(L)VERSION_ID}"
-      fi
-      if [[ \$SYS_OS_VERS ]]; then
-        export REQ_URL_SH="\${REQ_URL_SH}&sysOsVers=\${SYS_OS_VERS}"
-      fi
+    if [[ -z \$SYS_OS_VERS ]] && [[ \$VERSION_ID ]]; then
+      export SYS_OS_VERS="\${(L)VERSION_ID}"
+      export REQ_URL_SH="\${REQ_URL_SH}&sysOsVers=\${SYS_OS_VERS}"
     fi
 
-    if [[ -z \$SYS_OS_VERS_CODE ]]; then
-      if [[ \$VERSION_CODENAME ]]; then
-        export SYS_OS_VERS_CODE="\${(L)VERSION_CODENAME}"
-      fi
-      if [[ \$SYS_OS_VERS_CODE ]]; then
-        export REQ_URL_SH="\${REQ_URL_SH}&sysOsVersCode=\${SYS_OS_VERS_CODE}"
-      fi
+    if [[ -z \$SYS_OS_VERS_CODE ]] && [[ \$VERSION_CODENAME ]]; then
+      export SYS_OS_VERS_CODE="\${(L)VERSION_CODENAME}"
+      export REQ_URL_SH="\${REQ_URL_SH}&sysOsVersCode=\${SYS_OS_VERS_CODE}"
     fi
   fi
 fi
@@ -654,7 +647,7 @@ export SYS_USER="\${(L)\$(whoami)}"
 export REQ_URL_SH="\${REQ_URL_SH}&sysUser=\${SYS_USER}"
 
 
-eval "\$( curl --fail-with-body --location --no-progress-meter --url "\${REQ_URL_SH}" )"
+eval "\$( curl --fail-with-body --location --no-progress-meter --url \$REQ_URL_SH )"
 
 \`
 `;

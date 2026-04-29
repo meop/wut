@@ -1,23 +1,44 @@
 def --env packDnf [] {
   let cmd = 'dnf'
-  if ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or (which $cmd | is-empty) {
+  if (
+    (which $cmd | is-empty) or
+    ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
+    ('PACK_OP' not-in $env) or
+    ($env.PACK_OP == 'add' and ($env.PACK_ADD_NAMES? | is-empty)) or
+    ($env.PACK_OP == 'rem' and ($env.PACK_REM_NAMES? | is-empty))
+  ) {
     return
   }
-  if ('PACK_OP' in $env) and ($env.PACK_OP in ['add', 'rem']) and ($env.PACKED? | default false) {
-    return
+
+  if not (packPrompt $"use ($cmd) \(system\)") { return }
+  let cmd = packSudoCmd $cmd
+
+  match $env.PACK_OP {
+    'add' => {
+      packOpUp [$cmd makecache]
+      packOpAdd [$cmd search] [$cmd install]
+    }
+    'find' => {
+      packOpUp [$cmd makecache]
+      packOpFind [$cmd search]
+    }
+    'list' => {
+      packOpList [$cmd list --installed]
+    }
+    'out' => {
+      packOpUp [$cmd makecache]
+      packOpOut [$cmd list --upgrades]
+    }
+    'rem' => {
+      packOpRem [$cmd list --installed] [$cmd remove]
+    }
+    'sync' => {
+      packOpUp [$cmd makecache]
+      packOpSync [$cmd distro-sync] [$cmd upgrade]
+    }
+    'tidy' => {
+      opPrintMaybeRunCmd $cmd clean all
+      opPrintMaybeRunCmd $cmd autoremove
+    }
   }
-  mut yn = ''
-  if 'YES' in $env {
-    $yn = 'y'
-  } else {
-    $yn = input $"? use ($cmd) \(system\) [y, [n]]: "
-  }
-  if $yn == 'n' {
-    return
-  }
-  let cmd = if (which sudo | is-not-empty) { $"sudo ($cmd)" } else { $cmd }
-  if 'PACK_OP' in $env and ($env.PACK_OP == 'add' or $env.PACK_OP == 'find' or $env.PACK_OP == 'out' or $env.PACK_OP == 'sync') {
-    opPrintMaybeRunCmd $cmd check-upgrade '|' complete '|' ignore
-  }
-  packDnfOp $cmd
 }

@@ -27,7 +27,7 @@ function () {
   local output="${HOME}/.zsh-plugins/znap"
   if [[ ! -d "${output}" ]]; then
     local url='https://github.com/marlonrichert/zsh-snap.git'
-    git clone --depth 1 --quiet "${url}" "${output}"
+    git clone --depth 1 --quiet $url $output
   fi
   . "${output}/znap.zsh"
 }

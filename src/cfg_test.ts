@@ -33,7 +33,7 @@ Deno.test('getCfgDirDump - returns pack yaml entries', async () => {
   const results = await getCfgDirDump(['pack'], { extension: 'yaml' })
   assertEquals(results.length > 0, true)
   const names = results.map((r) => r.join('-'))
-  assertEquals(names.includes('shell-nushell'), true)
+  assertEquals(names.includes('shell-nu'), true)
 })
 
 Deno.test('getCfgDirDump - extension filter excludes non-matching', async () => {
@@ -46,12 +46,12 @@ Deno.test('getCfgDirDump - extension filter excludes non-matching', async () => 
 Deno.test('getCfgDirDump - flexible filter matches at any depth', async () => {
   const results = await getCfgDirDump(['pack'], {
     extension: 'yaml',
-    filters: ['nushell'],
+    filters: ['nu'],
     flexible: true,
   })
   assertEquals(results.length >= 1, true)
   const names = results.map((r) => r.join('-'))
-  assertEquals(names.includes('shell-nushell'), true)
+  assertEquals(names.includes('shell-nu'), true)
 })
 
 Deno.test('getCfgDirDump - non-flexible filter matches first segment only', async () => {
@@ -160,7 +160,7 @@ Deno.test('getCfgFileLoad - loads and parses file.yaml', async () => {
 })
 
 Deno.test('getCfgFileLoad - loads pack config with add/system tiers', async () => {
-  const result = await getCfgFileLoad(['pack', 'shell', 'nushell'], { extension: 'yaml' })
+  const result = await getCfgFileLoad(['pack', 'shell', 'nu'], { extension: 'yaml' })
   assertEquals(result !== null, true)
   assertEquals(typeof result.add, 'object')
   assertEquals(typeof result.add.system, 'object')

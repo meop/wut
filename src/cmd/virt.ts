@@ -152,21 +152,13 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     )
 
     for (const supportedManager of supportedManagers) {
-      _shell = _shell
-        .with(
-          await _shell.fileLoad(
-            [VIRT_KEY, supportedManager, op],
-            import.meta.resolve,
-            ['..'],
-          ),
-        )
-        .with(
-          await _shell.fileLoad(
-            [VIRT_KEY, supportedManager],
-            import.meta.resolve,
-            ['..'],
-          ),
-        )
+      _shell = _shell.with(
+        await _shell.fileLoad(
+          [VIRT_KEY, supportedManager],
+          import.meta.resolve,
+          ['..'],
+        ),
+      )
     }
 
     if (supportedManagers.includes('podman')) {

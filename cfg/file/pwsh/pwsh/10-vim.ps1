@@ -1,4 +1,4 @@
 if (Get-Command nvim -ErrorAction Ignore) {
-  $env:EDITOR = 'nvim'
-  $env:VISUAL = 'nvim'
+  $env:EDITOR = 'vim'
+  $env:VISUAL = 'vim'
 }
