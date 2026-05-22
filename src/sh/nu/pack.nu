@@ -33,13 +33,33 @@ def packQueryPypi [term: string] {
   [{registry: 'pypi', name: $info.name, version: $info.version, description: ($info.summary? | default '')}]
 }
 
-def --env packOpAdd [cmdsFind: list<string>, cmds: list<string>] {
+def --env packOp [cmds: list<string>] {
+  opPrintMaybeRunCmd try '{' ...$cmds '}'
+}
+
+def packSearch [cmdsFind: list<string>, term: string] {
+  run-external ($cmdsFind | first) ...($cmdsFind | skip 1) $term
+    | complete
+    | get stdout
+    | lines
+    | any { |line| ($line | str contains $term) }
+}
+
+def packInstalled [cmdsList: list<string>, term: string] {
+  run-external ($cmdsList | first) ...($cmdsList | skip 1)
+    | complete
+    | get stdout
+    | lines
+    | any { |line| ($line | str contains $term) }
+}
+
+def --env packOpAdd [
+  finder: closure,
+  cmds: list<string>,
+] {
   mut toAdd = []
   for term in $env.PACK_ADD_NAMES {
-    let found = (run-external ($cmdsFind | first) ...($cmdsFind | skip 1) $term
-      | lines
-      | any { |line| ($line | str contains $term) })
-    if $found {
+    if (do $finder $term) {
       $toAdd = ($toAdd | append $term)
     } else {
       print $"($term): not found"
@@ -58,37 +78,34 @@ def --env packOpAdd [cmdsFind: list<string>, cmds: list<string>] {
 
 def --env packOpFind [cmds: list<string>] {
   for term in $env.PACK_FIND_NAMES {
-    opPrintRunCmd ...$cmds $term
+    opPrintRunCmd try '{' ...$cmds $term '}'
   }
 }
 
 def --env packOpList [cmds: list<string>] {
   if ($env.PACK_LIST_NAMES? | is-empty) {
-    opPrintRunCmd ...$cmds
-    return
-  }
-  for term in $env.PACK_LIST_NAMES {
-    opPrintRunCmd ...$cmds '|' find --ignore-case $term
-  }
-}
-
-def --env packOpOut [cmds: list<string>] {
-  if ($env.PACK_OUT_NAMES? | is-empty) {
     opPrintRunCmd try '{' ...$cmds '}'
     return
   }
-  for term in $env.PACK_OUT_NAMES {
+  for term in $env.PACK_LIST_NAMES {
     opPrintRunCmd try '{' ...$cmds '|' find --ignore-case $term '}'
   }
 }
 
-def --env packOpRem [cmdsList: list<string>, cmds: list<string>] {
+def --env packOpOutdated [cmds: list<string>] {
+  if ($env.PACK_OUTDATED_NAMES? | is-empty) {
+    opPrintRunCmd try '{' ...$cmds '}'
+    return
+  }
+  for term in $env.PACK_OUTDATED_NAMES {
+    opPrintRunCmd try '{' ...$cmds '|' find --ignore-case $term '}'
+  }
+}
+
+def --env packOpRemove [finder: closure, cmds: list<string>] {
   mut toRem = []
-  for term in $env.PACK_REM_NAMES {
-    let found = (run-external ($cmdsList | first) ...($cmdsList | skip 1)
-      | lines
-      | any { |line| ($line | str contains $term) })
-    if $found {
+  for term in $env.PACK_REMOVE_NAMES {
+    if (do $finder $term) {
       $toRem = ($toRem | append $term)
     } else {
       print $"($term): not installed"
@@ -97,26 +114,19 @@ def --env packOpRem [cmdsList: list<string>, cmds: list<string>] {
   if ($toRem | is-not-empty) {
     opPrintMaybeRunCmd ...$cmds $toRem
   }
-  let remains = ($env.PACK_REM_NAMES | where { |n| $n not-in $toRem })
+  let remains = ($env.PACK_REMOVE_NAMES | where { |n| $n not-in $toRem })
   if ($remains | is-empty) {
-    hide-env PACK_REM_NAMES
+    hide-env PACK_REMOVE_NAMES
     return
   }
-  $env.PACK_REM_NAMES = $remains
+  $env.PACK_REMOVE_NAMES = $remains
 }
 
 def --env packOpSync [cmdsNoArgs: list<string>, cmds: list<string>] {
   if ($env.PACK_SYNC_NAMES? | is-empty) {
-    opPrintMaybeRunCmd try '{' ...$cmdsNoArgs '}'
+    packOp $cmdsNoArgs
     return
   }
-  opPrintMaybeRunCmd try '{' ...$cmds $env.PACK_SYNC_NAMES '}'
+  packOp ($cmds ++ $env.PACK_SYNC_NAMES)
 }
 
-def --env packOpTidy [cmds: list<string>] {
-  opPrintMaybeRunCmd ...$cmds
-}
-
-def --env packOpUp [cmds: list<string>] {
-  opPrintMaybeRunCmd try '{' ...$cmds '}'
-}

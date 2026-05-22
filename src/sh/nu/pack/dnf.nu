@@ -5,7 +5,7 @@ def --env packDnf [] {
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
     ($env.PACK_OP == 'add' and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == 'rem' and ($env.PACK_REM_NAMES? | is-empty))
+    ($env.PACK_OP == 'remove' and ($env.PACK_REMOVE_NAMES? | is-empty))
   ) {
     return
   }
@@ -15,25 +15,25 @@ def --env packDnf [] {
 
   match $env.PACK_OP {
     'add' => {
-      packOpUp [$cmd makecache]
-      packOpAdd [$cmd search] [$cmd install]
+      packOp [$cmd makecache]
+      packOpAdd { |n| packSearch [$cmd search] $n } [$cmd install]
     }
     'find' => {
-      packOpUp [$cmd makecache]
+      packOp [$cmd makecache]
       packOpFind [$cmd search]
     }
     'list' => {
       packOpList [$cmd list --installed]
     }
-    'out' => {
-      packOpUp [$cmd makecache]
-      packOpOut [$cmd list --upgrades]
+    'outdated' => {
+      packOp [$cmd makecache]
+      packOpOutdated [$cmd list --upgrades]
     }
-    'rem' => {
-      packOpRem [$cmd list --installed] [$cmd remove]
+    'remove' => {
+      packOpRemove { |n| packInstalled [$cmd list --installed] $n } [$cmd remove]
     }
     'sync' => {
-      packOpUp [$cmd makecache]
+      packOp [$cmd makecache]
       packOpSync [$cmd distro-sync] [$cmd upgrade]
     }
     'tidy' => {

@@ -13,7 +13,7 @@ def --env packPacman [] {
     (which $mgr | is-empty) or
     ('PACK_OP' not-in $env) or
     ($env.PACK_OP == 'add' and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == 'rem' and ($env.PACK_REM_NAMES? | is-empty))
+    ($env.PACK_OP == 'remove' and ($env.PACK_REMOVE_NAMES? | is-empty))
   ) {
     return
   }
@@ -23,25 +23,25 @@ def --env packPacman [] {
 
   match $env.PACK_OP {
     'add' => {
-      packOpUp [$cmd --sync --refresh]
-      packOpAdd [$cmd --sync --search] [$cmd --sync --needed]
+      packOp [$cmd --sync --refresh]
+      packOpAdd { |n| packSearch [$cmd --sync --search] $n } [$cmd --sync --needed]
     }
     'find' => {
-      packOpUp [$cmd --sync --refresh]
+      packOp [$cmd --sync --refresh]
       packOpFind [$cmd --sync --search]
     }
     'list' => {
       packOpList [$cmd --query]
     }
-    'out' => {
-      packOpUp [$cmd --sync --refresh]
-      packOpOut [$cmd --query --upgrades]
+    'outdated' => {
+      packOp [$cmd --sync --refresh]
+      packOpOutdated [$cmd --query --upgrades]
     }
-    'rem' => {
-      packOpRem [$cmd --query] [$cmd --remove --nosave --recursive]
+    'remove' => {
+      packOpRemove { |n| packInstalled [$cmd --query] $n } [$cmd --remove --nosave --recursive]
     }
     'sync' => {
-      packOpUp [$cmd --sync --refresh]
+      packOp [$cmd --sync --refresh]
       packOpSync [$cmd --sync --sysupgrade] [$cmd --sync --needed]
     }
     'tidy' => {

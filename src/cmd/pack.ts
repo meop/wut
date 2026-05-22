@@ -20,8 +20,8 @@ export class PackCmd extends CmdBase implements Cmd {
       new PackCmdAdd([...this.scopes, this.name]),
       new PackCmdFind([...this.scopes, this.name]),
       new PackCmdList([...this.scopes, this.name]),
-      new PackCmdOut([...this.scopes, this.name]),
-      new PackCmdRem([...this.scopes, this.name]),
+      new PackCmdOutdated([...this.scopes, this.name]),
+      new PackCmdRemove([...this.scopes, this.name]),
       new PackCmdSync([...this.scopes, this.name]),
       new PackCmdTidy([...this.scopes, this.name]),
     ]
@@ -403,7 +403,7 @@ function processManagerEntryLines(
   lines.push(shell.varSetArr(PACK_OP_NAMES_KEY(op), entry.names))
   lines.push(getManagerCallName(manager))
 
-  if (op === 'rem') {
+  if (op === 'remove') {
     const postScript = remEntry?.[nativeShell]
     if (postScript?.commands?.length) {
       lines.push(...buildCmdRunLines(shell, plat, postScript.commands))
@@ -459,7 +459,7 @@ async function processGroupConfig(
   }
 
   const addConfig = content.add as Record<string, unknown> | undefined
-  const remConfig = content.rem as {
+  const remConfig = content.remove as {
     system?: Record<string, RemManagerEntry>
     user?: Record<string, RemManagerEntry>
   } | undefined
@@ -497,7 +497,7 @@ async function processGroupConfig(
         tierBlocks.push({
           label: 'use script (user/system)',
           pre: scriptPre,
-          lines: [...scriptBodyLines, '$env.PACKED = true'],
+          lines: scriptBodyLines,
         })
         found = true
       }
@@ -633,7 +633,7 @@ async function execOp(
     )
     found = groupFilterFound
     result = printGroups(result, groupEntries)
-  } else if (op === 'add' || op === 'rem') {
+  } else if (op === 'add' || op === 'remove') {
     const groupResult = await processGroupNames(
       result,
       context,
@@ -648,15 +648,16 @@ async function execOp(
 
   const remaining = names.filter((n) => !found.includes(n))
 
-  if ((op === 'find' && names.length) || op === 'list' || op === 'out') {
+  if ((op === 'find' && names.length) || op === 'list' || op === 'outdated') {
     result = setOpNames(result, op, names)
     result = callManagers(result, allManagers)
   } else if (op !== 'find') {
-    const managerNames = remaining.length ? remaining : names
-    if (managerNames.length) {
-      result = setOpNames(result, op, managerNames)
+    if (remaining.length) {
+      result = setOpNames(result, op, remaining)
     }
-    result = callManagers(result, allManagers)
+    if (!names.length || remaining.length) {
+      result = callManagers(result, allManagers)
+    }
   }
 
   return buildAndLog(result, environment)
@@ -715,12 +716,12 @@ export class PackCmdList extends CmdBase implements Cmd {
   }
 }
 
-export class PackCmdOut extends CmdBase implements Cmd {
+export class PackCmdOutdated extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
-    this.name = 'out'
+    this.name = 'outdated'
     this.description = 'list out of sync on local'
-    this.aliases = ['o', 'ou']
+    this.aliases = ['o', 'ou', 'out', 'stale']
     this.arguments = [{ name: 'names', description: 'name(s) to match' }]
   }
   override async work(
@@ -732,12 +733,12 @@ export class PackCmdOut extends CmdBase implements Cmd {
   }
 }
 
-export class PackCmdRem extends CmdBase implements Cmd {
+export class PackCmdRemove extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
-    this.name = 'rem'
+    this.name = 'remove'
     this.description = 'remove on local'
-    this.aliases = ['r', 'rm', 'rem', 'remove', 'un', 'unin', 'uninstall']
+    this.aliases = ['r', 'rm', 'rem', 'un', 'unin', 'uninstall']
     this.arguments = [
       { name: 'names', description: 'name(s) to match', required: true },
     ]
@@ -756,7 +757,7 @@ export class PackCmdSync extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'sync'
     this.description = 'sync from remote'
-    this.aliases = ['s', 'sy', 'up', 'update', 'upgrade']
+    this.aliases = ['s', 'sy', 'up', 'update']
     this.arguments = [{ name: 'names', description: 'name(s) to match' }]
   }
   override async work(

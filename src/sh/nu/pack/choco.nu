@@ -5,7 +5,7 @@ def --env packChoco [] {
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
     ($env.PACK_OP == 'add' and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == 'rem' and ($env.PACK_REM_NAMES? | is-empty))
+    ($env.PACK_OP == 'remove' and ($env.PACK_REMOVE_NAMES? | is-empty))
   ) {
     return
   }
@@ -14,7 +14,7 @@ def --env packChoco [] {
 
   match $env.PACK_OP {
     'add' => {
-      packOpAdd [$cmd search] [$cmd install]
+      packOpAdd { |n| packSearch [$cmd search] $n } [$cmd install]
     }
     'find' => {
       packOpFind [$cmd search]
@@ -22,23 +22,17 @@ def --env packChoco [] {
     'list' => {
       packOpList [$cmd list]
     }
-    'out' => {
-      packOpOut [$cmd outdated]
+    'outdated' => {
+      packOpOutdated [$cmd outdated]
     }
-    'rem' => {
-      packOpRem [$cmd list] [$cmd uninstall]
+    'remove' => {
+      packOpRemove { |n| packInstalled [$cmd list] $n } [$cmd uninstall]
     }
     'sync' => {
       packOpSync [$cmd upgrade all] [$cmd upgrade]
     }
     'tidy' => {
       opPrintMaybeRunCmd $cmd cache remove
-      let orphans = (glob 'C:\ProgramData\chocolatey\lib\**\*.nuspec' | where { |f|
-        (open --raw $f | str contains '<dependency') == false
-      } | each { |f| $f | path basename | str replace '.nuspec' '' })
-      if ($orphans | is-not-empty) {
-        opPrintMaybeRunCmd $cmd uninstall $orphans --force-dependencies
-      }
     }
   }
 }

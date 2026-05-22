@@ -5,7 +5,7 @@ def --env packScoop [] {
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
     ($env.PACK_OP == 'add' and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == 'rem' and ($env.PACK_REM_NAMES? | is-empty))
+    ($env.PACK_OP == 'remove' and ($env.PACK_REMOVE_NAMES? | is-empty))
   ) {
     return
   }
@@ -14,29 +14,29 @@ def --env packScoop [] {
 
   match $env.PACK_OP {
     'add' => {
-      packOpUp [$cmd update]
-      packOpAdd [$cmd search] [$cmd install]
+      packOp [$cmd update]
+      packOpAdd { |n| packSearch [$cmd search] $n } [$cmd install]
     }
     'find' => {
-      packOpUp [$cmd update]
+      packOp [$cmd update]
       packOpFind [$cmd search]
     }
     'list' => {
       packOpList [$cmd list]
     }
-    'out' => {
-      packOpUp [$cmd update]
-      packOpOut [$cmd status]
+    'outdated' => {
+      packOp [$cmd update]
+      packOpOutdated [$cmd status]
     }
-    'rem' => {
-      packOpRem [$cmd list] [$cmd uninstall --purge]
+    'remove' => {
+      packOpRemove { |n| packInstalled [$cmd list] $n } [$cmd uninstall --purge]
     }
     'sync' => {
-      packOpUp [$cmd update]
+      packOp [$cmd update]
       packOpSync [$cmd update --all] [$cmd update]
     }
     'tidy' => {
-      packOpTidy [$cmd cleanup --all --cache]
+      packOp [$cmd cleanup --all --cache]
     }
   }
 }

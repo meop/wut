@@ -5,7 +5,7 @@ def --env packCargo [] {
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
     ($env.PACK_OP == 'add' and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == 'rem' and ($env.PACK_REM_NAMES? | is-empty))
+    ($env.PACK_OP == 'remove' and ($env.PACK_REMOVE_NAMES? | is-empty))
   ) {
     return
   }
@@ -14,7 +14,7 @@ def --env packCargo [] {
 
   match $env.PACK_OP {
     'add' => {
-      packOpAdd [$cmd search] [$cmd binstall --locked]
+      packOpAdd { |n| packSearch [$cmd search] $n } [$cmd binstall --locked]
     }
     'find' => {
       packOpFind [$cmd search]
@@ -22,17 +22,17 @@ def --env packCargo [] {
     'list' => {
       packOpList [$cmd install --list]
     }
-    'out' => {
-      packOpOut [$cmd install-update --list]
+    'outdated' => {
+      packOpOutdated [$cmd install-update --list]
     }
-    'rem' => {
-      packOpRem [$cmd install --list] [$cmd uninstall]
+    'remove' => {
+      packOpRemove { |n| packInstalled [$cmd install --list] $n } [$cmd uninstall]
     }
     'sync' => {
       packOpSync [$cmd install-update --all] [$cmd install-update]
     }
     'tidy' => {
-      packOpTidy [$cmd cache --autoclean]
+      packOp [$cmd cache --autoclean]
     }
   }
 }

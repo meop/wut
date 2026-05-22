@@ -5,7 +5,7 @@ def --env packDeno [] {
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
     ($env.PACK_OP == 'add' and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == 'rem' and ($env.PACK_REM_NAMES? | is-empty))
+    ($env.PACK_OP == 'remove' and ($env.PACK_REMOVE_NAMES? | is-empty))
   ) {
     return
   }
@@ -22,8 +22,7 @@ def --env packDeno [] {
 
   match $env.PACK_OP {
     'add' => {
-      opPrintMaybeRunCmd $cmd install -g $env.PACK_ADD_NAMES
-      hide-env PACK_ADD_NAMES
+      packOpAdd { |n| [(packQueryNpm $n), (packQueryJsr $n)] | flatten | is-not-empty } [$cmd install -g]
     }
     'find' => {
       for term in $env.PACK_FIND_NAMES {
@@ -33,11 +32,11 @@ def --env packDeno [] {
     'list' => {
       packOpList ['ls' (getBinDir)]
     }
-    'rem' => {
-      packOpRem ['ls' (getBinDir)] [$cmd uninstall -g]
+    'remove' => {
+      packOpRemove { |n| packInstalled ['ls' (getBinDir)] $n } [$cmd uninstall -g]
     }
     'tidy' => {
-      packOpTidy [$cmd clean]
+      packOp [$cmd clean]
     }
   }
 }

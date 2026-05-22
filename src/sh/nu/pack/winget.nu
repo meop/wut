@@ -5,7 +5,7 @@ def --env packWinget [] {
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
     ($env.PACK_OP == 'add' and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == 'rem' and ($env.PACK_REM_NAMES? | is-empty))
+    ($env.PACK_OP == 'remove' and ($env.PACK_REMOVE_NAMES? | is-empty))
   ) {
     return
   }
@@ -14,25 +14,25 @@ def --env packWinget [] {
 
   match $env.PACK_OP {
     'add' => {
-      packOpUp [$cmd source update]
-      packOpAdd [$cmd search --id] [$cmd install]
+      packOp [$cmd source update]
+      packOpAdd { |n| packSearch [$cmd search --id] $n } [$cmd install]
     }
     'find' => {
-      packOpUp [$cmd source update]
+      packOp [$cmd source update]
       packOpFind [$cmd search]
     }
     'list' => {
       packOpList [$cmd list]
     }
-    'out' => {
-      packOpUp [$cmd source update]
-      packOpOut [$cmd upgrade]
+    'outdated' => {
+      packOp [$cmd source update]
+      packOpOutdated [$cmd upgrade]
     }
-    'rem' => {
-      packOpRem [$cmd list] [$cmd uninstall]
+    'remove' => {
+      packOpRemove { |n| packInstalled [$cmd list] $n } [$cmd uninstall]
     }
     'sync' => {
-      packOpUp [$cmd source update]
+      packOp [$cmd source update]
       packOpSync [$cmd upgrade --all] [$cmd upgrade]
     }
   }
