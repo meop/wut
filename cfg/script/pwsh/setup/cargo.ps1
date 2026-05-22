@@ -11,7 +11,7 @@
   if ($YES) {
     $yn = 'y'
   } else {
-    $yn = Read-Host 'setup cargo - install tools (user) [y,[n]]'
+    $yn = Read-Host 'setup cargo - install tools (user) [y,[n]]: '
   }
   if ($yn -ne 'n') {
     $url = 'https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.ps1'

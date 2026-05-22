@@ -1,6 +1,9 @@
 ---
 add:
   user:
+    ghpm:
+      names:
+        - nu
     cargo:
       names:
         - nu
