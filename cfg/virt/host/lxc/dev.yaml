@@ -1,9 +1,6 @@
 ---
 lxc:
   config:
-    cgroup:
-      devices:
-        allow: a
     cgroup2:
       devices:
         allow: a
