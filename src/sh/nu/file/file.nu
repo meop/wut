@@ -40,7 +40,7 @@ def file [] {
         let srcUrl = $"($env.REQ_URL_CFG)/file/($src)"
 
         let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
-        opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($srcUrl)'#" ')"' '|' save --force $"r#'($tmpFilePath)'#"
+        opPrintRunCmd http get --raw --redirect-mode follow $"r#'($srcUrl)'#" '|' save --force $"r#'($tmpFilePath)'#"
 
         let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
 
@@ -141,7 +141,7 @@ def file [] {
           $createdDirs = $createdDirs ++ [$dstParentDirPath]
           opPrintMaybeRunCmd mkdir $"r#'($dstParentDirPath)'#"
         }
-        opPrintMaybeRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($srcUrl)'#" ')"' '|' save --force $"r#'($dstFilePath)'#"
+        opPrintMaybeRunCmd http get --raw --redirect-mode follow $"r#'($srcUrl)'#" '|' save --force $"r#'($dstFilePath)'#"
       }
 
       for perm in ($env.FILE_SYNC_PATH_PERMS? | default []) {
