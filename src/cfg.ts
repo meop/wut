@@ -2,7 +2,7 @@ import type { Ctx } from '@meop/shire/ctx'
 import { Fmt, parse } from '@meop/shire/serde'
 import { join } from '@std/path'
 
-import { getFileContent, getFilePaths, isDirPath, isPath } from './fs.ts'
+import { getFileBinaryContent, getFileContent, getFilePaths, isDirPath, isPath } from './fs.ts'
 import { toRelParts } from './path.ts'
 import { SETTINGS } from './stng.ts'
 
@@ -127,6 +127,10 @@ export async function getCfgFileContent(
   return await getFileContent(
     (await localCfgPaths(parts, options?.extension))[0] ?? '',
   )
+}
+
+export async function getCfgFileBinaryContent(parts: Array<string>): Promise<ArrayBuffer | null> {
+  return await getFileBinaryContent((await localCfgPaths(parts))[0] ?? '')
 }
 
 export async function getCfgFileLoad(

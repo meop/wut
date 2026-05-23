@@ -48,6 +48,20 @@ export async function getFileContent(path: string): Promise<string | null> {
   }
 }
 
+export async function getFileBinaryContent(path: string): Promise<ArrayBuffer | null> {
+  if (!(await isFilePath(path))) {
+    return null
+  }
+  try {
+    return (await Deno.readFile(path)).buffer as ArrayBuffer
+  } catch (e) {
+    if (e instanceof Deno.errors.NotFound || e instanceof Deno.errors.PermissionDenied) {
+      return null
+    }
+    throw e
+  }
+}
+
 export async function getFilePaths(
   path: string,
   options?: {

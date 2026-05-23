@@ -7,7 +7,7 @@ import { PowerSh } from '@meop/shire/sh/pwsh'
 import { ZSh } from '@meop/shire/sh/zsh'
 import { SrvBase } from '@meop/shire/srv'
 
-import { getCfgFileContent } from './cfg.ts'
+import { getCfgFileBinaryContent } from './cfg.ts'
 import { FileCmd } from './cmd/file.ts'
 import { PackCmd } from './cmd/pack.ts'
 import { ScriptCmd } from './cmd/script.ts'
@@ -61,9 +61,9 @@ export async function runSrv(request: Request) {
 
     const op = parts[0]
     if (op === Op.cfg) {
-      const config = await getCfgFileContent(parts.slice(1))
+      const config = await getCfgFileBinaryContent(parts.slice(1))
       if (config == null) {
-        return new Response(`echo "config not found: ${config}"`, {
+        return new Response(`echo "config not found: ${parts.slice(1).join('/')}"`, {
           status: 404,
         })
       }
