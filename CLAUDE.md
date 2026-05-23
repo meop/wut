@@ -107,6 +107,14 @@ Known nushell parsing quirks that have caused bugs in `src/sh/nu/`:
   starts with `#` (e.g. shebangs). Fix was merged in 0.101 then reverted; see
   https://github.com/nushell/nushell/pull/14548.
 
+- **`http get --raw` vs `http get` and `$"(...)"` wrapping** — `http get` without `--raw` auto-parses the response body
+  based on content type (JSON → record, etc.), which breaks `nu -c` invocations expecting a string. Always use
+  `--raw` when fetching scripts to execute. Two distinct patterns depending on intent:
+  - **Execute as code**: `nu --no-config-file -c $"( http get --raw --redirect-mode follow $url )"` — `$"(...)"` converts
+    the raw bytes to a string for `-c`. Safe because script responses are always valid UTF-8.
+  - **Save to disk**: `http get --raw --redirect-mode follow $url | save --force $path` — pipe binary directly, no
+    `$"(...)"` wrapper. Wrapping corrupts non-UTF-8 files (e.g. PNGs).
+
 ## Testing
 
 See [docs/TESTS.md](docs/TESTS.md) for full details on test architecture, how to update snapshots, and how to add new
