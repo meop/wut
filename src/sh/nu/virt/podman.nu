@@ -56,7 +56,7 @@ def virtPodman [] {
       let containerfileUrl = $"($env.REQ_URL_CFG)($buildInfo.filePath)"
 
       let containerfileFilePath = ($contextDirPath | path join ($buildInfo.filePath | path basename))
-      let containerfileContent = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($containerfileUrl)'#" ')"'
+      let containerfileContent = opPrintRunCmd http get --raw --redirect-mode follow $"r#'($containerfileUrl)'#"
 
       opPrintMaybeRunCmd sudo mkdir -p $contextDirPath
       opPrintMaybeRunCmd $"r#'($containerfileContent)'#" '|' sudo tee $containerfileFilePath '|' ignore
@@ -104,7 +104,7 @@ def virtPodman [] {
     let kubeFilePath = $"($kubeDirPath)/($pod).kube"
 
     # layer 2: pod.yaml — base pod metadata (hostname, network, mac, annotations)
-    let configPodRaw = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/podman/($pod).yaml'#" ')"'
+    let configPodRaw = opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/podman/($pod).yaml'#"
     mut builtImages = buildImage $configPodRaw $env.SYS_HOST $pod '' []
     mut podDoc = $configPodRaw
       | str replace --all '{host}' $env.SYS_HOST
@@ -118,7 +118,7 @@ def virtPodman [] {
     # layer 3: instance yamls — overlaid onto pod base
     for instancePath in $podInstances {
       let instance = ($instancePath | split row '/') | last
-      let yamlRaw = opPrintRunCmd '$"(' http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/podman/($instancePath).yaml'#" ')"'
+      let yamlRaw = opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/podman/($instancePath).yaml'#"
 
       $builtImages = buildImage $yamlRaw $env.SYS_HOST $pod $instance $builtImages
 
