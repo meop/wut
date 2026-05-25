@@ -22,7 +22,8 @@ function () {
       local sources_file_path="/etc/apt/sources.list.d/fury-nushell.sources"
       local gpg_file_path='/etc/apt/trusted.gpg.d/fury-nushell.gpg'
       local url='https://apt.fury.io/nushell'
-      opPrintMaybeRunCmd sudo --preserve-env bash -c '"'curl --fail-with-body --location --no-progress-meter --url "${url}/gpg.key" '|' gpg --dearmor -o $gpg_file_path'"'
+      local bashCmd="curl --fail-with-body --location --no-progress-meter --url '${url}/gpg.key' | gpg --dearmor -o '${gpg_file_path}'"
+      opPrintMaybeRunCmd sudo --preserve-env bash -c "${(qqq)bashCmd}"
       local apt_lines=(
         'Types: deb'
         'URIs: https://apt.fury.io/nushell/'
@@ -30,7 +31,8 @@ function () {
         'Components: '
         'Signed-By: /etc/apt/trusted.gpg.d/fury-nushell.gpg'
       )
-      opPrintMaybeRunCmd sudo --preserve-env bash -c '"'printf "'""${(j:\n:)apt_lines}\n""'" '>' $sources_file_path'"'
+      local bashCmd="printf '${(j:\n:)apt_lines}\n' > ${sources_file_path}"
+      opPrintMaybeRunCmd sudo --preserve-env bash -c "${(qqq)bashCmd}"
     }
     install_repo
     opPrintMaybeRunCmd sudo apt update '>' /dev/null '2>&1'
@@ -47,7 +49,8 @@ function () {
         'gpgcheck=0'
         'gpgkey='"${url}/gpg.key"
       )
-      opPrintMaybeRunCmd sudo --preserve-env bash -c '"'printf "'""${(j:\n:)yum_lines}\n""'" '>' $repo_file_path'"'
+      local bashCmd="printf '${(j:\n:)yum_lines}\n' > ${repo_file_path}"
+      opPrintMaybeRunCmd sudo --preserve-env bash -c "${(qqq)bashCmd}"
     }
     install_repo
     opPrintMaybeRunCmd sudo dnf check-upgrade '>' /dev/null '2>&1'
