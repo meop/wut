@@ -1,8 +1,9 @@
 {
   "version": "5",
   "specifiers": {
-    "jsr:@eemeli/yaml@^2.8.3": "2.8.3",
-    "jsr:@meop/shire@~0.7.4": "0.7.4",
+    "jsr:@eemeli/yaml@^2.8.3": "2.9.0",
+    "jsr:@eemeli/yaml@^2.9.0": "2.9.0",
+    "jsr:@meop/shire@~0.7.7": "0.7.7",
     "jsr:@std/assert@^1.0.19": "1.0.19",
     "jsr:@std/collections@^1.1.3": "1.1.7",
     "jsr:@std/data-structures@^1.0.11": "1.0.11",
@@ -14,13 +15,13 @@
     "jsr:@std/toml@^1.0.11": "1.0.11"
   },
   "jsr": {
-    "@eemeli/yaml@2.8.3": {
-      "integrity": "838335bac4d404cd10fbebf15367849a1315eb1e247a662f27e0fd59831f8b36"
+    "@eemeli/yaml@2.9.0": {
+      "integrity": "e8f9e0b389c2c62dfb3c979ad2e02f0ce522a65b7761cc5690839e9f1e5620e4"
     },
-    "@meop/shire@0.7.4": {
-      "integrity": "70c47ba4764eca6ae5f9e8cbaf027f1f8cf49257c55ee21599967800c526c164",
+    "@meop/shire@0.7.7": {
+      "integrity": "19a993b2bddcb237535fc71691d165e908f33936d0b5c1a73604bf7749e7ff85",
       "dependencies": [
-        "jsr:@eemeli/yaml"
+        "jsr:@eemeli/yaml@^2.8.3"
       ]
     },
     "@std/assert@1.0.19": {
@@ -73,8 +74,8 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@eemeli/yaml@^2.8.3",
-      "jsr:@meop/shire@~0.7.4",
+      "jsr:@eemeli/yaml@^2.9.0",
+      "jsr:@meop/shire@~0.7.7",
       "jsr:@std/assert@^1.0.19",
       "jsr:@std/fs@^1.0.23",
       "jsr:@std/path@^1.1.4",
@@ -82,7 +83,7 @@
       "jsr:@std/toml@^1.0.11"
     ],
     "links": {
-      "jsr:@meop/shire@0.7.4": {
+      "jsr:@meop/shire@0.7.7": {
         "dependencies": [
           "jsr:@eemeli/yaml@^2.8.3",
           "jsr:@std/assert@^1.0.19"
