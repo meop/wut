@@ -5,11 +5,11 @@ function () {
   fi
   local yn=''
   if [[ $YES ]]; then
-    yn='y'
+    yn=y
   else
     read 'yn?setup cargo - install tools (user) [y,[n]]: '
   fi
-  if [[ $yn == 'n' ]]; then
+  if [[ $yn == n ]]; then
     return
   fi
   local url='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'

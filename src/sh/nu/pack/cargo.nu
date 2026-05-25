@@ -2,10 +2,10 @@ def --env packCargo [] {
   let cmd = 'cargo'
   if (
     (which $cmd | is-empty) or
-    ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
-    ('PACK_OP' not-in $env) or
-    ($env.PACK_OP == 'add' and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == 'remove' and ($env.PACK_REMOVE_NAMES? | is-empty))
+    (PACK_MANAGER in $env and $env.PACK_MANAGER != $cmd) or
+    (PACK_OP not-in $env) or
+    ($env.PACK_OP == add and ($env.PACK_ADD_NAMES? | is-empty)) or
+    ($env.PACK_OP == remove and ($env.PACK_REMOVE_NAMES? | is-empty))
   ) {
     return
   }
@@ -13,25 +13,25 @@ def --env packCargo [] {
   if not (packPrompt $"use ($cmd) \(user\)") { return }
 
   match $env.PACK_OP {
-    'add' => {
+    add => {
       packOpAdd { |n| packSearch [$cmd search] $n } [$cmd binstall --locked]
     }
-    'find' => {
+    find => {
       packOpFind [$cmd search]
     }
-    'list' => {
+    list => {
       packOpList [$cmd install --list]
     }
-    'outdated' => {
+    outdated => {
       packOpOutdated [$cmd install-update --list]
     }
-    'remove' => {
+    remove => {
       packOpRemove { |n| packInstalled [$cmd install --list] $n } [$cmd uninstall]
     }
-    'sync' => {
+    sync => {
       packOpSync [$cmd install-update --all] [$cmd install-update]
     }
-    'tidy' => {
+    tidy => {
       packOp [$cmd cache --autoclean]
     }
   }

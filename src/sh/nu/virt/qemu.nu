@@ -1,18 +1,18 @@
 def virtQemu [] {
   let cmd = 'qemu'
-  if ('VIRT_MANAGER' in $env and $env.VIRT_MANAGER != $cmd) or (which $"($cmd)-img" | is-empty) {
+  if (VIRT_MANAGER in $env and $env.VIRT_MANAGER != $cmd) or (which $"($cmd)-img" | is-empty) {
     return
   }
-  if $env.VIRT_OP == 'tidy' {
+  if $env.VIRT_OP == tidy {
     return
   }
   mut yn = ''
-  if 'YES' in $env {
+  if YES in $env {
     $yn = 'y'
   } else {
     $yn = input $"use ($cmd) \(system\) [y,[n]]: "
   }
-  if $yn == 'n' {
+  if $yn == n {
     return
   }
 
@@ -270,7 +270,7 @@ def virtQemu [] {
   }
 
   match $env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in $env.VIRT_INSTANCES {
         if (^pgrep --ignore-ancestors --full --list-full $"^qemu-system.*($instance)" | complete | get stdout | is-not-empty) {
           opPrintWarn $"`($cmd)` instance `($instance)` is already added"
@@ -280,7 +280,7 @@ def virtQemu [] {
         doAdd $cmd $instance
       }
     }
-    'list' => {
+    list => {
       let serviceDirPath = '/etc/systemd/system'
       for instance in (if ($serviceDirPath | path exists) {
         ls $serviceDirPath
@@ -294,7 +294,7 @@ def virtQemu [] {
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full $"^qemu-system.*($instance)" }
       }
     }
-    'rem' => {
+    rem => {
       let instances = if ($env.VIRT_INSTANCES | is-not-empty) {
         $env.VIRT_INSTANCES
       } else {
@@ -312,7 +312,7 @@ def virtQemu [] {
         doRem $cmd $instance
       }
     }
-    'sync' => {
+    sync => {
       for instance in $env.VIRT_INSTANCES {
         if not ($"/etc/systemd/system/qemu-($instance).service" | path exists) {
           continue

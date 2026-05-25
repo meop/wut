@@ -115,6 +115,16 @@ Known nushell parsing quirks that have caused bugs in `src/sh/nu/`:
   - **Save to disk**: `http get --raw --redirect-mode follow $url | save --force $path` — pipe binary directly, no
     `$"(...)"` wrapper. Wrapping corrupts non-UTF-8 files (e.g. PNGs).
 
+- **Bare words on the RHS of assignments are external command calls (since 0.97.0).** `$yn = y` and `let cmd = docker`
+  are parse errors — nushell treats the bare word as an external command to execute, not a string literal. Always quote
+  string values in assignments: `$yn = 'y'`, `let cmd = 'docker'`. Bare words ARE valid (no quotes needed) in: match
+  arm patterns (`arm64 =>`), `in $env`/`not-in $env` checks, comparison operators (`$x == linux`, `$x != n`), and
+  command argument position (`str starts-with record`).
+
+- **Unquoted absolute path at the start of a `()` subexpression pipeline is executed as a command.**
+  `(/etc/os-release | path exists)` tries to execute `/etc/os-release` as an external command (error: "not
+  executable"). Quote the path: `('/etc/os-release' | path exists)`.
+
 ## Testing
 
 See [docs/TESTS.md](docs/TESTS.md) for full details on test architecture, how to update snapshots, and how to add new

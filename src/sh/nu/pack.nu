@@ -1,11 +1,11 @@
 def packPrompt [label: string] {
   mut yn = ''
-  if 'YES' in $env {
+  if YES in $env {
     $yn = 'y'
   } else {
     $yn = input $"($label) [y,[n]]: "
   }
-  $yn != 'n'
+  $yn != n
 }
 
 def packSudoCmd [cmd: string] {

@@ -2,7 +2,7 @@ def replaceEnv [line] {
   mut l = $line
   if ($l | str contains '{') {
     let itemsEnv = $env | items { |key, value| [$key, $value] }
-    for e in ($itemsEnv | where { |e| (($e.0 | describe) == 'string') and (($e.1 | describe) == 'string') }) {
+    for e in ($itemsEnv | where { |e| (($e.0 | describe) == string) and (($e.1 | describe) == string) }) {
       $l = $l | str replace --all $"{($e.0)}" ($e.1)
     }
   }
@@ -10,16 +10,16 @@ def replaceEnv [line] {
 }
 def file [] {
   mut yn = ''
-  if 'YES' in $env {
+  if YES in $env {
     $yn = 'y'
   } else {
     $yn = input r#'use file (user) [y,[n]]: '#
   }
-  if $yn == 'n' {
+  if $yn == n {
     return
   }
   match $env.FILE_OP {
-    'diff' => {
+    diff => {
       for pair in $env.FILE_DIFF_PATH_PAIRS {
         let pairParts = $pair | split row '|'
 
@@ -53,7 +53,7 @@ def file [] {
         opPrintRunCmd rm --force $"r#'($tmpFilePath)'#"
       }
     }
-    'find' => {
+    find => {
       for entry in $env.FILE_FIND_KEYS {
         let parts = $entry | split row '|'
         let keys = $parts | get 0
@@ -76,7 +76,7 @@ def file [] {
         }
       }
     }
-    'list' => {
+    list => {
       for pair in $env.FILE_LIST_PATH_PAIRS {
         let pairParts = $pair | split row '|'
 
@@ -97,7 +97,7 @@ def file [] {
         opPrint $"($src) -> ($dstFilePath)"
       }
     }
-    'sync' => {
+    sync => {
       for dir in ($env.FILE_SYNC_CLEAR_DIRS? | default []) {
         let dirParts = $dir | split row '|'
 

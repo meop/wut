@@ -2,10 +2,10 @@ def --env packXbps [] {
   let cmd = 'xbps'
   if (
     (which $"($cmd)-install" | is-empty) or
-    ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
-    ('PACK_OP' not-in $env) or
-    ($env.PACK_OP == 'add' and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == 'remove' and ($env.PACK_REMOVE_NAMES? | is-empty))
+    (PACK_MANAGER in $env and $env.PACK_MANAGER != $cmd) or
+    (PACK_OP not-in $env) or
+    ($env.PACK_OP == add and ($env.PACK_ADD_NAMES? | is-empty)) or
+    ($env.PACK_OP == remove and ($env.PACK_REMOVE_NAMES? | is-empty))
   ) {
     return
   }
@@ -14,29 +14,29 @@ def --env packXbps [] {
   let cmd = packSudoCmd $cmd
 
   match $env.PACK_OP {
-    'add' => {
+    add => {
       packOp [$"($cmd)-install" --sync]
       packOpAdd { |n| packSearch [$"($cmd)-query" --repository --search] $n } [$"($cmd)-install"]
     }
-    'find' => {
+    find => {
       packOp [$"($cmd)-install" --sync]
       packOpFind [$"($cmd)-query" --repository --search]
     }
-    'list' => {
+    list => {
       packOpList [$"($cmd)-query" --list-pkgs]
     }
-    'outdated' => {
+    outdated => {
       packOp [$"($cmd)-install" --sync]
       packOpOutdated [$"($cmd)-install" --dry-run --update]
     }
-    'remove' => {
+    remove => {
       packOpRemove { |n| packInstalled [$"($cmd)-query" --list-pkgs] $n } [$"($cmd)-remove" --recursive]
     }
-    'sync' => {
+    sync => {
       packOp [$"($cmd)-install" --sync]
       packOpSync [$"($cmd)-install" --update] [$"($cmd)-install" --update]
     }
-    'tidy' => {
+    tidy => {
       opPrintMaybeRunCmd $"($cmd)-remove" --clean-cache --clean-cache
       opPrintMaybeRunCmd $"($cmd)-remove" --remove-orphans
     }

@@ -4,12 +4,12 @@ def virtPodman [] {
     return
   }
   mut yn = ''
-  if 'YES' in $env {
+  if YES in $env {
     $yn = 'y'
   } else {
     $yn = input $"use ($cmd) \(system\) [y,[n]]: "
   }
-  if $yn == 'n' {
+  if $yn == n {
     return
   }
 
@@ -25,7 +25,7 @@ def virtPodman [] {
   def processYaml [yamlRaw, host, pod, instance] {
     mut result = []
     for doc in ($yamlRaw | str replace --all '{host}' $host | str replace --all '{pod}' $pod | str replace --all '{instance}' $instance | splitYamlDocs) {
-      if ($doc | get kind? | default '') == 'Build' {
+      if ($doc | get kind? | default '') == Build {
         # custom doc, not passed to podman
       } else {
         let doc = if ($doc | get apiVersion? | is-empty) { $doc | insert apiVersion 'v1' } else { $doc }
@@ -42,7 +42,7 @@ def virtPodman [] {
       | str replace --all '{pod}' $pod
       | str replace --all '{instance}' $instance
       | splitYamlDocs
-      | where { |d| ($d | get kind? | default '') == 'Build' }
+      | where { |d| ($d | get kind? | default '') == Build }
     if ($buildDocs | is-empty) {
       return $alreadyBuilt
     }
@@ -110,7 +110,7 @@ def virtPodman [] {
       | str replace --all '{host}' $env.SYS_HOST
       | str replace --all '{pod}' $pod
       | splitYamlDocs
-      | where { |d| ($d | get kind? | default '') == 'Pod' }
+      | where { |d| ($d | get kind? | default '') == Pod }
       | first
 
     mut configMaps = []
@@ -123,7 +123,7 @@ def virtPodman [] {
       $builtImages = buildImage $yamlRaw $env.SYS_HOST $pod $instance $builtImages
 
       let instanceDocs = processYaml $yamlRaw $env.SYS_HOST $pod $instance | splitYamlDocs
-      let instancePodDoc = $instanceDocs | where { |d| ($d | get kind? | default '') == 'Pod' } | first
+      let instancePodDoc = $instanceDocs | where { |d| ($d | get kind? | default '') == Pod } | first
 
       $podDoc = $podDoc
         | upsert metadata.annotations (deepMerge ($podDoc | get metadata.annotations? | default {}) ($instancePodDoc | get metadata.annotations? | default {}))
@@ -135,7 +135,7 @@ def virtPodman [] {
         $podDoc = $podDoc | upsert spec.hostname $instanceHostname
       }
 
-      for cm in ($instanceDocs | where { |d| ($d | get kind? | default '') == 'ConfigMap' }) {
+      for cm in ($instanceDocs | where { |d| ($d | get kind? | default '') == ConfigMap }) {
         $configMaps = ($configMaps | where { |m| $m.metadata.name != $cm.metadata.name }) | append $cm
       }
     }
@@ -193,12 +193,12 @@ def virtPodman [] {
   }
 
   match $env.VIRT_OP {
-    'add' => {
+    add => {
       let pods = $env.VIRT_INSTANCES | each { |p| ($p | split row '/') | first } | uniq
       for pod in $pods {
         let podInstances = $env.VIRT_INSTANCES | where { |p| (($p | split row '/') | first) == $pod }
 
-        if (^sudo systemctl is-active $"($pod).service" | complete | get stdout | str trim) == 'active' {
+        if (^sudo systemctl is-active $"($pod).service" | complete | get stdout | str trim) == active {
           opPrintWarn $"`($cmd)` pod `($pod)` is already added"
           continue
         }
@@ -206,7 +206,7 @@ def virtPodman [] {
         doAdd $pod $podInstances $cmd
       }
     }
-    'list' => {
+    list => {
       let kubeDirPath = '/etc/containers/systemd'
       for pod in (if ($kubeDirPath | path exists) {
         ls $kubeDirPath
@@ -220,7 +220,7 @@ def virtPodman [] {
         opPrintRunCmd sudo $cmd container list --filter $"pod=($pod)" --format '"table {{.PodName}}\t{{.Names}}\t{{.Image}}\t{{.Ports}}\t{{.State}}\t{{.Status}}"'
       }
     }
-    'rem' => {
+    rem => {
       let managedNetworks = $env.VIRT_PODMAN_NETWORKS | from json
       let kubeDirPath = '/etc/containers/systemd'
 
@@ -246,7 +246,7 @@ def virtPodman [] {
         removeNetworkIfUnused $network $pod $managedNetworks
       }
     }
-    'sync' => {
+    sync => {
       let kubeDirPath = '/etc/containers/systemd'
       for pod in ($env.VIRT_INSTANCES | each { |p| ($p | split row '/') | first } | uniq) {
         if not ($"($kubeDirPath)/($pod).kube" | path exists) {
@@ -259,7 +259,7 @@ def virtPodman [] {
         doAdd $pod $podInstances $cmd
       }
     }
-    'tidy' => {
+    tidy => {
       opPrintMaybeRunCmd sudo $cmd system prune --all
     }
   }

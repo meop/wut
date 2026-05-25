@@ -2,10 +2,10 @@ def --env packChoco [] {
   let cmd = 'choco'
   if (
     (which $cmd | is-empty) or
-    ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
-    ('PACK_OP' not-in $env) or
-    ($env.PACK_OP == 'add' and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == 'remove' and ($env.PACK_REMOVE_NAMES? | is-empty))
+    (PACK_MANAGER in $env and $env.PACK_MANAGER != $cmd) or
+    (PACK_OP not-in $env) or
+    ($env.PACK_OP == add and ($env.PACK_ADD_NAMES? | is-empty)) or
+    ($env.PACK_OP == remove and ($env.PACK_REMOVE_NAMES? | is-empty))
   ) {
     return
   }
@@ -13,25 +13,25 @@ def --env packChoco [] {
   if not (packPrompt $"use ($cmd) \(user/system\)") { return }
 
   match $env.PACK_OP {
-    'add' => {
+    add => {
       packOpAdd { |n| packSearch [$cmd search] $n } [$cmd install]
     }
-    'find' => {
+    find => {
       packOpFind [$cmd search]
     }
-    'list' => {
+    list => {
       packOpList [$cmd list]
     }
-    'outdated' => {
+    outdated => {
       packOpOutdated [$cmd outdated]
     }
-    'remove' => {
+    remove => {
       packOpRemove { |n| packInstalled [$cmd list] $n } [$cmd uninstall]
     }
-    'sync' => {
+    sync => {
       packOpSync [$cmd upgrade all] [$cmd upgrade]
     }
-    'tidy' => {
+    tidy => {
       opPrintMaybeRunCmd $cmd cache remove
     }
   }

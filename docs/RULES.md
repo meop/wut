@@ -102,16 +102,28 @@ two levels for consistency.
 
 1. **script.yaml** — each script must have gates matching its actual compatibility
 2. **Shell scripts** — each script must include corresponding OS/DE checks at function start:
-   - pwsh: `if (-not $IsWindows) { Write-Host 'script is for winnt'; return }`
-   - zsh: `if [[ $SYS_OS_PLAT != 'linux' ]]; then echo 'script is for linux'; return; fi`
+   - pwsh:
+     ```powershell
+     if (-not $IsWindows) {
+       Write-Host 'script is for winnt'
+       return
+     }
+     ```
+   - zsh:
+     ```zsh
+     if [[ $SYS_OS_PLAT != linux ]]; then
+       echo 'script is for linux'
+       return
+     fi
+     ```
 
 Gates must match in both places — scripts are both discovered only on appropriate systems (YAML) and protected against
 accidental execution on incompatible ones (script body).
 
 **Examples:**
 
-- `install/brew.zsh` has `sys_os_plat: [darwin]` in YAML and checks `[[ $SYS_OS_PLAT != 'darwin' ]]`
+- `install/brew.zsh` has `sys_os_plat: [darwin]` in YAML and checks `[[ $SYS_OS_PLAT != darwin ]]`
 - `setup/gnome-terminal.zsh` has `sys_os_de: [gnome]` + `sys_os_plat: [linux]` in YAML and checks both
-- `install/node.zsh` has `sys_os_like: [debian]` in YAML and checks `[[ $SYS_OS_LIKE != *'debian'* ]]`
+- `install/node.zsh` has `sys_os_like: [debian]` in YAML and checks `[[ $SYS_OS_LIKE != *debian* ]]`
 - `install/docker.zsh` has `sys_os: [debian, ubuntu]` in YAML and checks exact `$SYS_OS` (because `$SYS_OS` is also used
   in URL construction)

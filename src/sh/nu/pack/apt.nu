@@ -2,10 +2,10 @@ def --env packApt [] {
   let cmd = 'apt'
   if (
     (which $cmd | is-empty) or
-    ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
-    ('PACK_OP' not-in $env) or
-    ($env.PACK_OP == 'add' and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == 'remove' and ($env.PACK_REMOVE_NAMES? | is-empty))
+    (PACK_MANAGER in $env and $env.PACK_MANAGER != $cmd) or
+    (PACK_OP not-in $env) or
+    ($env.PACK_OP == add and ($env.PACK_ADD_NAMES? | is-empty)) or
+    ($env.PACK_OP == remove and ($env.PACK_REMOVE_NAMES? | is-empty))
   ) {
     return
   }
@@ -14,29 +14,29 @@ def --env packApt [] {
   let cmd = packSudoCmd $cmd
 
   match $env.PACK_OP {
-    'add' => {
+    add => {
       packOp [$cmd update]
       packOpAdd { |n| packSearch [$cmd search] $n } [$cmd install]
     }
-    'find' => {
+    find => {
       packOp [$cmd update]
       packOpFind [$cmd search]
     }
-    'list' => {
+    list => {
       packOpList [$cmd list --installed]
     }
-    'outdated' => {
+    outdated => {
       packOp [$cmd update]
       packOpOutdated [$cmd list --upgradable]
     }
-    'remove' => {
+    remove => {
       packOpRemove { |n| packInstalled [$cmd list --installed] $n } [$cmd purge --autoremove]
     }
-    'sync' => {
+    sync => {
       packOp [$cmd update]
       packOpSync [$cmd full-upgrade] [$cmd install]
     }
-    'tidy' => {
+    tidy => {
       opPrintMaybeRunCmd $cmd clean
       opPrintMaybeRunCmd $cmd autoremove --purge
     }

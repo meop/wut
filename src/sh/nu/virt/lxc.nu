@@ -3,16 +3,16 @@ def virtLxc [] {
   if ('VIRT_MANAGER' in $env and $env.VIRT_MANAGER != $cmd) or (which $"($cmd)-ls" | is-empty) {
     return
   }
-  if $env.VIRT_OP == 'tidy' {
+  if $env.VIRT_OP == tidy {
     return
   }
   mut yn = ''
-  if 'YES' in $env {
+  if YES in $env {
     $yn = 'y'
   } else {
     $yn = input $"use ($cmd) \(system\) [y,[n]]: "
   }
-  if $yn == 'n' {
+  if $yn == n {
     return
   }
 
@@ -96,7 +96,7 @@ def virtLxc [] {
       (if ($net | is-not-empty) { [
         [$"lxc.net.0.type = ($net.type)", $"lxc.net.0.link = ($net.link)", $"lxc.net.0.name = ($net.name)"],
         (if 'hwaddr' in $net { [$"lxc.net.0.hwaddr = ($net.hwaddr)"] } else { [] }),
-        (if $net.type == 'veth' { [$"lxc.net.0.veth.pair = veth-($instance)"] } else if $net.type == 'macvlan' { [$"lxc.net.0.macvlan.mode = ($net.mode? | default 'bridge')"] } else { [] }),
+        (if $net.type == veth { [$"lxc.net.0.veth.pair = veth-($instance)"] } else if $net.type == macvlan { [$"lxc.net.0.macvlan.mode = ($net.mode? | default bridge)"] } else { [] }),
         ['lxc.net.0.flags = up'],
       ] | flatten } else { [] }),
       ($merged | get lxc?.mounts? | default [] | each { |mnt| $"lxc.mount.entry = (replaceEnv $lxcEnv $mnt.source) ((replaceEnv $lxcEnv $mnt.target) | str trim --left --char '/') none bind,create=dir 0 0" }),
@@ -130,7 +130,7 @@ def virtLxc [] {
   }
 
   match $env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in $env.VIRT_INSTANCES {
         if (^sudo $"($cmd)-ls" --running | complete | get stdout | split row ' ' | str trim | where { |l| $l | is-not-empty } | any { |l| $l == $instance }) {
           opPrintWarn $"`($cmd)` instance `($instance)` is already added"
@@ -140,7 +140,7 @@ def virtLxc [] {
         doAdd $cmd $instance
       }
     }
-    'list' => {
+    list => {
       let filters = if ($env.VIRT_INSTANCES | is-not-empty) { $env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo $"($cmd)-ls" | complete | get stdout | split row ' ' | str trim | where { is-not-empty }
       let instances = if ($filters | is-not-empty) {
@@ -152,7 +152,7 @@ def virtLxc [] {
         opPrintRunCmd sudo $"($cmd)-ls" --fancy --fancy-format '"NAME,IPV4,IPV6,STATE,AUTOSTART"' -- $instance
       }
     }
-    'rem' => {
+    rem => {
       let instances = if ($env.VIRT_INSTANCES | is-not-empty) {
         $env.VIRT_INSTANCES
       } else {
@@ -167,7 +167,7 @@ def virtLxc [] {
         doRem $cmd $instance
       }
     }
-    'sync' => {
+    sync => {
       for instance in $env.VIRT_INSTANCES {
         if not ($"/var/lib/lxc/($instance)/config" | path exists) {
           continue
