@@ -17,7 +17,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not ($dir | path exists) {
+      return []
+    }
+    ls $dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match $env.PACK_OP {
