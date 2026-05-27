@@ -13,16 +13,16 @@ def --env packDeno [] {
   if not (packPrompt $"use ($cmd) \(user\)") { return }
 
   def getBinDir [] {
-    if $nu.os-info.name == windows {
-      [$env.LOCALAPPDATA deno bin] | path join
-    } else {
-      [$env.HOME '.deno' bin] | path join
-    }
+    [$env.HOME '.deno' bin] | path join
+  }
+
+  def getInstalled [] {
+    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
   }
 
   match $env.PACK_OP {
     add => {
-      packOpAdd { |n| [(packQueryNpm $n), (packQueryJsr $n)] | flatten | is-not-empty } [$cmd install -g]
+      packOpAdd { |n| [(packQueryNpm $n), (packQueryJsr $n)] | flatten | is-not-empty } [$cmd install --force --global]
     }
     find => {
       for term in $env.PACK_FIND_NAMES {
@@ -30,10 +30,20 @@ def --env packDeno [] {
       }
     }
     list => {
-      packOpList [ls (getBinDir)]
+      packOpList [getInstalled]
     }
     remove => {
-      packOpRemove { |n| packInstalled [ls (getBinDir)] $n } [$cmd uninstall -g]
+      packOpRemove { |n| [(getBinDir) $".($n)"] | path join | path exists } [$cmd uninstall --global]
+    }
+    sync => {
+      let names = if ($env.PACK_SYNC_NAMES? | is-not-empty) {
+        $env.PACK_SYNC_NAMES
+      } else {
+        getInstalled
+      }
+      for n in $names {
+        opPrintMaybeRunCmd $cmd install --force --global $"($n)@latest"
+      }
     }
     tidy => {
       packOp [$cmd clean]

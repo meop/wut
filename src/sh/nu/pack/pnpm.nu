@@ -14,22 +14,35 @@ def --env packPnpm [] {
 
   match $env.PACK_OP {
     add => {
-      packOpAdd { |n| packSearch [$cmd search] $n } [$cmd add -g]
+      packOpAdd { |n| packSearch [$cmd search] $n } [$cmd add --global]
     }
     find => {
       packOpFind [$cmd search]
     }
     list => {
-      packOpList [$cmd list -g]
+      packOpList [$cmd list --global]
     }
     outdated => {
-      packOpOutdated [$cmd outdated -g]
+      packOpOutdated [$cmd outdated --global]
     }
     remove => {
-      packOpRemove { |n| packInstalled [$cmd list -g] $n } [$cmd remove -g]
+      packOpRemove { |n| packInstalled [$cmd list --global] $n } [$cmd remove --global]
     }
     sync => {
-      packOpSync [$cmd update -g] [$cmd update -g]
+      packOp [$cmd runtime set node latest --global]
+      packOp [$cmd self-update]
+      let p = ^$cmd ls --global --parseable
+        | lines
+        | each { |line|
+            let parts = ($line | path split)
+            let idx = ($parts | enumerate | where item == 'node_modules' | get 0?.index?)
+            if $idx == null { null } else {
+              $parts | skip ($idx + 1) | str join '/'
+            }
+          }
+        | compact
+        | where { $in != node and $in != '@pnpm/exe' }
+      packOpSync [$cmd update --global --latest ...$p] [$cmd update --global --latest]
     }
     tidy => {
       packOp [$cmd store prune]

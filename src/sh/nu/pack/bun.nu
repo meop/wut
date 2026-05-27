@@ -14,7 +14,7 @@ def --env packBun [] {
 
   match $env.PACK_OP {
     add => {
-      packOpAdd { |n| packQueryNpm $n | is-not-empty } [$cmd add -g]
+      packOpAdd { |n| [(packQueryNpm $n), (packQueryJsr $n)] | flatten | is-not-empty } [$cmd add --force --global]
     }
     find => {
       for term in $env.PACK_FIND_NAMES {
@@ -22,10 +22,13 @@ def --env packBun [] {
       }
     }
     list => {
-      packOpList [$cmd pm ls -g]
+      packOpList [$cmd pm list --global]
     }
     remove => {
-      packOpRemove { |n| packInstalled [$cmd pm ls -g] $n } [$cmd remove -g]
+      packOpRemove { |n| packInstalled [$cmd pm list --global] $n } [$cmd remove --global]
+    }
+    sync => {
+      packOpSync [$cmd update --force --global --latest] [$cmd update --force --global --latest]
     }
     tidy => {
       packOp [$cmd pm cache rm]

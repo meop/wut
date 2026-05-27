@@ -6,17 +6,17 @@ snapshot[`nu / darwin / diff 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=darwin'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -24,10 +24,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -35,10 +35,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -46,10 +46,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -57,10 +57,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -72,7 +72,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -86,13 +86,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -135,7 +135,7 @@ def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
-    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
+    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == string) and ((\$e.1 | describe) == string) }) {
       \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
@@ -143,16 +143,16 @@ def replaceEnv [line] {
 }
 def file [] {
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input r#'use file (user) [y,[n]]: '#
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.FILE_OP {
-    'diff' => {
+    diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -186,7 +186,7 @@ def file [] {
         opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    'find' => {
+    find => {
       for entry in \$env.FILE_FIND_KEYS {
         let parts = \$entry | split row '|'
         let keys = \$parts | get 0
@@ -209,7 +209,7 @@ def file [] {
         }
       }
     }
-    'list' => {
+    list => {
       for pair in \$env.FILE_LIST_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -230,7 +230,7 @@ def file [] {
         opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
       }
     }
-    'sync' => {
+    sync => {
       for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
         let dirParts = \$dir | split row '|'
 
@@ -313,17 +313,17 @@ snapshot[`nu / darwin / find 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=darwin'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -331,10 +331,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -342,10 +342,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -353,10 +353,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -364,10 +364,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -379,7 +379,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -393,13 +393,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -442,7 +442,7 @@ def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
-    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
+    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == string) and ((\$e.1 | describe) == string) }) {
       \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
@@ -450,16 +450,16 @@ def replaceEnv [line] {
 }
 def file [] {
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input r#'use file (user) [y,[n]]: '#
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.FILE_OP {
-    'diff' => {
+    diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -493,7 +493,7 @@ def file [] {
         opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    'find' => {
+    find => {
       for entry in \$env.FILE_FIND_KEYS {
         let parts = \$entry | split row '|'
         let keys = \$parts | get 0
@@ -516,7 +516,7 @@ def file [] {
         }
       }
     }
-    'list' => {
+    list => {
       for pair in \$env.FILE_LIST_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -537,7 +537,7 @@ def file [] {
         opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
       }
     }
-    'sync' => {
+    sync => {
       for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
         let dirParts = \$dir | split row '|'
 
@@ -620,17 +620,17 @@ snapshot[`nu / darwin / sync 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=darwin'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -638,10 +638,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -649,10 +649,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -660,10 +660,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -671,10 +671,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -686,7 +686,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -700,13 +700,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -749,7 +749,7 @@ def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
-    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
+    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == string) and ((\$e.1 | describe) == string) }) {
       \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
@@ -757,16 +757,16 @@ def replaceEnv [line] {
 }
 def file [] {
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input r#'use file (user) [y,[n]]: '#
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.FILE_OP {
-    'diff' => {
+    diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -800,7 +800,7 @@ def file [] {
         opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    'find' => {
+    find => {
       for entry in \$env.FILE_FIND_KEYS {
         let parts = \$entry | split row '|'
         let keys = \$parts | get 0
@@ -823,7 +823,7 @@ def file [] {
         }
       }
     }
-    'list' => {
+    list => {
       for pair in \$env.FILE_LIST_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -844,7 +844,7 @@ def file [] {
         opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
       }
     }
-    'sync' => {
+    sync => {
       for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
         let dirParts = \$dir | split row '|'
 
@@ -931,17 +931,17 @@ snapshot[`nu / linux / diff 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -949,10 +949,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -960,10 +960,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -971,10 +971,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -982,10 +982,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -997,7 +997,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -1011,13 +1011,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -1060,7 +1060,7 @@ def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
-    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
+    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == string) and ((\$e.1 | describe) == string) }) {
       \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
@@ -1068,16 +1068,16 @@ def replaceEnv [line] {
 }
 def file [] {
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input r#'use file (user) [y,[n]]: '#
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.FILE_OP {
-    'diff' => {
+    diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -1111,7 +1111,7 @@ def file [] {
         opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    'find' => {
+    find => {
       for entry in \$env.FILE_FIND_KEYS {
         let parts = \$entry | split row '|'
         let keys = \$parts | get 0
@@ -1134,7 +1134,7 @@ def file [] {
         }
       }
     }
-    'list' => {
+    list => {
       for pair in \$env.FILE_LIST_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -1155,7 +1155,7 @@ def file [] {
         opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
       }
     }
-    'sync' => {
+    sync => {
       for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
         let dirParts = \$dir | split row '|'
 
@@ -1238,17 +1238,17 @@ snapshot[`nu / linux / find 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -1256,10 +1256,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -1267,10 +1267,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -1278,10 +1278,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -1289,10 +1289,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -1304,7 +1304,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -1318,13 +1318,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -1367,7 +1367,7 @@ def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
-    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
+    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == string) and ((\$e.1 | describe) == string) }) {
       \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
@@ -1375,16 +1375,16 @@ def replaceEnv [line] {
 }
 def file [] {
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input r#'use file (user) [y,[n]]: '#
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.FILE_OP {
-    'diff' => {
+    diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -1418,7 +1418,7 @@ def file [] {
         opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    'find' => {
+    find => {
       for entry in \$env.FILE_FIND_KEYS {
         let parts = \$entry | split row '|'
         let keys = \$parts | get 0
@@ -1441,7 +1441,7 @@ def file [] {
         }
       }
     }
-    'list' => {
+    list => {
       for pair in \$env.FILE_LIST_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -1462,7 +1462,7 @@ def file [] {
         opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
       }
     }
-    'sync' => {
+    sync => {
       for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
         let dirParts = \$dir | split row '|'
 
@@ -1545,17 +1545,17 @@ snapshot[`nu / linux / sync 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -1563,10 +1563,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -1574,10 +1574,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -1585,10 +1585,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -1596,10 +1596,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -1611,7 +1611,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -1625,13 +1625,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -1674,7 +1674,7 @@ def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
-    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
+    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == string) and ((\$e.1 | describe) == string) }) {
       \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
@@ -1682,16 +1682,16 @@ def replaceEnv [line] {
 }
 def file [] {
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input r#'use file (user) [y,[n]]: '#
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.FILE_OP {
-    'diff' => {
+    diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -1725,7 +1725,7 @@ def file [] {
         opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    'find' => {
+    find => {
       for entry in \$env.FILE_FIND_KEYS {
         let parts = \$entry | split row '|'
         let keys = \$parts | get 0
@@ -1748,7 +1748,7 @@ def file [] {
         }
       }
     }
-    'list' => {
+    list => {
       for pair in \$env.FILE_LIST_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -1769,7 +1769,7 @@ def file [] {
         opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
       }
     }
-    'sync' => {
+    sync => {
       for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
         let dirParts = \$dir | split row '|'
 
@@ -1856,17 +1856,17 @@ snapshot[`nu / linux / find (with filter) 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/find/git?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -1874,10 +1874,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -1885,10 +1885,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -1896,10 +1896,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -1907,10 +1907,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -1922,7 +1922,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -1936,13 +1936,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -1987,7 +1987,7 @@ def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
-    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
+    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == string) and ((\$e.1 | describe) == string) }) {
       \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
@@ -1995,16 +1995,16 @@ def replaceEnv [line] {
 }
 def file [] {
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input r#'use file (user) [y,[n]]: '#
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.FILE_OP {
-    'diff' => {
+    diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -2038,7 +2038,7 @@ def file [] {
         opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    'find' => {
+    find => {
       for entry in \$env.FILE_FIND_KEYS {
         let parts = \$entry | split row '|'
         let keys = \$parts | get 0
@@ -2061,7 +2061,7 @@ def file [] {
         }
       }
     }
-    'list' => {
+    list => {
       for pair in \$env.FILE_LIST_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -2082,7 +2082,7 @@ def file [] {
         opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
       }
     }
-    'sync' => {
+    sync => {
       for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
         let dirParts = \$dir | split row '|'
 
@@ -2165,17 +2165,17 @@ snapshot[`nu / linux / find (with sysHost) 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=linux&sysHost=testhost'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -2183,10 +2183,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -2194,10 +2194,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -2205,10 +2205,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -2216,10 +2216,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -2231,7 +2231,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -2245,13 +2245,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -2296,7 +2296,7 @@ def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
-    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
+    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == string) and ((\$e.1 | describe) == string) }) {
       \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
@@ -2304,16 +2304,16 @@ def replaceEnv [line] {
 }
 def file [] {
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input r#'use file (user) [y,[n]]: '#
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.FILE_OP {
-    'diff' => {
+    diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -2347,7 +2347,7 @@ def file [] {
         opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    'find' => {
+    find => {
       for entry in \$env.FILE_FIND_KEYS {
         let parts = \$entry | split row '|'
         let keys = \$parts | get 0
@@ -2370,7 +2370,7 @@ def file [] {
         }
       }
     }
-    'list' => {
+    list => {
       for pair in \$env.FILE_LIST_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -2391,7 +2391,7 @@ def file [] {
         opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
       }
     }
-    'sync' => {
+    sync => {
       for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
         let dirParts = \$dir | split row '|'
 
@@ -2474,17 +2474,17 @@ snapshot[`nu / darwin / list 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=darwin'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -2492,10 +2492,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -2503,10 +2503,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -2514,10 +2514,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -2525,10 +2525,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -2540,7 +2540,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -2554,13 +2554,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -2603,7 +2603,7 @@ def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
-    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
+    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == string) and ((\$e.1 | describe) == string) }) {
       \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
@@ -2611,16 +2611,16 @@ def replaceEnv [line] {
 }
 def file [] {
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input r#'use file (user) [y,[n]]: '#
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.FILE_OP {
-    'diff' => {
+    diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -2654,7 +2654,7 @@ def file [] {
         opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    'find' => {
+    find => {
       for entry in \$env.FILE_FIND_KEYS {
         let parts = \$entry | split row '|'
         let keys = \$parts | get 0
@@ -2677,7 +2677,7 @@ def file [] {
         }
       }
     }
-    'list' => {
+    list => {
       for pair in \$env.FILE_LIST_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -2698,7 +2698,7 @@ def file [] {
         opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
       }
     }
-    'sync' => {
+    sync => {
       for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
         let dirParts = \$dir | split row '|'
 
@@ -2781,17 +2781,17 @@ snapshot[`nu / linux / list 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -2799,10 +2799,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -2810,10 +2810,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -2821,10 +2821,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -2832,10 +2832,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -2847,7 +2847,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -2861,13 +2861,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -2910,7 +2910,7 @@ def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
-    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
+    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == string) and ((\$e.1 | describe) == string) }) {
       \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
@@ -2918,16 +2918,16 @@ def replaceEnv [line] {
 }
 def file [] {
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input r#'use file (user) [y,[n]]: '#
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.FILE_OP {
-    'diff' => {
+    diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -2961,7 +2961,7 @@ def file [] {
         opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    'find' => {
+    find => {
       for entry in \$env.FILE_FIND_KEYS {
         let parts = \$entry | split row '|'
         let keys = \$parts | get 0
@@ -2984,7 +2984,7 @@ def file [] {
         }
       }
     }
-    'list' => {
+    list => {
       for pair in \$env.FILE_LIST_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -3005,7 +3005,7 @@ def file [] {
         opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
       }
     }
-    'sync' => {
+    sync => {
       for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
         let dirParts = \$dir | split row '|'
 
@@ -3088,17 +3088,17 @@ snapshot[`nu / winnt / diff 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=winnt'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -3106,10 +3106,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -3117,10 +3117,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -3128,10 +3128,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -3139,10 +3139,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -3154,7 +3154,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -3168,13 +3168,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -3217,7 +3217,7 @@ def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
-    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
+    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == string) and ((\$e.1 | describe) == string) }) {
       \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
@@ -3225,16 +3225,16 @@ def replaceEnv [line] {
 }
 def file [] {
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input r#'use file (user) [y,[n]]: '#
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.FILE_OP {
-    'diff' => {
+    diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -3268,7 +3268,7 @@ def file [] {
         opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    'find' => {
+    find => {
       for entry in \$env.FILE_FIND_KEYS {
         let parts = \$entry | split row '|'
         let keys = \$parts | get 0
@@ -3291,7 +3291,7 @@ def file [] {
         }
       }
     }
-    'list' => {
+    list => {
       for pair in \$env.FILE_LIST_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -3312,7 +3312,7 @@ def file [] {
         opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
       }
     }
-    'sync' => {
+    sync => {
       for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
         let dirParts = \$dir | split row '|'
 
@@ -3395,17 +3395,17 @@ snapshot[`nu / winnt / find 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=winnt'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -3413,10 +3413,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -3424,10 +3424,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -3435,10 +3435,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -3446,10 +3446,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -3461,7 +3461,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -3475,13 +3475,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -3524,7 +3524,7 @@ def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
-    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
+    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == string) and ((\$e.1 | describe) == string) }) {
       \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
@@ -3532,16 +3532,16 @@ def replaceEnv [line] {
 }
 def file [] {
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input r#'use file (user) [y,[n]]: '#
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.FILE_OP {
-    'diff' => {
+    diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -3575,7 +3575,7 @@ def file [] {
         opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    'find' => {
+    find => {
       for entry in \$env.FILE_FIND_KEYS {
         let parts = \$entry | split row '|'
         let keys = \$parts | get 0
@@ -3598,7 +3598,7 @@ def file [] {
         }
       }
     }
-    'list' => {
+    list => {
       for pair in \$env.FILE_LIST_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -3619,7 +3619,7 @@ def file [] {
         opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
       }
     }
-    'sync' => {
+    sync => {
       for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
         let dirParts = \$dir | split row '|'
 
@@ -3702,17 +3702,17 @@ snapshot[`nu / winnt / sync 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=winnt'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -3720,10 +3720,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -3731,10 +3731,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -3742,10 +3742,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -3753,10 +3753,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -3768,7 +3768,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -3782,13 +3782,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -3831,7 +3831,7 @@ def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
-    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
+    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == string) and ((\$e.1 | describe) == string) }) {
       \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
@@ -3839,16 +3839,16 @@ def replaceEnv [line] {
 }
 def file [] {
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input r#'use file (user) [y,[n]]: '#
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.FILE_OP {
-    'diff' => {
+    diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -3882,7 +3882,7 @@ def file [] {
         opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    'find' => {
+    find => {
       for entry in \$env.FILE_FIND_KEYS {
         let parts = \$entry | split row '|'
         let keys = \$parts | get 0
@@ -3905,7 +3905,7 @@ def file [] {
         }
       }
     }
-    'list' => {
+    list => {
       for pair in \$env.FILE_LIST_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -3926,7 +3926,7 @@ def file [] {
         opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
       }
     }
-    'sync' => {
+    sync => {
       for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
         let dirParts = \$dir | split row '|'
 
@@ -4013,17 +4013,17 @@ snapshot[`nu / winnt / list 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=winnt'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -4031,10 +4031,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -4042,10 +4042,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -4053,10 +4053,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -4064,10 +4064,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -4079,7 +4079,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -4093,13 +4093,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -4142,7 +4142,7 @@ def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
     let itemsEnv = \$env | items { |key, value| [\$key, \$value] }
-    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == 'string') and ((\$e.1 | describe) == 'string') }) {
+    for e in (\$itemsEnv | where { |e| ((\$e.0 | describe) == string) and ((\$e.1 | describe) == string) }) {
       \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
     }
   }
@@ -4150,16 +4150,16 @@ def replaceEnv [line] {
 }
 def file [] {
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input r#'use file (user) [y,[n]]: '#
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.FILE_OP {
-    'diff' => {
+    diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -4193,7 +4193,7 @@ def file [] {
         opPrintRunCmd rm --force \$\\"r#'(\$tmpFilePath)'#\\"
       }
     }
-    'find' => {
+    find => {
       for entry in \$env.FILE_FIND_KEYS {
         let parts = \$entry | split row '|'
         let keys = \$parts | get 0
@@ -4216,7 +4216,7 @@ def file [] {
         }
       }
     }
-    'list' => {
+    list => {
       for pair in \$env.FILE_LIST_PATH_PAIRS {
         let pairParts = \$pair | split row '|'
 
@@ -4237,7 +4237,7 @@ def file [] {
         opPrint \$\\"(\$src) -> (\$dstFilePath)\\"
       }
     }
-    'sync' => {
+    sync => {
       for dir in (\$env.FILE_SYNC_CLEAR_DIRS? | default []) {
         let dirParts = \$dir | split row '|'
 

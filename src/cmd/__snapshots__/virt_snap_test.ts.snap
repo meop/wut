@@ -6,17 +6,17 @@ snapshot[`nu / linux / add 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/add?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -24,10 +24,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -35,10 +35,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -46,10 +46,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -57,10 +57,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -72,7 +72,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -86,13 +86,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -144,17 +144,17 @@ snapshot[`nu / linux / find 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -162,10 +162,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -173,10 +173,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -184,10 +184,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -195,10 +195,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -210,7 +210,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -224,13 +224,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -294,17 +294,17 @@ snapshot[`nu / linux / list 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/list?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -312,10 +312,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -323,10 +323,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -334,10 +334,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -345,10 +345,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -360,7 +360,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -374,13 +374,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -428,9 +428,9 @@ def deepMerge [base, override] {
       let baseVal = \$result | get \$kv.key
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
-      if (\$baseDesc | str starts-with 'record') and (\$overrideDesc | str starts-with 'record') {
+      if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
         \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
-      } else if (\$baseDesc | str starts-with 'list') and (\$overrideDesc | str starts-with 'list') {
+      } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
         \$result = \$result | upsert \$kv.key \$kv.value
@@ -445,20 +445,20 @@ def deepMerge [base, override] {
 
 def virtDocker [] {
   let cmd = 'docker'
-  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^sudo \$cmd container ls | complete | get stdout | find --ignore-case \$instance | is-not-empty) {
           continue
@@ -473,14 +473,14 @@ def virtDocker [] {
           | each { |svc|
               \$svc | get volumes? | default []
               | each { |v|
-                  if (\$v | describe) == 'string' {
+                  if (\$v | describe) == string {
                     let host = \$v | split row ':' | first
                     if (\$host | str starts-with '/') {
                       \$host
                     } else {
                       null
                     }
-                  } else if (\$v | get type? | default '') == 'bind' {
+                  } else if (\$v | get type? | default '') == bind {
                     \$v.source
                   } else {
                     null
@@ -495,7 +495,7 @@ def virtDocker [] {
         opPrintMaybeRunCmd \$\\"r#'(\$yaml)'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
-    'list' => {
+    list => {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
@@ -506,7 +506,7 @@ def virtDocker [] {
       let nameFilters = \$instances | each { |i| ['--filter', \$\\"name=(\$i)\\"] } | flatten
       opPrintRunCmd sudo \$cmd container ls --all --format '\\"table {{.Names}}\\\\\\\\t{{.Image}}\\\\\\\\t{{.Ports}}\\\\\\\\t{{.State}}\\\\\\\\t{{.Status}}\\"' --no-trunc ...\$nameFilters
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -516,12 +516,12 @@ def virtDocker [] {
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - down
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
-    'tidy' => {
+    tidy => {
       opPrintMaybeRunCmd sudo \$cmd system prune --all
     }
   }
@@ -533,16 +533,16 @@ def virtLxc [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
   }
-  if \$env.VIRT_OP == 'tidy' {
+  if \$env.VIRT_OP == tidy {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -626,7 +626,7 @@ def virtLxc [] {
       (if (\$net | is-not-empty) { [
         [\$\\"lxc.net.0.type = (\$net.type)\\", \$\\"lxc.net.0.link = (\$net.link)\\", \$\\"lxc.net.0.name = (\$net.name)\\"],
         (if 'hwaddr' in \$net { [\$\\"lxc.net.0.hwaddr = (\$net.hwaddr)\\"] } else { [] }),
-        (if \$net.type == 'veth' { [\$\\"lxc.net.0.veth.pair = veth-(\$instance)\\"] } else if \$net.type == 'macvlan' { [\$\\"lxc.net.0.macvlan.mode = (\$net.mode? | default 'bridge')\\"] } else { [] }),
+        (if \$net.type == veth { [\$\\"lxc.net.0.veth.pair = veth-(\$instance)\\"] } else if \$net.type == macvlan { [\$\\"lxc.net.0.macvlan.mode = (\$net.mode? | default bridge)\\"] } else { [] }),
         ['lxc.net.0.flags = up'],
       ] | flatten } else { [] }),
       (\$merged | get lxc?.mounts? | default [] | each { |mnt| \$\\"lxc.mount.entry = (replaceEnv \$lxcEnv \$mnt.source) ((replaceEnv \$lxcEnv \$mnt.target) | str trim --left --char '/') none bind,create=dir 0 0\\" }),
@@ -660,7 +660,7 @@ def virtLxc [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row ' ' | str trim | where { |l| \$l | is-not-empty } | any { |l| \$l == \$instance }) {
           opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
@@ -670,7 +670,7 @@ def virtLxc [] {
         doAdd \$cmd \$instance
       }
     }
-    'list' => {
+    list => {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split row ' ' | str trim | where { is-not-empty }
       let instances = if (\$filters | is-not-empty) {
@@ -682,7 +682,7 @@ def virtLxc [] {
         opPrintRunCmd sudo \$\\"(\$cmd)-ls\\" --fancy --fancy-format '\\"NAME,IPV4,IPV6,STATE,AUTOSTART\\"' -- \$instance
       }
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -697,7 +697,7 @@ def virtLxc [] {
         doRem \$cmd \$instance
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
           continue
@@ -720,12 +720,12 @@ def virtPodman [] {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -741,7 +741,7 @@ def virtPodman [] {
   def processYaml [yamlRaw, host, pod, instance] {
     mut result = []
     for doc in (\$yamlRaw | str replace --all '{host}' \$host | str replace --all '{pod}' \$pod | str replace --all '{instance}' \$instance | splitYamlDocs) {
-      if (\$doc | get kind? | default '') == 'Build' {
+      if (\$doc | get kind? | default '') == Build {
         # custom doc, not passed to podman
       } else {
         let doc = if (\$doc | get apiVersion? | is-empty) { \$doc | insert apiVersion 'v1' } else { \$doc }
@@ -758,7 +758,7 @@ def virtPodman [] {
       | str replace --all '{pod}' \$pod
       | str replace --all '{instance}' \$instance
       | splitYamlDocs
-      | where { |d| (\$d | get kind? | default '') == 'Build' }
+      | where { |d| (\$d | get kind? | default '') == Build }
     if (\$buildDocs | is-empty) {
       return \$alreadyBuilt
     }
@@ -826,7 +826,7 @@ def virtPodman [] {
       | str replace --all '{host}' \$env.SYS_HOST
       | str replace --all '{pod}' \$pod
       | splitYamlDocs
-      | where { |d| (\$d | get kind? | default '') == 'Pod' }
+      | where { |d| (\$d | get kind? | default '') == Pod }
       | first
 
     mut configMaps = []
@@ -839,7 +839,7 @@ def virtPodman [] {
       \$builtImages = buildImage \$yamlRaw \$env.SYS_HOST \$pod \$instance \$builtImages
 
       let instanceDocs = processYaml \$yamlRaw \$env.SYS_HOST \$pod \$instance | splitYamlDocs
-      let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == 'Pod' } | first
+      let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == Pod } | first
 
       \$podDoc = \$podDoc
         | upsert metadata.annotations (deepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
@@ -851,7 +851,7 @@ def virtPodman [] {
         \$podDoc = \$podDoc | upsert spec.hostname \$instanceHostname
       }
 
-      for cm in (\$instanceDocs | where { |d| (\$d | get kind? | default '') == 'ConfigMap' }) {
+      for cm in (\$instanceDocs | where { |d| (\$d | get kind? | default '') == ConfigMap }) {
         \$configMaps = (\$configMaps | where { |m| \$m.metadata.name != \$cm.metadata.name }) | append \$cm
       }
     }
@@ -909,12 +909,12 @@ def virtPodman [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       let pods = \$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq
       for pod in \$pods {
         let podInstances = \$env.VIRT_INSTANCES | where { |p| ((\$p | split row '/') | first) == \$pod }
 
-        if (^sudo systemctl is-active \$\\"(\$pod).service\\" | complete | get stdout | str trim) == 'active' {
+        if (^sudo systemctl is-active \$\\"(\$pod).service\\" | complete | get stdout | str trim) == active {
           opPrintWarn \$\\"\`(\$cmd)\` pod \`(\$pod)\` is already added\\"
           continue
         }
@@ -922,7 +922,7 @@ def virtPodman [] {
         doAdd \$pod \$podInstances \$cmd
       }
     }
-    'list' => {
+    list => {
       let kubeDirPath = '/etc/containers/systemd'
       for pod in (if (\$kubeDirPath | path exists) {
         ls \$kubeDirPath
@@ -936,7 +936,7 @@ def virtPodman [] {
         opPrintRunCmd sudo \$cmd container list --filter \$\\"pod=(\$pod)\\" --format '\\"table {{.PodName}}\\\\t{{.Names}}\\\\t{{.Image}}\\\\t{{.Ports}}\\\\t{{.State}}\\\\t{{.Status}}\\"'
       }
     }
-    'rem' => {
+    rem => {
       let managedNetworks = \$env.VIRT_PODMAN_NETWORKS | from json
       let kubeDirPath = '/etc/containers/systemd'
 
@@ -962,7 +962,7 @@ def virtPodman [] {
         removeNetworkIfUnused \$network \$pod \$managedNetworks
       }
     }
-    'sync' => {
+    sync => {
       let kubeDirPath = '/etc/containers/systemd'
       for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
         if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
@@ -975,7 +975,7 @@ def virtPodman [] {
         doAdd \$pod \$podInstances \$cmd
       }
     }
-    'tidy' => {
+    tidy => {
       opPrintMaybeRunCmd sudo \$cmd system prune --all
     }
   }
@@ -984,19 +984,19 @@ def virtPodman [] {
 
 def virtQemu [] {
   let cmd = 'qemu'
-  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
+  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
     return
   }
-  if \$env.VIRT_OP == 'tidy' {
+  if \$env.VIRT_OP == tidy {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -1254,7 +1254,7 @@ def virtQemu [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" | complete | get stdout | is-not-empty) {
           opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
@@ -1264,7 +1264,7 @@ def virtQemu [] {
         doAdd \$cmd \$instance
       }
     }
-    'list' => {
+    list => {
       let serviceDirPath = '/etc/systemd/system'
       for instance in (if (\$serviceDirPath | path exists) {
         ls \$serviceDirPath
@@ -1278,7 +1278,7 @@ def virtQemu [] {
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" }
       }
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -1296,7 +1296,7 @@ def virtQemu [] {
         doRem \$cmd \$instance
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
           continue
@@ -1353,17 +1353,17 @@ snapshot[`nu / linux / rem 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/rem?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -1371,10 +1371,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -1382,10 +1382,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -1393,10 +1393,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -1404,10 +1404,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -1419,7 +1419,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -1433,13 +1433,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -1491,17 +1491,17 @@ snapshot[`nu / linux / sync 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/sync?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -1509,10 +1509,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -1520,10 +1520,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -1531,10 +1531,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -1542,10 +1542,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -1557,7 +1557,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -1571,13 +1571,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -1625,9 +1625,9 @@ def deepMerge [base, override] {
       let baseVal = \$result | get \$kv.key
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
-      if (\$baseDesc | str starts-with 'record') and (\$overrideDesc | str starts-with 'record') {
+      if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
         \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
-      } else if (\$baseDesc | str starts-with 'list') and (\$overrideDesc | str starts-with 'list') {
+      } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
         \$result = \$result | upsert \$kv.key \$kv.value
@@ -1642,20 +1642,20 @@ def deepMerge [base, override] {
 
 def virtDocker [] {
   let cmd = 'docker'
-  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^sudo \$cmd container ls | complete | get stdout | find --ignore-case \$instance | is-not-empty) {
           continue
@@ -1670,14 +1670,14 @@ def virtDocker [] {
           | each { |svc|
               \$svc | get volumes? | default []
               | each { |v|
-                  if (\$v | describe) == 'string' {
+                  if (\$v | describe) == string {
                     let host = \$v | split row ':' | first
                     if (\$host | str starts-with '/') {
                       \$host
                     } else {
                       null
                     }
-                  } else if (\$v | get type? | default '') == 'bind' {
+                  } else if (\$v | get type? | default '') == bind {
                     \$v.source
                   } else {
                     null
@@ -1692,7 +1692,7 @@ def virtDocker [] {
         opPrintMaybeRunCmd \$\\"r#'(\$yaml)'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
-    'list' => {
+    list => {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
@@ -1703,7 +1703,7 @@ def virtDocker [] {
       let nameFilters = \$instances | each { |i| ['--filter', \$\\"name=(\$i)\\"] } | flatten
       opPrintRunCmd sudo \$cmd container ls --all --format '\\"table {{.Names}}\\\\\\\\t{{.Image}}\\\\\\\\t{{.Ports}}\\\\\\\\t{{.State}}\\\\\\\\t{{.Status}}\\"' --no-trunc ...\$nameFilters
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -1713,12 +1713,12 @@ def virtDocker [] {
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - down
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
-    'tidy' => {
+    tidy => {
       opPrintMaybeRunCmd sudo \$cmd system prune --all
     }
   }
@@ -1730,16 +1730,16 @@ def virtLxc [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
   }
-  if \$env.VIRT_OP == 'tidy' {
+  if \$env.VIRT_OP == tidy {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -1823,7 +1823,7 @@ def virtLxc [] {
       (if (\$net | is-not-empty) { [
         [\$\\"lxc.net.0.type = (\$net.type)\\", \$\\"lxc.net.0.link = (\$net.link)\\", \$\\"lxc.net.0.name = (\$net.name)\\"],
         (if 'hwaddr' in \$net { [\$\\"lxc.net.0.hwaddr = (\$net.hwaddr)\\"] } else { [] }),
-        (if \$net.type == 'veth' { [\$\\"lxc.net.0.veth.pair = veth-(\$instance)\\"] } else if \$net.type == 'macvlan' { [\$\\"lxc.net.0.macvlan.mode = (\$net.mode? | default 'bridge')\\"] } else { [] }),
+        (if \$net.type == veth { [\$\\"lxc.net.0.veth.pair = veth-(\$instance)\\"] } else if \$net.type == macvlan { [\$\\"lxc.net.0.macvlan.mode = (\$net.mode? | default bridge)\\"] } else { [] }),
         ['lxc.net.0.flags = up'],
       ] | flatten } else { [] }),
       (\$merged | get lxc?.mounts? | default [] | each { |mnt| \$\\"lxc.mount.entry = (replaceEnv \$lxcEnv \$mnt.source) ((replaceEnv \$lxcEnv \$mnt.target) | str trim --left --char '/') none bind,create=dir 0 0\\" }),
@@ -1857,7 +1857,7 @@ def virtLxc [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row ' ' | str trim | where { |l| \$l | is-not-empty } | any { |l| \$l == \$instance }) {
           opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
@@ -1867,7 +1867,7 @@ def virtLxc [] {
         doAdd \$cmd \$instance
       }
     }
-    'list' => {
+    list => {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split row ' ' | str trim | where { is-not-empty }
       let instances = if (\$filters | is-not-empty) {
@@ -1879,7 +1879,7 @@ def virtLxc [] {
         opPrintRunCmd sudo \$\\"(\$cmd)-ls\\" --fancy --fancy-format '\\"NAME,IPV4,IPV6,STATE,AUTOSTART\\"' -- \$instance
       }
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -1894,7 +1894,7 @@ def virtLxc [] {
         doRem \$cmd \$instance
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
           continue
@@ -1917,12 +1917,12 @@ def virtPodman [] {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -1938,7 +1938,7 @@ def virtPodman [] {
   def processYaml [yamlRaw, host, pod, instance] {
     mut result = []
     for doc in (\$yamlRaw | str replace --all '{host}' \$host | str replace --all '{pod}' \$pod | str replace --all '{instance}' \$instance | splitYamlDocs) {
-      if (\$doc | get kind? | default '') == 'Build' {
+      if (\$doc | get kind? | default '') == Build {
         # custom doc, not passed to podman
       } else {
         let doc = if (\$doc | get apiVersion? | is-empty) { \$doc | insert apiVersion 'v1' } else { \$doc }
@@ -1955,7 +1955,7 @@ def virtPodman [] {
       | str replace --all '{pod}' \$pod
       | str replace --all '{instance}' \$instance
       | splitYamlDocs
-      | where { |d| (\$d | get kind? | default '') == 'Build' }
+      | where { |d| (\$d | get kind? | default '') == Build }
     if (\$buildDocs | is-empty) {
       return \$alreadyBuilt
     }
@@ -2023,7 +2023,7 @@ def virtPodman [] {
       | str replace --all '{host}' \$env.SYS_HOST
       | str replace --all '{pod}' \$pod
       | splitYamlDocs
-      | where { |d| (\$d | get kind? | default '') == 'Pod' }
+      | where { |d| (\$d | get kind? | default '') == Pod }
       | first
 
     mut configMaps = []
@@ -2036,7 +2036,7 @@ def virtPodman [] {
       \$builtImages = buildImage \$yamlRaw \$env.SYS_HOST \$pod \$instance \$builtImages
 
       let instanceDocs = processYaml \$yamlRaw \$env.SYS_HOST \$pod \$instance | splitYamlDocs
-      let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == 'Pod' } | first
+      let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == Pod } | first
 
       \$podDoc = \$podDoc
         | upsert metadata.annotations (deepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
@@ -2048,7 +2048,7 @@ def virtPodman [] {
         \$podDoc = \$podDoc | upsert spec.hostname \$instanceHostname
       }
 
-      for cm in (\$instanceDocs | where { |d| (\$d | get kind? | default '') == 'ConfigMap' }) {
+      for cm in (\$instanceDocs | where { |d| (\$d | get kind? | default '') == ConfigMap }) {
         \$configMaps = (\$configMaps | where { |m| \$m.metadata.name != \$cm.metadata.name }) | append \$cm
       }
     }
@@ -2106,12 +2106,12 @@ def virtPodman [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       let pods = \$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq
       for pod in \$pods {
         let podInstances = \$env.VIRT_INSTANCES | where { |p| ((\$p | split row '/') | first) == \$pod }
 
-        if (^sudo systemctl is-active \$\\"(\$pod).service\\" | complete | get stdout | str trim) == 'active' {
+        if (^sudo systemctl is-active \$\\"(\$pod).service\\" | complete | get stdout | str trim) == active {
           opPrintWarn \$\\"\`(\$cmd)\` pod \`(\$pod)\` is already added\\"
           continue
         }
@@ -2119,7 +2119,7 @@ def virtPodman [] {
         doAdd \$pod \$podInstances \$cmd
       }
     }
-    'list' => {
+    list => {
       let kubeDirPath = '/etc/containers/systemd'
       for pod in (if (\$kubeDirPath | path exists) {
         ls \$kubeDirPath
@@ -2133,7 +2133,7 @@ def virtPodman [] {
         opPrintRunCmd sudo \$cmd container list --filter \$\\"pod=(\$pod)\\" --format '\\"table {{.PodName}}\\\\t{{.Names}}\\\\t{{.Image}}\\\\t{{.Ports}}\\\\t{{.State}}\\\\t{{.Status}}\\"'
       }
     }
-    'rem' => {
+    rem => {
       let managedNetworks = \$env.VIRT_PODMAN_NETWORKS | from json
       let kubeDirPath = '/etc/containers/systemd'
 
@@ -2159,7 +2159,7 @@ def virtPodman [] {
         removeNetworkIfUnused \$network \$pod \$managedNetworks
       }
     }
-    'sync' => {
+    sync => {
       let kubeDirPath = '/etc/containers/systemd'
       for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
         if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
@@ -2172,7 +2172,7 @@ def virtPodman [] {
         doAdd \$pod \$podInstances \$cmd
       }
     }
-    'tidy' => {
+    tidy => {
       opPrintMaybeRunCmd sudo \$cmd system prune --all
     }
   }
@@ -2181,19 +2181,19 @@ def virtPodman [] {
 
 def virtQemu [] {
   let cmd = 'qemu'
-  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
+  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
     return
   }
-  if \$env.VIRT_OP == 'tidy' {
+  if \$env.VIRT_OP == tidy {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -2451,7 +2451,7 @@ def virtQemu [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" | complete | get stdout | is-not-empty) {
           opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
@@ -2461,7 +2461,7 @@ def virtQemu [] {
         doAdd \$cmd \$instance
       }
     }
-    'list' => {
+    list => {
       let serviceDirPath = '/etc/systemd/system'
       for instance in (if (\$serviceDirPath | path exists) {
         ls \$serviceDirPath
@@ -2475,7 +2475,7 @@ def virtQemu [] {
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" }
       }
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -2493,7 +2493,7 @@ def virtQemu [] {
         doRem \$cmd \$instance
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
           continue
@@ -2518,17 +2518,17 @@ snapshot[`nu / linux / tidy 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/tidy?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -2536,10 +2536,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -2547,10 +2547,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -2558,10 +2558,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -2569,10 +2569,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -2584,7 +2584,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -2598,13 +2598,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -2652,9 +2652,9 @@ def deepMerge [base, override] {
       let baseVal = \$result | get \$kv.key
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
-      if (\$baseDesc | str starts-with 'record') and (\$overrideDesc | str starts-with 'record') {
+      if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
         \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
-      } else if (\$baseDesc | str starts-with 'list') and (\$overrideDesc | str starts-with 'list') {
+      } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
         \$result = \$result | upsert \$kv.key \$kv.value
@@ -2669,20 +2669,20 @@ def deepMerge [base, override] {
 
 def virtDocker [] {
   let cmd = 'docker'
-  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^sudo \$cmd container ls | complete | get stdout | find --ignore-case \$instance | is-not-empty) {
           continue
@@ -2697,14 +2697,14 @@ def virtDocker [] {
           | each { |svc|
               \$svc | get volumes? | default []
               | each { |v|
-                  if (\$v | describe) == 'string' {
+                  if (\$v | describe) == string {
                     let host = \$v | split row ':' | first
                     if (\$host | str starts-with '/') {
                       \$host
                     } else {
                       null
                     }
-                  } else if (\$v | get type? | default '') == 'bind' {
+                  } else if (\$v | get type? | default '') == bind {
                     \$v.source
                   } else {
                     null
@@ -2719,7 +2719,7 @@ def virtDocker [] {
         opPrintMaybeRunCmd \$\\"r#'(\$yaml)'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
-    'list' => {
+    list => {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
@@ -2730,7 +2730,7 @@ def virtDocker [] {
       let nameFilters = \$instances | each { |i| ['--filter', \$\\"name=(\$i)\\"] } | flatten
       opPrintRunCmd sudo \$cmd container ls --all --format '\\"table {{.Names}}\\\\\\\\t{{.Image}}\\\\\\\\t{{.Ports}}\\\\\\\\t{{.State}}\\\\\\\\t{{.Status}}\\"' --no-trunc ...\$nameFilters
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -2740,12 +2740,12 @@ def virtDocker [] {
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - down
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
-    'tidy' => {
+    tidy => {
       opPrintMaybeRunCmd sudo \$cmd system prune --all
     }
   }
@@ -2757,16 +2757,16 @@ def virtLxc [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
   }
-  if \$env.VIRT_OP == 'tidy' {
+  if \$env.VIRT_OP == tidy {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -2850,7 +2850,7 @@ def virtLxc [] {
       (if (\$net | is-not-empty) { [
         [\$\\"lxc.net.0.type = (\$net.type)\\", \$\\"lxc.net.0.link = (\$net.link)\\", \$\\"lxc.net.0.name = (\$net.name)\\"],
         (if 'hwaddr' in \$net { [\$\\"lxc.net.0.hwaddr = (\$net.hwaddr)\\"] } else { [] }),
-        (if \$net.type == 'veth' { [\$\\"lxc.net.0.veth.pair = veth-(\$instance)\\"] } else if \$net.type == 'macvlan' { [\$\\"lxc.net.0.macvlan.mode = (\$net.mode? | default 'bridge')\\"] } else { [] }),
+        (if \$net.type == veth { [\$\\"lxc.net.0.veth.pair = veth-(\$instance)\\"] } else if \$net.type == macvlan { [\$\\"lxc.net.0.macvlan.mode = (\$net.mode? | default bridge)\\"] } else { [] }),
         ['lxc.net.0.flags = up'],
       ] | flatten } else { [] }),
       (\$merged | get lxc?.mounts? | default [] | each { |mnt| \$\\"lxc.mount.entry = (replaceEnv \$lxcEnv \$mnt.source) ((replaceEnv \$lxcEnv \$mnt.target) | str trim --left --char '/') none bind,create=dir 0 0\\" }),
@@ -2884,7 +2884,7 @@ def virtLxc [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row ' ' | str trim | where { |l| \$l | is-not-empty } | any { |l| \$l == \$instance }) {
           opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
@@ -2894,7 +2894,7 @@ def virtLxc [] {
         doAdd \$cmd \$instance
       }
     }
-    'list' => {
+    list => {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split row ' ' | str trim | where { is-not-empty }
       let instances = if (\$filters | is-not-empty) {
@@ -2906,7 +2906,7 @@ def virtLxc [] {
         opPrintRunCmd sudo \$\\"(\$cmd)-ls\\" --fancy --fancy-format '\\"NAME,IPV4,IPV6,STATE,AUTOSTART\\"' -- \$instance
       }
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -2921,7 +2921,7 @@ def virtLxc [] {
         doRem \$cmd \$instance
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
           continue
@@ -2944,12 +2944,12 @@ def virtPodman [] {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -2965,7 +2965,7 @@ def virtPodman [] {
   def processYaml [yamlRaw, host, pod, instance] {
     mut result = []
     for doc in (\$yamlRaw | str replace --all '{host}' \$host | str replace --all '{pod}' \$pod | str replace --all '{instance}' \$instance | splitYamlDocs) {
-      if (\$doc | get kind? | default '') == 'Build' {
+      if (\$doc | get kind? | default '') == Build {
         # custom doc, not passed to podman
       } else {
         let doc = if (\$doc | get apiVersion? | is-empty) { \$doc | insert apiVersion 'v1' } else { \$doc }
@@ -2982,7 +2982,7 @@ def virtPodman [] {
       | str replace --all '{pod}' \$pod
       | str replace --all '{instance}' \$instance
       | splitYamlDocs
-      | where { |d| (\$d | get kind? | default '') == 'Build' }
+      | where { |d| (\$d | get kind? | default '') == Build }
     if (\$buildDocs | is-empty) {
       return \$alreadyBuilt
     }
@@ -3050,7 +3050,7 @@ def virtPodman [] {
       | str replace --all '{host}' \$env.SYS_HOST
       | str replace --all '{pod}' \$pod
       | splitYamlDocs
-      | where { |d| (\$d | get kind? | default '') == 'Pod' }
+      | where { |d| (\$d | get kind? | default '') == Pod }
       | first
 
     mut configMaps = []
@@ -3063,7 +3063,7 @@ def virtPodman [] {
       \$builtImages = buildImage \$yamlRaw \$env.SYS_HOST \$pod \$instance \$builtImages
 
       let instanceDocs = processYaml \$yamlRaw \$env.SYS_HOST \$pod \$instance | splitYamlDocs
-      let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == 'Pod' } | first
+      let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == Pod } | first
 
       \$podDoc = \$podDoc
         | upsert metadata.annotations (deepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
@@ -3075,7 +3075,7 @@ def virtPodman [] {
         \$podDoc = \$podDoc | upsert spec.hostname \$instanceHostname
       }
 
-      for cm in (\$instanceDocs | where { |d| (\$d | get kind? | default '') == 'ConfigMap' }) {
+      for cm in (\$instanceDocs | where { |d| (\$d | get kind? | default '') == ConfigMap }) {
         \$configMaps = (\$configMaps | where { |m| \$m.metadata.name != \$cm.metadata.name }) | append \$cm
       }
     }
@@ -3133,12 +3133,12 @@ def virtPodman [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       let pods = \$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq
       for pod in \$pods {
         let podInstances = \$env.VIRT_INSTANCES | where { |p| ((\$p | split row '/') | first) == \$pod }
 
-        if (^sudo systemctl is-active \$\\"(\$pod).service\\" | complete | get stdout | str trim) == 'active' {
+        if (^sudo systemctl is-active \$\\"(\$pod).service\\" | complete | get stdout | str trim) == active {
           opPrintWarn \$\\"\`(\$cmd)\` pod \`(\$pod)\` is already added\\"
           continue
         }
@@ -3146,7 +3146,7 @@ def virtPodman [] {
         doAdd \$pod \$podInstances \$cmd
       }
     }
-    'list' => {
+    list => {
       let kubeDirPath = '/etc/containers/systemd'
       for pod in (if (\$kubeDirPath | path exists) {
         ls \$kubeDirPath
@@ -3160,7 +3160,7 @@ def virtPodman [] {
         opPrintRunCmd sudo \$cmd container list --filter \$\\"pod=(\$pod)\\" --format '\\"table {{.PodName}}\\\\t{{.Names}}\\\\t{{.Image}}\\\\t{{.Ports}}\\\\t{{.State}}\\\\t{{.Status}}\\"'
       }
     }
-    'rem' => {
+    rem => {
       let managedNetworks = \$env.VIRT_PODMAN_NETWORKS | from json
       let kubeDirPath = '/etc/containers/systemd'
 
@@ -3186,7 +3186,7 @@ def virtPodman [] {
         removeNetworkIfUnused \$network \$pod \$managedNetworks
       }
     }
-    'sync' => {
+    sync => {
       let kubeDirPath = '/etc/containers/systemd'
       for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
         if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
@@ -3199,7 +3199,7 @@ def virtPodman [] {
         doAdd \$pod \$podInstances \$cmd
       }
     }
-    'tidy' => {
+    tidy => {
       opPrintMaybeRunCmd sudo \$cmd system prune --all
     }
   }
@@ -3208,19 +3208,19 @@ def virtPodman [] {
 
 def virtQemu [] {
   let cmd = 'qemu'
-  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
+  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
     return
   }
-  if \$env.VIRT_OP == 'tidy' {
+  if \$env.VIRT_OP == tidy {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -3478,7 +3478,7 @@ def virtQemu [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" | complete | get stdout | is-not-empty) {
           opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
@@ -3488,7 +3488,7 @@ def virtQemu [] {
         doAdd \$cmd \$instance
       }
     }
-    'list' => {
+    list => {
       let serviceDirPath = '/etc/systemd/system'
       for instance in (if (\$serviceDirPath | path exists) {
         ls \$serviceDirPath
@@ -3502,7 +3502,7 @@ def virtQemu [] {
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" }
       }
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -3520,7 +3520,7 @@ def virtQemu [] {
         doRem \$cmd \$instance
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
           continue
@@ -3545,17 +3545,17 @@ snapshot[`nu / darwin / add 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/add?sysOsPlat=darwin'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -3563,10 +3563,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -3574,10 +3574,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -3585,10 +3585,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -3596,10 +3596,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -3611,7 +3611,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -3625,13 +3625,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -3683,17 +3683,17 @@ snapshot[`nu / darwin / find 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find?sysOsPlat=darwin'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -3701,10 +3701,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -3712,10 +3712,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -3723,10 +3723,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -3734,10 +3734,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -3749,7 +3749,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -3763,13 +3763,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -3829,17 +3829,17 @@ snapshot[`nu / darwin / list 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/list?sysOsPlat=darwin'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -3847,10 +3847,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -3858,10 +3858,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -3869,10 +3869,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -3880,10 +3880,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -3895,7 +3895,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -3909,13 +3909,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -3963,9 +3963,9 @@ def deepMerge [base, override] {
       let baseVal = \$result | get \$kv.key
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
-      if (\$baseDesc | str starts-with 'record') and (\$overrideDesc | str starts-with 'record') {
+      if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
         \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
-      } else if (\$baseDesc | str starts-with 'list') and (\$overrideDesc | str starts-with 'list') {
+      } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
         \$result = \$result | upsert \$kv.key \$kv.value
@@ -3986,17 +3986,17 @@ snapshot[`nu / darwin / rem 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/rem?sysOsPlat=darwin'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -4004,10 +4004,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4015,10 +4015,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4026,10 +4026,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4037,10 +4037,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4052,7 +4052,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -4066,13 +4066,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -4124,17 +4124,17 @@ snapshot[`nu / darwin / sync 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/sync?sysOsPlat=darwin'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -4142,10 +4142,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4153,10 +4153,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4164,10 +4164,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4175,10 +4175,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4190,7 +4190,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -4204,13 +4204,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -4258,9 +4258,9 @@ def deepMerge [base, override] {
       let baseVal = \$result | get \$kv.key
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
-      if (\$baseDesc | str starts-with 'record') and (\$overrideDesc | str starts-with 'record') {
+      if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
         \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
-      } else if (\$baseDesc | str starts-with 'list') and (\$overrideDesc | str starts-with 'list') {
+      } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
         \$result = \$result | upsert \$kv.key \$kv.value
@@ -4281,17 +4281,17 @@ snapshot[`nu / darwin / tidy 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/tidy?sysOsPlat=darwin'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -4299,10 +4299,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4310,10 +4310,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4321,10 +4321,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4332,10 +4332,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4347,7 +4347,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -4361,13 +4361,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -4415,9 +4415,9 @@ def deepMerge [base, override] {
       let baseVal = \$result | get \$kv.key
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
-      if (\$baseDesc | str starts-with 'record') and (\$overrideDesc | str starts-with 'record') {
+      if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
         \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
-      } else if (\$baseDesc | str starts-with 'list') and (\$overrideDesc | str starts-with 'list') {
+      } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
         \$result = \$result | upsert \$kv.key \$kv.value
@@ -4438,17 +4438,17 @@ snapshot[`nu / winnt / add 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/add?sysOsPlat=winnt'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -4456,10 +4456,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4467,10 +4467,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4478,10 +4478,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4489,10 +4489,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4504,7 +4504,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -4518,13 +4518,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -4576,17 +4576,17 @@ snapshot[`nu / winnt / find 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find?sysOsPlat=winnt'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -4594,10 +4594,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4605,10 +4605,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4616,10 +4616,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4627,10 +4627,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4642,7 +4642,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -4656,13 +4656,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -4722,17 +4722,17 @@ snapshot[`nu / winnt / list 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/list?sysOsPlat=winnt'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -4740,10 +4740,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4751,10 +4751,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4762,10 +4762,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4773,10 +4773,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4788,7 +4788,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -4802,13 +4802,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -4856,9 +4856,9 @@ def deepMerge [base, override] {
       let baseVal = \$result | get \$kv.key
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
-      if (\$baseDesc | str starts-with 'record') and (\$overrideDesc | str starts-with 'record') {
+      if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
         \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
-      } else if (\$baseDesc | str starts-with 'list') and (\$overrideDesc | str starts-with 'list') {
+      } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
         \$result = \$result | upsert \$kv.key \$kv.value
@@ -4879,17 +4879,17 @@ snapshot[`nu / winnt / rem 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/rem?sysOsPlat=winnt'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -4897,10 +4897,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4908,10 +4908,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4919,10 +4919,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4930,10 +4930,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -4945,7 +4945,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -4959,13 +4959,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -5017,17 +5017,17 @@ snapshot[`nu / winnt / sync 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/sync?sysOsPlat=winnt'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -5035,10 +5035,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -5046,10 +5046,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -5057,10 +5057,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -5068,10 +5068,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -5083,7 +5083,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -5097,13 +5097,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -5151,9 +5151,9 @@ def deepMerge [base, override] {
       let baseVal = \$result | get \$kv.key
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
-      if (\$baseDesc | str starts-with 'record') and (\$overrideDesc | str starts-with 'record') {
+      if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
         \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
-      } else if (\$baseDesc | str starts-with 'list') and (\$overrideDesc | str starts-with 'list') {
+      } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
         \$result = \$result | upsert \$kv.key \$kv.value
@@ -5174,17 +5174,17 @@ snapshot[`nu / winnt / tidy 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/tidy?sysOsPlat=winnt'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -5192,10 +5192,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -5203,10 +5203,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -5214,10 +5214,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -5225,10 +5225,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -5240,7 +5240,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -5254,13 +5254,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -5308,9 +5308,9 @@ def deepMerge [base, override] {
       let baseVal = \$result | get \$kv.key
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
-      if (\$baseDesc | str starts-with 'record') and (\$overrideDesc | str starts-with 'record') {
+      if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
         \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
-      } else if (\$baseDesc | str starts-with 'list') and (\$overrideDesc | str starts-with 'list') {
+      } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
         \$result = \$result | upsert \$kv.key \$kv.value
@@ -5331,17 +5331,17 @@ snapshot[`nu / linux / add (host) 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/add?sysOsPlat=linux&sysHost=host'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -5349,10 +5349,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -5360,10 +5360,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -5371,10 +5371,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -5382,10 +5382,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -5397,7 +5397,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -5411,13 +5411,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -5471,17 +5471,17 @@ snapshot[`nu / linux / find (host) 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find?sysOsPlat=linux&sysHost=host'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -5489,10 +5489,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -5500,10 +5500,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -5511,10 +5511,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -5522,10 +5522,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -5537,7 +5537,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -5551,13 +5551,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -5626,17 +5626,17 @@ snapshot[`nu / linux / list (host) 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/list?sysOsPlat=linux&sysHost=host'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -5644,10 +5644,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -5655,10 +5655,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -5666,10 +5666,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -5677,10 +5677,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -5692,7 +5692,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -5706,13 +5706,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -5762,9 +5762,9 @@ def deepMerge [base, override] {
       let baseVal = \$result | get \$kv.key
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
-      if (\$baseDesc | str starts-with 'record') and (\$overrideDesc | str starts-with 'record') {
+      if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
         \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
-      } else if (\$baseDesc | str starts-with 'list') and (\$overrideDesc | str starts-with 'list') {
+      } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
         \$result = \$result | upsert \$kv.key \$kv.value
@@ -5779,20 +5779,20 @@ def deepMerge [base, override] {
 
 def virtDocker [] {
   let cmd = 'docker'
-  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^sudo \$cmd container ls | complete | get stdout | find --ignore-case \$instance | is-not-empty) {
           continue
@@ -5807,14 +5807,14 @@ def virtDocker [] {
           | each { |svc|
               \$svc | get volumes? | default []
               | each { |v|
-                  if (\$v | describe) == 'string' {
+                  if (\$v | describe) == string {
                     let host = \$v | split row ':' | first
                     if (\$host | str starts-with '/') {
                       \$host
                     } else {
                       null
                     }
-                  } else if (\$v | get type? | default '') == 'bind' {
+                  } else if (\$v | get type? | default '') == bind {
                     \$v.source
                   } else {
                     null
@@ -5829,7 +5829,7 @@ def virtDocker [] {
         opPrintMaybeRunCmd \$\\"r#'(\$yaml)'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
-    'list' => {
+    list => {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
@@ -5840,7 +5840,7 @@ def virtDocker [] {
       let nameFilters = \$instances | each { |i| ['--filter', \$\\"name=(\$i)\\"] } | flatten
       opPrintRunCmd sudo \$cmd container ls --all --format '\\"table {{.Names}}\\\\\\\\t{{.Image}}\\\\\\\\t{{.Ports}}\\\\\\\\t{{.State}}\\\\\\\\t{{.Status}}\\"' --no-trunc ...\$nameFilters
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -5850,12 +5850,12 @@ def virtDocker [] {
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - down
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
-    'tidy' => {
+    tidy => {
       opPrintMaybeRunCmd sudo \$cmd system prune --all
     }
   }
@@ -5867,16 +5867,16 @@ def virtLxc [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
   }
-  if \$env.VIRT_OP == 'tidy' {
+  if \$env.VIRT_OP == tidy {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -5960,7 +5960,7 @@ def virtLxc [] {
       (if (\$net | is-not-empty) { [
         [\$\\"lxc.net.0.type = (\$net.type)\\", \$\\"lxc.net.0.link = (\$net.link)\\", \$\\"lxc.net.0.name = (\$net.name)\\"],
         (if 'hwaddr' in \$net { [\$\\"lxc.net.0.hwaddr = (\$net.hwaddr)\\"] } else { [] }),
-        (if \$net.type == 'veth' { [\$\\"lxc.net.0.veth.pair = veth-(\$instance)\\"] } else if \$net.type == 'macvlan' { [\$\\"lxc.net.0.macvlan.mode = (\$net.mode? | default 'bridge')\\"] } else { [] }),
+        (if \$net.type == veth { [\$\\"lxc.net.0.veth.pair = veth-(\$instance)\\"] } else if \$net.type == macvlan { [\$\\"lxc.net.0.macvlan.mode = (\$net.mode? | default bridge)\\"] } else { [] }),
         ['lxc.net.0.flags = up'],
       ] | flatten } else { [] }),
       (\$merged | get lxc?.mounts? | default [] | each { |mnt| \$\\"lxc.mount.entry = (replaceEnv \$lxcEnv \$mnt.source) ((replaceEnv \$lxcEnv \$mnt.target) | str trim --left --char '/') none bind,create=dir 0 0\\" }),
@@ -5994,7 +5994,7 @@ def virtLxc [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row ' ' | str trim | where { |l| \$l | is-not-empty } | any { |l| \$l == \$instance }) {
           opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
@@ -6004,7 +6004,7 @@ def virtLxc [] {
         doAdd \$cmd \$instance
       }
     }
-    'list' => {
+    list => {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split row ' ' | str trim | where { is-not-empty }
       let instances = if (\$filters | is-not-empty) {
@@ -6016,7 +6016,7 @@ def virtLxc [] {
         opPrintRunCmd sudo \$\\"(\$cmd)-ls\\" --fancy --fancy-format '\\"NAME,IPV4,IPV6,STATE,AUTOSTART\\"' -- \$instance
       }
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -6031,7 +6031,7 @@ def virtLxc [] {
         doRem \$cmd \$instance
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
           continue
@@ -6054,12 +6054,12 @@ def virtPodman [] {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -6075,7 +6075,7 @@ def virtPodman [] {
   def processYaml [yamlRaw, host, pod, instance] {
     mut result = []
     for doc in (\$yamlRaw | str replace --all '{host}' \$host | str replace --all '{pod}' \$pod | str replace --all '{instance}' \$instance | splitYamlDocs) {
-      if (\$doc | get kind? | default '') == 'Build' {
+      if (\$doc | get kind? | default '') == Build {
         # custom doc, not passed to podman
       } else {
         let doc = if (\$doc | get apiVersion? | is-empty) { \$doc | insert apiVersion 'v1' } else { \$doc }
@@ -6092,7 +6092,7 @@ def virtPodman [] {
       | str replace --all '{pod}' \$pod
       | str replace --all '{instance}' \$instance
       | splitYamlDocs
-      | where { |d| (\$d | get kind? | default '') == 'Build' }
+      | where { |d| (\$d | get kind? | default '') == Build }
     if (\$buildDocs | is-empty) {
       return \$alreadyBuilt
     }
@@ -6160,7 +6160,7 @@ def virtPodman [] {
       | str replace --all '{host}' \$env.SYS_HOST
       | str replace --all '{pod}' \$pod
       | splitYamlDocs
-      | where { |d| (\$d | get kind? | default '') == 'Pod' }
+      | where { |d| (\$d | get kind? | default '') == Pod }
       | first
 
     mut configMaps = []
@@ -6173,7 +6173,7 @@ def virtPodman [] {
       \$builtImages = buildImage \$yamlRaw \$env.SYS_HOST \$pod \$instance \$builtImages
 
       let instanceDocs = processYaml \$yamlRaw \$env.SYS_HOST \$pod \$instance | splitYamlDocs
-      let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == 'Pod' } | first
+      let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == Pod } | first
 
       \$podDoc = \$podDoc
         | upsert metadata.annotations (deepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
@@ -6185,7 +6185,7 @@ def virtPodman [] {
         \$podDoc = \$podDoc | upsert spec.hostname \$instanceHostname
       }
 
-      for cm in (\$instanceDocs | where { |d| (\$d | get kind? | default '') == 'ConfigMap' }) {
+      for cm in (\$instanceDocs | where { |d| (\$d | get kind? | default '') == ConfigMap }) {
         \$configMaps = (\$configMaps | where { |m| \$m.metadata.name != \$cm.metadata.name }) | append \$cm
       }
     }
@@ -6243,12 +6243,12 @@ def virtPodman [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       let pods = \$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq
       for pod in \$pods {
         let podInstances = \$env.VIRT_INSTANCES | where { |p| ((\$p | split row '/') | first) == \$pod }
 
-        if (^sudo systemctl is-active \$\\"(\$pod).service\\" | complete | get stdout | str trim) == 'active' {
+        if (^sudo systemctl is-active \$\\"(\$pod).service\\" | complete | get stdout | str trim) == active {
           opPrintWarn \$\\"\`(\$cmd)\` pod \`(\$pod)\` is already added\\"
           continue
         }
@@ -6256,7 +6256,7 @@ def virtPodman [] {
         doAdd \$pod \$podInstances \$cmd
       }
     }
-    'list' => {
+    list => {
       let kubeDirPath = '/etc/containers/systemd'
       for pod in (if (\$kubeDirPath | path exists) {
         ls \$kubeDirPath
@@ -6270,7 +6270,7 @@ def virtPodman [] {
         opPrintRunCmd sudo \$cmd container list --filter \$\\"pod=(\$pod)\\" --format '\\"table {{.PodName}}\\\\t{{.Names}}\\\\t{{.Image}}\\\\t{{.Ports}}\\\\t{{.State}}\\\\t{{.Status}}\\"'
       }
     }
-    'rem' => {
+    rem => {
       let managedNetworks = \$env.VIRT_PODMAN_NETWORKS | from json
       let kubeDirPath = '/etc/containers/systemd'
 
@@ -6296,7 +6296,7 @@ def virtPodman [] {
         removeNetworkIfUnused \$network \$pod \$managedNetworks
       }
     }
-    'sync' => {
+    sync => {
       let kubeDirPath = '/etc/containers/systemd'
       for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
         if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
@@ -6309,7 +6309,7 @@ def virtPodman [] {
         doAdd \$pod \$podInstances \$cmd
       }
     }
-    'tidy' => {
+    tidy => {
       opPrintMaybeRunCmd sudo \$cmd system prune --all
     }
   }
@@ -6318,19 +6318,19 @@ def virtPodman [] {
 
 def virtQemu [] {
   let cmd = 'qemu'
-  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
+  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
     return
   }
-  if \$env.VIRT_OP == 'tidy' {
+  if \$env.VIRT_OP == tidy {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -6588,7 +6588,7 @@ def virtQemu [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" | complete | get stdout | is-not-empty) {
           opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
@@ -6598,7 +6598,7 @@ def virtQemu [] {
         doAdd \$cmd \$instance
       }
     }
-    'list' => {
+    list => {
       let serviceDirPath = '/etc/systemd/system'
       for instance in (if (\$serviceDirPath | path exists) {
         ls \$serviceDirPath
@@ -6612,7 +6612,7 @@ def virtQemu [] {
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" }
       }
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -6630,7 +6630,7 @@ def virtQemu [] {
         doRem \$cmd \$instance
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
           continue
@@ -6687,17 +6687,17 @@ snapshot[`nu / linux / list (host podman) 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/list/podman?sysOsPlat=linux&sysHost=host'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -6705,10 +6705,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -6716,10 +6716,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -6727,10 +6727,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -6738,10 +6738,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -6753,7 +6753,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -6767,13 +6767,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -6825,9 +6825,9 @@ def deepMerge [base, override] {
       let baseVal = \$result | get \$kv.key
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
-      if (\$baseDesc | str starts-with 'record') and (\$overrideDesc | str starts-with 'record') {
+      if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
         \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
-      } else if (\$baseDesc | str starts-with 'list') and (\$overrideDesc | str starts-with 'list') {
+      } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
         \$result = \$result | upsert \$kv.key \$kv.value
@@ -6842,20 +6842,20 @@ def deepMerge [base, override] {
 
 def virtDocker [] {
   let cmd = 'docker'
-  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^sudo \$cmd container ls | complete | get stdout | find --ignore-case \$instance | is-not-empty) {
           continue
@@ -6870,14 +6870,14 @@ def virtDocker [] {
           | each { |svc|
               \$svc | get volumes? | default []
               | each { |v|
-                  if (\$v | describe) == 'string' {
+                  if (\$v | describe) == string {
                     let host = \$v | split row ':' | first
                     if (\$host | str starts-with '/') {
                       \$host
                     } else {
                       null
                     }
-                  } else if (\$v | get type? | default '') == 'bind' {
+                  } else if (\$v | get type? | default '') == bind {
                     \$v.source
                   } else {
                     null
@@ -6892,7 +6892,7 @@ def virtDocker [] {
         opPrintMaybeRunCmd \$\\"r#'(\$yaml)'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
-    'list' => {
+    list => {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
@@ -6903,7 +6903,7 @@ def virtDocker [] {
       let nameFilters = \$instances | each { |i| ['--filter', \$\\"name=(\$i)\\"] } | flatten
       opPrintRunCmd sudo \$cmd container ls --all --format '\\"table {{.Names}}\\\\\\\\t{{.Image}}\\\\\\\\t{{.Ports}}\\\\\\\\t{{.State}}\\\\\\\\t{{.Status}}\\"' --no-trunc ...\$nameFilters
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -6913,12 +6913,12 @@ def virtDocker [] {
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - down
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
-    'tidy' => {
+    tidy => {
       opPrintMaybeRunCmd sudo \$cmd system prune --all
     }
   }
@@ -6930,16 +6930,16 @@ def virtLxc [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
   }
-  if \$env.VIRT_OP == 'tidy' {
+  if \$env.VIRT_OP == tidy {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -7023,7 +7023,7 @@ def virtLxc [] {
       (if (\$net | is-not-empty) { [
         [\$\\"lxc.net.0.type = (\$net.type)\\", \$\\"lxc.net.0.link = (\$net.link)\\", \$\\"lxc.net.0.name = (\$net.name)\\"],
         (if 'hwaddr' in \$net { [\$\\"lxc.net.0.hwaddr = (\$net.hwaddr)\\"] } else { [] }),
-        (if \$net.type == 'veth' { [\$\\"lxc.net.0.veth.pair = veth-(\$instance)\\"] } else if \$net.type == 'macvlan' { [\$\\"lxc.net.0.macvlan.mode = (\$net.mode? | default 'bridge')\\"] } else { [] }),
+        (if \$net.type == veth { [\$\\"lxc.net.0.veth.pair = veth-(\$instance)\\"] } else if \$net.type == macvlan { [\$\\"lxc.net.0.macvlan.mode = (\$net.mode? | default bridge)\\"] } else { [] }),
         ['lxc.net.0.flags = up'],
       ] | flatten } else { [] }),
       (\$merged | get lxc?.mounts? | default [] | each { |mnt| \$\\"lxc.mount.entry = (replaceEnv \$lxcEnv \$mnt.source) ((replaceEnv \$lxcEnv \$mnt.target) | str trim --left --char '/') none bind,create=dir 0 0\\" }),
@@ -7057,7 +7057,7 @@ def virtLxc [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row ' ' | str trim | where { |l| \$l | is-not-empty } | any { |l| \$l == \$instance }) {
           opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
@@ -7067,7 +7067,7 @@ def virtLxc [] {
         doAdd \$cmd \$instance
       }
     }
-    'list' => {
+    list => {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split row ' ' | str trim | where { is-not-empty }
       let instances = if (\$filters | is-not-empty) {
@@ -7079,7 +7079,7 @@ def virtLxc [] {
         opPrintRunCmd sudo \$\\"(\$cmd)-ls\\" --fancy --fancy-format '\\"NAME,IPV4,IPV6,STATE,AUTOSTART\\"' -- \$instance
       }
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -7094,7 +7094,7 @@ def virtLxc [] {
         doRem \$cmd \$instance
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
           continue
@@ -7117,12 +7117,12 @@ def virtPodman [] {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -7138,7 +7138,7 @@ def virtPodman [] {
   def processYaml [yamlRaw, host, pod, instance] {
     mut result = []
     for doc in (\$yamlRaw | str replace --all '{host}' \$host | str replace --all '{pod}' \$pod | str replace --all '{instance}' \$instance | splitYamlDocs) {
-      if (\$doc | get kind? | default '') == 'Build' {
+      if (\$doc | get kind? | default '') == Build {
         # custom doc, not passed to podman
       } else {
         let doc = if (\$doc | get apiVersion? | is-empty) { \$doc | insert apiVersion 'v1' } else { \$doc }
@@ -7155,7 +7155,7 @@ def virtPodman [] {
       | str replace --all '{pod}' \$pod
       | str replace --all '{instance}' \$instance
       | splitYamlDocs
-      | where { |d| (\$d | get kind? | default '') == 'Build' }
+      | where { |d| (\$d | get kind? | default '') == Build }
     if (\$buildDocs | is-empty) {
       return \$alreadyBuilt
     }
@@ -7223,7 +7223,7 @@ def virtPodman [] {
       | str replace --all '{host}' \$env.SYS_HOST
       | str replace --all '{pod}' \$pod
       | splitYamlDocs
-      | where { |d| (\$d | get kind? | default '') == 'Pod' }
+      | where { |d| (\$d | get kind? | default '') == Pod }
       | first
 
     mut configMaps = []
@@ -7236,7 +7236,7 @@ def virtPodman [] {
       \$builtImages = buildImage \$yamlRaw \$env.SYS_HOST \$pod \$instance \$builtImages
 
       let instanceDocs = processYaml \$yamlRaw \$env.SYS_HOST \$pod \$instance | splitYamlDocs
-      let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == 'Pod' } | first
+      let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == Pod } | first
 
       \$podDoc = \$podDoc
         | upsert metadata.annotations (deepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
@@ -7248,7 +7248,7 @@ def virtPodman [] {
         \$podDoc = \$podDoc | upsert spec.hostname \$instanceHostname
       }
 
-      for cm in (\$instanceDocs | where { |d| (\$d | get kind? | default '') == 'ConfigMap' }) {
+      for cm in (\$instanceDocs | where { |d| (\$d | get kind? | default '') == ConfigMap }) {
         \$configMaps = (\$configMaps | where { |m| \$m.metadata.name != \$cm.metadata.name }) | append \$cm
       }
     }
@@ -7306,12 +7306,12 @@ def virtPodman [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       let pods = \$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq
       for pod in \$pods {
         let podInstances = \$env.VIRT_INSTANCES | where { |p| ((\$p | split row '/') | first) == \$pod }
 
-        if (^sudo systemctl is-active \$\\"(\$pod).service\\" | complete | get stdout | str trim) == 'active' {
+        if (^sudo systemctl is-active \$\\"(\$pod).service\\" | complete | get stdout | str trim) == active {
           opPrintWarn \$\\"\`(\$cmd)\` pod \`(\$pod)\` is already added\\"
           continue
         }
@@ -7319,7 +7319,7 @@ def virtPodman [] {
         doAdd \$pod \$podInstances \$cmd
       }
     }
-    'list' => {
+    list => {
       let kubeDirPath = '/etc/containers/systemd'
       for pod in (if (\$kubeDirPath | path exists) {
         ls \$kubeDirPath
@@ -7333,7 +7333,7 @@ def virtPodman [] {
         opPrintRunCmd sudo \$cmd container list --filter \$\\"pod=(\$pod)\\" --format '\\"table {{.PodName}}\\\\t{{.Names}}\\\\t{{.Image}}\\\\t{{.Ports}}\\\\t{{.State}}\\\\t{{.Status}}\\"'
       }
     }
-    'rem' => {
+    rem => {
       let managedNetworks = \$env.VIRT_PODMAN_NETWORKS | from json
       let kubeDirPath = '/etc/containers/systemd'
 
@@ -7359,7 +7359,7 @@ def virtPodman [] {
         removeNetworkIfUnused \$network \$pod \$managedNetworks
       }
     }
-    'sync' => {
+    sync => {
       let kubeDirPath = '/etc/containers/systemd'
       for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
         if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
@@ -7372,7 +7372,7 @@ def virtPodman [] {
         doAdd \$pod \$podInstances \$cmd
       }
     }
-    'tidy' => {
+    tidy => {
       opPrintMaybeRunCmd sudo \$cmd system prune --all
     }
   }
@@ -7381,19 +7381,19 @@ def virtPodman [] {
 
 def virtQemu [] {
   let cmd = 'qemu'
-  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
+  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
     return
   }
-  if \$env.VIRT_OP == 'tidy' {
+  if \$env.VIRT_OP == tidy {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -7651,7 +7651,7 @@ def virtQemu [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" | complete | get stdout | is-not-empty) {
           opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
@@ -7661,7 +7661,7 @@ def virtQemu [] {
         doAdd \$cmd \$instance
       }
     }
-    'list' => {
+    list => {
       let serviceDirPath = '/etc/systemd/system'
       for instance in (if (\$serviceDirPath | path exists) {
         ls \$serviceDirPath
@@ -7675,7 +7675,7 @@ def virtQemu [] {
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" }
       }
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -7693,7 +7693,7 @@ def virtQemu [] {
         doRem \$cmd \$instance
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
           continue
@@ -7726,17 +7726,17 @@ snapshot[`nu / linux / rem (host) 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/rem?sysOsPlat=linux&sysHost=host'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -7744,10 +7744,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -7755,10 +7755,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -7766,10 +7766,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -7777,10 +7777,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -7792,7 +7792,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -7806,13 +7806,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -7866,17 +7866,17 @@ snapshot[`nu / linux / sync (host) 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/sync?sysOsPlat=linux&sysHost=host'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
@@ -7884,10 +7884,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -7895,10 +7895,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -7906,10 +7906,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -7917,10 +7917,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
@@ -7932,7 +7932,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -7946,13 +7946,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -8002,9 +8002,9 @@ def deepMerge [base, override] {
       let baseVal = \$result | get \$kv.key
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
-      if (\$baseDesc | str starts-with 'record') and (\$overrideDesc | str starts-with 'record') {
+      if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
         \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
-      } else if (\$baseDesc | str starts-with 'list') and (\$overrideDesc | str starts-with 'list') {
+      } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
         \$result = \$result | upsert \$kv.key \$kv.value
@@ -8019,20 +8019,20 @@ def deepMerge [base, override] {
 
 def virtDocker [] {
   let cmd = 'docker'
-  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^sudo \$cmd container ls | complete | get stdout | find --ignore-case \$instance | is-not-empty) {
           continue
@@ -8047,14 +8047,14 @@ def virtDocker [] {
           | each { |svc|
               \$svc | get volumes? | default []
               | each { |v|
-                  if (\$v | describe) == 'string' {
+                  if (\$v | describe) == string {
                     let host = \$v | split row ':' | first
                     if (\$host | str starts-with '/') {
                       \$host
                     } else {
                       null
                     }
-                  } else if (\$v | get type? | default '') == 'bind' {
+                  } else if (\$v | get type? | default '') == bind {
                     \$v.source
                   } else {
                     null
@@ -8069,7 +8069,7 @@ def virtDocker [] {
         opPrintMaybeRunCmd \$\\"r#'(\$yaml)'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
-    'list' => {
+    list => {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
@@ -8080,7 +8080,7 @@ def virtDocker [] {
       let nameFilters = \$instances | each { |i| ['--filter', \$\\"name=(\$i)\\"] } | flatten
       opPrintRunCmd sudo \$cmd container ls --all --format '\\"table {{.Names}}\\\\\\\\t{{.Image}}\\\\\\\\t{{.Ports}}\\\\\\\\t{{.State}}\\\\\\\\t{{.Status}}\\"' --no-trunc ...\$nameFilters
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -8090,12 +8090,12 @@ def virtDocker [] {
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - down
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
-    'tidy' => {
+    tidy => {
       opPrintMaybeRunCmd sudo \$cmd system prune --all
     }
   }
@@ -8107,16 +8107,16 @@ def virtLxc [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
   }
-  if \$env.VIRT_OP == 'tidy' {
+  if \$env.VIRT_OP == tidy {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -8200,7 +8200,7 @@ def virtLxc [] {
       (if (\$net | is-not-empty) { [
         [\$\\"lxc.net.0.type = (\$net.type)\\", \$\\"lxc.net.0.link = (\$net.link)\\", \$\\"lxc.net.0.name = (\$net.name)\\"],
         (if 'hwaddr' in \$net { [\$\\"lxc.net.0.hwaddr = (\$net.hwaddr)\\"] } else { [] }),
-        (if \$net.type == 'veth' { [\$\\"lxc.net.0.veth.pair = veth-(\$instance)\\"] } else if \$net.type == 'macvlan' { [\$\\"lxc.net.0.macvlan.mode = (\$net.mode? | default 'bridge')\\"] } else { [] }),
+        (if \$net.type == veth { [\$\\"lxc.net.0.veth.pair = veth-(\$instance)\\"] } else if \$net.type == macvlan { [\$\\"lxc.net.0.macvlan.mode = (\$net.mode? | default bridge)\\"] } else { [] }),
         ['lxc.net.0.flags = up'],
       ] | flatten } else { [] }),
       (\$merged | get lxc?.mounts? | default [] | each { |mnt| \$\\"lxc.mount.entry = (replaceEnv \$lxcEnv \$mnt.source) ((replaceEnv \$lxcEnv \$mnt.target) | str trim --left --char '/') none bind,create=dir 0 0\\" }),
@@ -8234,7 +8234,7 @@ def virtLxc [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row ' ' | str trim | where { |l| \$l | is-not-empty } | any { |l| \$l == \$instance }) {
           opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
@@ -8244,7 +8244,7 @@ def virtLxc [] {
         doAdd \$cmd \$instance
       }
     }
-    'list' => {
+    list => {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split row ' ' | str trim | where { is-not-empty }
       let instances = if (\$filters | is-not-empty) {
@@ -8256,7 +8256,7 @@ def virtLxc [] {
         opPrintRunCmd sudo \$\\"(\$cmd)-ls\\" --fancy --fancy-format '\\"NAME,IPV4,IPV6,STATE,AUTOSTART\\"' -- \$instance
       }
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -8271,7 +8271,7 @@ def virtLxc [] {
         doRem \$cmd \$instance
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
           continue
@@ -8294,12 +8294,12 @@ def virtPodman [] {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -8315,7 +8315,7 @@ def virtPodman [] {
   def processYaml [yamlRaw, host, pod, instance] {
     mut result = []
     for doc in (\$yamlRaw | str replace --all '{host}' \$host | str replace --all '{pod}' \$pod | str replace --all '{instance}' \$instance | splitYamlDocs) {
-      if (\$doc | get kind? | default '') == 'Build' {
+      if (\$doc | get kind? | default '') == Build {
         # custom doc, not passed to podman
       } else {
         let doc = if (\$doc | get apiVersion? | is-empty) { \$doc | insert apiVersion 'v1' } else { \$doc }
@@ -8332,7 +8332,7 @@ def virtPodman [] {
       | str replace --all '{pod}' \$pod
       | str replace --all '{instance}' \$instance
       | splitYamlDocs
-      | where { |d| (\$d | get kind? | default '') == 'Build' }
+      | where { |d| (\$d | get kind? | default '') == Build }
     if (\$buildDocs | is-empty) {
       return \$alreadyBuilt
     }
@@ -8400,7 +8400,7 @@ def virtPodman [] {
       | str replace --all '{host}' \$env.SYS_HOST
       | str replace --all '{pod}' \$pod
       | splitYamlDocs
-      | where { |d| (\$d | get kind? | default '') == 'Pod' }
+      | where { |d| (\$d | get kind? | default '') == Pod }
       | first
 
     mut configMaps = []
@@ -8413,7 +8413,7 @@ def virtPodman [] {
       \$builtImages = buildImage \$yamlRaw \$env.SYS_HOST \$pod \$instance \$builtImages
 
       let instanceDocs = processYaml \$yamlRaw \$env.SYS_HOST \$pod \$instance | splitYamlDocs
-      let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == 'Pod' } | first
+      let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == Pod } | first
 
       \$podDoc = \$podDoc
         | upsert metadata.annotations (deepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
@@ -8425,7 +8425,7 @@ def virtPodman [] {
         \$podDoc = \$podDoc | upsert spec.hostname \$instanceHostname
       }
 
-      for cm in (\$instanceDocs | where { |d| (\$d | get kind? | default '') == 'ConfigMap' }) {
+      for cm in (\$instanceDocs | where { |d| (\$d | get kind? | default '') == ConfigMap }) {
         \$configMaps = (\$configMaps | where { |m| \$m.metadata.name != \$cm.metadata.name }) | append \$cm
       }
     }
@@ -8483,12 +8483,12 @@ def virtPodman [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       let pods = \$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq
       for pod in \$pods {
         let podInstances = \$env.VIRT_INSTANCES | where { |p| ((\$p | split row '/') | first) == \$pod }
 
-        if (^sudo systemctl is-active \$\\"(\$pod).service\\" | complete | get stdout | str trim) == 'active' {
+        if (^sudo systemctl is-active \$\\"(\$pod).service\\" | complete | get stdout | str trim) == active {
           opPrintWarn \$\\"\`(\$cmd)\` pod \`(\$pod)\` is already added\\"
           continue
         }
@@ -8496,7 +8496,7 @@ def virtPodman [] {
         doAdd \$pod \$podInstances \$cmd
       }
     }
-    'list' => {
+    list => {
       let kubeDirPath = '/etc/containers/systemd'
       for pod in (if (\$kubeDirPath | path exists) {
         ls \$kubeDirPath
@@ -8510,7 +8510,7 @@ def virtPodman [] {
         opPrintRunCmd sudo \$cmd container list --filter \$\\"pod=(\$pod)\\" --format '\\"table {{.PodName}}\\\\t{{.Names}}\\\\t{{.Image}}\\\\t{{.Ports}}\\\\t{{.State}}\\\\t{{.Status}}\\"'
       }
     }
-    'rem' => {
+    rem => {
       let managedNetworks = \$env.VIRT_PODMAN_NETWORKS | from json
       let kubeDirPath = '/etc/containers/systemd'
 
@@ -8536,7 +8536,7 @@ def virtPodman [] {
         removeNetworkIfUnused \$network \$pod \$managedNetworks
       }
     }
-    'sync' => {
+    sync => {
       let kubeDirPath = '/etc/containers/systemd'
       for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
         if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
@@ -8549,7 +8549,7 @@ def virtPodman [] {
         doAdd \$pod \$podInstances \$cmd
       }
     }
-    'tidy' => {
+    tidy => {
       opPrintMaybeRunCmd sudo \$cmd system prune --all
     }
   }
@@ -8558,19 +8558,19 @@ def virtPodman [] {
 
 def virtQemu [] {
   let cmd = 'qemu'
-  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
+  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
     return
   }
-  if \$env.VIRT_OP == 'tidy' {
+  if \$env.VIRT_OP == tidy {
     return
   }
   mut yn = ''
-  if 'YES' in \$env {
+  if YES in \$env {
     \$yn = 'y'
   } else {
     \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
   }
-  if \$yn == 'n' {
+  if \$yn == n {
     return
   }
 
@@ -8828,7 +8828,7 @@ def virtQemu [] {
   }
 
   match \$env.VIRT_OP {
-    'add' => {
+    add => {
       for instance in \$env.VIRT_INSTANCES {
         if (^pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" | complete | get stdout | is-not-empty) {
           opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
@@ -8838,7 +8838,7 @@ def virtQemu [] {
         doAdd \$cmd \$instance
       }
     }
-    'list' => {
+    list => {
       let serviceDirPath = '/etc/systemd/system'
       for instance in (if (\$serviceDirPath | path exists) {
         ls \$serviceDirPath
@@ -8852,7 +8852,7 @@ def virtQemu [] {
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" }
       }
     }
-    'rem' => {
+    rem => {
       let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
         \$env.VIRT_INSTANCES
       } else {
@@ -8870,7 +8870,7 @@ def virtQemu [] {
         doRem \$cmd \$instance
       }
     }
-    'sync' => {
+    sync => {
       for instance in \$env.VIRT_INSTANCES {
         if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
           continue
@@ -8919,17 +8919,17 @@ snapshot[`nu / linux / find (host test) 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find/test?sysOsPlat=linux&sysHost=host'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -8937,10 +8937,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -8948,10 +8948,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -8959,10 +8959,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -8970,10 +8970,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -8985,7 +8985,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -8999,13 +8999,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -9071,17 +9071,17 @@ snapshot[`nu / linux / find (host test2) 1`] = `
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/find/test2?sysOsPlat=linux&sysHost=host'#
 
 def opPrint --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
@@ -9089,10 +9089,10 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -9100,10 +9100,10 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -9111,10 +9111,10 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -9122,10 +9122,10 @@ def opPrintInfo --wrapped [...args] {
 }
 
 def opPrintCmd --wrapped [...args] {
-  if 'SUCCINCT' in \$env {
+  if SUCCINCT in \$env {
     return
   }
-  if 'GRAYSCALE' in \$env {
+  if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
   }
@@ -9137,7 +9137,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -9151,13 +9151,13 @@ def opRunSilentCmd --wrapped [...args] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if 'NOOP' not-in \$env {
+  if NOOP not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
