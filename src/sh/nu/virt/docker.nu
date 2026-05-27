@@ -54,7 +54,7 @@ def virtDocker [] {
       let filters = if ($env.VIRT_INSTANCES | is-not-empty) { $env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo $cmd compose ls --format json | complete | get stdout | if ($in | is-not-empty) { from json | get Name } else { [] }
       let instances = if ($filters | is-not-empty) {
-        $allInstances | where { |i| $filters | all { |f| $i | str contains $f } }
+        $allInstances | where { |i| $filters | all { |f| $i | str contains --ignore-case $f } }
       } else {
         $allInstances
       }

@@ -42,7 +42,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| ($line | str contains $term) }
+    | any { |line| ($line | str contains --ignore-case $term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -50,7 +50,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| ($line | str contains $term) }
+    | any { |line| ($line | str contains --ignore-case $term) }
 }
 
 def --env packOpAdd [

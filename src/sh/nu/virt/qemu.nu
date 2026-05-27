@@ -287,7 +287,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\.service$'
           | get name
           | each { |f| $f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if ($env.VIRT_INSTANCES | is-not-empty) { where { |i| $env.VIRT_INSTANCES | all { |f| $i | str contains $f } } } else { $in }
+          | if ($env.VIRT_INSTANCES | is-not-empty) { where { |i| $env.VIRT_INSTANCES | all { |f| $i | str contains --ignore-case $f } } } else { $in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 $"qemu-($instance).service" }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full $"^swtpm.*($instance)" }
