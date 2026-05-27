@@ -118,8 +118,13 @@ Known nushell parsing quirks that have caused bugs in `src/sh/nu/`:
 - **Bare words on the RHS of assignments are external command calls (since 0.97.0).** `$yn = y` and `let cmd = docker`
   are parse errors — nushell treats the bare word as an external command to execute, not a string literal. Always quote
   string values in assignments: `$yn = 'y'`, `let cmd = 'docker'`. Bare words ARE valid (no quotes needed) in: match
-  arm patterns (`arm64 =>`), `in $env`/`not-in $env` checks, comparison operators (`$x == linux`, `$x != n`), and
-  command argument position (`str starts-with record`).
+  arm patterns (`arm64 =>`), comparison operators (`$x == linux`, `$x != n`), and command argument position
+  (`str starts-with record`).
+
+- **Bare words in `in $env`/`not-in $env` checks only work without surrounding parens.** `if KEY in $env {` works,
+  but `(KEY in $env)` treats the bare word as an external command (error: command not found). In compound `or`
+  conditions where each clause is wrapped in `(...)`, always quote the key: `('KEY' in $env)`,
+  `('KEY' not-in $env)`.
 
 - **Unquoted absolute path at the start of a `()` subexpression pipeline is executed as a command.**
   `(/etc/os-release | path exists)` tries to execute `/etc/os-release` as an external command (error: "not

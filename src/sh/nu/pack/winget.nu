@@ -3,7 +3,7 @@ def --env packWinget [] {
   if (
     (which $cmd | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
-    (PACK_OP not-in $env) or
+    ('PACK_OP' not-in $env) or
     ($env.PACK_OP == add and ($env.PACK_ADD_NAMES? | is-empty)) or
     ($env.PACK_OP == remove and ($env.PACK_REMOVE_NAMES? | is-empty))
   ) {

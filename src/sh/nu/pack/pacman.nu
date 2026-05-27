@@ -11,7 +11,7 @@ def --env packPacman [] {
   if (
     ($mgr not-in ['yay', 'paru', 'pacman']) or
     (which $mgr | is-empty) or
-    (PACK_OP not-in $env) or
+    ('PACK_OP' not-in $env) or
     ($env.PACK_OP == add and ($env.PACK_ADD_NAMES? | is-empty)) or
     ($env.PACK_OP == remove and ($env.PACK_REMOVE_NAMES? | is-empty))
   ) {

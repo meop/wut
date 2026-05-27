@@ -7,3 +7,10 @@ if USERNAME in $env {
 if USERPROFILE in $env {
   $env.HOME = $env.USERPROFILE
 }
+
+def --env path-ensure [p: string] {
+  let np = ($p | path expand)
+  if ($np | path exists) and not ($np in $env.PATH) {
+    $env.PATH = ($env.PATH | prepend $np)
+  }
+}
