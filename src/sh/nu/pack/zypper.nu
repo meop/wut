@@ -11,12 +11,12 @@ def --env packZypper [] {
   }
 
   if not (packPrompt $"use ($cmd) \(system\)") { return }
-  let cmd = packSudoCmd $cmd
+  let cmd = packElevate $cmd
 
   match $env.PACK_OP {
     add => {
       packOp [$cmd refresh]
-      packOpAdd { |n| packSearch [$cmd search] $n } [$cmd install]
+      packOpAdd { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
     find => {
       packOp [$cmd refresh]
@@ -30,14 +30,14 @@ def --env packZypper [] {
       packOpOutdated [$cmd list-updates]
     }
     remove => {
-      packOpRemove { |n| packInstalled [$cmd search --installed-only] $n } [$cmd uninstall]
+      packOpRemove { |n| packGrepList [$cmd search --installed-only] $n } [$cmd uninstall]
     }
     sync => {
       packOp [$cmd refresh]
       packOpSync [$cmd update] [$cmd install]
     }
     tidy => {
-      opPrintMaybeRunCmd $cmd clean --all
+      packOp [$cmd clean --all]
       for flag in ['--unneeded', '--orphaned'] {
         let pkgs = (run-external 'zypper' 'packages' $flag
           | lines
@@ -45,7 +45,7 @@ def --env packZypper [] {
           | each { |l| $l | split row '|' | get 2 | str trim }
           | where { |n| ($n | is-not-empty) })
         if ($pkgs | is-not-empty) {
-          opPrintMaybeRunCmd $cmd remove --clean-deps $pkgs
+          packOp ([$cmd remove --clean-deps] ++ $pkgs)
         }
       }
     }

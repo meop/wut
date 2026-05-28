@@ -11,12 +11,12 @@ def --env packApk [] {
   }
 
   if not (packPrompt $"use ($cmd) \(system\)") { return }
-  let cmd = packSudoCmd $cmd
+  let cmd = packElevate $cmd
 
   match $env.PACK_OP {
     add => {
       packOp [$cmd update]
-      packOpAdd { |n| packSearch [$cmd search] $n } [$cmd add]
+      packOpAdd { |n| packGrepFind [$cmd search] $n } [$cmd add]
     }
     find => {
       packOp [$cmd update]
@@ -30,7 +30,7 @@ def --env packApk [] {
       packOpOutdated [$cmd list -u]
     }
     remove => {
-      packOpRemove { |n| packInstalled [$cmd list --installed] $n } [$cmd del]
+      packOpRemove { |n| packGrepList [$cmd list --installed] $n } [$cmd del]
     }
     sync => {
       packOp [$cmd update]

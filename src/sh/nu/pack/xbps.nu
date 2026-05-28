@@ -11,12 +11,12 @@ def --env packXbps [] {
   }
 
   if not (packPrompt $"use ($cmd) \(system\)") { return }
-  let cmd = packSudoCmd $cmd
+  let cmd = packElevate $cmd
 
   match $env.PACK_OP {
     add => {
       packOp [$"($cmd)-install" --sync]
-      packOpAdd { |n| packSearch [$"($cmd)-query" --repository --search] $n } [$"($cmd)-install"]
+      packOpAdd { |n| packGrepFind [$"($cmd)-query" --repository --search] $n } [$"($cmd)-install"]
     }
     find => {
       packOp [$"($cmd)-install" --sync]
@@ -30,15 +30,15 @@ def --env packXbps [] {
       packOpOutdated [$"($cmd)-install" --dry-run --update]
     }
     remove => {
-      packOpRemove { |n| packInstalled [$"($cmd)-query" --list-pkgs] $n } [$"($cmd)-remove" --recursive]
+      packOpRemove { |n| packGrepList [$"($cmd)-query" --list-pkgs] $n } [$"($cmd)-remove" --recursive]
     }
     sync => {
       packOp [$"($cmd)-install" --sync]
       packOpSync [$"($cmd)-install" --update] [$"($cmd)-install" --update]
     }
     tidy => {
-      opPrintMaybeRunCmd $"($cmd)-remove" --clean-cache --clean-cache
-      opPrintMaybeRunCmd $"($cmd)-remove" --remove-orphans
+      packOp [$"($cmd)-remove" --clean-cache --clean-cache]
+      packOp [$"($cmd)-remove" --remove-orphans]
     }
   }
 }

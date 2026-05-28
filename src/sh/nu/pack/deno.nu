@@ -26,18 +26,18 @@ def --env packDeno [] {
 
   match $env.PACK_OP {
     add => {
-      packOpAdd { |n| [(packQueryNpm $n), (packQueryJsr $n)] | flatten | is-not-empty } [$cmd install --force --global]
+      packOpAdd { |n| [(packHttpGetNpm $n), (packHttpGetJsr $n)] | flatten | is-not-empty } [$cmd install --force --global] --each
     }
     find => {
       for term in $env.PACK_FIND_NAMES {
-        [(packQueryNpm $term), (packQueryJsr $term)] | flatten | print
+        [(packHttpGetNpm $term), (packHttpGetJsr $term)] | flatten | print
       }
     }
     list => {
       packOpList [getInstalled]
     }
     remove => {
-      packOpRemove { |n| [(getBinDir) $".($n)"] | path join | path exists } [$cmd uninstall --global]
+      packOpRemove { |n| [(getBinDir) $".($n)"] | path join | path exists } [$cmd uninstall --global] --each
     }
     sync => {
       let names = if ($env.PACK_SYNC_NAMES? | is-not-empty) {
@@ -46,7 +46,7 @@ def --env packDeno [] {
         getInstalled
       }
       for n in $names {
-        opPrintMaybeRunCmd $cmd install --force --global $"($n)@latest"
+        packOp [$cmd install --force --global $"($n)@latest"]
       }
     }
     tidy => {

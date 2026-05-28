@@ -15,7 +15,7 @@ def --env packWinget [] {
   match $env.PACK_OP {
     add => {
       packOp [$cmd source update]
-      packOpAdd { |n| packSearch [$cmd search --id] $n } [$cmd install]
+      packOpAdd { |n| packGrepFind [$cmd search --id] $n } [$cmd install] --each
     }
     find => {
       packOp [$cmd source update]
@@ -29,11 +29,11 @@ def --env packWinget [] {
       packOpOutdated [$cmd upgrade]
     }
     remove => {
-      packOpRemove { |n| packInstalled [$cmd list] $n } [$cmd uninstall]
+      packOpRemove { |n| packGrepList [$cmd list] $n } [$cmd uninstall] --each
     }
     sync => {
       packOp [$cmd source update]
-      packOpSync [$cmd upgrade --all] [$cmd upgrade]
+      packOpSync [$cmd upgrade --all] [$cmd upgrade] --each
     }
   }
 }

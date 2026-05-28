@@ -14,7 +14,7 @@ def --env packChoco [] {
 
   match $env.PACK_OP {
     add => {
-      packOpAdd { |n| packSearch [$cmd search] $n } [$cmd install]
+      packOpAdd { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
     find => {
       packOpFind [$cmd search]
@@ -26,13 +26,13 @@ def --env packChoco [] {
       packOpOutdated [$cmd outdated]
     }
     remove => {
-      packOpRemove { |n| packInstalled [$cmd list] $n } [$cmd uninstall]
+      packOpRemove { |n| packGrepList [$cmd list] $n } [$cmd uninstall]
     }
     sync => {
       packOpSync [$cmd upgrade all] [$cmd upgrade]
     }
     tidy => {
-      opPrintMaybeRunCmd $cmd cache remove
+      packOp [$cmd cache remove]
     }
   }
 }

@@ -14,7 +14,7 @@ def --env packCargo [] {
 
   match $env.PACK_OP {
     add => {
-      packOpAdd { |n| packSearch [$cmd search] $n } [$cmd binstall --locked]
+      packOpAdd { |n| packGrepFind [$cmd search] $n } [$cmd binstall --locked]
     }
     find => {
       packOpFind [$cmd search]
@@ -26,7 +26,7 @@ def --env packCargo [] {
       packOpOutdated [$cmd install-update --list]
     }
     remove => {
-      packOpRemove { |n| packInstalled [$cmd install --list] $n } [$cmd uninstall]
+      packOpRemove { |n| packGrepList [$cmd install --list] $n } [$cmd uninstall]
     }
     sync => {
       packOpSync [$cmd install-update --all] [$cmd install-update]

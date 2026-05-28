@@ -6,15 +6,7 @@ def virtLxc [] {
   if $env.VIRT_OP == tidy {
     return
   }
-  mut yn = ''
-  if YES in $env {
-    $yn = 'y'
-  } else {
-    $yn = input $"use ($cmd) \(system\) [y,[n]]: "
-  }
-  if $yn == n {
-    return
-  }
+  if not (virtPrompt $"use ($cmd) \(system\)") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []
@@ -47,7 +39,7 @@ def virtLxc [] {
   def doAdd [cmd, instance] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($cmd).yaml'#"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml'#"
-    let merged = deepMerge ($config | from yaml) ($configVm | from yaml)
+    let merged = virtDeepMerge ($config | from yaml) ($configVm | from yaml)
 
     mut lxcEnv = {}
 

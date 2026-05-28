@@ -15,7 +15,7 @@ def --env packGhpm [] {
   match $env.PACK_OP {
     add => {
       packOp [$cmd refresh]
-      packOpAdd { |n| packSearch [$cmd search] $n } [$cmd install]
+      packOpAdd { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
     find => {
       packOp [$cmd refresh]
@@ -28,7 +28,7 @@ def --env packGhpm [] {
       packOpOutdated [$cmd outdated]
     }
     remove => {
-      packOpRemove { |n| packInstalled [$cmd list] $n } [$cmd uninstall]
+      packOpRemove { |n| packGrepList [$cmd list] $n } [$cmd uninstall]
     }
     sync => {
       packOpSync [$cmd sync] [$cmd sync]

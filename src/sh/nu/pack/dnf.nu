@@ -11,12 +11,12 @@ def --env packDnf [] {
   }
 
   if not (packPrompt $"use ($cmd) \(system\)") { return }
-  let cmd = packSudoCmd $cmd
+  let cmd = packElevate $cmd
 
   match $env.PACK_OP {
     add => {
       packOp [$cmd makecache]
-      packOpAdd { |n| packSearch [$cmd search] $n } [$cmd install]
+      packOpAdd { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
     find => {
       packOp [$cmd makecache]
@@ -30,15 +30,15 @@ def --env packDnf [] {
       packOpOutdated [$cmd list --upgrades]
     }
     remove => {
-      packOpRemove { |n| packInstalled [$cmd list --installed] $n } [$cmd remove]
+      packOpRemove { |n| packGrepList [$cmd list --installed] $n } [$cmd remove]
     }
     sync => {
       packOp [$cmd makecache]
       packOpSync [$cmd distro-sync] [$cmd upgrade]
     }
     tidy => {
-      opPrintMaybeRunCmd $cmd clean all
-      opPrintMaybeRunCmd $cmd autoremove
+      packOp [$cmd clean all]
+      packOp [$cmd autoremove]
     }
   }
 }

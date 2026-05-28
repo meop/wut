@@ -11,12 +11,12 @@ def --env packApt [] {
   }
 
   if not (packPrompt $"use ($cmd) \(system\)") { return }
-  let cmd = packSudoCmd $cmd
+  let cmd = packElevate $cmd
 
   match $env.PACK_OP {
     add => {
       packOp [$cmd update]
-      packOpAdd { |n| packSearch [$cmd search] $n } [$cmd install]
+      packOpAdd { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
     find => {
       packOp [$cmd update]
@@ -30,15 +30,15 @@ def --env packApt [] {
       packOpOutdated [$cmd list --upgradable]
     }
     remove => {
-      packOpRemove { |n| packInstalled [$cmd list --installed] $n } [$cmd purge --autoremove]
+      packOpRemove { |n| packGrepList [$cmd list --installed] $n } [$cmd purge --autoremove]
     }
     sync => {
       packOp [$cmd update]
       packOpSync [$cmd full-upgrade] [$cmd install]
     }
     tidy => {
-      opPrintMaybeRunCmd $cmd clean
-      opPrintMaybeRunCmd $cmd autoremove --purge
+      packOp [$cmd clean]
+      packOp [$cmd autoremove --purge]
     }
   }
 }

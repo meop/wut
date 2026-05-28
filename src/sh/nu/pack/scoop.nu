@@ -15,7 +15,7 @@ def --env packScoop [] {
   match $env.PACK_OP {
     add => {
       packOp [$cmd update]
-      packOpAdd { |n| packSearch [$cmd search] $n } [$cmd install]
+      packOpAdd { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
     find => {
       packOp [$cmd update]
@@ -29,7 +29,7 @@ def --env packScoop [] {
       packOpOutdated [$cmd status]
     }
     remove => {
-      packOpRemove { |n| packInstalled [$cmd list] $n } [$cmd uninstall --purge]
+      packOpRemove { |n| packGrepList [$cmd list] $n } [$cmd uninstall --purge]
     }
     sync => {
       packOp [$cmd update]

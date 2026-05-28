@@ -15,7 +15,7 @@ def --env packBrew [] {
   match $env.PACK_OP {
     add => {
       packOp [$cmd update]
-      packOpAdd { |n| packSearch [$cmd search] $n } [$cmd install]
+      packOpAdd { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
     find => {
       packOp [$cmd update]
@@ -29,15 +29,15 @@ def --env packBrew [] {
       packOpOutdated [$cmd outdated]
     }
     remove => {
-      packOpRemove { |n| packInstalled [$cmd list] $n } [$cmd uninstall]
+      packOpRemove { |n| packGrepList [$cmd list] $n } [$cmd uninstall]
     }
     sync => {
       packOp [$cmd update]
       packOpSync [$cmd upgrade --greedy] [$cmd upgrade --greedy]
     }
     tidy => {
-      opPrintMaybeRunCmd $cmd cleanup --prune=all --scrub
-      opPrintMaybeRunCmd $cmd autoremove
+      packOp [$cmd cleanup --prune=all --scrub]
+      packOp [$cmd autoremove]
     }
   }
 }

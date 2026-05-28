@@ -10,7 +10,7 @@ as text. These are fast, require no Docker or real shells, and exercise the full
 **Tier 2 — Syntax checks**: Feed each generated script through its shell's parser (`nu`, `zsh`, `pwsh`) to catch syntax
 errors. If a shell binary is not installed, its checks are silently skipped — no hard failure.
 
-Snapshot files are committed to the repo under `tests/snapshot/__snapshots__/`, so script diffs are visible in PRs.
+Snapshot files are committed to the repo under `src/cmd/__snapshots__/`, so script diffs are visible in PRs.
 
 ## Running Tests
 
@@ -29,40 +29,59 @@ The test tasks set `WUT_ENV=test` automatically, which loads `settings-test.toml
 When you intentionally change a snippet, template, or server logic:
 
 1. Run `deno task test:update` to regenerate snapshots.
-2. Review the diff in `tests/snapshot/__snapshots__/` to confirm only expected output changed.
+2. Review the diff in `src/cmd/__snapshots__/` to confirm only expected output changed.
 3. Commit the updated snapshots alongside your code changes.
 
 During CI, run `deno task test` (without `--update`) — any unexpected script change will fail the test.
 
 ## Test Coverage
 
-### `tests/snapshot/pack.test.ts`
+### `src/cmd/pack_snap_test.ts`
 
-Package manager commands — all shells × all supported managers × all 7 ops (`add`, `find`, `list`, `out`, `rem`, `sync`,
+Package manager commands — nu × all supported managers × all 7 ops (`add`, `find`, `list`, `out`, `rem`, `sync`,
 `tidy`):
 
-| Shell | Platforms / managers                                                                                   |
-| ----- | ------------------------------------------------------------------------------------------------------ |
-| nu    | arch (yay+pacman), ubuntu (apt), rocky (dnf), suse (zypper), darwin (brew), winnt (choco+scoop+winget) |
-| nu    | no-sys params → bootstrap script                                                                       |
-| pwsh  | winnt (choco+scoop+winget)                                                                             |
-| zsh   | arch, ubuntu, rocky, suse, darwin                                                                      |
+| Shell | Platforms / managers                                                                                                    |
+| ----- | ----------------------------------------------------------------------------------------------------------------------- |
+| nu    | alpine (apk), arch (yay+pacman), ubuntu (apt), rocky (dnf), void (xbps), suse (zypper), darwin (brew), winnt (choco+scoop+winget) |
+| nu    | no-sys params → bootstrap script                                                                                        |
 
-### `tests/snapshot/virt.test.ts`
+### `src/cmd/virt_snap_test.ts`
 
 Virtual machine management — nu × all platforms × all ops (`add`, `find`, `list`, `rem`, `sync`, `tidy`):
 
-| Shell | Platforms                                            |
-| ----- | ---------------------------------------------------- |
-| nu    | linux (docker+qemu), darwin (docker), winnt (docker) |
+| Shell | Platforms                                                         |
+| ----- | ----------------------------------------------------------------- |
+| nu    | linux (docker+qemu), darwin (docker), winnt (docker)              |
+| nu    | linux with `sysHost` — exercises real instance config loading     |
 
-### `tests/snapshot/file.test.ts`
+### `src/cmd/file_snap_test.ts`
 
-Dotfile synchronization — nu × all platforms × all ops (`diff`, `find`, `sync`):
+Dotfile synchronization — nu × all platforms × all ops (`diff`, `find`, `list`, `sync`):
 
 | Shell | Platforms            |
 | ----- | -------------------- |
 | nu    | linux, darwin, winnt |
+
+### `src/cmd/script_snap_test.ts`
+
+Script discovery and execution — all shells × all platforms:
+
+| Shell | Platforms                  |
+| ----- | -------------------------- |
+| nu    | linux → native redirect    |
+| nu    | winnt → native redirect    |
+| pwsh  | winnt                      |
+| zsh   | darwin, linux              |
+
+### `src/sh_test.ts`
+
+pwsh/zsh → nu redirect — one representative op per command per shell:
+
+| Shell | Commands redirected to nu          |
+| ----- | ---------------------------------- |
+| pwsh  | file/find, file/sync, pack/add, pack/find, virt/list |
+| zsh   | file/find, file/sync, pack/add, pack/find, virt/list |
 
 ## Adding New Test Cases
 
@@ -73,8 +92,9 @@ Dotfile synchronization — nu × all platforms × all ops (`diff`, `find`, `syn
 
 ```typescript
 import { assertSnapshot } from '@std/testing/snapshot'
-import { runSrv } from '../../src/srv.ts'
-import { checkSyntax, req } from '../helpers.ts'
+
+import { checkSyntax, req } from '../_test.ts'
+import { runSrv } from '../srv.ts'
 
 Deno.test('nu / arch / new-op', async (t) => {
   const body = await (await runSrv(req('/sh/nu/pack/new-op?sysOsPlat=linux&sysOs=arch'))).text()

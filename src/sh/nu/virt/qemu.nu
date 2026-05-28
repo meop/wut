@@ -1,20 +1,12 @@
 def virtQemu [] {
   let cmd = 'qemu'
-  if (VIRT_MANAGER in $env and $env.VIRT_MANAGER != $cmd) or (which $"($cmd)-img" | is-empty) {
+  if ('VIRT_MANAGER' in $env and $env.VIRT_MANAGER != $cmd) or (which $"($cmd)-img" | is-empty) {
     return
   }
   if $env.VIRT_OP == tidy {
     return
   }
-  mut yn = ''
-  if YES in $env {
-    $yn = 'y'
-  } else {
-    $yn = input $"use ($cmd) \(system\) [y,[n]]: "
-  }
-  if $yn == n {
-    return
-  }
+  if not (virtPrompt $"use ($cmd) \(system\)") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = $localEnv | items { |key, value| [$key, $value] }
@@ -42,7 +34,7 @@ def virtQemu [] {
   def doAdd [cmd, instance] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($cmd).yaml'#"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml'#"
-    let merged = deepMerge ($config | from yaml) ($configVm | from yaml)
+    let merged = virtDeepMerge ($config | from yaml) ($configVm | from yaml)
 
     mut qemuEnv = {}
 

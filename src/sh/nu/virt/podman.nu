@@ -3,15 +3,7 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in $env and $env.VIRT_MANAGER != $cmd) or (which $cmd | is-empty) {
     return
   }
-  mut yn = ''
-  if YES in $env {
-    $yn = 'y'
-  } else {
-    $yn = input $"use ($cmd) \(system\) [y,[n]]: "
-  }
-  if $yn == n {
-    return
-  }
+  if not (virtPrompt $"use ($cmd) \(system\)") { return }
 
   def splitYamlDocs [] {
     $in
@@ -126,7 +118,7 @@ def virtPodman [] {
       let instancePodDoc = $instanceDocs | where { |d| ($d | get kind? | default '') == Pod } | first
 
       $podDoc = $podDoc
-        | upsert metadata.annotations (deepMerge ($podDoc | get metadata.annotations? | default {}) ($instancePodDoc | get metadata.annotations? | default {}))
+        | upsert metadata.annotations (virtDeepMerge ($podDoc | get metadata.annotations? | default {}) ($instancePodDoc | get metadata.annotations? | default {}))
         | upsert spec.containers (upsertByName ($podDoc | get spec.containers? | default []) ($instancePodDoc | get spec.containers? | default []))
         | upsert spec.volumes (upsertByName ($podDoc | get spec.volumes? | default []) ($instancePodDoc | get spec.volumes? | default []))
 

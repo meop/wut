@@ -14,7 +14,7 @@ def --env packPnpm [] {
 
   match $env.PACK_OP {
     add => {
-      packOpAdd { |n| packSearch [$cmd search] $n } [$cmd add --global]
+      packOpAdd { |n| packGrepFind [$cmd search] $n } [$cmd add --global]
     }
     find => {
       packOpFind [$cmd search]
@@ -26,23 +26,29 @@ def --env packPnpm [] {
       packOpOutdated [$cmd outdated --global]
     }
     remove => {
-      packOpRemove { |n| packInstalled [$cmd list --global] $n } [$cmd remove --global]
+      packOpRemove { |n| packGrepList [$cmd list --global] $n } [$cmd remove --global]
     }
     sync => {
       packOp [$cmd runtime set node latest --global]
-      packOp [$cmd self-update]
-      let p = ^$cmd ls --global --parseable
-        | lines
-        | each { |line|
-            let parts = ($line | path split)
-            let idx = ($parts | enumerate | where item == 'node_modules' | get 0?.index?)
-            if $idx == null { null } else {
-              $parts | skip ($idx + 1) | str join '/'
+      packOp [$cmd add --global '@pnpm/exe']
+      let names = if ($env.PACK_SYNC_NAMES? | is-not-empty) {
+        $env.PACK_SYNC_NAMES
+      } else {
+        ^$cmd ls --global --parseable
+          | lines
+          | each { |line|
+              let parts = ($line | path split)
+              let idx = ($parts | enumerate | where item == 'node_modules' | get 0?.index?)
+              if $idx == null { null } else {
+                $parts | skip ($idx + 1) | str join '/'
+              }
             }
-          }
-        | compact
-        | where { $in != node and $in != '@pnpm/exe' }
-      packOpSync [$cmd update --global --latest ...$p] [$cmd update --global --latest]
+          | compact
+          | where { $in != node and $in != '@pnpm/exe' }
+      }
+      if ($names | is-not-empty) {
+        packOp ([$cmd update --global --latest] ++ $names)
+      }
     }
     tidy => {
       packOp [$cmd store prune]

@@ -14,18 +14,18 @@ def --env packBun [] {
 
   match $env.PACK_OP {
     add => {
-      packOpAdd { |n| [(packQueryNpm $n), (packQueryJsr $n)] | flatten | is-not-empty } [$cmd add --force --global]
+      packOpAdd { |n| [(packHttpGetNpm $n), (packHttpGetJsr $n)] | flatten | is-not-empty } [$cmd add --force --global]
     }
     find => {
       for term in $env.PACK_FIND_NAMES {
-        [(packQueryNpm $term), (packQueryJsr $term)] | flatten | print
+        [(packHttpGetNpm $term), (packHttpGetJsr $term)] | flatten | print
       }
     }
     list => {
-      packOpList [$cmd pm list --global]
+      packOpList [$cmd list --global]
     }
     remove => {
-      packOpRemove { |n| packInstalled [$cmd pm list --global] $n } [$cmd remove --global]
+      packOpRemove { |n| packGrepList [$cmd list --global] $n } [$cmd remove --global]
     }
     sync => {
       packOpSync [$cmd update --force --global --latest] [$cmd update --force --global --latest]

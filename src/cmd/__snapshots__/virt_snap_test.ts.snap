@@ -421,7 +421,7 @@ do {
 
 \$env.VIRT_OP = r#'list'#
 
-def deepMerge [base, override] {
+def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
     if (\$kv.key in \$result) {
@@ -429,7 +429,7 @@ def deepMerge [base, override] {
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
       if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
-        \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
+        \$result = \$result | upsert \$kv.key (virtDeepMerge \$baseVal \$kv.value)
       } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
@@ -442,21 +442,23 @@ def deepMerge [base, override] {
   \$result
 }
 
-
-def virtDocker [] {
-  let cmd = 'docker'
-  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
-    return
-  }
+def virtPrompt [label: string] {
   mut yn = ''
   if YES in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
+    \$yn = input \$\\"(\$label) [y,[n]]: \\"
   }
-  if \$yn == n {
+  \$yn != n
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   match \$env.VIRT_OP {
     add => {
       for instance in \$env.VIRT_INSTANCES {
@@ -536,15 +538,7 @@ def virtLxc [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []
@@ -577,7 +571,7 @@ def virtLxc [] {
   def doAdd [cmd, instance] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
-    let merged = deepMerge (\$config | from yaml) (\$configVm | from yaml)
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
 
     mut lxcEnv = {}
 
@@ -719,15 +713,7 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def splitYamlDocs [] {
     \$in
@@ -842,7 +828,7 @@ def virtPodman [] {
       let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == Pod } | first
 
       \$podDoc = \$podDoc
-        | upsert metadata.annotations (deepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
+        | upsert metadata.annotations (virtDeepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
         | upsert spec.containers (upsertByName (\$podDoc | get spec.containers? | default []) (\$instancePodDoc | get spec.containers? | default []))
         | upsert spec.volumes (upsertByName (\$podDoc | get spec.volumes? | default []) (\$instancePodDoc | get spec.volumes? | default []))
 
@@ -984,21 +970,13 @@ def virtPodman [] {
 
 def virtQemu [] {
   let cmd = 'qemu'
-  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
     return
   }
   if \$env.VIRT_OP == tidy {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
@@ -1026,7 +1004,7 @@ def virtQemu [] {
   def doAdd [cmd, instance] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
-    let merged = deepMerge (\$config | from yaml) (\$configVm | from yaml)
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
 
     mut qemuEnv = {}
 
@@ -1618,7 +1596,7 @@ do {
 
 \$env.VIRT_OP = r#'sync'#
 
-def deepMerge [base, override] {
+def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
     if (\$kv.key in \$result) {
@@ -1626,7 +1604,7 @@ def deepMerge [base, override] {
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
       if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
-        \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
+        \$result = \$result | upsert \$kv.key (virtDeepMerge \$baseVal \$kv.value)
       } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
@@ -1639,21 +1617,23 @@ def deepMerge [base, override] {
   \$result
 }
 
-
-def virtDocker [] {
-  let cmd = 'docker'
-  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
-    return
-  }
+def virtPrompt [label: string] {
   mut yn = ''
   if YES in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
+    \$yn = input \$\\"(\$label) [y,[n]]: \\"
   }
-  if \$yn == n {
+  \$yn != n
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   match \$env.VIRT_OP {
     add => {
       for instance in \$env.VIRT_INSTANCES {
@@ -1733,15 +1713,7 @@ def virtLxc [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []
@@ -1774,7 +1746,7 @@ def virtLxc [] {
   def doAdd [cmd, instance] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
-    let merged = deepMerge (\$config | from yaml) (\$configVm | from yaml)
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
 
     mut lxcEnv = {}
 
@@ -1916,15 +1888,7 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def splitYamlDocs [] {
     \$in
@@ -2039,7 +2003,7 @@ def virtPodman [] {
       let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == Pod } | first
 
       \$podDoc = \$podDoc
-        | upsert metadata.annotations (deepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
+        | upsert metadata.annotations (virtDeepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
         | upsert spec.containers (upsertByName (\$podDoc | get spec.containers? | default []) (\$instancePodDoc | get spec.containers? | default []))
         | upsert spec.volumes (upsertByName (\$podDoc | get spec.volumes? | default []) (\$instancePodDoc | get spec.volumes? | default []))
 
@@ -2181,21 +2145,13 @@ def virtPodman [] {
 
 def virtQemu [] {
   let cmd = 'qemu'
-  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
     return
   }
   if \$env.VIRT_OP == tidy {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
@@ -2223,7 +2179,7 @@ def virtQemu [] {
   def doAdd [cmd, instance] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
-    let merged = deepMerge (\$config | from yaml) (\$configVm | from yaml)
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
 
     mut qemuEnv = {}
 
@@ -2645,7 +2601,7 @@ do {
 
 \$env.VIRT_OP = r#'tidy'#
 
-def deepMerge [base, override] {
+def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
     if (\$kv.key in \$result) {
@@ -2653,7 +2609,7 @@ def deepMerge [base, override] {
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
       if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
-        \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
+        \$result = \$result | upsert \$kv.key (virtDeepMerge \$baseVal \$kv.value)
       } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
@@ -2666,21 +2622,23 @@ def deepMerge [base, override] {
   \$result
 }
 
-
-def virtDocker [] {
-  let cmd = 'docker'
-  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
-    return
-  }
+def virtPrompt [label: string] {
   mut yn = ''
   if YES in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
+    \$yn = input \$\\"(\$label) [y,[n]]: \\"
   }
-  if \$yn == n {
+  \$yn != n
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   match \$env.VIRT_OP {
     add => {
       for instance in \$env.VIRT_INSTANCES {
@@ -2760,15 +2718,7 @@ def virtLxc [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []
@@ -2801,7 +2751,7 @@ def virtLxc [] {
   def doAdd [cmd, instance] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
-    let merged = deepMerge (\$config | from yaml) (\$configVm | from yaml)
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
 
     mut lxcEnv = {}
 
@@ -2943,15 +2893,7 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def splitYamlDocs [] {
     \$in
@@ -3066,7 +3008,7 @@ def virtPodman [] {
       let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == Pod } | first
 
       \$podDoc = \$podDoc
-        | upsert metadata.annotations (deepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
+        | upsert metadata.annotations (virtDeepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
         | upsert spec.containers (upsertByName (\$podDoc | get spec.containers? | default []) (\$instancePodDoc | get spec.containers? | default []))
         | upsert spec.volumes (upsertByName (\$podDoc | get spec.volumes? | default []) (\$instancePodDoc | get spec.volumes? | default []))
 
@@ -3208,21 +3150,13 @@ def virtPodman [] {
 
 def virtQemu [] {
   let cmd = 'qemu'
-  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
     return
   }
   if \$env.VIRT_OP == tidy {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
@@ -3250,7 +3184,7 @@ def virtQemu [] {
   def doAdd [cmd, instance] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
-    let merged = deepMerge (\$config | from yaml) (\$configVm | from yaml)
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
 
     mut qemuEnv = {}
 
@@ -3956,7 +3890,7 @@ do {
 
 \$env.VIRT_OP = r#'list'#
 
-def deepMerge [base, override] {
+def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
     if (\$kv.key in \$result) {
@@ -3964,7 +3898,7 @@ def deepMerge [base, override] {
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
       if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
-        \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
+        \$result = \$result | upsert \$kv.key (virtDeepMerge \$baseVal \$kv.value)
       } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
@@ -3975,6 +3909,16 @@ def deepMerge [base, override] {
     }
   }
   \$result
+}
+
+def virtPrompt [label: string] {
+  mut yn = ''
+  if YES in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"(\$label) [y,[n]]: "
+  }
+  \$yn != n
 }
 
 \`
@@ -4251,7 +4195,7 @@ do {
 
 \$env.VIRT_OP = r#'sync'#
 
-def deepMerge [base, override] {
+def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
     if (\$kv.key in \$result) {
@@ -4259,7 +4203,7 @@ def deepMerge [base, override] {
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
       if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
-        \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
+        \$result = \$result | upsert \$kv.key (virtDeepMerge \$baseVal \$kv.value)
       } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
@@ -4270,6 +4214,16 @@ def deepMerge [base, override] {
     }
   }
   \$result
+}
+
+def virtPrompt [label: string] {
+  mut yn = ''
+  if YES in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"(\$label) [y,[n]]: "
+  }
+  \$yn != n
 }
 
 \`
@@ -4408,7 +4362,7 @@ do {
 
 \$env.VIRT_OP = r#'tidy'#
 
-def deepMerge [base, override] {
+def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
     if (\$kv.key in \$result) {
@@ -4416,7 +4370,7 @@ def deepMerge [base, override] {
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
       if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
-        \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
+        \$result = \$result | upsert \$kv.key (virtDeepMerge \$baseVal \$kv.value)
       } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
@@ -4427,6 +4381,16 @@ def deepMerge [base, override] {
     }
   }
   \$result
+}
+
+def virtPrompt [label: string] {
+  mut yn = ''
+  if YES in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"(\$label) [y,[n]]: "
+  }
+  \$yn != n
 }
 
 \`
@@ -4849,7 +4813,7 @@ do {
 
 \$env.VIRT_OP = r#'list'#
 
-def deepMerge [base, override] {
+def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
     if (\$kv.key in \$result) {
@@ -4857,7 +4821,7 @@ def deepMerge [base, override] {
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
       if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
-        \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
+        \$result = \$result | upsert \$kv.key (virtDeepMerge \$baseVal \$kv.value)
       } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
@@ -4868,6 +4832,16 @@ def deepMerge [base, override] {
     }
   }
   \$result
+}
+
+def virtPrompt [label: string] {
+  mut yn = ''
+  if YES in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"(\$label) [y,[n]]: "
+  }
+  \$yn != n
 }
 
 \`
@@ -5144,7 +5118,7 @@ do {
 
 \$env.VIRT_OP = r#'sync'#
 
-def deepMerge [base, override] {
+def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
     if (\$kv.key in \$result) {
@@ -5152,7 +5126,7 @@ def deepMerge [base, override] {
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
       if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
-        \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
+        \$result = \$result | upsert \$kv.key (virtDeepMerge \$baseVal \$kv.value)
       } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
@@ -5163,6 +5137,16 @@ def deepMerge [base, override] {
     }
   }
   \$result
+}
+
+def virtPrompt [label: string] {
+  mut yn = ''
+  if YES in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"(\$label) [y,[n]]: "
+  }
+  \$yn != n
 }
 
 \`
@@ -5301,7 +5285,7 @@ do {
 
 \$env.VIRT_OP = r#'tidy'#
 
-def deepMerge [base, override] {
+def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
     if (\$kv.key in \$result) {
@@ -5309,7 +5293,7 @@ def deepMerge [base, override] {
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
       if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
-        \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
+        \$result = \$result | upsert \$kv.key (virtDeepMerge \$baseVal \$kv.value)
       } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
@@ -5320,6 +5304,16 @@ def deepMerge [base, override] {
     }
   }
   \$result
+}
+
+def virtPrompt [label: string] {
+  mut yn = ''
+  if YES in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"(\$label) [y,[n]]: "
+  }
+  \$yn != n
 }
 
 \`
@@ -5755,7 +5749,7 @@ do {
 
 \$env.VIRT_OP = r#'list'#
 
-def deepMerge [base, override] {
+def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
     if (\$kv.key in \$result) {
@@ -5763,7 +5757,7 @@ def deepMerge [base, override] {
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
       if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
-        \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
+        \$result = \$result | upsert \$kv.key (virtDeepMerge \$baseVal \$kv.value)
       } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
@@ -5776,21 +5770,23 @@ def deepMerge [base, override] {
   \$result
 }
 
-
-def virtDocker [] {
-  let cmd = 'docker'
-  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
-    return
-  }
+def virtPrompt [label: string] {
   mut yn = ''
   if YES in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
+    \$yn = input \$\\"(\$label) [y,[n]]: \\"
   }
-  if \$yn == n {
+  \$yn != n
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   match \$env.VIRT_OP {
     add => {
       for instance in \$env.VIRT_INSTANCES {
@@ -5870,15 +5866,7 @@ def virtLxc [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []
@@ -5911,7 +5899,7 @@ def virtLxc [] {
   def doAdd [cmd, instance] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
-    let merged = deepMerge (\$config | from yaml) (\$configVm | from yaml)
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
 
     mut lxcEnv = {}
 
@@ -6053,15 +6041,7 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def splitYamlDocs [] {
     \$in
@@ -6176,7 +6156,7 @@ def virtPodman [] {
       let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == Pod } | first
 
       \$podDoc = \$podDoc
-        | upsert metadata.annotations (deepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
+        | upsert metadata.annotations (virtDeepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
         | upsert spec.containers (upsertByName (\$podDoc | get spec.containers? | default []) (\$instancePodDoc | get spec.containers? | default []))
         | upsert spec.volumes (upsertByName (\$podDoc | get spec.volumes? | default []) (\$instancePodDoc | get spec.volumes? | default []))
 
@@ -6318,21 +6298,13 @@ def virtPodman [] {
 
 def virtQemu [] {
   let cmd = 'qemu'
-  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
     return
   }
   if \$env.VIRT_OP == tidy {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
@@ -6360,7 +6332,7 @@ def virtQemu [] {
   def doAdd [cmd, instance] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
-    let merged = deepMerge (\$config | from yaml) (\$configVm | from yaml)
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
 
     mut qemuEnv = {}
 
@@ -6818,7 +6790,7 @@ do {
 
 \$env.VIRT_OP = r#'list'#
 
-def deepMerge [base, override] {
+def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
     if (\$kv.key in \$result) {
@@ -6826,7 +6798,7 @@ def deepMerge [base, override] {
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
       if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
-        \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
+        \$result = \$result | upsert \$kv.key (virtDeepMerge \$baseVal \$kv.value)
       } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
@@ -6839,21 +6811,23 @@ def deepMerge [base, override] {
   \$result
 }
 
-
-def virtDocker [] {
-  let cmd = 'docker'
-  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
-    return
-  }
+def virtPrompt [label: string] {
   mut yn = ''
   if YES in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
+    \$yn = input \$\\"(\$label) [y,[n]]: \\"
   }
-  if \$yn == n {
+  \$yn != n
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   match \$env.VIRT_OP {
     add => {
       for instance in \$env.VIRT_INSTANCES {
@@ -6933,15 +6907,7 @@ def virtLxc [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []
@@ -6974,7 +6940,7 @@ def virtLxc [] {
   def doAdd [cmd, instance] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
-    let merged = deepMerge (\$config | from yaml) (\$configVm | from yaml)
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
 
     mut lxcEnv = {}
 
@@ -7116,15 +7082,7 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def splitYamlDocs [] {
     \$in
@@ -7239,7 +7197,7 @@ def virtPodman [] {
       let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == Pod } | first
 
       \$podDoc = \$podDoc
-        | upsert metadata.annotations (deepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
+        | upsert metadata.annotations (virtDeepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
         | upsert spec.containers (upsertByName (\$podDoc | get spec.containers? | default []) (\$instancePodDoc | get spec.containers? | default []))
         | upsert spec.volumes (upsertByName (\$podDoc | get spec.volumes? | default []) (\$instancePodDoc | get spec.volumes? | default []))
 
@@ -7381,21 +7339,13 @@ def virtPodman [] {
 
 def virtQemu [] {
   let cmd = 'qemu'
-  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
     return
   }
   if \$env.VIRT_OP == tidy {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
@@ -7423,7 +7373,7 @@ def virtQemu [] {
   def doAdd [cmd, instance] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
-    let merged = deepMerge (\$config | from yaml) (\$configVm | from yaml)
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
 
     mut qemuEnv = {}
 
@@ -7995,7 +7945,7 @@ do {
 
 \$env.VIRT_OP = r#'sync'#
 
-def deepMerge [base, override] {
+def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
     if (\$kv.key in \$result) {
@@ -8003,7 +7953,7 @@ def deepMerge [base, override] {
       let baseDesc = (\$baseVal | describe)
       let overrideDesc = (\$kv.value | describe)
       if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
-        \$result = \$result | upsert \$kv.key (deepMerge \$baseVal \$kv.value)
+        \$result = \$result | upsert \$kv.key (virtDeepMerge \$baseVal \$kv.value)
       } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
         \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
       } else {
@@ -8016,21 +7966,23 @@ def deepMerge [base, override] {
   \$result
 }
 
-
-def virtDocker [] {
-  let cmd = 'docker'
-  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
-    return
-  }
+def virtPrompt [label: string] {
   mut yn = ''
   if YES in \$env {
     \$yn = 'y'
   } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
+    \$yn = input \$\\"(\$label) [y,[n]]: \\"
   }
-  if \$yn == n {
+  \$yn != n
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   match \$env.VIRT_OP {
     add => {
       for instance in \$env.VIRT_INSTANCES {
@@ -8110,15 +8062,7 @@ def virtLxc [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []
@@ -8151,7 +8095,7 @@ def virtLxc [] {
   def doAdd [cmd, instance] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
-    let merged = deepMerge (\$config | from yaml) (\$configVm | from yaml)
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
 
     mut lxcEnv = {}
 
@@ -8293,15 +8237,7 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def splitYamlDocs [] {
     \$in
@@ -8416,7 +8352,7 @@ def virtPodman [] {
       let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == Pod } | first
 
       \$podDoc = \$podDoc
-        | upsert metadata.annotations (deepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
+        | upsert metadata.annotations (virtDeepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
         | upsert spec.containers (upsertByName (\$podDoc | get spec.containers? | default []) (\$instancePodDoc | get spec.containers? | default []))
         | upsert spec.volumes (upsertByName (\$podDoc | get spec.volumes? | default []) (\$instancePodDoc | get spec.volumes? | default []))
 
@@ -8558,21 +8494,13 @@ def virtPodman [] {
 
 def virtQemu [] {
   let cmd = 'qemu'
-  if (VIRT_MANAGER in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
     return
   }
   if \$env.VIRT_OP == tidy {
     return
   }
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input \$\\"use (\$cmd) \\\\(system\\\\) [y,[n]]: \\"
-  }
-  if \$yn == n {
-    return
-  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
@@ -8600,7 +8528,7 @@ def virtQemu [] {
   def doAdd [cmd, instance] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
-    let merged = deepMerge (\$config | from yaml) (\$configVm | from yaml)
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
 
     mut qemuEnv = {}
 

@@ -14,18 +14,18 @@ def --env packUv [] {
 
   match $env.PACK_OP {
     add => {
-      packOpAdd { |n| packQueryPypi $n | is-not-empty } [$cmd tool install]
+      packOpAdd { |n| packHttpGetPypi $n | is-not-empty } [$cmd tool install] --each
     }
     find => {
       for term in $env.PACK_FIND_NAMES {
-        packQueryPypi $term | print
+        packHttpGetPypi $term | print
       }
     }
     list => {
       packOpList [$cmd tool list]
     }
     remove => {
-      packOpRemove { |n| packInstalled [$cmd tool list] $n } [$cmd tool uninstall]
+      packOpRemove { |n| packGrepList [$cmd tool list] $n } [$cmd tool uninstall]
     }
     sync => {
       packOpSync [$cmd tool upgrade --all] [$cmd tool upgrade]
