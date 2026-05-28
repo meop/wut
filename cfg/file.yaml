@@ -1,13 +1,4 @@
 ---
-fzf:
-  maps:
-    - in: theme.zsh
-      out:
-        darwin: '{HOME}/.fzf/theme.zsh'
-        linux: '{HOME}/.fzf/theme.zsh'
-    - in: theme.ps1
-      out:
-        winnt: '{HOME}/.fzf/theme.ps1'
 git:
   maps:
     - in: gitconfig
@@ -51,11 +42,6 @@ pwsh:
         winnt: '{HOME}/Documents/PowerShell/profile.ps1'
 ssh:
   maps:
-    - in: hushlogin
-      out:
-        darwin: '{HOME}/.hushlogin'
-        linux: '{HOME}/.hushlogin'
-        winnt: '{HOME}/.hushlogin'
     - in: config
       out:
         darwin: '{HOME}/.ssh/config'
@@ -65,6 +51,11 @@ ssh:
         user:
           read: true
           write: true
+    - in: hushlogin
+      out:
+        darwin: '{HOME}/.hushlogin'
+        linux: '{HOME}/.hushlogin'
+        winnt: '{HOME}/.hushlogin'
 zsh:
   maps:
     - in: zsh

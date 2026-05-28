@@ -168,8 +168,6 @@ function opPrintMaybeRunCmd {
     \$yn = Read-Host "use script [y,[n]]"
   }
   if (\$yn -ne 'n') {
-opPrint 'install'
-opPrint '  rustup'
 opPrint 'setup'
 opPrint '  cargo'
   }
@@ -329,8 +327,6 @@ function () {
     read "yn?use script [y,[n]]: "
   fi
   if [[ \$yn != 'n' ]]; then
-opPrint 'install'
-opPrint '  nu, rustup'
 opPrint 'setup'
 opPrint '  cargo'
   fi
@@ -490,8 +486,6 @@ function () {
     read "yn?use script [y,[n]]: "
   fi
   if [[ \$yn != 'n' ]]; then
-opPrint 'install'
-opPrint '  nu, rustup'
 opPrint 'setup'
 opPrint '  cargo'
   fi
@@ -653,8 +647,6 @@ function () {
     read "yn?use script [y,[n]]: "
   fi
   if [[ \$yn != 'n' ]]; then
-opPrint 'install'
-opPrint '  nu, rustup'
   fi
 }
 \`
@@ -821,25 +813,6 @@ function opPrintMaybeRunCmd {
 \$REQ_SRCH = '?sysOsPlat=winnt'
 
 \$SCRIPT_EXEC_PARTS = 'install'
-
-& {
-  if (-not \$IsWindows) {
-    opPrintWarn 'script is for winnt'
-    return
-  }
-  \$yn = ''
-  if (\$YES) {
-    \$yn = 'y'
-  } else {
-    \$yn = Read-Host 'install rustup (user) [y,[n]]: '
-  }
-  if (\$yn -ne 'n') {
-    \$url = "https://win.rustup.rs/\${env:SYS_CPU_ARCH}"
-    Invoke-WebRequest -ErrorAction Stop -ProgressAction SilentlyContinue -OutFile "\${env:HOME}\\\\rustup-init.exe" -Uri \$url
-    & "\${env:HOME}\\\\rustup-init.exe"
-    Remove-Item "\${env:HOME}\\\\rustup-init.exe"
-  }
-}
 
 \`
 `;

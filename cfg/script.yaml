@@ -1,19 +1,10 @@
 ---
 pwsh:
-  install:
-    rustup:
-      sys_os_plat:
-        - winnt
   setup:
     cargo:
       sys_os_plat:
         - winnt
 zsh:
-  install:
-    rustup:
-      sys_os_plat:
-        - darwin
-        - linux
   setup:
     cargo:
       sys_os_plat:

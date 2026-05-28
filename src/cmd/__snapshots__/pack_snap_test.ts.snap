@@ -181,7 +181,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -189,7 +189,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -503,7 +503,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -776,7 +780,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -784,7 +788,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -1098,7 +1102,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -1380,7 +1388,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -1388,7 +1396,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -1702,7 +1710,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -1973,7 +1985,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -1981,7 +1993,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -2295,7 +2307,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -2568,7 +2584,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -2576,7 +2592,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -2890,7 +2906,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -3161,7 +3181,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -3169,7 +3189,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -3483,7 +3503,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -3752,7 +3776,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -3760,7 +3784,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -4074,7 +4098,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -4345,7 +4373,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -4353,7 +4381,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -4667,7 +4695,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -4951,7 +4983,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -4959,7 +4991,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -5273,7 +5305,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -5566,7 +5602,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -5574,7 +5610,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -5888,7 +5924,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -6170,7 +6210,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -6178,7 +6218,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -6492,7 +6532,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -6776,7 +6820,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -6784,7 +6828,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -7098,7 +7142,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -7380,7 +7428,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -7388,7 +7436,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -7702,7 +7750,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -7982,7 +8034,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -7990,7 +8042,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -8304,7 +8356,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -8586,7 +8642,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -8594,7 +8650,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -8908,7 +8964,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -9182,7 +9242,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -9190,7 +9250,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -9504,7 +9564,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -9787,7 +9851,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -9795,7 +9859,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -10109,7 +10173,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -10381,7 +10449,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -10389,7 +10457,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -10703,7 +10771,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -10977,7 +11049,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -10985,7 +11057,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -11299,7 +11371,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -11571,7 +11647,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -11579,7 +11655,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -11893,7 +11969,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -12163,7 +12243,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -12171,7 +12251,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -12485,7 +12565,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -12757,7 +12841,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -12765,7 +12849,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -13079,7 +13163,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -13353,7 +13441,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -13361,7 +13449,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -13675,7 +13763,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -13958,7 +14050,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -13966,7 +14058,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -14280,7 +14372,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -14552,7 +14648,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -14560,7 +14656,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -14874,7 +14970,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -15148,7 +15248,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -15156,7 +15256,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -15470,7 +15570,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -15742,7 +15846,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -15750,7 +15854,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -16064,7 +16168,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -16334,7 +16442,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -16342,7 +16450,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -16656,7 +16764,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -16928,7 +17040,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -16936,7 +17048,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -17250,7 +17362,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -17524,7 +17640,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -17532,7 +17648,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -17846,7 +17962,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -18129,7 +18249,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -18137,7 +18257,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -18451,7 +18571,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -18723,7 +18847,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -18731,7 +18855,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -19045,7 +19169,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -19319,7 +19447,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -19327,7 +19455,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -19641,7 +19769,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -19913,7 +20045,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -19921,7 +20053,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -20235,7 +20367,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -20505,7 +20641,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -20513,7 +20649,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -20827,7 +20963,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -21099,7 +21239,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -21107,7 +21247,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -21421,7 +21561,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -21704,7 +21848,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -21712,7 +21856,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -22026,7 +22170,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -22318,7 +22466,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -22326,7 +22474,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -22640,7 +22788,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -22921,7 +23073,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -22929,7 +23081,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -23243,7 +23395,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -23526,7 +23682,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -23534,7 +23690,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -23848,7 +24004,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -24129,7 +24289,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -24137,7 +24297,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -24451,7 +24611,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -24730,7 +24894,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -24738,7 +24902,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -25052,7 +25216,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -25331,7 +25499,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -25339,7 +25507,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -25653,7 +25821,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -25924,7 +26096,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -25932,7 +26104,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -26246,7 +26418,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -26526,7 +26702,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -26534,7 +26710,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -26848,7 +27024,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -27117,7 +27297,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -27125,7 +27305,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -27439,7 +27619,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -27710,7 +27894,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -27718,7 +27902,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -28032,7 +28216,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -28301,7 +28489,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -28309,7 +28497,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -28623,7 +28811,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -28890,7 +29082,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -28898,7 +29090,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -29212,7 +29404,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -29481,7 +29677,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -29489,7 +29685,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -29803,7 +29999,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -30156,7 +30356,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -30164,7 +30364,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -30478,7 +30678,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -30840,7 +31044,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -30848,7 +31052,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -31162,7 +31366,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -31513,7 +31721,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -31521,7 +31729,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -31835,7 +32043,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -32188,7 +32400,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -32196,7 +32408,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -32510,7 +32722,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -32861,7 +33077,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -32869,7 +33085,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -33183,7 +33399,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -33532,7 +33752,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -33540,7 +33760,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -33854,7 +34074,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -34203,7 +34427,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -34211,7 +34435,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -34525,7 +34749,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -34694,7 +34922,7 @@ do --env {
   }
   if \$yn != 'n' {
 opPrint r#'lang-rustup'#
-opPrint r#'  cfg/script/pwsh/install/rustup.ps1'#
+opPrint r#'  rustlang.rustup'#
 opPrint r#'shell-nu'#
 opPrint r#'  nu'#
   }
@@ -34879,7 +35107,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -34887,7 +35115,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -35201,7 +35429,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -35290,7 +35522,7 @@ do --env {
   }
   if \$yn != 'n' {
 opPrint r#'lang-rustup'#
-opPrint r#'  cfg/script/zsh/install/rustup.zsh'#
+opPrint r#'  rustup'#
 opPrint r#'shell-nu'#
 opPrint r#'  nu'#
   }
@@ -35479,7 +35711,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -35487,7 +35719,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -35578,7 +35810,7 @@ do --env {
   }
   if \$yn != 'n' {
 opPrint r#'lang-rustup'#
-opPrint r#'  cfg/script/zsh/install/rustup.zsh'#
+opPrint r#'  rustup, rustlang.rustup'#
 opPrint r#'shell-nu'#
 opPrint r#'  nu'#
   }
@@ -35767,7 +35999,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -35775,7 +36007,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -35921,8 +36153,6 @@ do --env {
     \$yn = input r#'use pack [y,[n]]: '#
   }
   if \$yn != 'n' {
-opPrint r#'lang-rustup'#
-opPrint r#'  cfg/script/zsh/install/rustup.zsh'#
   }
 }
 \`
@@ -36107,7 +36337,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -36115,7 +36345,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -36429,7 +36659,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -36700,7 +36934,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -36708,7 +36942,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -37022,7 +37256,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -37375,7 +37613,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -37383,7 +37621,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -37697,7 +37935,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -37970,7 +38212,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -37978,7 +38220,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -38292,7 +38534,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -38578,7 +38824,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -38586,7 +38832,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -38900,7 +39146,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {
@@ -39172,7 +39422,7 @@ def packSearch [cmdsFind: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def packInstalled [cmdsList: list<string>, term: string] {
@@ -39180,7 +39430,7 @@ def packInstalled [cmdsList: list<string>, term: string] {
     | complete
     | get stdout
     | lines
-    | any { |line| (\$line | str contains \$term) }
+    | any { |line| (\$line | str contains --ignore-case \$term) }
 }
 
 def --env packOpAdd [
@@ -39494,7 +39744,11 @@ def --env packDeno [] {
   }
 
   def getInstalled [] {
-    ls (getBinDir) | where type == dir | get name | path basename | str substring 1..
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
   }
 
   match \$env.PACK_OP {

@@ -299,7 +299,7 @@ def file [] {
 }
 
 
-\$env.FILE_DIFF_PATH_PAIRS = [ r#'fzf|fzf/theme.zsh|{HOME}/.fzf/theme.zsh'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
+\$env.FILE_DIFF_PATH_PAIRS = [ r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
 
 \$env.FILE_OP = r#'diff'#
 
@@ -606,7 +606,7 @@ def file [] {
 }
 
 
-\$env.FILE_FIND_KEYS = [ r#'fzf|theme.zsh, theme.ps1'#, r#'git|gitconfig'#, r#'nu|nu, env.nu, config.nu'#, r#'pwsh|pwsh, env.ps1, profile.ps1'#, r#'ssh|hushlogin, config'#, r#'zsh|zsh, zshenv, zshrc'# ]
+\$env.FILE_FIND_KEYS = [ r#'git|gitconfig'#, r#'nu|nu, env.nu, config.nu'#, r#'pwsh|pwsh, env.ps1, profile.ps1'#, r#'ssh|config, hushlogin'#, r#'zsh|zsh, zshenv, zshrc'# ]
 
 \$env.FILE_OP = r#'find'#
 
@@ -913,7 +913,7 @@ def file [] {
 }
 
 
-\$env.FILE_SYNC_PATH_PAIRS = [ r#'fzf|fzf/theme.zsh|{HOME}/.fzf/theme.zsh'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
+\$env.FILE_SYNC_PATH_PAIRS = [ r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
 
 \$env.FILE_SYNC_CLEAR_DIRS = [ r#'nu|{HOME}/.config/nushell/autoload'#, r#'pwsh|{HOME}/.pwsh'#, r#'zsh|{HOME}/.zsh'# ]
 
@@ -1224,7 +1224,7 @@ def file [] {
 }
 
 
-\$env.FILE_DIFF_PATH_PAIRS = [ r#'fzf|fzf/theme.zsh|{HOME}/.fzf/theme.zsh'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
+\$env.FILE_DIFF_PATH_PAIRS = [ r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
 
 \$env.FILE_OP = r#'diff'#
 
@@ -1531,7 +1531,7 @@ def file [] {
 }
 
 
-\$env.FILE_FIND_KEYS = [ r#'fzf|theme.zsh, theme.ps1'#, r#'git|gitconfig'#, r#'nu|nu, env.nu, config.nu'#, r#'pwsh|pwsh, env.ps1, profile.ps1'#, r#'ssh|hushlogin, config'#, r#'zsh|zsh, zshenv, zshrc'# ]
+\$env.FILE_FIND_KEYS = [ r#'git|gitconfig'#, r#'nu|nu, env.nu, config.nu'#, r#'pwsh|pwsh, env.ps1, profile.ps1'#, r#'ssh|config, hushlogin'#, r#'zsh|zsh, zshenv, zshrc'# ]
 
 \$env.FILE_OP = r#'find'#
 
@@ -1838,7 +1838,7 @@ def file [] {
 }
 
 
-\$env.FILE_SYNC_PATH_PAIRS = [ r#'fzf|fzf/theme.zsh|{HOME}/.fzf/theme.zsh'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
+\$env.FILE_SYNC_PATH_PAIRS = [ r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
 
 \$env.FILE_SYNC_CLEAR_DIRS = [ r#'nu|{HOME}/.config/nushell/autoload'#, r#'pwsh|{HOME}/.pwsh'#, r#'zsh|{HOME}/.zsh'# ]
 
@@ -2460,7 +2460,7 @@ def file [] {
 }
 
 
-\$env.FILE_FIND_KEYS = [ r#'fzf|theme.zsh, theme.ps1'#, r#'git|gitconfig'#, r#'nu|nu, env.nu, config.nu'#, r#'pwsh|pwsh, env.ps1, profile.ps1'#, r#'ssh|hushlogin, config'#, r#'zsh|zsh, zshenv, zshrc'# ]
+\$env.FILE_FIND_KEYS = [ r#'git|gitconfig'#, r#'nu|nu, env.nu, config.nu'#, r#'pwsh|pwsh, env.ps1, profile.ps1'#, r#'ssh|config, hushlogin'#, r#'zsh|zsh, zshenv, zshrc'# ]
 
 \$env.FILE_OP = r#'find'#
 
@@ -2767,7 +2767,7 @@ def file [] {
 }
 
 
-\$env.FILE_LIST_PATH_PAIRS = [ r#'fzf|fzf/theme.zsh|{HOME}/.fzf/theme.zsh'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
+\$env.FILE_LIST_PATH_PAIRS = [ r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
 
 \$env.FILE_OP = r#'list'#
 
@@ -3074,7 +3074,7 @@ def file [] {
 }
 
 
-\$env.FILE_LIST_PATH_PAIRS = [ r#'fzf|fzf/theme.zsh|{HOME}/.fzf/theme.zsh'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
+\$env.FILE_LIST_PATH_PAIRS = [ r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/.config/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/.config/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/.config/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/.config/powershell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/.config/powershell/profile.ps1'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'zsh|zsh/zsh/10-vim.zsh|{HOME}/.zsh/10-vim.zsh'#, r#'zsh|zsh/zshenv|{HOME}/.zshenv'#, r#'zsh|zsh/zshrc|{HOME}/.zshrc'# ]
 
 \$env.FILE_OP = r#'list'#
 
@@ -3381,7 +3381,7 @@ def file [] {
 }
 
 
-\$env.FILE_DIFF_PATH_PAIRS = [ r#'fzf|fzf/theme.ps1|{HOME}/.fzf/theme.ps1'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/AppData/Roaming/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/AppData/Roaming/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/AppData/Roaming/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/Documents/PowerShell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/Documents/PowerShell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'# ]
+\$env.FILE_DIFF_PATH_PAIRS = [ r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/AppData/Roaming/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/AppData/Roaming/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/AppData/Roaming/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/Documents/PowerShell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/Documents/PowerShell/profile.ps1'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'# ]
 
 \$env.FILE_OP = r#'diff'#
 
@@ -3688,7 +3688,7 @@ def file [] {
 }
 
 
-\$env.FILE_FIND_KEYS = [ r#'fzf|theme.zsh, theme.ps1'#, r#'git|gitconfig'#, r#'nu|nu, env.nu, config.nu'#, r#'pwsh|pwsh, env.ps1, profile.ps1'#, r#'ssh|hushlogin, config'# ]
+\$env.FILE_FIND_KEYS = [ r#'git|gitconfig'#, r#'nu|nu, env.nu, config.nu'#, r#'pwsh|pwsh, env.ps1, profile.ps1'#, r#'ssh|config, hushlogin'# ]
 
 \$env.FILE_OP = r#'find'#
 
@@ -3995,7 +3995,7 @@ def file [] {
 }
 
 
-\$env.FILE_SYNC_PATH_PAIRS = [ r#'fzf|fzf/theme.ps1|{HOME}/.fzf/theme.ps1'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/AppData/Roaming/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/AppData/Roaming/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/AppData/Roaming/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/Documents/PowerShell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/Documents/PowerShell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'# ]
+\$env.FILE_SYNC_PATH_PAIRS = [ r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/AppData/Roaming/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/AppData/Roaming/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/AppData/Roaming/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/Documents/PowerShell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/Documents/PowerShell/profile.ps1'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'# ]
 
 \$env.FILE_SYNC_CLEAR_DIRS = [ r#'nu|{HOME}/AppData/Roaming/nushell/autoload'#, r#'pwsh|{HOME}/.pwsh'# ]
 
@@ -4306,7 +4306,7 @@ def file [] {
 }
 
 
-\$env.FILE_LIST_PATH_PAIRS = [ r#'fzf|fzf/theme.ps1|{HOME}/.fzf/theme.ps1'#, r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/AppData/Roaming/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/AppData/Roaming/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/AppData/Roaming/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/Documents/PowerShell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/Documents/PowerShell/profile.ps1'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'#, r#'ssh|ssh/config|{HOME}/.ssh/config'# ]
+\$env.FILE_LIST_PATH_PAIRS = [ r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/AppData/Roaming/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/AppData/Roaming/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/AppData/Roaming/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/Documents/PowerShell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/Documents/PowerShell/profile.ps1'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'# ]
 
 \$env.FILE_OP = r#'list'#
 

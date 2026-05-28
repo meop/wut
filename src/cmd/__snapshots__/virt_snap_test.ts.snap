@@ -499,7 +499,7 @@ def virtDocker [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
       } else {
         \$allInstances
       }
@@ -674,7 +674,7 @@ def virtLxc [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split row ' ' | str trim | where { is-not-empty }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
       } else {
         \$allInstances
       }
@@ -929,7 +929,7 @@ def virtPodman [] {
           | where name =~ '\\\\.kube\$'
           | get name
           | each { |f| \$f | path basename | str replace '.kube' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" }
         opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
@@ -1271,7 +1271,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" }
@@ -1696,7 +1696,7 @@ def virtDocker [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
       } else {
         \$allInstances
       }
@@ -1871,7 +1871,7 @@ def virtLxc [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split row ' ' | str trim | where { is-not-empty }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
       } else {
         \$allInstances
       }
@@ -2126,7 +2126,7 @@ def virtPodman [] {
           | where name =~ '\\\\.kube\$'
           | get name
           | each { |f| \$f | path basename | str replace '.kube' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" }
         opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
@@ -2468,7 +2468,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" }
@@ -2723,7 +2723,7 @@ def virtDocker [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
       } else {
         \$allInstances
       }
@@ -2898,7 +2898,7 @@ def virtLxc [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split row ' ' | str trim | where { is-not-empty }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
       } else {
         \$allInstances
       }
@@ -3153,7 +3153,7 @@ def virtPodman [] {
           | where name =~ '\\\\.kube\$'
           | get name
           | each { |f| \$f | path basename | str replace '.kube' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" }
         opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
@@ -3495,7 +3495,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" }
@@ -5833,7 +5833,7 @@ def virtDocker [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
       } else {
         \$allInstances
       }
@@ -6008,7 +6008,7 @@ def virtLxc [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split row ' ' | str trim | where { is-not-empty }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
       } else {
         \$allInstances
       }
@@ -6263,7 +6263,7 @@ def virtPodman [] {
           | where name =~ '\\\\.kube\$'
           | get name
           | each { |f| \$f | path basename | str replace '.kube' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" }
         opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
@@ -6605,7 +6605,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" }
@@ -6896,7 +6896,7 @@ def virtDocker [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
       } else {
         \$allInstances
       }
@@ -7071,7 +7071,7 @@ def virtLxc [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split row ' ' | str trim | where { is-not-empty }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
       } else {
         \$allInstances
       }
@@ -7326,7 +7326,7 @@ def virtPodman [] {
           | where name =~ '\\\\.kube\$'
           | get name
           | each { |f| \$f | path basename | str replace '.kube' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" }
         opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
@@ -7668,7 +7668,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" }
@@ -8073,7 +8073,7 @@ def virtDocker [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
       } else {
         \$allInstances
       }
@@ -8248,7 +8248,7 @@ def virtLxc [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split row ' ' | str trim | where { is-not-empty }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
       } else {
         \$allInstances
       }
@@ -8503,7 +8503,7 @@ def virtPodman [] {
           | where name =~ '\\\\.kube\$'
           | get name
           | each { |f| \$f | path basename | str replace '.kube' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" }
         opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
@@ -8845,7 +8845,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" }
