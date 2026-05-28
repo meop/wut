@@ -29,8 +29,6 @@ def --env packPnpm [] {
       packOpRemove { |n| packGrepList [$cmd list --global] $n } [$cmd remove --global]
     }
     sync => {
-      packOp [$cmd runtime set node latest --global]
-      packOp [$cmd add --global '@pnpm/exe']
       let names = if ($env.PACK_SYNC_NAMES? | is-not-empty) {
         $env.PACK_SYNC_NAMES
       } else {
@@ -44,7 +42,7 @@ def --env packPnpm [] {
               }
             }
           | compact
-          | where { $in != node and $in != '@pnpm/exe' }
+          | where { $in != bun and $in != deno and $in != node }
       }
       if ($names | is-not-empty) {
         packOp ([$cmd update --global --latest] ++ $names)
