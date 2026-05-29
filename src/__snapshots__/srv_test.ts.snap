@@ -1,6 +1,6 @@
 export const snapshot = {};
 
-snapshot[`error / unsupported operation 1`] = `'echo "operation requested not supported: invalid'`;
+snapshot[`error / unsupported operation 1`] = `'echo "operation requested not supported: invalid"'`;
 
 snapshot[`error / unsupported shell 1`] = `'echo "shell requested not supported: invalid"'`;
 

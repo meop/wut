@@ -41,19 +41,19 @@ During CI, run `deno task test` (without `--update`) — any unexpected script c
 Package manager commands — nu × all supported managers × all 7 ops (`add`, `find`, `list`, `out`, `rem`, `sync`,
 `tidy`):
 
-| Shell | Platforms / managers                                                                                                    |
-| ----- | ----------------------------------------------------------------------------------------------------------------------- |
+| Shell | Platforms / managers                                                                                                              |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------- |
 | nu    | alpine (apk), arch (yay+pacman), ubuntu (apt), rocky (dnf), void (xbps), suse (zypper), darwin (brew), winnt (choco+scoop+winget) |
-| nu    | no-sys params → bootstrap script                                                                                        |
+| nu    | no-sys params → bootstrap script                                                                                                  |
 
 ### `src/cmd/virt_snap_test.ts`
 
 Virtual machine management — nu × all platforms × all ops (`add`, `find`, `list`, `rem`, `sync`, `tidy`):
 
-| Shell | Platforms                                                         |
-| ----- | ----------------------------------------------------------------- |
-| nu    | linux (docker+qemu), darwin (docker), winnt (docker)              |
-| nu    | linux with `sysHost` — exercises real instance config loading     |
+| Shell | Platforms                                                     |
+| ----- | ------------------------------------------------------------- |
+| nu    | linux (docker+qemu), darwin (docker), winnt (docker)          |
+| nu    | linux with `sysHost` — exercises real instance config loading |
 
 ### `src/cmd/file_snap_test.ts`
 
@@ -67,19 +67,19 @@ Dotfile synchronization — nu × all platforms × all ops (`diff`, `find`, `lis
 
 Script discovery and execution — all shells × all platforms:
 
-| Shell | Platforms                  |
-| ----- | -------------------------- |
-| nu    | linux → native redirect    |
-| nu    | winnt → native redirect    |
-| pwsh  | winnt                      |
-| zsh   | darwin, linux              |
+| Shell | Platforms               |
+| ----- | ----------------------- |
+| nu    | linux → native redirect |
+| nu    | winnt → native redirect |
+| pwsh  | winnt                   |
+| zsh   | darwin, linux           |
 
 ### `src/sh_test.ts`
 
 pwsh/zsh → nu redirect — one representative op per command per shell:
 
-| Shell | Commands redirected to nu          |
-| ----- | ---------------------------------- |
+| Shell | Commands redirected to nu                            |
+| ----- | ---------------------------------------------------- |
 | pwsh  | file/find, file/sync, pack/add, pack/find, virt/list |
 | zsh   | file/find, file/sync, pack/add, pack/find, virt/list |
 

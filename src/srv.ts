@@ -55,7 +55,7 @@ export async function runSrv(request: Request) {
 
     if (!parts.length) {
       return new Response(`echo "operation request missing"`, {
-        status: 400,
+        status: 404,
       })
     }
 
@@ -69,12 +69,14 @@ export async function runSrv(request: Request) {
       }
       return new Response(config)
     } else if (op != Op.sh) {
-      return new Response(`echo "operation requested not supported: ${op}`)
+      return new Response(`echo "operation requested not supported: ${op}"`, {
+        status: 404,
+      })
     }
 
     if (!(parts.length > 1)) {
       return new Response(`echo "shell request missing"`, {
-        status: 400,
+        status: 404,
       })
     }
 
@@ -151,9 +153,7 @@ export async function runSrv(request: Request) {
   } catch (err) {
     let error = String(err)
     if (err instanceof Error) {
-      error = JSON.stringify(getErr(err), null, 2)
-        .replaceAll('\\', '')
-        .trimEnd()
+      error = stringify(getErr(err), Fmt.json)
     }
     console.error(error)
     const body = `echo "check server logs"`
