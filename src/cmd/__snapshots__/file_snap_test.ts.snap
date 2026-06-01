@@ -3381,7 +3381,7 @@ def file [] {
 }
 
 
-\$env.FILE_DIFF_PATH_PAIRS = [ r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/AppData/Roaming/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/AppData/Roaming/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/AppData/Roaming/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/Documents/PowerShell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/Documents/PowerShell/profile.ps1'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'# ]
+\$env.FILE_DIFF_PATH_PAIRS = [ r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{APPDATA}/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{APPDATA}/nushell/env.nu'#, r#'nu|nu/config.nu|{APPDATA}/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/Documents/PowerShell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/Documents/PowerShell/profile.ps1'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'# ]
 
 \$env.FILE_OP = r#'diff'#
 
@@ -3995,9 +3995,9 @@ def file [] {
 }
 
 
-\$env.FILE_SYNC_PATH_PAIRS = [ r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/AppData/Roaming/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/AppData/Roaming/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/AppData/Roaming/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/Documents/PowerShell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/Documents/PowerShell/profile.ps1'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'# ]
+\$env.FILE_SYNC_PATH_PAIRS = [ r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{APPDATA}/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{APPDATA}/nushell/env.nu'#, r#'nu|nu/config.nu|{APPDATA}/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/Documents/PowerShell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/Documents/PowerShell/profile.ps1'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'# ]
 
-\$env.FILE_SYNC_CLEAR_DIRS = [ r#'nu|{HOME}/AppData/Roaming/nushell/autoload'#, r#'pwsh|{HOME}/.pwsh'# ]
+\$env.FILE_SYNC_CLEAR_DIRS = [ r#'nu|{APPDATA}/nushell/autoload'#, r#'pwsh|{HOME}/.pwsh'# ]
 
 \$env.FILE_SYNC_PATH_PERMS = [ r##'ssh|pwsh -noprofile -c r#'icacls '{HOME}\\\\.ssh\\\\config' /t /reset'#'##, r##'ssh|pwsh -noprofile -c r#'icacls '{HOME}\\\\.ssh\\\\config' /t /inheritance:r /grant \\":(gr,gw)\\"'#'## ]
 
@@ -4306,7 +4306,7 @@ def file [] {
 }
 
 
-\$env.FILE_LIST_PATH_PAIRS = [ r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{HOME}/AppData/Roaming/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{HOME}/AppData/Roaming/nushell/env.nu'#, r#'nu|nu/config.nu|{HOME}/AppData/Roaming/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/Documents/PowerShell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/Documents/PowerShell/profile.ps1'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'# ]
+\$env.FILE_LIST_PATH_PAIRS = [ r#'git|git/gitconfig|{HOME}/.gitconfig'#, r#'nu|nu/nu/10-vim.nu|{APPDATA}/nushell/autoload/10-vim.nu'#, r#'nu|nu/env.nu|{APPDATA}/nushell/env.nu'#, r#'nu|nu/config.nu|{APPDATA}/nushell/config.nu'#, r#'pwsh|pwsh/pwsh/10-vim.ps1|{HOME}/.pwsh/10-vim.ps1'#, r#'pwsh|pwsh/env.ps1|{HOME}/Documents/PowerShell/env.ps1'#, r#'pwsh|pwsh/profile.ps1|{HOME}/Documents/PowerShell/profile.ps1'#, r#'ssh|ssh/config|{HOME}/.ssh/config'#, r#'ssh|ssh/hushlogin|{HOME}/.hushlogin'# ]
 
 \$env.FILE_OP = r#'list'#
 

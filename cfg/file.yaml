@@ -12,17 +12,17 @@ nu:
       out:
         darwin: '{HOME}/.config/nushell/autoload'
         linux: '{HOME}/.config/nushell/autoload'
-        winnt: '{HOME}/AppData/Roaming/nushell/autoload'
+        winnt: '{APPDATA}/nushell/autoload'
     - in: env.nu
       out:
         darwin: '{HOME}/.config/nushell/env.nu'
         linux: '{HOME}/.config/nushell/env.nu'
-        winnt: '{HOME}/AppData/Roaming/nushell/env.nu'
+        winnt: '{APPDATA}/nushell/env.nu'
     - in: config.nu
       out:
         darwin: '{HOME}/.config/nushell/config.nu'
         linux: '{HOME}/.config/nushell/config.nu'
-        winnt: '{HOME}/AppData/Roaming/nushell/config.nu'
+        winnt: '{APPDATA}/nushell/config.nu'
 pwsh:
   maps:
     - in: pwsh
