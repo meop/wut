@@ -36,8 +36,8 @@ def --env packScoop [] {
       packOpSync [$cmd update --all] [$cmd update]
     }
     tidy => {
-      packOp [$cmd cleanup --all --cache]
       packOp [$cmd cache rm --all]
+      packOp [$cmd cleanup --all]
     }
   }
 }
