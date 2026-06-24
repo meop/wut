@@ -37,6 +37,7 @@ def --env packScoop [] {
     }
     tidy => {
       packOp [$cmd cleanup --all --cache]
+      packOp [$cmd cache rm --all]
     }
   }
 }
