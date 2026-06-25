@@ -1,7 +1,14 @@
 import type { Ctx } from '@meop/shire/ctx'
 import { assertEquals } from '@std/assert'
 
-import { type CtxFilter, getCfgDirDump, getCfgFileLoad, localCfgPaths } from './cfg.ts'
+import {
+  type CtxFilter,
+  getCfgDirDump,
+  getCfgFileLoad,
+  localCfgPaths,
+  pinpointMatch,
+  preferExactMatches,
+} from './cfg.ts'
 
 // --- helpers ---
 
@@ -148,6 +155,87 @@ Deno.test('getCfgDirDump - without context ignores CtxFilter', async () => {
   })
   const names = results.map((r) => r.join('-'))
   assertEquals(names.includes('qemu'), true)
+})
+
+// --- preferExactMatches ---
+
+Deno.test('preferExactMatches - exact segment wins over prefix sibling', () => {
+  const result = preferExactMatches(
+    [['setup', 'gpu'], ['setup', 'gpu-lite']],
+    ['gpu'],
+  )
+  assertEquals(result, [['setup', 'gpu']])
+})
+
+Deno.test('preferExactMatches - no exact match keeps all glob results', () => {
+  const result = preferExactMatches(
+    [['setup', 'gpu'], ['setup', 'gpu-lite']],
+    ['gp'],
+  )
+  assertEquals(result, [['setup', 'gpu'], ['setup', 'gpu-lite']])
+})
+
+Deno.test('preferExactMatches - exact match on dir segment', () => {
+  const result = preferExactMatches(
+    [['gpu', 'main'], ['gpu-lite', 'main']],
+    ['gpu'],
+  )
+  assertEquals(result, [['gpu', 'main']])
+})
+
+Deno.test('preferExactMatches - applies each filter term independently', () => {
+  const result = preferExactMatches(
+    [['render', 'gpu'], ['render', 'gpu-lite'], ['compute', 'gpu']],
+    ['render', 'gpu'],
+  )
+  assertEquals(result, [['render', 'gpu']])
+})
+
+Deno.test('preferExactMatches - exact alias wins (key+aliases shape)', () => {
+  const result = preferExactMatches(
+    [['git', 'g'], ['github', 'gh']],
+    ['g'],
+  )
+  assertEquals(result, [['git', 'g']])
+})
+
+Deno.test('preferExactMatches - all exact keeps all', () => {
+  const result = preferExactMatches(
+    [['render', 'gpu'], ['compute', 'gpu']],
+    ['gpu'],
+  )
+  assertEquals(result, [['render', 'gpu'], ['compute', 'gpu']])
+})
+
+// --- pinpointMatch ---
+
+Deno.test('pinpointMatch - exact wins then single result', () => {
+  const result = pinpointMatch(
+    [['setup', 'gpu'], ['setup', 'gpu-lite']],
+    ['gpu'],
+  )
+  assertEquals(result, [['setup', 'gpu']])
+})
+
+Deno.test('pinpointMatch - no exact match takes first sorted', () => {
+  const result = pinpointMatch(
+    [['setup', 'gpu'], ['setup', 'gpu-lite']],
+    ['gp'],
+  )
+  assertEquals(result, [['setup', 'gpu']])
+})
+
+Deno.test('pinpointMatch - never returns more than one', () => {
+  const result = pinpointMatch(
+    [['render', 'gpu'], ['compute', 'gpu']],
+    ['gpu'],
+  )
+  assertEquals(result.length, 1)
+})
+
+Deno.test('pinpointMatch - empty when nothing matches', () => {
+  const result = pinpointMatch([], ['gpu'])
+  assertEquals(result, [])
 })
 
 // --- getCfgFileLoad ---

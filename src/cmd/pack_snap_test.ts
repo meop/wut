@@ -71,6 +71,17 @@ Deno.test('nu / arch / sync', async (t) => {
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
+// 'shell' resolves to two groups (shell-nu, shell-zsh): add is WIDE (both), rem is PINPOINT (first only)
+Deno.test('nu / arch / add (shell group) — wide', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/shell?sysOsPlat=linux&sysOs=arch'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / arch / rem (shell group) — pinpoint', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/rem/shell?sysOsPlat=linux&sysOs=arch'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
 Deno.test('nu / arch / tidy', async (t) => {
   const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=arch'))).text()
   await assertSnapshot(t, body)

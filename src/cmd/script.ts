@@ -86,6 +86,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
         contextFilter,
         extension: _shell.extension,
         filters,
+        pinpoint: true,
       }),
     )
   }

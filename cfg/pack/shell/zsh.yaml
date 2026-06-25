@@ -1,0 +1,22 @@
+---
+add:
+  user:
+    ghpm:
+      names:
+        - zsh
+    cargo:
+      names:
+        - zsh
+  system:
+    brew:
+      names:
+        - zsh
+    pacman:
+      names:
+        - zsh
+    xbps:
+      names:
+        - zsh
+    winget:
+      names:
+        - zsh

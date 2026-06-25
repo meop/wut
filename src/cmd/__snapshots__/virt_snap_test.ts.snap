@@ -132,7 +132,7 @@ do {
 \$env.REQ_SRCH = r#'?sysOsPlat=linux'#
 
 opPrintInfo r#'id: wut virt add | add on local
-aliases: a, ad, in, install
+aliases: 'a, ad, in, install'
 arguments:
   - <parts> | path part(s) to match'#
 \`
@@ -1457,7 +1457,7 @@ do {
 \$env.REQ_SRCH = r#'?sysOsPlat=linux'#
 
 opPrintInfo r#'id: wut virt rem | remove on local
-aliases: r, rm, rem, remove, un, unin, uninstall
+aliases: 'r, rm, rem, remove, un, unin, uninstall'
 arguments:
   - <parts> | path part(s) to match'#
 \`
@@ -3605,7 +3605,7 @@ do {
 \$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
 
 opPrintInfo r#'id: wut virt add | add on local
-aliases: a, ad, in, install
+aliases: 'a, ad, in, install'
 arguments:
   - <parts> | path part(s) to match'#
 \`
@@ -4056,7 +4056,7 @@ do {
 \$env.REQ_SRCH = r#'?sysOsPlat=darwin'#
 
 opPrintInfo r#'id: wut virt rem | remove on local
-aliases: r, rm, rem, remove, un, unin, uninstall
+aliases: 'r, rm, rem, remove, un, unin, uninstall'
 arguments:
   - <parts> | path part(s) to match'#
 \`
@@ -4528,7 +4528,7 @@ do {
 \$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
 
 opPrintInfo r#'id: wut virt add | add on local
-aliases: a, ad, in, install
+aliases: 'a, ad, in, install'
 arguments:
   - <parts> | path part(s) to match'#
 \`
@@ -4979,7 +4979,7 @@ do {
 \$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
 
 opPrintInfo r#'id: wut virt rem | remove on local
-aliases: r, rm, rem, remove, un, unin, uninstall
+aliases: 'r, rm, rem, remove, un, unin, uninstall'
 arguments:
   - <parts> | path part(s) to match'#
 \`
@@ -5453,7 +5453,7 @@ do {
 \$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=host'#
 
 opPrintInfo r#'id: wut virt add | add on local
-aliases: a, ad, in, install
+aliases: 'a, ad, in, install'
 arguments:
   - <parts> | path part(s) to match'#
 \`
@@ -5608,7 +5608,7 @@ opPrint r#'podman'#
 opPrint r#'  web'#
 opPrint r#'    app'#
 opPrint r#'qemu'#
-opPrint r#'  test'#
+opPrint r#'  test, test2'#
   }
 }
 \`
@@ -7804,10 +7804,3061 @@ do {
 \$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=host'#
 
 opPrintInfo r#'id: wut virt rem | remove on local
-aliases: r, rm, rem, remove, un, unin, uninstall
+aliases: 'r, rm, rem, remove, un, unin, uninstall'
 arguments:
   - <parts> | path part(s) to match'#
 \`
+`;
+
+snapshot[`nu / linux / rem (host podman) — pinpoint 1`] = `
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/rem/podman?sysOsPlat=linux&sysHost=host'#
+
+def opPrint --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  \$\\"(\$args | flatten | str join ' ')\\" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+    return
+  }
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  let args = \$args | flatten
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
+  if (\$args | length) > 1 {
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunSilentCmd ...\$args
+  }
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opMaybeRunCmd ...\$args
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
+    exit 1
+  }
+}
+
+
+\$env.SYS_HOST = r#'host'#
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/virt/rem/podman'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=host'#
+
+\$env.VIRT_REM_PARTS = r#'podman'#
+
+\$env.VIRT_OP = r#'rem'#
+
+def virtDeepMerge [base, override] {
+  mut result = \$base
+  for kv in (\$override | transpose key value) {
+    if (\$kv.key in \$result) {
+      let baseVal = \$result | get \$kv.key
+      let baseDesc = (\$baseVal | describe)
+      let overrideDesc = (\$kv.value | describe)
+      if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
+        \$result = \$result | upsert \$kv.key (virtDeepMerge \$baseVal \$kv.value)
+      } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
+        \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
+      } else {
+        \$result = \$result | upsert \$kv.key \$kv.value
+      }
+    } else {
+      \$result = \$result | upsert \$kv.key \$kv.value
+    }
+  }
+  \$result
+}
+
+def virtPrompt [label: string] {
+  mut yn = ''
+  if YES in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$\\"(\$label) [y,[n]]: \\"
+  }
+  \$yn != n
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  match \$env.VIRT_OP {
+    add => {
+      for instance in \$env.VIRT_INSTANCES {
+        if (^sudo \$cmd container ls | complete | get stdout | find --ignore-case \$instance | is-not-empty) {
+          continue
+        }
+
+        let yaml = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
+
+        for src in (\$yaml
+          | from yaml
+          | get services? | default {}
+          | values
+          | each { |svc|
+              \$svc | get volumes? | default []
+              | each { |v|
+                  if (\$v | describe) == string {
+                    let host = \$v | split row ':' | first
+                    if (\$host | str starts-with '/') {
+                      \$host
+                    } else {
+                      null
+                    }
+                  } else if (\$v | get type? | default '') == bind {
+                    \$v.source
+                  } else {
+                    null
+                  }
+                }
+              | compact
+            }
+          | flatten) {
+          opPrintMaybeRunCmd sudo mkdir -p \$src
+        }
+
+        opPrintMaybeRunCmd \$\\"r#'(\$yaml)'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
+      }
+    }
+    list => {
+      let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
+      let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
+      let instances = if (\$filters | is-not-empty) {
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+      } else {
+        \$allInstances
+      }
+      let nameFilters = \$instances | each { |i| ['--filter', \$\\"name=(\$i)\\"] } | flatten
+      opPrintRunCmd sudo \$cmd container ls --all --format '\\"table {{.Names}}\\\\\\\\t{{.Image}}\\\\\\\\t{{.Ports}}\\\\\\\\t{{.State}}\\\\\\\\t{{.Status}}\\"' --no-trunc ...\$nameFilters
+    }
+    rem => {
+      let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
+        \$env.VIRT_INSTANCES
+      } else {
+        ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
+      }
+      for instance in \$instances {
+        opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - down
+      }
+    }
+    sync => {
+      for instance in \$env.VIRT_INSTANCES {
+        opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
+      }
+    }
+    tidy => {
+      opPrintMaybeRunCmd sudo \$cmd system prune --all
+    }
+  }
+}
+
+
+def virtLxc [] {
+  let cmd = 'lxc'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
+    return
+  }
+  if \$env.VIRT_OP == tidy {
+    return
+  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+
+  def flattenLxcConfig [cfg, prefix = ''] {
+    mut lines = []
+    for kv in (\$cfg | transpose key value) {
+      let key = if \$prefix == '' { \$kv.key } else { \$\\"(\$prefix).(\$kv.key)\\" }
+      let desc = (\$kv.value | describe)
+      if (\$desc | str starts-with 'record') {
+        \$lines = \$lines | append (flattenLxcConfig \$kv.value \$key)
+      } else if (\$desc | str starts-with 'list') {
+        for item in \$kv.value {
+          \$lines = \$lines | append \$\\"lxc.(\$key) = (\$item)\\"
+        }
+      } else {
+        \$lines = \$lines | append \$\\"lxc.(\$key) = (\$kv.value)\\"
+      }
+    }
+    \$lines
+  }
+
+  def replaceEnv [localEnv, value] {
+    mut v = \$value
+    if (\$v | str contains '{') {
+      for e in (\$localEnv | items { |k, val| [\$k, \$val] }) {
+        \$v = \$v | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
+      }
+    }
+    \$v
+  }
+
+  def doAdd [cmd, instance] {
+    let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
+    let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
+
+    mut lxcEnv = {}
+
+    for e in (\$merged | get environment? | default [] | each { split row '=' }) {
+      \$lxcEnv = \$lxcEnv | upsert \$e.0 \$e.1
+    }
+
+    \$lxcEnv = \$lxcEnv | upsert 'instance' \$instance
+
+    let lxcDirPath = \$lxcEnv.VIRT_LXC_DIR_PATH
+    let rootfsDirPath = \$\\"(\$lxcDirPath)/(\$instance)/rootfs\\"
+    \$lxcEnv = \$lxcEnv | upsert 'rootfs' \$rootfsDirPath
+    let lxcEnv = \$lxcEnv
+
+    let net = \$merged | get lxc?.network? | default {}
+    if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
+      opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    for mnt in (\$merged | get lxc?.mounts? | default []) {
+      opPrintMaybeRunCmd sudo mkdir -p (replaceEnv \$lxcEnv \$mnt.source)
+    }
+
+    opPrintMaybeRunCmd sudo mkdir -p \$rootfsDirPath
+
+    let rootfsReady = (^sudo test -d \$\\"(\$rootfsDirPath)/usr\\" | complete).exit_code == 0
+    if not \$rootfsReady {
+      let template = \$merged | get lxc?.create?.template?
+      let templateName = (\$template | columns | get 0?) | default 'download'
+      opPrintMaybeRunCmd sudo lxc-create --name \$instance --lxcpath \$lxcDirPath --template \$templateName -- ...(
+        (if (\$templateName in (\$template | columns)) { \$template | get \$templateName } else { {} })
+        | transpose key value
+        | each { |kv| [\$\\"--(\$kv.key)\\", \$kv.value] }
+        | flatten
+      )
+      opPrintMaybeRunCmd sudo rm -f \$\\"(\$lxcDirPath)/(\$instance)/config\\"
+    }
+
+    let autostart = \$merged | get lxc?.autostart? | default false
+
+    let configLines = [
+      [\$\\"lxc.uts.name = (\$instance)\\", \$\\"lxc.rootfs.path = dir:(\$rootfsDirPath)\\"],
+      (if \$autostart { ['lxc.start.auto = 1'] } else { [] }),
+      (flattenLxcConfig (\$merged | get lxc?.config? | default {}) | each { |l| replaceEnv \$lxcEnv \$l }),
+      (if (\$net | is-not-empty) { [
+        [\$\\"lxc.net.0.type = (\$net.type)\\", \$\\"lxc.net.0.link = (\$net.link)\\", \$\\"lxc.net.0.name = (\$net.name)\\"],
+        (if 'hwaddr' in \$net { [\$\\"lxc.net.0.hwaddr = (\$net.hwaddr)\\"] } else { [] }),
+        (if \$net.type == veth { [\$\\"lxc.net.0.veth.pair = veth-(\$instance)\\"] } else if \$net.type == macvlan { [\$\\"lxc.net.0.macvlan.mode = (\$net.mode? | default bridge)\\"] } else { [] }),
+        ['lxc.net.0.flags = up'],
+      ] | flatten } else { [] }),
+      (\$merged | get lxc?.mounts? | default [] | each { |mnt| \$\\"lxc.mount.entry = (replaceEnv \$lxcEnv \$mnt.source) ((replaceEnv \$lxcEnv \$mnt.target) | str trim --left --char '/') none bind,create=dir 0 0\\" }),
+    ] | flatten
+
+    opPrintMaybeRunCmd sudo mkdir -p \$\\"/var/lib/lxc/(\$instance)\\"
+
+    opPrintMaybeRunCmd \$\\"r#'((\$configLines | str join \\"\\\\n\\") + \\"\\\\n\\")'#\\" '|' sudo tee \$\\"/var/lib/lxc/(\$instance)/config\\" '|' ignore
+
+    if \$autostart {
+      opPrintMaybeRunCmd sudo systemctl enable lxc
+    }
+
+    opPrintMaybeRunCmd sudo \$\\"(\$cmd)-start\\" --name \$instance
+  }
+
+  def doRem [cmd, instance] {
+    let wasRunning = ^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row ' ' | str trim | where { |l| \$l | is-not-empty } | any { |l| \$l == \$instance }
+    if \$wasRunning {
+      opPrintMaybeRunCmd sudo \$\\"(\$cmd)-stop\\" --name \$instance
+    }
+
+    let hasConfig = \$\\"/var/lib/lxc/(\$instance)\\" | path exists
+    if \$hasConfig {
+      opPrintMaybeRunCmd sudo rm -rf \$\\"/var/lib/lxc/(\$instance)\\"
+    }
+
+    if not (\$wasRunning or \$hasConfig) {
+      opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already removed\\"
+    }
+  }
+
+  match \$env.VIRT_OP {
+    add => {
+      for instance in \$env.VIRT_INSTANCES {
+        if (^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row ' ' | str trim | where { |l| \$l | is-not-empty } | any { |l| \$l == \$instance }) {
+          opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
+          continue
+        }
+
+        doAdd \$cmd \$instance
+      }
+    }
+    list => {
+      let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
+      let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split row ' ' | str trim | where { is-not-empty }
+      let instances = if (\$filters | is-not-empty) {
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+      } else {
+        \$allInstances
+      }
+      for instance in \$instances {
+        opPrintRunCmd sudo \$\\"(\$cmd)-ls\\" --fancy --fancy-format '\\"NAME,IPV4,IPV6,STATE,AUTOSTART\\"' -- \$instance
+      }
+    }
+    rem => {
+      let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
+        \$env.VIRT_INSTANCES
+      } else {
+        let lxcDirPath = '/var/lib/lxc'
+        if (\$lxcDirPath | path exists) {
+          ls \$lxcDirPath | where type == dir | get name | each { |f| \$f | path basename }
+        } else {
+          []
+        }
+      }
+      for instance in \$instances {
+        doRem \$cmd \$instance
+      }
+    }
+    sync => {
+      for instance in \$env.VIRT_INSTANCES {
+        if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
+          continue
+        }
+
+        if (^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row ' ' | str trim | where { |l| \$l | is-not-empty } | any { |l| \$l == \$instance }) {
+          opPrintMaybeRunCmd sudo \$\\"(\$cmd)-stop\\" --name \$instance
+        }
+
+        doAdd \$cmd \$instance
+      }
+    }
+  }
+}
+
+
+def virtPodman [] {
+  let cmd = 'podman'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+
+  def splitYamlDocs [] {
+    \$in
+      | str replace --regex '^---\\\\n' ''
+      | split row \\"\\\\n---\\\\n\\"
+      | each { str trim }
+      | where { is-not-empty }
+      | each { from yaml }
+  }
+
+  def processYaml [yamlRaw, host, pod, instance] {
+    mut result = []
+    for doc in (\$yamlRaw | str replace --all '{host}' \$host | str replace --all '{pod}' \$pod | str replace --all '{instance}' \$instance | splitYamlDocs) {
+      if (\$doc | get kind? | default '') == Build {
+        # custom doc, not passed to podman
+      } else {
+        let doc = if (\$doc | get apiVersion? | is-empty) { \$doc | insert apiVersion 'v1' } else { \$doc }
+        \$result = \$result | append (\$doc | to yaml)
+      }
+    }
+
+    \$result | str join \\"---\\\\n\\"
+  }
+
+  def buildImage [yamlRaw, host, pod, instance, alreadyBuilt: list<string>] {
+    let buildDocs = \$yamlRaw
+      | str replace --all '{host}' \$host
+      | str replace --all '{pod}' \$pod
+      | str replace --all '{instance}' \$instance
+      | splitYamlDocs
+      | where { |d| (\$d | get kind? | default '') == Build }
+    if (\$buildDocs | is-empty) {
+      return \$alreadyBuilt
+    }
+
+    mut built = \$alreadyBuilt
+    for buildInfo in (\$buildDocs | first | get images) {
+      let image = \$buildInfo.name
+      if \$image in \$built { continue }
+
+      let contextDirPath = \$buildInfo.buildContextPath
+      let containerfileUrl = \$\\"(\$env.REQ_URL_CFG)(\$buildInfo.filePath)\\"
+
+      let containerfileFilePath = (\$contextDirPath | path join (\$buildInfo.filePath | path basename))
+      let containerfileContent = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$containerfileUrl)'#\\"
+
+      opPrintMaybeRunCmd sudo mkdir -p \$contextDirPath
+      opPrintMaybeRunCmd \$\\"r#'(\$containerfileContent)'#\\" '|' sudo tee \$containerfileFilePath '|' ignore
+      opPrintMaybeRunCmd sudo podman build --file \$containerfileFilePath --tag \$image \$contextDirPath
+
+      \$built = \$built | append \$image
+    }
+    \$built
+  }
+
+  def upsertByName [existing, incoming] {
+    let incomingNames = \$incoming | each { |x| \$x.name }
+    (\$existing | where { |x| not (\$incomingNames | any { |n| \$n == \$x.name }) }) | append \$incoming
+  }
+
+  def readKubeNetwork [kubeFilePath: string] {
+    if not (\$kubeFilePath | path exists) { return '' }
+    let networkLines = open --raw \$kubeFilePath | lines | where { \$in | str starts-with 'Network=' }
+    if (\$networkLines | is-empty) { return '' }
+    \$networkLines | first | str replace 'Network=' '' | str trim
+  }
+
+  def removeNetworkIfUnused [network: string, pod: string, managedNetworks: record] {
+    if (\$network | is-empty) { return }
+    if (\$managedNetworks | get --optional \$network) == null { return }
+    let kubeDirPath = '/etc/containers/systemd'
+    if not (\$kubeDirPath | path exists) {
+      opPrintMaybeRunCmd sudo podman network rm \$network
+      return
+    }
+    if not (ls \$kubeDirPath
+      | where name =~ '\\\\.kube\$'
+      | where { |f| not (\$f.name | str ends-with \$\\"(\$pod).kube\\") }
+      | each { |f| open --raw \$f.name }
+      | str join \\"\\\\n\\"
+      | str contains \$\\"Network=(\$network)\\") {
+      opPrintMaybeRunCmd sudo podman network rm \$network
+    }
+  }
+
+  def doAdd [pod, podInstances, cmd] {
+    let kubeDirPath = '/etc/containers/systemd'
+    let networks = \$env.VIRT_PODMAN_NETWORKS | from json
+    let yamlFilePath = \$\\"(\$kubeDirPath)/(\$pod).yaml\\"
+    let kubeFilePath = \$\\"(\$kubeDirPath)/(\$pod).kube\\"
+
+    # layer 2: pod.yaml — base pod metadata (hostname, network, mac, annotations)
+    let configPodRaw = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/podman/(\$pod).yaml'#\\"
+    mut builtImages = buildImage \$configPodRaw \$env.SYS_HOST \$pod '' []
+    mut podDoc = \$configPodRaw
+      | str replace --all '{host}' \$env.SYS_HOST
+      | str replace --all '{pod}' \$pod
+      | splitYamlDocs
+      | where { |d| (\$d | get kind? | default '') == Pod }
+      | first
+
+    mut configMaps = []
+
+    # layer 3: instance yamls — overlaid onto pod base
+    for instancePath in \$podInstances {
+      let instance = (\$instancePath | split row '/') | last
+      let yamlRaw = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/podman/(\$instancePath).yaml'#\\"
+
+      \$builtImages = buildImage \$yamlRaw \$env.SYS_HOST \$pod \$instance \$builtImages
+
+      let instanceDocs = processYaml \$yamlRaw \$env.SYS_HOST \$pod \$instance | splitYamlDocs
+      let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == Pod } | first
+
+      \$podDoc = \$podDoc
+        | upsert metadata.annotations (virtDeepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
+        | upsert spec.containers (upsertByName (\$podDoc | get spec.containers? | default []) (\$instancePodDoc | get spec.containers? | default []))
+        | upsert spec.volumes (upsertByName (\$podDoc | get spec.volumes? | default []) (\$instancePodDoc | get spec.volumes? | default []))
+
+      let instanceHostname = \$instancePodDoc | get spec.hostname?
+      if \$instanceHostname != null {
+        \$podDoc = \$podDoc | upsert spec.hostname \$instanceHostname
+      }
+
+      for cm in (\$instanceDocs | where { |d| (\$d | get kind? | default '') == ConfigMap }) {
+        \$configMaps = (\$configMaps | where { |m| \$m.metadata.name != \$cm.metadata.name }) | append \$cm
+      }
+    }
+
+    let annotations = \$podDoc | get metadata.annotations? | default {}
+    let network = \$annotations | get 'io.podman.kube.network'? | default ''
+    let mac = \$annotations | get 'io.podman.kube.podmanargs.mac-address'? | default ''
+    let containers = \$podDoc | get spec.containers? | default []
+    let volumes = \$podDoc | get spec.volumes? | default []
+    let hostname = \$podDoc | get spec.hostname? | default \$pod
+
+    let networkDef = \$networks | get --optional \$network
+    if \$networkDef != null {
+      if not (^sudo podman network ls --format '{{.Name}}' | lines | any { \$in == \$network }) {
+        let netArgs = [
+          ['network', 'create'],
+          (if (\$networkDef | get driver? | is-not-empty) { ['--driver', \$networkDef.driver] } else { [] }),
+          (if (\$networkDef | get interface? | is-not-empty) { ['--interface-name', \$networkDef.interface] } else { [] }),
+          (if (\$networkDef | get ipam? | is-not-empty) { ['--ipam-driver', \$networkDef.ipam] } else { [] }),
+          (\$networkDef | get options? | default {} | transpose key value | each { |opt| ['--opt', \$\\"(\$opt.key)=(\$opt.value)\\"] } | flatten),
+          [\$network],
+        ] | flatten
+        opPrintMaybeRunCmd sudo podman ...\$netArgs
+      }
+    }
+
+    for container in \$containers {
+      if not (\$container.image | str starts-with 'localhost/') {
+        opPrintMaybeRunCmd sudo \$cmd pull \$container.image
+      }
+    }
+
+    let allDocs = ([({
+      apiVersion: 'v1',
+      kind: 'Pod',
+      metadata: { name: \$pod, annotations: \$annotations },
+      spec: { hostname: \$hostname, containers: \$containers, volumes: \$volumes },
+    } | to yaml)] | append (\$configMaps | each { |cm| \$cm | to yaml })) | str join \\"---\\\\n\\"
+
+    let kubeLines = [
+      ['[Unit]', \$\\"Description=(\$pod) pod\\", '', '[Kube]', \$\\"Yaml=(\$pod).yaml\\", \$\\"Network=(\$network)\\"],
+      (if (\$mac | is-not-empty) { [\$\\"PodmanArgs=--mac-address (\$mac)\\"] } else { [] }),
+    ] | flatten
+
+    let isNew = not (\$kubeFilePath | path exists)
+    opPrintMaybeRunCmd sudo mkdir -p \$kubeDirPath
+    opPrintMaybeRunCmd \$\\"r#'(\$allDocs)'#\\" '|' sudo tee \$yamlFilePath '|' ignore
+    opPrintMaybeRunCmd \$\\"r#'((\$kubeLines | append ['', '[Install]', 'WantedBy=default.target'] | str join \\"\\\\n\\") + \\"\\\\n\\")'#\\" '|' sudo tee \$kubeFilePath '|' ignore
+    opPrintMaybeRunCmd sudo systemctl daemon-reload
+    if \$isNew {
+      opPrintMaybeRunCmd sudo systemctl start \$\\"(\$pod).service\\"
+    } else {
+      opPrintMaybeRunCmd sudo systemctl restart \$\\"(\$pod).service\\"
+    }
+  }
+
+  match \$env.VIRT_OP {
+    add => {
+      let pods = \$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq
+      for pod in \$pods {
+        let podInstances = \$env.VIRT_INSTANCES | where { |p| ((\$p | split row '/') | first) == \$pod }
+
+        if (^sudo systemctl is-active \$\\"(\$pod).service\\" | complete | get stdout | str trim) == active {
+          opPrintWarn \$\\"\`(\$cmd)\` pod \`(\$pod)\` is already added\\"
+          continue
+        }
+
+        doAdd \$pod \$podInstances \$cmd
+      }
+    }
+    list => {
+      let kubeDirPath = '/etc/containers/systemd'
+      for pod in (if (\$kubeDirPath | path exists) {
+        ls \$kubeDirPath
+          | where name =~ '\\\\.kube\$'
+          | get name
+          | each { |f| \$f | path basename | str replace '.kube' '' }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
+      } else { [] }) {
+        try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" }
+        opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
+        opPrintRunCmd sudo \$cmd container list --filter \$\\"pod=(\$pod)\\" --format '\\"table {{.PodName}}\\\\t{{.Names}}\\\\t{{.Image}}\\\\t{{.Ports}}\\\\t{{.State}}\\\\t{{.Status}}\\"'
+      }
+    }
+    rem => {
+      let managedNetworks = \$env.VIRT_PODMAN_NETWORKS | from json
+      let kubeDirPath = '/etc/containers/systemd'
+
+      let pods = if (\$env.VIRT_INSTANCES | is-not-empty) {
+        \$env.VIRT_INSTANCES | each { (\$in | split row '/') | first } | uniq
+      } else {
+        if (\$kubeDirPath | path exists) {
+          ls \$kubeDirPath
+            | where name =~ '\\\\.kube\$'
+            | get name
+            | each { |f| \$f | path basename | str replace '.kube' '' }
+        } else {
+          []
+        }
+      }
+      for pod in \$pods {
+        let yamlFilePath = \$\\"(\$kubeDirPath)/(\$pod).yaml\\"
+        let kubeFilePath = \$\\"(\$kubeDirPath)/(\$pod).kube\\"
+        let network = readKubeNetwork \$kubeFilePath
+        opPrintMaybeRunCmd sudo systemctl stop \$\\"(\$pod).service\\"
+        opPrintMaybeRunCmd sudo rm -f \$yamlFilePath \$kubeFilePath
+        opPrintMaybeRunCmd sudo systemctl daemon-reload
+        removeNetworkIfUnused \$network \$pod \$managedNetworks
+      }
+    }
+    sync => {
+      let kubeDirPath = '/etc/containers/systemd'
+      for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
+        if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
+          continue
+        }
+
+        opPrintMaybeRunCmd sudo systemctl stop \$\\"(\$pod).service\\"
+
+        let podInstances = \$env.VIRT_INSTANCES | where { |p| ((\$p | split row '/') | first) == \$pod }
+        doAdd \$pod \$podInstances \$cmd
+      }
+    }
+    tidy => {
+      opPrintMaybeRunCmd sudo \$cmd system prune --all
+    }
+  }
+}
+
+
+def virtQemu [] {
+  let cmd = 'qemu'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
+    return
+  }
+  if \$env.VIRT_OP == tidy {
+    return
+  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+
+  def replaceEnv [localEnv, lines] {
+    let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
+
+    mut linesX = []
+    for l in \$lines {
+      mut l = \$l
+      if (\$l | str contains '{') {
+        for e in \$localEnvItems {
+          \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
+        }
+      }
+      \$linesX = \$linesX | append \$l
+    }
+
+    return \$linesX
+  }
+
+  def intoCellPath [...items] {
+    \$items | each {
+      |i| {value: \$i, optional: true}
+    } | into cell-path
+  }
+
+  def doAdd [cmd, instance] {
+    let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
+    let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
+
+    mut qemuEnv = {}
+
+    for e in (\$merged | get environment? | default [] | each { split row '=' }) {
+      \$qemuEnv = \$qemuEnv | upsert \$e.0 \$e.1
+    }
+
+    \$qemuEnv = \$qemuEnv | upsert 'instance' \$instance
+
+    let cpuStat = ^lscpu
+    \$qemuEnv = \$qemuEnv | upsert 'VM_CPU_SOCKETS' (\$cpuStat | find --ignore-case 'socket(s)' | split row ':' | last | str trim | ansi strip)
+    \$qemuEnv = \$qemuEnv | upsert 'VM_CPU_CORES' (\$cpuStat | find --ignore-case 'core(s)' | split row ':' | last | str trim | ansi strip)
+    \$qemuEnv = \$qemuEnv | upsert 'VM_CPU_THREADS' (\$cpuStat | find --ignore-case 'thread(s)' | split row ':' | last | str trim | ansi strip)
+
+    let cpuVendor = if ((^cat '/proc/cpuinfo' | find --ignore-case 'vendor_id' | last | split row ':' | last | str downcase | str trim | ansi strip) | str contains 'amd') { 'amd' } else { 'intel' }
+    \$qemuEnv = \$qemuEnv | upsert 'VM_CPU_VENDOR' (\$cpuVendor | str trim)
+
+    let nicDirPath = \$\\"/sys/class/net/(\$qemuEnv.NIC)\\"
+    if not (\$nicDirPath | path exists) {
+      opPrintWarn \$\\"cannot add \`(\$instance)\`: NIC '(\$qemuEnv.NIC)' does not exist\\"
+      return
+    }
+    \$qemuEnv = \$qemuEnv | upsert 'NIC_MAC' (if ('NIC_MAC' in \$qemuEnv) {
+      \$qemuEnv.NIC_MAC
+    } else {
+      ^cat \$\\"(\$nicDirPath)/address\\" | str trim
+    })
+    \$qemuEnv = \$qemuEnv | upsert 'NIC_IF_INDEX' (if ('NIC_IF_INDEX' in \$qemuEnv) {
+      \$qemuEnv.NIC_IF_INDEX
+    } else {
+      ^cat \$\\"(\$nicDirPath)/ifindex\\" | str trim
+    })
+
+    let sysArch = \$qemuEnv.VM_SYS_ARCH
+    let sysPlat = \$qemuEnv.VM_SYS_PLAT
+
+    if 'VFIO_PCI_DEV_IDS' in \$qemuEnv {
+      for pciDevId in ((\$qemuEnv.VFIO_PCI_DEV_IDS | split row ',') | enumerate) {
+        \$qemuEnv = \$qemuEnv | upsert \$\\"VFIO_PCI_DEV_IDS_(\$pciDevId.index)\\" \$pciDevId.item
+      }
+    }
+
+    if 'qemu' in \$merged {
+      let serviceName = \$\\"qemu-(\$instance)\\"
+      let serviceDirPath = '/etc/systemd/system'
+      let configDirPath = \$\\"/var/lib/qemu/(\$instance)\\"
+
+      let serviceFilePath = (\$serviceDirPath | path join \$\\"(\$serviceName).service\\")
+
+      opPrintMaybeRunCmd sudo mkdir -p \$serviceDirPath
+      opPrintMaybeRunCmd sudo mkdir -p \$configDirPath
+
+      let tmpDirPath = \$\\"(\$qemuEnv.TMP_QEMU_DIR_PATH)/(\$instance)\\"
+      let pidFilePath = (\$tmpDirPath | path join qemu.pid)
+
+      mut serviceLines = [
+        '[Unit]',
+        \$\\"Description=QEMU instance (\$instance)\\",
+        'After=network.target',
+        '',
+        '[Service]',
+        'Type=forking',
+        \$\\"PIDFile=(\$pidFilePath)\\",
+        \$\\"WorkingDirectory=(\$configDirPath)\\",
+        \$\\"ExecStartPre=/usr/bin/mkdir -p (\$tmpDirPath)\\",
+      ]
+
+      let unbindEfiFbScriptFilePath = (\$configDirPath | path join 'unbind-efi-fb.sh')
+      let unbindEfiFbLines = [
+        '#!/usr/bin/bash',
+        \\"checkPath='/sys/bus/platform/drivers/efi-framebuffer/efi-framebuffer.0'\\",
+        'if [ ! -e \\"\$checkPath\\" ]; then exit 0; fi',
+        'for vtcon in /sys/class/vtconsole/vtcon*/bind; do',
+        '  echo 0 > \\"\$vtcon\\"',
+        'done',
+        'echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/unbind',
+      ]
+      # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+      # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+      opPrintMaybeRunCmd \$\\"r##'((\$unbindEfiFbLines | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$unbindEfiFbScriptFilePath '|' ignore
+      opPrintMaybeRunCmd sudo chmod +x \$unbindEfiFbScriptFilePath
+      \$serviceLines = \$serviceLines | append [
+        \$\\"ExecStartPre=(\$unbindEfiFbScriptFilePath)\\",
+        'ExecStartPre=/usr/bin/sleep 2',
+      ]
+
+      if 'VFIO_PCI_DEV_IDS' in \$qemuEnv {
+        let rebindScriptFilePath = (\$configDirPath | path join 'rebind-vfio-pci.sh')
+        let rebindLines = [
+          '#!/usr/bin/bash',
+          \\"driver='vfio-pci'\\",
+          \$\\"for fullPciDevId in (\$qemuEnv.VFIO_PCI_DEV_IDS | split row ',' | each { |id| \$\\"0000:(\$id)\\" } | str join ' '); do\\",
+          '  if [ -e \\"/sys/bus/pci/devices/\$fullPciDevId/driver_override\\" ]; then',
+          '    currentDriver=\$(basename \$(readlink \\"/sys/bus/pci/devices/\$fullPciDevId/driver\\" 2>/dev/null) 2>/dev/null)',
+          '    if [ \\"\$currentDriver\\" != \\"\$driver\\" ]; then',
+          '      echo \\"\$driver\\" > \\"/sys/bus/pci/devices/\$fullPciDevId/driver_override\\"',
+          '      echo \\"\$fullPciDevId\\" > \\"/sys/bus/pci/devices/\$fullPciDevId/driver/unbind\\"',
+          '      echo \\"\$fullPciDevId\\" > \\"/sys/bus/pci/drivers/\$driver/bind\\"',
+          '      echo > \\"/sys/bus/pci/devices/\$fullPciDevId/driver_override\\"',
+          '    fi',
+          '  fi',
+          'done',
+        ]
+        # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+        # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+        opPrintMaybeRunCmd \$\\"r##'((\$rebindLines | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$rebindScriptFilePath '|' ignore
+        opPrintMaybeRunCmd sudo chmod +x \$rebindScriptFilePath
+        \$serviceLines = \$serviceLines | append [
+          \$\\"ExecStartPre=(\$rebindScriptFilePath)\\",
+          'ExecStartPre=/usr/bin/sleep 2',
+        ]
+      }
+
+      if 'swtpm' in \$merged {
+        let swtpmScriptFilePath = (\$configDirPath | path join swtpm.sh)
+        let swtpmArgs = replaceEnv \$qemuEnv (\$merged | get swtpm?.arguments? | default [])
+        let swtpmCmd = \$\\"swtpm(if (\$swtpmArgs | length) > 0 { ' ' + (\$swtpmArgs | str join ' ') } else { '' })\\"
+
+        # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+        # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+        opPrintMaybeRunCmd \$\\"r##'((['#!/usr/bin/bash', ('exec ' + \$swtpmCmd)] | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$swtpmScriptFilePath '|' ignore
+        opPrintMaybeRunCmd sudo chmod +x \$swtpmScriptFilePath
+        \$serviceLines = \$serviceLines | append [
+          \$\\"ExecStartPre=-/usr/bin/pkill --full \\\\\\"^swtpm.*(\$instance)\\\\\\"\\",
+          \$\\"ExecStartPre=-/usr/bin/rm -f (\$tmpDirPath)/tpm.socket\\",
+          \$\\"ExecStartPre=(\$swtpmScriptFilePath)\\",
+          'ExecStartPre=/usr/bin/sleep 2',
+        ]
+      }
+
+      \$serviceLines = \$serviceLines | append \$\\"ExecStartPre=-/usr/bin/rm -f (\$pidFilePath)\\"
+
+      let qemuBlock = \$merged | get qemu?.architecture? | get --optional \$sysArch | default {}
+      let qemuBin = \$\\"(\$cmd)-system-(\$sysArch)\\"
+
+      let qemuCpuFlags = [
+        [cpu flags],
+        [cpu vendor \$cpuVendor flags],
+        [cpu platform \$sysPlat flags],
+        [cpu vendor \$cpuVendor platform \$sysPlat flags],
+      ] | each {
+        |s| let p = (intoCellPath ...\$s)
+        if (\$qemuBlock | get \$p | is-not-empty) {
+          \$qemuBlock | get \$p
+        } else {
+          []
+        }
+      } | flatten
+
+      \$qemuEnv = \$qemuEnv | upsert 'VM_CPU_FLAGS' (
+        if (\$qemuCpuFlags | length) > 0 {
+          \$\\",(\$qemuCpuFlags | str join ',')\\"
+        } else {
+          ''
+        }
+      )
+
+      let qemuScriptFilePath = (\$configDirPath | path join qemu.sh)
+      let qemuArgs = replaceEnv \$qemuEnv (\$merged | get qemu?.arguments? | default [])
+      let cpusCount = ((\$qemuEnv.VM_CPU_SOCKETS | into int) * (\$qemuEnv.VM_CPU_CORES | into int) * (\$qemuEnv.VM_CPU_THREADS | into int))
+      let cpusMax = \$cpusCount - 1
+      let qemuCmd = \$\\"(\$qemuBin)(if (\$qemuArgs | length) > 0 { ' ' + (\$qemuArgs | str join ' ') } else { '' })\\"
+      # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+      # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+      opPrintMaybeRunCmd \$\\"r##'((['#!/usr/bin/bash', ('exec ' + \$qemuCmd)] | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$qemuScriptFilePath '|' ignore
+      opPrintMaybeRunCmd sudo chmod +x \$qemuScriptFilePath
+      \$serviceLines = \$serviceLines | append \$\\"ExecStart=(\$qemuScriptFilePath)\\"
+
+      if (\$qemuBlock | get cpu?.pin? | default false) {
+        let pinScriptFilePath = (\$configDirPath | path join qemu-cpu-pin.sh)
+        let pinLines = [
+          '#!/usr/bin/bash',
+          (\\"pid=\$(cat \\" + \$pidFilePath + \\")\\"),
+          'if [ -z \\"\$pid\\" ]; then exit 0; fi',
+          (\\"for i in \$(seq 0 \\" + (\$cpusMax | into string) + \\"); do\\"),
+          \\"  spid=\$(ps --pid \$pid -T -o ucmd,spid | grep \\\\\\"CPU \$i/KVM\\\\\\" | awk '{print \$NF}')\\",
+          '  if [ -n \\"\$spid\\" ]; then',
+          '    taskset --pid --cpu-list \$i \$spid',
+          '  fi',
+          'done',
+        ]
+        # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+        # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+        opPrintMaybeRunCmd \$\\"r##'((\$pinLines | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$pinScriptFilePath '|' ignore
+        opPrintMaybeRunCmd sudo chmod +x \$pinScriptFilePath
+        \$serviceLines = \$serviceLines | append [
+          'ExecStartPost=/usr/bin/sleep 2',
+          \$\\"ExecStartPost=(\$pinScriptFilePath)\\",
+        ]
+      }
+
+      \$serviceLines = \$serviceLines | append [
+        'Restart=on-failure',
+        '',
+        '[Install]',
+        'WantedBy=default.target',
+      ]
+      opPrintMaybeRunCmd \$\\"r#'((\$serviceLines | str join \\"\\\\n\\") + \\"\\\\n\\")'#\\" '|' sudo tee \$serviceFilePath '|' ignore
+      opPrintMaybeRunCmd sudo systemctl daemon-reload
+      opPrintMaybeRunCmd sudo systemctl enable --now \$serviceName
+    }
+  }
+
+  def doRem [cmd, instance] {
+    let serviceName = \$\\"qemu-(\$instance)\\"
+    let serviceDirPath = '/etc/systemd/system'
+    let serviceFilePath = (\$serviceDirPath | path join \$\\"(\$serviceName).service\\")
+    let configDirPath = \$\\"/var/lib/qemu/(\$instance)\\"
+
+    let cleanedService = \$serviceFilePath | path exists
+    if \$cleanedService {
+      opPrintMaybeRunCmd sudo systemctl disable --now \$serviceName
+      opPrintMaybeRunCmd sudo rm -f \$serviceFilePath
+      opPrintMaybeRunCmd sudo systemctl daemon-reload
+    }
+
+    let cleanedConfig = \$configDirPath | path exists
+    if \$cleanedConfig {
+      opPrintMaybeRunCmd sudo rm -rf \$configDirPath
+    }
+
+    if not (\$cleanedService or \$cleanedConfig) {
+      opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already removed\\"
+    }
+  }
+
+  match \$env.VIRT_OP {
+    add => {
+      for instance in \$env.VIRT_INSTANCES {
+        if (^pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" | complete | get stdout | is-not-empty) {
+          opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
+          continue
+        }
+
+        doAdd \$cmd \$instance
+      }
+    }
+    list => {
+      let serviceDirPath = '/etc/systemd/system'
+      for instance in (if (\$serviceDirPath | path exists) {
+        ls \$serviceDirPath
+          | where name =~ '/qemu-[^/]+\\\\.service\$'
+          | get name
+          | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
+      } else { [] }) {
+        try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" }
+        try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" }
+        try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" }
+      }
+    }
+    rem => {
+      let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
+        \$env.VIRT_INSTANCES
+      } else {
+        let serviceDirPath = '/etc/systemd/system'
+        if (\$serviceDirPath | path exists) {
+          ls \$serviceDirPath
+            | where name =~ '/qemu-[^/]+\\\\.service\$'
+            | get name
+            | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
+        } else {
+          []
+        }
+      }
+      for instance in \$instances {
+        doRem \$cmd \$instance
+      }
+    }
+    sync => {
+      for instance in \$env.VIRT_INSTANCES {
+        if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
+          continue
+        }
+
+        opPrintMaybeRunCmd sudo systemctl stop \$\\"qemu-(\$instance)\\"
+
+        doAdd \$cmd \$instance
+      }
+    }
+  }
+}
+
+
+\$env.VIRT_PODMAN_NETWORKS = r#'{\\"net0\\":{\\"driver\\":\\"bridge\\",\\"interface\\":\\"br0\\",\\"ipam\\":\\"dhcp\\",\\"options\\":{\\"mode\\":\\"unmanaged\\"}}}'#
+
+\$env.VIRT_MANAGER = r#'podman'#
+
+\$env.VIRT_INSTANCES = [ r#'web/app'# ]
+
+virtPodman
+
+hide-env VIRT_MANAGER
+"
+`;
+
+snapshot[`nu / linux / add (host qemu) — wide 1`] = `
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/add/qemu?sysOsPlat=linux&sysHost=host'#
+
+def opPrint --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  \$\\"(\$args | flatten | str join ' ')\\" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+    return
+  }
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  let args = \$args | flatten
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
+  if (\$args | length) > 1 {
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunSilentCmd ...\$args
+  }
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opMaybeRunCmd ...\$args
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
+    exit 1
+  }
+}
+
+
+\$env.SYS_HOST = r#'host'#
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/virt/add/qemu'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=host'#
+
+\$env.VIRT_ADD_PARTS = r#'qemu'#
+
+\$env.VIRT_OP = r#'add'#
+
+def virtDeepMerge [base, override] {
+  mut result = \$base
+  for kv in (\$override | transpose key value) {
+    if (\$kv.key in \$result) {
+      let baseVal = \$result | get \$kv.key
+      let baseDesc = (\$baseVal | describe)
+      let overrideDesc = (\$kv.value | describe)
+      if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
+        \$result = \$result | upsert \$kv.key (virtDeepMerge \$baseVal \$kv.value)
+      } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
+        \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
+      } else {
+        \$result = \$result | upsert \$kv.key \$kv.value
+      }
+    } else {
+      \$result = \$result | upsert \$kv.key \$kv.value
+    }
+  }
+  \$result
+}
+
+def virtPrompt [label: string] {
+  mut yn = ''
+  if YES in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$\\"(\$label) [y,[n]]: \\"
+  }
+  \$yn != n
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  match \$env.VIRT_OP {
+    add => {
+      for instance in \$env.VIRT_INSTANCES {
+        if (^sudo \$cmd container ls | complete | get stdout | find --ignore-case \$instance | is-not-empty) {
+          continue
+        }
+
+        let yaml = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
+
+        for src in (\$yaml
+          | from yaml
+          | get services? | default {}
+          | values
+          | each { |svc|
+              \$svc | get volumes? | default []
+              | each { |v|
+                  if (\$v | describe) == string {
+                    let host = \$v | split row ':' | first
+                    if (\$host | str starts-with '/') {
+                      \$host
+                    } else {
+                      null
+                    }
+                  } else if (\$v | get type? | default '') == bind {
+                    \$v.source
+                  } else {
+                    null
+                  }
+                }
+              | compact
+            }
+          | flatten) {
+          opPrintMaybeRunCmd sudo mkdir -p \$src
+        }
+
+        opPrintMaybeRunCmd \$\\"r#'(\$yaml)'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
+      }
+    }
+    list => {
+      let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
+      let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
+      let instances = if (\$filters | is-not-empty) {
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+      } else {
+        \$allInstances
+      }
+      let nameFilters = \$instances | each { |i| ['--filter', \$\\"name=(\$i)\\"] } | flatten
+      opPrintRunCmd sudo \$cmd container ls --all --format '\\"table {{.Names}}\\\\\\\\t{{.Image}}\\\\\\\\t{{.Ports}}\\\\\\\\t{{.State}}\\\\\\\\t{{.Status}}\\"' --no-trunc ...\$nameFilters
+    }
+    rem => {
+      let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
+        \$env.VIRT_INSTANCES
+      } else {
+        ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
+      }
+      for instance in \$instances {
+        opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - down
+      }
+    }
+    sync => {
+      for instance in \$env.VIRT_INSTANCES {
+        opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
+      }
+    }
+    tidy => {
+      opPrintMaybeRunCmd sudo \$cmd system prune --all
+    }
+  }
+}
+
+
+def virtLxc [] {
+  let cmd = 'lxc'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
+    return
+  }
+  if \$env.VIRT_OP == tidy {
+    return
+  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+
+  def flattenLxcConfig [cfg, prefix = ''] {
+    mut lines = []
+    for kv in (\$cfg | transpose key value) {
+      let key = if \$prefix == '' { \$kv.key } else { \$\\"(\$prefix).(\$kv.key)\\" }
+      let desc = (\$kv.value | describe)
+      if (\$desc | str starts-with 'record') {
+        \$lines = \$lines | append (flattenLxcConfig \$kv.value \$key)
+      } else if (\$desc | str starts-with 'list') {
+        for item in \$kv.value {
+          \$lines = \$lines | append \$\\"lxc.(\$key) = (\$item)\\"
+        }
+      } else {
+        \$lines = \$lines | append \$\\"lxc.(\$key) = (\$kv.value)\\"
+      }
+    }
+    \$lines
+  }
+
+  def replaceEnv [localEnv, value] {
+    mut v = \$value
+    if (\$v | str contains '{') {
+      for e in (\$localEnv | items { |k, val| [\$k, \$val] }) {
+        \$v = \$v | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
+      }
+    }
+    \$v
+  }
+
+  def doAdd [cmd, instance] {
+    let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
+    let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
+
+    mut lxcEnv = {}
+
+    for e in (\$merged | get environment? | default [] | each { split row '=' }) {
+      \$lxcEnv = \$lxcEnv | upsert \$e.0 \$e.1
+    }
+
+    \$lxcEnv = \$lxcEnv | upsert 'instance' \$instance
+
+    let lxcDirPath = \$lxcEnv.VIRT_LXC_DIR_PATH
+    let rootfsDirPath = \$\\"(\$lxcDirPath)/(\$instance)/rootfs\\"
+    \$lxcEnv = \$lxcEnv | upsert 'rootfs' \$rootfsDirPath
+    let lxcEnv = \$lxcEnv
+
+    let net = \$merged | get lxc?.network? | default {}
+    if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
+      opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    for mnt in (\$merged | get lxc?.mounts? | default []) {
+      opPrintMaybeRunCmd sudo mkdir -p (replaceEnv \$lxcEnv \$mnt.source)
+    }
+
+    opPrintMaybeRunCmd sudo mkdir -p \$rootfsDirPath
+
+    let rootfsReady = (^sudo test -d \$\\"(\$rootfsDirPath)/usr\\" | complete).exit_code == 0
+    if not \$rootfsReady {
+      let template = \$merged | get lxc?.create?.template?
+      let templateName = (\$template | columns | get 0?) | default 'download'
+      opPrintMaybeRunCmd sudo lxc-create --name \$instance --lxcpath \$lxcDirPath --template \$templateName -- ...(
+        (if (\$templateName in (\$template | columns)) { \$template | get \$templateName } else { {} })
+        | transpose key value
+        | each { |kv| [\$\\"--(\$kv.key)\\", \$kv.value] }
+        | flatten
+      )
+      opPrintMaybeRunCmd sudo rm -f \$\\"(\$lxcDirPath)/(\$instance)/config\\"
+    }
+
+    let autostart = \$merged | get lxc?.autostart? | default false
+
+    let configLines = [
+      [\$\\"lxc.uts.name = (\$instance)\\", \$\\"lxc.rootfs.path = dir:(\$rootfsDirPath)\\"],
+      (if \$autostart { ['lxc.start.auto = 1'] } else { [] }),
+      (flattenLxcConfig (\$merged | get lxc?.config? | default {}) | each { |l| replaceEnv \$lxcEnv \$l }),
+      (if (\$net | is-not-empty) { [
+        [\$\\"lxc.net.0.type = (\$net.type)\\", \$\\"lxc.net.0.link = (\$net.link)\\", \$\\"lxc.net.0.name = (\$net.name)\\"],
+        (if 'hwaddr' in \$net { [\$\\"lxc.net.0.hwaddr = (\$net.hwaddr)\\"] } else { [] }),
+        (if \$net.type == veth { [\$\\"lxc.net.0.veth.pair = veth-(\$instance)\\"] } else if \$net.type == macvlan { [\$\\"lxc.net.0.macvlan.mode = (\$net.mode? | default bridge)\\"] } else { [] }),
+        ['lxc.net.0.flags = up'],
+      ] | flatten } else { [] }),
+      (\$merged | get lxc?.mounts? | default [] | each { |mnt| \$\\"lxc.mount.entry = (replaceEnv \$lxcEnv \$mnt.source) ((replaceEnv \$lxcEnv \$mnt.target) | str trim --left --char '/') none bind,create=dir 0 0\\" }),
+    ] | flatten
+
+    opPrintMaybeRunCmd sudo mkdir -p \$\\"/var/lib/lxc/(\$instance)\\"
+
+    opPrintMaybeRunCmd \$\\"r#'((\$configLines | str join \\"\\\\n\\") + \\"\\\\n\\")'#\\" '|' sudo tee \$\\"/var/lib/lxc/(\$instance)/config\\" '|' ignore
+
+    if \$autostart {
+      opPrintMaybeRunCmd sudo systemctl enable lxc
+    }
+
+    opPrintMaybeRunCmd sudo \$\\"(\$cmd)-start\\" --name \$instance
+  }
+
+  def doRem [cmd, instance] {
+    let wasRunning = ^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row ' ' | str trim | where { |l| \$l | is-not-empty } | any { |l| \$l == \$instance }
+    if \$wasRunning {
+      opPrintMaybeRunCmd sudo \$\\"(\$cmd)-stop\\" --name \$instance
+    }
+
+    let hasConfig = \$\\"/var/lib/lxc/(\$instance)\\" | path exists
+    if \$hasConfig {
+      opPrintMaybeRunCmd sudo rm -rf \$\\"/var/lib/lxc/(\$instance)\\"
+    }
+
+    if not (\$wasRunning or \$hasConfig) {
+      opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already removed\\"
+    }
+  }
+
+  match \$env.VIRT_OP {
+    add => {
+      for instance in \$env.VIRT_INSTANCES {
+        if (^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row ' ' | str trim | where { |l| \$l | is-not-empty } | any { |l| \$l == \$instance }) {
+          opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
+          continue
+        }
+
+        doAdd \$cmd \$instance
+      }
+    }
+    list => {
+      let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
+      let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split row ' ' | str trim | where { is-not-empty }
+      let instances = if (\$filters | is-not-empty) {
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+      } else {
+        \$allInstances
+      }
+      for instance in \$instances {
+        opPrintRunCmd sudo \$\\"(\$cmd)-ls\\" --fancy --fancy-format '\\"NAME,IPV4,IPV6,STATE,AUTOSTART\\"' -- \$instance
+      }
+    }
+    rem => {
+      let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
+        \$env.VIRT_INSTANCES
+      } else {
+        let lxcDirPath = '/var/lib/lxc'
+        if (\$lxcDirPath | path exists) {
+          ls \$lxcDirPath | where type == dir | get name | each { |f| \$f | path basename }
+        } else {
+          []
+        }
+      }
+      for instance in \$instances {
+        doRem \$cmd \$instance
+      }
+    }
+    sync => {
+      for instance in \$env.VIRT_INSTANCES {
+        if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
+          continue
+        }
+
+        if (^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row ' ' | str trim | where { |l| \$l | is-not-empty } | any { |l| \$l == \$instance }) {
+          opPrintMaybeRunCmd sudo \$\\"(\$cmd)-stop\\" --name \$instance
+        }
+
+        doAdd \$cmd \$instance
+      }
+    }
+  }
+}
+
+
+def virtPodman [] {
+  let cmd = 'podman'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+
+  def splitYamlDocs [] {
+    \$in
+      | str replace --regex '^---\\\\n' ''
+      | split row \\"\\\\n---\\\\n\\"
+      | each { str trim }
+      | where { is-not-empty }
+      | each { from yaml }
+  }
+
+  def processYaml [yamlRaw, host, pod, instance] {
+    mut result = []
+    for doc in (\$yamlRaw | str replace --all '{host}' \$host | str replace --all '{pod}' \$pod | str replace --all '{instance}' \$instance | splitYamlDocs) {
+      if (\$doc | get kind? | default '') == Build {
+        # custom doc, not passed to podman
+      } else {
+        let doc = if (\$doc | get apiVersion? | is-empty) { \$doc | insert apiVersion 'v1' } else { \$doc }
+        \$result = \$result | append (\$doc | to yaml)
+      }
+    }
+
+    \$result | str join \\"---\\\\n\\"
+  }
+
+  def buildImage [yamlRaw, host, pod, instance, alreadyBuilt: list<string>] {
+    let buildDocs = \$yamlRaw
+      | str replace --all '{host}' \$host
+      | str replace --all '{pod}' \$pod
+      | str replace --all '{instance}' \$instance
+      | splitYamlDocs
+      | where { |d| (\$d | get kind? | default '') == Build }
+    if (\$buildDocs | is-empty) {
+      return \$alreadyBuilt
+    }
+
+    mut built = \$alreadyBuilt
+    for buildInfo in (\$buildDocs | first | get images) {
+      let image = \$buildInfo.name
+      if \$image in \$built { continue }
+
+      let contextDirPath = \$buildInfo.buildContextPath
+      let containerfileUrl = \$\\"(\$env.REQ_URL_CFG)(\$buildInfo.filePath)\\"
+
+      let containerfileFilePath = (\$contextDirPath | path join (\$buildInfo.filePath | path basename))
+      let containerfileContent = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$containerfileUrl)'#\\"
+
+      opPrintMaybeRunCmd sudo mkdir -p \$contextDirPath
+      opPrintMaybeRunCmd \$\\"r#'(\$containerfileContent)'#\\" '|' sudo tee \$containerfileFilePath '|' ignore
+      opPrintMaybeRunCmd sudo podman build --file \$containerfileFilePath --tag \$image \$contextDirPath
+
+      \$built = \$built | append \$image
+    }
+    \$built
+  }
+
+  def upsertByName [existing, incoming] {
+    let incomingNames = \$incoming | each { |x| \$x.name }
+    (\$existing | where { |x| not (\$incomingNames | any { |n| \$n == \$x.name }) }) | append \$incoming
+  }
+
+  def readKubeNetwork [kubeFilePath: string] {
+    if not (\$kubeFilePath | path exists) { return '' }
+    let networkLines = open --raw \$kubeFilePath | lines | where { \$in | str starts-with 'Network=' }
+    if (\$networkLines | is-empty) { return '' }
+    \$networkLines | first | str replace 'Network=' '' | str trim
+  }
+
+  def removeNetworkIfUnused [network: string, pod: string, managedNetworks: record] {
+    if (\$network | is-empty) { return }
+    if (\$managedNetworks | get --optional \$network) == null { return }
+    let kubeDirPath = '/etc/containers/systemd'
+    if not (\$kubeDirPath | path exists) {
+      opPrintMaybeRunCmd sudo podman network rm \$network
+      return
+    }
+    if not (ls \$kubeDirPath
+      | where name =~ '\\\\.kube\$'
+      | where { |f| not (\$f.name | str ends-with \$\\"(\$pod).kube\\") }
+      | each { |f| open --raw \$f.name }
+      | str join \\"\\\\n\\"
+      | str contains \$\\"Network=(\$network)\\") {
+      opPrintMaybeRunCmd sudo podman network rm \$network
+    }
+  }
+
+  def doAdd [pod, podInstances, cmd] {
+    let kubeDirPath = '/etc/containers/systemd'
+    let networks = \$env.VIRT_PODMAN_NETWORKS | from json
+    let yamlFilePath = \$\\"(\$kubeDirPath)/(\$pod).yaml\\"
+    let kubeFilePath = \$\\"(\$kubeDirPath)/(\$pod).kube\\"
+
+    # layer 2: pod.yaml — base pod metadata (hostname, network, mac, annotations)
+    let configPodRaw = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/podman/(\$pod).yaml'#\\"
+    mut builtImages = buildImage \$configPodRaw \$env.SYS_HOST \$pod '' []
+    mut podDoc = \$configPodRaw
+      | str replace --all '{host}' \$env.SYS_HOST
+      | str replace --all '{pod}' \$pod
+      | splitYamlDocs
+      | where { |d| (\$d | get kind? | default '') == Pod }
+      | first
+
+    mut configMaps = []
+
+    # layer 3: instance yamls — overlaid onto pod base
+    for instancePath in \$podInstances {
+      let instance = (\$instancePath | split row '/') | last
+      let yamlRaw = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/podman/(\$instancePath).yaml'#\\"
+
+      \$builtImages = buildImage \$yamlRaw \$env.SYS_HOST \$pod \$instance \$builtImages
+
+      let instanceDocs = processYaml \$yamlRaw \$env.SYS_HOST \$pod \$instance | splitYamlDocs
+      let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == Pod } | first
+
+      \$podDoc = \$podDoc
+        | upsert metadata.annotations (virtDeepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
+        | upsert spec.containers (upsertByName (\$podDoc | get spec.containers? | default []) (\$instancePodDoc | get spec.containers? | default []))
+        | upsert spec.volumes (upsertByName (\$podDoc | get spec.volumes? | default []) (\$instancePodDoc | get spec.volumes? | default []))
+
+      let instanceHostname = \$instancePodDoc | get spec.hostname?
+      if \$instanceHostname != null {
+        \$podDoc = \$podDoc | upsert spec.hostname \$instanceHostname
+      }
+
+      for cm in (\$instanceDocs | where { |d| (\$d | get kind? | default '') == ConfigMap }) {
+        \$configMaps = (\$configMaps | where { |m| \$m.metadata.name != \$cm.metadata.name }) | append \$cm
+      }
+    }
+
+    let annotations = \$podDoc | get metadata.annotations? | default {}
+    let network = \$annotations | get 'io.podman.kube.network'? | default ''
+    let mac = \$annotations | get 'io.podman.kube.podmanargs.mac-address'? | default ''
+    let containers = \$podDoc | get spec.containers? | default []
+    let volumes = \$podDoc | get spec.volumes? | default []
+    let hostname = \$podDoc | get spec.hostname? | default \$pod
+
+    let networkDef = \$networks | get --optional \$network
+    if \$networkDef != null {
+      if not (^sudo podman network ls --format '{{.Name}}' | lines | any { \$in == \$network }) {
+        let netArgs = [
+          ['network', 'create'],
+          (if (\$networkDef | get driver? | is-not-empty) { ['--driver', \$networkDef.driver] } else { [] }),
+          (if (\$networkDef | get interface? | is-not-empty) { ['--interface-name', \$networkDef.interface] } else { [] }),
+          (if (\$networkDef | get ipam? | is-not-empty) { ['--ipam-driver', \$networkDef.ipam] } else { [] }),
+          (\$networkDef | get options? | default {} | transpose key value | each { |opt| ['--opt', \$\\"(\$opt.key)=(\$opt.value)\\"] } | flatten),
+          [\$network],
+        ] | flatten
+        opPrintMaybeRunCmd sudo podman ...\$netArgs
+      }
+    }
+
+    for container in \$containers {
+      if not (\$container.image | str starts-with 'localhost/') {
+        opPrintMaybeRunCmd sudo \$cmd pull \$container.image
+      }
+    }
+
+    let allDocs = ([({
+      apiVersion: 'v1',
+      kind: 'Pod',
+      metadata: { name: \$pod, annotations: \$annotations },
+      spec: { hostname: \$hostname, containers: \$containers, volumes: \$volumes },
+    } | to yaml)] | append (\$configMaps | each { |cm| \$cm | to yaml })) | str join \\"---\\\\n\\"
+
+    let kubeLines = [
+      ['[Unit]', \$\\"Description=(\$pod) pod\\", '', '[Kube]', \$\\"Yaml=(\$pod).yaml\\", \$\\"Network=(\$network)\\"],
+      (if (\$mac | is-not-empty) { [\$\\"PodmanArgs=--mac-address (\$mac)\\"] } else { [] }),
+    ] | flatten
+
+    let isNew = not (\$kubeFilePath | path exists)
+    opPrintMaybeRunCmd sudo mkdir -p \$kubeDirPath
+    opPrintMaybeRunCmd \$\\"r#'(\$allDocs)'#\\" '|' sudo tee \$yamlFilePath '|' ignore
+    opPrintMaybeRunCmd \$\\"r#'((\$kubeLines | append ['', '[Install]', 'WantedBy=default.target'] | str join \\"\\\\n\\") + \\"\\\\n\\")'#\\" '|' sudo tee \$kubeFilePath '|' ignore
+    opPrintMaybeRunCmd sudo systemctl daemon-reload
+    if \$isNew {
+      opPrintMaybeRunCmd sudo systemctl start \$\\"(\$pod).service\\"
+    } else {
+      opPrintMaybeRunCmd sudo systemctl restart \$\\"(\$pod).service\\"
+    }
+  }
+
+  match \$env.VIRT_OP {
+    add => {
+      let pods = \$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq
+      for pod in \$pods {
+        let podInstances = \$env.VIRT_INSTANCES | where { |p| ((\$p | split row '/') | first) == \$pod }
+
+        if (^sudo systemctl is-active \$\\"(\$pod).service\\" | complete | get stdout | str trim) == active {
+          opPrintWarn \$\\"\`(\$cmd)\` pod \`(\$pod)\` is already added\\"
+          continue
+        }
+
+        doAdd \$pod \$podInstances \$cmd
+      }
+    }
+    list => {
+      let kubeDirPath = '/etc/containers/systemd'
+      for pod in (if (\$kubeDirPath | path exists) {
+        ls \$kubeDirPath
+          | where name =~ '\\\\.kube\$'
+          | get name
+          | each { |f| \$f | path basename | str replace '.kube' '' }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
+      } else { [] }) {
+        try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" }
+        opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
+        opPrintRunCmd sudo \$cmd container list --filter \$\\"pod=(\$pod)\\" --format '\\"table {{.PodName}}\\\\t{{.Names}}\\\\t{{.Image}}\\\\t{{.Ports}}\\\\t{{.State}}\\\\t{{.Status}}\\"'
+      }
+    }
+    rem => {
+      let managedNetworks = \$env.VIRT_PODMAN_NETWORKS | from json
+      let kubeDirPath = '/etc/containers/systemd'
+
+      let pods = if (\$env.VIRT_INSTANCES | is-not-empty) {
+        \$env.VIRT_INSTANCES | each { (\$in | split row '/') | first } | uniq
+      } else {
+        if (\$kubeDirPath | path exists) {
+          ls \$kubeDirPath
+            | where name =~ '\\\\.kube\$'
+            | get name
+            | each { |f| \$f | path basename | str replace '.kube' '' }
+        } else {
+          []
+        }
+      }
+      for pod in \$pods {
+        let yamlFilePath = \$\\"(\$kubeDirPath)/(\$pod).yaml\\"
+        let kubeFilePath = \$\\"(\$kubeDirPath)/(\$pod).kube\\"
+        let network = readKubeNetwork \$kubeFilePath
+        opPrintMaybeRunCmd sudo systemctl stop \$\\"(\$pod).service\\"
+        opPrintMaybeRunCmd sudo rm -f \$yamlFilePath \$kubeFilePath
+        opPrintMaybeRunCmd sudo systemctl daemon-reload
+        removeNetworkIfUnused \$network \$pod \$managedNetworks
+      }
+    }
+    sync => {
+      let kubeDirPath = '/etc/containers/systemd'
+      for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
+        if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
+          continue
+        }
+
+        opPrintMaybeRunCmd sudo systemctl stop \$\\"(\$pod).service\\"
+
+        let podInstances = \$env.VIRT_INSTANCES | where { |p| ((\$p | split row '/') | first) == \$pod }
+        doAdd \$pod \$podInstances \$cmd
+      }
+    }
+    tidy => {
+      opPrintMaybeRunCmd sudo \$cmd system prune --all
+    }
+  }
+}
+
+
+def virtQemu [] {
+  let cmd = 'qemu'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
+    return
+  }
+  if \$env.VIRT_OP == tidy {
+    return
+  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+
+  def replaceEnv [localEnv, lines] {
+    let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
+
+    mut linesX = []
+    for l in \$lines {
+      mut l = \$l
+      if (\$l | str contains '{') {
+        for e in \$localEnvItems {
+          \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
+        }
+      }
+      \$linesX = \$linesX | append \$l
+    }
+
+    return \$linesX
+  }
+
+  def intoCellPath [...items] {
+    \$items | each {
+      |i| {value: \$i, optional: true}
+    } | into cell-path
+  }
+
+  def doAdd [cmd, instance] {
+    let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
+    let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
+
+    mut qemuEnv = {}
+
+    for e in (\$merged | get environment? | default [] | each { split row '=' }) {
+      \$qemuEnv = \$qemuEnv | upsert \$e.0 \$e.1
+    }
+
+    \$qemuEnv = \$qemuEnv | upsert 'instance' \$instance
+
+    let cpuStat = ^lscpu
+    \$qemuEnv = \$qemuEnv | upsert 'VM_CPU_SOCKETS' (\$cpuStat | find --ignore-case 'socket(s)' | split row ':' | last | str trim | ansi strip)
+    \$qemuEnv = \$qemuEnv | upsert 'VM_CPU_CORES' (\$cpuStat | find --ignore-case 'core(s)' | split row ':' | last | str trim | ansi strip)
+    \$qemuEnv = \$qemuEnv | upsert 'VM_CPU_THREADS' (\$cpuStat | find --ignore-case 'thread(s)' | split row ':' | last | str trim | ansi strip)
+
+    let cpuVendor = if ((^cat '/proc/cpuinfo' | find --ignore-case 'vendor_id' | last | split row ':' | last | str downcase | str trim | ansi strip) | str contains 'amd') { 'amd' } else { 'intel' }
+    \$qemuEnv = \$qemuEnv | upsert 'VM_CPU_VENDOR' (\$cpuVendor | str trim)
+
+    let nicDirPath = \$\\"/sys/class/net/(\$qemuEnv.NIC)\\"
+    if not (\$nicDirPath | path exists) {
+      opPrintWarn \$\\"cannot add \`(\$instance)\`: NIC '(\$qemuEnv.NIC)' does not exist\\"
+      return
+    }
+    \$qemuEnv = \$qemuEnv | upsert 'NIC_MAC' (if ('NIC_MAC' in \$qemuEnv) {
+      \$qemuEnv.NIC_MAC
+    } else {
+      ^cat \$\\"(\$nicDirPath)/address\\" | str trim
+    })
+    \$qemuEnv = \$qemuEnv | upsert 'NIC_IF_INDEX' (if ('NIC_IF_INDEX' in \$qemuEnv) {
+      \$qemuEnv.NIC_IF_INDEX
+    } else {
+      ^cat \$\\"(\$nicDirPath)/ifindex\\" | str trim
+    })
+
+    let sysArch = \$qemuEnv.VM_SYS_ARCH
+    let sysPlat = \$qemuEnv.VM_SYS_PLAT
+
+    if 'VFIO_PCI_DEV_IDS' in \$qemuEnv {
+      for pciDevId in ((\$qemuEnv.VFIO_PCI_DEV_IDS | split row ',') | enumerate) {
+        \$qemuEnv = \$qemuEnv | upsert \$\\"VFIO_PCI_DEV_IDS_(\$pciDevId.index)\\" \$pciDevId.item
+      }
+    }
+
+    if 'qemu' in \$merged {
+      let serviceName = \$\\"qemu-(\$instance)\\"
+      let serviceDirPath = '/etc/systemd/system'
+      let configDirPath = \$\\"/var/lib/qemu/(\$instance)\\"
+
+      let serviceFilePath = (\$serviceDirPath | path join \$\\"(\$serviceName).service\\")
+
+      opPrintMaybeRunCmd sudo mkdir -p \$serviceDirPath
+      opPrintMaybeRunCmd sudo mkdir -p \$configDirPath
+
+      let tmpDirPath = \$\\"(\$qemuEnv.TMP_QEMU_DIR_PATH)/(\$instance)\\"
+      let pidFilePath = (\$tmpDirPath | path join qemu.pid)
+
+      mut serviceLines = [
+        '[Unit]',
+        \$\\"Description=QEMU instance (\$instance)\\",
+        'After=network.target',
+        '',
+        '[Service]',
+        'Type=forking',
+        \$\\"PIDFile=(\$pidFilePath)\\",
+        \$\\"WorkingDirectory=(\$configDirPath)\\",
+        \$\\"ExecStartPre=/usr/bin/mkdir -p (\$tmpDirPath)\\",
+      ]
+
+      let unbindEfiFbScriptFilePath = (\$configDirPath | path join 'unbind-efi-fb.sh')
+      let unbindEfiFbLines = [
+        '#!/usr/bin/bash',
+        \\"checkPath='/sys/bus/platform/drivers/efi-framebuffer/efi-framebuffer.0'\\",
+        'if [ ! -e \\"\$checkPath\\" ]; then exit 0; fi',
+        'for vtcon in /sys/class/vtconsole/vtcon*/bind; do',
+        '  echo 0 > \\"\$vtcon\\"',
+        'done',
+        'echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/unbind',
+      ]
+      # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+      # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+      opPrintMaybeRunCmd \$\\"r##'((\$unbindEfiFbLines | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$unbindEfiFbScriptFilePath '|' ignore
+      opPrintMaybeRunCmd sudo chmod +x \$unbindEfiFbScriptFilePath
+      \$serviceLines = \$serviceLines | append [
+        \$\\"ExecStartPre=(\$unbindEfiFbScriptFilePath)\\",
+        'ExecStartPre=/usr/bin/sleep 2',
+      ]
+
+      if 'VFIO_PCI_DEV_IDS' in \$qemuEnv {
+        let rebindScriptFilePath = (\$configDirPath | path join 'rebind-vfio-pci.sh')
+        let rebindLines = [
+          '#!/usr/bin/bash',
+          \\"driver='vfio-pci'\\",
+          \$\\"for fullPciDevId in (\$qemuEnv.VFIO_PCI_DEV_IDS | split row ',' | each { |id| \$\\"0000:(\$id)\\" } | str join ' '); do\\",
+          '  if [ -e \\"/sys/bus/pci/devices/\$fullPciDevId/driver_override\\" ]; then',
+          '    currentDriver=\$(basename \$(readlink \\"/sys/bus/pci/devices/\$fullPciDevId/driver\\" 2>/dev/null) 2>/dev/null)',
+          '    if [ \\"\$currentDriver\\" != \\"\$driver\\" ]; then',
+          '      echo \\"\$driver\\" > \\"/sys/bus/pci/devices/\$fullPciDevId/driver_override\\"',
+          '      echo \\"\$fullPciDevId\\" > \\"/sys/bus/pci/devices/\$fullPciDevId/driver/unbind\\"',
+          '      echo \\"\$fullPciDevId\\" > \\"/sys/bus/pci/drivers/\$driver/bind\\"',
+          '      echo > \\"/sys/bus/pci/devices/\$fullPciDevId/driver_override\\"',
+          '    fi',
+          '  fi',
+          'done',
+        ]
+        # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+        # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+        opPrintMaybeRunCmd \$\\"r##'((\$rebindLines | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$rebindScriptFilePath '|' ignore
+        opPrintMaybeRunCmd sudo chmod +x \$rebindScriptFilePath
+        \$serviceLines = \$serviceLines | append [
+          \$\\"ExecStartPre=(\$rebindScriptFilePath)\\",
+          'ExecStartPre=/usr/bin/sleep 2',
+        ]
+      }
+
+      if 'swtpm' in \$merged {
+        let swtpmScriptFilePath = (\$configDirPath | path join swtpm.sh)
+        let swtpmArgs = replaceEnv \$qemuEnv (\$merged | get swtpm?.arguments? | default [])
+        let swtpmCmd = \$\\"swtpm(if (\$swtpmArgs | length) > 0 { ' ' + (\$swtpmArgs | str join ' ') } else { '' })\\"
+
+        # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+        # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+        opPrintMaybeRunCmd \$\\"r##'((['#!/usr/bin/bash', ('exec ' + \$swtpmCmd)] | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$swtpmScriptFilePath '|' ignore
+        opPrintMaybeRunCmd sudo chmod +x \$swtpmScriptFilePath
+        \$serviceLines = \$serviceLines | append [
+          \$\\"ExecStartPre=-/usr/bin/pkill --full \\\\\\"^swtpm.*(\$instance)\\\\\\"\\",
+          \$\\"ExecStartPre=-/usr/bin/rm -f (\$tmpDirPath)/tpm.socket\\",
+          \$\\"ExecStartPre=(\$swtpmScriptFilePath)\\",
+          'ExecStartPre=/usr/bin/sleep 2',
+        ]
+      }
+
+      \$serviceLines = \$serviceLines | append \$\\"ExecStartPre=-/usr/bin/rm -f (\$pidFilePath)\\"
+
+      let qemuBlock = \$merged | get qemu?.architecture? | get --optional \$sysArch | default {}
+      let qemuBin = \$\\"(\$cmd)-system-(\$sysArch)\\"
+
+      let qemuCpuFlags = [
+        [cpu flags],
+        [cpu vendor \$cpuVendor flags],
+        [cpu platform \$sysPlat flags],
+        [cpu vendor \$cpuVendor platform \$sysPlat flags],
+      ] | each {
+        |s| let p = (intoCellPath ...\$s)
+        if (\$qemuBlock | get \$p | is-not-empty) {
+          \$qemuBlock | get \$p
+        } else {
+          []
+        }
+      } | flatten
+
+      \$qemuEnv = \$qemuEnv | upsert 'VM_CPU_FLAGS' (
+        if (\$qemuCpuFlags | length) > 0 {
+          \$\\",(\$qemuCpuFlags | str join ',')\\"
+        } else {
+          ''
+        }
+      )
+
+      let qemuScriptFilePath = (\$configDirPath | path join qemu.sh)
+      let qemuArgs = replaceEnv \$qemuEnv (\$merged | get qemu?.arguments? | default [])
+      let cpusCount = ((\$qemuEnv.VM_CPU_SOCKETS | into int) * (\$qemuEnv.VM_CPU_CORES | into int) * (\$qemuEnv.VM_CPU_THREADS | into int))
+      let cpusMax = \$cpusCount - 1
+      let qemuCmd = \$\\"(\$qemuBin)(if (\$qemuArgs | length) > 0 { ' ' + (\$qemuArgs | str join ' ') } else { '' })\\"
+      # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+      # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+      opPrintMaybeRunCmd \$\\"r##'((['#!/usr/bin/bash', ('exec ' + \$qemuCmd)] | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$qemuScriptFilePath '|' ignore
+      opPrintMaybeRunCmd sudo chmod +x \$qemuScriptFilePath
+      \$serviceLines = \$serviceLines | append \$\\"ExecStart=(\$qemuScriptFilePath)\\"
+
+      if (\$qemuBlock | get cpu?.pin? | default false) {
+        let pinScriptFilePath = (\$configDirPath | path join qemu-cpu-pin.sh)
+        let pinLines = [
+          '#!/usr/bin/bash',
+          (\\"pid=\$(cat \\" + \$pidFilePath + \\")\\"),
+          'if [ -z \\"\$pid\\" ]; then exit 0; fi',
+          (\\"for i in \$(seq 0 \\" + (\$cpusMax | into string) + \\"); do\\"),
+          \\"  spid=\$(ps --pid \$pid -T -o ucmd,spid | grep \\\\\\"CPU \$i/KVM\\\\\\" | awk '{print \$NF}')\\",
+          '  if [ -n \\"\$spid\\" ]; then',
+          '    taskset --pid --cpu-list \$i \$spid',
+          '  fi',
+          'done',
+        ]
+        # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+        # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+        opPrintMaybeRunCmd \$\\"r##'((\$pinLines | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$pinScriptFilePath '|' ignore
+        opPrintMaybeRunCmd sudo chmod +x \$pinScriptFilePath
+        \$serviceLines = \$serviceLines | append [
+          'ExecStartPost=/usr/bin/sleep 2',
+          \$\\"ExecStartPost=(\$pinScriptFilePath)\\",
+        ]
+      }
+
+      \$serviceLines = \$serviceLines | append [
+        'Restart=on-failure',
+        '',
+        '[Install]',
+        'WantedBy=default.target',
+      ]
+      opPrintMaybeRunCmd \$\\"r#'((\$serviceLines | str join \\"\\\\n\\") + \\"\\\\n\\")'#\\" '|' sudo tee \$serviceFilePath '|' ignore
+      opPrintMaybeRunCmd sudo systemctl daemon-reload
+      opPrintMaybeRunCmd sudo systemctl enable --now \$serviceName
+    }
+  }
+
+  def doRem [cmd, instance] {
+    let serviceName = \$\\"qemu-(\$instance)\\"
+    let serviceDirPath = '/etc/systemd/system'
+    let serviceFilePath = (\$serviceDirPath | path join \$\\"(\$serviceName).service\\")
+    let configDirPath = \$\\"/var/lib/qemu/(\$instance)\\"
+
+    let cleanedService = \$serviceFilePath | path exists
+    if \$cleanedService {
+      opPrintMaybeRunCmd sudo systemctl disable --now \$serviceName
+      opPrintMaybeRunCmd sudo rm -f \$serviceFilePath
+      opPrintMaybeRunCmd sudo systemctl daemon-reload
+    }
+
+    let cleanedConfig = \$configDirPath | path exists
+    if \$cleanedConfig {
+      opPrintMaybeRunCmd sudo rm -rf \$configDirPath
+    }
+
+    if not (\$cleanedService or \$cleanedConfig) {
+      opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already removed\\"
+    }
+  }
+
+  match \$env.VIRT_OP {
+    add => {
+      for instance in \$env.VIRT_INSTANCES {
+        if (^pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" | complete | get stdout | is-not-empty) {
+          opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
+          continue
+        }
+
+        doAdd \$cmd \$instance
+      }
+    }
+    list => {
+      let serviceDirPath = '/etc/systemd/system'
+      for instance in (if (\$serviceDirPath | path exists) {
+        ls \$serviceDirPath
+          | where name =~ '/qemu-[^/]+\\\\.service\$'
+          | get name
+          | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
+      } else { [] }) {
+        try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" }
+        try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" }
+        try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" }
+      }
+    }
+    rem => {
+      let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
+        \$env.VIRT_INSTANCES
+      } else {
+        let serviceDirPath = '/etc/systemd/system'
+        if (\$serviceDirPath | path exists) {
+          ls \$serviceDirPath
+            | where name =~ '/qemu-[^/]+\\\\.service\$'
+            | get name
+            | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
+        } else {
+          []
+        }
+      }
+      for instance in \$instances {
+        doRem \$cmd \$instance
+      }
+    }
+    sync => {
+      for instance in \$env.VIRT_INSTANCES {
+        if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
+          continue
+        }
+
+        opPrintMaybeRunCmd sudo systemctl stop \$\\"qemu-(\$instance)\\"
+
+        doAdd \$cmd \$instance
+      }
+    }
+  }
+}
+
+
+\$env.VIRT_PODMAN_NETWORKS = r#'{\\"net0\\":{\\"driver\\":\\"bridge\\",\\"interface\\":\\"br0\\",\\"ipam\\":\\"dhcp\\",\\"options\\":{\\"mode\\":\\"unmanaged\\"}}}'#
+
+\$env.VIRT_MANAGER = r#'qemu'#
+
+\$env.VIRT_INSTANCES = [ r#'test'#, r#'test2'# ]
+
+virtQemu
+
+hide-env VIRT_MANAGER
+"
+`;
+
+snapshot[`nu / linux / rem (host qemu) — pinpoint 1`] = `
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/rem/qemu?sysOsPlat=linux&sysHost=host'#
+
+def opPrint --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  \$\\"(\$args | flatten | str join ' ')\\" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+    return
+  }
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  let args = \$args | flatten
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
+  if (\$args | length) > 1 {
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunSilentCmd ...\$args
+  }
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opMaybeRunCmd ...\$args
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
+    exit 1
+  }
+}
+
+
+\$env.SYS_HOST = r#'host'#
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/virt/rem/qemu'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=host'#
+
+\$env.VIRT_REM_PARTS = r#'qemu'#
+
+\$env.VIRT_OP = r#'rem'#
+
+def virtDeepMerge [base, override] {
+  mut result = \$base
+  for kv in (\$override | transpose key value) {
+    if (\$kv.key in \$result) {
+      let baseVal = \$result | get \$kv.key
+      let baseDesc = (\$baseVal | describe)
+      let overrideDesc = (\$kv.value | describe)
+      if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
+        \$result = \$result | upsert \$kv.key (virtDeepMerge \$baseVal \$kv.value)
+      } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
+        \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
+      } else {
+        \$result = \$result | upsert \$kv.key \$kv.value
+      }
+    } else {
+      \$result = \$result | upsert \$kv.key \$kv.value
+    }
+  }
+  \$result
+}
+
+def virtPrompt [label: string] {
+  mut yn = ''
+  if YES in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$\\"(\$label) [y,[n]]: \\"
+  }
+  \$yn != n
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  match \$env.VIRT_OP {
+    add => {
+      for instance in \$env.VIRT_INSTANCES {
+        if (^sudo \$cmd container ls | complete | get stdout | find --ignore-case \$instance | is-not-empty) {
+          continue
+        }
+
+        let yaml = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
+
+        for src in (\$yaml
+          | from yaml
+          | get services? | default {}
+          | values
+          | each { |svc|
+              \$svc | get volumes? | default []
+              | each { |v|
+                  if (\$v | describe) == string {
+                    let host = \$v | split row ':' | first
+                    if (\$host | str starts-with '/') {
+                      \$host
+                    } else {
+                      null
+                    }
+                  } else if (\$v | get type? | default '') == bind {
+                    \$v.source
+                  } else {
+                    null
+                  }
+                }
+              | compact
+            }
+          | flatten) {
+          opPrintMaybeRunCmd sudo mkdir -p \$src
+        }
+
+        opPrintMaybeRunCmd \$\\"r#'(\$yaml)'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
+      }
+    }
+    list => {
+      let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
+      let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
+      let instances = if (\$filters | is-not-empty) {
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+      } else {
+        \$allInstances
+      }
+      let nameFilters = \$instances | each { |i| ['--filter', \$\\"name=(\$i)\\"] } | flatten
+      opPrintRunCmd sudo \$cmd container ls --all --format '\\"table {{.Names}}\\\\\\\\t{{.Image}}\\\\\\\\t{{.Ports}}\\\\\\\\t{{.State}}\\\\\\\\t{{.Status}}\\"' --no-trunc ...\$nameFilters
+    }
+    rem => {
+      let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
+        \$env.VIRT_INSTANCES
+      } else {
+        ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
+      }
+      for instance in \$instances {
+        opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - down
+      }
+    }
+    sync => {
+      for instance in \$env.VIRT_INSTANCES {
+        opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
+      }
+    }
+    tidy => {
+      opPrintMaybeRunCmd sudo \$cmd system prune --all
+    }
+  }
+}
+
+
+def virtLxc [] {
+  let cmd = 'lxc'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
+    return
+  }
+  if \$env.VIRT_OP == tidy {
+    return
+  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+
+  def flattenLxcConfig [cfg, prefix = ''] {
+    mut lines = []
+    for kv in (\$cfg | transpose key value) {
+      let key = if \$prefix == '' { \$kv.key } else { \$\\"(\$prefix).(\$kv.key)\\" }
+      let desc = (\$kv.value | describe)
+      if (\$desc | str starts-with 'record') {
+        \$lines = \$lines | append (flattenLxcConfig \$kv.value \$key)
+      } else if (\$desc | str starts-with 'list') {
+        for item in \$kv.value {
+          \$lines = \$lines | append \$\\"lxc.(\$key) = (\$item)\\"
+        }
+      } else {
+        \$lines = \$lines | append \$\\"lxc.(\$key) = (\$kv.value)\\"
+      }
+    }
+    \$lines
+  }
+
+  def replaceEnv [localEnv, value] {
+    mut v = \$value
+    if (\$v | str contains '{') {
+      for e in (\$localEnv | items { |k, val| [\$k, \$val] }) {
+        \$v = \$v | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
+      }
+    }
+    \$v
+  }
+
+  def doAdd [cmd, instance] {
+    let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
+    let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
+
+    mut lxcEnv = {}
+
+    for e in (\$merged | get environment? | default [] | each { split row '=' }) {
+      \$lxcEnv = \$lxcEnv | upsert \$e.0 \$e.1
+    }
+
+    \$lxcEnv = \$lxcEnv | upsert 'instance' \$instance
+
+    let lxcDirPath = \$lxcEnv.VIRT_LXC_DIR_PATH
+    let rootfsDirPath = \$\\"(\$lxcDirPath)/(\$instance)/rootfs\\"
+    \$lxcEnv = \$lxcEnv | upsert 'rootfs' \$rootfsDirPath
+    let lxcEnv = \$lxcEnv
+
+    let net = \$merged | get lxc?.network? | default {}
+    if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
+      opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    for mnt in (\$merged | get lxc?.mounts? | default []) {
+      opPrintMaybeRunCmd sudo mkdir -p (replaceEnv \$lxcEnv \$mnt.source)
+    }
+
+    opPrintMaybeRunCmd sudo mkdir -p \$rootfsDirPath
+
+    let rootfsReady = (^sudo test -d \$\\"(\$rootfsDirPath)/usr\\" | complete).exit_code == 0
+    if not \$rootfsReady {
+      let template = \$merged | get lxc?.create?.template?
+      let templateName = (\$template | columns | get 0?) | default 'download'
+      opPrintMaybeRunCmd sudo lxc-create --name \$instance --lxcpath \$lxcDirPath --template \$templateName -- ...(
+        (if (\$templateName in (\$template | columns)) { \$template | get \$templateName } else { {} })
+        | transpose key value
+        | each { |kv| [\$\\"--(\$kv.key)\\", \$kv.value] }
+        | flatten
+      )
+      opPrintMaybeRunCmd sudo rm -f \$\\"(\$lxcDirPath)/(\$instance)/config\\"
+    }
+
+    let autostart = \$merged | get lxc?.autostart? | default false
+
+    let configLines = [
+      [\$\\"lxc.uts.name = (\$instance)\\", \$\\"lxc.rootfs.path = dir:(\$rootfsDirPath)\\"],
+      (if \$autostart { ['lxc.start.auto = 1'] } else { [] }),
+      (flattenLxcConfig (\$merged | get lxc?.config? | default {}) | each { |l| replaceEnv \$lxcEnv \$l }),
+      (if (\$net | is-not-empty) { [
+        [\$\\"lxc.net.0.type = (\$net.type)\\", \$\\"lxc.net.0.link = (\$net.link)\\", \$\\"lxc.net.0.name = (\$net.name)\\"],
+        (if 'hwaddr' in \$net { [\$\\"lxc.net.0.hwaddr = (\$net.hwaddr)\\"] } else { [] }),
+        (if \$net.type == veth { [\$\\"lxc.net.0.veth.pair = veth-(\$instance)\\"] } else if \$net.type == macvlan { [\$\\"lxc.net.0.macvlan.mode = (\$net.mode? | default bridge)\\"] } else { [] }),
+        ['lxc.net.0.flags = up'],
+      ] | flatten } else { [] }),
+      (\$merged | get lxc?.mounts? | default [] | each { |mnt| \$\\"lxc.mount.entry = (replaceEnv \$lxcEnv \$mnt.source) ((replaceEnv \$lxcEnv \$mnt.target) | str trim --left --char '/') none bind,create=dir 0 0\\" }),
+    ] | flatten
+
+    opPrintMaybeRunCmd sudo mkdir -p \$\\"/var/lib/lxc/(\$instance)\\"
+
+    opPrintMaybeRunCmd \$\\"r#'((\$configLines | str join \\"\\\\n\\") + \\"\\\\n\\")'#\\" '|' sudo tee \$\\"/var/lib/lxc/(\$instance)/config\\" '|' ignore
+
+    if \$autostart {
+      opPrintMaybeRunCmd sudo systemctl enable lxc
+    }
+
+    opPrintMaybeRunCmd sudo \$\\"(\$cmd)-start\\" --name \$instance
+  }
+
+  def doRem [cmd, instance] {
+    let wasRunning = ^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row ' ' | str trim | where { |l| \$l | is-not-empty } | any { |l| \$l == \$instance }
+    if \$wasRunning {
+      opPrintMaybeRunCmd sudo \$\\"(\$cmd)-stop\\" --name \$instance
+    }
+
+    let hasConfig = \$\\"/var/lib/lxc/(\$instance)\\" | path exists
+    if \$hasConfig {
+      opPrintMaybeRunCmd sudo rm -rf \$\\"/var/lib/lxc/(\$instance)\\"
+    }
+
+    if not (\$wasRunning or \$hasConfig) {
+      opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already removed\\"
+    }
+  }
+
+  match \$env.VIRT_OP {
+    add => {
+      for instance in \$env.VIRT_INSTANCES {
+        if (^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row ' ' | str trim | where { |l| \$l | is-not-empty } | any { |l| \$l == \$instance }) {
+          opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
+          continue
+        }
+
+        doAdd \$cmd \$instance
+      }
+    }
+    list => {
+      let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
+      let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split row ' ' | str trim | where { is-not-empty }
+      let instances = if (\$filters | is-not-empty) {
+        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+      } else {
+        \$allInstances
+      }
+      for instance in \$instances {
+        opPrintRunCmd sudo \$\\"(\$cmd)-ls\\" --fancy --fancy-format '\\"NAME,IPV4,IPV6,STATE,AUTOSTART\\"' -- \$instance
+      }
+    }
+    rem => {
+      let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
+        \$env.VIRT_INSTANCES
+      } else {
+        let lxcDirPath = '/var/lib/lxc'
+        if (\$lxcDirPath | path exists) {
+          ls \$lxcDirPath | where type == dir | get name | each { |f| \$f | path basename }
+        } else {
+          []
+        }
+      }
+      for instance in \$instances {
+        doRem \$cmd \$instance
+      }
+    }
+    sync => {
+      for instance in \$env.VIRT_INSTANCES {
+        if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
+          continue
+        }
+
+        if (^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row ' ' | str trim | where { |l| \$l | is-not-empty } | any { |l| \$l == \$instance }) {
+          opPrintMaybeRunCmd sudo \$\\"(\$cmd)-stop\\" --name \$instance
+        }
+
+        doAdd \$cmd \$instance
+      }
+    }
+  }
+}
+
+
+def virtPodman [] {
+  let cmd = 'podman'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+
+  def splitYamlDocs [] {
+    \$in
+      | str replace --regex '^---\\\\n' ''
+      | split row \\"\\\\n---\\\\n\\"
+      | each { str trim }
+      | where { is-not-empty }
+      | each { from yaml }
+  }
+
+  def processYaml [yamlRaw, host, pod, instance] {
+    mut result = []
+    for doc in (\$yamlRaw | str replace --all '{host}' \$host | str replace --all '{pod}' \$pod | str replace --all '{instance}' \$instance | splitYamlDocs) {
+      if (\$doc | get kind? | default '') == Build {
+        # custom doc, not passed to podman
+      } else {
+        let doc = if (\$doc | get apiVersion? | is-empty) { \$doc | insert apiVersion 'v1' } else { \$doc }
+        \$result = \$result | append (\$doc | to yaml)
+      }
+    }
+
+    \$result | str join \\"---\\\\n\\"
+  }
+
+  def buildImage [yamlRaw, host, pod, instance, alreadyBuilt: list<string>] {
+    let buildDocs = \$yamlRaw
+      | str replace --all '{host}' \$host
+      | str replace --all '{pod}' \$pod
+      | str replace --all '{instance}' \$instance
+      | splitYamlDocs
+      | where { |d| (\$d | get kind? | default '') == Build }
+    if (\$buildDocs | is-empty) {
+      return \$alreadyBuilt
+    }
+
+    mut built = \$alreadyBuilt
+    for buildInfo in (\$buildDocs | first | get images) {
+      let image = \$buildInfo.name
+      if \$image in \$built { continue }
+
+      let contextDirPath = \$buildInfo.buildContextPath
+      let containerfileUrl = \$\\"(\$env.REQ_URL_CFG)(\$buildInfo.filePath)\\"
+
+      let containerfileFilePath = (\$contextDirPath | path join (\$buildInfo.filePath | path basename))
+      let containerfileContent = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$containerfileUrl)'#\\"
+
+      opPrintMaybeRunCmd sudo mkdir -p \$contextDirPath
+      opPrintMaybeRunCmd \$\\"r#'(\$containerfileContent)'#\\" '|' sudo tee \$containerfileFilePath '|' ignore
+      opPrintMaybeRunCmd sudo podman build --file \$containerfileFilePath --tag \$image \$contextDirPath
+
+      \$built = \$built | append \$image
+    }
+    \$built
+  }
+
+  def upsertByName [existing, incoming] {
+    let incomingNames = \$incoming | each { |x| \$x.name }
+    (\$existing | where { |x| not (\$incomingNames | any { |n| \$n == \$x.name }) }) | append \$incoming
+  }
+
+  def readKubeNetwork [kubeFilePath: string] {
+    if not (\$kubeFilePath | path exists) { return '' }
+    let networkLines = open --raw \$kubeFilePath | lines | where { \$in | str starts-with 'Network=' }
+    if (\$networkLines | is-empty) { return '' }
+    \$networkLines | first | str replace 'Network=' '' | str trim
+  }
+
+  def removeNetworkIfUnused [network: string, pod: string, managedNetworks: record] {
+    if (\$network | is-empty) { return }
+    if (\$managedNetworks | get --optional \$network) == null { return }
+    let kubeDirPath = '/etc/containers/systemd'
+    if not (\$kubeDirPath | path exists) {
+      opPrintMaybeRunCmd sudo podman network rm \$network
+      return
+    }
+    if not (ls \$kubeDirPath
+      | where name =~ '\\\\.kube\$'
+      | where { |f| not (\$f.name | str ends-with \$\\"(\$pod).kube\\") }
+      | each { |f| open --raw \$f.name }
+      | str join \\"\\\\n\\"
+      | str contains \$\\"Network=(\$network)\\") {
+      opPrintMaybeRunCmd sudo podman network rm \$network
+    }
+  }
+
+  def doAdd [pod, podInstances, cmd] {
+    let kubeDirPath = '/etc/containers/systemd'
+    let networks = \$env.VIRT_PODMAN_NETWORKS | from json
+    let yamlFilePath = \$\\"(\$kubeDirPath)/(\$pod).yaml\\"
+    let kubeFilePath = \$\\"(\$kubeDirPath)/(\$pod).kube\\"
+
+    # layer 2: pod.yaml — base pod metadata (hostname, network, mac, annotations)
+    let configPodRaw = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/podman/(\$pod).yaml'#\\"
+    mut builtImages = buildImage \$configPodRaw \$env.SYS_HOST \$pod '' []
+    mut podDoc = \$configPodRaw
+      | str replace --all '{host}' \$env.SYS_HOST
+      | str replace --all '{pod}' \$pod
+      | splitYamlDocs
+      | where { |d| (\$d | get kind? | default '') == Pod }
+      | first
+
+    mut configMaps = []
+
+    # layer 3: instance yamls — overlaid onto pod base
+    for instancePath in \$podInstances {
+      let instance = (\$instancePath | split row '/') | last
+      let yamlRaw = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/podman/(\$instancePath).yaml'#\\"
+
+      \$builtImages = buildImage \$yamlRaw \$env.SYS_HOST \$pod \$instance \$builtImages
+
+      let instanceDocs = processYaml \$yamlRaw \$env.SYS_HOST \$pod \$instance | splitYamlDocs
+      let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == Pod } | first
+
+      \$podDoc = \$podDoc
+        | upsert metadata.annotations (virtDeepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
+        | upsert spec.containers (upsertByName (\$podDoc | get spec.containers? | default []) (\$instancePodDoc | get spec.containers? | default []))
+        | upsert spec.volumes (upsertByName (\$podDoc | get spec.volumes? | default []) (\$instancePodDoc | get spec.volumes? | default []))
+
+      let instanceHostname = \$instancePodDoc | get spec.hostname?
+      if \$instanceHostname != null {
+        \$podDoc = \$podDoc | upsert spec.hostname \$instanceHostname
+      }
+
+      for cm in (\$instanceDocs | where { |d| (\$d | get kind? | default '') == ConfigMap }) {
+        \$configMaps = (\$configMaps | where { |m| \$m.metadata.name != \$cm.metadata.name }) | append \$cm
+      }
+    }
+
+    let annotations = \$podDoc | get metadata.annotations? | default {}
+    let network = \$annotations | get 'io.podman.kube.network'? | default ''
+    let mac = \$annotations | get 'io.podman.kube.podmanargs.mac-address'? | default ''
+    let containers = \$podDoc | get spec.containers? | default []
+    let volumes = \$podDoc | get spec.volumes? | default []
+    let hostname = \$podDoc | get spec.hostname? | default \$pod
+
+    let networkDef = \$networks | get --optional \$network
+    if \$networkDef != null {
+      if not (^sudo podman network ls --format '{{.Name}}' | lines | any { \$in == \$network }) {
+        let netArgs = [
+          ['network', 'create'],
+          (if (\$networkDef | get driver? | is-not-empty) { ['--driver', \$networkDef.driver] } else { [] }),
+          (if (\$networkDef | get interface? | is-not-empty) { ['--interface-name', \$networkDef.interface] } else { [] }),
+          (if (\$networkDef | get ipam? | is-not-empty) { ['--ipam-driver', \$networkDef.ipam] } else { [] }),
+          (\$networkDef | get options? | default {} | transpose key value | each { |opt| ['--opt', \$\\"(\$opt.key)=(\$opt.value)\\"] } | flatten),
+          [\$network],
+        ] | flatten
+        opPrintMaybeRunCmd sudo podman ...\$netArgs
+      }
+    }
+
+    for container in \$containers {
+      if not (\$container.image | str starts-with 'localhost/') {
+        opPrintMaybeRunCmd sudo \$cmd pull \$container.image
+      }
+    }
+
+    let allDocs = ([({
+      apiVersion: 'v1',
+      kind: 'Pod',
+      metadata: { name: \$pod, annotations: \$annotations },
+      spec: { hostname: \$hostname, containers: \$containers, volumes: \$volumes },
+    } | to yaml)] | append (\$configMaps | each { |cm| \$cm | to yaml })) | str join \\"---\\\\n\\"
+
+    let kubeLines = [
+      ['[Unit]', \$\\"Description=(\$pod) pod\\", '', '[Kube]', \$\\"Yaml=(\$pod).yaml\\", \$\\"Network=(\$network)\\"],
+      (if (\$mac | is-not-empty) { [\$\\"PodmanArgs=--mac-address (\$mac)\\"] } else { [] }),
+    ] | flatten
+
+    let isNew = not (\$kubeFilePath | path exists)
+    opPrintMaybeRunCmd sudo mkdir -p \$kubeDirPath
+    opPrintMaybeRunCmd \$\\"r#'(\$allDocs)'#\\" '|' sudo tee \$yamlFilePath '|' ignore
+    opPrintMaybeRunCmd \$\\"r#'((\$kubeLines | append ['', '[Install]', 'WantedBy=default.target'] | str join \\"\\\\n\\") + \\"\\\\n\\")'#\\" '|' sudo tee \$kubeFilePath '|' ignore
+    opPrintMaybeRunCmd sudo systemctl daemon-reload
+    if \$isNew {
+      opPrintMaybeRunCmd sudo systemctl start \$\\"(\$pod).service\\"
+    } else {
+      opPrintMaybeRunCmd sudo systemctl restart \$\\"(\$pod).service\\"
+    }
+  }
+
+  match \$env.VIRT_OP {
+    add => {
+      let pods = \$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq
+      for pod in \$pods {
+        let podInstances = \$env.VIRT_INSTANCES | where { |p| ((\$p | split row '/') | first) == \$pod }
+
+        if (^sudo systemctl is-active \$\\"(\$pod).service\\" | complete | get stdout | str trim) == active {
+          opPrintWarn \$\\"\`(\$cmd)\` pod \`(\$pod)\` is already added\\"
+          continue
+        }
+
+        doAdd \$pod \$podInstances \$cmd
+      }
+    }
+    list => {
+      let kubeDirPath = '/etc/containers/systemd'
+      for pod in (if (\$kubeDirPath | path exists) {
+        ls \$kubeDirPath
+          | where name =~ '\\\\.kube\$'
+          | get name
+          | each { |f| \$f | path basename | str replace '.kube' '' }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
+      } else { [] }) {
+        try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" }
+        opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
+        opPrintRunCmd sudo \$cmd container list --filter \$\\"pod=(\$pod)\\" --format '\\"table {{.PodName}}\\\\t{{.Names}}\\\\t{{.Image}}\\\\t{{.Ports}}\\\\t{{.State}}\\\\t{{.Status}}\\"'
+      }
+    }
+    rem => {
+      let managedNetworks = \$env.VIRT_PODMAN_NETWORKS | from json
+      let kubeDirPath = '/etc/containers/systemd'
+
+      let pods = if (\$env.VIRT_INSTANCES | is-not-empty) {
+        \$env.VIRT_INSTANCES | each { (\$in | split row '/') | first } | uniq
+      } else {
+        if (\$kubeDirPath | path exists) {
+          ls \$kubeDirPath
+            | where name =~ '\\\\.kube\$'
+            | get name
+            | each { |f| \$f | path basename | str replace '.kube' '' }
+        } else {
+          []
+        }
+      }
+      for pod in \$pods {
+        let yamlFilePath = \$\\"(\$kubeDirPath)/(\$pod).yaml\\"
+        let kubeFilePath = \$\\"(\$kubeDirPath)/(\$pod).kube\\"
+        let network = readKubeNetwork \$kubeFilePath
+        opPrintMaybeRunCmd sudo systemctl stop \$\\"(\$pod).service\\"
+        opPrintMaybeRunCmd sudo rm -f \$yamlFilePath \$kubeFilePath
+        opPrintMaybeRunCmd sudo systemctl daemon-reload
+        removeNetworkIfUnused \$network \$pod \$managedNetworks
+      }
+    }
+    sync => {
+      let kubeDirPath = '/etc/containers/systemd'
+      for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
+        if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
+          continue
+        }
+
+        opPrintMaybeRunCmd sudo systemctl stop \$\\"(\$pod).service\\"
+
+        let podInstances = \$env.VIRT_INSTANCES | where { |p| ((\$p | split row '/') | first) == \$pod }
+        doAdd \$pod \$podInstances \$cmd
+      }
+    }
+    tidy => {
+      opPrintMaybeRunCmd sudo \$cmd system prune --all
+    }
+  }
+}
+
+
+def virtQemu [] {
+  let cmd = 'qemu'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
+    return
+  }
+  if \$env.VIRT_OP == tidy {
+    return
+  }
+  if not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+
+  def replaceEnv [localEnv, lines] {
+    let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
+
+    mut linesX = []
+    for l in \$lines {
+      mut l = \$l
+      if (\$l | str contains '{') {
+        for e in \$localEnvItems {
+          \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
+        }
+      }
+      \$linesX = \$linesX | append \$l
+    }
+
+    return \$linesX
+  }
+
+  def intoCellPath [...items] {
+    \$items | each {
+      |i| {value: \$i, optional: true}
+    } | into cell-path
+  }
+
+  def doAdd [cmd, instance] {
+    let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
+    let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
+
+    mut qemuEnv = {}
+
+    for e in (\$merged | get environment? | default [] | each { split row '=' }) {
+      \$qemuEnv = \$qemuEnv | upsert \$e.0 \$e.1
+    }
+
+    \$qemuEnv = \$qemuEnv | upsert 'instance' \$instance
+
+    let cpuStat = ^lscpu
+    \$qemuEnv = \$qemuEnv | upsert 'VM_CPU_SOCKETS' (\$cpuStat | find --ignore-case 'socket(s)' | split row ':' | last | str trim | ansi strip)
+    \$qemuEnv = \$qemuEnv | upsert 'VM_CPU_CORES' (\$cpuStat | find --ignore-case 'core(s)' | split row ':' | last | str trim | ansi strip)
+    \$qemuEnv = \$qemuEnv | upsert 'VM_CPU_THREADS' (\$cpuStat | find --ignore-case 'thread(s)' | split row ':' | last | str trim | ansi strip)
+
+    let cpuVendor = if ((^cat '/proc/cpuinfo' | find --ignore-case 'vendor_id' | last | split row ':' | last | str downcase | str trim | ansi strip) | str contains 'amd') { 'amd' } else { 'intel' }
+    \$qemuEnv = \$qemuEnv | upsert 'VM_CPU_VENDOR' (\$cpuVendor | str trim)
+
+    let nicDirPath = \$\\"/sys/class/net/(\$qemuEnv.NIC)\\"
+    if not (\$nicDirPath | path exists) {
+      opPrintWarn \$\\"cannot add \`(\$instance)\`: NIC '(\$qemuEnv.NIC)' does not exist\\"
+      return
+    }
+    \$qemuEnv = \$qemuEnv | upsert 'NIC_MAC' (if ('NIC_MAC' in \$qemuEnv) {
+      \$qemuEnv.NIC_MAC
+    } else {
+      ^cat \$\\"(\$nicDirPath)/address\\" | str trim
+    })
+    \$qemuEnv = \$qemuEnv | upsert 'NIC_IF_INDEX' (if ('NIC_IF_INDEX' in \$qemuEnv) {
+      \$qemuEnv.NIC_IF_INDEX
+    } else {
+      ^cat \$\\"(\$nicDirPath)/ifindex\\" | str trim
+    })
+
+    let sysArch = \$qemuEnv.VM_SYS_ARCH
+    let sysPlat = \$qemuEnv.VM_SYS_PLAT
+
+    if 'VFIO_PCI_DEV_IDS' in \$qemuEnv {
+      for pciDevId in ((\$qemuEnv.VFIO_PCI_DEV_IDS | split row ',') | enumerate) {
+        \$qemuEnv = \$qemuEnv | upsert \$\\"VFIO_PCI_DEV_IDS_(\$pciDevId.index)\\" \$pciDevId.item
+      }
+    }
+
+    if 'qemu' in \$merged {
+      let serviceName = \$\\"qemu-(\$instance)\\"
+      let serviceDirPath = '/etc/systemd/system'
+      let configDirPath = \$\\"/var/lib/qemu/(\$instance)\\"
+
+      let serviceFilePath = (\$serviceDirPath | path join \$\\"(\$serviceName).service\\")
+
+      opPrintMaybeRunCmd sudo mkdir -p \$serviceDirPath
+      opPrintMaybeRunCmd sudo mkdir -p \$configDirPath
+
+      let tmpDirPath = \$\\"(\$qemuEnv.TMP_QEMU_DIR_PATH)/(\$instance)\\"
+      let pidFilePath = (\$tmpDirPath | path join qemu.pid)
+
+      mut serviceLines = [
+        '[Unit]',
+        \$\\"Description=QEMU instance (\$instance)\\",
+        'After=network.target',
+        '',
+        '[Service]',
+        'Type=forking',
+        \$\\"PIDFile=(\$pidFilePath)\\",
+        \$\\"WorkingDirectory=(\$configDirPath)\\",
+        \$\\"ExecStartPre=/usr/bin/mkdir -p (\$tmpDirPath)\\",
+      ]
+
+      let unbindEfiFbScriptFilePath = (\$configDirPath | path join 'unbind-efi-fb.sh')
+      let unbindEfiFbLines = [
+        '#!/usr/bin/bash',
+        \\"checkPath='/sys/bus/platform/drivers/efi-framebuffer/efi-framebuffer.0'\\",
+        'if [ ! -e \\"\$checkPath\\" ]; then exit 0; fi',
+        'for vtcon in /sys/class/vtconsole/vtcon*/bind; do',
+        '  echo 0 > \\"\$vtcon\\"',
+        'done',
+        'echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/unbind',
+      ]
+      # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+      # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+      opPrintMaybeRunCmd \$\\"r##'((\$unbindEfiFbLines | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$unbindEfiFbScriptFilePath '|' ignore
+      opPrintMaybeRunCmd sudo chmod +x \$unbindEfiFbScriptFilePath
+      \$serviceLines = \$serviceLines | append [
+        \$\\"ExecStartPre=(\$unbindEfiFbScriptFilePath)\\",
+        'ExecStartPre=/usr/bin/sleep 2',
+      ]
+
+      if 'VFIO_PCI_DEV_IDS' in \$qemuEnv {
+        let rebindScriptFilePath = (\$configDirPath | path join 'rebind-vfio-pci.sh')
+        let rebindLines = [
+          '#!/usr/bin/bash',
+          \\"driver='vfio-pci'\\",
+          \$\\"for fullPciDevId in (\$qemuEnv.VFIO_PCI_DEV_IDS | split row ',' | each { |id| \$\\"0000:(\$id)\\" } | str join ' '); do\\",
+          '  if [ -e \\"/sys/bus/pci/devices/\$fullPciDevId/driver_override\\" ]; then',
+          '    currentDriver=\$(basename \$(readlink \\"/sys/bus/pci/devices/\$fullPciDevId/driver\\" 2>/dev/null) 2>/dev/null)',
+          '    if [ \\"\$currentDriver\\" != \\"\$driver\\" ]; then',
+          '      echo \\"\$driver\\" > \\"/sys/bus/pci/devices/\$fullPciDevId/driver_override\\"',
+          '      echo \\"\$fullPciDevId\\" > \\"/sys/bus/pci/devices/\$fullPciDevId/driver/unbind\\"',
+          '      echo \\"\$fullPciDevId\\" > \\"/sys/bus/pci/drivers/\$driver/bind\\"',
+          '      echo > \\"/sys/bus/pci/devices/\$fullPciDevId/driver_override\\"',
+          '    fi',
+          '  fi',
+          'done',
+        ]
+        # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+        # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+        opPrintMaybeRunCmd \$\\"r##'((\$rebindLines | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$rebindScriptFilePath '|' ignore
+        opPrintMaybeRunCmd sudo chmod +x \$rebindScriptFilePath
+        \$serviceLines = \$serviceLines | append [
+          \$\\"ExecStartPre=(\$rebindScriptFilePath)\\",
+          'ExecStartPre=/usr/bin/sleep 2',
+        ]
+      }
+
+      if 'swtpm' in \$merged {
+        let swtpmScriptFilePath = (\$configDirPath | path join swtpm.sh)
+        let swtpmArgs = replaceEnv \$qemuEnv (\$merged | get swtpm?.arguments? | default [])
+        let swtpmCmd = \$\\"swtpm(if (\$swtpmArgs | length) > 0 { ' ' + (\$swtpmArgs | str join ' ') } else { '' })\\"
+
+        # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+        # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+        opPrintMaybeRunCmd \$\\"r##'((['#!/usr/bin/bash', ('exec ' + \$swtpmCmd)] | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$swtpmScriptFilePath '|' ignore
+        opPrintMaybeRunCmd sudo chmod +x \$swtpmScriptFilePath
+        \$serviceLines = \$serviceLines | append [
+          \$\\"ExecStartPre=-/usr/bin/pkill --full \\\\\\"^swtpm.*(\$instance)\\\\\\"\\",
+          \$\\"ExecStartPre=-/usr/bin/rm -f (\$tmpDirPath)/tpm.socket\\",
+          \$\\"ExecStartPre=(\$swtpmScriptFilePath)\\",
+          'ExecStartPre=/usr/bin/sleep 2',
+        ]
+      }
+
+      \$serviceLines = \$serviceLines | append \$\\"ExecStartPre=-/usr/bin/rm -f (\$pidFilePath)\\"
+
+      let qemuBlock = \$merged | get qemu?.architecture? | get --optional \$sysArch | default {}
+      let qemuBin = \$\\"(\$cmd)-system-(\$sysArch)\\"
+
+      let qemuCpuFlags = [
+        [cpu flags],
+        [cpu vendor \$cpuVendor flags],
+        [cpu platform \$sysPlat flags],
+        [cpu vendor \$cpuVendor platform \$sysPlat flags],
+      ] | each {
+        |s| let p = (intoCellPath ...\$s)
+        if (\$qemuBlock | get \$p | is-not-empty) {
+          \$qemuBlock | get \$p
+        } else {
+          []
+        }
+      } | flatten
+
+      \$qemuEnv = \$qemuEnv | upsert 'VM_CPU_FLAGS' (
+        if (\$qemuCpuFlags | length) > 0 {
+          \$\\",(\$qemuCpuFlags | str join ',')\\"
+        } else {
+          ''
+        }
+      )
+
+      let qemuScriptFilePath = (\$configDirPath | path join qemu.sh)
+      let qemuArgs = replaceEnv \$qemuEnv (\$merged | get qemu?.arguments? | default [])
+      let cpusCount = ((\$qemuEnv.VM_CPU_SOCKETS | into int) * (\$qemuEnv.VM_CPU_CORES | into int) * (\$qemuEnv.VM_CPU_THREADS | into int))
+      let cpusMax = \$cpusCount - 1
+      let qemuCmd = \$\\"(\$qemuBin)(if (\$qemuArgs | length) > 0 { ' ' + (\$qemuArgs | str join ' ') } else { '' })\\"
+      # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+      # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+      opPrintMaybeRunCmd \$\\"r##'((['#!/usr/bin/bash', ('exec ' + \$qemuCmd)] | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$qemuScriptFilePath '|' ignore
+      opPrintMaybeRunCmd sudo chmod +x \$qemuScriptFilePath
+      \$serviceLines = \$serviceLines | append \$\\"ExecStart=(\$qemuScriptFilePath)\\"
+
+      if (\$qemuBlock | get cpu?.pin? | default false) {
+        let pinScriptFilePath = (\$configDirPath | path join qemu-cpu-pin.sh)
+        let pinLines = [
+          '#!/usr/bin/bash',
+          (\\"pid=\$(cat \\" + \$pidFilePath + \\")\\"),
+          'if [ -z \\"\$pid\\" ]; then exit 0; fi',
+          (\\"for i in \$(seq 0 \\" + (\$cpusMax | into string) + \\"); do\\"),
+          \\"  spid=\$(ps --pid \$pid -T -o ucmd,spid | grep \\\\\\"CPU \$i/KVM\\\\\\" | awk '{print \$NF}')\\",
+          '  if [ -n \\"\$spid\\" ]; then',
+          '    taskset --pid --cpu-list \$i \$spid',
+          '  fi',
+          'done',
+        ]
+        # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+        # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+        opPrintMaybeRunCmd \$\\"r##'((\$pinLines | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$pinScriptFilePath '|' ignore
+        opPrintMaybeRunCmd sudo chmod +x \$pinScriptFilePath
+        \$serviceLines = \$serviceLines | append [
+          'ExecStartPost=/usr/bin/sleep 2',
+          \$\\"ExecStartPost=(\$pinScriptFilePath)\\",
+        ]
+      }
+
+      \$serviceLines = \$serviceLines | append [
+        'Restart=on-failure',
+        '',
+        '[Install]',
+        'WantedBy=default.target',
+      ]
+      opPrintMaybeRunCmd \$\\"r#'((\$serviceLines | str join \\"\\\\n\\") + \\"\\\\n\\")'#\\" '|' sudo tee \$serviceFilePath '|' ignore
+      opPrintMaybeRunCmd sudo systemctl daemon-reload
+      opPrintMaybeRunCmd sudo systemctl enable --now \$serviceName
+    }
+  }
+
+  def doRem [cmd, instance] {
+    let serviceName = \$\\"qemu-(\$instance)\\"
+    let serviceDirPath = '/etc/systemd/system'
+    let serviceFilePath = (\$serviceDirPath | path join \$\\"(\$serviceName).service\\")
+    let configDirPath = \$\\"/var/lib/qemu/(\$instance)\\"
+
+    let cleanedService = \$serviceFilePath | path exists
+    if \$cleanedService {
+      opPrintMaybeRunCmd sudo systemctl disable --now \$serviceName
+      opPrintMaybeRunCmd sudo rm -f \$serviceFilePath
+      opPrintMaybeRunCmd sudo systemctl daemon-reload
+    }
+
+    let cleanedConfig = \$configDirPath | path exists
+    if \$cleanedConfig {
+      opPrintMaybeRunCmd sudo rm -rf \$configDirPath
+    }
+
+    if not (\$cleanedService or \$cleanedConfig) {
+      opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already removed\\"
+    }
+  }
+
+  match \$env.VIRT_OP {
+    add => {
+      for instance in \$env.VIRT_INSTANCES {
+        if (^pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" | complete | get stdout | is-not-empty) {
+          opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
+          continue
+        }
+
+        doAdd \$cmd \$instance
+      }
+    }
+    list => {
+      let serviceDirPath = '/etc/systemd/system'
+      for instance in (if (\$serviceDirPath | path exists) {
+        ls \$serviceDirPath
+          | where name =~ '/qemu-[^/]+\\\\.service\$'
+          | get name
+          | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
+      } else { [] }) {
+        try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" }
+        try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" }
+        try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^qemu-system.*(\$instance)\\" }
+      }
+    }
+    rem => {
+      let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
+        \$env.VIRT_INSTANCES
+      } else {
+        let serviceDirPath = '/etc/systemd/system'
+        if (\$serviceDirPath | path exists) {
+          ls \$serviceDirPath
+            | where name =~ '/qemu-[^/]+\\\\.service\$'
+            | get name
+            | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
+        } else {
+          []
+        }
+      }
+      for instance in \$instances {
+        doRem \$cmd \$instance
+      }
+    }
+    sync => {
+      for instance in \$env.VIRT_INSTANCES {
+        if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
+          continue
+        }
+
+        opPrintMaybeRunCmd sudo systemctl stop \$\\"qemu-(\$instance)\\"
+
+        doAdd \$cmd \$instance
+      }
+    }
+  }
+}
+
+
+\$env.VIRT_PODMAN_NETWORKS = r#'{\\"net0\\":{\\"driver\\":\\"bridge\\",\\"interface\\":\\"br0\\",\\"ipam\\":\\"dhcp\\",\\"options\\":{\\"mode\\":\\"unmanaged\\"}}}'#
+
+\$env.VIRT_MANAGER = r#'qemu'#
+
+\$env.VIRT_INSTANCES = [ r#'test'# ]
+
+virtQemu
+
+hide-env VIRT_MANAGER
+"
 `;
 
 snapshot[`nu / linux / sync (host) 1`] = `
@@ -8833,7 +11884,7 @@ hide-env VIRT_MANAGER
 
 \$env.VIRT_MANAGER = r#'qemu'#
 
-\$env.VIRT_INSTANCES = [ r#'test'# ]
+\$env.VIRT_INSTANCES = [ r#'test'#, r#'test2'# ]
 
 virtQemu
 
@@ -8987,7 +12038,7 @@ do --env {
   }
   if \$yn != 'n' {
 opPrint r#'qemu'#
-opPrint r#'  test'#
+opPrint r#'  test, test2'#
   }
 }
 \`
@@ -9138,6 +12189,8 @@ do --env {
     \$yn = input r#'use virt [y,[n]]: '#
   }
   if \$yn != 'n' {
+opPrint r#'qemu'#
+opPrint r#'  test2'#
   }
 }
 \`

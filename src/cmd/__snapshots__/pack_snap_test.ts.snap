@@ -8076,6 +8076,1390 @@ packPacman
 \`
 `;
 
+snapshot[`nu / arch / add (shell group) — wide 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/shell?sysOsPlat=linux&sysOs=arch'#
+
+def opPrint --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  \$"(\$args | flatten | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print --stderr
+    return
+  }
+  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  let args = \$args | flatten
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | flatten | str join ' ')"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunSilentCmd ...\$args
+  }
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opMaybeRunCmd ...\$args
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS = r#'arch'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/pack/add/shell'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=arch'#
+
+\$env.PACK_ADD_NAMES = r#'shell'#
+
+\$env.PACK_OP = r#'add'#
+
+def --env packDo [cmds: list<string>] {
+  opPrintRunCmd try '{' ...\$cmds '}'
+}
+
+def packElevate [cmd: string] {
+  if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
+}
+
+def --env packFiltered [cmds: list<string>, names: list<string>] {
+  if (\$names | is-empty) {
+    packDo \$cmds
+    return
+  }
+  for term in \$names {
+    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+  }
+}
+
+def packGrep [cmds: list<string>, term: string] {
+  run-external (\$cmds | first) ...(\$cmds | skip 1)
+    | complete
+    | get stdout
+    | lines
+    | any { |line| (\$line | str contains --ignore-case \$term) }
+}
+
+def packGrepFind [cmds: list<string>, term: string] {
+  packGrep (\$cmds ++ [\$term]) \$term
+}
+
+def packGrepList [cmds: list<string>, term: string] {
+  packGrep \$cmds \$term
+}
+
+const PACK_HTTP_GET_LIMIT = 10
+
+def packHttpGet [url: string, transform: closure] {
+  let res = try { http get --full \$url } catch { null }
+  if \$res == null or \$res.status != 200 { return [] }
+  do \$transform \$res.body
+}
+
+def packHttpGetNpm [term: string] {
+  packHttpGet \$"https://registry.npmjs.org/-/v1/search?text=(\$term)&size=(\$PACK_HTTP_GET_LIMIT)" { |body|
+    \$body | get objects
+      | each { |p| {registry: 'npm', name: \$p.package.name, version: \$p.package.version, description: (\$p.package.description? | default '')} }
+  }
+}
+
+def packHttpGetJsr [term: string] {
+  packHttpGet \$"https://api.jsr.io/packages?query=(\$term)&limit=(\$PACK_HTTP_GET_LIMIT)" { |body|
+    \$body | get items
+      | each { |p| {registry: 'jsr', name: \$"@(\$p.scope)/(\$p.name)", version: (\$p.latestVersion? | default ''), description: (\$p.description? | default '')} }
+  }
+}
+
+def packHttpGetPypi [term: string] {
+  packHttpGet \$"https://pypi.org/pypi/(\$term)/json" { |body|
+    let info = \$body.info
+    [{registry: 'pypi', name: \$info.name, version: \$info.version, description: (\$info.summary? | default '')}]
+  }
+}
+
+def --env packMutate [
+  names_key: string,
+  miss_msg: string,
+  finder: closure,
+  cmds: list<string>,
+  each: bool,
+] {
+  let names = \$env | get \$names_key
+  mut found = []
+  for term in \$names {
+    if (do \$finder \$term) {
+      \$found = (\$found | append \$term)
+    } else {
+      print \$"(\$term): (\$miss_msg)"
+    }
+  }
+  if (\$found | is-not-empty) {
+    if \$each {
+      for n in \$found {
+        packOp (\$cmds ++ [\$n])
+      }
+    } else {
+      packOp (\$cmds ++ \$found)
+    }
+  }
+  let remains = (\$names | where { |n| \$n not-in \$found })
+  if (\$remains | is-empty) {
+    hide-env \$names_key
+    return
+  }
+  load-env {(\$names_key): \$remains}
+}
+
+def --env packOp [cmds: list<string>] {
+  opPrintMaybeRunCmd try '{' ...\$cmds '}'
+}
+
+def --env packOpAdd [finder: closure, cmds: list<string>, --each] {
+  packMutate PACK_ADD_NAMES 'not found' \$finder \$cmds \$each
+}
+
+def --env packOpFind [cmds: list<string>] {
+  for term in \$env.PACK_FIND_NAMES {
+    packDo (\$cmds ++ [\$term])
+  }
+}
+
+def --env packOpList [cmds: list<string>] {
+  packFiltered \$cmds (\$env.PACK_LIST_NAMES? | default [])
+}
+
+def --env packOpOutdated [cmds: list<string>] {
+  packFiltered \$cmds (\$env.PACK_OUTDATED_NAMES? | default [])
+}
+
+def --env packOpRemove [finder: closure, cmds: list<string>, --each] {
+  packMutate PACK_REMOVE_NAMES 'not installed' \$finder \$cmds \$each
+}
+
+def --env packOpSync [cmdsNoArgs: list<string>, cmds: list<string>, --each] {
+  if (\$env.PACK_SYNC_NAMES? | is-empty) {
+    packOp \$cmdsNoArgs
+    return
+  }
+  if \$each {
+    for n in \$env.PACK_SYNC_NAMES {
+      packOp (\$cmds ++ [\$n])
+    }
+  } else {
+    packOp (\$cmds ++ \$env.PACK_SYNC_NAMES)
+  }
+}
+
+def packPrompt [label: string] {
+  mut yn = ''
+  if YES in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"(\$label) [y,[n]]: "
+  }
+  \$yn != n
+}
+
+
+def --env packGhpm [] {
+  let cmd = 'ghpm'
+  if (
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    ('PACK_OP' not-in \$env) or
+    (\$env.PACK_OP == add and (\$env.PACK_ADD_NAMES? | is-empty)) or
+    (\$env.PACK_OP == remove and (\$env.PACK_REMOVE_NAMES? | is-empty))
+  ) {
+    return
+  }
+
+  if not (packPrompt \$"use (\$cmd) \\\\(user\\\\)") { return }
+
+  match \$env.PACK_OP {
+    add => {
+      packOp [\$cmd refresh]
+      packOpAdd { |n| packGrepFind [\$cmd search] \$n } [\$cmd install]
+    }
+    find => {
+      packOp [\$cmd refresh]
+      packOpFind [\$cmd search]
+    }
+    list => {
+      packOpList [\$cmd list]
+    }
+    outdated => {
+      packOpOutdated [\$cmd outdated]
+    }
+    remove => {
+      packOpRemove { |n| packGrepList [\$cmd list] \$n } [\$cmd uninstall]
+    }
+    sync => {
+      packOpSync [\$cmd sync] [\$cmd sync]
+    }
+    tidy => {
+      packOp [\$cmd tidy]
+    }
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if (
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    ('PACK_OP' not-in \$env) or
+    (\$env.PACK_OP == add and (\$env.PACK_ADD_NAMES? | is-empty)) or
+    (\$env.PACK_OP == remove and (\$env.PACK_REMOVE_NAMES? | is-empty))
+  ) {
+    return
+  }
+
+  if not (packPrompt \$"use (\$cmd) \\\\(user\\\\)") { return }
+
+  match \$env.PACK_OP {
+    add => {
+      packOpAdd { |n| packGrepFind [\$cmd search] \$n } [\$cmd binstall --locked]
+    }
+    find => {
+      packOpFind [\$cmd search]
+    }
+    list => {
+      packOpList [\$cmd install --list]
+    }
+    outdated => {
+      packOpOutdated [\$cmd install-update --list]
+    }
+    remove => {
+      packOpRemove { |n| packGrepList [\$cmd install --list] \$n } [\$cmd uninstall]
+    }
+    sync => {
+      packOpSync [\$cmd install-update --all] [\$cmd install-update]
+    }
+    tidy => {
+      packOp [\$cmd cache --autoclean]
+    }
+  }
+}
+
+
+def --env packUv [] {
+  let cmd = 'uv'
+  if (
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    ('PACK_OP' not-in \$env) or
+    (\$env.PACK_OP == add and (\$env.PACK_ADD_NAMES? | is-empty)) or
+    (\$env.PACK_OP == remove and (\$env.PACK_REMOVE_NAMES? | is-empty))
+  ) {
+    return
+  }
+
+  if not (packPrompt \$"use (\$cmd) \\\\(user\\\\)") { return }
+
+  match \$env.PACK_OP {
+    add => {
+      packOpAdd { |n| packHttpGetPypi \$n | is-not-empty } [\$cmd tool install] --each
+    }
+    find => {
+      for term in \$env.PACK_FIND_NAMES {
+        packHttpGetPypi \$term | print
+      }
+    }
+    list => {
+      packOpList [\$cmd tool list]
+    }
+    remove => {
+      packOpRemove { |n| packGrepList [\$cmd tool list] \$n } [\$cmd tool uninstall]
+    }
+    sync => {
+      packOpSync [\$cmd tool upgrade --all] [\$cmd tool upgrade]
+    }
+    tidy => {
+      packOp [\$cmd cache clean]
+    }
+  }
+}
+
+
+def --env packPnpm [] {
+  let cmd = 'pnpm'
+  if (
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    ('PACK_OP' not-in \$env) or
+    (\$env.PACK_OP == add and (\$env.PACK_ADD_NAMES? | is-empty)) or
+    (\$env.PACK_OP == remove and (\$env.PACK_REMOVE_NAMES? | is-empty))
+  ) {
+    return
+  }
+
+  if not (packPrompt \$"use (\$cmd) \\\\(user\\\\)") { return }
+
+  match \$env.PACK_OP {
+    add => {
+      packOpAdd { |n| packGrepFind [\$cmd search] \$n } [\$cmd add --global]
+    }
+    find => {
+      packOpFind [\$cmd search]
+    }
+    list => {
+      packOpList [\$cmd list --global]
+    }
+    outdated => {
+      packOpOutdated [\$cmd outdated --global]
+    }
+    remove => {
+      packOpRemove { |n| packGrepList [\$cmd list --global] \$n } [\$cmd remove --global]
+    }
+    sync => {
+      let names = if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
+        \$env.PACK_SYNC_NAMES
+      } else {
+        ^\$cmd ls --global --parseable
+          | lines
+          | each { |line|
+              let parts = (\$line | path split)
+              let idx = (\$parts | enumerate | where item == 'node_modules' | get 0?.index?)
+              if \$idx == null { null } else {
+                \$parts | skip (\$idx + 1) | str join '/'
+              }
+            }
+          | compact
+          | where { \$in != bun and \$in != deno and \$in != node }
+      }
+      if (\$names | is-not-empty) {
+        packOp ([\$cmd update --global --latest] ++ \$names)
+      }
+    }
+    tidy => {
+      packOp [\$cmd store prune]
+    }
+  }
+}
+
+
+def --env packBun [] {
+  let cmd = 'bun'
+  if (
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    ('PACK_OP' not-in \$env) or
+    (\$env.PACK_OP == add and (\$env.PACK_ADD_NAMES? | is-empty)) or
+    (\$env.PACK_OP == remove and (\$env.PACK_REMOVE_NAMES? | is-empty))
+  ) {
+    return
+  }
+
+  if not (packPrompt \$"use (\$cmd) \\\\(user\\\\)") { return }
+
+  match \$env.PACK_OP {
+    add => {
+      packOpAdd { |n| [(packHttpGetNpm \$n), (packHttpGetJsr \$n)] | flatten | is-not-empty } [\$cmd add --force --global]
+    }
+    find => {
+      for term in \$env.PACK_FIND_NAMES {
+        [(packHttpGetNpm \$term), (packHttpGetJsr \$term)] | flatten | print
+      }
+    }
+    list => {
+      packOpList [\$cmd list --global]
+    }
+    remove => {
+      packOpRemove { |n| packGrepList [\$cmd list --global] \$n } [\$cmd remove --global]
+    }
+    sync => {
+      packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
+    }
+    tidy => {
+      packOp [\$cmd pm cache rm]
+    }
+  }
+}
+
+
+def --env packDeno [] {
+  let cmd = 'deno'
+  if (
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    ('PACK_OP' not-in \$env) or
+    (\$env.PACK_OP == add and (\$env.PACK_ADD_NAMES? | is-empty)) or
+    (\$env.PACK_OP == remove and (\$env.PACK_REMOVE_NAMES? | is-empty))
+  ) {
+    return
+  }
+
+  if not (packPrompt \$"use (\$cmd) \\\\(user\\\\)") { return }
+
+  def getBinDir [] {
+    [\$env.HOME '.deno' bin] | path join
+  }
+
+  def getInstalled [] {
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
+  }
+
+  match \$env.PACK_OP {
+    add => {
+      packOpAdd { |n| [(packHttpGetNpm \$n), (packHttpGetJsr \$n)] | flatten | is-not-empty } [\$cmd install --force --global] --each
+    }
+    find => {
+      for term in \$env.PACK_FIND_NAMES {
+        [(packHttpGetNpm \$term), (packHttpGetJsr \$term)] | flatten | print
+      }
+    }
+    list => {
+      packOpList [getInstalled]
+    }
+    remove => {
+      packOpRemove { |n| [(getBinDir) \$".(\$n)"] | path join | path exists } [\$cmd uninstall --global] --each
+    }
+    sync => {
+      let names = if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
+        \$env.PACK_SYNC_NAMES
+      } else {
+        getInstalled
+      }
+      for n in \$names {
+        packOp [\$cmd install --force --global \$"(\$n)@latest"]
+      }
+    }
+    tidy => {
+      packOp [\$cmd clean]
+    }
+  }
+}
+
+
+def --env packPacman [] {
+  let mgr = if PACK_MANAGER in \$env {
+    \$env.PACK_MANAGER
+  } else if (which yay | is-not-empty) {
+    'yay'
+  } else if (which paru | is-not-empty) {
+    'paru'
+  } else {
+    'pacman'
+  }
+  if (
+    (\$mgr not-in ['yay', 'paru', 'pacman']) or
+    (which \$mgr | is-empty) or
+    ('PACK_OP' not-in \$env) or
+    (\$env.PACK_OP == add and (\$env.PACK_ADD_NAMES? | is-empty)) or
+    (\$env.PACK_OP == remove and (\$env.PACK_REMOVE_NAMES? | is-empty))
+  ) {
+    return
+  }
+
+  if not (packPrompt \$"use (\$mgr) \\\\(system\\\\)") { return }
+  let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
+
+  match \$env.PACK_OP {
+    add => {
+      packOp [\$cmd --sync --refresh]
+      packOpAdd { |n| packGrepFind [\$cmd --sync --search] \$n } [\$cmd --sync --needed]
+    }
+    find => {
+      packOp [\$cmd --sync --refresh]
+      packOpFind [\$cmd --sync --search]
+    }
+    list => {
+      packOpList [\$cmd --query]
+    }
+    outdated => {
+      packOp [\$cmd --sync --refresh]
+      packOpOutdated [\$cmd --query --upgrades]
+    }
+    remove => {
+      packOpRemove { |n| packGrepList [\$cmd --query] \$n } [\$cmd --remove --nosave --recursive]
+    }
+    sync => {
+      packOp [\$cmd --sync --refresh]
+      packOpSync [\$cmd --sync --sysupgrade] [\$cmd --sync --needed]
+    }
+    tidy => {
+      # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
+      packOp [sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete]
+      packOp [\$cmd --sync --clean --clean]
+      packOp [\$cmd --query --deps --unrequired --quiet '|' \$cmd --remove --nosave --recursive '-']
+    }
+  }
+}
+
+
+opPrint r#'alias'#
+opPrint r#'  shell-nu'#
+
+do --env {
+opPrint r#'names'#
+opPrint r#'  nu'#
+mut yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'use ghpm (user) [y,[n]]: '#
+}
+if \$yn != 'n' {
+\$env.PACK_MANAGER = r#'ghpm'#
+\$env.PACK_ADD_NAMES = [ r#'nu'# ]
+packGhpm
+hide-env PACK_MANAGER
+} else {
+opPrint r#'names'#
+opPrint r#'  nu'#
+\$yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'use cargo (user) [y,[n]]: '#
+}
+if \$yn != 'n' {
+\$env.PACK_MANAGER = r#'cargo'#
+\$env.PACK_ADD_NAMES = [ r#'nu'# ]
+packCargo
+hide-env PACK_MANAGER
+} else {
+opPrint r#'names'#
+opPrint r#'  nushell'#
+\$yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'use pacman (system) [y,[n]]: '#
+}
+if \$yn != 'n' {
+\$env.PACK_MANAGER = r#'pacman'#
+\$env.PACK_ADD_NAMES = [ r#'nushell'# ]
+packPacman
+hide-env PACK_MANAGER
+}
+}
+}
+}
+
+opPrint r#'alias'#
+opPrint r#'  shell-zsh'#
+
+do --env {
+opPrint r#'names'#
+opPrint r#'  zsh'#
+mut yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'use ghpm (user) [y,[n]]: '#
+}
+if \$yn != 'n' {
+\$env.PACK_MANAGER = r#'ghpm'#
+\$env.PACK_ADD_NAMES = [ r#'zsh'# ]
+packGhpm
+hide-env PACK_MANAGER
+} else {
+opPrint r#'names'#
+opPrint r#'  zsh'#
+\$yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'use cargo (user) [y,[n]]: '#
+}
+if \$yn != 'n' {
+\$env.PACK_MANAGER = r#'cargo'#
+\$env.PACK_ADD_NAMES = [ r#'zsh'# ]
+packCargo
+hide-env PACK_MANAGER
+} else {
+opPrint r#'names'#
+opPrint r#'  zsh'#
+\$yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'use pacman (system) [y,[n]]: '#
+}
+if \$yn != 'n' {
+\$env.PACK_MANAGER = r#'pacman'#
+\$env.PACK_ADD_NAMES = [ r#'zsh'# ]
+packPacman
+hide-env PACK_MANAGER
+}
+}
+}
+}
+\`
+`;
+
+snapshot[`nu / arch / rem (shell group) — pinpoint 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/rem/shell?sysOsPlat=linux&sysOs=arch'#
+
+def opPrint --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  \$"(\$args | flatten | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print --stderr
+    return
+  }
+  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  let args = \$args | flatten
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | flatten | str join ' ')"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  nu --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunSilentCmd ...\$args
+  }
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opMaybeRunCmd ...\$args
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 111
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS = r#'arch'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/pack/remove/shell'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysOs=arch'#
+
+\$env.PACK_REMOVE_NAMES = r#'shell'#
+
+\$env.PACK_OP = r#'remove'#
+
+def --env packDo [cmds: list<string>] {
+  opPrintRunCmd try '{' ...\$cmds '}'
+}
+
+def packElevate [cmd: string] {
+  if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
+}
+
+def --env packFiltered [cmds: list<string>, names: list<string>] {
+  if (\$names | is-empty) {
+    packDo \$cmds
+    return
+  }
+  for term in \$names {
+    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+  }
+}
+
+def packGrep [cmds: list<string>, term: string] {
+  run-external (\$cmds | first) ...(\$cmds | skip 1)
+    | complete
+    | get stdout
+    | lines
+    | any { |line| (\$line | str contains --ignore-case \$term) }
+}
+
+def packGrepFind [cmds: list<string>, term: string] {
+  packGrep (\$cmds ++ [\$term]) \$term
+}
+
+def packGrepList [cmds: list<string>, term: string] {
+  packGrep \$cmds \$term
+}
+
+const PACK_HTTP_GET_LIMIT = 10
+
+def packHttpGet [url: string, transform: closure] {
+  let res = try { http get --full \$url } catch { null }
+  if \$res == null or \$res.status != 200 { return [] }
+  do \$transform \$res.body
+}
+
+def packHttpGetNpm [term: string] {
+  packHttpGet \$"https://registry.npmjs.org/-/v1/search?text=(\$term)&size=(\$PACK_HTTP_GET_LIMIT)" { |body|
+    \$body | get objects
+      | each { |p| {registry: 'npm', name: \$p.package.name, version: \$p.package.version, description: (\$p.package.description? | default '')} }
+  }
+}
+
+def packHttpGetJsr [term: string] {
+  packHttpGet \$"https://api.jsr.io/packages?query=(\$term)&limit=(\$PACK_HTTP_GET_LIMIT)" { |body|
+    \$body | get items
+      | each { |p| {registry: 'jsr', name: \$"@(\$p.scope)/(\$p.name)", version: (\$p.latestVersion? | default ''), description: (\$p.description? | default '')} }
+  }
+}
+
+def packHttpGetPypi [term: string] {
+  packHttpGet \$"https://pypi.org/pypi/(\$term)/json" { |body|
+    let info = \$body.info
+    [{registry: 'pypi', name: \$info.name, version: \$info.version, description: (\$info.summary? | default '')}]
+  }
+}
+
+def --env packMutate [
+  names_key: string,
+  miss_msg: string,
+  finder: closure,
+  cmds: list<string>,
+  each: bool,
+] {
+  let names = \$env | get \$names_key
+  mut found = []
+  for term in \$names {
+    if (do \$finder \$term) {
+      \$found = (\$found | append \$term)
+    } else {
+      print \$"(\$term): (\$miss_msg)"
+    }
+  }
+  if (\$found | is-not-empty) {
+    if \$each {
+      for n in \$found {
+        packOp (\$cmds ++ [\$n])
+      }
+    } else {
+      packOp (\$cmds ++ \$found)
+    }
+  }
+  let remains = (\$names | where { |n| \$n not-in \$found })
+  if (\$remains | is-empty) {
+    hide-env \$names_key
+    return
+  }
+  load-env {(\$names_key): \$remains}
+}
+
+def --env packOp [cmds: list<string>] {
+  opPrintMaybeRunCmd try '{' ...\$cmds '}'
+}
+
+def --env packOpAdd [finder: closure, cmds: list<string>, --each] {
+  packMutate PACK_ADD_NAMES 'not found' \$finder \$cmds \$each
+}
+
+def --env packOpFind [cmds: list<string>] {
+  for term in \$env.PACK_FIND_NAMES {
+    packDo (\$cmds ++ [\$term])
+  }
+}
+
+def --env packOpList [cmds: list<string>] {
+  packFiltered \$cmds (\$env.PACK_LIST_NAMES? | default [])
+}
+
+def --env packOpOutdated [cmds: list<string>] {
+  packFiltered \$cmds (\$env.PACK_OUTDATED_NAMES? | default [])
+}
+
+def --env packOpRemove [finder: closure, cmds: list<string>, --each] {
+  packMutate PACK_REMOVE_NAMES 'not installed' \$finder \$cmds \$each
+}
+
+def --env packOpSync [cmdsNoArgs: list<string>, cmds: list<string>, --each] {
+  if (\$env.PACK_SYNC_NAMES? | is-empty) {
+    packOp \$cmdsNoArgs
+    return
+  }
+  if \$each {
+    for n in \$env.PACK_SYNC_NAMES {
+      packOp (\$cmds ++ [\$n])
+    }
+  } else {
+    packOp (\$cmds ++ \$env.PACK_SYNC_NAMES)
+  }
+}
+
+def packPrompt [label: string] {
+  mut yn = ''
+  if YES in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input \$"(\$label) [y,[n]]: "
+  }
+  \$yn != n
+}
+
+
+def --env packGhpm [] {
+  let cmd = 'ghpm'
+  if (
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    ('PACK_OP' not-in \$env) or
+    (\$env.PACK_OP == add and (\$env.PACK_ADD_NAMES? | is-empty)) or
+    (\$env.PACK_OP == remove and (\$env.PACK_REMOVE_NAMES? | is-empty))
+  ) {
+    return
+  }
+
+  if not (packPrompt \$"use (\$cmd) \\\\(user\\\\)") { return }
+
+  match \$env.PACK_OP {
+    add => {
+      packOp [\$cmd refresh]
+      packOpAdd { |n| packGrepFind [\$cmd search] \$n } [\$cmd install]
+    }
+    find => {
+      packOp [\$cmd refresh]
+      packOpFind [\$cmd search]
+    }
+    list => {
+      packOpList [\$cmd list]
+    }
+    outdated => {
+      packOpOutdated [\$cmd outdated]
+    }
+    remove => {
+      packOpRemove { |n| packGrepList [\$cmd list] \$n } [\$cmd uninstall]
+    }
+    sync => {
+      packOpSync [\$cmd sync] [\$cmd sync]
+    }
+    tidy => {
+      packOp [\$cmd tidy]
+    }
+  }
+}
+
+
+def --env packCargo [] {
+  let cmd = 'cargo'
+  if (
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    ('PACK_OP' not-in \$env) or
+    (\$env.PACK_OP == add and (\$env.PACK_ADD_NAMES? | is-empty)) or
+    (\$env.PACK_OP == remove and (\$env.PACK_REMOVE_NAMES? | is-empty))
+  ) {
+    return
+  }
+
+  if not (packPrompt \$"use (\$cmd) \\\\(user\\\\)") { return }
+
+  match \$env.PACK_OP {
+    add => {
+      packOpAdd { |n| packGrepFind [\$cmd search] \$n } [\$cmd binstall --locked]
+    }
+    find => {
+      packOpFind [\$cmd search]
+    }
+    list => {
+      packOpList [\$cmd install --list]
+    }
+    outdated => {
+      packOpOutdated [\$cmd install-update --list]
+    }
+    remove => {
+      packOpRemove { |n| packGrepList [\$cmd install --list] \$n } [\$cmd uninstall]
+    }
+    sync => {
+      packOpSync [\$cmd install-update --all] [\$cmd install-update]
+    }
+    tidy => {
+      packOp [\$cmd cache --autoclean]
+    }
+  }
+}
+
+
+def --env packUv [] {
+  let cmd = 'uv'
+  if (
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    ('PACK_OP' not-in \$env) or
+    (\$env.PACK_OP == add and (\$env.PACK_ADD_NAMES? | is-empty)) or
+    (\$env.PACK_OP == remove and (\$env.PACK_REMOVE_NAMES? | is-empty))
+  ) {
+    return
+  }
+
+  if not (packPrompt \$"use (\$cmd) \\\\(user\\\\)") { return }
+
+  match \$env.PACK_OP {
+    add => {
+      packOpAdd { |n| packHttpGetPypi \$n | is-not-empty } [\$cmd tool install] --each
+    }
+    find => {
+      for term in \$env.PACK_FIND_NAMES {
+        packHttpGetPypi \$term | print
+      }
+    }
+    list => {
+      packOpList [\$cmd tool list]
+    }
+    remove => {
+      packOpRemove { |n| packGrepList [\$cmd tool list] \$n } [\$cmd tool uninstall]
+    }
+    sync => {
+      packOpSync [\$cmd tool upgrade --all] [\$cmd tool upgrade]
+    }
+    tidy => {
+      packOp [\$cmd cache clean]
+    }
+  }
+}
+
+
+def --env packPnpm [] {
+  let cmd = 'pnpm'
+  if (
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    ('PACK_OP' not-in \$env) or
+    (\$env.PACK_OP == add and (\$env.PACK_ADD_NAMES? | is-empty)) or
+    (\$env.PACK_OP == remove and (\$env.PACK_REMOVE_NAMES? | is-empty))
+  ) {
+    return
+  }
+
+  if not (packPrompt \$"use (\$cmd) \\\\(user\\\\)") { return }
+
+  match \$env.PACK_OP {
+    add => {
+      packOpAdd { |n| packGrepFind [\$cmd search] \$n } [\$cmd add --global]
+    }
+    find => {
+      packOpFind [\$cmd search]
+    }
+    list => {
+      packOpList [\$cmd list --global]
+    }
+    outdated => {
+      packOpOutdated [\$cmd outdated --global]
+    }
+    remove => {
+      packOpRemove { |n| packGrepList [\$cmd list --global] \$n } [\$cmd remove --global]
+    }
+    sync => {
+      let names = if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
+        \$env.PACK_SYNC_NAMES
+      } else {
+        ^\$cmd ls --global --parseable
+          | lines
+          | each { |line|
+              let parts = (\$line | path split)
+              let idx = (\$parts | enumerate | where item == 'node_modules' | get 0?.index?)
+              if \$idx == null { null } else {
+                \$parts | skip (\$idx + 1) | str join '/'
+              }
+            }
+          | compact
+          | where { \$in != bun and \$in != deno and \$in != node }
+      }
+      if (\$names | is-not-empty) {
+        packOp ([\$cmd update --global --latest] ++ \$names)
+      }
+    }
+    tidy => {
+      packOp [\$cmd store prune]
+    }
+  }
+}
+
+
+def --env packBun [] {
+  let cmd = 'bun'
+  if (
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    ('PACK_OP' not-in \$env) or
+    (\$env.PACK_OP == add and (\$env.PACK_ADD_NAMES? | is-empty)) or
+    (\$env.PACK_OP == remove and (\$env.PACK_REMOVE_NAMES? | is-empty))
+  ) {
+    return
+  }
+
+  if not (packPrompt \$"use (\$cmd) \\\\(user\\\\)") { return }
+
+  match \$env.PACK_OP {
+    add => {
+      packOpAdd { |n| [(packHttpGetNpm \$n), (packHttpGetJsr \$n)] | flatten | is-not-empty } [\$cmd add --force --global]
+    }
+    find => {
+      for term in \$env.PACK_FIND_NAMES {
+        [(packHttpGetNpm \$term), (packHttpGetJsr \$term)] | flatten | print
+      }
+    }
+    list => {
+      packOpList [\$cmd list --global]
+    }
+    remove => {
+      packOpRemove { |n| packGrepList [\$cmd list --global] \$n } [\$cmd remove --global]
+    }
+    sync => {
+      packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
+    }
+    tidy => {
+      packOp [\$cmd pm cache rm]
+    }
+  }
+}
+
+
+def --env packDeno [] {
+  let cmd = 'deno'
+  if (
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    ('PACK_OP' not-in \$env) or
+    (\$env.PACK_OP == add and (\$env.PACK_ADD_NAMES? | is-empty)) or
+    (\$env.PACK_OP == remove and (\$env.PACK_REMOVE_NAMES? | is-empty))
+  ) {
+    return
+  }
+
+  if not (packPrompt \$"use (\$cmd) \\\\(user\\\\)") { return }
+
+  def getBinDir [] {
+    [\$env.HOME '.deno' bin] | path join
+  }
+
+  def getInstalled [] {
+    let dir = getBinDir
+    if not (\$dir | path exists) {
+      return []
+    }
+    ls \$dir | where type == dir | get name | path basename | str substring 1..
+  }
+
+  match \$env.PACK_OP {
+    add => {
+      packOpAdd { |n| [(packHttpGetNpm \$n), (packHttpGetJsr \$n)] | flatten | is-not-empty } [\$cmd install --force --global] --each
+    }
+    find => {
+      for term in \$env.PACK_FIND_NAMES {
+        [(packHttpGetNpm \$term), (packHttpGetJsr \$term)] | flatten | print
+      }
+    }
+    list => {
+      packOpList [getInstalled]
+    }
+    remove => {
+      packOpRemove { |n| [(getBinDir) \$".(\$n)"] | path join | path exists } [\$cmd uninstall --global] --each
+    }
+    sync => {
+      let names = if (\$env.PACK_SYNC_NAMES? | is-not-empty) {
+        \$env.PACK_SYNC_NAMES
+      } else {
+        getInstalled
+      }
+      for n in \$names {
+        packOp [\$cmd install --force --global \$"(\$n)@latest"]
+      }
+    }
+    tidy => {
+      packOp [\$cmd clean]
+    }
+  }
+}
+
+
+def --env packPacman [] {
+  let mgr = if PACK_MANAGER in \$env {
+    \$env.PACK_MANAGER
+  } else if (which yay | is-not-empty) {
+    'yay'
+  } else if (which paru | is-not-empty) {
+    'paru'
+  } else {
+    'pacman'
+  }
+  if (
+    (\$mgr not-in ['yay', 'paru', 'pacman']) or
+    (which \$mgr | is-empty) or
+    ('PACK_OP' not-in \$env) or
+    (\$env.PACK_OP == add and (\$env.PACK_ADD_NAMES? | is-empty)) or
+    (\$env.PACK_OP == remove and (\$env.PACK_REMOVE_NAMES? | is-empty))
+  ) {
+    return
+  }
+
+  if not (packPrompt \$"use (\$mgr) \\\\(system\\\\)") { return }
+  let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
+
+  match \$env.PACK_OP {
+    add => {
+      packOp [\$cmd --sync --refresh]
+      packOpAdd { |n| packGrepFind [\$cmd --sync --search] \$n } [\$cmd --sync --needed]
+    }
+    find => {
+      packOp [\$cmd --sync --refresh]
+      packOpFind [\$cmd --sync --search]
+    }
+    list => {
+      packOpList [\$cmd --query]
+    }
+    outdated => {
+      packOp [\$cmd --sync --refresh]
+      packOpOutdated [\$cmd --query --upgrades]
+    }
+    remove => {
+      packOpRemove { |n| packGrepList [\$cmd --query] \$n } [\$cmd --remove --nosave --recursive]
+    }
+    sync => {
+      packOp [\$cmd --sync --refresh]
+      packOpSync [\$cmd --sync --sysupgrade] [\$cmd --sync --needed]
+    }
+    tidy => {
+      # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
+      packOp [sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete]
+      packOp [\$cmd --sync --clean --clean]
+      packOp [\$cmd --query --deps --unrequired --quiet '|' \$cmd --remove --nosave --recursive '-']
+    }
+  }
+}
+
+
+opPrint r#'alias'#
+opPrint r#'  shell-nu'#
+
+do --env {
+opPrint r#'names'#
+opPrint r#'  nu'#
+mut yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'use ghpm (user) [y,[n]]: '#
+}
+if \$yn != 'n' {
+\$env.PACK_MANAGER = r#'ghpm'#
+\$env.PACK_REMOVE_NAMES = [ r#'nu'# ]
+packGhpm
+hide-env PACK_MANAGER
+} else {
+opPrint r#'names'#
+opPrint r#'  nu'#
+\$yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'use cargo (user) [y,[n]]: '#
+}
+if \$yn != 'n' {
+\$env.PACK_MANAGER = r#'cargo'#
+\$env.PACK_REMOVE_NAMES = [ r#'nu'# ]
+packCargo
+hide-env PACK_MANAGER
+} else {
+opPrint r#'names'#
+opPrint r#'  nushell'#
+\$yn = ''
+if 'YES' in \$env {
+  \$yn = 'y'
+} else {
+  \$yn = input r#'use pacman (system) [y,[n]]: '#
+}
+if \$yn != 'n' {
+\$env.PACK_MANAGER = r#'pacman'#
+\$env.PACK_REMOVE_NAMES = [ r#'nushell'# ]
+packPacman
+hide-env PACK_MANAGER
+}
+}
+}
+}
+\`
+`;
+
 snapshot[`nu / arch / tidy 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
@@ -30966,7 +32350,8 @@ def --env packScoop [] {
       packOpSync [\$cmd update --all] [\$cmd update]
     }
     tidy => {
-      packOp [\$cmd cleanup --all --cache]
+      packOp [\$cmd cache rm --all]
+      packOp [\$cmd cleanup --all]
     }
   }
 }
@@ -31662,7 +33047,8 @@ def --env packScoop [] {
       packOpSync [\$cmd update --all] [\$cmd update]
     }
     tidy => {
-      packOp [\$cmd cleanup --all --cache]
+      packOp [\$cmd cache rm --all]
+      packOp [\$cmd cleanup --all]
     }
   }
 }
@@ -32367,7 +33753,8 @@ def --env packScoop [] {
       packOpSync [\$cmd update --all] [\$cmd update]
     }
     tidy => {
-      packOp [\$cmd cleanup --all --cache]
+      packOp [\$cmd cache rm --all]
+      packOp [\$cmd cleanup --all]
     }
   }
 }
@@ -33061,7 +34448,8 @@ def --env packScoop [] {
       packOpSync [\$cmd update --all] [\$cmd update]
     }
     tidy => {
-      packOp [\$cmd cleanup --all --cache]
+      packOp [\$cmd cache rm --all]
+      packOp [\$cmd cleanup --all]
     }
   }
 }
@@ -33757,7 +35145,8 @@ def --env packScoop [] {
       packOpSync [\$cmd update --all] [\$cmd update]
     }
     tidy => {
-      packOp [\$cmd cleanup --all --cache]
+      packOp [\$cmd cache rm --all]
+      packOp [\$cmd cleanup --all]
     }
   }
 }
@@ -34451,7 +35840,8 @@ def --env packScoop [] {
       packOpSync [\$cmd update --all] [\$cmd update]
     }
     tidy => {
-      packOp [\$cmd cleanup --all --cache]
+      packOp [\$cmd cache rm --all]
+      packOp [\$cmd cleanup --all]
     }
   }
 }
@@ -35143,7 +36533,8 @@ def --env packScoop [] {
       packOpSync [\$cmd update --all] [\$cmd update]
     }
     tidy => {
-      packOp [\$cmd cleanup --all --cache]
+      packOp [\$cmd cache rm --all]
+      packOp [\$cmd cleanup --all]
     }
   }
 }
@@ -35835,7 +37226,8 @@ def --env packScoop [] {
       packOpSync [\$cmd update --all] [\$cmd update]
     }
     tidy => {
-      packOp [\$cmd cleanup --all --cache]
+      packOp [\$cmd cache rm --all]
+      packOp [\$cmd cleanup --all]
     }
   }
 }
@@ -35894,6 +37286,8 @@ opPrint r#'lang-rustup'#
 opPrint r#'  rustlang.rustup'#
 opPrint r#'shell-nu'#
 opPrint r#'  nu'#
+opPrint r#'shell-zsh'#
+opPrint r#'  zsh'#
   }
 }
 \`
@@ -36511,6 +37905,8 @@ opPrint r#'lang-rustup'#
 opPrint r#'  rustup'#
 opPrint r#'shell-nu'#
 opPrint r#'  nu'#
+opPrint r#'shell-zsh'#
+opPrint r#'  zsh'#
   }
 }
 \`
@@ -36812,6 +38208,8 @@ opPrint r#'lang-rustup'#
 opPrint r#'  rustup, rustlang.rustup'#
 opPrint r#'shell-nu'#
 opPrint r#'  nu'#
+opPrint r#'shell-zsh'#
+opPrint r#'  zsh'#
   }
 }
 \`
@@ -38419,7 +39817,8 @@ def --env packScoop [] {
       packOpSync [\$cmd update --all] [\$cmd update]
     }
     tidy => {
-      packOp [\$cmd cleanup --all --cache]
+      packOp [\$cmd cache rm --all]
+      packOp [\$cmd cleanup --all]
     }
   }
 }

@@ -125,6 +125,22 @@ Deno.test('nu / linux / rem (host)', async (t) => {
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
+Deno.test('nu / linux / rem (host podman) — pinpoint', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/virt/rem/podman?sysOsPlat=linux&sysHost=host'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+// qemu has two instances (test, test2): add is WIDE (both), rem is PINPOINT (first only)
+Deno.test('nu / linux / add (host qemu) — wide', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/virt/add/qemu?sysOsPlat=linux&sysHost=host'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / linux / rem (host qemu) — pinpoint', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/virt/rem/qemu?sysOsPlat=linux&sysHost=host'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
 Deno.test('nu / linux / sync (host)', async (t) => {
   const body = await (await runSrv(req('/sh/nu/virt/sync?sysOsPlat=linux&sysHost=host'))).text()
   await assertSnapshot(t, body)

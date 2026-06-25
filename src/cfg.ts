@@ -26,6 +26,27 @@ export async function localCfgPaths(parts: Array<string>, extension?: string) {
   return []
 }
 
+export function preferExactMatches(
+  allParts: Array<Array<string>>,
+  filters: Array<string>,
+): Array<Array<string>> {
+  let result = allParts
+  for (const filter of filters) {
+    const exact = result.filter((parts) => parts.includes(filter))
+    if (exact.length > 0) {
+      result = exact
+    }
+  }
+  return result
+}
+
+export function pinpointMatch(
+  allParts: Array<Array<string>>,
+  filters: Array<string>,
+): Array<Array<string>> {
+  return preferExactMatches(allParts, filters).slice(0, 1)
+}
+
 export async function getCfgDirDump(
   parts: Array<string>,
   options?: {
@@ -34,6 +55,7 @@ export async function getCfgDirDump(
     extension?: string
     filters?: Array<string>
     flexible?: boolean
+    pinpoint?: boolean
   },
 ) {
   const dirPath = cfgPath(parts)
@@ -49,6 +71,7 @@ export async function getCfgDirDump(
     })
   ).map((p) => toRelParts(dirPath, p))
 
+  let result = dirFileParts
   if (options?.context && options.contextFilter) {
     const dirFilePartsFiltered: Array<Array<string>> = []
     for (const fileParts of dirFileParts) {
@@ -89,9 +112,13 @@ export async function getCfgDirDump(
         dirFilePartsFiltered.push(fileParts)
       }
     }
-    return dirFilePartsFiltered
+    result = dirFilePartsFiltered
   }
-  return dirFileParts
+
+  if (options?.pinpoint && options?.filters?.length) {
+    result = pinpointMatch(result, options.filters)
+  }
+  return result
 }
 
 export async function getCfgDirContent(
@@ -102,6 +129,7 @@ export async function getCfgDirContent(
     extension?: string
     filters?: Array<string>
     flexible?: boolean
+    pinpoint?: boolean
   },
 ) {
   const contents: Array<string> = []

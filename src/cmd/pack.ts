@@ -577,7 +577,10 @@ async function processGroupNames(
   const found: Array<string> = []
 
   for (const name of names) {
-    const resolved = await resolveGroupName(name)
+    let resolved = await resolveGroupName(name)
+    if (op === 'remove' && resolved.length > 1) {
+      resolved = [resolved.find((r) => r === name) ?? resolved[0]]
+    }
     for (const resolvedName of resolved) {
       const result = await processGroupConfig(
         _shell,
