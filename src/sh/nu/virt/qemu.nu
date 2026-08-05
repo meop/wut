@@ -49,7 +49,7 @@ def virtQemu [] {
     $qemuEnv = $qemuEnv | upsert 'VM_CPU_CORES' ($cpuStat | find --ignore-case 'core(s)' | split row ':' | last | str trim | ansi strip)
     $qemuEnv = $qemuEnv | upsert 'VM_CPU_THREADS' ($cpuStat | find --ignore-case 'thread(s)' | split row ':' | last | str trim | ansi strip)
 
-    let cpuVendor = if ((^cat '/proc/cpuinfo' | find --ignore-case 'vendor_id' | last | split row ':' | last | str downcase | str trim | ansi strip) | str contains 'amd') { 'amd' } else { 'intel' }
+    let cpuVendor = if ((^cat '/proc/cpuinfo' | find --ignore-case 'vendor_id' | last | split row ':' | last | str lowercase | str trim | ansi strip) | str contains 'amd') { 'amd' } else { 'intel' }
     $qemuEnv = $qemuEnv | upsert 'VM_CPU_VENDOR' ($cpuVendor | str trim)
 
     let nicDirPath = $"/sys/class/net/($qemuEnv.NIC)"

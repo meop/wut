@@ -31,7 +31,13 @@ def --env packBun [] {
       packOpSync [$cmd update --force --global --latest] [$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [$cmd pm cache rm]
+      opPrintCmd $cmd pm cache rm
+      if NOOP not-in $env {
+        let result = (do { ^$cmd pm cache rm } | complete)
+        if $result.exit_code != 0 and not ($result.stderr | str contains 'No package.json') {
+          opPrintErr $result.stderr
+        }
+      }
     }
   }
 }
