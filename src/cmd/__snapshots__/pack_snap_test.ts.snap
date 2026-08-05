@@ -280,7 +280,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -495,7 +495,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -896,7 +902,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -1111,7 +1117,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -1521,7 +1533,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -1736,7 +1748,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -2135,7 +2153,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -2350,7 +2368,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -2751,7 +2775,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -2966,7 +2990,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -3365,7 +3395,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -3580,7 +3610,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -3977,7 +4013,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -4192,7 +4228,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -4591,7 +4633,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -4806,7 +4848,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -4920,7 +4968,14 @@ def --env packPacman [] {
       # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
       packOp [sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete]
       packOp [\$cmd --sync --clean --clean]
-      packOp [\$cmd --query --deps --unrequired --quiet '|' \$cmd --remove --nosave --recursive '-']
+      let orphans = (do { run-external \$mgr '--query' '--deps' '--unrequired' '--quiet' }
+        | complete
+        | get stdout
+        | lines
+        | where { |n| (\$n | is-not-empty) })
+      if (\$orphans | is-not-empty) {
+        packOp ([\$cmd --remove --nosave --recursive] ++ \$orphans)
+      }
     }
   }
 }
@@ -5218,7 +5273,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -5433,7 +5488,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -5547,7 +5608,14 @@ def --env packPacman [] {
       # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
       packOp [sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete]
       packOp [\$cmd --sync --clean --clean]
-      packOp [\$cmd --query --deps --unrequired --quiet '|' \$cmd --remove --nosave --recursive '-']
+      let orphans = (do { run-external \$mgr '--query' '--deps' '--unrequired' '--quiet' }
+        | complete
+        | get stdout
+        | lines
+        | where { |n| (\$n | is-not-empty) })
+      if (\$orphans | is-not-empty) {
+        packOp ([\$cmd --remove --nosave --recursive] ++ \$orphans)
+      }
     }
   }
 }
@@ -5854,7 +5922,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -6069,7 +6137,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -6183,7 +6257,14 @@ def --env packPacman [] {
       # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
       packOp [sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete]
       packOp [\$cmd --sync --clean --clean]
-      packOp [\$cmd --query --deps --unrequired --quiet '|' \$cmd --remove --nosave --recursive '-']
+      let orphans = (do { run-external \$mgr '--query' '--deps' '--unrequired' '--quiet' }
+        | complete
+        | get stdout
+        | lines
+        | where { |n| (\$n | is-not-empty) })
+      if (\$orphans | is-not-empty) {
+        packOp ([\$cmd --remove --nosave --recursive] ++ \$orphans)
+      }
     }
   }
 }
@@ -6479,7 +6560,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -6694,7 +6775,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -6808,7 +6895,14 @@ def --env packPacman [] {
       # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
       packOp [sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete]
       packOp [\$cmd --sync --clean --clean]
-      packOp [\$cmd --query --deps --unrequired --quiet '|' \$cmd --remove --nosave --recursive '-']
+      let orphans = (do { run-external \$mgr '--query' '--deps' '--unrequired' '--quiet' }
+        | complete
+        | get stdout
+        | lines
+        | where { |n| (\$n | is-not-empty) })
+      if (\$orphans | is-not-empty) {
+        packOp ([\$cmd --remove --nosave --recursive] ++ \$orphans)
+      }
     }
   }
 }
@@ -7106,7 +7200,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -7321,7 +7415,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -7435,7 +7535,14 @@ def --env packPacman [] {
       # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
       packOp [sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete]
       packOp [\$cmd --sync --clean --clean]
-      packOp [\$cmd --query --deps --unrequired --quiet '|' \$cmd --remove --nosave --recursive '-']
+      let orphans = (do { run-external \$mgr '--query' '--deps' '--unrequired' '--quiet' }
+        | complete
+        | get stdout
+        | lines
+        | where { |n| (\$n | is-not-empty) })
+      if (\$orphans | is-not-empty) {
+        packOp ([\$cmd --remove --nosave --recursive] ++ \$orphans)
+      }
     }
   }
 }
@@ -7731,7 +7838,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -7946,7 +8053,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -8060,7 +8173,14 @@ def --env packPacman [] {
       # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
       packOp [sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete]
       packOp [\$cmd --sync --clean --clean]
-      packOp [\$cmd --query --deps --unrequired --quiet '|' \$cmd --remove --nosave --recursive '-']
+      let orphans = (do { run-external \$mgr '--query' '--deps' '--unrequired' '--quiet' }
+        | complete
+        | get stdout
+        | lines
+        | where { |n| (\$n | is-not-empty) })
+      if (\$orphans | is-not-empty) {
+        packOp ([\$cmd --remove --nosave --recursive] ++ \$orphans)
+      }
     }
   }
 }
@@ -8356,7 +8476,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -8571,7 +8691,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -8685,7 +8811,14 @@ def --env packPacman [] {
       # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
       packOp [sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete]
       packOp [\$cmd --sync --clean --clean]
-      packOp [\$cmd --query --deps --unrequired --quiet '|' \$cmd --remove --nosave --recursive '-']
+      let orphans = (do { run-external \$mgr '--query' '--deps' '--unrequired' '--quiet' }
+        | complete
+        | get stdout
+        | lines
+        | where { |n| (\$n | is-not-empty) })
+      if (\$orphans | is-not-empty) {
+        packOp ([\$cmd --remove --nosave --recursive] ++ \$orphans)
+      }
     }
   }
 }
@@ -8703,7 +8836,7 @@ if 'YES' in \$env {
 } else {
   \$yn = input r#'use ghpm (user) [y,[n]]: '#
 }
-if \$yn != 'n' {
+if (\$yn | str lowercase) in ['', 'y', 'yes'] {
 \$env.PACK_MANAGER = r#'ghpm'#
 \$env.PACK_ADD_NAMES = [ r#'nu'# ]
 packGhpm
@@ -8717,7 +8850,7 @@ if 'YES' in \$env {
 } else {
   \$yn = input r#'use cargo (user) [y,[n]]: '#
 }
-if \$yn != 'n' {
+if (\$yn | str lowercase) in ['', 'y', 'yes'] {
 \$env.PACK_MANAGER = r#'cargo'#
 \$env.PACK_ADD_NAMES = [ r#'nu'# ]
 packCargo
@@ -8731,7 +8864,7 @@ if 'YES' in \$env {
 } else {
   \$yn = input r#'use pacman (system) [y,[n]]: '#
 }
-if \$yn != 'n' {
+if (\$yn | str lowercase) in ['', 'y', 'yes'] {
 \$env.PACK_MANAGER = r#'pacman'#
 \$env.PACK_ADD_NAMES = [ r#'nushell'# ]
 packPacman
@@ -8753,7 +8886,7 @@ if 'YES' in \$env {
 } else {
   \$yn = input r#'use ghpm (user) [y,[n]]: '#
 }
-if \$yn != 'n' {
+if (\$yn | str lowercase) in ['', 'y', 'yes'] {
 \$env.PACK_MANAGER = r#'ghpm'#
 \$env.PACK_ADD_NAMES = [ r#'zsh'# ]
 packGhpm
@@ -8767,7 +8900,7 @@ if 'YES' in \$env {
 } else {
   \$yn = input r#'use cargo (user) [y,[n]]: '#
 }
-if \$yn != 'n' {
+if (\$yn | str lowercase) in ['', 'y', 'yes'] {
 \$env.PACK_MANAGER = r#'cargo'#
 \$env.PACK_ADD_NAMES = [ r#'zsh'# ]
 packCargo
@@ -8781,7 +8914,7 @@ if 'YES' in \$env {
 } else {
   \$yn = input r#'use pacman (system) [y,[n]]: '#
 }
-if \$yn != 'n' {
+if (\$yn | str lowercase) in ['', 'y', 'yes'] {
 \$env.PACK_MANAGER = r#'pacman'#
 \$env.PACK_ADD_NAMES = [ r#'zsh'# ]
 packPacman
@@ -9073,7 +9206,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -9288,7 +9421,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -9402,7 +9541,14 @@ def --env packPacman [] {
       # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
       packOp [sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete]
       packOp [\$cmd --sync --clean --clean]
-      packOp [\$cmd --query --deps --unrequired --quiet '|' \$cmd --remove --nosave --recursive '-']
+      let orphans = (do { run-external \$mgr '--query' '--deps' '--unrequired' '--quiet' }
+        | complete
+        | get stdout
+        | lines
+        | where { |n| (\$n | is-not-empty) })
+      if (\$orphans | is-not-empty) {
+        packOp ([\$cmd --remove --nosave --recursive] ++ \$orphans)
+      }
     }
   }
 }
@@ -9420,7 +9566,7 @@ if 'YES' in \$env {
 } else {
   \$yn = input r#'use ghpm (user) [y,[n]]: '#
 }
-if \$yn != 'n' {
+if (\$yn | str lowercase) in ['', 'y', 'yes'] {
 \$env.PACK_MANAGER = r#'ghpm'#
 \$env.PACK_REMOVE_NAMES = [ r#'nu'# ]
 packGhpm
@@ -9434,7 +9580,7 @@ if 'YES' in \$env {
 } else {
   \$yn = input r#'use cargo (user) [y,[n]]: '#
 }
-if \$yn != 'n' {
+if (\$yn | str lowercase) in ['', 'y', 'yes'] {
 \$env.PACK_MANAGER = r#'cargo'#
 \$env.PACK_REMOVE_NAMES = [ r#'nu'# ]
 packCargo
@@ -9448,7 +9594,7 @@ if 'YES' in \$env {
 } else {
   \$yn = input r#'use pacman (system) [y,[n]]: '#
 }
-if \$yn != 'n' {
+if (\$yn | str lowercase) in ['', 'y', 'yes'] {
 \$env.PACK_MANAGER = r#'pacman'#
 \$env.PACK_REMOVE_NAMES = [ r#'nushell'# ]
 packPacman
@@ -9738,7 +9884,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -9953,7 +10099,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -10067,7 +10219,14 @@ def --env packPacman [] {
       # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
       packOp [sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete]
       packOp [\$cmd --sync --clean --clean]
-      packOp [\$cmd --query --deps --unrequired --quiet '|' \$cmd --remove --nosave --recursive '-']
+      let orphans = (do { run-external \$mgr '--query' '--deps' '--unrequired' '--quiet' }
+        | complete
+        | get stdout
+        | lines
+        | where { |n| (\$n | is-not-empty) })
+      if (\$orphans | is-not-empty) {
+        packOp ([\$cmd --remove --nosave --recursive] ++ \$orphans)
+      }
     }
   }
 }
@@ -10363,7 +10522,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -10578,7 +10737,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -10980,7 +11145,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -11195,7 +11360,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -11606,7 +11777,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -11821,7 +11992,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -12221,7 +12398,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -12436,7 +12613,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -12838,7 +13021,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -13053,7 +13236,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -13453,7 +13642,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -13668,7 +13857,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -14066,7 +14261,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -14281,7 +14476,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -14681,7 +14882,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -14896,7 +15097,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -15298,7 +15505,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -15513,7 +15720,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -15924,7 +16137,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -16139,7 +16352,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -16539,7 +16758,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -16754,7 +16973,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -17156,7 +17381,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -17371,7 +17596,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -17771,7 +18002,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -17986,7 +18217,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -18384,7 +18621,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -18599,7 +18836,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -18999,7 +19242,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -19214,7 +19457,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -19616,7 +19865,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -19831,7 +20080,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -20242,7 +20497,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -20457,7 +20712,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -20857,7 +21118,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -21072,7 +21333,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -21474,7 +21741,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -21689,7 +21956,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -22089,7 +22362,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -22304,7 +22577,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -22702,7 +22981,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -22917,7 +23196,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -23317,7 +23602,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -23532,7 +23817,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -23943,7 +24234,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -24158,7 +24449,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -24578,7 +24875,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -24793,7 +25090,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -25202,7 +25505,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -25417,7 +25720,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -25828,7 +26137,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -26043,7 +26352,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -26452,7 +26767,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -26667,7 +26982,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -27074,7 +27395,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -27289,7 +27610,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -27696,7 +28023,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -27911,7 +28238,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -28310,7 +28643,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -28525,7 +28858,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -28933,7 +29272,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -29148,7 +29487,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -29545,7 +29890,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -29760,7 +30105,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -30159,7 +30510,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -30374,7 +30725,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -30771,7 +31128,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -30986,7 +31343,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -31381,7 +31744,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -31596,7 +31959,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -31993,7 +32362,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -32208,7 +32577,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -32690,7 +33065,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -32905,7 +33280,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -33396,7 +33777,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -33611,7 +33992,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -34091,7 +34478,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -34306,7 +34693,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -34788,7 +35181,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -35003,7 +35396,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -35483,7 +35882,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -35698,7 +36097,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -36176,7 +36581,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -36391,7 +36796,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -36869,7 +37280,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -37084,7 +37495,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -37569,7 +37986,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -37784,7 +38201,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -38192,7 +38615,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -38495,7 +38918,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -38549,7 +38972,14 @@ def --env packPacman [] {
       # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
       packOp [sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete]
       packOp [\$cmd --sync --clean --clean]
-      packOp [\$cmd --query --deps --unrequired --quiet '|' \$cmd --remove --nosave --recursive '-']
+      let orphans = (do { run-external \$mgr '--query' '--deps' '--unrequired' '--quiet' }
+        | complete
+        | get stdout
+        | lines
+        | where { |n| (\$n | is-not-empty) })
+      if (\$orphans | is-not-empty) {
+        packOp ([\$cmd --remove --nosave --recursive] ++ \$orphans)
+      }
     }
   }
 }
@@ -38846,7 +39276,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -39061,7 +39491,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -39460,7 +39896,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -39675,7 +40111,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -40157,7 +40599,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -40372,7 +40814,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -40773,7 +41221,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -40988,7 +41436,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -41102,7 +41556,14 @@ def --env packPacman [] {
       # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
       packOp [sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete]
       packOp [\$cmd --sync --clean --clean]
-      packOp [\$cmd --query --deps --unrequired --quiet '|' \$cmd --remove --nosave --recursive '-']
+      let orphans = (do { run-external \$mgr '--query' '--deps' '--unrequired' '--quiet' }
+        | complete
+        | get stdout
+        | lines
+        | where { |n| (\$n | is-not-empty) })
+      if (\$orphans | is-not-empty) {
+        packOp ([\$cmd --remove --nosave --recursive] ++ \$orphans)
+      }
     }
   }
 }
@@ -41402,7 +41863,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -41617,7 +42078,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -42017,7 +42484,7 @@ def packPrompt [label: string] {
   } else {
     \$yn = input \$"(\$label) [y,[n]]: "
   }
-  \$yn != n
+  (\$yn | str lowercase) in ['', 'y', 'yes']
 }
 
 
@@ -42232,7 +42699,13 @@ def --env packBun [] {
       packOpSync [\$cmd update --force --global --latest] [\$cmd update --force --global --latest]
     }
     tidy => {
-      packOp [\$cmd pm cache rm]
+      opPrintCmd \$cmd pm cache rm
+      if NOOP not-in \$env {
+        let result = (do { ^\$cmd pm cache rm } | complete)
+        if \$result.exit_code != 0 and not (\$result.stderr | str contains 'No package.json') {
+          opPrintErr \$result.stderr
+        }
+      }
     }
   }
 }
@@ -42476,14 +42949,14 @@ do {
 }
 
 
-\$env.SYS_CPU_ARCH = match (uname | get machine | str downcase) {
+\$env.SYS_CPU_ARCH = match (uname | get machine | str lowercase) {
   arm64 => 'aarch64',
   amd64 => 'x86_64',
   \$x => \$x,
 }
 \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)?sysCpuArch=(\$env.SYS_CPU_ARCH)"
 
-let _raw_vend = sys cpu | first | get name | str downcase
+let _raw_vend = sys cpu | first | get name | str lowercase
 \$env.SYS_CPU_VEND = match \$_raw_vend {
   \$x if (\$x | str starts-with amd) => 'amd',
   \$x if (\$x | str starts-with apple) => 'apple',
@@ -42494,10 +42967,10 @@ if \$env.SYS_CPU_VEND != null {
   \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysCpuVend=(\$env.SYS_CPU_VEND)"
 }
 
-\$env.SYS_HOST = sys host | get hostname | str downcase
+\$env.SYS_HOST = sys host | get hostname | str lowercase
 \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysHost=(\$env.SYS_HOST)"
 
-\$env.SYS_OS_PLAT = match (uname | get kernel-name | str downcase) {
+\$env.SYS_OS_PLAT = match (uname | get kernel-name | str lowercase) {
   darwin => 'darwin',
   linux => 'linux',
   windows_nt => 'winnt',
@@ -42507,7 +42980,7 @@ if \$env.SYS_CPU_VEND != null {
 
 if \$env.SYS_OS_PLAT == linux {
   if SYS_OS_DE not-in \$env and XDG_SESSION_DESKTOP in \$env {
-    \$env.SYS_OS_DE = match (\$env.XDG_SESSION_DESKTOP | str downcase) {
+    \$env.SYS_OS_DE = match (\$env.XDG_SESSION_DESKTOP | str lowercase) {
       kde => 'plasma',
       rpd | rpd-labwc => 'lxde',
       \$x => \$x,
@@ -42524,28 +42997,28 @@ if \$env.SYS_OS_PLAT == linux {
       | load-env
 
     if SYS_OS not-in \$env and ID in \$env {
-      \$env.SYS_OS = \$env.ID | str downcase
+      \$env.SYS_OS = \$env.ID | str lowercase
       \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOs=(\$env.SYS_OS)"
     }
 
     if SYS_OS_LIKE not-in \$env and SYS_OS in \$env {
-      \$env.SYS_OS_LIKE = if ID_LIKE in \$env { \$"(\$env.SYS_OS)_(\$env.ID_LIKE | str downcase)" } else { \$env.SYS_OS } | str replace --all ' ' '_'
+      \$env.SYS_OS_LIKE = if ID_LIKE in \$env { \$"(\$env.SYS_OS)_(\$env.ID_LIKE | str lowercase)" } else { \$env.SYS_OS } | str replace --all ' ' '_'
       \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsLike=(\$env.SYS_OS_LIKE)"
     }
 
     if SYS_OS_VERS not-in \$env and VERSION_ID in \$env {
-      \$env.SYS_OS_VERS = \$env.VERSION_ID | str downcase
+      \$env.SYS_OS_VERS = \$env.VERSION_ID | str lowercase
       \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsVers=(\$env.SYS_OS_VERS)"
     }
 
     if SYS_OS_VERS_CODE not-in \$env and VERSION_CODENAME in \$env {
-      \$env.SYS_OS_VERS_CODE = \$env.VERSION_CODENAME | str downcase
+      \$env.SYS_OS_VERS_CODE = \$env.VERSION_CODENAME | str lowercase
       \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsVersCode=(\$env.SYS_OS_VERS_CODE)"
     }
   }
 }
 
-\$env.SYS_USER = whoami | str downcase
+\$env.SYS_USER = whoami | str lowercase
 \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysUser=(\$env.SYS_USER)"
 
 

@@ -141,5 +141,5 @@ def packPrompt [label: string] {
   } else {
     $yn = input $"($label) [y,[n]]: "
   }
-  $yn != n
+  ($yn | str lowercase) in ['', 'y', 'yes']
 }

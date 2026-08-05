@@ -430,12 +430,12 @@ export function buildTierChain(tiers: Array<TierBlock>): Array<string> {
       `}`,
     ]
     if (i === tiers.length - 1) {
-      return [...pre, ...prompt, `if $yn != 'n' {`, ...lines, `}`]
+      return [...pre, ...prompt, `if ($yn | str lowercase) in ['', 'y', 'yes'] {`, ...lines, `}`]
     }
     return [
       ...pre,
       ...prompt,
-      `if $yn != 'n' {`,
+      `if ($yn | str lowercase) in ['', 'y', 'yes'] {`,
       ...lines,
       `} else {`,
       ...buildChain(i + 1),

@@ -15,7 +15,7 @@ def file [] {
   } else {
     $yn = input r#'use file (user) [y,[n]]: '#
   }
-  if $yn == n {
+  if not (($yn | str lowercase) in ['', 'y', 'yes']) {
     return
   }
   match $env.FILE_OP {
