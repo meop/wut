@@ -246,6 +246,7 @@ async function findGroupsWithNames(
   filters: Array<string> | undefined,
   allManagers: Array<string> | null,
   context: Ctx | null,
+  managerSpecified: boolean,
 ): Promise<{ entries: Array<string>; found: Array<string> }> {
   const results = await getCfgDirDump([PACK_KEY], {
     extension: Fmt.yaml,
@@ -267,7 +268,7 @@ async function findGroupsWithNames(
       let tierFound = false
       for (const tier of Object.keys(addConfig)) {
         if (tier === 'script') {
-          if (!context) {
+          if (managerSpecified || !context) {
             continue
           }
           const nativeShell = getNativeShellForPlat(context.sys_os_plat ?? '')
@@ -452,6 +453,7 @@ async function processGroupConfig(
   userManagers: Array<string>,
   sysManagers: Array<string>,
   name: string,
+  managerSpecified: boolean,
 ): Promise<{ shell: Sh; found: boolean }> {
   const content = await loadGroupConfig(name.split('-'))
   if (content == null) {
@@ -471,7 +473,7 @@ async function processGroupConfig(
 
   for (const tier of Object.keys(addConfig ?? {})) {
     if (tier === 'script') {
-      if (op !== 'add') {
+      if (op !== 'add' || managerSpecified) {
         continue
       }
       const nativeShell = getNativeShellForPlat(plat)
@@ -572,6 +574,7 @@ async function processGroupNames(
   userManagers: Array<string>,
   sysManagers: Array<string>,
   names: Array<string>,
+  managerSpecified: boolean,
 ): Promise<{ shell: Sh; found: Array<string> }> {
   let _shell = shell
   const found: Array<string> = []
@@ -589,6 +592,7 @@ async function processGroupNames(
         userManagers,
         sysManagers,
         resolvedName,
+        managerSpecified,
       )
       _shell = result.shell
       if (result.found && !found.includes(name)) {
@@ -624,15 +628,16 @@ async function execOp(
   }
 
   const names = environment.getSplit(PACK_OP_NAMES_KEY(op))
+  const managerSpecified = !!environment.get(PACK_MANAGER_KEY)
   let found: Array<string> = []
 
   if (op === 'find') {
-    const hasContext = context.sys_os_plat || context.sys_os ||
-      environment.get(PACK_MANAGER_KEY)
+    const hasContext = context.sys_os_plat || context.sys_os || managerSpecified
     const { entries: groupEntries, found: groupFilterFound } = await findGroupsWithNames(
       names.length ? names : undefined,
       hasContext ? allManagers : null,
       hasContext ? context : null,
+      managerSpecified,
     )
     found = groupFilterFound
     result = printGroups(result, groupEntries)
@@ -644,6 +649,7 @@ async function execOp(
       userManagers,
       sysManagers,
       names,
+      managerSpecified,
     )
     result = groupResult.shell
     found = groupResult.found
