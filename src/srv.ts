@@ -46,6 +46,10 @@ enum Op {
 const SH_VERS_MAJOR_KEY = ['sh', 'vers', 'major']
 const SH_VERS_MINOR_KEY = ['sh', 'vers', 'minor']
 
+const NU_VERS_MAJOR_KEY = ['nu', 'vers', 'major']
+const NU_VERS_MINOR_KEY = ['nu', 'vers', 'minor']
+const NU_VERS_PATCH_KEY = ['nu', 'vers', 'patch']
+
 const VAR_REQ_URL_OP_KEY = (op: string) => ['req', 'url', op]
 
 export async function runSrv(request: Request) {
@@ -115,12 +119,19 @@ export async function runSrv(request: Request) {
       .with(shell.varSet(SH_VERS_MINOR_KEY, String(vers.minor)))
     shell = shell.with(await shell.fileLoad(['vers']))
 
+    const nuVers = VERSIONS.nu
+    shell = shell
+      .with(shell.varSet(NU_VERS_MAJOR_KEY, String(nuVers.major)))
+      .with(shell.varSet(NU_VERS_MINOR_KEY, String(nuVers.minor)))
+      .with(shell.varSet(NU_VERS_PATCH_KEY, String(nuVers.patch)))
+
     if (
       !(Object.keys(context).filter((k) => k.startsWith('sys')).some((k) => context[k as keyof Ctx]))
     ) {
       return new Response(
         shell
           .with(await shell.fileLoad(['sys']))
+          .with(await shell.fileLoad(['rt'], import.meta.resolve, ['.']))
           .with(await shell.fileLoad(['get']))
           .build(),
       )
@@ -138,6 +149,8 @@ export async function runSrv(request: Request) {
         shell.varSetStr([e[0]], e[1]),
       )
     }
+
+    shell = shell.with(await shell.fileLoad(['rt'], import.meta.resolve, ['.']))
 
     try {
       return new Response(await cmd.process(parts.slice(2), shell, canonicalContext))

@@ -38,8 +38,6 @@ Set `WUT_URL` to your server address, then paste the corresponding `wut` functio
 
 ### nu
 
-Nushell is supported on Unix and Windows for all commands.
-
 ```nu
 $env.WUT_URL = 'http://my-server:9000'
 
@@ -54,8 +52,6 @@ def wut --wrapped [...args] {
 
 ### pwsh
 
-Powershell is supported on Windows for `script`. All other commands invoke Nushell.
-
 ```pwsh
 $env:WUT_URL = 'http://my-server:9000'
 
@@ -69,8 +65,6 @@ function wut {
 ```
 
 ### zsh
-
-Zshell is supported on Unix for `script`. All other commands invoke Nushell.
 
 ```zsh
 export WUT_URL='http://my-server:9000'

@@ -3,13 +3,13 @@ import { assertSnapshot } from '@std/testing/snapshot'
 import { checkSyntax, req } from '../_test.ts'
 import { runSrv } from '../srv.ts'
 
-// nu → native redirect
-Deno.test('nu / linux / find (redirect)', async (t) => {
+// nu builds the (nu ∪ zsh ∪ pwsh) overlay listing directly — find never redirects
+Deno.test('nu / linux / find', async (t) => {
   const body = await (await runSrv(req('/sh/nu/script/find?sysOsPlat=linux'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / winnt / find (redirect)', async (t) => {
+Deno.test('nu / winnt / find', async (t) => {
   const body = await (await runSrv(req('/sh/nu/script/find?sysOsPlat=winnt'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
@@ -56,13 +56,38 @@ Deno.test('pwsh / winnt / exec', async (t) => {
   await assertSnapshot(t, body)
   await checkSyntax('pwsh', body)
 })
-Deno.test('zsh / darwin / exec', async (t) => {
+Deno.test('zsh / darwin / exec (no match, docker not gated for darwin)', async (t) => {
   const body = await (await runSrv(req('/sh/zsh/script/exec/setup/docker?sysOsPlat=darwin'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('zsh', body)
 })
-Deno.test('zsh / linux / exec', async (t) => {
+// docker exists under both pwsh and zsh, both gated to linux — pwsh wins priority even though zsh called
+Deno.test('zsh / linux / exec (overlay redirects to pwsh)', async (t) => {
   const body = await (await runSrv(req('/sh/zsh/script/exec/setup/docker?sysOsPlat=linux'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('zsh', body)
+})
+
+// overlay: cargo exists under nu, zsh, and pwsh — nu wins priority regardless of which shell called
+Deno.test('nu / linux / exec (overlay, already nu)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/script/exec/setup/cargo?sysOsPlat=linux'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('zsh / linux / exec (overlay redirects to nu)', async (t) => {
+  const body = await (await runSrv(req('/sh/zsh/script/exec/setup/cargo?sysOsPlat=linux'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('zsh', body)
+})
+Deno.test('pwsh / winnt / exec (overlay redirects to nu)', async (t) => {
+  const body = await (await runSrv(req('/sh/pwsh/script/exec/setup/cargo?sysOsPlat=winnt'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('pwsh', body)
+})
+
+// overlay dedup: cargo exists under both nu and zsh on linux, find shows it once
+Deno.test('zsh / linux / find (overlay dedup)', async (t) => {
+  const body = await (await runSrv(req('/sh/zsh/script/find/setup?sysOsPlat=linux'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('zsh', body)
 })

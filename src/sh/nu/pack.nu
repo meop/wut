@@ -71,7 +71,8 @@ def --env packMutate [
   let names = $env | get $names_key
   mut found = []
   for term in $names {
-    if (do $finder $term) {
+    # flags (eg brew's --cask) aren't package names and can't be verified via the finder — always pass them through
+    if ($term | str starts-with '-') or (do $finder $term) {
       $found = ($found | append $term)
     } else {
       print $"($term): ($miss_msg)"

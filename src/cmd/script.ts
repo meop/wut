@@ -5,7 +5,7 @@ import { Fmt } from '@meop/shire/serde'
 import type { Sh } from '@meop/shire/sh'
 
 import { type CtxFilter, getCfgDirContent, getCfgDirDump, getCfgFileLoad } from '../cfg.ts'
-import { redirectNativeShell } from '../sh.ts'
+import { redirectShell } from '../sh.ts'
 
 export class ScriptCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -23,80 +23,97 @@ export class ScriptCmd extends CmdBase implements Cmd {
 const SCRIPT_KEY = 'script'
 const SCRIPT_OP_PARTS_KEY = (op: string) => [SCRIPT_KEY, op, 'parts']
 
-async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
-  const redirect = await redirectNativeShell(shell, context)
-  if (redirect) {
-    return redirect
-  }
-  let _shell = shell
+// nu and pwsh both run everywhere; nu is fastest, pwsh slower. zsh is fastest of all but unix-only, so it only
+// ever wins when a script has no nu/pwsh flavor at all for that platform. script.yaml gates already narrow each
+// shell's scripts to the platforms they apply to, so trying them in this order and taking the first match is how
+// a script authored in more than one flavor gets a single winner.
+const SHELL_PRIORITY: Array<{ name: string; extension: string }> = [
+  { name: 'nu', extension: 'nu' },
+  { name: 'pwsh', extension: 'ps1' },
+  { name: 'zsh', extension: 'zsh' },
+]
 
-  const dirParts = [SCRIPT_KEY, _shell.name]
-  const filters = environment.getSplit(SCRIPT_OP_PARTS_KEY(op))
+async function findOp(shell: Sh, context: Ctx, environment: Env) {
+  const filters = environment.getSplit(SCRIPT_OP_PARTS_KEY('find'))
+  const content = await getCfgFileLoad([SCRIPT_KEY], { extension: Fmt.yaml })
 
-  const content = await getCfgFileLoad([SCRIPT_KEY], {
-    extension: Fmt.yaml,
-  })
-
-  let contextFilter: CtxFilter | undefined
-  if (content != null) {
-    contextFilter = content[_shell.name]
-  }
-
-  if (op === 'find') {
-    const allResults = await getCfgDirDump(dirParts, {
+  const grouped = new Map<string, Set<string>>()
+  for (const { name, extension } of SHELL_PRIORITY) {
+    const contextFilter: CtxFilter | undefined = content?.[name]
+    const results = await getCfgDirDump([SCRIPT_KEY, name], {
       context,
       contextFilter,
-      extension: _shell.extension,
+      extension,
       filters,
       flexible: true,
     })
-
-    const grouped = new Map<string, string[]>()
-    for (const r of allResults) {
+    for (const r of results) {
       const key = r[0]
       const val = r.slice(1).join('/')
       if (!grouped.has(key)) {
-        grouped.set(key, [])
+        grouped.set(key, new Set())
       }
       if (val) {
-        grouped.get(key)!.push(val)
+        grouped.get(key)!.add(val)
       }
     }
-
-    const shellLines: string[] = []
-    for (
-      const [key, scripts] of [...grouped.entries()].toSorted(([a], [b]) => a.localeCompare(b))
-    ) {
-      shellLines.push(..._shell.print(key))
-      if (scripts.length > 0) {
-        shellLines.push(..._shell.print(`  ${scripts.toSorted().join(', ')}`))
-      }
-    }
-
-    _shell = _shell.with(
-      _shell.gatedFunc(
-        'use script',
-        shellLines,
-      ),
-    )
-  } else {
-    _shell = _shell.with(
-      await getCfgDirContent(dirParts, {
-        context,
-        contextFilter,
-        extension: _shell.extension,
-        filters,
-        pinpoint: true,
-      }),
-    )
   }
 
-  const body = _shell.build()
+  const shellLines: string[] = []
+  for (
+    const [key, scripts] of [...grouped.entries()].toSorted(([a], [b]) => a.localeCompare(b))
+  ) {
+    shellLines.push(...shell.print(key))
+    if (scripts.size > 0) {
+      shellLines.push(...shell.print(`  ${[...scripts].toSorted().join(', ')}`))
+    }
+  }
 
+  const _shell = shell.with(shell.gatedFunc('use script', shellLines))
+  const body = _shell.build()
   if (environment.get(['log'])) {
     console.log(body)
   }
+  return body
+}
 
+async function execOp(shell: Sh, context: Ctx, environment: Env) {
+  const filters = environment.getSplit(SCRIPT_OP_PARTS_KEY('exec'))
+  const content = await getCfgFileLoad([SCRIPT_KEY], { extension: Fmt.yaml })
+
+  for (const { name, extension } of SHELL_PRIORITY) {
+    const contextFilter: CtxFilter | undefined = content?.[name]
+    const dirParts = [SCRIPT_KEY, name]
+    const matches = await getCfgDirDump(dirParts, {
+      context,
+      contextFilter,
+      extension,
+      filters,
+      pinpoint: true,
+    })
+    if (matches.length === 0) {
+      continue
+    }
+
+    const redirect = await redirectShell(shell, name, context)
+    if (redirect) {
+      return redirect
+    }
+
+    const _shell = shell.with(
+      await getCfgDirContent(dirParts, { context, contextFilter, extension, filters, pinpoint: true }),
+    )
+    const body = _shell.build()
+    if (environment.get(['log'])) {
+      console.log(body)
+    }
+    return body
+  }
+
+  const body = shell.build()
+  if (environment.get(['log'])) {
+    console.log(body)
+  }
   return body
 }
 
@@ -115,7 +132,7 @@ export class ScriptCmdExec extends CmdBase implements Cmd {
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(shell, context, environment, this.name)
+    return await execOp(shell, context, environment)
   }
 }
 
@@ -132,6 +149,6 @@ export class ScriptCmdFind extends CmdBase implements Cmd {
     context: Ctx,
     environment: Env,
   ): Promise<string> {
-    return await execOp(shell, context, environment, this.name)
+    return await findOp(shell, context, environment)
   }
 }

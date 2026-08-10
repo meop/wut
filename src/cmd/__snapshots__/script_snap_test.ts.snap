@@ -1,19 +1,577 @@
 export const snapshot = {};
 
-snapshot[`nu / linux / find (redirect) 1`] = `
-\`zsh --no-rcs -c r#'REQ_URL_SH='http://x/sh/zsh/script/find?sysOsPlat=linux'
+snapshot[`nu / linux / find 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-eval "\$( curl --fail-with-body --location --no-progress-meter --url \$REQ_URL_SH )"
+\$env.REQ_URL_SH = r#'http://x/sh/nu/script/find?sysOsPlat=linux'#
 
-'#\`
+def opPrint --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  \$"(\$args | flatten | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print --stderr
+    return
+  }
+  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  let args = \$args | flatten
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunSilentCmd ...\$args
+  }
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opMaybeRunCmd ...\$args
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 114
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.NU_VERS_MAJOR = 0
+
+\$env.NU_VERS_MINOR = 114
+
+\$env.NU_VERS_PATCH = 1
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/script/find'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux'#
+
+def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
+  if not (\$nu_bin | path exists) {
+    return false
+  }
+  let installed = (do { ^\$nu_bin --version } | complete)
+  if \$installed.exit_code != 0 {
+    return false
+  }
+  (\$installed.stdout | str trim) == \$nu_vers
+}
+
+def wutNuLockRelease [lock_path: string] {
+  rm --force \$lock_path
+  # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
+  try { rm (\$lock_path | path dirname) } catch { }
+}
+
+def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
+  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    return
+  }
+
+  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+    'darwin_aarch64' => 'aarch64-apple-darwin',
+    'darwin_x86_64' => 'x86_64-apple-darwin',
+    'linux_aarch64' => 'aarch64-unknown-linux-gnu',
+    'linux_x86_64' => 'x86_64-unknown-linux-gnu',
+    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
+    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    _ => '',
+  }
+  if \$triple == '' {
+    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    exit 1
+  }
+
+  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  mkdir \$work_dir
+
+  let lock_path = (\$work_dir | path join 'nu.lock')
+  mut acquired = false
+  mut waited = 0
+  while \$waited < 240 {
+    if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+      return
+    }
+    let locked = (try { "" | save \$lock_path; true } catch { false })
+    if \$locked {
+      \$acquired = true
+      break
+    }
+    sleep 500ms
+    \$waited = \$waited + 1
+  }
+  if not \$acquired {
+    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    rm --force \$lock_path
+    let locked = (try { "" | save \$lock_path; true } catch { false })
+    if not \$locked {
+      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      exit 1
+    }
+  }
+
+  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    wutNuLockRelease \$lock_path
+    return
+  }
+
+  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
+  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let archive_path = (\$work_dir | path join \$asset)
+  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+
+  rm --force --recursive \$archive_path \$extract_dir
+
+  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    rm --force \$archive_path
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
+  let extract_target = if \$ext_archive == 'zip' {
+    mkdir \$extract_dir
+    \$extract_dir
+  } else {
+    \$work_dir
+  }
+  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    rm --force --recursive \$archive_path \$extract_dir
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  if not (\$extracted_bin | path exists) {
+    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    rm --force --recursive \$archive_path \$extract_dir
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  if \$env.SYS_OS_PLAT != 'winnt' {
+    ^chmod +x \$extracted_bin
+  }
+  mv --force \$extracted_bin \$nu_bin
+  rm --force --recursive \$archive_path \$extract_dir
+
+  wutNuLockRelease \$lock_path
+}
+
+def --env wutNuSync [] {
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
+    opPrintWarn 'script is for darwin, linux, or winnt'
+    return
+  }
+
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  let wut_home = \$env.WUT_HOME
+  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let nu_bin = (\$wut_home | path join 'bin' \$"nu(\$ext)")
+  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+
+  wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
+}
+
+wutNuSync
+
+
+do --env {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'use script [y,[n]]: '#
+  }
+  if \$yn != 'n' {
+opPrint r#'setup'#
+opPrint r#'  cargo, docker'#
+  }
+}
+\`
 `;
 
-snapshot[`nu / winnt / find (redirect) 1`] = `
-\`pwsh -noprofile -c r#'\$REQ_URL_SH = 'http://x/sh/pwsh/script/find?sysOsPlat=winnt'
+snapshot[`nu / winnt / find 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-Invoke-Expression "\$( Invoke-RestMethod -ErrorAction Stop -ProgressAction SilentlyContinue -Uri \$REQ_URL_SH )"
+\$env.REQ_URL_SH = r#'http://x/sh/nu/script/find?sysOsPlat=winnt'#
 
-'#\`
+def opPrint --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  \$"(\$args | flatten | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print --stderr
+    return
+  }
+  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  let args = \$args | flatten
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunSilentCmd ...\$args
+  }
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opMaybeRunCmd ...\$args
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 114
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.NU_VERS_MAJOR = 0
+
+\$env.NU_VERS_MINOR = 114
+
+\$env.NU_VERS_PATCH = 1
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'winnt'#
+
+\$env.REQ_PATH = r#'/sh/nu/script/find'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
+
+def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
+  if not (\$nu_bin | path exists) {
+    return false
+  }
+  let installed = (do { ^\$nu_bin --version } | complete)
+  if \$installed.exit_code != 0 {
+    return false
+  }
+  (\$installed.stdout | str trim) == \$nu_vers
+}
+
+def wutNuLockRelease [lock_path: string] {
+  rm --force \$lock_path
+  # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
+  try { rm (\$lock_path | path dirname) } catch { }
+}
+
+def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
+  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    return
+  }
+
+  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+    'darwin_aarch64' => 'aarch64-apple-darwin',
+    'darwin_x86_64' => 'x86_64-apple-darwin',
+    'linux_aarch64' => 'aarch64-unknown-linux-gnu',
+    'linux_x86_64' => 'x86_64-unknown-linux-gnu',
+    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
+    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    _ => '',
+  }
+  if \$triple == '' {
+    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    exit 1
+  }
+
+  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  mkdir \$work_dir
+
+  let lock_path = (\$work_dir | path join 'nu.lock')
+  mut acquired = false
+  mut waited = 0
+  while \$waited < 240 {
+    if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+      return
+    }
+    let locked = (try { "" | save \$lock_path; true } catch { false })
+    if \$locked {
+      \$acquired = true
+      break
+    }
+    sleep 500ms
+    \$waited = \$waited + 1
+  }
+  if not \$acquired {
+    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    rm --force \$lock_path
+    let locked = (try { "" | save \$lock_path; true } catch { false })
+    if not \$locked {
+      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      exit 1
+    }
+  }
+
+  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    wutNuLockRelease \$lock_path
+    return
+  }
+
+  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
+  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let archive_path = (\$work_dir | path join \$asset)
+  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+
+  rm --force --recursive \$archive_path \$extract_dir
+
+  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    rm --force \$archive_path
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
+  let extract_target = if \$ext_archive == 'zip' {
+    mkdir \$extract_dir
+    \$extract_dir
+  } else {
+    \$work_dir
+  }
+  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    rm --force --recursive \$archive_path \$extract_dir
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  if not (\$extracted_bin | path exists) {
+    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    rm --force --recursive \$archive_path \$extract_dir
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  if \$env.SYS_OS_PLAT != 'winnt' {
+    ^chmod +x \$extracted_bin
+  }
+  mv --force \$extracted_bin \$nu_bin
+  rm --force --recursive \$archive_path \$extract_dir
+
+  wutNuLockRelease \$lock_path
+}
+
+def --env wutNuSync [] {
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
+    opPrintWarn 'script is for darwin, linux, or winnt'
+    return
+  }
+
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  let wut_home = \$env.WUT_HOME
+  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let nu_bin = (\$wut_home | path join 'bin' \$"nu(\$ext)")
+  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+
+  wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
+}
+
+wutNuSync
+
+
+do --env {
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input r#'use script [y,[n]]: '#
+  }
+  if \$yn != 'n' {
+opPrint r#'setup'#
+opPrint r#'  cargo, docker'#
+  }
+}
+\`
 `;
 
 snapshot[`pwsh / winnt / find 1`] = `
@@ -139,7 +697,7 @@ function opPrintMaybeRunCmd {
 
 \$SH_VERS_MAJOR = 7
 
-\$SH_VERS_MINOR = 5
+\$SH_VERS_MINOR = 6
 
 & {
   \$major = \$SH_VERS_MAJOR -as [int]
@@ -152,6 +710,12 @@ function opPrintMaybeRunCmd {
 }
 
 
+\$NU_VERS_MAJOR = 0
+
+\$NU_VERS_MINOR = 114
+
+\$NU_VERS_PATCH = 1
+
 \$REQ_ORIG = 'http://x'
 
 \$SYS_OS_PLAT = 'winnt'
@@ -159,6 +723,145 @@ function opPrintMaybeRunCmd {
 \$REQ_PATH = '/sh/pwsh/script/find'
 
 \$REQ_SRCH = '?sysOsPlat=winnt'
+
+& {
+  function wutNuVersCurrent ([string]\$nuBin, [string]\$nuVers) {
+    if (-not (Test-Path -Path \$nuBin -PathType Leaf)) {
+      return \$false
+    }
+    \$installed = & \$nuBin --version 2>\$null
+    if (\$LASTEXITCODE -ne 0) {
+      return \$false
+    }
+    return (\$installed | Out-String).Trim() -eq \$nuVers
+  }
+
+  function wutNuLockRelease ([string]\$lockDir) {
+    Remove-Item -Force -Recurse -Path \$lockDir -ErrorAction SilentlyContinue
+    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
+    \$workDir = Split-Path -Path \$lockDir -Parent
+    if ((Get-ChildItem -Path \$workDir -Force -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0) {
+      Remove-Item -Path \$workDir -Force -ErrorAction SilentlyContinue
+    }
+  }
+
+  function wutNuInstall ([string]\$wutHome, [string]\$nuBin, [string]\$nuVers, [string]\$ext) {
+    if (wutNuVersCurrent \$nuBin \$nuVers) {
+      return
+    }
+
+    \$triple = switch ("\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}") {
+      'darwin_aarch64' { 'aarch64-apple-darwin' }
+      'darwin_x86_64' { 'x86_64-apple-darwin' }
+      'linux_aarch64' { 'aarch64-unknown-linux-gnu' }
+      'linux_x86_64' { 'x86_64-unknown-linux-gnu' }
+      'winnt_aarch64' { 'aarch64-pc-windows-msvc' }
+      'winnt_x86_64' { 'x86_64-pc-windows-msvc' }
+      default { '' }
+    }
+    if (\$triple -eq '') {
+      opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
+      exit 1
+    }
+
+    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nuBin path
+    \$workDir = Join-Path \$wutHome 'bin' '.nu'
+    New-Item -ItemType Directory -Force -Path \$workDir | Out-Null
+
+    \$lockDir = Join-Path \$workDir 'nu.lock'
+    \$acquired = \$false
+    \$waited = 0
+    while (\$waited -lt 240) {
+      if (wutNuVersCurrent \$nuBin \$nuVers) {
+        return
+      }
+      try {
+        New-Item -ItemType Directory -Path \$lockDir -ErrorAction Stop | Out-Null
+        \$acquired = \$true
+        break
+      } catch {
+        Start-Sleep -Milliseconds 500
+        \$waited += 1
+      }
+    }
+    if (-not \$acquired) {
+      opPrintWarn "reclaiming stale nu sync lock: \${lockDir}"
+      Remove-Item -Force -Recurse -Path \$lockDir -ErrorAction SilentlyContinue
+      try {
+        New-Item -ItemType Directory -Path \$lockDir -ErrorAction Stop | Out-Null
+      } catch {
+        opPrintErr "failed to acquire nu sync lock: \${lockDir}"
+        exit 1
+      }
+    }
+
+    if (wutNuVersCurrent \$nuBin \$nuVers) {
+      wutNuLockRelease \$lockDir
+      return
+    }
+
+    \$extArchive = if (\$SYS_OS_PLAT -eq 'winnt') { 'zip' } else { 'tar.gz' }
+    \$asset = "nu-\${nuVers}-\${triple}.\${extArchive}"
+    \$url = "https://github.com/nushell/nushell/releases/download/\${nuVers}/\${asset}"
+    \$archivePath = Join-Path \$workDir \$asset
+    \$extractDir = Join-Path \$workDir "nu-\${nuVers}-\${triple}"
+
+    Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
+
+    & curl --fail-with-body --location --no-progress-meter --output \$archivePath --url \$url
+    if (\$LASTEXITCODE -ne 0) {
+      opPrintErr "failed to download nu \${nuVers}: \${url}"
+      Remove-Item -Force -Path \$archivePath -ErrorAction SilentlyContinue
+      wutNuLockRelease \$lockDir
+      exit 1
+    }
+
+    # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+    # extractDir; tar.gz assets already contain their own nu-\${nuVers}-\${triple} folder, so they extract into workDir
+    if (\$extArchive -eq 'zip') {
+      New-Item -ItemType Directory -Force -Path \$extractDir | Out-Null
+      & tar -xf \$archivePath -C \$extractDir
+    } else {
+      & tar -xf \$archivePath -C \$workDir
+    }
+    if (\$LASTEXITCODE -ne 0) {
+      opPrintErr "failed to extract nu \${nuVers}"
+      Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
+      wutNuLockRelease \$lockDir
+      exit 1
+    }
+
+    \$extractedBin = Join-Path \$extractDir "nu\${ext}"
+    if (-not (Test-Path -Path \$extractedBin -PathType Leaf)) {
+      opPrintErr "nu binary not found in extracted archive: \${extractDir}"
+      Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
+      wutNuLockRelease \$lockDir
+      exit 1
+    }
+
+    if (\$SYS_OS_PLAT -ne 'winnt') {
+      & chmod +x \$extractedBin
+    }
+    Move-Item -Force -Path \$extractedBin -Destination \$nuBin
+    Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
+
+    wutNuLockRelease \$lockDir
+  }
+
+  if (\$SYS_OS_PLAT -notin @('darwin', 'linux', 'winnt')) {
+    opPrintWarn 'script is for darwin, linux, or winnt'
+    return
+  }
+
+  \$env:WUT_HOME = \$env:WUT_HOME ?? "\${env:HOME}/.wut"
+  \$wutHome = \$env:WUT_HOME
+  \$ext = if (\$SYS_OS_PLAT -eq 'winnt') { '.exe' } else { '' }
+  \$nuBin = Join-Path \$wutHome 'bin' "nu\${ext}"
+  \$nuVers = "\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
+
+  wutNuInstall \$wutHome \$nuBin \$nuVers \$ext
+}
+
 
 & {
   \$yn = ''
@@ -169,7 +872,7 @@ function opPrintMaybeRunCmd {
   }
   if (\$yn -ne 'n') {
 opPrint 'setup'
-opPrint '  cargo'
+opPrint '  cargo, docker'
   }
 }
 \`
@@ -311,6 +1014,12 @@ function () {
 }
 
 
+NU_VERS_MAJOR=0
+
+NU_VERS_MINOR=114
+
+NU_VERS_PATCH=1
+
 REQ_ORIG='http://x'
 
 SYS_OS_PLAT='darwin'
@@ -318,6 +1027,115 @@ SYS_OS_PLAT='darwin'
 REQ_PATH='/sh/zsh/script/find'
 
 REQ_SRCH='?sysOsPlat=darwin'
+
+function () {
+  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
+    opPrintWarn 'script is for darwin or linux'
+    return
+  fi
+
+  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
+  local wut_home="\${WUT_HOME}"
+  local nu_bin="\${wut_home}/bin/nu"
+  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
+
+  function nu_vers_current {
+    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
+  }
+
+  function nu_lock_release {
+    rmdir "\${lock_dir}" 2> /dev/null
+    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
+    rmdir "\${lock_dir:h}" 2> /dev/null
+  }
+
+  function nu_sync {
+    if nu_vers_current; then
+      return
+    fi
+
+    local triple=''
+    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
+      darwin_aarch64) triple='aarch64-apple-darwin' ;;
+      darwin_x86_64) triple='x86_64-apple-darwin' ;;
+      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
+      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
+      *)
+        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
+        exit 1
+        ;;
+    esac
+
+    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+    local work_dir="\${wut_home}/bin/.nu"
+    mkdir -p "\${work_dir}"
+
+    local lock_dir="\${work_dir}/nu.lock"
+    local acquired=0
+    local waited=0
+    while (( waited < 240 )); do
+      if nu_vers_current; then
+        return
+      fi
+      if mkdir "\${lock_dir}" 2> /dev/null; then
+        acquired=1
+        break
+      fi
+      sleep 0.5
+      waited=\$(( waited + 1 ))
+    done
+    if (( ! acquired )); then
+      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
+      rmdir "\${lock_dir}" 2> /dev/null
+      if ! mkdir "\${lock_dir}" 2> /dev/null; then
+        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
+        exit 1
+      fi
+    fi
+
+    if nu_vers_current; then
+      nu_lock_release
+      return
+    fi
+
+    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
+    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
+    local archive_path="\${work_dir}/\${asset}"
+    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
+
+    rm -rf "\${archive_path}" "\${extract_dir}"
+
+    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
+      opPrintErr "failed to download nu \${nu_vers}: \${url}"
+      rm -f "\${archive_path}"
+      nu_lock_release
+      exit 1
+    fi
+
+    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
+      opPrintErr "failed to extract nu \${nu_vers}"
+      rm -rf "\${archive_path}" "\${extract_dir}"
+      nu_lock_release
+      exit 1
+    fi
+
+    if [[ ! -f "\${extract_dir}/nu" ]]; then
+      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
+      rm -rf "\${archive_path}" "\${extract_dir}"
+      nu_lock_release
+      exit 1
+    fi
+
+    chmod +x "\${extract_dir}/nu"
+    mv -f "\${extract_dir}/nu" "\${nu_bin}"
+    rm -rf "\${archive_path}" "\${extract_dir}"
+
+    nu_lock_release
+  }
+
+  nu_sync
+}
+
 
 function () {
   local yn=''
@@ -470,6 +1288,12 @@ function () {
 }
 
 
+NU_VERS_MAJOR=0
+
+NU_VERS_MINOR=114
+
+NU_VERS_PATCH=1
+
 REQ_ORIG='http://x'
 
 SYS_OS_PLAT='linux'
@@ -477,6 +1301,115 @@ SYS_OS_PLAT='linux'
 REQ_PATH='/sh/zsh/script/find'
 
 REQ_SRCH='?sysOsPlat=linux'
+
+function () {
+  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
+    opPrintWarn 'script is for darwin or linux'
+    return
+  fi
+
+  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
+  local wut_home="\${WUT_HOME}"
+  local nu_bin="\${wut_home}/bin/nu"
+  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
+
+  function nu_vers_current {
+    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
+  }
+
+  function nu_lock_release {
+    rmdir "\${lock_dir}" 2> /dev/null
+    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
+    rmdir "\${lock_dir:h}" 2> /dev/null
+  }
+
+  function nu_sync {
+    if nu_vers_current; then
+      return
+    fi
+
+    local triple=''
+    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
+      darwin_aarch64) triple='aarch64-apple-darwin' ;;
+      darwin_x86_64) triple='x86_64-apple-darwin' ;;
+      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
+      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
+      *)
+        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
+        exit 1
+        ;;
+    esac
+
+    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+    local work_dir="\${wut_home}/bin/.nu"
+    mkdir -p "\${work_dir}"
+
+    local lock_dir="\${work_dir}/nu.lock"
+    local acquired=0
+    local waited=0
+    while (( waited < 240 )); do
+      if nu_vers_current; then
+        return
+      fi
+      if mkdir "\${lock_dir}" 2> /dev/null; then
+        acquired=1
+        break
+      fi
+      sleep 0.5
+      waited=\$(( waited + 1 ))
+    done
+    if (( ! acquired )); then
+      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
+      rmdir "\${lock_dir}" 2> /dev/null
+      if ! mkdir "\${lock_dir}" 2> /dev/null; then
+        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
+        exit 1
+      fi
+    fi
+
+    if nu_vers_current; then
+      nu_lock_release
+      return
+    fi
+
+    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
+    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
+    local archive_path="\${work_dir}/\${asset}"
+    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
+
+    rm -rf "\${archive_path}" "\${extract_dir}"
+
+    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
+      opPrintErr "failed to download nu \${nu_vers}: \${url}"
+      rm -f "\${archive_path}"
+      nu_lock_release
+      exit 1
+    fi
+
+    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
+      opPrintErr "failed to extract nu \${nu_vers}"
+      rm -rf "\${archive_path}" "\${extract_dir}"
+      nu_lock_release
+      exit 1
+    fi
+
+    if [[ ! -f "\${extract_dir}/nu" ]]; then
+      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
+      rm -rf "\${archive_path}" "\${extract_dir}"
+      nu_lock_release
+      exit 1
+    fi
+
+    chmod +x "\${extract_dir}/nu"
+    mv -f "\${extract_dir}/nu" "\${nu_bin}"
+    rm -rf "\${archive_path}" "\${extract_dir}"
+
+    nu_lock_release
+  }
+
+  nu_sync
+}
+
 
 function () {
   local yn=''
@@ -487,7 +1420,7 @@ function () {
   fi
   if [[ \$yn != 'n' ]]; then
 opPrint 'setup'
-opPrint '  cargo'
+opPrint '  cargo, docker'
   fi
 }
 \`
@@ -629,6 +1562,12 @@ function () {
 }
 
 
+NU_VERS_MAJOR=0
+
+NU_VERS_MINOR=114
+
+NU_VERS_PATCH=1
+
 REQ_ORIG='http://x'
 
 SYS_OS_PLAT='linux'
@@ -636,6 +1575,115 @@ SYS_OS_PLAT='linux'
 REQ_PATH='/sh/zsh/script/find/install'
 
 REQ_SRCH='?sysOsPlat=linux'
+
+function () {
+  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
+    opPrintWarn 'script is for darwin or linux'
+    return
+  fi
+
+  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
+  local wut_home="\${WUT_HOME}"
+  local nu_bin="\${wut_home}/bin/nu"
+  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
+
+  function nu_vers_current {
+    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
+  }
+
+  function nu_lock_release {
+    rmdir "\${lock_dir}" 2> /dev/null
+    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
+    rmdir "\${lock_dir:h}" 2> /dev/null
+  }
+
+  function nu_sync {
+    if nu_vers_current; then
+      return
+    fi
+
+    local triple=''
+    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
+      darwin_aarch64) triple='aarch64-apple-darwin' ;;
+      darwin_x86_64) triple='x86_64-apple-darwin' ;;
+      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
+      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
+      *)
+        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
+        exit 1
+        ;;
+    esac
+
+    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+    local work_dir="\${wut_home}/bin/.nu"
+    mkdir -p "\${work_dir}"
+
+    local lock_dir="\${work_dir}/nu.lock"
+    local acquired=0
+    local waited=0
+    while (( waited < 240 )); do
+      if nu_vers_current; then
+        return
+      fi
+      if mkdir "\${lock_dir}" 2> /dev/null; then
+        acquired=1
+        break
+      fi
+      sleep 0.5
+      waited=\$(( waited + 1 ))
+    done
+    if (( ! acquired )); then
+      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
+      rmdir "\${lock_dir}" 2> /dev/null
+      if ! mkdir "\${lock_dir}" 2> /dev/null; then
+        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
+        exit 1
+      fi
+    fi
+
+    if nu_vers_current; then
+      nu_lock_release
+      return
+    fi
+
+    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
+    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
+    local archive_path="\${work_dir}/\${asset}"
+    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
+
+    rm -rf "\${archive_path}" "\${extract_dir}"
+
+    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
+      opPrintErr "failed to download nu \${nu_vers}: \${url}"
+      rm -f "\${archive_path}"
+      nu_lock_release
+      exit 1
+    fi
+
+    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
+      opPrintErr "failed to extract nu \${nu_vers}"
+      rm -rf "\${archive_path}" "\${extract_dir}"
+      nu_lock_release
+      exit 1
+    fi
+
+    if [[ ! -f "\${extract_dir}/nu" ]]; then
+      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
+      rm -rf "\${archive_path}" "\${extract_dir}"
+      nu_lock_release
+      exit 1
+    fi
+
+    chmod +x "\${extract_dir}/nu"
+    mv -f "\${extract_dir}/nu" "\${nu_bin}"
+    rm -rf "\${archive_path}" "\${extract_dir}"
+
+    nu_lock_release
+  }
+
+  nu_sync
+}
+
 
 SCRIPT_FIND_PARTS='install'
 
@@ -653,19 +1701,555 @@ function () {
 `;
 
 snapshot[`nu / linux / exec (redirect) 1`] = `
-\`zsh --no-rcs -c r#'REQ_URL_SH='http://x/sh/zsh/script/exec/install?sysOsPlat=linux'
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-eval "\$( curl --fail-with-body --location --no-progress-meter --url \$REQ_URL_SH )"
+\$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/install?sysOsPlat=linux'#
 
-'#\`
+def opPrint --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  \$"(\$args | flatten | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print --stderr
+    return
+  }
+  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  let args = \$args | flatten
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunSilentCmd ...\$args
+  }
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opMaybeRunCmd ...\$args
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 114
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.NU_VERS_MAJOR = 0
+
+\$env.NU_VERS_MINOR = 114
+
+\$env.NU_VERS_PATCH = 1
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/script/exec/install'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux'#
+
+def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
+  if not (\$nu_bin | path exists) {
+    return false
+  }
+  let installed = (do { ^\$nu_bin --version } | complete)
+  if \$installed.exit_code != 0 {
+    return false
+  }
+  (\$installed.stdout | str trim) == \$nu_vers
+}
+
+def wutNuLockRelease [lock_path: string] {
+  rm --force \$lock_path
+  # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
+  try { rm (\$lock_path | path dirname) } catch { }
+}
+
+def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
+  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    return
+  }
+
+  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+    'darwin_aarch64' => 'aarch64-apple-darwin',
+    'darwin_x86_64' => 'x86_64-apple-darwin',
+    'linux_aarch64' => 'aarch64-unknown-linux-gnu',
+    'linux_x86_64' => 'x86_64-unknown-linux-gnu',
+    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
+    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    _ => '',
+  }
+  if \$triple == '' {
+    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    exit 1
+  }
+
+  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  mkdir \$work_dir
+
+  let lock_path = (\$work_dir | path join 'nu.lock')
+  mut acquired = false
+  mut waited = 0
+  while \$waited < 240 {
+    if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+      return
+    }
+    let locked = (try { "" | save \$lock_path; true } catch { false })
+    if \$locked {
+      \$acquired = true
+      break
+    }
+    sleep 500ms
+    \$waited = \$waited + 1
+  }
+  if not \$acquired {
+    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    rm --force \$lock_path
+    let locked = (try { "" | save \$lock_path; true } catch { false })
+    if not \$locked {
+      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      exit 1
+    }
+  }
+
+  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    wutNuLockRelease \$lock_path
+    return
+  }
+
+  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
+  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let archive_path = (\$work_dir | path join \$asset)
+  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+
+  rm --force --recursive \$archive_path \$extract_dir
+
+  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    rm --force \$archive_path
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
+  let extract_target = if \$ext_archive == 'zip' {
+    mkdir \$extract_dir
+    \$extract_dir
+  } else {
+    \$work_dir
+  }
+  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    rm --force --recursive \$archive_path \$extract_dir
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  if not (\$extracted_bin | path exists) {
+    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    rm --force --recursive \$archive_path \$extract_dir
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  if \$env.SYS_OS_PLAT != 'winnt' {
+    ^chmod +x \$extracted_bin
+  }
+  mv --force \$extracted_bin \$nu_bin
+  rm --force --recursive \$archive_path \$extract_dir
+
+  wutNuLockRelease \$lock_path
+}
+
+def --env wutNuSync [] {
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
+    opPrintWarn 'script is for darwin, linux, or winnt'
+    return
+  }
+
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  let wut_home = \$env.WUT_HOME
+  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let nu_bin = (\$wut_home | path join 'bin' \$"nu(\$ext)")
+  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+
+  wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
+}
+
+wutNuSync
+
+
+\$env.SCRIPT_EXEC_PARTS = r#'install'#
+\`
 `;
 
 snapshot[`nu / winnt / exec (redirect) 1`] = `
-\`pwsh -noprofile -c r#'\$REQ_URL_SH = 'http://x/sh/pwsh/script/exec/install?sysOsPlat=winnt'
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-Invoke-Expression "\$( Invoke-RestMethod -ErrorAction Stop -ProgressAction SilentlyContinue -Uri \$REQ_URL_SH )"
+\$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/install?sysOsPlat=winnt'#
 
-'#\`
+def opPrint --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  \$"(\$args | flatten | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print --stderr
+    return
+  }
+  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  let args = \$args | flatten
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunSilentCmd ...\$args
+  }
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opMaybeRunCmd ...\$args
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 114
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.NU_VERS_MAJOR = 0
+
+\$env.NU_VERS_MINOR = 114
+
+\$env.NU_VERS_PATCH = 1
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'winnt'#
+
+\$env.REQ_PATH = r#'/sh/nu/script/exec/install'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=winnt'#
+
+def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
+  if not (\$nu_bin | path exists) {
+    return false
+  }
+  let installed = (do { ^\$nu_bin --version } | complete)
+  if \$installed.exit_code != 0 {
+    return false
+  }
+  (\$installed.stdout | str trim) == \$nu_vers
+}
+
+def wutNuLockRelease [lock_path: string] {
+  rm --force \$lock_path
+  # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
+  try { rm (\$lock_path | path dirname) } catch { }
+}
+
+def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
+  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    return
+  }
+
+  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+    'darwin_aarch64' => 'aarch64-apple-darwin',
+    'darwin_x86_64' => 'x86_64-apple-darwin',
+    'linux_aarch64' => 'aarch64-unknown-linux-gnu',
+    'linux_x86_64' => 'x86_64-unknown-linux-gnu',
+    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
+    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    _ => '',
+  }
+  if \$triple == '' {
+    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    exit 1
+  }
+
+  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  mkdir \$work_dir
+
+  let lock_path = (\$work_dir | path join 'nu.lock')
+  mut acquired = false
+  mut waited = 0
+  while \$waited < 240 {
+    if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+      return
+    }
+    let locked = (try { "" | save \$lock_path; true } catch { false })
+    if \$locked {
+      \$acquired = true
+      break
+    }
+    sleep 500ms
+    \$waited = \$waited + 1
+  }
+  if not \$acquired {
+    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    rm --force \$lock_path
+    let locked = (try { "" | save \$lock_path; true } catch { false })
+    if not \$locked {
+      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      exit 1
+    }
+  }
+
+  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    wutNuLockRelease \$lock_path
+    return
+  }
+
+  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
+  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let archive_path = (\$work_dir | path join \$asset)
+  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+
+  rm --force --recursive \$archive_path \$extract_dir
+
+  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    rm --force \$archive_path
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
+  let extract_target = if \$ext_archive == 'zip' {
+    mkdir \$extract_dir
+    \$extract_dir
+  } else {
+    \$work_dir
+  }
+  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    rm --force --recursive \$archive_path \$extract_dir
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  if not (\$extracted_bin | path exists) {
+    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    rm --force --recursive \$archive_path \$extract_dir
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  if \$env.SYS_OS_PLAT != 'winnt' {
+    ^chmod +x \$extracted_bin
+  }
+  mv --force \$extracted_bin \$nu_bin
+  rm --force --recursive \$archive_path \$extract_dir
+
+  wutNuLockRelease \$lock_path
+}
+
+def --env wutNuSync [] {
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
+    opPrintWarn 'script is for darwin, linux, or winnt'
+    return
+  }
+
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  let wut_home = \$env.WUT_HOME
+  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let nu_bin = (\$wut_home | path join 'bin' \$"nu(\$ext)")
+  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+
+  wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
+}
+
+wutNuSync
+
+
+\$env.SCRIPT_EXEC_PARTS = r#'install'#
+\`
 `;
 
 snapshot[`pwsh / winnt / exec 1`] = `
@@ -791,7 +2375,7 @@ function opPrintMaybeRunCmd {
 
 \$SH_VERS_MAJOR = 7
 
-\$SH_VERS_MINOR = 5
+\$SH_VERS_MINOR = 6
 
 & {
   \$major = \$SH_VERS_MAJOR -as [int]
@@ -804,6 +2388,12 @@ function opPrintMaybeRunCmd {
 }
 
 
+\$NU_VERS_MAJOR = 0
+
+\$NU_VERS_MINOR = 114
+
+\$NU_VERS_PATCH = 1
+
 \$REQ_ORIG = 'http://x'
 
 \$SYS_OS_PLAT = 'winnt'
@@ -812,12 +2402,150 @@ function opPrintMaybeRunCmd {
 
 \$REQ_SRCH = '?sysOsPlat=winnt'
 
-\$SCRIPT_EXEC_PARTS = 'install'
+& {
+  function wutNuVersCurrent ([string]\$nuBin, [string]\$nuVers) {
+    if (-not (Test-Path -Path \$nuBin -PathType Leaf)) {
+      return \$false
+    }
+    \$installed = & \$nuBin --version 2>\$null
+    if (\$LASTEXITCODE -ne 0) {
+      return \$false
+    }
+    return (\$installed | Out-String).Trim() -eq \$nuVers
+  }
 
+  function wutNuLockRelease ([string]\$lockDir) {
+    Remove-Item -Force -Recurse -Path \$lockDir -ErrorAction SilentlyContinue
+    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
+    \$workDir = Split-Path -Path \$lockDir -Parent
+    if ((Get-ChildItem -Path \$workDir -Force -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0) {
+      Remove-Item -Path \$workDir -Force -ErrorAction SilentlyContinue
+    }
+  }
+
+  function wutNuInstall ([string]\$wutHome, [string]\$nuBin, [string]\$nuVers, [string]\$ext) {
+    if (wutNuVersCurrent \$nuBin \$nuVers) {
+      return
+    }
+
+    \$triple = switch ("\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}") {
+      'darwin_aarch64' { 'aarch64-apple-darwin' }
+      'darwin_x86_64' { 'x86_64-apple-darwin' }
+      'linux_aarch64' { 'aarch64-unknown-linux-gnu' }
+      'linux_x86_64' { 'x86_64-unknown-linux-gnu' }
+      'winnt_aarch64' { 'aarch64-pc-windows-msvc' }
+      'winnt_x86_64' { 'x86_64-pc-windows-msvc' }
+      default { '' }
+    }
+    if (\$triple -eq '') {
+      opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
+      exit 1
+    }
+
+    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nuBin path
+    \$workDir = Join-Path \$wutHome 'bin' '.nu'
+    New-Item -ItemType Directory -Force -Path \$workDir | Out-Null
+
+    \$lockDir = Join-Path \$workDir 'nu.lock'
+    \$acquired = \$false
+    \$waited = 0
+    while (\$waited -lt 240) {
+      if (wutNuVersCurrent \$nuBin \$nuVers) {
+        return
+      }
+      try {
+        New-Item -ItemType Directory -Path \$lockDir -ErrorAction Stop | Out-Null
+        \$acquired = \$true
+        break
+      } catch {
+        Start-Sleep -Milliseconds 500
+        \$waited += 1
+      }
+    }
+    if (-not \$acquired) {
+      opPrintWarn "reclaiming stale nu sync lock: \${lockDir}"
+      Remove-Item -Force -Recurse -Path \$lockDir -ErrorAction SilentlyContinue
+      try {
+        New-Item -ItemType Directory -Path \$lockDir -ErrorAction Stop | Out-Null
+      } catch {
+        opPrintErr "failed to acquire nu sync lock: \${lockDir}"
+        exit 1
+      }
+    }
+
+    if (wutNuVersCurrent \$nuBin \$nuVers) {
+      wutNuLockRelease \$lockDir
+      return
+    }
+
+    \$extArchive = if (\$SYS_OS_PLAT -eq 'winnt') { 'zip' } else { 'tar.gz' }
+    \$asset = "nu-\${nuVers}-\${triple}.\${extArchive}"
+    \$url = "https://github.com/nushell/nushell/releases/download/\${nuVers}/\${asset}"
+    \$archivePath = Join-Path \$workDir \$asset
+    \$extractDir = Join-Path \$workDir "nu-\${nuVers}-\${triple}"
+
+    Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
+
+    & curl --fail-with-body --location --no-progress-meter --output \$archivePath --url \$url
+    if (\$LASTEXITCODE -ne 0) {
+      opPrintErr "failed to download nu \${nuVers}: \${url}"
+      Remove-Item -Force -Path \$archivePath -ErrorAction SilentlyContinue
+      wutNuLockRelease \$lockDir
+      exit 1
+    }
+
+    # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+    # extractDir; tar.gz assets already contain their own nu-\${nuVers}-\${triple} folder, so they extract into workDir
+    if (\$extArchive -eq 'zip') {
+      New-Item -ItemType Directory -Force -Path \$extractDir | Out-Null
+      & tar -xf \$archivePath -C \$extractDir
+    } else {
+      & tar -xf \$archivePath -C \$workDir
+    }
+    if (\$LASTEXITCODE -ne 0) {
+      opPrintErr "failed to extract nu \${nuVers}"
+      Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
+      wutNuLockRelease \$lockDir
+      exit 1
+    }
+
+    \$extractedBin = Join-Path \$extractDir "nu\${ext}"
+    if (-not (Test-Path -Path \$extractedBin -PathType Leaf)) {
+      opPrintErr "nu binary not found in extracted archive: \${extractDir}"
+      Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
+      wutNuLockRelease \$lockDir
+      exit 1
+    }
+
+    if (\$SYS_OS_PLAT -ne 'winnt') {
+      & chmod +x \$extractedBin
+    }
+    Move-Item -Force -Path \$extractedBin -Destination \$nuBin
+    Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
+
+    wutNuLockRelease \$lockDir
+  }
+
+  if (\$SYS_OS_PLAT -notin @('darwin', 'linux', 'winnt')) {
+    opPrintWarn 'script is for darwin, linux, or winnt'
+    return
+  }
+
+  \$env:WUT_HOME = \$env:WUT_HOME ?? "\${env:HOME}/.wut"
+  \$wutHome = \$env:WUT_HOME
+  \$ext = if (\$SYS_OS_PLAT -eq 'winnt') { '.exe' } else { '' }
+  \$nuBin = Join-Path \$wutHome 'bin' "nu\${ext}"
+  \$nuVers = "\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
+
+  wutNuInstall \$wutHome \$nuBin \$nuVers \$ext
+}
+
+
+\$SCRIPT_EXEC_PARTS = 'install'
 \`
 `;
 
-snapshot[`zsh / darwin / exec 1`] = `
+snapshot[`zsh / darwin / exec (no match, docker not gated for darwin) 1`] = `
 \`REQ_URL_CFG='http://x/cfg'
 
 REQ_URL_SH='http://x/sh/zsh/script/exec/setup/docker?sysOsPlat=darwin'
@@ -953,6 +2681,12 @@ function () {
 }
 
 
+NU_VERS_MAJOR=0
+
+NU_VERS_MINOR=114
+
+NU_VERS_PATCH=1
+
 REQ_ORIG='http://x'
 
 SYS_OS_PLAT='darwin'
@@ -961,15 +2695,441 @@ REQ_PATH='/sh/zsh/script/exec/setup/docker'
 
 REQ_SRCH='?sysOsPlat=darwin'
 
+function () {
+  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
+    opPrintWarn 'script is for darwin or linux'
+    return
+  fi
+
+  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
+  local wut_home="\${WUT_HOME}"
+  local nu_bin="\${wut_home}/bin/nu"
+  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
+
+  function nu_vers_current {
+    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
+  }
+
+  function nu_lock_release {
+    rmdir "\${lock_dir}" 2> /dev/null
+    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
+    rmdir "\${lock_dir:h}" 2> /dev/null
+  }
+
+  function nu_sync {
+    if nu_vers_current; then
+      return
+    fi
+
+    local triple=''
+    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
+      darwin_aarch64) triple='aarch64-apple-darwin' ;;
+      darwin_x86_64) triple='x86_64-apple-darwin' ;;
+      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
+      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
+      *)
+        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
+        exit 1
+        ;;
+    esac
+
+    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+    local work_dir="\${wut_home}/bin/.nu"
+    mkdir -p "\${work_dir}"
+
+    local lock_dir="\${work_dir}/nu.lock"
+    local acquired=0
+    local waited=0
+    while (( waited < 240 )); do
+      if nu_vers_current; then
+        return
+      fi
+      if mkdir "\${lock_dir}" 2> /dev/null; then
+        acquired=1
+        break
+      fi
+      sleep 0.5
+      waited=\$(( waited + 1 ))
+    done
+    if (( ! acquired )); then
+      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
+      rmdir "\${lock_dir}" 2> /dev/null
+      if ! mkdir "\${lock_dir}" 2> /dev/null; then
+        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
+        exit 1
+      fi
+    fi
+
+    if nu_vers_current; then
+      nu_lock_release
+      return
+    fi
+
+    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
+    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
+    local archive_path="\${work_dir}/\${asset}"
+    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
+
+    rm -rf "\${archive_path}" "\${extract_dir}"
+
+    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
+      opPrintErr "failed to download nu \${nu_vers}: \${url}"
+      rm -f "\${archive_path}"
+      nu_lock_release
+      exit 1
+    fi
+
+    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
+      opPrintErr "failed to extract nu \${nu_vers}"
+      rm -rf "\${archive_path}" "\${extract_dir}"
+      nu_lock_release
+      exit 1
+    fi
+
+    if [[ ! -f "\${extract_dir}/nu" ]]; then
+      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
+      rm -rf "\${archive_path}" "\${extract_dir}"
+      nu_lock_release
+      exit 1
+    fi
+
+    chmod +x "\${extract_dir}/nu"
+    mv -f "\${extract_dir}/nu" "\${nu_bin}"
+    rm -rf "\${archive_path}" "\${extract_dir}"
+
+    nu_lock_release
+  }
+
+  nu_sync
+}
+
+
 SCRIPT_EXEC_PARTS='setup|docker'
+\`
+`;
+
+snapshot[`zsh / linux / exec (overlay redirects to pwsh) 1`] = `
+\`pwsh -noprofile -c '\$REQ_URL_SH = '\\\\''http://x/sh/pwsh/script/exec/setup/docker?sysOsPlat=linux'\\\\''
+
+Invoke-Expression "\$( Invoke-RestMethod -ErrorAction Stop -ProgressAction SilentlyContinue -Uri \$REQ_URL_SH )"
+
+'\`
+`;
+
+snapshot[`nu / linux / exec (overlay, already nu) 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/setup/cargo?sysOsPlat=linux'#
+
+def opPrint --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  \$"(\$args | flatten | str join ' ')" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print --stderr
+    return
+  }
+  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+}
+
+def opPrintCmd --wrapped [...args] {
+  if SUCCINCT in \$env {
+    return
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
+    return
+  }
+  let args = \$args | flatten
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
+def opRunCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunSilentCmd ...\$args
+  }
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opMaybeRunCmd ...\$args
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 114
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    exit 1
+  }
+}
+
+
+\$env.NU_VERS_MAJOR = 0
+
+\$env.NU_VERS_MINOR = 114
+
+\$env.NU_VERS_PATCH = 1
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/script/exec/setup/cargo'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux'#
+
+def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
+  if not (\$nu_bin | path exists) {
+    return false
+  }
+  let installed = (do { ^\$nu_bin --version } | complete)
+  if \$installed.exit_code != 0 {
+    return false
+  }
+  (\$installed.stdout | str trim) == \$nu_vers
+}
+
+def wutNuLockRelease [lock_path: string] {
+  rm --force \$lock_path
+  # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
+  try { rm (\$lock_path | path dirname) } catch { }
+}
+
+def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
+  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    return
+  }
+
+  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+    'darwin_aarch64' => 'aarch64-apple-darwin',
+    'darwin_x86_64' => 'x86_64-apple-darwin',
+    'linux_aarch64' => 'aarch64-unknown-linux-gnu',
+    'linux_x86_64' => 'x86_64-unknown-linux-gnu',
+    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
+    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    _ => '',
+  }
+  if \$triple == '' {
+    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    exit 1
+  }
+
+  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  mkdir \$work_dir
+
+  let lock_path = (\$work_dir | path join 'nu.lock')
+  mut acquired = false
+  mut waited = 0
+  while \$waited < 240 {
+    if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+      return
+    }
+    let locked = (try { "" | save \$lock_path; true } catch { false })
+    if \$locked {
+      \$acquired = true
+      break
+    }
+    sleep 500ms
+    \$waited = \$waited + 1
+  }
+  if not \$acquired {
+    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    rm --force \$lock_path
+    let locked = (try { "" | save \$lock_path; true } catch { false })
+    if not \$locked {
+      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      exit 1
+    }
+  }
+
+  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    wutNuLockRelease \$lock_path
+    return
+  }
+
+  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
+  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let archive_path = (\$work_dir | path join \$asset)
+  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+
+  rm --force --recursive \$archive_path \$extract_dir
+
+  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    rm --force \$archive_path
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
+  let extract_target = if \$ext_archive == 'zip' {
+    mkdir \$extract_dir
+    \$extract_dir
+  } else {
+    \$work_dir
+  }
+  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    rm --force --recursive \$archive_path \$extract_dir
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  if not (\$extracted_bin | path exists) {
+    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    rm --force --recursive \$archive_path \$extract_dir
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  if \$env.SYS_OS_PLAT != 'winnt' {
+    ^chmod +x \$extracted_bin
+  }
+  mv --force \$extracted_bin \$nu_bin
+  rm --force --recursive \$archive_path \$extract_dir
+
+  wutNuLockRelease \$lock_path
+}
+
+def --env wutNuSync [] {
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
+    opPrintWarn 'script is for darwin, linux, or winnt'
+    return
+  }
+
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  let wut_home = \$env.WUT_HOME
+  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let nu_bin = (\$wut_home | path join 'bin' \$"nu(\$ext)")
+  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+
+  wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
+}
+
+wutNuSync
+
+
+\$env.SCRIPT_EXEC_PARTS = r#'setup|cargo'#
+
+do {
+  if not (which cargo | is-not-empty) {
+    opPrintWarn 'cargo is not installed'
+    return
+  }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input 'setup cargo - install tools (user) [y,[n]]: '
+  }
+  if \$yn != 'n' {
+    opPrintMaybeRunCmd cargo binstall cargo-cache
+    opPrintMaybeRunCmd cargo binstall cargo-update
+  }
+}
 
 \`
 `;
 
-snapshot[`zsh / linux / exec 1`] = `
+snapshot[`zsh / linux / exec (overlay redirects to nu) 1`] = `
+\`nu --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/script/exec/setup/cargo?sysOsPlat=linux'\\\\''#
+
+^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+
+'\`
+`;
+
+snapshot[`pwsh / winnt / exec (overlay redirects to nu) 1`] = `
+\`nu --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/script/exec/setup/cargo?sysOsPlat=winnt''#
+
+^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+
+'\`
+`;
+
+snapshot[`zsh / linux / find (overlay dedup) 1`] = `
 \`REQ_URL_CFG='http://x/cfg'
 
-REQ_URL_SH='http://x/sh/zsh/script/exec/setup/docker?sysOsPlat=linux'
+REQ_URL_SH='http://x/sh/zsh/script/find/setup?sysOsPlat=linux'
 
 function opPrint {
   if [[ \$SUCCINCT ]]; then
@@ -1102,15 +3262,142 @@ function () {
 }
 
 
+NU_VERS_MAJOR=0
+
+NU_VERS_MINOR=114
+
+NU_VERS_PATCH=1
+
 REQ_ORIG='http://x'
 
 SYS_OS_PLAT='linux'
 
-REQ_PATH='/sh/zsh/script/exec/setup/docker'
+REQ_PATH='/sh/zsh/script/find/setup'
 
 REQ_SRCH='?sysOsPlat=linux'
 
-SCRIPT_EXEC_PARTS='setup|docker'
+function () {
+  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
+    opPrintWarn 'script is for darwin or linux'
+    return
+  fi
 
+  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
+  local wut_home="\${WUT_HOME}"
+  local nu_bin="\${wut_home}/bin/nu"
+  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
+
+  function nu_vers_current {
+    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
+  }
+
+  function nu_lock_release {
+    rmdir "\${lock_dir}" 2> /dev/null
+    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
+    rmdir "\${lock_dir:h}" 2> /dev/null
+  }
+
+  function nu_sync {
+    if nu_vers_current; then
+      return
+    fi
+
+    local triple=''
+    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
+      darwin_aarch64) triple='aarch64-apple-darwin' ;;
+      darwin_x86_64) triple='x86_64-apple-darwin' ;;
+      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
+      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
+      *)
+        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
+        exit 1
+        ;;
+    esac
+
+    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+    local work_dir="\${wut_home}/bin/.nu"
+    mkdir -p "\${work_dir}"
+
+    local lock_dir="\${work_dir}/nu.lock"
+    local acquired=0
+    local waited=0
+    while (( waited < 240 )); do
+      if nu_vers_current; then
+        return
+      fi
+      if mkdir "\${lock_dir}" 2> /dev/null; then
+        acquired=1
+        break
+      fi
+      sleep 0.5
+      waited=\$(( waited + 1 ))
+    done
+    if (( ! acquired )); then
+      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
+      rmdir "\${lock_dir}" 2> /dev/null
+      if ! mkdir "\${lock_dir}" 2> /dev/null; then
+        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
+        exit 1
+      fi
+    fi
+
+    if nu_vers_current; then
+      nu_lock_release
+      return
+    fi
+
+    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
+    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
+    local archive_path="\${work_dir}/\${asset}"
+    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
+
+    rm -rf "\${archive_path}" "\${extract_dir}"
+
+    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
+      opPrintErr "failed to download nu \${nu_vers}: \${url}"
+      rm -f "\${archive_path}"
+      nu_lock_release
+      exit 1
+    fi
+
+    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
+      opPrintErr "failed to extract nu \${nu_vers}"
+      rm -rf "\${archive_path}" "\${extract_dir}"
+      nu_lock_release
+      exit 1
+    fi
+
+    if [[ ! -f "\${extract_dir}/nu" ]]; then
+      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
+      rm -rf "\${archive_path}" "\${extract_dir}"
+      nu_lock_release
+      exit 1
+    fi
+
+    chmod +x "\${extract_dir}/nu"
+    mv -f "\${extract_dir}/nu" "\${nu_bin}"
+    rm -rf "\${archive_path}" "\${extract_dir}"
+
+    nu_lock_release
+  }
+
+  nu_sync
+}
+
+
+SCRIPT_FIND_PARTS='setup'
+
+function () {
+  local yn=''
+  if [[ \$YES ]]; then
+    yn='y'
+  else
+    read "yn?use script [y,[n]]: "
+  fi
+  if [[ \$yn != 'n' ]]; then
+opPrint 'setup'
+opPrint '  cargo, docker'
+  fi
+}
 \`
 `;
