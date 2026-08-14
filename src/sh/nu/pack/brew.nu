@@ -21,6 +21,10 @@ def --env packBrew [] {
       packOp [$cmd update]
       packOpFind [$cmd search]
     }
+    info => {
+      packOp [$cmd update]
+      packOpInfo [$cmd info]
+    }
     list => {
       packOpList [$cmd list]
     }

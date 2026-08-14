@@ -21,6 +21,10 @@ def --env packWinget [] {
       packOp [$cmd source update]
       packOpFind [$cmd search]
     }
+    info => {
+      packOp [$cmd source update]
+      packOpInfo [$cmd show]
+    }
     list => {
       packOpList [$cmd list]
     }

@@ -21,6 +21,9 @@ def --env packGhpm [] {
       packOp [$cmd refresh]
       packOpFind [$cmd search]
     }
+    info => {
+      packOpInfo [$cmd info]
+    }
     list => {
       packOpList [$cmd list]
     }

@@ -22,6 +22,10 @@ def --env packDnf [] {
       packOp [$cmd makecache]
       packOpFind [$cmd search]
     }
+    info => {
+      packOp [$cmd makecache]
+      packOpInfo [$cmd info]
+    }
     list => {
       packOpList [$cmd list --installed]
     }

@@ -109,6 +109,12 @@ def --env packOpFind [cmds: list<string>] {
   }
 }
 
+def --env packOpInfo [cmds: list<string>] {
+  for term in $env.PACK_INFO_NAMES {
+    packDo ($cmds ++ [$term])
+  }
+}
+
 def --env packOpList [cmds: list<string>] {
   packFiltered $cmds ($env.PACK_LIST_NAMES? | default [])
 }

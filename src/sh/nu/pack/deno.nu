@@ -33,6 +33,12 @@ def --env packDeno [] {
         [(packHttpGetNpm $term), (packHttpGetJsr $term)] | flatten | print
       }
     }
+    info => {
+      for term in $env.PACK_INFO_NAMES {
+        packDo [$cmd info $"npm:($term)"]
+        packDo [$cmd info $"jsr:($term)"]
+      }
+    }
     list => {
       packOpList [getInstalled]
     }

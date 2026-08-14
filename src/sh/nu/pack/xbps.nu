@@ -22,6 +22,10 @@ def --env packXbps [] {
       packOp [$"($cmd)-install" --sync]
       packOpFind [$"($cmd)-query" --repository --search]
     }
+    info => {
+      packOp [$"($cmd)-install" --sync]
+      packOpInfo [$"($cmd)-query" --repository --show]
+    }
     list => {
       packOpList [$"($cmd)-query" --list-pkgs]
     }

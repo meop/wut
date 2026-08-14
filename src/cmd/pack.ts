@@ -19,6 +19,7 @@ export class PackCmd extends CmdBase implements Cmd {
     this.commands = [
       new PackCmdAdd([...this.scopes, this.name]),
       new PackCmdFind([...this.scopes, this.name]),
+      new PackCmdInfo([...this.scopes, this.name]),
       new PackCmdList([...this.scopes, this.name]),
       new PackCmdOutdated([...this.scopes, this.name]),
       new PackCmdRemove([...this.scopes, this.name]),
@@ -657,7 +658,7 @@ async function execOp(
 
   const remaining = names.filter((n) => !found.includes(n))
 
-  if ((op === 'find' && names.length) || op === 'list' || op === 'outdated') {
+  if ((op === 'find' && names.length) || op === 'list' || op === 'outdated' || op === 'info') {
     result = setOpNames(result, op, names)
     result = callManagers(result, allManagers)
   } else if (op !== 'find') {
@@ -698,6 +699,23 @@ export class PackCmdFind extends CmdBase implements Cmd {
     this.description = 'find from remote'
     this.aliases = ['f', 'fi', 'se', 'search']
     this.arguments = [{ name: 'names', description: 'name(s) to match' }]
+  }
+  override async work(
+    shell: Sh,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
+    return await execOp(shell, context, environment, this.name)
+  }
+}
+
+export class PackCmdInfo extends CmdBase implements Cmd {
+  constructor(scopes: Array<string>) {
+    super(scopes)
+    this.name = 'info'
+    this.description = 'show details for package(s) from remote'
+    this.aliases = ['i', 'show']
+    this.arguments = [{ name: 'names', description: 'name(s) to look up' }]
   }
   override async work(
     shell: Sh,

@@ -323,7 +323,7 @@ export class VirtCmdSync extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'sync'
     this.description = 'sync from remote'
-    this.aliases = ['s', 'sy', 'up', 'update', 'upgrade']
+    this.aliases = ['s', 'sy', 'up', 'update']
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
   override async work(

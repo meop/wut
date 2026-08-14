@@ -22,15 +22,22 @@ def --env packZypper [] {
       packOp [$cmd refresh]
       packOpFind [$cmd search]
     }
+    info => {
+      packOp [$cmd refresh]
+      packOpInfo [$cmd info]
+    }
     list => {
-      packOpList [$cmd search --installed-only]
+      # not `search --installed-only`: it can report packages as installed
+      # when they aren't — https://github.com/openSUSE/zypper/issues/498
+      packOpList [$cmd packages --installed-only]
     }
     outdated => {
       packOp [$cmd refresh]
       packOpOutdated [$cmd list-updates]
     }
     remove => {
-      packOpRemove { |n| packGrepList [$cmd search --installed-only] $n } [$cmd uninstall]
+      # same reason as list, above: search --installed-only isn't reliable
+      packOpRemove { |n| packGrepList [$cmd packages --installed-only] $n } [$cmd uninstall]
     }
     sync => {
       packOp [$cmd refresh]

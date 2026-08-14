@@ -30,6 +30,10 @@ def --env packPacman [] {
       packOp [$cmd --sync --refresh]
       packOpFind [$cmd --sync --search]
     }
+    info => {
+      packOp [$cmd --sync --refresh]
+      packOpInfo [$cmd --sync --info]
+    }
     list => {
       packOpList [$cmd --query]
     }

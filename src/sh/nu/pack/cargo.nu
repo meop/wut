@@ -19,6 +19,9 @@ def --env packCargo [] {
     find => {
       packOpFind [$cmd search]
     }
+    info => {
+      packOpInfo [$cmd info]
+    }
     list => {
       packOpList [$cmd install --list]
     }

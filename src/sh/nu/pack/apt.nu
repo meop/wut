@@ -22,6 +22,10 @@ def --env packApt [] {
       packOp [$cmd update]
       packOpFind [$cmd search]
     }
+    info => {
+      packOp [$cmd update]
+      packOpInfo [$cmd show]
+    }
     list => {
       packOpList [$cmd list --installed]
     }

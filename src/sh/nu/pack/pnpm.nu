@@ -19,6 +19,9 @@ def --env packPnpm [] {
     find => {
       packOpFind [$cmd search]
     }
+    info => {
+      packOpInfo [$cmd info]
+    }
     list => {
       packOpList [$cmd list --global]
     }

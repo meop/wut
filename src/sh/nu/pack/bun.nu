@@ -25,6 +25,9 @@ def --env packBun [] {
         [(packHttpGetNpm $term), (packHttpGetJsr $term)] | flatten | print
       }
     }
+    info => {
+      packOpInfo [$cmd info]
+    }
     list => {
       opPrintCmd $cmd list --global
       let result = (do { ^$cmd list --global } | complete)

@@ -19,6 +19,9 @@ def --env packChoco [] {
     find => {
       packOpFind [$cmd search]
     }
+    info => {
+      packOpInfo [$cmd info]
+    }
     list => {
       packOpList [$cmd list]
     }
