@@ -89,7 +89,6 @@ export async function getCfgDirDump(
         contextFilterPtr = contextFilterPtr[key] as CtxFilter
       }
       if (!found) {
-        dirFilePartsFiltered.push(fileParts)
         continue
       }
       for (const key of Object.keys(contextFilterPtr) as Array<keyof Ctx>) {

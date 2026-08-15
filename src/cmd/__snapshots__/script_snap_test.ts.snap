@@ -280,8 +280,10 @@ do --env {
     \$yn = input r#'use script [y,[n]]: '#
   }
   if \$yn != 'n' {
-opPrint r#'setup'#
-opPrint r#'  cargo, docker'#
+opPrint r#'cargo'#
+opPrint r#'  setup'#
+opPrint r#'docker'#
+opPrint r#'  setup'#
   }
 }
 \`
@@ -567,8 +569,10 @@ do --env {
     \$yn = input r#'use script [y,[n]]: '#
   }
   if \$yn != 'n' {
-opPrint r#'setup'#
-opPrint r#'  cargo, docker'#
+opPrint r#'cargo'#
+opPrint r#'  setup'#
+opPrint r#'docker'#
+opPrint r#'  setup'#
   }
 }
 \`
@@ -871,8 +875,10 @@ function opPrintMaybeRunCmd {
     \$yn = Read-Host "use script [y,[n]]"
   }
   if (\$yn -ne 'n') {
-opPrint 'setup'
-opPrint '  cargo, docker'
+opPrint 'cargo'
+opPrint '  setup'
+opPrint 'docker'
+opPrint '  setup'
   }
 }
 \`
@@ -1145,8 +1151,8 @@ function () {
     read "yn?use script [y,[n]]: "
   fi
   if [[ \$yn != 'n' ]]; then
-opPrint 'setup'
-opPrint '  cargo'
+opPrint 'cargo'
+opPrint '  setup'
   fi
 }
 \`
@@ -1419,8 +1425,10 @@ function () {
     read "yn?use script [y,[n]]: "
   fi
   if [[ \$yn != 'n' ]]; then
-opPrint 'setup'
-opPrint '  cargo, docker'
+opPrint 'cargo'
+opPrint '  setup'
+opPrint 'docker'
+opPrint '  setup'
   fi
 }
 \`
@@ -2548,7 +2556,7 @@ function opPrintMaybeRunCmd {
 snapshot[`zsh / darwin / exec (no match, docker not gated for darwin) 1`] = `
 \`REQ_URL_CFG='http://x/cfg'
 
-REQ_URL_SH='http://x/sh/zsh/script/exec/setup/docker?sysOsPlat=darwin'
+REQ_URL_SH='http://x/sh/zsh/script/exec/docker/setup?sysOsPlat=darwin'
 
 function opPrint {
   if [[ \$SUCCINCT ]]; then
@@ -2691,7 +2699,7 @@ REQ_ORIG='http://x'
 
 SYS_OS_PLAT='darwin'
 
-REQ_PATH='/sh/zsh/script/exec/setup/docker'
+REQ_PATH='/sh/zsh/script/exec/docker/setup'
 
 REQ_SRCH='?sysOsPlat=darwin'
 
@@ -2804,12 +2812,12 @@ function () {
 }
 
 
-SCRIPT_EXEC_PARTS='setup|docker'
+SCRIPT_EXEC_PARTS='docker|setup'
 \`
 `;
 
 snapshot[`zsh / linux / exec (overlay redirects to pwsh) 1`] = `
-\`pwsh -noprofile -c '\$REQ_URL_SH = '\\\\''http://x/sh/pwsh/script/exec/setup/docker?sysOsPlat=linux'\\\\''
+\`pwsh -noprofile -c '\$REQ_URL_SH = '\\\\''http://x/sh/pwsh/script/exec/docker/setup?sysOsPlat=linux'\\\\''
 
 Invoke-Expression "\$( Invoke-RestMethod -ErrorAction Stop -ProgressAction SilentlyContinue -Uri \$REQ_URL_SH )"
 
@@ -2819,7 +2827,7 @@ Invoke-Expression "\$( Invoke-RestMethod -ErrorAction Stop -ProgressAction Silen
 snapshot[`nu / linux / exec (overlay, already nu) 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/setup/cargo?sysOsPlat=linux'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/cargo/setup?sysOsPlat=linux'#
 
 def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
@@ -2949,7 +2957,7 @@ do {
 
 \$env.SYS_OS_PLAT = r#'linux'#
 
-\$env.REQ_PATH = r#'/sh/nu/script/exec/setup/cargo'#
+\$env.REQ_PATH = r#'/sh/nu/script/exec/cargo/setup'#
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux'#
 
@@ -3088,7 +3096,7 @@ def --env wutNuSync [] {
 wutNuSync
 
 
-\$env.SCRIPT_EXEC_PARTS = r#'setup|cargo'#
+\$env.SCRIPT_EXEC_PARTS = r#'cargo|setup'#
 
 do {
   if not (which cargo | is-not-empty) {
@@ -3111,7 +3119,7 @@ do {
 `;
 
 snapshot[`zsh / linux / exec (overlay redirects to nu) 1`] = `
-\`nu --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/script/exec/setup/cargo?sysOsPlat=linux'\\\\''#
+\`"\${WUT_HOME}/bin/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/script/exec/cargo/setup?sysOsPlat=linux'\\\\''#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -3119,7 +3127,7 @@ snapshot[`zsh / linux / exec (overlay redirects to nu) 1`] = `
 `;
 
 snapshot[`pwsh / winnt / exec (overlay redirects to nu) 1`] = `
-\`nu --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/script/exec/setup/cargo?sysOsPlat=winnt''#
+\`& "\${env:WUT_HOME}/bin/nu.exe" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/script/exec/cargo/setup?sysOsPlat=winnt''#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -3395,8 +3403,10 @@ function () {
     read "yn?use script [y,[n]]: "
   fi
   if [[ \$yn != 'n' ]]; then
-opPrint 'setup'
-opPrint '  cargo, docker'
+opPrint 'cargo'
+opPrint '  setup'
+opPrint 'docker'
+opPrint '  setup'
   fi
 }
 \`

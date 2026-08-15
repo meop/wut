@@ -13,6 +13,16 @@ const sysOsPlatToNativeShell: Record<string, string> = {
   winnt: 'pwsh',
 }
 
+// nu isn't guaranteed to be on PATH yet, so invoke wut's own pinned binary instead
+function pinnedNuBinCmd(shell: Sh, sysOsPlat: string): string {
+  const ext = sysOsPlat === 'winnt' ? '.exe' : ''
+  return shell.name === 'pwsh'
+    ? `& "\${env:WUT_HOME}/bin/nu${ext}"`
+    : shell.name === 'zsh'
+    ? `"\${WUT_HOME}/bin/nu${ext}"`
+    : `^($env.WUT_HOME | path join 'bin' 'nu${ext}')`
+}
+
 export async function redirectShell(shell: Sh, target: string, context: Ctx): Promise<string | null> {
   if (shell.name === target) {
     return null
@@ -43,14 +53,12 @@ export async function redirectShell(shell: Sh, target: string, context: Ctx): Pr
     .with(targetShell.varSetStr(REQ_URL_SH, url))
     .with(await targetShell.fileLoad(['get']))
     .build()
-  return `${target} ${targetShell.execArgs(shell.toLiteral(script))}`
+
+  const bin = target === 'nu' ? pinnedNuBinCmd(shell, context.sys_os_plat ?? '') : target
+  return `${bin} ${targetShell.execArgs(shell.toLiteral(script))}`
 }
 
-// pack/file/virt need a guarantee they're running under wut's pinned nu, not whatever nu (if any) happens to be
-// on the caller's PATH. Unlike redirectShell above, this always targets the pinned binary explicitly and never
-// short-circuits on `shell.name === 'nu'` alone, since being nu doesn't mean being *pinned* nu — the marker query
-// param on the re-fetched URL is what distinguishes "first pass" from "already hopped" for a nu caller (pwsh/zsh
-// callers never carry it themselves, so they always hop, exactly once, same as before).
+// always hops to the pinned nu, even if already running as (unpinned) nu — the marker param tracks that
 export async function redirectCommonShell(shell: Sh, context: Ctx): Promise<string | null> {
   if (context.req_srch.includes(WUT_NU_PINNED_PARAM)) {
     return null
@@ -70,13 +78,7 @@ export async function redirectCommonShell(shell: Sh, context: Ctx): Promise<stri
     .with(await targetShell.fileLoad(['get']))
     .build()
 
-  const ext = context.sys_os_plat === 'winnt' ? '.exe' : ''
-  const bin = shell.name === 'pwsh'
-    ? `& "\${env:WUT_HOME}/bin/nu${ext}"`
-    : shell.name === 'zsh'
-    ? `"\${WUT_HOME}/bin/nu${ext}"`
-    : `^($env.WUT_HOME | path join 'bin' 'nu${ext}')`
-
+  const bin = pinnedNuBinCmd(shell, context.sys_os_plat ?? '')
   return `${bin} ${targetShell.execArgs(shell.toLiteral(script))}`
 }
 
@@ -84,4 +86,12 @@ export function execNativeShell(shell: Sh, plat: string, cmd: string): string {
   const target = sysOsPlatToNativeShell[plat]
   const targetShell = target === 'pwsh' ? new PowerSh() : new ZSh()
   return `${target} ${targetShell.execArgs(shell.toLiteral(cmd))}`
+}
+
+export function execScriptShell(shell: Sh, plat: string, shellFlavor: string, cmd: string): string {
+  if (shellFlavor === 'nu') {
+    const targetShell = new NuSh()
+    return `${pinnedNuBinCmd(shell, plat)} ${targetShell.execArgs(shell.toLiteral(cmd))}`
+  }
+  return execNativeShell(shell, plat, cmd)
 }

@@ -5,7 +5,7 @@ import { Fmt } from '@meop/shire/serde'
 import type { Sh } from '@meop/shire/sh'
 
 import { getCfgDirDump, getCfgFileContent, getCfgFileLoad } from '../cfg.ts'
-import { execNativeShell, redirectCommonShell } from '../sh.ts'
+import { execScriptShell, redirectCommonShell } from '../sh.ts'
 
 export class PackCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -111,6 +111,18 @@ function getNativeShellForPlat(plat: string): string {
   return plat === 'winnt' ? 'pwsh' : 'zsh'
 }
 
+export function selectScriptEntry(
+  scriptConfig: Record<string, ScriptEntry> | undefined,
+  context: Ctx,
+): { shellFlavor: string; entry: ScriptEntry } | null {
+  for (const [shellFlavor, entry] of Object.entries(scriptConfig ?? {})) {
+    if (evaluateGate(entry.gate, context)) {
+      return { shellFlavor, entry }
+    }
+  }
+  return null
+}
+
 export function evaluateGate(
   gate: Record<string, Array<string>> | null | undefined,
   context: Ctx,
@@ -163,17 +175,19 @@ function getManagerCallName(manager: string): string {
 function buildCmdRunLines(
   shell: Sh,
   plat: string,
+  shellFlavor: string,
   commands: Array<string>,
 ): Array<string> {
   return [
     ...commands.flatMap((cmd) => shell.print(`  ${cmd}`)),
-    `if 'NOOP' not-in $env { ${execNativeShell(shell, plat, commands.join('\n'))} }`,
+    `if 'NOOP' not-in $env { ${execScriptShell(shell, plat, shellFlavor, commands.join('\n'))} }`,
   ]
 }
 
 async function buildFileRunLines(
   shell: Sh,
   plat: string,
+  shellFlavor: string,
   filePath: string,
 ): Promise<Array<string> | null> {
   const { parts, ext } = parseScriptFilePath(filePath)
@@ -183,7 +197,7 @@ async function buildFileRunLines(
   }
   return [
     ...shell.print(`  ${filePath}`),
-    `if 'NOOP' not-in $env { ${execNativeShell(shell, plat, fileContent)} }`,
+    `if 'NOOP' not-in $env { ${execScriptShell(shell, plat, shellFlavor, fileContent)} }`,
   ]
 }
 
@@ -272,14 +286,14 @@ async function findGroupsWithNames(
           if (managerSpecified || !context) {
             continue
           }
-          const nativeShell = getNativeShellForPlat(context.sys_os_plat ?? '')
           const scriptConfig = addConfig[tier] as
             | Record<string, ScriptEntry>
             | undefined
-          const entry = scriptConfig?.[nativeShell]
-          if (!entry || !evaluateGate(entry.gate, context)) {
+          const selected = selectScriptEntry(scriptConfig, context)
+          if (!selected) {
             continue
           }
+          const { entry } = selected
           if (entry.commands?.length) {
             for (const cmd of entry.commands) {
               if (!allNames.includes(cmd)) allNames.push(cmd)
@@ -375,7 +389,7 @@ interface ManagerEntry {
 
 type RemManagerEntry = Record<string, ScriptEntry>
 
-interface ScriptEntry {
+export interface ScriptEntry {
   commands?: Array<string>
   file?: string
   gate?: Record<string, Array<string>>
@@ -398,7 +412,7 @@ function processManagerEntryLines(
   if (op === 'add') {
     const preScript = entry[nativeShell as 'pwsh' | 'zsh']
     if (preScript?.commands?.length) {
-      lines.push(...buildCmdRunLines(shell, plat, preScript.commands))
+      lines.push(...buildCmdRunLines(shell, plat, nativeShell, preScript.commands))
     }
   }
 
@@ -408,7 +422,7 @@ function processManagerEntryLines(
   if (op === 'remove') {
     const postScript = remEntry?.[nativeShell]
     if (postScript?.commands?.length) {
-      lines.push(...buildCmdRunLines(shell, plat, postScript.commands))
+      lines.push(...buildCmdRunLines(shell, plat, nativeShell, postScript.commands))
     }
   }
 
@@ -477,19 +491,19 @@ async function processGroupConfig(
       if (op !== 'add' || managerSpecified) {
         continue
       }
-      const nativeShell = getNativeShellForPlat(plat)
       const scriptConfig = addConfig![tier] as
         | Record<string, ScriptEntry>
         | undefined
-      const entry = scriptConfig?.[nativeShell]
-      if (!entry || !evaluateGate(entry.gate, context)) {
+      const selected = selectScriptEntry(scriptConfig, context)
+      if (!selected) {
         continue
       }
+      const { shellFlavor, entry } = selected
       let scriptBodyLines: Array<string> | null = null
       if (entry.commands?.length) {
-        scriptBodyLines = buildCmdRunLines(_shell, plat, entry.commands)
+        scriptBodyLines = buildCmdRunLines(_shell, plat, shellFlavor, entry.commands)
       } else if (entry.file) {
-        scriptBodyLines = await buildFileRunLines(_shell, plat, entry.file)
+        scriptBodyLines = await buildFileRunLines(_shell, plat, shellFlavor, entry.file)
       }
       if (scriptBodyLines) {
         const scriptPre = entry.file

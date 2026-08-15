@@ -102,17 +102,15 @@ Deno.test('getCfgDirDump - CtxFilter non-matching context excludes traversed pat
   assertEquals(names.includes('qemu'), false)
 })
 
-Deno.test('getCfgDirDump - CtxFilter partial traversal includes path', async () => {
+Deno.test('getCfgDirDump - CtxFilter excludes paths not declared in the filter', async () => {
   const filter: CtxFilter = { qemu: { sys_os_plat: ['linux'] } }
   const results = await getCfgDirDump(['virt'], {
     extension: 'yaml',
-    context: mkCtx({ sys_os_plat: 'darwin' }),
+    context: mkCtx({ sys_os_plat: 'linux' }),
     contextFilter: filter,
   })
   const names = results.map((r) => r.join('-'))
-  assertEquals(names.some((n) => n.startsWith('host-')), true)
-  assertEquals(names.includes('lxc'), true)
-  assertEquals(names.includes('podman'), true)
+  assertEquals(names, ['qemu'])
 })
 
 Deno.test('getCfgDirDump - CtxFilter sys_os_like substring match', async () => {

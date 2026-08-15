@@ -1,26 +1,24 @@
 ---
-nu:
+cargo:
   setup:
-    cargo:
+    nu:
       sys_os_plat:
         - darwin
         - linux
         - winnt
-pwsh:
-  setup:
-    cargo:
+    pwsh:
       sys_os_plat:
         - winnt
-    docker:
-      sys_os_plat:
-        - linux
-        - winnt
-zsh:
-  setup:
-    cargo:
+    zsh:
       sys_os_plat:
         - darwin
         - linux
-    docker:
+docker:
+  setup:
+    pwsh:
+      sys_os_plat:
+        - linux
+        - winnt
+    zsh:
       sys_os_plat:
         - linux
