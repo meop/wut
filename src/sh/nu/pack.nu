@@ -94,25 +94,16 @@ def packExistsPypi [name: string] {
   packHttpOk $"https://pypi.org/pypi/($name)/json"
 }
 
-# ghpm search always exits 0 and answers fuzzily, so the name column is what decides
-def packExistsGhpm [name: string] {
-  opPrintCmd 'ghpm search' $name
-  let out = (run-external ghpm search $name | complete)
-  if $out.exit_code != 0 {
-    return false
-  }
-  $out.stdout | lines | skip 2 | any { |l| ($l | split row ' ' | get -o 0) == $name }
-}
-
 # choosing a manager needs an exact name, not the substring search 'find' runs: pacman has nushell, not nushel
 def packExists [manager: string, name: string] {
   match $manager {
-    ghpm => (packExistsGhpm $name),
+    ghpm => (packOk [ghpm info $name]),
     cargo => (packOk [cargo info $name]),
     uv => (packExistsPypi $name),
+    # bun and pnpm are npm clients; jsr is deno's own registry, so it answers there first
     pnpm => (packExistsNpm $name),
     bun => ((packExistsNpm $name) or (packExistsJsr $name)),
-    deno => ((packExistsNpm $name) or (packExistsJsr $name)),
+    deno => ((packExistsJsr $name) or (packExistsNpm $name)),
     brew => (packOk [brew info $name]),
     apk => (packOk [apk search -e $name]),
     apt => (packOk [apt-cache show $name]),
