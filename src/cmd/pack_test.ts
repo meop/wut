@@ -186,10 +186,11 @@ Deno.test('selectScriptEntry - undefined scriptConfig returns null', () => {
 // --- getSupportedManagers ---
 
 // the manager list is one ordered list now: no platform or distro maps, -m filters and orders it
-Deno.test('getSupportedManagers - no -m returns every manager, in preference order', () => {
+Deno.test('getSupportedManagers - no -m returns every manager, portable ones first', () => {
   const all = getSupportedManagers(mkEnv())
-  assertEquals(all[0], 'ghpm')
-  assertEquals(all.includes('pacman'), true)
+  assertEquals(all.slice(0, 6), ['bun', 'cargo', 'deno', 'ghpm', 'pnpm', 'uv'])
+  // a user space install is preferred over one that needs sudo
+  assertEquals(all.indexOf('cargo') < all.indexOf('pacman'), true)
   assertEquals(all.includes('winget'), true)
 })
 

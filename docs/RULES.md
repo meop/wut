@@ -122,10 +122,11 @@ the preference order — user managers, then `script`, then system managers. A y
 declare it wrongly (a system manager filed under `user:` silently never matched), which is why there is one flat
 `manager` map. `script` is a sibling because it is not a manager. `remove` takes the same shape.
 
-`-m` overrides the order for one invocation and takes a list: `wut p -m pacman,ghpm add nu` narrows to those two and
-prefers pacman, whatever wut's own order says. `script` is spellable in that list, so naming managers excludes scripts
-by default — `-m ghpm,pacman` — while `-m script` runs only the script and `-m ghpm,script` prefers ghpm and falls to
-the script.
+The order of the managers in the file is the group's preference, and the first one present on the machine wins it. `-m`
+overrides that for one invocation and takes a list: `wut p -m pacman,ghpm add nu` narrows to those two and prefers
+pacman, whatever wut's own order says. `script` is spellable in that list, so naming managers excludes scripts by
+default — `-m ghpm,pacman` — while `-m script` runs only the script and `-m ghpm,script` prefers ghpm and falls to the
+script.
 
 ## pack group aliases
 

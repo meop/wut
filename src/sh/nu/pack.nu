@@ -61,41 +61,192 @@ def packHttpGetPypi [term: string] {
   }
 }
 
-# a group is done once some manager (or script) installed it, and failed once a manager was missing a name it
-# declared — either way no later phase offers it again
-def packGroupSettled [group: string] {
-  ($group in ($env.PACK_DONE? | default [])) or ($group in ($env.PACK_FAIL? | default []))
+
+def packOk [cmds: list<string>] {
+  (run-external ($cmds | first) ...($cmds | skip 1) | complete | get exit_code) == 0
 }
 
-def --env packMarkDone [group: string] {
-  load-env {PACK_DONE: (($env.PACK_DONE? | default []) | append $group | uniq)}
-}
-
-def --env packMarkFail [group: string, why: string] {
-  load-env {
-    PACK_FAIL: (($env.PACK_FAIL? | default []) | append $group | uniq)
-    PACK_FAIL_WHY: (($env.PACK_FAIL_WHY? | default []) | append $"($group): ($why)")
-  }
-}
-
-# flags (eg brew's --cask) aren't package names and can't be verified via the finder — always pass them through
-def packFindable [term: string, finder: closure] {
-  ($term | str starts-with '-') or (do $finder $term)
-}
-
-def packNothingToDo [key: string] {
-  let planned = (packPlanFor $key | is-empty)
-  match $env.PACK_OP {
-    add => (($env.PACK_ADD_NAMES? | is-empty) and $planned),
-    remove => (($env.PACK_REMOVE_NAMES? | is-empty) and $planned),
+# choosing a manager needs an exact name, not the substring search 'find' runs: pacman has nushell, not nushel
+def packExists [manager: string, name: string] {
+  match $manager {
+    ghpm => (packOk [ghpm info $name]),
+    cargo => (packOk [cargo info $name]),
+    uv => (packHttpGetPypi $name | is-not-empty),
+    pnpm => (packHttpGetNpm $name | is-not-empty),
+    bun => ([(packHttpGetNpm $name), (packHttpGetJsr $name)] | flatten | is-not-empty),
+    deno => ([(packHttpGetNpm $name), (packHttpGetJsr $name)] | flatten | is-not-empty),
+    brew => (packOk [brew info $name]),
+    apk => (packOk [apk search -e $name]),
+    apt => (packOk [apt-cache show $name]),
+    dnf => (packOk [dnf info $name]),
+    yay => (packOk [yay --sync --info $name]),
+    paru => (packOk [paru --sync --info $name]),
+    pacman => (packOk [pacman --sync --info $name]),
+    xbps => (packOk [xbps-query --repository --show $name]),
+    zypper => (packOk [zypper --non-interactive info $name]),
+    choco => (packOk [choco info $name]),
+    scoop => (packOk [scoop info $name]),
+    winget => (packOk [winget show --exact --id $name]),
     _ => false,
   }
 }
 
-def packPlanFor [key: string] {
-  $env.PACK_PLAN? | default '{}' | from json | get -o $key | default []
+def packRefresh [manager: string] {
+  match $manager {
+    ghpm => { packOp [ghpm refresh] },
+    apk => { packOp [(packElevate 'apk') update] },
+    apt => { packOp [(packElevate 'apt') update] },
+    dnf => { packOp [(packElevate 'dnf') check-update] },
+    yay => { packOp [yay --sync --refresh] },
+    paru => { packOp [paru --sync --refresh] },
+    pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
+    xbps => { packOp [(packElevate 'xbps') -install --sync] },
+    zypper => { packOp [(packElevate 'zypper') refresh] },
+    scoop => { packOp [scoop update] },
+    _ => {},
+  }
 }
 
+# the env dump sets these as a flat string, and setOpNames may later replace them with a list
+def packNameList [key: string] {
+  let v = ($env | get -o $key)
+  if $v == null {
+    []
+  } else if (($v | describe) | str starts-with 'list') {
+    $v
+  } else {
+    [$v]
+  }
+}
+
+def packManagersHere [] {
+  ($env.PACK_MANAGERS? | default []) | where { |m| which $m | is-not-empty }
+}
+
+def packRefreshAll [] {
+  for m in (packManagersHere) { packRefresh $m }
+}
+
+# the first manager here that really has it, in the order wut prefers
+def packFindFirst [name: string] {
+  for m in (packManagersHere) {
+    if (packExists $m $name) { return $m }
+  }
+  null
+}
+
+def --env packRunLoose [manager: string] {
+  let key = $"PACK_($env.PACK_OP | str uppercase)_NAMES"
+  load-env {($key): $env.PACK_LOOSE_NAMES}
+  packCallManager $manager
+}
+
+def --env packCallManager [manager: string] {
+  match $manager {
+    ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm },
+    bun => { packBun }, deno => { packDeno }, brew => { packBrew }, apk => { packApk },
+    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
+  }
+}
+
+# ghpm's table: a rule as wide as each header, columns padded to their widest cell, the last one loose
+def packTable [headers: list<string>, rows: list<list<string>>] {
+  let widths = ($headers | enumerate | each { |h|
+    [($h.item | str length)] ++ ($rows | each { |r| $r | get -o $h.index | default '' | str length }) | math max
+  })
+  let line = { |cells: list<string>|
+    $cells | enumerate | each { |c|
+      if $c.index == (($cells | length) - 1) { $c.item } else { $c.item | fill --alignment left --width ($widths | get $c.index) }
+    } | str join ' '
+  }
+  opPrint (do $line $headers)
+  opPrint (do $line ($headers | each { |h| '-' | fill --alignment left --width ($h | str length) --character '-' }))
+  for r in $rows { opPrint (do $line $r) }
+}
+
+def packManagerHere [manager: string] {
+  # a script is gated by the server, so if it reached the plan this machine can run it
+  ($manager == 'script') or (which $manager | is-not-empty)
+}
+
+# the first path whose manager is on this machine wins the group, in the order the group stated
+def packPickPath [unit: record] {
+  $unit.paths | where { |p| packManagerHere $p.manager } | first 1 | get -o 0
+}
+
+def --env packPlanRun [] {
+  let units = ($env.PACK_PLAN? | default '[]' | from json)
+
+  # a group whose every path needs a manager this machine lacks is not a plan, it is an absence: drop it, and let
+  # the name it came from fall through to a find like any other unclaimed name
+  mut rows = []
+  mut runnable = []
+  mut served = []
+  for unit in $units {
+    let path = (packPickPath $unit)
+    if $path != null {
+      $runnable = ($runnable | append $path.id)
+      $served = ($served | append $unit.name)
+      $rows = ($rows | append [[$unit.group, $path.manager, ($path.names | str join ', ')]])
+    }
+  }
+
+  let fellThrough = ($units | each { |u| $u.name } | uniq | where { |n| $n not-in $served })
+  let loose = ((packNameList 'PACK_ADD_NAMES') ++ (packNameList 'PACK_REMOVE_NAMES') ++ $fellThrough | uniq)
+
+  mut looseFor = {}
+  if ($loose | is-not-empty) {
+    packRefreshAll
+    for name in $loose {
+      let winner = (packFindFirst $name)
+      if $winner == null {
+        load-env {PACK_UNSERVED: (($env.PACK_UNSERVED? | default []) | append $name)}
+      } else {
+        $rows = ($rows | append [[$name, $winner, $name]])
+        $looseFor = ($looseFor | upsert $winner (($looseFor | get -o $winner | default []) | append $name))
+      }
+    }
+  }
+
+  if ($rows | is-empty) {
+    packReport
+    return
+  }
+
+  packTable ['group' 'manager' 'packages'] $rows
+  if not (packPrompt 'use pack') { return }
+
+  # agreed once, up front: nothing below asks again
+  $env.PACK_AGREED = '1'
+  for id in $runnable {
+    try {
+      packRunUnit $id
+    } catch { |e|
+      packMarkFailed $id $e.msg
+    }
+  }
+  for entry in ($looseFor | transpose manager names) {
+    load-env {PACK_LOOSE_NAMES: $entry.names}
+    try {
+      packRunLoose $entry.manager
+    } catch { |e|
+      packMarkFailed ($entry.names | str join ', ') $e.msg
+    }
+  }
+  packReport
+}
+
+def packNothingToDo [key: string] {
+  match $env.PACK_OP {
+    add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
+    remove => ((packNameList 'PACK_REMOVE_NAMES') | is-empty),
+    _ => false,
+  }
+}
+
+# by the time a manager runs, the plan has chosen it and the user has already agreed
 def --env packMutate [
   key: string,
   label: string,
@@ -104,86 +255,44 @@ def --env packMutate [
   cmds: list<string>,
   each: bool,
 ] {
-  # a group states exactly what this manager installs, so a name it cannot find is a stale group, not a fallback
-  mut ready = []
-  for entry in (packPlanFor $key) {
-    if (packGroupSettled $entry.group) {
-      continue
-    }
-    let missing = ($entry.names | where { |n| not (packFindable $n $finder) })
-    if ($missing | is-empty) {
-      $ready = ($ready | append $entry)
-    } else {
-      packMarkFail $entry.group $"($key) has no ($missing | str join ', ')"
-    }
-  }
-
-  # loose names have no manager stated for them, so each one is offered wherever it turns up first
-  let names = ($env | get -o $names_key | default [])
-  let found = ($names | where { |n| packFindable $n $finder })
-
-  let offer = (($ready | each { |e| $e.names } | flatten) ++ $found | uniq)
-  if ($offer | is-empty) {
+  let names = (packNameList $names_key)
+  if ($names | is-empty) {
     return
   }
-  if not (packPrompt $"($label): ($offer | str join ', ')") {
+  if ('PACK_AGREED' not-in $env) and not (packPrompt $"($label): ($names | str join ', ')") {
     return
   }
-
-  # one command per group keeps a group's flags scoped to its own names
-  for entry in $ready {
-    if $each {
-      for n in $entry.names { packOp ($cmds ++ [$n]) }
-    } else {
-      packOp ($cmds ++ $entry.names)
-    }
-    packMarkDone $entry.group
+  if $each {
+    for n in $names { packOpStrict ($cmds ++ [$n]) }
+  } else {
+    packOpStrict ($cmds ++ $names)
   }
-  if ($found | is-not-empty) {
-    if $each {
-      for n in $found { packOp ($cmds ++ [$n]) }
-    } else {
-      packOp ($cmds ++ $found)
-    }
-  }
-
-  # an empty list, not hide-env: a removal does not survive the nested def --env chain, an assignment does
-  load-env {($names_key): ($names | where { |n| $n not-in $found })}
+  load-env {($names_key): []}
 }
 
-# a group with no candidate managers is script satisfied, so it always shows
-# asked for by name but not here: say so, rather than doing nothing quietly
-def packRequireManager [...cmds: string] {
-  let missing = ($cmds | where { |c| which $c | is-empty })
-  if ($missing | is-not-empty) {
-    opPrintWarn $"manager not installed: ($missing | str join ', ')"
-  }
+def --env packMarkFailed [what: string, why: string] {
+  load-env {PACK_FAILED: (($env.PACK_FAILED? | default []) | append $"($what): ($why | lines | first)")}
 }
 
-def packFindGroup [label: string, ...cmds: string] {
-  if ($cmds | is-empty) or ($cmds | any { |c| which $c | is-not-empty }) {
-    opPrint $label
-  }
-}
-
+# only the exceptions: a clean run says nothing
 def packReport [] {
-  let done = ($env.PACK_DONE? | default [])
-  let failed = ($env.PACK_FAIL? | default [])
-  let pending = (($env.PACK_GROUPS? | default []) | where { |g| $g not-in $done and $g not-in $failed })
-  let loose = ($env.PACK_ADD_NAMES? | default []) ++ ($env.PACK_REMOVE_NAMES? | default [])
+  let unserved = ($env.PACK_UNSERVED? | default [])
+  let failed = ($env.PACK_FAILED? | default [])
+  if ($unserved | is-not-empty) {
+    opPrintWarn $"no manager had: ($unserved | str join ', ')"
+  }
+  if ($failed | is-not-empty) {
+    opPrintErr 'failed:'
+    for f in $failed { opPrintErr $"  ($f)" }
+  }
+  if ($failed | is-not-empty) or ($unserved | is-not-empty) {
+    exit 1
+  }
+}
 
-  if ($env.PACK_FAIL_WHY? | default [] | is-not-empty) {
-    opPrintErr 'stale group(s), fix the config:'
-    for why in $env.PACK_FAIL_WHY { opPrintErr $"  ($why)" }
-  }
-  if ($pending | is-not-empty) {
-    opPrintWarn 'declined everywhere:'
-    opPrintWarn $"  ($pending | str join ', ')"
-  }
-  if ($loose | is-not-empty) {
-    opPrintWarn 'no manager had:'
-    opPrintWarn $"  ($loose | str join ', ')"
-  }
+# no try wrapper: an install that fails has to reach the caller so the run can report it
+def --env packOpStrict [cmds: list<string>] {
+  opPrintMaybeRunCmd ...$cmds
 }
 
 def --env packOp [cmds: list<string>] {

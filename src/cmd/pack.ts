@@ -31,32 +31,41 @@ export class PackCmd extends CmdBase implements Cmd {
 
 // every manager wut knows, in the order to prefer them. which of these a machine actually has is a question only
 // the client can answer, so there is no platform or distro map here to go stale
-const MANAGERS: Array<string> = [
+// sorted within each half, but a user space install is preferred over one that needs sudo, so the halves are
+// not interchangeable: this list is the default preference order
+const PORTABLE_MANAGERS: Array<string> = [
+  'bun',
+  'cargo',
+  'deno',
+  'ghpm',
+  'pnpm',
+  'uv',
+]
+
+const NATIVE_MANAGERS: Array<string> = [
   'apk',
   'apt',
   'brew',
-  'bun',
-  'cargo',
   'choco',
-  'deno',
   'dnf',
-  'ghpm',
   'pacman',
   'paru',
-  'pnpm',
   'scoop',
-  'uv',
   'winget',
   'xbps',
   'yay',
   'zypper',
 ]
 
+const MANAGERS: Array<string> = [...PORTABLE_MANAGERS, ...NATIVE_MANAGERS]
+
 const PACK_KEY = 'pack'
 const PACK_MANAGERS_KEY = [PACK_KEY, 'managers']
 const PACK_MANAGER_KEY = [PACK_KEY, 'manager']
 const PACK_OP_KEY = [PACK_KEY, 'op']
 const PACK_OP_NAMES_KEY = (op: string) => [PACK_KEY, op, 'names']
+// the units the client picks from, as data; their bodies live in packRunUnit
+const PACK_PLAN_KEY = [PACK_KEY, 'plan']
 
 // '-m pacman,ghpm' both narrows to those managers and states which to prefer, so the list order wins
 export const SCRIPT_PATH = 'script'
@@ -407,14 +416,17 @@ export function buildTierChain(tiers: Array<TierBlock>): Array<string> {
   return ['do --env {', ...buildChain(0), '}']
 }
 
-// a tier block is labelled 'use <manager> (<tier>)', which is the only place its manager survives
-function requestedIndex(requested: Array<string>, label: string): number {
-  const manager = label.split(' ')[1] ?? ''
+function requestedIndex(requested: Array<string>, manager: string): number {
   const index = requested.indexOf(manager)
   return index < 0 ? requested.length : index
 }
 
-async function processGroupConfig(
+export type PlanPath = { id: string; manager: string; names: Array<string> }
+export type PlanUnit = { group: string; name: string; paths: Array<PlanPath> }
+
+// one install path becomes a row the client can choose plus an arm it can run, so code stays code and the
+// plan stays data
+async function buildGroupUnit(
   shell: Sh,
   context: Ctx,
   op: string,
@@ -422,93 +434,64 @@ async function processGroupConfig(
   name: string,
   requested: Array<string>,
   managerSpecified: boolean,
-): Promise<{ shell: Sh; found: boolean }> {
+  cliName: string,
+): Promise<{ unit: PlanUnit | null; arms: Array<string> }> {
   const content = await loadGroupConfig(name.split('-'))
   if (content == null) {
-    return { shell, found: false }
+    return { unit: null, arms: [] }
   }
 
   const addConfig = groupOp(content, 'add') as Record<string, unknown> | undefined
   const remConfig = groupOp(content, 'remove')?.manager as Record<string, RemManagerEntry> | undefined
-
-  let _shell = shell
-  let found = false
   const plat = context.sys_os_plat ?? ''
-  const tierBlocks: Array<TierBlock> = []
-
-  // every install path for the group sits under 'manager', script included, in the file's own order
   const managerConfig = (addConfig?.manager ?? {}) as Record<string, ManagerEntry>
 
+  const paths: Array<PlanPath> = []
+  const arms: Array<string> = []
+
+  const addArm = (id: string, lines: Array<string>) => {
+    arms.push(`    ${shell.toLiteral(id)} => {`, ...lines, '    }')
+  }
+
   for (const tier of Object.keys(managerConfig)) {
+    const id = `${name}|${tier}`
     if (tier === SCRIPT_PATH) {
       if (op !== 'add' || (managerSpecified && !requested.includes(SCRIPT_PATH))) {
         continue
       }
-      const scriptConfig = managerConfig[tier] as unknown as
-        | Record<string, ScriptEntry>
-        | undefined
-      const selected = selectScriptEntry(scriptConfig, context)
+      const selected = selectScriptEntry(
+        managerConfig[tier] as unknown as Record<string, ScriptEntry> | undefined,
+        context,
+      )
       if (!selected) {
         continue
       }
       const { shellFlavor, entry } = selected
-      let scriptBodyLines: Array<string> | null = null
-      if (entry.commands?.length) {
-        scriptBodyLines = buildCmdRunLines(_shell, plat, shellFlavor, entry.commands)
-      } else if (entry.file) {
-        scriptBodyLines = await buildFileRunLines(_shell, plat, shellFlavor, entry.file)
-      }
-      if (scriptBodyLines) {
-        const scriptPre = entry.file
-          ? [..._shell.print('file'), ..._shell.print(`  ${entry.file}`)]
-          : entry.commands?.length
-          ? [..._shell.print('commands'), ..._shell.print(`  ${entry.commands.join(' ')}`)]
-          : []
-        tierBlocks.push({
-          label: `use ${SCRIPT_PATH}`,
-          pre: scriptPre,
-          lines: scriptBodyLines,
-        })
-        found = true
-      }
-    } else {
-      const manager = tier
-      const entry = managerConfig[manager]
-      if (
-        !entry?.names?.length ||
-        !allManagers.includes(manager) ||
-        !evaluateGate(entry.gate, context)
-      ) {
+      const lines = entry.commands?.length
+        ? buildCmdRunLines(shell, plat, shellFlavor, entry.commands)
+        : entry.file
+        ? await buildFileRunLines(shell, plat, shellFlavor, entry.file)
+        : null
+      if (!lines) {
         continue
       }
-      tierBlocks.push({
-        label: `use ${manager}`,
-        pre: [..._shell.print('names'), ..._shell.print(`  ${entry.names.join(' ')}`)],
-        lines: processManagerEntryLines(_shell, context, op, manager, entry, remConfig?.[manager]),
-      })
-      found = true
+      paths.push({ id, manager: SCRIPT_PATH, names: [entry.file ?? entry.commands?.join(' ') ?? ''] })
+      addArm(id, lines)
+      continue
     }
+    const entry = managerConfig[tier]
+    if (!entry?.names?.length || !allManagers.includes(tier) || !evaluateGate(entry.gate, context)) {
+      continue
+    }
+    paths.push({ id, manager: tier, names: entry.names })
+    addArm(id, processManagerEntryLines(shell, context, op, tier, entry, remConfig?.[tier]))
   }
 
   if (requested.length > 1) {
-    tierBlocks.sort((a, b) => requestedIndex(requested, a.label) - requestedIndex(requested, b.label))
+    paths.sort((a, b) => requestedIndex(requested, a.manager) - requestedIndex(requested, b.manager))
   }
 
-  if (tierBlocks.length > 0) {
-    _shell = _shell.with([..._shell.print('alias'), ..._shell.print(`  ${name}`)])
-    if (tierBlocks.length === 1) {
-      if (tierBlocks[0].pre?.length) {
-        _shell = _shell.with(tierBlocks[0].pre)
-      }
-      _shell = _shell.with(
-        _shell.gatedFunc(tierBlocks[0].label, tierBlocks[0].lines),
-      )
-    } else {
-      _shell = _shell.with(buildTierChain(tierBlocks))
-    }
-  }
-
-  return { shell: _shell, found }
+  return { unit: paths.length ? { group: name, name: cliName, paths } : null, arms }
 }
 
 export async function resolveGroupName(name: string): Promise<Array<string>> {
@@ -557,7 +540,7 @@ export async function resolveGroupName(name: string): Promise<Array<string>> {
   return all
 }
 
-async function processGroupNames(
+async function buildPlan(
   shell: Sh,
   context: Ctx,
   op: string,
@@ -565,10 +548,11 @@ async function processGroupNames(
   names: Array<string>,
   requested: Array<string>,
   managerSpecified: boolean,
-): Promise<{ shell: Sh; found: Array<string>; groups: Array<string> }> {
-  let _shell = shell
-  const found: Array<string> = []
-  const groups: Array<string> = []
+): Promise<{ units: Array<PlanUnit>; arms: Array<string>; claimed: Array<string> }> {
+  const units: Array<PlanUnit> = []
+  const arms: Array<string> = []
+  const claimed: Array<string> = []
+  const seen = new Set<string>()
 
   for (const name of names) {
     let resolved = await resolveGroupName(name)
@@ -576,28 +560,32 @@ async function processGroupNames(
       resolved = [resolved.find((r) => r === name) ?? resolved[0]]
     }
     for (const resolvedName of resolved) {
-      const result = await processGroupConfig(
-        _shell,
+      // a name and a folder of that name are one group, and a group reached twice is still installed once
+      if (seen.has(resolvedName)) {
+        continue
+      }
+      seen.add(resolvedName)
+      const { unit, arms: unitArms } = await buildGroupUnit(
+        shell,
         context,
         op,
         allManagers,
         resolvedName,
         requested,
         managerSpecified,
+        name,
       )
-      _shell = result.shell
-      if (result.found) {
-        if (!found.includes(name)) {
-          found.push(name)
-        }
-        if (!groups.includes(resolvedName)) {
-          groups.push(resolvedName)
+      if (unit) {
+        units.push(unit)
+        arms.push(...unitArms)
+        if (!claimed.includes(name)) {
+          claimed.push(name)
         }
       }
     }
   }
 
-  return { shell: _shell, found, groups }
+  return { units, arms, claimed }
 }
 
 async function execOp(
@@ -656,7 +644,7 @@ async function execOp(
     found = groupFilterFound
     result = printGroups(result, groupEntries)
   } else if (op === 'add' || op === 'remove') {
-    const groupResult = await processGroupNames(
+    const { units, arms, claimed } = await buildPlan(
       result,
       context,
       op,
@@ -665,8 +653,26 @@ async function execOp(
       requested,
       managerSpecified,
     )
-    result = groupResult.shell
-    found = groupResult.found
+    found = claimed
+
+    // names no group claimed have no stated manager, so the client finds one for them
+    const loose = names.filter((n) => !claimed.includes(n))
+
+    result = result
+      .with([
+        'def --env packRunUnit [id: string] {',
+        '  match $id {',
+        ...arms,
+        '    _ => {}',
+        '  }',
+        '}',
+      ])
+      .with(result.varSetStr(PACK_PLAN_KEY, JSON.stringify(units)))
+    // always stated, since the env dump has already set this key to the raw cli names
+    result = result.with(result.varSetArr(PACK_OP_NAMES_KEY(op), loose))
+    result = result.with(['packPlanRun'])
+
+    return buildAndLog(result, environment)
   }
 
   const remaining = names.filter((n) => !found.includes(n))
@@ -674,17 +680,11 @@ async function execOp(
   if ((op === 'find' && names.length) || op === 'list' || op === 'outdated' || op === 'info') {
     result = setOpNames(result, op, names)
     result = callManagers(result, allManagers)
-  } else if (op !== 'find') {
+  } else if (remaining.length || !names.length) {
     if (remaining.length) {
       result = setOpNames(result, op, remaining)
     }
-    if (!names.length || remaining.length) {
-      result = callManagers(result, allManagers)
-    }
-  }
-
-  if (op === 'add' || op === 'remove') {
-    result = result.with(['packReport'])
+    result = callManagers(result, allManagers)
   }
 
   return buildAndLog(result, environment)

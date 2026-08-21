@@ -459,15 +459,15 @@ Deno.test('nu / arch / add (pinned, shell matches both groups)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/add/shell?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes("opPrint r#'  shell-nu'#"), true)
-  assertEquals(body.includes("opPrint r#'  shell-zsh'#"), true)
+  assertEquals(body.includes('"group":"shell-nu"'), true)
+  assertEquals(body.includes('"group":"shell-zsh"'), true)
 })
 Deno.test('nu / arch / rem (pinned, shell takes the first group only)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/rem/shell?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes("opPrint r#'  shell-nu'#"), true)
-  assertEquals(body.includes("opPrint r#'  shell-zsh'#"), false)
+  assertEquals(body.includes('"group":"shell-nu"'), true)
+  assertEquals(body.includes('"group":"shell-zsh"'), false)
 })
 // every manager the group declares gets a block; a gated entry still does not
 Deno.test('nu / ubuntu / add (pinned, rustup)', async (t) => {
@@ -528,16 +528,16 @@ Deno.test('nu / arch / rem (pinned, by alias)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/rem/nushell?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes("opPrint r#'  shell-nu'#"), true)
-  assertEquals(body.includes("opPrint r#'  shell-zsh'#"), false)
+  assertEquals(body.includes('"group":"shell-nu"'), true)
+  assertEquals(body.includes('"group":"shell-zsh"'), false)
 })
 // an alias that matches nothing still falls through to the managers' own search
 Deno.test('nu / arch / find (pinned, unknown name)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/find/nosuchpackage?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('packFindGroup'), true)
   assertEquals(body.includes("$env.PACK_FIND_NAMES = [ r#'nosuchpackage'# ]"), true)
+  assertEquals(body.includes('packPacman'), true)
   assertEquals(body.includes('packPacman'), true)
 })
 
@@ -567,9 +567,9 @@ Deno.test('nu / arch / add (pinned, -m script only)', async (t) => {
     .text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('use script'), true)
+  assertEquals(body.includes('"manager":"script"'), true)
   // naming script alone leaves the managers out
-  assertEquals(body.includes('use apt'), false)
+  assertEquals(body.includes('"manager":"apt"'), false)
 })
 
 Deno.test('nu / ubuntu / add (pinned, -m ghpm,script orders the script after the manager)', async (t) => {
@@ -578,7 +578,34 @@ Deno.test('nu / ubuntu / add (pinned, -m ghpm,script orders the script after the
   )).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  const apt = body.indexOf('use apt')
-  const script = body.indexOf('use script')
+  const apt = body.indexOf('"manager":"apt"')
+  const script = body.indexOf('"manager":"script"')
   assertEquals(apt > 0 && script > apt, true)
+})
+
+// the plan is data, its bodies are code behind ids, and the client runs it after one prompt
+Deno.test('nu / arch / add (pinned, emits a plan and a dispatcher)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/add/nu?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('def --env packRunUnit [id: string] {'), true)
+  assertEquals(body.includes('"group":"shell-nu"'), true)
+  assertEquals(body.includes('"name":"nu"'), true)
+  assertEquals(body.includes('packPlanRun'), true)
+  // no cascade of prompts any more
+  assertEquals(body.includes("input r#'use ghpm"), false)
+})
+// each unit carries the cli name that produced it, so the client can fall that name through when no path works
+Deno.test('nu / arch / add (pinned, units carry their cli name)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/add/shell?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('"group":"shell-nu","name":"shell"'), true)
+  assertEquals(body.includes('"group":"shell-zsh","name":"shell"'), true)
+})
+// names no group claimed are stated as loose, even when there are none, since the env dump pre-sets the key
+Deno.test('nu / arch / add (pinned, claimed names are not left loose)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/add/nu?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  assertEquals(body.includes('$env.PACK_ADD_NAMES = [  ]'), true)
 })

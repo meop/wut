@@ -53,19 +53,47 @@ The server cannot know which managers exist on the machine, so it emits resolved
 
 ## One decision
 
-The whole plan renders as a table and asks once. There are no per-manager prompts — a prompt was never a veto, it was
-"here is what wut decided, do you agree", and asking it seven times only obscured that. Declining does nothing at all;
-agreeing runs the plan non-interactively, so `-y` is exact.
+The plan renders as a table and asks once:
 
-To force a manager, say so up front: `wut p -m pacman add nu` plans only that manager.
+```
+group        manager packages
+-----        ------- --------
+term-ghostty pacman  ghostty
+term-wt      -       needs winget
+
+use pack [y,[n]]:
+```
+
+There are no per-manager prompts — a prompt was never a veto, it was "here is what wut decided, do you agree", and
+asking it seven times only obscured that. Declining does nothing at all; agreeing runs the plan non-interactively, so
+`-y` is exact. To force a manager, say so up front: `wut p -m pacman add nu` plans only that manager, and `-m` can name
+`script` too.
+
+The server emits the plan as data (`PACK_PLAN`) and the bodies behind ids in a generated `packRunUnit`, so code stays
+code and the plan stays data. The client picks each group's winner — the first path whose manager is on this PATH, in
+the group's own order — and resolves loose names with `packExists`, an exact check per manager, not the substring search
+`find` uses. Refreshes run before those checks so the answers are current.
+
+## Nothing viable is an absence, not a plan
+
+A group whose every path needs a manager this machine lacks is not something to show you and refuse to do. The client
+drops it, and the cli name it came from falls through to a find like any other unclaimed name:
+
+```
+wut p add term      on arch     term-ghostty pacman ghostty
+                    on fedora   term         dnf    term        (both groups dropped, the name searched)
+                                or, if dnf has no term:  no manager had: term
+```
+
+The find that does this is `packExists`, an exact check per manager, not the substring search `find` runs — choosing a
+manager and researching a partial name are different questions, and only the first may claim a package.
 
 ## Failing
 
-Planning fails hard, execution fails loud:
+Execution fails loud:
 
-- planning — an unsatisfiable group stops the run before anything is touched
-- execution — a unit that fails is recorded and the rest continue; a failed pre-command skips its own group's install
-  and nothing else
-- the end report lists what failed, what nothing could serve, and exits non-zero
+- each unit runs inside its own `try`; a failure is recorded and the rest continue
+- installs go through `packOpStrict`, which does not swallow the error the way `packOp` does
+- the report prints only exceptions — what failed, what nothing could serve — and exits non-zero
 
 Silence is the bug, not continuing. A failure that scrolled past is the thing this replaces.
