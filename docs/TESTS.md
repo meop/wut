@@ -83,12 +83,32 @@ pwsh/zsh → nu redirect — one representative op per command per shell:
 | pwsh  | file/find, file/sync, pack/add, pack/find, virt/list |
 | zsh   | file/find, file/sync, pack/add, pack/find, virt/list |
 
+## Following the redirect: `wutNuPinned=1`
+
+`pack`, `file` and `virt` call `redirectCommonShell` first, so **any** request without `wutNuPinned=1` in its query
+string renders the hop to the pinned nu and nothing else — group listings, manager calls, path pairs and filters are all
+on the far side of it. A snapshot taken without the param asserts the bootstrap, not the op.
+
+Both forms are worth having. Without the param, the test pins the hop URL; with it, the test pins what the client
+actually runs:
+
+```typescript
+// the hop
+runSrv(req('/sh/nu/pack/find?sysOsPlat=linux&sysOs=arch'))
+// the body
+runSrv(req('/sh/nu/pack/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'))
+```
+
+`script` never redirects wholesale, so its tests need no param — but its fan out hops do carry `wutShellOnly` and
+`wutShellFrom`, and a test that wants the leaf must pass both.
+
 ## Adding New Test Cases
 
 1. Add a new `Deno.test` entry to the appropriate file (or create a new test file).
 2. Call `runSrv(req('/sh/...'))`, snapshot the body with `assertSnapshot`, then call `checkSyntax`.
-3. Run `deno task test:update` to generate the initial snapshot.
-4. Commit both the test and the snapshot.
+3. For `pack`/`file`/`virt`, add `wutNuPinned=1` if the test is about the op rather than the hop.
+4. Run `deno task test:update` to generate the initial snapshot.
+5. Commit both the test and the snapshot.
 
 ```typescript
 import { assertSnapshot } from '@std/testing/snapshot'

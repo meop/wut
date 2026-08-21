@@ -1,22 +1,24 @@
 ---
-add:
-  user:
-    ghpm:
-      names:
-        - nu
-    cargo:
-      names:
-        - nu
-  system:
-    brew:
-      names:
-        - nushell
-    pacman:
-      names:
-        - nushell
-    xbps:
-      names:
-        - nushell
-    winget:
-      names:
-        - nushell.nushell
+aliases:
+  - nushell
+operation:
+  add:
+    manager:
+      ghpm:
+        names:
+          - nu
+      cargo:
+        names:
+          - nu
+      brew:
+        names:
+          - nushell
+      pacman:
+        names:
+          - nushell
+      xbps:
+        names:
+          - nushell
+      winget:
+        names:
+          - nushell.nushell

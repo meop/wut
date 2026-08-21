@@ -85,6 +85,86 @@ ssh:
 - Template paths (with `{...}`) are resolved at runtime from context
 - Aliases only affect `find` operation filtering
 
+## pack group structure
+
+A group file has two top level keys: `aliases`, other names it answers to, and `operation`, holding `add` and `remove`.
+A group states what a manager installs, never which kind of manager it is:
+
+```yaml
+---
+aliases:
+  - nushell
+operation:
+  add:
+    manager:
+      ghpm:
+        names:
+          - nu
+      pacman:
+        names:
+          - nushell
+    script:
+      zsh:
+        file: cfg/script/docker/install.zsh
+        gate:
+          sys_os_plat:
+            - linux
+```
+
+A manager entry may carry a `gate`, read exactly like a script entry's, for a manager that only applies on some
+platforms. `find` honours it too, so a group whose every entry is gated out is not offered there either.
+
+File names carry no punctuation — the punctuated spelling is an alias. No blank lines inside the file, one newline at
+the end.
+
+`ghpm` is always a user manager and `pacman` is always a system one, so wut derives the tier from the manager and owns
+the preference order — user managers, then `script`, then system managers. A yaml that also declared the tier could
+declare it wrongly (a system manager filed under `user:` silently never matched), which is why there is one flat
+`manager` map. `script` is a sibling because it is not a manager. `remove` takes the same shape.
+
+`-m` overrides the order for one invocation and takes a list: `wut p -m pacman,ghpm add nu` narrows to those two and
+prefers pacman, whatever wut's own order says. `script` is spellable in that list, so naming managers excludes scripts
+by default — `-m ghpm,pacman` — while `-m script` runs only the script and `-m ghpm,script` prefers ghpm and falls to
+the script.
+
+## pack group aliases
+
+A pack group is named by its path — `cfg/pack/shell/nu.yaml` is `shell-nu` — and `aliases` gives it other names to be
+found by:
+
+```yaml
+---
+aliases:
+  - nushell
+add:
+  user:
+    ghpm:
+      names:
+        - nu
+  system:
+    pacman:
+      names:
+        - nushell
+```
+
+`wut p f nushell`, `wut p add nushell` and `wut p rem nushell` now all reach this group, and `find` shows the alias in
+the heading (`shell-nu (nushell)`) so the match explains itself.
+
+Aliases are a lookup key only — never an install name. Each manager still gets exactly the `names` it declares, so ghpm
+and cargo keep asking for `nu` while pacman asks for `nushell`. That matters wherever the binary, the package and the
+group disagree: `rg` vs `ripgrep`, `nu` vs `nushell`.
+
+**Naming:** a group is named for its binary, not its project — `code.yaml` with alias `vscode`, `7z.yaml` with alias
+`7zip`, `gpg.yaml` with alias `gnupg`. Aliases are listed sorted, and `find` shows them sorted.
+
+A companion package is not an alias. `npm` ships inside node on brew and winget but is split out on pacman and dnf, so
+it belongs in those managers' `names` — same for `docker-compose` alongside `docker`. An alias is another name for the
+same thing; a companion is a second thing the group installs.
+
+`find` matches aliases by substring, like it matches group and package names. Resolution for `add`/`remove` matches an
+alias exactly, the way a full group name matches, and structural path matches are preferred over alias matches when both
+hit.
+
 ## script.yaml Gate Enforcement
 
 `script.yaml` defines gate conditions that must be met for scripts to be available/executable. All gates are enforced at
@@ -92,6 +172,7 @@ two levels for consistency.
 
 **Gate Types:**
 
+- `has_cmd` - Command(s) the script needs on the client's PATH — any one is enough. Client-side (see below)
 - `sys_os_plat` - OS platform (darwin, linux, winnt)
 - `sys_os` - Specific OS distribution (debian, ubuntu, arch, etc.) — exact match
 - `sys_os_like` - OS family substring match (e.g. `debian` matches ubuntu, kali, etc.; `arch` matches manjaro, etc.)
@@ -120,10 +201,28 @@ two levels for consistency.
 Gates must match in both places — scripts are both discovered only on appropriate systems (YAML) and protected against
 accidental execution on incompatible ones (script body).
 
+**Client-side gates:**
+
+`sys_*` gates are resolved on the server, from context the client sent. `has_cmd` cannot be — the server does not know
+what is on the client's PATH — so it compiles into the emitted script instead, via `scriptHasCmd` from
+`src/sh/<shell>/script.<ext>`:
+
+- `script find` hands the whole listing to the client (`scriptFindGroup`), which drops tools whose command is missing,
+  and drops the action heading entirely when nothing under it survives
+- `script exec` with an action alone wraps each block in the gate, so a fanned out run silently skips what the client
+  cannot use — the same shape as a `pack` manager function returning early
+- `script exec` with a tool named does **not** wrap it: the run was asked for by name, so the script's own check gets to
+  say `'<tool> is not installed'`
+
+Declare `has_cmd` only where the tool must already exist — `install` actions must stay ungated, or they would skip
+exactly when they are needed. A script that gates on something other than a command (an app bundle, a config file) keeps
+that check in its body only.
+
 **Examples:**
 
-- `install/brew.zsh` has `sys_os_plat: [darwin]` in YAML and checks `[[ $SYS_OS_PLAT != darwin ]]`
-- `setup/gnome-terminal.zsh` has `sys_os_de: [gnome]` + `sys_os_plat: [linux]` in YAML and checks both
-- `install/node.zsh` has `sys_os_like: [debian]` in YAML and checks `[[ $SYS_OS_LIKE != *debian* ]]`
-- `install/docker.zsh` has `sys_os: [debian, ubuntu]` in YAML and checks exact `$SYS_OS` (because `$SYS_OS` is also used
+- `brew/install.zsh` has `sys_os_plat: [darwin]` in YAML and checks `[[ $SYS_OS_PLAT != darwin ]]`
+- `brew/repair.zsh` adds `has_cmd: [brew]` in YAML and checks `type brew > /dev/null`
+- `gnome-terminal/setup.zsh` has `sys_os_de: [gnome]` + `sys_os_plat: [linux]` in YAML and checks both
+- `node/install.zsh` has `sys_os_like: [debian]` in YAML and checks `[[ $SYS_OS_LIKE != *debian* ]]`
+- `docker/install.zsh` has `sys_os: [debian, ubuntu]` in YAML and checks exact `$SYS_OS` (because `$SYS_OS` is also used
   in URL construction)

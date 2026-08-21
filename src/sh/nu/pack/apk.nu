@@ -4,19 +4,18 @@ def --env packApk [] {
     (which $cmd | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
-    ($env.PACK_OP == add and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == remove and ($env.PACK_REMOVE_NAMES? | is-empty))
+    (packNothingToDo 'apk')
   ) {
     return
   }
 
-  if not (packPrompt $"use ($cmd) \(system\)") { return }
+  if ($env.PACK_OP not-in ['add', 'remove']) and not (packPrompt $"use ($cmd) \(system\)") { return }
   let cmd = packElevate $cmd
 
   match $env.PACK_OP {
     add => {
       packOp [$cmd update]
-      packOpAdd { |n| packGrepFind [$cmd search] $n } [$cmd add]
+      packOpAdd 'apk' $"use apk \(system\)" { |n| packGrepFind [$cmd search] $n } [$cmd add]
     }
     find => {
       packOp [$cmd update]
@@ -34,7 +33,7 @@ def --env packApk [] {
       packOpOutdated [$cmd list -u]
     }
     remove => {
-      packOpRemove { |n| packGrepList [$cmd list --installed] $n } [$cmd del]
+      packOpRemove 'apk' $"use apk \(system\)" { |n| packGrepList [$cmd list --installed] $n } [$cmd del]
     }
     sync => {
       packOp [$cmd update]

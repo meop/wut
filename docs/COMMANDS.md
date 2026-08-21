@@ -64,15 +64,38 @@ names with OR semantics — each name is resolved independently.
 
 | Command  | WIDE (substring, all)                                          | PINPOINT (exact-wins → first, one) |
 | -------- | -------------------------------------------------------------- | ---------------------------------- |
-| `script` | `find`                                                         | `exec`                             |
+| `script` | `find`, `exec` (action alone)                                  | `exec` (action + tool)             |
 | `file`   | `find`, `diff`, `list`, `sync`                                 | —                                  |
 | `pack`   | `find`, `add` (+ native-delegated: `list`, `outdated`, `sync`) | `remove`                           |
 | `virt`   | `find`, `list`, `add`, `sync`, `tidy`                          | `rem`                              |
 
+`script exec` is the one op that splits on cardinality: `wut s e setup` runs every setup script gated for this machine,
+while `wut s e setup ptyxis` names a tool and pinpoints to one. The cli reads action first; the config tree is tool
+first (`ptyxis/setup.zsh`), so `script` reverses its filters before globbing. The `has_cmd` gate is client-side, so a
+fanned out run skips tools that are not on the client's PATH, and `find` leaves them out of the listing — see
+[RULES.md](RULES.md#script.yaml-gate-enforcement).
+
 Primitives in `src/cfg.ts`: `preferExactMatches(parts, filters)` (exact-wins) and `pinpointMatch(parts, filters)`
-(exact-wins then first). `getCfgDirDump` / `getCfgDirContent` take a `pinpoint` flag (used by `script exec`); `virt rem`
-and `pack remove` apply pinpoint at their own layer, where podman-instance eligibility and group-name resolution differ
-from a plain path glob. `pack list`/`outdated`/`sync` delegate matching to the native package manager.
+(exact-wins then first). `script exec`, `virt rem` and `pack remove` apply pinpoint at their own layer — script over the
+union of all three shells' matches, so a tool present in more than one shell still resolves to a single script, and
+podman-instance eligibility and group-name resolution differ from a plain path glob. `pack list`/`outdated`/`sync`
+delegate matching to the native package manager.
+
+## Nothing matched
+
+A filter that matches nothing is a no op, and every op says so rather than emitting a body that quietly does nothing:
+
+| Command  | Message                          | When                                                  |
+| -------- | -------------------------------- | ----------------------------------------------------- |
+| `pack`   | `manager not supported: <name>`  | `-m` names a manager this client has no support for   |
+| `virt`   | `manager not supported: <name>`  | same                                                  |
+| `virt`   | `no instance matched: <filters>` | an add/rem/sync filter resolved to no instance        |
+| `file`   | `no file matched: <filters>`     | a filter resolved to no config key                    |
+| `script` | `no script matched: <filters>`   | an action, or action plus tool, resolved to no script |
+
+`find` ops are exempt: an empty result is the answer to a search, not a failure. Note the asymmetry this fixes — an
+unmatched `-m` used to leave an **empty** manager list, which then read as "no list to filter by" and listed every
+group, including names for managers the client cannot use.
 
 Example fixtures exercise the split: `virt add qemu` → `[test, test2]` (WIDE) vs `virt rem qemu` → `[test]` (PINPOINT);
 `pack add shell` → both shell groups vs `pack rem shell` → the first.

@@ -4,19 +4,18 @@ def --env packDnf [] {
     (which $cmd | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
-    ($env.PACK_OP == add and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == remove and ($env.PACK_REMOVE_NAMES? | is-empty))
+    (packNothingToDo 'dnf')
   ) {
     return
   }
 
-  if not (packPrompt $"use ($cmd) \(system\)") { return }
+  if ($env.PACK_OP not-in ['add', 'remove']) and not (packPrompt $"use ($cmd) \(system\)") { return }
   let cmd = packElevate $cmd
 
   match $env.PACK_OP {
     add => {
       packOp [$cmd makecache]
-      packOpAdd { |n| packGrepFind [$cmd search] $n } [$cmd install]
+      packOpAdd 'dnf' $"use dnf \(system\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
     find => {
       packOp [$cmd makecache]
@@ -34,7 +33,7 @@ def --env packDnf [] {
       packOpOutdated [$cmd list --upgrades]
     }
     remove => {
-      packOpRemove { |n| packGrepList [$cmd list --installed] $n } [$cmd remove]
+      packOpRemove 'dnf' $"use dnf \(system\)" { |n| packGrepList [$cmd list --installed] $n } [$cmd remove]
     }
     sync => {
       packOp [$cmd makecache]

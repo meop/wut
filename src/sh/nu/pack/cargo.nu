@@ -4,17 +4,16 @@ def --env packCargo [] {
     (which $cmd | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
-    ($env.PACK_OP == add and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == remove and ($env.PACK_REMOVE_NAMES? | is-empty))
+    (packNothingToDo 'cargo')
   ) {
     return
   }
 
-  if not (packPrompt $"use ($cmd) \(user\)") { return }
+  if ($env.PACK_OP not-in ['add', 'remove']) and not (packPrompt $"use ($cmd) \(user\)") { return }
 
   match $env.PACK_OP {
     add => {
-      packOpAdd { |n| packGrepFind [$cmd search] $n } [$cmd binstall --locked]
+      packOpAdd 'cargo' $"use cargo \(user\)" { |n| packGrepFind [$cmd search] $n } [$cmd binstall --locked]
     }
     find => {
       packOpFind [$cmd search]
@@ -29,7 +28,7 @@ def --env packCargo [] {
       packOpOutdated [$cmd install-update --list]
     }
     remove => {
-      packOpRemove { |n| packGrepList [$cmd install --list] $n } [$cmd uninstall]
+      packOpRemove 'cargo' $"use cargo \(user\)" { |n| packGrepList [$cmd install --list] $n } [$cmd uninstall]
     }
     sync => {
       packOpSync [$cmd install-update --all] [$cmd install-update]

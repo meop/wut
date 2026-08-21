@@ -23,7 +23,12 @@ function pinnedNuBinCmd(shell: Sh, sysOsPlat: string): string {
     : `^($env.WUT_HOME | path join 'bin' 'nu${ext}')`
 }
 
-export async function redirectShell(shell: Sh, target: string, context: Ctx): Promise<string | null> {
+export async function redirectShell(
+  shell: Sh,
+  target: string,
+  context: Ctx,
+  params: Array<string> = [],
+): Promise<string | null> {
   if (shell.name === target) {
     return null
   }
@@ -32,6 +37,7 @@ export async function redirectShell(shell: Sh, target: string, context: Ctx): Pr
     context.req_orig,
     context.req_path.replace(`/sh/${shell.name}`, `/sh/${target}`),
     context.req_srch,
+    ...(params.length ? [context.req_srch ? '&' : '?', params.join('&')] : []),
   ].join('')
 
   let targetShell: NuSh | PowerSh | ZSh

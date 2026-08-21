@@ -2,23 +2,33 @@
 cargo:
   setup:
     nu:
+      has_cmd:
+        - cargo
       sys_os_plat:
         - darwin
         - linux
         - winnt
     pwsh:
+      has_cmd:
+        - cargo
       sys_os_plat:
         - winnt
     zsh:
+      has_cmd:
+        - cargo
       sys_os_plat:
         - darwin
         - linux
 docker:
   setup:
     pwsh:
+      has_cmd:
+        - docker
       sys_os_plat:
         - linux
         - winnt
     zsh:
+      has_cmd:
+        - docker
       sys_os_plat:
         - linux

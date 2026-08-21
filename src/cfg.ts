@@ -55,7 +55,6 @@ export async function getCfgDirDump(
     extension?: string
     filters?: Array<string>
     flexible?: boolean
-    pinpoint?: boolean
   },
 ) {
   const dirPath = cfgPath(parts)
@@ -114,35 +113,7 @@ export async function getCfgDirDump(
     result = dirFilePartsFiltered
   }
 
-  if (options?.pinpoint && options?.filters?.length) {
-    result = pinpointMatch(result, options.filters)
-  }
   return result
-}
-
-export async function getCfgDirContent(
-  parts: Array<string>,
-  options?: {
-    context?: Ctx
-    contextFilter?: CtxFilter
-    extension?: string
-    filters?: Array<string>
-    flexible?: boolean
-    pinpoint?: boolean
-  },
-) {
-  const contents: Array<string> = []
-  const dirFileParts = await getCfgDirDump(parts, options)
-  for (const fileParts of dirFileParts) {
-    const content = await getCfgFileContent(
-      [...parts, ...fileParts],
-      options,
-    )
-    if (content != null) {
-      contents.push(content)
-    }
-  }
-  return contents
 }
 
 export async function getCfgFileContent(

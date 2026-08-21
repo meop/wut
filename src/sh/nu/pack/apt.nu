@@ -4,19 +4,18 @@ def --env packApt [] {
     (which $cmd | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
-    ($env.PACK_OP == add and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == remove and ($env.PACK_REMOVE_NAMES? | is-empty))
+    (packNothingToDo 'apt')
   ) {
     return
   }
 
-  if not (packPrompt $"use ($cmd) \(system\)") { return }
+  if ($env.PACK_OP not-in ['add', 'remove']) and not (packPrompt $"use ($cmd) \(system\)") { return }
   let cmd = packElevate $cmd
 
   match $env.PACK_OP {
     add => {
       packOp [$cmd update]
-      packOpAdd { |n| packGrepFind [$cmd search] $n } [$cmd install]
+      packOpAdd 'apt' $"use apt \(system\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
     find => {
       packOp [$cmd update]
@@ -34,7 +33,7 @@ def --env packApt [] {
       packOpOutdated [$cmd list --upgradable]
     }
     remove => {
-      packOpRemove { |n| packGrepList [$cmd list --installed] $n } [$cmd purge --autoremove]
+      packOpRemove 'apt' $"use apt \(system\)" { |n| packGrepList [$cmd list --installed] $n } [$cmd purge --autoremove]
     }
     sync => {
       packOp [$cmd update]

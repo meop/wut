@@ -4,13 +4,12 @@ def --env packDeno [] {
     (which $cmd | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
-    ($env.PACK_OP == add and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == remove and ($env.PACK_REMOVE_NAMES? | is-empty))
+    (packNothingToDo 'deno')
   ) {
     return
   }
 
-  if not (packPrompt $"use ($cmd) \(user\)") { return }
+  if ($env.PACK_OP not-in ['add', 'remove']) and not (packPrompt $"use ($cmd) \(user\)") { return }
 
   def getBinDir [] {
     [$env.HOME '.deno' bin] | path join
@@ -26,7 +25,7 @@ def --env packDeno [] {
 
   match $env.PACK_OP {
     add => {
-      packOpAdd { |n| [(packHttpGetNpm $n), (packHttpGetJsr $n)] | flatten | is-not-empty } [$cmd install --force --global] --each
+      packOpAdd 'deno' $"use deno \(user\)" { |n| [(packHttpGetNpm $n), (packHttpGetJsr $n)] | flatten | is-not-empty } [$cmd install --force --global] --each
     }
     find => {
       for term in $env.PACK_FIND_NAMES {
@@ -43,7 +42,7 @@ def --env packDeno [] {
       packOpList [getInstalled]
     }
     remove => {
-      packOpRemove { |n| [(getBinDir) $".($n)"] | path join | path exists } [$cmd uninstall --global] --each
+      packOpRemove 'deno' $"use deno \(user\)" { |n| [(getBinDir) $".($n)"] | path join | path exists } [$cmd uninstall --global] --each
     }
     sync => {
       let names = if ($env.PACK_SYNC_NAMES? | is-not-empty) {

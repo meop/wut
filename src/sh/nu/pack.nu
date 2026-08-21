@@ -61,46 +61,137 @@ def packHttpGetPypi [term: string] {
   }
 }
 
+# a group is done once some manager (or script) installed it, and failed once a manager was missing a name it
+# declared — either way no later phase offers it again
+def packGroupSettled [group: string] {
+  ($group in ($env.PACK_DONE? | default [])) or ($group in ($env.PACK_FAIL? | default []))
+}
+
+def --env packMarkDone [group: string] {
+  load-env {PACK_DONE: (($env.PACK_DONE? | default []) | append $group | uniq)}
+}
+
+def --env packMarkFail [group: string, why: string] {
+  load-env {
+    PACK_FAIL: (($env.PACK_FAIL? | default []) | append $group | uniq)
+    PACK_FAIL_WHY: (($env.PACK_FAIL_WHY? | default []) | append $"($group): ($why)")
+  }
+}
+
+# flags (eg brew's --cask) aren't package names and can't be verified via the finder — always pass them through
+def packFindable [term: string, finder: closure] {
+  ($term | str starts-with '-') or (do $finder $term)
+}
+
+def packNothingToDo [key: string] {
+  let planned = (packPlanFor $key | is-empty)
+  match $env.PACK_OP {
+    add => (($env.PACK_ADD_NAMES? | is-empty) and $planned),
+    remove => (($env.PACK_REMOVE_NAMES? | is-empty) and $planned),
+    _ => false,
+  }
+}
+
+def packPlanFor [key: string] {
+  $env.PACK_PLAN? | default '{}' | from json | get -o $key | default []
+}
+
 def --env packMutate [
+  key: string,
+  label: string,
   names_key: string,
-  miss_msg: string,
   finder: closure,
   cmds: list<string>,
   each: bool,
 ] {
-  let names = $env | get $names_key
-  mut found = []
-  for term in $names {
-    # flags (eg brew's --cask) aren't package names and can't be verified via the finder — always pass them through
-    if ($term | str starts-with '-') or (do $finder $term) {
-      $found = ($found | append $term)
-    } else {
-      print $"($term): ($miss_msg)"
+  # a group states exactly what this manager installs, so a name it cannot find is a stale group, not a fallback
+  mut ready = []
+  for entry in (packPlanFor $key) {
+    if (packGroupSettled $entry.group) {
+      continue
     }
+    let missing = ($entry.names | where { |n| not (packFindable $n $finder) })
+    if ($missing | is-empty) {
+      $ready = ($ready | append $entry)
+    } else {
+      packMarkFail $entry.group $"($key) has no ($missing | str join ', ')"
+    }
+  }
+
+  # loose names have no manager stated for them, so each one is offered wherever it turns up first
+  let names = ($env | get -o $names_key | default [])
+  let found = ($names | where { |n| packFindable $n $finder })
+
+  let offer = (($ready | each { |e| $e.names } | flatten) ++ $found | uniq)
+  if ($offer | is-empty) {
+    return
+  }
+  if not (packPrompt $"($label): ($offer | str join ', ')") {
+    return
+  }
+
+  # one command per group keeps a group's flags scoped to its own names
+  for entry in $ready {
+    if $each {
+      for n in $entry.names { packOp ($cmds ++ [$n]) }
+    } else {
+      packOp ($cmds ++ $entry.names)
+    }
+    packMarkDone $entry.group
   }
   if ($found | is-not-empty) {
     if $each {
-      for n in $found {
-        packOp ($cmds ++ [$n])
-      }
+      for n in $found { packOp ($cmds ++ [$n]) }
     } else {
       packOp ($cmds ++ $found)
     }
   }
-  let remains = ($names | where { |n| $n not-in $found })
-  if ($remains | is-empty) {
-    hide-env $names_key
-    return
+
+  # an empty list, not hide-env: a removal does not survive the nested def --env chain, an assignment does
+  load-env {($names_key): ($names | where { |n| $n not-in $found })}
+}
+
+# a group with no candidate managers is script satisfied, so it always shows
+# asked for by name but not here: say so, rather than doing nothing quietly
+def packRequireManager [...cmds: string] {
+  let missing = ($cmds | where { |c| which $c | is-empty })
+  if ($missing | is-not-empty) {
+    opPrintWarn $"manager not installed: ($missing | str join ', ')"
   }
-  load-env {($names_key): $remains}
+}
+
+def packFindGroup [label: string, ...cmds: string] {
+  if ($cmds | is-empty) or ($cmds | any { |c| which $c | is-not-empty }) {
+    opPrint $label
+  }
+}
+
+def packReport [] {
+  let done = ($env.PACK_DONE? | default [])
+  let failed = ($env.PACK_FAIL? | default [])
+  let pending = (($env.PACK_GROUPS? | default []) | where { |g| $g not-in $done and $g not-in $failed })
+  let loose = ($env.PACK_ADD_NAMES? | default []) ++ ($env.PACK_REMOVE_NAMES? | default [])
+
+  if ($env.PACK_FAIL_WHY? | default [] | is-not-empty) {
+    opPrintErr 'stale group(s), fix the config:'
+    for why in $env.PACK_FAIL_WHY { opPrintErr $"  ($why)" }
+  }
+  if ($pending | is-not-empty) {
+    opPrintWarn 'declined everywhere:'
+    opPrintWarn $"  ($pending | str join ', ')"
+  }
+  if ($loose | is-not-empty) {
+    opPrintWarn 'no manager had:'
+    opPrintWarn $"  ($loose | str join ', ')"
+  }
 }
 
 def --env packOp [cmds: list<string>] {
   opPrintMaybeRunCmd try '{' ...$cmds '}'
 }
 
-def --env packOpAdd [finder: closure, cmds: list<string>, --each] {
-  packMutate PACK_ADD_NAMES 'not found' $finder $cmds $each
+def --env packOpAdd [key: string, label: string, finder: closure, cmds: list<string>, --each] {
+  packMutate $key $label PACK_ADD_NAMES $finder $cmds $each
 }
 
 def --env packOpFind [cmds: list<string>] {
@@ -123,8 +214,8 @@ def --env packOpOutdated [cmds: list<string>] {
   packFiltered $cmds ($env.PACK_OUTDATED_NAMES? | default [])
 }
 
-def --env packOpRemove [finder: closure, cmds: list<string>, --each] {
-  packMutate PACK_REMOVE_NAMES 'not installed' $finder $cmds $each
+def --env packOpRemove [key: string, label: string, finder: closure, cmds: list<string>, --each] {
+  packMutate $key $label PACK_REMOVE_NAMES $finder $cmds $each
 }
 
 def --env packOpSync [cmdsNoArgs: list<string>, cmds: list<string>, --each] {

@@ -11,6 +11,7 @@ do {
   }
   if $yn != 'n' {
     opPrintMaybeRunCmd cargo binstall cargo-cache
+    opPrintMaybeRunCmd cargo binstall cargo-nextest
     opPrintMaybeRunCmd cargo binstall cargo-update
   }
 }

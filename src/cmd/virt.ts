@@ -62,6 +62,14 @@ function getManagerFuncName(manager: string, prefix = VIRT_KEY) {
     : ''
 }
 
+function buildAndLog(shell: Sh, environment: Env) {
+  const body = shell.build()
+  if (environment.get(['log'])) {
+    console.log(body)
+  }
+  return body
+}
+
 async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   const redirect = await redirectCommonShell(shell, context)
   if (redirect) {
@@ -70,6 +78,11 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
 
   let _shell = shell.with(shell.varSetStr(VIRT_OP_KEY, op))
   const supportedManagers = getSupportedManagers(context, environment)
+
+  const manager = environment.get(VIRT_MANAGER_KEY)
+  if (manager && !supportedManagers.length) {
+    return buildAndLog(_shell.with(_shell.printWarn(`manager not supported: ${manager}`)), environment)
+  }
 
   const dirParts = [VIRT_KEY, context.sys_host ?? '']
   const filters = environment.getSplit(VIRT_OP_PARTS_KEY(op))
@@ -85,9 +98,9 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       if (!supportedManagers.includes(r[0])) {
         continue
       }
+      // the manager is part of the path everywhere else (add, rem, list), so it filters here too
       if (filters.length > 0) {
-        const pathParts = r.slice(1)
-        if (!filters.every((f) => pathParts.some((p) => p.includes(f)))) {
+        if (!filters.every((f) => r.some((p) => p.includes(f)))) {
           continue
         }
       }
@@ -172,6 +185,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     }
 
     const applyResults = (results: Array<Array<string>>) => {
+      let applied = 0
       const virtMap: Record<string, Array<string>> = {}
       for (const parts of results) {
         if (!parts[1] || (parts[0] === 'podman' && !parts[2])) {
@@ -188,6 +202,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
             _shell.varSetStr(VIRT_MANAGER_KEY, key),
           )
         }
+        applied += 1
         _shell = _shell
           .with(
             _shell.varSetArr(
@@ -202,6 +217,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
           )
         }
       }
+      return applied
     }
 
     if (op === 'list') {
@@ -233,17 +249,14 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
           .filter((parts) => parts[1] && !(parts[0] === 'podman' && !parts[2]))
           .slice(0, 1)
       }
-      applyResults(results)
+      const applied = applyResults(results)
+      if (!applied && filters.length) {
+        _shell = _shell.with(_shell.printWarn(`no instance matched: ${filters.join(' ')}`))
+      }
     }
   }
 
-  const body = _shell.build()
-
-  if (environment.get(['log'])) {
-    console.log(body)
-  }
-
-  return body
+  return buildAndLog(_shell, environment)
 }
 
 export class VirtCmdAdd extends CmdBase implements Cmd {

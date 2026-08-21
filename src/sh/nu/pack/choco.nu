@@ -4,17 +4,16 @@ def --env packChoco [] {
     (which $cmd | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
-    ($env.PACK_OP == add and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == remove and ($env.PACK_REMOVE_NAMES? | is-empty))
+    (packNothingToDo 'choco')
   ) {
     return
   }
 
-  if not (packPrompt $"use ($cmd) \(user/system\)") { return }
+  if ($env.PACK_OP not-in ['add', 'remove']) and not (packPrompt $"use ($cmd) \(user/system\)") { return }
 
   match $env.PACK_OP {
     add => {
-      packOpAdd { |n| packGrepFind [$cmd search] $n } [$cmd install]
+      packOpAdd 'choco' $"use choco \(user/system\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
     find => {
       packOpFind [$cmd search]
@@ -29,7 +28,7 @@ def --env packChoco [] {
       packOpOutdated [$cmd outdated]
     }
     remove => {
-      packOpRemove { |n| packGrepList [$cmd list] $n } [$cmd uninstall]
+      packOpRemove 'choco' $"use choco \(user/system\)" { |n| packGrepList [$cmd list] $n } [$cmd uninstall]
     }
     sync => {
       packOpSync [$cmd upgrade all] [$cmd upgrade]

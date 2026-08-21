@@ -93,6 +93,15 @@ Config file structure (`file.yaml`, `script.yaml` gates) is documented in [docs/
 The server primarily generates nushell scripts. `pwsh`/`zsh` shells are redirected to nushell equivalents for commands
 with complex logic (pack, file, virt). See `file.ts`, `virt.ts`, `pack.ts` for redirect implementation.
 
+`script exec` is the exception: each script runs in the shell it is written for. One script hops wholesale; an action
+alone fans out, running the calling shell's own scripts inline and hopping once per other shell with `wutShellOnly`
+appended, which stops that hop from fanning out again.
+
+Every script is owned by exactly one shell, so an overlay never runs twice. The calling shell wins ties — a hop it never
+has to make is the cheapest one — and the rest fall back most native first (zsh > pwsh > nu). Both sides of a hop have
+to agree on ownership or a script runs twice or not at all, which is why the hop also carries `wutShellFrom`: the leaf
+resolves against the shell the run started in, not the shell rendering its own response.
+
 ## Nushell Pitfalls
 
 `src/sh/nu/` generates nushell; several parsing quirks (raw-string depth, bare words in assignments, `[...]`

@@ -4,18 +4,17 @@ def --env packWinget [] {
     (which $cmd | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
-    ($env.PACK_OP == add and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == remove and ($env.PACK_REMOVE_NAMES? | is-empty))
+    (packNothingToDo 'winget')
   ) {
     return
   }
 
-  if not (packPrompt $"use ($cmd) \(user/system\)") { return }
+  if ($env.PACK_OP not-in ['add', 'remove']) and not (packPrompt $"use ($cmd) \(user/system\)") { return }
 
   match $env.PACK_OP {
     add => {
       packOp [$cmd source update]
-      packOpAdd { |n| packGrepFind [$cmd search --id] $n } [$cmd install] --each
+      packOpAdd 'winget' $"use winget \(user/system\)" { |n| packGrepFind [$cmd search --id] $n } [$cmd install] --each
     }
     find => {
       packOp [$cmd source update]
@@ -33,7 +32,7 @@ def --env packWinget [] {
       packOpOutdated [$cmd upgrade]
     }
     remove => {
-      packOpRemove { |n| packGrepList [$cmd list] $n } [$cmd uninstall] --each
+      packOpRemove 'winget' $"use winget \(user/system\)" { |n| packGrepList [$cmd list] $n } [$cmd uninstall] --each
     }
     sync => {
       packOp [$cmd source update]

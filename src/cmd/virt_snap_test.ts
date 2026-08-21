@@ -1,3 +1,4 @@
+import { assertEquals } from '@std/assert'
 import { assertSnapshot } from '@std/testing/snapshot'
 
 import { checkSyntax, req } from '../_test.ts'
@@ -157,4 +158,79 @@ Deno.test('nu / linux / find (host test2)', async (t) => {
   const body = await (await runSrv(req('/sh/nu/virt/find/test2?sysOsPlat=linux&sysHost=host'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
+})
+
+// everything above stops at the redirect; these follow it to the body the client actually runs
+
+const PIN = 'sysOsPlat=linux&sysHost=host&wutNuPinned=1'
+
+Deno.test('nu / linux / find (pinned)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/find?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  // manager, then pod, then instance
+  assertEquals(body.includes("opPrint r#'podman'#"), true)
+  assertEquals(body.includes("opPrint r#'  web'#"), true)
+  assertEquals(body.includes("opPrint r#'    app'#"), true)
+  assertEquals(body.includes("opPrint r#'  test, test2'#"), true)
+})
+Deno.test('nu / linux / find (pinned, filtered)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/find/qemu?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("opPrint r#'qemu'#"), true)
+  assertEquals(body.includes("opPrint r#'lxc'#"), false)
+})
+// add is WIDE: every qemu instance
+Deno.test('nu / linux / add (pinned, qemu)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/add/qemu?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("$env.VIRT_INSTANCES = [ r#'test'#, r#'test2'# ]"), true)
+  assertEquals(body.includes('virtQemu'), true)
+})
+// rem is PINPOINT: one, even though the same filter matched two for add
+Deno.test('nu / linux / rem (pinned, qemu)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/rem/qemu?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("$env.VIRT_INSTANCES = [ r#'test'# ]"), true)
+})
+Deno.test('nu / linux / list (pinned)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/list?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  for (const fn of ['virtDocker', 'virtLxc', 'virtPodman', 'virtQemu']) {
+    assertEquals(body.includes(fn), true)
+  }
+})
+// podman is the one manager with a networks config to hand over
+Deno.test('nu / linux / add (pinned, podman carries networks)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/add/podman?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('VIRT_PODMAN_NETWORKS'), true)
+})
+// -m naming something this client cannot use: say so, do nothing
+Deno.test('nu / linux / find (pinned, -m unsupported)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/-m/bogus/find?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('manager not supported: bogus'), true)
+  assertEquals(/^virt[A-Z]/m.test(body), false)
+})
+// a filter that matched nothing is a no op, and says so rather than running silently
+Deno.test('nu / linux / add (pinned, no match)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/add/nosuchthing?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('no instance matched: nosuchthing'), true)
+  assertEquals(/^virt[A-Z]/m.test(body), false)
+})
+// darwin supports no virt manager at all
+Deno.test('nu / darwin / find (pinned, no managers)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/virt/find?sysOsPlat=darwin&sysHost=host&wutNuPinned=1'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("opPrint r#'qemu'#"), false)
 })

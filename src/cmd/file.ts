@@ -86,6 +86,14 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     }
   }
 
+  if (filters.length && !validKeys.length) {
+    const body = _shell.with(_shell.printWarn(`no file matched: ${filters.join(' ')}`)).build()
+    if (environment.get(['log'])) {
+      console.log(body)
+    }
+    return body
+  }
+
   _shell = _shell.with(
     await _shell.fileLoad(
       [FILE_KEY, FILE_KEY],

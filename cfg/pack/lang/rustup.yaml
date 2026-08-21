@@ -1,21 +1,32 @@
 ---
-add:
-  system:
-    brew:
-      names:
-        - rustup
-    apt:
-      names:
-        - rustup
-    dnf:
-      names:
-        - rustup
-    pacman:
-      names:
-        - rustup
-    xbps:
-      names:
-        - rustup
-    winget:
-      names:
-        - rustlang.rustup
+operation:
+  add:
+    manager:
+      script:
+        zsh:
+          commands:
+            - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs '|' sh
+          gate:
+            sys_os_plat:
+              - linux
+      brew:
+        names:
+          - rustup
+        gate:
+          sys_os_plat:
+            - darwin
+      apt:
+        names:
+          - rustup
+      dnf:
+        names:
+          - rustup
+      pacman:
+        names:
+          - rustup
+      xbps:
+        names:
+          - rustup
+      winget:
+        names:
+          - rustlang.rustup

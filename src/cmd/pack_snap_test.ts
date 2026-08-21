@@ -1,3 +1,4 @@
+import { assertEquals } from '@std/assert'
 import { assertSnapshot } from '@std/testing/snapshot'
 
 import { checkSyntax, req } from '../_test.ts'
@@ -385,4 +386,199 @@ Deno.test('nu / no-sys / add', async (t) => {
   const body = await (await runSrv(req('/sh/nu/pack/add/firefox'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
+})
+
+// the pinned hop is where the real body lives: everything above only captures the redirect to it
+
+// -m names a manager this client cannot use: say so, list nothing, search nothing
+Deno.test('nu / arch / find (-m apt, pinned)', async (t) => {
+  const body = await (await runSrv(
+    req('/sh/nu/pack/-m/apt/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'),
+  )).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  // apt is a manager wut knows, so the plan includes it and the client reports it missing
+  assertEquals(body.includes("packRequireManager r#'apt'#"), true)
+})
+// the listing is matched on names and aliases, but still only offers what this machine could install
+Deno.test('nu / arch / find (-m yay, pinned)', async (t) => {
+  const body = await (await runSrv(
+    req('/sh/nu/pack/-m/yay/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'),
+  )).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('manager not known'), false)
+  // the fixture group declares pacman, not yay, so narrowing to yay drops it
+  assertEquals(body.includes('shell-nu'), false)
+  // yay aliases onto the pacman function
+  assertEquals(body.includes('packPacman'), true)
+})
+// the heading is the group and its aliases, never the package names
+Deno.test('nu / arch / find (-m pacman, pinned)', async (t) => {
+  const body = await (await runSrv(
+    req('/sh/nu/pack/-m/pacman/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'),
+  )).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("packFindGroup r#'shell-nu (nushell)'#"), true)
+  // no package names in the listing at all now, from any manager
+  assertEquals(body.includes('nushell.nushell'), false)
+  assertEquals(body.includes("opPrint r#'  nu, nushell'#"), false)
+})
+// no -m: the union of every manager this client supports
+Deno.test('nu / arch / find (no manager, pinned)', async (t) => {
+  const body = await (await runSrv(
+    req('/sh/nu/pack/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'),
+  )).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("packFindGroup r#'shell-nu (nushell)'#"), true)
+  assertEquals(body.includes('packPacman'), true)
+})
+
+const PIN_ARCH = 'sysOsPlat=linux&sysOs=arch&wutNuPinned=1'
+
+// a group name resolves to each manager's own name for it
+Deno.test('nu / arch / add (pinned, nu group)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/add/nu?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("$env.PACK_ADD_NAMES = [ r#'nushell'# ]"), true)
+  assertEquals(body.includes('packPacman'), true)
+  // the user tier keeps its own name for the same group
+  assertEquals(body.includes("$env.PACK_ADD_NAMES = [ r#'nu'# ]"), true)
+})
+Deno.test('nu / arch / rem (pinned, nu group)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/rem/nu?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("$env.PACK_REMOVE_NAMES = [ r#'nushell'# ]"), true)
+})
+// the documented cardinality split: add takes every matching group, rem takes one
+Deno.test('nu / arch / add (pinned, shell matches both groups)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/add/shell?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("opPrint r#'  shell-nu'#"), true)
+  assertEquals(body.includes("opPrint r#'  shell-zsh'#"), true)
+})
+Deno.test('nu / arch / rem (pinned, shell takes the first group only)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/rem/shell?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("opPrint r#'  shell-nu'#"), true)
+  assertEquals(body.includes("opPrint r#'  shell-zsh'#"), false)
+})
+// every manager the group declares gets a block; a gated entry still does not
+Deno.test('nu / ubuntu / add (pinned, rustup)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/rustup?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("$env.PACK_MANAGER = r#'apt'#"), true)
+  // brew's entry is gated to darwin
+  assertEquals(body.includes("$env.PACK_MANAGER = r#'brew'#"), false)
+})
+// name-less ops hand every supported manager its own turn
+Deno.test('nu / arch / sync (pinned)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/sync?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  for (const fn of ['packGhpm', 'packCargo', 'packUv', 'packPnpm', 'packBun', 'packDeno', 'packPacman']) {
+    assertEquals(body.includes(fn), true)
+  }
+})
+Deno.test('nu / arch / tidy (pinned)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/tidy?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("$env.PACK_OP = r#'tidy'#"), true)
+  assertEquals(body.includes('packPacman'), true)
+})
+// find with a name still runs the managers' own search after listing groups
+Deno.test('nu / arch / find (pinned, name runs manager search too)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/find/nu?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  // the group heading carries its aliases; package names come from the manager's own search
+  assertEquals(body.includes("packFindGroup r#'shell-nu (nushell)'#"), true)
+  assertEquals(body.includes("$env.PACK_FIND_NAMES = [ r#'nu'# ]"), true)
+  assertEquals(body.includes('packPacman'), true)
+})
+
+// an alias is another name for the group, for lookup only — never an install name
+
+Deno.test('nu / arch / find (pinned, by alias)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/find/nushell?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  // the heading carries the alias, so the match explains itself
+  assertEquals(body.includes("packFindGroup r#'shell-nu (nushell)'#"), true)
+  assertEquals(body.includes("opPrint r#'  nu, nushell'#"), false)
+})
+Deno.test('nu / arch / add (pinned, by alias installs declared names)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/add/nushell?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("$env.PACK_ADD_NAMES = [ r#'nu'# ]"), true)
+  assertEquals(body.includes("$env.PACK_ADD_NAMES = [ r#'nushell'# ]"), true)
+  // ghpm and cargo keep their own name for it, the alias is never handed to a manager
+  assertEquals(body.includes("$env.PACK_MANAGER = r#'ghpm'#"), true)
+})
+Deno.test('nu / arch / rem (pinned, by alias)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/rem/nushell?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("opPrint r#'  shell-nu'#"), true)
+  assertEquals(body.includes("opPrint r#'  shell-zsh'#"), false)
+})
+// an alias that matches nothing still falls through to the managers' own search
+Deno.test('nu / arch / find (pinned, unknown name)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/find/nosuchpackage?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('packFindGroup'), true)
+  assertEquals(body.includes("$env.PACK_FIND_NAMES = [ r#'nosuchpackage'# ]"), true)
+  assertEquals(body.includes('packPacman'), true)
+})
+
+// the last filter is the client's: a group whose only candidate manager is not on this PATH does not show
+Deno.test('nu / arch / find (pinned, candidates travel to the client)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/find?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("packFindGroup r#'shell-nu (nushell)'# r#'ghpm'# r#'cargo'#"), true)
+})
+
+// a gate on a manager entry was silently ignored until now, so an arch-only entry was offered everywhere
+Deno.test('nu / darwin / add (pinned, manager entry gate keeps it off this platform)', async (t) => {
+  const body = await (await runSrv(
+    req('/sh/nu/pack/add/rustup?sysOsPlat=darwin&sysOs=darwin&wutNuPinned=1'),
+  )).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("$env.PACK_ADD_NAMES = [ r#'rustup'# ]"), true)
+})
+
+// -m is an ordered preference over install paths, and 'script' is one of them
+Deno.test('nu / arch / add (pinned, -m script only)', async (t) => {
+  const body = await (await runSrv(
+    req(`/sh/nu/pack/-m/script/add/rustup?${PIN_ARCH.replace('&wutNuPinned=1', '')}&wutNuPinned=1`),
+  ))
+    .text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('use script'), true)
+  // naming script alone leaves the managers out
+  assertEquals(body.includes('use apt'), false)
+})
+
+Deno.test('nu / ubuntu / add (pinned, -m ghpm,script orders the script after the manager)', async (t) => {
+  const body = await (await runSrv(
+    req('/sh/nu/pack/-m/apt,script/add/rustup?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'),
+  )).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  const apt = body.indexOf('use apt')
+  const script = body.indexOf('use script')
+  assertEquals(apt > 0 && script > apt, true)
 })

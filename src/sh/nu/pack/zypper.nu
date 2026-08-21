@@ -4,19 +4,18 @@ def --env packZypper [] {
     (which $cmd | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
-    ($env.PACK_OP == add and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == remove and ($env.PACK_REMOVE_NAMES? | is-empty))
+    (packNothingToDo 'zypper')
   ) {
     return
   }
 
-  if not (packPrompt $"use ($cmd) \(system\)") { return }
+  if ($env.PACK_OP not-in ['add', 'remove']) and not (packPrompt $"use ($cmd) \(system\)") { return }
   let cmd = packElevate $cmd
 
   match $env.PACK_OP {
     add => {
       packOp [$cmd refresh]
-      packOpAdd { |n| packGrepFind [$cmd search] $n } [$cmd install]
+      packOpAdd 'zypper' $"use zypper \(system\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
     find => {
       packOp [$cmd refresh]
@@ -37,7 +36,7 @@ def --env packZypper [] {
     }
     remove => {
       # same reason as list, above: search --installed-only isn't reliable
-      packOpRemove { |n| packGrepList [$cmd packages --installed-only] $n } [$cmd uninstall]
+      packOpRemove 'zypper' $"use zypper \(system\)" { |n| packGrepList [$cmd packages --installed-only] $n } [$cmd uninstall]
     }
     sync => {
       packOp [$cmd refresh]

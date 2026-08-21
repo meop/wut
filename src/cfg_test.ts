@@ -245,11 +245,11 @@ Deno.test('getCfgFileLoad - loads and parses file.yaml', async () => {
   assertEquals('git' in result, true)
 })
 
-Deno.test('getCfgFileLoad - loads pack config with add/system tiers', async () => {
+Deno.test('getCfgFileLoad - loads pack config with an operation add map', async () => {
   const result = await getCfgFileLoad(['pack', 'shell', 'nu'], { extension: 'yaml' })
   assertEquals(result !== null, true)
-  assertEquals(typeof result.add, 'object')
-  assertEquals(typeof result.add.system, 'object')
+  assertEquals(typeof result.operation, 'object')
+  assertEquals(typeof result.operation.add.manager.ghpm, 'object')
 })
 
 Deno.test('getCfgFileLoad - non-existent file returns null', async () => {

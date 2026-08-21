@@ -14,7 +14,7 @@ export class PackCmd extends CmdBase implements Cmd {
     this.description = 'package manager ops'
     this.aliases = ['p', 'pa', 'pac', 'package']
     this.options = [
-      { keys: ['-m', '--manager'], description: 'manager to use' },
+      { keys: ['-m', '--managers'], description: 'manager(s) to use, in order of preference' },
     ]
     this.commands = [
       new PackCmdAdd([...this.scopes, this.name]),
@@ -29,82 +29,49 @@ export class PackCmd extends CmdBase implements Cmd {
   }
 }
 
-const sysOsPlatToSysManagers: Record<string, Array<string>> = {
-  darwin: ['brew'],
-  linux: ['apk', 'apt', 'dnf', 'yay', 'paru', 'pacman', 'xbps', 'zypper'],
-  winnt: ['choco', 'scoop', 'winget'],
-}
-
-const sysOsToSysManagers: Record<string, Array<string>> = {
-  alma: ['dnf'],
-  alpine: ['apk'],
-  arch: ['yay', 'paru', 'pacman'],
-  centos: ['dnf'],
-  debian: ['apt'],
-  fedora: ['dnf'],
-  kali: ['apt'],
-  manjaro: ['yay', 'paru', 'pacman'],
-  mint: ['apt'],
-  rhel: ['dnf'],
-  rocky: ['dnf'],
-  suse: ['zypper'],
-  ubuntu: ['apt'],
-  void: ['xbps'],
-}
-
-const sysOsPlatToUserManagers: Record<string, Array<string>> = {
-  darwin: ['ghpm', 'cargo', 'uv', 'pnpm', 'bun', 'deno'],
-  linux: ['ghpm', 'cargo', 'uv', 'pnpm', 'bun', 'deno'],
-  winnt: ['ghpm', 'cargo', 'uv', 'pnpm', 'bun', 'deno'],
-}
-
-const sysOsToUserManagers: Record<string, Array<string>> = {}
+// every manager wut knows, in the order to prefer them. which of these a machine actually has is a question only
+// the client can answer, so there is no platform or distro map here to go stale
+const MANAGERS: Array<string> = [
+  'apk',
+  'apt',
+  'brew',
+  'bun',
+  'cargo',
+  'choco',
+  'deno',
+  'dnf',
+  'ghpm',
+  'pacman',
+  'paru',
+  'pnpm',
+  'scoop',
+  'uv',
+  'winget',
+  'xbps',
+  'yay',
+  'zypper',
+]
 
 const PACK_KEY = 'pack'
+const PACK_MANAGERS_KEY = [PACK_KEY, 'managers']
 const PACK_MANAGER_KEY = [PACK_KEY, 'manager']
 const PACK_OP_KEY = [PACK_KEY, 'op']
 const PACK_OP_NAMES_KEY = (op: string) => [PACK_KEY, op, 'names']
 
-export function getSupportedManagers(
-  platMap: Record<string, Array<string>>,
-  osMap: Record<string, Array<string>>,
-  context: Ctx,
-  environment: Env,
-): Array<string> {
-  let managers: Array<string> = []
-  if (context.sys_os_plat) {
-    managers.push(...(platMap[context.sys_os_plat] ?? []))
-  }
-  if (context.sys_os) {
-    const match = Object.keys(osMap)
-      .filter((key) => context.sys_os!.includes(key))
-      .sort((a, b) => b.length - a.length)[0]
-    if (match) {
-      managers = osMap[match].filter((p) => managers.includes(p))
-    }
-  }
-  if (environment.get(PACK_MANAGER_KEY)) {
-    managers = managers.filter((p) => p === environment.get(PACK_MANAGER_KEY))
-  }
-  return managers
+// '-m pacman,ghpm' both narrows to those managers and states which to prefer, so the list order wins
+export const SCRIPT_PATH = 'script'
+
+export function getRequestedManagers(environment: Env): Array<string> {
+  return (environment.get(PACK_MANAGERS_KEY) ?? '')
+    .split(',')
+    .map((m) => m.trim())
+    .filter((m) => m.length > 0)
 }
 
-function getSupportedSysManagers(context: Ctx, environment: Env) {
-  return getSupportedManagers(
-    sysOsPlatToSysManagers,
-    sysOsToSysManagers,
-    context,
-    environment,
-  )
-}
-
-function getSupportedUserManagers(context: Ctx, environment: Env) {
-  return getSupportedManagers(
-    sysOsPlatToUserManagers,
-    sysOsToUserManagers,
-    context,
-    environment,
-  )
+// naming only 'script' leaves no managers at all, which is the point of naming it
+export function getSupportedManagers(environment: Env): Array<string> {
+  const asked = getRequestedManagers(environment)
+  return asked.length ? asked.filter((m) => m !== SCRIPT_PATH && MANAGERS.includes(m)) : [...MANAGERS]
 }
 
 function getNativeShellForPlat(plat: string): string {
@@ -241,27 +208,62 @@ async function initOp(
   {
     shell: Sh
     allManagers: Array<string>
-    userManagers: Array<string>
-    sysManagers: Array<string>
   }
 > {
   let _shell = shell.with(shell.varSetStr(PACK_OP_KEY, op))
-  const sysManagers = getSupportedSysManagers(context, environment)
-  const userManagers = getSupportedUserManagers(context, environment)
-  const allManagers = [...userManagers, ...sysManagers]
+  const allManagers = getSupportedManagers(environment)
   _shell = await loadManagerFiles(_shell, allManagers)
-  return { shell: _shell, allManagers, userManagers, sysManagers }
+  return { shell: _shell, allManagers }
 }
 
 async function loadGroupConfig(parts: Array<string>) {
   return await getCfgFileLoad([PACK_KEY, ...parts], { extension: Fmt.yaml })
 }
 
-async function findGroupsWithNames(
+// operations live under 'operation', beside the group's own metadata
+// deno-lint-ignore no-explicit-any
+function groupOp(content: any, op: 'add' | 'remove'): any {
+  return content?.operation?.[op]
+}
+
+// packages the group pulls in by name: another pack if one matches, otherwise a loose name
+function groupExtras(content: unknown): Array<string> {
+  const extras = (content as { extras?: unknown } | null)?.extras
+  return Array.isArray(extras) ? extras.filter((e): e is string => typeof e === 'string') : []
+}
+
+// another name for the whole group, for lookup only — managers still install the names they declare
+function groupAliases(content: unknown): Array<string> {
+  const aliases = (content as { aliases?: unknown } | null)?.aliases
+  return Array.isArray(aliases) ? aliases.filter((a): a is string => typeof a === 'string') : []
+}
+
+// a group is on offer here if this platform has a manager it names, or its script is gated in. the managers it names
+// are only candidates: whether one is really on this machine is the client's to answer
+function groupCandidates(
+  // deno-lint-ignore no-explicit-any
+  content: any,
+  allManagers: Array<string> | null,
+  context: Ctx | null,
+): Array<string> | null {
+  if (!allManagers || !context) {
+    return []
+  }
+  const managerConfig = (groupOp(content, 'add')?.manager ?? {}) as Record<string, ManagerEntry>
+  if (selectScriptEntry(managerConfig[SCRIPT_PATH] as unknown as Record<string, ScriptEntry>, context)) {
+    return []
+  }
+  const candidates = Object.keys(managerConfig).filter((m) =>
+    m !== SCRIPT_PATH && allManagers.includes(m) && evaluateGate(managerConfig[m]?.gate, context)
+  )
+  return candidates.length ? candidates : null
+}
+
+// matched on group name and aliases only: what a manager has is that manager's own search to answer
+async function findGroups(
   filters: Array<string> | undefined,
   allManagers: Array<string> | null,
   context: Ctx | null,
-  managerSpecified: boolean,
 ): Promise<{ entries: Array<string>; found: Array<string> }> {
   const results = await getCfgDirDump([PACK_KEY], {
     extension: Fmt.yaml,
@@ -275,90 +277,33 @@ async function findGroupsWithNames(
     if (content == null) {
       continue
     }
-    const allNames: Array<string> = []
-
-    const addConfig = content.add as Record<string, unknown> | undefined
-
-    if (addConfig) {
-      let tierFound = false
-      for (const tier of Object.keys(addConfig)) {
-        if (tier === 'script') {
-          if (managerSpecified || !context) {
-            continue
-          }
-          const scriptConfig = addConfig[tier] as
-            | Record<string, ScriptEntry>
-            | undefined
-          const selected = selectScriptEntry(scriptConfig, context)
-          if (!selected) {
-            continue
-          }
-          const { entry } = selected
-          if (entry.commands?.length) {
-            for (const cmd of entry.commands) {
-              if (!allNames.includes(cmd)) allNames.push(cmd)
-            }
-          } else if (entry.file) {
-            if (!allNames.includes(entry.file)) allNames.push(entry.file)
-          } else {
-            continue
-          }
-          tierFound = true
-        } else {
-          const tierContent = addConfig[tier] as
-            | Record<string, ManagerEntry>
-            | undefined
-          if (!tierContent) {
-            continue
-          }
-          for (const key of Object.keys(tierContent)) {
-            if (allManagers?.length && !allManagers.includes(key)) {
-              continue
-            }
-            for (const n of tierContent[key]?.names ?? []) {
-              if (!allNames.includes(n)) {
-                allNames.push(n)
-                tierFound = true
-              }
-            }
-          }
-        }
-        if (tierFound && context) {
-          break
-        }
-      }
-    }
-
-    if (!allNames.length) {
+    const candidates = groupCandidates(content, allManagers, context)
+    if (candidates == null) {
       continue
     }
+    const aliases = groupAliases(content).toSorted()
     if (filters?.length) {
-      const matchedFilters = filters.filter((f) => name.includes(f) || allNames.some((n) => n.includes(f)))
-      if (matchedFilters.length !== filters.length) {
+      const matched = filters.filter((f) => name.includes(f) || aliases.some((a) => a.includes(f)))
+      if (matched.length !== filters.length) {
         continue
       }
-      for (const f of matchedFilters) {
+      for (const f of matched) {
         if (!found.includes(f)) {
           found.push(f)
         }
       }
     }
-    entries.push(`${name}|${allNames.join(', ')}`)
+    const label = aliases.length ? `${name} (${aliases.join(', ')})` : name
+    entries.push([label, ...candidates].join('|'))
   }
   return { entries: entries.toSorted(), found }
 }
 
 function printGroups(shell: Sh, entries: Array<string>) {
-  const lines: Array<string> = []
-  for (const entry of entries) {
-    const sep = entry.indexOf('|')
-    const key = sep >= 0 ? entry.slice(0, sep) : entry
-    const names = sep >= 0 ? entry.slice(sep + 1) : ''
-    lines.push(...shell.print(key))
-    if (names) {
-      lines.push(...shell.print(`  ${names}`))
-    }
-  }
+  const lines = entries.map((entry) => {
+    const [label, ...candidates] = entry.split('|')
+    return ['packFindGroup', shell.toLiteral(label), ...candidates.map((c) => shell.toLiteral(c))].join(' ')
+  })
   return shell.with(shell.gatedFunc('use pack', lines))
 }
 
@@ -383,6 +328,7 @@ function setOpNames(shell: Sh, op: string, names: Array<string>) {
 
 interface ManagerEntry {
   names: Array<string>
+  gate?: Record<string, Array<string>>
   pwsh?: ScriptEntry
   zsh?: ScriptEntry
 }
@@ -461,13 +407,20 @@ export function buildTierChain(tiers: Array<TierBlock>): Array<string> {
   return ['do --env {', ...buildChain(0), '}']
 }
 
+// a tier block is labelled 'use <manager> (<tier>)', which is the only place its manager survives
+function requestedIndex(requested: Array<string>, label: string): number {
+  const manager = label.split(' ')[1] ?? ''
+  const index = requested.indexOf(manager)
+  return index < 0 ? requested.length : index
+}
+
 async function processGroupConfig(
   shell: Sh,
   context: Ctx,
   op: string,
-  userManagers: Array<string>,
-  sysManagers: Array<string>,
+  allManagers: Array<string>,
   name: string,
+  requested: Array<string>,
   managerSpecified: boolean,
 ): Promise<{ shell: Sh; found: boolean }> {
   const content = await loadGroupConfig(name.split('-'))
@@ -475,23 +428,23 @@ async function processGroupConfig(
     return { shell, found: false }
   }
 
-  const addConfig = content.add as Record<string, unknown> | undefined
-  const remConfig = content.remove as {
-    system?: Record<string, RemManagerEntry>
-    user?: Record<string, RemManagerEntry>
-  } | undefined
+  const addConfig = groupOp(content, 'add') as Record<string, unknown> | undefined
+  const remConfig = groupOp(content, 'remove')?.manager as Record<string, RemManagerEntry> | undefined
 
   let _shell = shell
   let found = false
   const plat = context.sys_os_plat ?? ''
   const tierBlocks: Array<TierBlock> = []
 
-  for (const tier of Object.keys(addConfig ?? {})) {
-    if (tier === 'script') {
-      if (op !== 'add' || managerSpecified) {
+  // every install path for the group sits under 'manager', script included, in the file's own order
+  const managerConfig = (addConfig?.manager ?? {}) as Record<string, ManagerEntry>
+
+  for (const tier of Object.keys(managerConfig)) {
+    if (tier === SCRIPT_PATH) {
+      if (op !== 'add' || (managerSpecified && !requested.includes(SCRIPT_PATH))) {
         continue
       }
-      const scriptConfig = addConfig![tier] as
+      const scriptConfig = managerConfig[tier] as unknown as
         | Record<string, ScriptEntry>
         | undefined
       const selected = selectScriptEntry(scriptConfig, context)
@@ -512,29 +465,33 @@ async function processGroupConfig(
           ? [..._shell.print('commands'), ..._shell.print(`  ${entry.commands.join(' ')}`)]
           : []
         tierBlocks.push({
-          label: 'use script (user/system)',
+          label: `use ${SCRIPT_PATH}`,
           pre: scriptPre,
           lines: scriptBodyLines,
         })
         found = true
       }
-    } else if (tier === 'user' || tier === 'system') {
-      const managers = tier === 'user' ? userManagers : sysManagers
-      const tierConfig = addConfig?.[tier] as Record<string, ManagerEntry> | undefined
-      const tierRemConfig = tier === 'user' ? remConfig?.user : remConfig?.system
-      for (const manager of managers) {
-        const entry = tierConfig?.[manager]
-        if (!entry?.names?.length) {
-          continue
-        }
-        tierBlocks.push({
-          label: `use ${manager} (${tier})`,
-          pre: [..._shell.print('names'), ..._shell.print(`  ${entry.names.join(' ')}`)],
-          lines: processManagerEntryLines(_shell, context, op, manager, entry, tierRemConfig?.[manager]),
-        })
-        found = true
+    } else {
+      const manager = tier
+      const entry = managerConfig[manager]
+      if (
+        !entry?.names?.length ||
+        !allManagers.includes(manager) ||
+        !evaluateGate(entry.gate, context)
+      ) {
+        continue
       }
+      tierBlocks.push({
+        label: `use ${manager}`,
+        pre: [..._shell.print('names'), ..._shell.print(`  ${entry.names.join(' ')}`)],
+        lines: processManagerEntryLines(_shell, context, op, manager, entry, remConfig?.[manager]),
+      })
+      found = true
     }
+  }
+
+  if (requested.length > 1) {
+    tierBlocks.sort((a, b) => requestedIndex(requested, a.label) - requestedIndex(requested, b.label))
   }
 
   if (tierBlocks.length > 0) {
@@ -561,38 +518,57 @@ export async function resolveGroupName(name: string): Promise<Array<string>> {
     flexible: true,
   })
   const matched: Array<string> = []
+  const aliasMatched: Array<string> = []
   for (const parts of results) {
-    if (nameParts.length > parts.length) {
-      continue
-    }
     const resolvedName = parts.join('-')
-    if (matched.includes(resolvedName)) {
+    if (matched.includes(resolvedName) || aliasMatched.includes(resolvedName)) {
       continue
     }
-    const isPrefix = parts.slice(0, nameParts.length).every((p, i) => p === nameParts[i])
-    const isSuffix = parts.slice(parts.length - nameParts.length).every((
-      p,
-      i,
-    ) => p === nameParts[i])
-    const isLastPart = parts[parts.length - 1] === name
-    if (isPrefix || isSuffix || isLastPart) {
-      matched.push(resolvedName)
+    if (nameParts.length <= parts.length) {
+      const isPrefix = parts.slice(0, nameParts.length).every((p, i) => p === nameParts[i])
+      const isSuffix = parts.slice(parts.length - nameParts.length).every((
+        p,
+        i,
+      ) => p === nameParts[i])
+      const isLastPart = parts[parts.length - 1] === name
+      if (isPrefix || isSuffix || isLastPart) {
+        matched.push(resolvedName)
+        continue
+      }
+    }
+    // an alias stands in for the whole group name, so it matches like a full name does
+    if (groupAliases(await loadGroupConfig(parts)).includes(name)) {
+      aliasMatched.push(resolvedName)
     }
   }
-  return matched
+
+  // a name and a folder of the same name are one group: python.yaml and everything under python/.
+  // an alias reaches the folder the same way, since it stands in for the name
+  const all = [...matched, ...aliasMatched]
+  for (const hit of [...all]) {
+    const prefix = `${hit}-`
+    for (const parts of results) {
+      const resolvedName = parts.join('-')
+      if (resolvedName.startsWith(prefix) && !all.includes(resolvedName)) {
+        all.push(resolvedName)
+      }
+    }
+  }
+  return all
 }
 
 async function processGroupNames(
   shell: Sh,
   context: Ctx,
   op: string,
-  userManagers: Array<string>,
-  sysManagers: Array<string>,
+  allManagers: Array<string>,
   names: Array<string>,
+  requested: Array<string>,
   managerSpecified: boolean,
-): Promise<{ shell: Sh; found: Array<string> }> {
+): Promise<{ shell: Sh; found: Array<string>; groups: Array<string> }> {
   let _shell = shell
   const found: Array<string> = []
+  const groups: Array<string> = []
 
   for (const name of names) {
     let resolved = await resolveGroupName(name)
@@ -604,19 +580,24 @@ async function processGroupNames(
         _shell,
         context,
         op,
-        userManagers,
-        sysManagers,
+        allManagers,
         resolvedName,
+        requested,
         managerSpecified,
       )
       _shell = result.shell
-      if (result.found && !found.includes(name)) {
-        found.push(name)
+      if (result.found) {
+        if (!found.includes(name)) {
+          found.push(name)
+        }
+        if (!groups.includes(resolvedName)) {
+          groups.push(resolvedName)
+        }
       }
     }
   }
 
-  return { shell: _shell, found }
+  return { shell: _shell, found, groups }
 }
 
 async function execOp(
@@ -630,7 +611,7 @@ async function execOp(
     return redirect
   }
 
-  const { shell: _shell, allManagers, userManagers, sysManagers } = await initOp(
+  const { shell: _shell, allManagers } = await initOp(
     shell,
     context,
     environment,
@@ -638,21 +619,39 @@ async function execOp(
   )
   let result = _shell
 
+  const requested = getRequestedManagers(environment)
+  const unknown = requested.filter((m) => m !== SCRIPT_PATH && !MANAGERS.includes(m))
+  if (unknown.length) {
+    result = result.with(result.printWarn(`manager not known: ${unknown.join(', ')}`))
+  }
+  if (requested.length && !allManagers.length && !requested.includes(SCRIPT_PATH)) {
+    return buildAndLog(result, environment)
+  }
+  if (allManagers.length) {
+    result = result.with(result.varSetArr(PACK_MANAGERS_KEY, allManagers))
+  }
+  // whether a named manager is actually here is the client's to report
+  if (requested.length) {
+    const named = requested.filter((m) => m !== SCRIPT_PATH && MANAGERS.includes(m))
+    if (named.length) {
+      result = result.with([['packRequireManager', ...named.map((m) => result.toLiteral(m))].join(' ')])
+    }
+  }
+
   if (op === 'tidy') {
     return buildAndLog(callManagers(result, allManagers), environment)
   }
 
   const names = environment.getSplit(PACK_OP_NAMES_KEY(op))
-  const managerSpecified = !!environment.get(PACK_MANAGER_KEY)
+  const managerSpecified = !!environment.get(PACK_MANAGERS_KEY)
   let found: Array<string> = []
 
   if (op === 'find') {
-    const hasContext = context.sys_os_plat || context.sys_os || managerSpecified
-    const { entries: groupEntries, found: groupFilterFound } = await findGroupsWithNames(
+    const hasContext = context.sys_os_plat || context.sys_os || requested.length
+    const { entries: groupEntries, found: groupFilterFound } = await findGroups(
       names.length ? names : undefined,
       hasContext ? allManagers : null,
       hasContext ? context : null,
-      managerSpecified,
     )
     found = groupFilterFound
     result = printGroups(result, groupEntries)
@@ -661,9 +660,9 @@ async function execOp(
       result,
       context,
       op,
-      userManagers,
-      sysManagers,
+      allManagers,
       names,
+      requested,
       managerSpecified,
     )
     result = groupResult.shell
@@ -682,6 +681,10 @@ async function execOp(
     if (!names.length || remaining.length) {
       result = callManagers(result, allManagers)
     }
+  }
+
+  if (op === 'add' || op === 'remove') {
+    result = result.with(['packReport'])
   }
 
   return buildAndLog(result, environment)

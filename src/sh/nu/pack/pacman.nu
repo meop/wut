@@ -12,19 +12,18 @@ def --env packPacman [] {
     ($mgr not-in ['yay', 'paru', 'pacman']) or
     (which $mgr | is-empty) or
     ('PACK_OP' not-in $env) or
-    ($env.PACK_OP == add and ($env.PACK_ADD_NAMES? | is-empty)) or
-    ($env.PACK_OP == remove and ($env.PACK_REMOVE_NAMES? | is-empty))
+    (packNothingToDo 'pacman')
   ) {
     return
   }
 
-  if not (packPrompt $"use ($mgr) \(system\)") { return }
+  if ($env.PACK_OP not-in ['add', 'remove']) and not (packPrompt $"use ($mgr) \(system\)") { return }
   let cmd = if $mgr == pacman { packElevate $mgr } else { $mgr }
 
   match $env.PACK_OP {
     add => {
       packOp [$cmd --sync --refresh]
-      packOpAdd { |n| packGrepFind [$cmd --sync --search] $n } [$cmd --sync --needed]
+      packOpAdd 'pacman' $"use ($mgr) \(system\)" { |n| packGrepFind [$cmd --sync --search] $n } [$cmd --sync --needed]
     }
     find => {
       packOp [$cmd --sync --refresh]
@@ -42,7 +41,7 @@ def --env packPacman [] {
       packOpOutdated [$cmd --query --upgrades]
     }
     remove => {
-      packOpRemove { |n| packGrepList [$cmd --query] $n } [$cmd --remove --nosave --recursive]
+      packOpRemove 'pacman' $"use ($mgr) \(system\)" { |n| packGrepList [$cmd --query] $n } [$cmd --remove --nosave --recursive]
     }
     sync => {
       packOp [$cmd --sync --refresh]
