@@ -86,7 +86,19 @@ wut p add term      on arch     term-ghostty pacman ghostty
 ```
 
 The find that does this is `packExists`, an exact check per manager, not the substring search `find` runs — choosing a
-manager and researching a partial name are different questions, and only the first may claim a package.
+manager and researching a partial name are different questions, and only the first may claim a package. Every check is
+printed as the command it is, its output swallowed, since the answer is an exit code and the output would bury the plan:
+
+```
+http get https://registry.npmjs.org/ripgrep-x
+cargo info ripgrep-x
+ghpm search ripgrep-x
+pacman --sync --info ripgrep-x
+no manager had: ripgrep-x
+```
+
+Two managers answer fuzzily and need reading rather than an exit code: `ghpm search` always exits 0, so the name column
+decides, and npm and jsr are checked by name (`registry.npmjs.org/<name>`) rather than through their search endpoints.
 
 ## Failing
 

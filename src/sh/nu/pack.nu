@@ -62,19 +62,57 @@ def packHttpGetPypi [term: string] {
 }
 
 
+# the check is shown, its output is not: the answer is the exit code, and the output would bury the plan
 def packOk [cmds: list<string>] {
+  opPrintCmd ...$cmds
   (run-external ($cmds | first) ...($cmds | skip 1) | complete | get exit_code) == 0
+}
+
+def packHttpOk [url: string] {
+  opPrintCmd 'http get' $url
+  let res = (try { http get --full --redirect-mode follow $url } catch { null })
+  ($res != null) and ($res.status == 200)
+}
+
+# by name, not by search: the registries answer 404 for a name that does not exist
+def packExistsNpm [name: string] {
+  packHttpOk $"https://registry.npmjs.org/($name)"
+}
+
+def packExistsJsr [name: string] {
+  if not ($name | str starts-with '@') {
+    return false
+  }
+  let parts = ($name | str substring 1.. | split row '/')
+  if ($parts | length) != 2 {
+    return false
+  }
+  packHttpOk $"https://api.jsr.io/scopes/($parts | get 0)/packages/($parts | get 1)"
+}
+
+def packExistsPypi [name: string] {
+  packHttpOk $"https://pypi.org/pypi/($name)/json"
+}
+
+# ghpm search always exits 0 and answers fuzzily, so the name column is what decides
+def packExistsGhpm [name: string] {
+  opPrintCmd 'ghpm search' $name
+  let out = (run-external ghpm search $name | complete)
+  if $out.exit_code != 0 {
+    return false
+  }
+  $out.stdout | lines | skip 2 | any { |l| ($l | split row ' ' | get -o 0) == $name }
 }
 
 # choosing a manager needs an exact name, not the substring search 'find' runs: pacman has nushell, not nushel
 def packExists [manager: string, name: string] {
   match $manager {
-    ghpm => (packOk [ghpm info $name]),
+    ghpm => (packExistsGhpm $name),
     cargo => (packOk [cargo info $name]),
-    uv => (packHttpGetPypi $name | is-not-empty),
-    pnpm => (packHttpGetNpm $name | is-not-empty),
-    bun => ([(packHttpGetNpm $name), (packHttpGetJsr $name)] | flatten | is-not-empty),
-    deno => ([(packHttpGetNpm $name), (packHttpGetJsr $name)] | flatten | is-not-empty),
+    uv => (packExistsPypi $name),
+    pnpm => (packExistsNpm $name),
+    bun => ((packExistsNpm $name) or (packExistsJsr $name)),
+    deno => ((packExistsNpm $name) or (packExistsJsr $name)),
     brew => (packOk [brew info $name]),
     apk => (packOk [apk search -e $name]),
     apt => (packOk [apt-cache show $name]),
