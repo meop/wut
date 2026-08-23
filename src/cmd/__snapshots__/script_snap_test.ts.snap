@@ -294,6 +294,40 @@ def scriptFindGroup [label: string, ...entries: string] {
   opPrint \$"  (\$tools | str join ', ')"
 }
 
+def --env scriptPlanAdd [action: string, tool: string, shell: string, ...cmds: string] {
+  if (\$cmds | is-not-empty) and not (scriptHasCmd ...\$cmds) {
+    return
+  }
+  load-env {SCRIPT_PLAN_ROWS: ((\$env.SCRIPT_PLAN_ROWS? | default []) | append \$"(\$action)|(\$tool)|(\$shell)")}
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+def scriptPlanShow [] {
+  let rows = ((\$env.SCRIPT_PLAN_ROWS? | default []) | each { |r| \$r | split row '|' })
+  if (\$rows | is-empty) {
+    return false
+  }
+  let headers = ['action' 'tool' 'shell']
+  let widths = (\$headers | enumerate | each { |h|
+    [(\$h.item | str length)] ++ (\$rows | each { |r| \$r | get -o \$h.index | default '' | str length }) | math max
+  })
+  let line = { |cells: list<string>|
+    \$cells | enumerate | each { |c|
+      if \$c.index == 2 { \$c.item } else { \$c.item | fill --alignment left --width (\$widths | get \$c.index) }
+    } | str join ' '
+  }
+  opPrint (do \$line \$headers)
+  opPrint (do \$line (\$headers | each { |h| '-' | fill --alignment left --width (\$h | str length) --character '-' }))
+  for r in \$rows { opPrint (do \$line \$r) }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input 'use script [y,[n]]: '
+  }
+  (\$yn | str downcase) in ['', 'y', 'yes']
+}
+
 
 do --env {
   mut yn = ''
@@ -601,6 +635,40 @@ def scriptFindGroup [label: string, ...entries: string] {
   }
   opPrint \$label
   opPrint \$"  (\$tools | str join ', ')"
+}
+
+def --env scriptPlanAdd [action: string, tool: string, shell: string, ...cmds: string] {
+  if (\$cmds | is-not-empty) and not (scriptHasCmd ...\$cmds) {
+    return
+  }
+  load-env {SCRIPT_PLAN_ROWS: ((\$env.SCRIPT_PLAN_ROWS? | default []) | append \$"(\$action)|(\$tool)|(\$shell)")}
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+def scriptPlanShow [] {
+  let rows = ((\$env.SCRIPT_PLAN_ROWS? | default []) | each { |r| \$r | split row '|' })
+  if (\$rows | is-empty) {
+    return false
+  }
+  let headers = ['action' 'tool' 'shell']
+  let widths = (\$headers | enumerate | each { |h|
+    [(\$h.item | str length)] ++ (\$rows | each { |r| \$r | get -o \$h.index | default '' | str length }) | math max
+  })
+  let line = { |cells: list<string>|
+    \$cells | enumerate | each { |c|
+      if \$c.index == 2 { \$c.item } else { \$c.item | fill --alignment left --width (\$widths | get \$c.index) }
+    } | str join ' '
+  }
+  opPrint (do \$line \$headers)
+  opPrint (do \$line (\$headers | each { |h| '-' | fill --alignment left --width (\$h | str length) --character '-' }))
+  for r in \$rows { opPrint (do \$line \$r) }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input 'use script [y,[n]]: '
+  }
+  (\$yn | str downcase) in ['', 'y', 'yes']
 }
 
 
@@ -941,6 +1009,47 @@ function scriptFindGroup {
   opPrint "  \$(\$tools -join ', ')"
 }
 
+\$script:ScriptPlanRows = @()
+
+function scriptPlanAdd {
+  \$action, \$tool, \$shell = \$args[0..2]
+  \$cmds = if (\$args.Count -gt 3) { \$args[3..(\$args.Count - 1)] } else { @() }
+  if (\$cmds.Count -gt 0) {
+    if (-not (scriptHasCmd @cmds)) {
+      return
+    }
+  }
+  \$script:ScriptPlanRows += , @(\$action, \$tool, \$shell)
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+function scriptPlanShow {
+  if (\$script:ScriptPlanRows.Count -eq 0) {
+    return \$false
+  }
+  \$headers = @('action', 'tool', 'shell')
+  \$widths = 0..2 | ForEach-Object {
+    \$i = \$_
+    (@(\$headers[\$i].Length) + (\$script:ScriptPlanRows | ForEach-Object { \$_[\$i].Length }) | Measure-Object -Maximum).Maximum
+  }
+  \$line = {
+    param(\$cells)
+    (0..2 | ForEach-Object {
+      if (\$_ -eq 2) { \$cells[\$_] } else { \$cells[\$_].PadRight(\$widths[\$_]) }
+    }) -join ' '
+  }
+  opPrint (& \$line \$headers)
+  opPrint (& \$line @(0..2 | ForEach-Object { '-' * \$headers[\$_].Length }))
+  foreach (\$r in \$script:ScriptPlanRows) { opPrint (& \$line \$r) }
+  \$yn = ''
+  if (\$YES) {
+    \$yn = 'y'
+  } else {
+    \$yn = Read-Host 'use script [y,[n]]'
+  }
+  return (\$yn -eq '') -or (\$yn.ToLower() -eq 'y') -or (\$yn.ToLower() -eq 'yes')
+}
+
 
 & {
   \$yn = ''
@@ -1247,6 +1356,48 @@ function scriptFindGroup {
   fi
   opPrint "\$label"
   opPrint "  \${(j:, :)tools}"
+}
+
+typeset -ga SCRIPT_PLAN_ROWS
+
+function scriptPlanAdd {
+  local action="\$1" tool="\$2" shell="\$3"
+  shift 3
+  if (( \$# )) && ! scriptHasCmd "\$@"; then
+    return
+  fi
+  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+function scriptPlanShow {
+  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
+    return 1
+  fi
+  local -a actions tools shells
+  local row
+  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
+    actions+=("\${row%%|*}")
+    tools+=("\${\${row#*|}%%|*}")
+    shells+=("\${row##*|}")
+  done
+  local aw=6 tw=4 i
+  for i in {1..\${#actions}}; do
+    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
+    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
+  done
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
+  for i in {1..\${#actions}}; do
+    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
+  done
+  local yn=''
+  if [[ \$YES ]]; then
+    yn=y
+  else
+    read "yn?use script [y,[n]]: "
+  fi
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
 
@@ -1557,6 +1708,48 @@ function scriptFindGroup {
   opPrint "  \${(j:, :)tools}"
 }
 
+typeset -ga SCRIPT_PLAN_ROWS
+
+function scriptPlanAdd {
+  local action="\$1" tool="\$2" shell="\$3"
+  shift 3
+  if (( \$# )) && ! scriptHasCmd "\$@"; then
+    return
+  fi
+  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+function scriptPlanShow {
+  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
+    return 1
+  fi
+  local -a actions tools shells
+  local row
+  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
+    actions+=("\${row%%|*}")
+    tools+=("\${\${row#*|}%%|*}")
+    shells+=("\${row##*|}")
+  done
+  local aw=6 tw=4 i
+  for i in {1..\${#actions}}; do
+    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
+    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
+  done
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
+  for i in {1..\${#actions}}; do
+    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
+  done
+  local yn=''
+  if [[ \$YES ]]; then
+    yn=y
+  else
+    read "yn?use script [y,[n]]: "
+  fi
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+}
+
 
 function () {
   local yn=''
@@ -1865,6 +2058,48 @@ function scriptFindGroup {
   fi
   opPrint "\$label"
   opPrint "  \${(j:, :)tools}"
+}
+
+typeset -ga SCRIPT_PLAN_ROWS
+
+function scriptPlanAdd {
+  local action="\$1" tool="\$2" shell="\$3"
+  shift 3
+  if (( \$# )) && ! scriptHasCmd "\$@"; then
+    return
+  fi
+  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+function scriptPlanShow {
+  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
+    return 1
+  fi
+  local -a actions tools shells
+  local row
+  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
+    actions+=("\${row%%|*}")
+    tools+=("\${\${row#*|}%%|*}")
+    shells+=("\${row##*|}")
+  done
+  local aw=6 tw=4 i
+  for i in {1..\${#actions}}; do
+    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
+    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
+  done
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
+  for i in {1..\${#actions}}; do
+    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
+  done
+  local yn=''
+  if [[ \$YES ]]; then
+    yn=y
+  else
+    read "yn?use script [y,[n]]: "
+  fi
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
 
@@ -3262,6 +3497,89 @@ SCRIPT_EXEC_ACTION='setup'
 
 SCRIPT_EXEC_PARTS='docker'
 
+function scriptHasCmd {
+  local cmd
+  for cmd in "\$@"; do
+    if type "\$cmd" > /dev/null 2>&1; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
+function scriptFindGroup {
+  local label="\$1"
+  shift
+  local tools=()
+  local entry name cmds
+  for entry in "\$@"; do
+    name="\${entry%%=*}"
+    cmds="\${entry#*=}"
+    if [[ \$cmds == "\$entry" || -z \$cmds ]]; then
+      tools+=("\$name")
+      continue
+    fi
+    if scriptHasCmd \${(s:,:)cmds}; then
+      tools+=("\$name")
+    fi
+  done
+  if (( \${#tools} == 0 )); then
+    return
+  fi
+  opPrint "\$label"
+  opPrint "  \${(j:, :)tools}"
+}
+
+typeset -ga SCRIPT_PLAN_ROWS
+
+function scriptPlanAdd {
+  local action="\$1" tool="\$2" shell="\$3"
+  shift 3
+  if (( \$# )) && ! scriptHasCmd "\$@"; then
+    return
+  fi
+  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+function scriptPlanShow {
+  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
+    return 1
+  fi
+  local -a actions tools shells
+  local row
+  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
+    actions+=("\${row%%|*}")
+    tools+=("\${\${row#*|}%%|*}")
+    shells+=("\${row##*|}")
+  done
+  local aw=6 tw=4 i
+  for i in {1..\${#actions}}; do
+    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
+    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
+  done
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
+  for i in {1..\${#actions}}; do
+    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
+  done
+  local yn=''
+  if [[ \$YES ]]; then
+    yn=y
+  else
+    read "yn?use script [y,[n]]: "
+  fi
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+}
+
+
+scriptPlanAdd 'setup' 'docker' 'zsh' 'docker'
+
+if ! scriptPlanShow; then
+  return
+fi
+
 function () {
   if ! type docker > /dev/null; then
     opPrintWarn 'docker is not installed'
@@ -3549,6 +3867,69 @@ wutNuSync
 
 \$env.SCRIPT_EXEC_PARTS = r#'cargo'#
 
+def scriptHasCmd [...cmds: string] {
+  \$cmds | any { |cmd| which \$cmd | is-not-empty }
+}
+
+# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
+def scriptFindGroup [label: string, ...entries: string] {
+  let tools = (
+    \$entries
+      | each { |entry| \$entry | split row '=' }
+      | where { |parts|
+        let cmds = (\$parts | get -o 1 | default '')
+        (\$cmds | is-empty) or (scriptHasCmd ...(\$cmds | split row ','))
+      }
+      | each { |parts| \$parts | get 0 }
+  )
+  if (\$tools | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$"  (\$tools | str join ', ')"
+}
+
+def --env scriptPlanAdd [action: string, tool: string, shell: string, ...cmds: string] {
+  if (\$cmds | is-not-empty) and not (scriptHasCmd ...\$cmds) {
+    return
+  }
+  load-env {SCRIPT_PLAN_ROWS: ((\$env.SCRIPT_PLAN_ROWS? | default []) | append \$"(\$action)|(\$tool)|(\$shell)")}
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+def scriptPlanShow [] {
+  let rows = ((\$env.SCRIPT_PLAN_ROWS? | default []) | each { |r| \$r | split row '|' })
+  if (\$rows | is-empty) {
+    return false
+  }
+  let headers = ['action' 'tool' 'shell']
+  let widths = (\$headers | enumerate | each { |h|
+    [(\$h.item | str length)] ++ (\$rows | each { |r| \$r | get -o \$h.index | default '' | str length }) | math max
+  })
+  let line = { |cells: list<string>|
+    \$cells | enumerate | each { |c|
+      if \$c.index == 2 { \$c.item } else { \$c.item | fill --alignment left --width (\$widths | get \$c.index) }
+    } | str join ' '
+  }
+  opPrint (do \$line \$headers)
+  opPrint (do \$line (\$headers | each { |h| '-' | fill --alignment left --width (\$h | str length) --character '-' }))
+  for r in \$rows { opPrint (do \$line \$r) }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input 'use script [y,[n]]: '
+  }
+  (\$yn | str downcase) in ['', 'y', 'yes']
+}
+
+
+scriptPlanAdd r#'setup'# r#'cargo'# r#'nu'# r#'cargo'#
+
+if not (scriptPlanShow) {
+  return
+}
+
 do {
   if not (which cargo | is-not-empty) {
     opPrintWarn 'cargo is not installed'
@@ -3832,6 +4213,89 @@ function () {
 SCRIPT_EXEC_ACTION='setup'
 
 SCRIPT_EXEC_PARTS='cargo'
+
+function scriptHasCmd {
+  local cmd
+  for cmd in "\$@"; do
+    if type "\$cmd" > /dev/null 2>&1; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
+function scriptFindGroup {
+  local label="\$1"
+  shift
+  local tools=()
+  local entry name cmds
+  for entry in "\$@"; do
+    name="\${entry%%=*}"
+    cmds="\${entry#*=}"
+    if [[ \$cmds == "\$entry" || -z \$cmds ]]; then
+      tools+=("\$name")
+      continue
+    fi
+    if scriptHasCmd \${(s:,:)cmds}; then
+      tools+=("\$name")
+    fi
+  done
+  if (( \${#tools} == 0 )); then
+    return
+  fi
+  opPrint "\$label"
+  opPrint "  \${(j:, :)tools}"
+}
+
+typeset -ga SCRIPT_PLAN_ROWS
+
+function scriptPlanAdd {
+  local action="\$1" tool="\$2" shell="\$3"
+  shift 3
+  if (( \$# )) && ! scriptHasCmd "\$@"; then
+    return
+  fi
+  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+function scriptPlanShow {
+  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
+    return 1
+  fi
+  local -a actions tools shells
+  local row
+  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
+    actions+=("\${row%%|*}")
+    tools+=("\${\${row#*|}%%|*}")
+    shells+=("\${row##*|}")
+  done
+  local aw=6 tw=4 i
+  for i in {1..\${#actions}}; do
+    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
+    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
+  done
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
+  for i in {1..\${#actions}}; do
+    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
+  done
+  local yn=''
+  if [[ \$YES ]]; then
+    yn=y
+  else
+    read "yn?use script [y,[n]]: "
+  fi
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+}
+
+
+scriptPlanAdd 'setup' 'cargo' 'zsh' 'cargo'
+
+if ! scriptPlanShow; then
+  return
+fi
 
 function () {
   if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
@@ -4152,6 +4616,88 @@ function opPrintMaybeRunCmd {
 \$SCRIPT_EXEC_ACTION = 'setup'
 
 \$SCRIPT_EXEC_PARTS = 'cargo'
+
+function scriptHasCmd {
+  foreach (\$cmd in \$args) {
+    if (Get-Command \$cmd -ErrorAction SilentlyContinue) {
+      return \$true
+    }
+  }
+  return \$false
+}
+
+# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
+function scriptFindGroup {
+  if (\$args.Count -lt 2) {
+    return
+  }
+  \$label = \$args[0]
+  \$tools = @()
+  foreach (\$entry in \$args[1..(\$args.Count - 1)]) {
+    \$name, \$cmds = \$entry -split '=', 2
+    if (-not \$cmds) {
+      \$tools += \$name
+      continue
+    }
+    \$cmdList = \$cmds -split ','
+    if (scriptHasCmd @cmdList) {
+      \$tools += \$name
+    }
+  }
+  if (-not \$tools) {
+    return
+  }
+  opPrint \$label
+  opPrint "  \$(\$tools -join ', ')"
+}
+
+\$script:ScriptPlanRows = @()
+
+function scriptPlanAdd {
+  \$action, \$tool, \$shell = \$args[0..2]
+  \$cmds = if (\$args.Count -gt 3) { \$args[3..(\$args.Count - 1)] } else { @() }
+  if (\$cmds.Count -gt 0) {
+    if (-not (scriptHasCmd @cmds)) {
+      return
+    }
+  }
+  \$script:ScriptPlanRows += , @(\$action, \$tool, \$shell)
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+function scriptPlanShow {
+  if (\$script:ScriptPlanRows.Count -eq 0) {
+    return \$false
+  }
+  \$headers = @('action', 'tool', 'shell')
+  \$widths = 0..2 | ForEach-Object {
+    \$i = \$_
+    (@(\$headers[\$i].Length) + (\$script:ScriptPlanRows | ForEach-Object { \$_[\$i].Length }) | Measure-Object -Maximum).Maximum
+  }
+  \$line = {
+    param(\$cells)
+    (0..2 | ForEach-Object {
+      if (\$_ -eq 2) { \$cells[\$_] } else { \$cells[\$_].PadRight(\$widths[\$_]) }
+    }) -join ' '
+  }
+  opPrint (& \$line \$headers)
+  opPrint (& \$line @(0..2 | ForEach-Object { '-' * \$headers[\$_].Length }))
+  foreach (\$r in \$script:ScriptPlanRows) { opPrint (& \$line \$r) }
+  \$yn = ''
+  if (\$YES) {
+    \$yn = 'y'
+  } else {
+    \$yn = Read-Host 'use script [y,[n]]'
+  }
+  return (\$yn -eq '') -or (\$yn.ToLower() -eq 'y') -or (\$yn.ToLower() -eq 'yes')
+}
+
+
+scriptPlanAdd 'setup' 'cargo' 'pwsh' 'cargo'
+
+if (-not (scriptPlanShow)) {
+  return
+}
 
 & {
   if (-not \$IsWindows) {
@@ -4474,6 +5020,48 @@ function scriptFindGroup {
   opPrint "  \${(j:, :)tools}"
 }
 
+typeset -ga SCRIPT_PLAN_ROWS
+
+function scriptPlanAdd {
+  local action="\$1" tool="\$2" shell="\$3"
+  shift 3
+  if (( \$# )) && ! scriptHasCmd "\$@"; then
+    return
+  fi
+  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+function scriptPlanShow {
+  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
+    return 1
+  fi
+  local -a actions tools shells
+  local row
+  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
+    actions+=("\${row%%|*}")
+    tools+=("\${\${row#*|}%%|*}")
+    shells+=("\${row##*|}")
+  done
+  local aw=6 tw=4 i
+  for i in {1..\${#actions}}; do
+    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
+    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
+  done
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
+  for i in {1..\${#actions}}; do
+    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
+  done
+  local yn=''
+  if [[ \$YES ]]; then
+    yn=y
+  else
+    read "yn?use script [y,[n]]: "
+  fi
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+}
+
 
 function () {
   local yn=''
@@ -4784,6 +5372,56 @@ function scriptFindGroup {
   opPrint "  \${(j:, :)tools}"
 }
 
+typeset -ga SCRIPT_PLAN_ROWS
+
+function scriptPlanAdd {
+  local action="\$1" tool="\$2" shell="\$3"
+  shift 3
+  if (( \$# )) && ! scriptHasCmd "\$@"; then
+    return
+  fi
+  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+function scriptPlanShow {
+  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
+    return 1
+  fi
+  local -a actions tools shells
+  local row
+  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
+    actions+=("\${row%%|*}")
+    tools+=("\${\${row#*|}%%|*}")
+    shells+=("\${row##*|}")
+  done
+  local aw=6 tw=4 i
+  for i in {1..\${#actions}}; do
+    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
+    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
+  done
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
+  for i in {1..\${#actions}}; do
+    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
+  done
+  local yn=''
+  if [[ \$YES ]]; then
+    yn=y
+  else
+    read "yn?use script [y,[n]]: "
+  fi
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+}
+
+
+scriptPlanAdd 'setup' 'cargo' 'zsh' 'cargo'
+
+scriptPlanAdd 'setup' 'docker' 'zsh' 'docker'
+
+if ! scriptPlanShow; then
+  return
+fi
 
 if scriptHasCmd 'cargo'; then
 function () {
@@ -5121,6 +5759,48 @@ def scriptFindGroup [label: string, ...entries: string] {
   opPrint \$"  (\$tools | str join ', ')"
 }
 
+def --env scriptPlanAdd [action: string, tool: string, shell: string, ...cmds: string] {
+  if (\$cmds | is-not-empty) and not (scriptHasCmd ...\$cmds) {
+    return
+  }
+  load-env {SCRIPT_PLAN_ROWS: ((\$env.SCRIPT_PLAN_ROWS? | default []) | append \$"(\$action)|(\$tool)|(\$shell)")}
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+def scriptPlanShow [] {
+  let rows = ((\$env.SCRIPT_PLAN_ROWS? | default []) | each { |r| \$r | split row '|' })
+  if (\$rows | is-empty) {
+    return false
+  }
+  let headers = ['action' 'tool' 'shell']
+  let widths = (\$headers | enumerate | each { |h|
+    [(\$h.item | str length)] ++ (\$rows | each { |r| \$r | get -o \$h.index | default '' | str length }) | math max
+  })
+  let line = { |cells: list<string>|
+    \$cells | enumerate | each { |c|
+      if \$c.index == 2 { \$c.item } else { \$c.item | fill --alignment left --width (\$widths | get \$c.index) }
+    } | str join ' '
+  }
+  opPrint (do \$line \$headers)
+  opPrint (do \$line (\$headers | each { |h| '-' | fill --alignment left --width (\$h | str length) --character '-' }))
+  for r in \$rows { opPrint (do \$line \$r) }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input 'use script [y,[n]]: '
+  }
+  (\$yn | str downcase) in ['', 'y', 'yes']
+}
+
+
+scriptPlanAdd r#'setup'# r#'cargo'# r#'nu'# r#'cargo'#
+
+scriptPlanAdd r#'setup'# r#'docker'# r#'zsh'# r#'docker'#
+
+if not (scriptPlanShow) {
+  return
+}
 
 if (scriptHasCmd r#'cargo'#) {
 do {
@@ -5143,7 +5823,7 @@ do {
 
 }
 
-zsh --no-rcs -c r#'REQ_URL_SH='http://x/sh/zsh/script/exec/setup?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu'
+zsh --no-rcs -c r#'REQ_URL_SH='http://x/sh/zsh/script/exec/setup?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu&wutAgreed=1'
 
 eval "\$( curl --fail-with-body --location --no-progress-meter --url \$REQ_URL_SH )"
 
@@ -5446,6 +6126,54 @@ function scriptFindGroup {
   opPrint "  \${(j:, :)tools}"
 }
 
+typeset -ga SCRIPT_PLAN_ROWS
+
+function scriptPlanAdd {
+  local action="\$1" tool="\$2" shell="\$3"
+  shift 3
+  if (( \$# )) && ! scriptHasCmd "\$@"; then
+    return
+  fi
+  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+function scriptPlanShow {
+  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
+    return 1
+  fi
+  local -a actions tools shells
+  local row
+  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
+    actions+=("\${row%%|*}")
+    tools+=("\${\${row#*|}%%|*}")
+    shells+=("\${row##*|}")
+  done
+  local aw=6 tw=4 i
+  for i in {1..\${#actions}}; do
+    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
+    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
+  done
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
+  for i in {1..\${#actions}}; do
+    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
+  done
+  local yn=''
+  if [[ \$YES ]]; then
+    yn=y
+  else
+    read "yn?use script [y,[n]]: "
+  fi
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+}
+
+
+scriptPlanAdd 'setup' 'docker' 'zsh' 'docker'
+
+if ! scriptPlanShow; then
+  return
+fi
 
 if scriptHasCmd 'docker'; then
 function () {
@@ -5751,6 +6479,48 @@ function scriptFindGroup {
   fi
   opPrint "\$label"
   opPrint "  \${(j:, :)tools}"
+}
+
+typeset -ga SCRIPT_PLAN_ROWS
+
+function scriptPlanAdd {
+  local action="\$1" tool="\$2" shell="\$3"
+  shift 3
+  if (( \$# )) && ! scriptHasCmd "\$@"; then
+    return
+  fi
+  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+function scriptPlanShow {
+  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
+    return 1
+  fi
+  local -a actions tools shells
+  local row
+  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
+    actions+=("\${row%%|*}")
+    tools+=("\${\${row#*|}%%|*}")
+    shells+=("\${row##*|}")
+  done
+  local aw=6 tw=4 i
+  for i in {1..\${#actions}}; do
+    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
+    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
+  done
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
+  for i in {1..\${#actions}}; do
+    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
+  done
+  local yn=''
+  if [[ \$YES ]]; then
+    yn=y
+  else
+    read "yn?use script [y,[n]]: "
+  fi
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
 
@@ -6064,6 +6834,48 @@ def scriptFindGroup [label: string, ...entries: string] {
   opPrint \$"  (\$tools | str join ', ')"
 }
 
+def --env scriptPlanAdd [action: string, tool: string, shell: string, ...cmds: string] {
+  if (\$cmds | is-not-empty) and not (scriptHasCmd ...\$cmds) {
+    return
+  }
+  load-env {SCRIPT_PLAN_ROWS: ((\$env.SCRIPT_PLAN_ROWS? | default []) | append \$"(\$action)|(\$tool)|(\$shell)")}
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+def scriptPlanShow [] {
+  let rows = ((\$env.SCRIPT_PLAN_ROWS? | default []) | each { |r| \$r | split row '|' })
+  if (\$rows | is-empty) {
+    return false
+  }
+  let headers = ['action' 'tool' 'shell']
+  let widths = (\$headers | enumerate | each { |h|
+    [(\$h.item | str length)] ++ (\$rows | each { |r| \$r | get -o \$h.index | default '' | str length }) | math max
+  })
+  let line = { |cells: list<string>|
+    \$cells | enumerate | each { |c|
+      if \$c.index == 2 { \$c.item } else { \$c.item | fill --alignment left --width (\$widths | get \$c.index) }
+    } | str join ' '
+  }
+  opPrint (do \$line \$headers)
+  opPrint (do \$line (\$headers | each { |h| '-' | fill --alignment left --width (\$h | str length) --character '-' }))
+  for r in \$rows { opPrint (do \$line \$r) }
+  mut yn = ''
+  if 'YES' in \$env {
+    \$yn = 'y'
+  } else {
+    \$yn = input 'use script [y,[n]]: '
+  }
+  (\$yn | str downcase) in ['', 'y', 'yes']
+}
+
+
+scriptPlanAdd r#'setup'# r#'cargo'# r#'nu'# r#'cargo'#
+
+scriptPlanAdd r#'setup'# r#'docker'# r#'zsh'# r#'docker'#
+
+if not (scriptPlanShow) {
+  return
+}
 
 if (scriptHasCmd r#'cargo'#) {
 do {
@@ -6086,10 +6898,747 @@ do {
 
 }
 
-zsh --no-rcs -c r#'REQ_URL_SH='http://x/sh/zsh/script/exec/setup?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu'
+zsh --no-rcs -c r#'REQ_URL_SH='http://x/sh/zsh/script/exec/setup?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu&wutAgreed=1'
 
 eval "\$( curl --fail-with-body --location --no-progress-meter --url \$REQ_URL_SH )"
 
 '#
+\`
+`;
+
+snapshot[`zsh / linux / exec (action only, plans every shell then asks once) 1`] = `
+\`REQ_URL_CFG='http://x/cfg'
+
+REQ_URL_SH='http://x/sh/zsh/script/exec/setup?sysOsPlat=linux'
+
+function opPrint {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  print -r -- "\$*"
+}
+
+function opPrintErr {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*" >&2
+    return
+  fi
+  print -n "\\\\033[0;31m" >&2
+  print -n -r -- "\$*" >&2
+  print "\\\\033[0m" >&2
+}
+
+function opPrintSucc {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;32m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintWarn {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;33m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintInfo {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;34m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintCmd {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;35m"
+  print -n -r "\$1"
+  print -n "\\\\033[0m"
+  shift 1
+  if [[ \$* ]]; then
+    print -n " \\\\033[0;36m"
+    print -n -r -- "\$*"
+    print "\\\\033[0m"
+  fi
+}
+
+function opMaybePrintCmd {
+  if [[ -z \$NOOP ]]; then
+    opPrintCmd "\$@"
+  fi
+}
+
+function opRunCmd {
+  eval "\$*"
+}
+
+function opRunSilentCmd {
+  eval "\$*" &> /dev/null
+}
+
+function opMaybeRunCmd {
+  if [[ -z \$NOOP ]]; then
+    opRunCmd "\$@"
+  fi
+}
+
+function opMaybeRunSilentCmd {
+  if [[ -z \$NOOP ]]; then
+    opRunSilentCmd "\$@"
+  fi
+}
+
+function opPrintRunCmd {
+  opPrintCmd "\$@"
+  opRunCmd "\$@"
+}
+
+function opPrintMaybeRunCmd {
+  opPrintCmd "\$@"
+  opMaybeRunCmd "\$@"
+}
+
+
+SH_VERS_MAJOR=5
+
+SH_VERS_MINOR=9
+
+function () {
+  local major=\$SH_VERS_MAJOR
+  local minor=\$SH_VERS_MINOR
+
+  autoload is-at-least
+  if ! is-at-least "\${major}.\${minor}"; then
+    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
+    exit 1
+  fi
+}
+
+
+NU_VERS_MAJOR=0
+
+NU_VERS_MINOR=114
+
+NU_VERS_PATCH=1
+
+REQ_ORIG='http://x'
+
+SYS_OS_PLAT='linux'
+
+REQ_PATH='/sh/zsh/script/exec/setup'
+
+REQ_SRCH='?sysOsPlat=linux'
+
+function () {
+  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
+    opPrintWarn 'script is for darwin or linux'
+    return
+  fi
+
+  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
+  local wut_home="\${WUT_HOME}"
+  local nu_bin="\${wut_home}/bin/nu"
+  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
+
+  function nu_vers_current {
+    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
+  }
+
+  function nu_lock_release {
+    rmdir "\${lock_dir}" 2> /dev/null
+    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
+    rmdir "\${lock_dir:h}" 2> /dev/null
+  }
+
+  function nu_sync {
+    if nu_vers_current; then
+      return
+    fi
+
+    local triple=''
+    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
+      darwin_aarch64) triple='aarch64-apple-darwin' ;;
+      darwin_x86_64) triple='x86_64-apple-darwin' ;;
+      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
+      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
+      *)
+        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
+        exit 1
+        ;;
+    esac
+
+    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+    local work_dir="\${wut_home}/bin/.nu"
+    mkdir -p "\${work_dir}"
+
+    local lock_dir="\${work_dir}/nu.lock"
+    local acquired=0
+    local waited=0
+    while (( waited < 240 )); do
+      if nu_vers_current; then
+        return
+      fi
+      if mkdir "\${lock_dir}" 2> /dev/null; then
+        acquired=1
+        break
+      fi
+      sleep 0.5
+      waited=\$(( waited + 1 ))
+    done
+    if (( ! acquired )); then
+      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
+      rmdir "\${lock_dir}" 2> /dev/null
+      if ! mkdir "\${lock_dir}" 2> /dev/null; then
+        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
+        exit 1
+      fi
+    fi
+
+    if nu_vers_current; then
+      nu_lock_release
+      return
+    fi
+
+    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
+    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
+    local archive_path="\${work_dir}/\${asset}"
+    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
+
+    rm -rf "\${archive_path}" "\${extract_dir}"
+
+    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
+      opPrintErr "failed to download nu \${nu_vers}: \${url}"
+      rm -f "\${archive_path}"
+      nu_lock_release
+      exit 1
+    fi
+
+    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
+      opPrintErr "failed to extract nu \${nu_vers}"
+      rm -rf "\${archive_path}" "\${extract_dir}"
+      nu_lock_release
+      exit 1
+    fi
+
+    if [[ ! -f "\${extract_dir}/nu" ]]; then
+      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
+      rm -rf "\${archive_path}" "\${extract_dir}"
+      nu_lock_release
+      exit 1
+    fi
+
+    chmod +x "\${extract_dir}/nu"
+    mv -f "\${extract_dir}/nu" "\${nu_bin}"
+    rm -rf "\${archive_path}" "\${extract_dir}"
+
+    nu_lock_release
+  }
+
+  nu_sync
+}
+
+
+SCRIPT_EXEC_ACTION='setup'
+
+function scriptHasCmd {
+  local cmd
+  for cmd in "\$@"; do
+    if type "\$cmd" > /dev/null 2>&1; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
+function scriptFindGroup {
+  local label="\$1"
+  shift
+  local tools=()
+  local entry name cmds
+  for entry in "\$@"; do
+    name="\${entry%%=*}"
+    cmds="\${entry#*=}"
+    if [[ \$cmds == "\$entry" || -z \$cmds ]]; then
+      tools+=("\$name")
+      continue
+    fi
+    if scriptHasCmd \${(s:,:)cmds}; then
+      tools+=("\$name")
+    fi
+  done
+  if (( \${#tools} == 0 )); then
+    return
+  fi
+  opPrint "\$label"
+  opPrint "  \${(j:, :)tools}"
+}
+
+typeset -ga SCRIPT_PLAN_ROWS
+
+function scriptPlanAdd {
+  local action="\$1" tool="\$2" shell="\$3"
+  shift 3
+  if (( \$# )) && ! scriptHasCmd "\$@"; then
+    return
+  fi
+  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+function scriptPlanShow {
+  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
+    return 1
+  fi
+  local -a actions tools shells
+  local row
+  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
+    actions+=("\${row%%|*}")
+    tools+=("\${\${row#*|}%%|*}")
+    shells+=("\${row##*|}")
+  done
+  local aw=6 tw=4 i
+  for i in {1..\${#actions}}; do
+    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
+    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
+  done
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
+  for i in {1..\${#actions}}; do
+    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
+  done
+  local yn=''
+  if [[ \$YES ]]; then
+    yn=y
+  else
+    read "yn?use script [y,[n]]: "
+  fi
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+}
+
+
+scriptPlanAdd 'setup' 'cargo' 'zsh' 'cargo'
+
+scriptPlanAdd 'setup' 'docker' 'zsh' 'docker'
+
+if ! scriptPlanShow; then
+  return
+fi
+
+if scriptHasCmd 'cargo'; then
+function () {
+  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
+    opPrintWarn 'script is for darwin or linux'
+    return
+  fi
+  if ! type cargo > /dev/null; then
+    opPrintWarn 'cargo is not installed'
+    return
+  fi
+  local yn=''
+  if [[ \$YES ]]; then
+    yn=y
+  else
+    read 'yn?setup cargo - install tools (user) [y,[n]]: '
+  fi
+  if [[ \$yn == n ]]; then
+    return
+  fi
+  local url='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
+  opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "\${url}" '|' bash
+  opPrintMaybeRunCmd cargo binstall cargo-cache
+  opPrintMaybeRunCmd cargo binstall cargo-update
+}
+
+fi
+
+if scriptHasCmd 'docker'; then
+function () {
+  if ! type docker > /dev/null; then
+    opPrintWarn 'docker is not installed'
+    return
+  fi
+  opPrintInfo 'setup docker via zsh'
+}
+
+fi
+\`
+`;
+
+snapshot[`zsh / linux / exec (a hop does not ask again) 1`] = `
+\`REQ_URL_CFG='http://x/cfg'
+
+REQ_URL_SH='http://x/sh/zsh/script/exec/setup?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu&wutAgreed=1'
+
+function opPrint {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  print -r -- "\$*"
+}
+
+function opPrintErr {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*" >&2
+    return
+  fi
+  print -n "\\\\033[0;31m" >&2
+  print -n -r -- "\$*" >&2
+  print "\\\\033[0m" >&2
+}
+
+function opPrintSucc {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;32m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintWarn {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;33m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintInfo {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;34m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintCmd {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;35m"
+  print -n -r "\$1"
+  print -n "\\\\033[0m"
+  shift 1
+  if [[ \$* ]]; then
+    print -n " \\\\033[0;36m"
+    print -n -r -- "\$*"
+    print "\\\\033[0m"
+  fi
+}
+
+function opMaybePrintCmd {
+  if [[ -z \$NOOP ]]; then
+    opPrintCmd "\$@"
+  fi
+}
+
+function opRunCmd {
+  eval "\$*"
+}
+
+function opRunSilentCmd {
+  eval "\$*" &> /dev/null
+}
+
+function opMaybeRunCmd {
+  if [[ -z \$NOOP ]]; then
+    opRunCmd "\$@"
+  fi
+}
+
+function opMaybeRunSilentCmd {
+  if [[ -z \$NOOP ]]; then
+    opRunSilentCmd "\$@"
+  fi
+}
+
+function opPrintRunCmd {
+  opPrintCmd "\$@"
+  opRunCmd "\$@"
+}
+
+function opPrintMaybeRunCmd {
+  opPrintCmd "\$@"
+  opMaybeRunCmd "\$@"
+}
+
+
+SH_VERS_MAJOR=5
+
+SH_VERS_MINOR=9
+
+function () {
+  local major=\$SH_VERS_MAJOR
+  local minor=\$SH_VERS_MINOR
+
+  autoload is-at-least
+  if ! is-at-least "\${major}.\${minor}"; then
+    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
+    exit 1
+  fi
+}
+
+
+NU_VERS_MAJOR=0
+
+NU_VERS_MINOR=114
+
+NU_VERS_PATCH=1
+
+REQ_ORIG='http://x'
+
+SYS_OS_PLAT='linux'
+
+REQ_PATH='/sh/zsh/script/exec/setup'
+
+REQ_SRCH='?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu&wutAgreed=1'
+
+function () {
+  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
+    opPrintWarn 'script is for darwin or linux'
+    return
+  fi
+
+  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
+  local wut_home="\${WUT_HOME}"
+  local nu_bin="\${wut_home}/bin/nu"
+  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
+
+  function nu_vers_current {
+    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
+  }
+
+  function nu_lock_release {
+    rmdir "\${lock_dir}" 2> /dev/null
+    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
+    rmdir "\${lock_dir:h}" 2> /dev/null
+  }
+
+  function nu_sync {
+    if nu_vers_current; then
+      return
+    fi
+
+    local triple=''
+    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
+      darwin_aarch64) triple='aarch64-apple-darwin' ;;
+      darwin_x86_64) triple='x86_64-apple-darwin' ;;
+      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
+      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
+      *)
+        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
+        exit 1
+        ;;
+    esac
+
+    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+    local work_dir="\${wut_home}/bin/.nu"
+    mkdir -p "\${work_dir}"
+
+    local lock_dir="\${work_dir}/nu.lock"
+    local acquired=0
+    local waited=0
+    while (( waited < 240 )); do
+      if nu_vers_current; then
+        return
+      fi
+      if mkdir "\${lock_dir}" 2> /dev/null; then
+        acquired=1
+        break
+      fi
+      sleep 0.5
+      waited=\$(( waited + 1 ))
+    done
+    if (( ! acquired )); then
+      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
+      rmdir "\${lock_dir}" 2> /dev/null
+      if ! mkdir "\${lock_dir}" 2> /dev/null; then
+        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
+        exit 1
+      fi
+    fi
+
+    if nu_vers_current; then
+      nu_lock_release
+      return
+    fi
+
+    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
+    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
+    local archive_path="\${work_dir}/\${asset}"
+    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
+
+    rm -rf "\${archive_path}" "\${extract_dir}"
+
+    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
+      opPrintErr "failed to download nu \${nu_vers}: \${url}"
+      rm -f "\${archive_path}"
+      nu_lock_release
+      exit 1
+    fi
+
+    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
+      opPrintErr "failed to extract nu \${nu_vers}"
+      rm -rf "\${archive_path}" "\${extract_dir}"
+      nu_lock_release
+      exit 1
+    fi
+
+    if [[ ! -f "\${extract_dir}/nu" ]]; then
+      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
+      rm -rf "\${archive_path}" "\${extract_dir}"
+      nu_lock_release
+      exit 1
+    fi
+
+    chmod +x "\${extract_dir}/nu"
+    mv -f "\${extract_dir}/nu" "\${nu_bin}"
+    rm -rf "\${archive_path}" "\${extract_dir}"
+
+    nu_lock_release
+  }
+
+  nu_sync
+}
+
+
+SCRIPT_EXEC_ACTION='setup'
+
+function scriptHasCmd {
+  local cmd
+  for cmd in "\$@"; do
+    if type "\$cmd" > /dev/null 2>&1; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
+function scriptFindGroup {
+  local label="\$1"
+  shift
+  local tools=()
+  local entry name cmds
+  for entry in "\$@"; do
+    name="\${entry%%=*}"
+    cmds="\${entry#*=}"
+    if [[ \$cmds == "\$entry" || -z \$cmds ]]; then
+      tools+=("\$name")
+      continue
+    fi
+    if scriptHasCmd \${(s:,:)cmds}; then
+      tools+=("\$name")
+    fi
+  done
+  if (( \${#tools} == 0 )); then
+    return
+  fi
+  opPrint "\$label"
+  opPrint "  \${(j:, :)tools}"
+}
+
+typeset -ga SCRIPT_PLAN_ROWS
+
+function scriptPlanAdd {
+  local action="\$1" tool="\$2" shell="\$3"
+  shift 3
+  if (( \$# )) && ! scriptHasCmd "\$@"; then
+    return
+  fi
+  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
+}
+
+# one table, one question: a script that runs after this does not ask whether to run
+function scriptPlanShow {
+  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
+    return 1
+  fi
+  local -a actions tools shells
+  local row
+  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
+    actions+=("\${row%%|*}")
+    tools+=("\${\${row#*|}%%|*}")
+    shells+=("\${row##*|}")
+  done
+  local aw=6 tw=4 i
+  for i in {1..\${#actions}}; do
+    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
+    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
+  done
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
+  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
+  for i in {1..\${#actions}}; do
+    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
+  done
+  local yn=''
+  if [[ \$YES ]]; then
+    yn=y
+  else
+    read "yn?use script [y,[n]]: "
+  fi
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+}
+
+
+if scriptHasCmd 'docker'; then
+function () {
+  if ! type docker > /dev/null; then
+    opPrintWarn 'docker is not installed'
+    return
+  fi
+  opPrintInfo 'setup docker via zsh'
+}
+
+fi
 \`
 `;

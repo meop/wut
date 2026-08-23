@@ -109,3 +109,17 @@ Execution fails loud:
 - the report prints only exceptions — what failed, what nothing could serve — and exits non-zero
 
 Silence is the bug, not continuing. A failure that scrolled past is the thing this replaces.
+
+## The same shape elsewhere
+
+`virt` and `script` follow it too.
+
+`virt` plans manager against instances, filters by what is on this PATH, shows the table and asks once, then sets
+`VIRT_AGREED` so no manager function asks again. A manager the plan needs but the machine lacks is reported rather than
+prompted about.
+
+`script` is the awkward one, because its fan out spans processes: the calling shell runs what it owns and hops to nu or
+pwsh for the rest. The table has to cover those too, and it can — `has_cmd` is answerable from any shell on the same
+machine — so the shell you invoked builds a row for every match and asks once, and each hop carries `wutAgreed=1` and
+neither plans nor asks. The scripts themselves still ask their own questions once running: those are per action consent
+written into the script, not a manager choice.

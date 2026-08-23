@@ -186,15 +186,15 @@ Deno.test('nu / linux / add (pinned, qemu)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/virt/add/qemu?${PIN}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes("$env.VIRT_INSTANCES = [ r#'test'#, r#'test2'# ]"), true)
-  assertEquals(body.includes('virtQemu'), true)
+  assertEquals(body.includes('"qemu":["test","test2"]'), true)
+  assertEquals(/^virtPlanRun$/m.test(body), true)
 })
 // rem is PINPOINT: one, even though the same filter matched two for add
 Deno.test('nu / linux / rem (pinned, qemu)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/virt/rem/qemu?${PIN}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes("$env.VIRT_INSTANCES = [ r#'test'# ]"), true)
+  assertEquals(body.includes('"qemu":["test"]'), true)
 })
 Deno.test('nu / linux / list (pinned)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/virt/list?${PIN}`))).text()
@@ -225,7 +225,8 @@ Deno.test('nu / linux / add (pinned, no match)', async (t) => {
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(body.includes('no instance matched: nosuchthing'), true)
-  assertEquals(/^virt[A-Z]/m.test(body), false)
+  // the driver is always defined; nothing calls it
+  assertEquals(/^virtPlanRun$/m.test(body), false)
 })
 // darwin supports no virt manager at all
 Deno.test('nu / darwin / find (pinned, no managers)', async (t) => {
@@ -233,4 +234,15 @@ Deno.test('nu / darwin / find (pinned, no managers)', async (t) => {
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(body.includes("opPrint r#'qemu'#"), false)
+})
+
+// virt plans like pack: which manager takes which instances, decided once
+Deno.test('nu / linux / add (pinned, emits a plan for the client to run)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/add/podman?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('$env.VIRT_PLAN'), true)
+  assertEquals(/^virtPlanRun$/m.test(body), true)
+  // no per manager prompting left in the emission
+  assertEquals(body.includes("input r#'use podman"), false)
 })

@@ -31,6 +31,8 @@ const SCRIPT_DIR_PARTS = [SCRIPT_KEY]
 const HAS_CMD_KEY = 'has_cmd'
 // set on a fan out hop, so the target shell runs only what it owns and never hops onward itself
 const SHELL_ONLY_PARAM = 'wutShellOnly'
+// the caller already showed the whole plan and asked, so a hop must not ask again
+const AGREED_PARAM = 'wutAgreed'
 // the shell the run started in, carried across a hop so the target resolves ownership the same way its caller did
 const SHELL_FROM_PARAM = 'wutShellFrom'
 
@@ -82,6 +84,15 @@ function shellGates(
     }
   }
   return { filter, cmds }
+}
+
+// everything below runs only if the plan was agreed to, hops included
+function agreeLines(shell: Sh): Array<string> {
+  return shell.name === 'zsh'
+    ? ['if ! scriptPlanShow; then', '  return', 'fi']
+    : shell.name === 'pwsh'
+    ? ['if (-not (scriptPlanShow)) {', '  return', '}']
+    : ['if not (scriptPlanShow) {', '  return', '}']
 }
 
 // the client side gate, wrapped around a block the client may not be able to run
@@ -215,13 +226,31 @@ async function execOp(shell: Sh, context: Ctx, environment: Env) {
     )
   }
 
+  const agreed = !!getParam(context, AGREED_PARAM)
+
   let _shell = shell
   if (matches.length && args.length) {
     _shell = _shell.with(_shell.varSetArr(WUT_ARGS_KEY, args))
   }
-  if (gated && matches.some((m) => m.shell === shell.name && m.cmds.length)) {
-    _shell = _shell.with(await shell.fileLoad([SCRIPT_KEY], import.meta.resolve, ['..']))
+  _shell = _shell.with(await shell.fileLoad([SCRIPT_KEY], import.meta.resolve, ['..']))
+
+  // the shell that was asked shows the whole plan, hops included: has_cmd is answerable here for all of them
+  if (!agreed) {
+    for (const match of matches) {
+      const action = match.parts[match.parts.length - 1]
+      const tool = match.parts.slice(0, -1).join('/')
+      _shell = _shell.with([
+        ['scriptPlanAdd', action, tool, match.shell, ...match.cmds]
+          .map((p) => _shell.toLiteral(p))
+          .join(' ')
+          .replace(/^\S+/, 'scriptPlanAdd'),
+      ])
+    }
   }
+  if (!agreed) {
+    _shell = _shell.with(agreeLines(shell))
+  }
+
   for (const { name } of shellOrder(shellFrom)) {
     const shellMatches = matches.filter((m) => m.shell === name)
     if (!shellMatches.length) {
@@ -248,6 +277,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env) {
     const redirect = await redirectShell(shell, name, context, [
       `${SHELL_ONLY_PARAM}=${name}`,
       `${SHELL_FROM_PARAM}=${shellFrom}`,
+      `${AGREED_PARAM}=1`,
     ])
     if (redirect) {
       _shell = _shell.with(redirect)

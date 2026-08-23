@@ -135,7 +135,10 @@ Deno.test('nu / linux / exec (action only, runs its own and hops the rest)', asy
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   // cargo has a nu copy so it stays inline; docker does not, so it hops to zsh over pwsh
-  assertEquals(body.includes('/sh/zsh/script/exec/setup?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu'), true)
+  assertEquals(
+    body.includes('/sh/zsh/script/exec/setup?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu&wutAgreed=1'),
+    true,
+  )
 })
 // a fan out hop is marked, so the target runs only what it owns and never hops back
 Deno.test('zsh / linux / exec (action only, shell only hop from nu)', async (t) => {
@@ -174,7 +177,27 @@ Deno.test('nu / linux / exec (action only, gates each block on has_cmd)', async 
 // a named tool is never gated, so its own 'not installed' warning still explains the no op
 Deno.test('nu / linux / exec (named tool is not gated)', async () => {
   const body = await (await runSrv(req('/sh/nu/script/exec/setup/cargo?sysOsPlat=linux'))).text()
-  assertEquals(body.includes('scriptHasCmd'), false)
+  // the helper is always defined; what matters is that no block is wrapped in it
+  assertEquals(body.includes('if (scriptHasCmd'), false)
   assertEquals(body.includes("opPrintWarn 'cargo is not installed'"), true)
   await checkSyntax('nu', body)
+})
+
+// the shell that was asked shows every match, hops included, since has_cmd is answerable here for all of them
+Deno.test('zsh / linux / exec (action only, plans every shell then asks once)', async (t) => {
+  const body = await (await runSrv(req('/sh/zsh/script/exec/setup?sysOsPlat=linux'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('zsh', body)
+  assertEquals(body.includes("scriptPlanAdd 'setup' 'cargo' 'zsh' 'cargo'"), true)
+  assertEquals(body.includes('if ! scriptPlanShow; then'), true)
+})
+// a hop carries the agreement, so the leaf neither plans nor asks
+Deno.test('zsh / linux / exec (a hop does not ask again)', async (t) => {
+  const body = await (await runSrv(
+    req('/sh/zsh/script/exec/setup?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu&wutAgreed=1'),
+  )).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('zsh', body)
+  assertEquals(/^scriptPlanAdd /m.test(body), false)
+  assertEquals(body.includes('if ! scriptPlanShow; then'), false)
 })

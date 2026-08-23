@@ -3,7 +3,7 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in $env and $env.VIRT_MANAGER != $cmd) or (which $cmd | is-empty) {
     return
   }
-  if not (virtPrompt $"use ($cmd) \(system\)") { return }
+  if ('VIRT_AGREED' not-in $env) and not (virtPrompt $"use ($cmd) \(system\)") { return }
 
   def splitYamlDocs [] {
     $in

@@ -40,6 +40,8 @@ const VIRT_PODMAN_NETWORKS_KEY = [VIRT_KEY, 'podman', 'networks']
 const VIRT_OP_PARTS_KEY = (op: string) => [VIRT_KEY, op, 'parts']
 
 const VIRT_INSTANCES_KEY = [VIRT_KEY, 'instances']
+// manager -> instances, for the client to filter by what is here and run after one prompt
+const VIRT_PLAN_KEY = [VIRT_KEY, 'plan']
 
 function getSupportedManagers(context: Ctx, environment: Env) {
   let managers: Array<string> = []
@@ -184,38 +186,24 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       )
     }
 
+    // the plan is data: which manager takes which instances. whether that manager is on this machine, and the one
+    // decision about all of it, are the client's
     const applyResults = (results: Array<Array<string>>) => {
-      let applied = 0
       const virtMap: Record<string, Array<string>> = {}
       for (const parts of results) {
         if (!parts[1] || (parts[0] === 'podman' && !parts[2])) {
           continue
         }
-        ;(virtMap[parts[0]] ??= []).push(parts.slice(1).join('/'))
-      }
-      for (const key of Object.keys(virtMap)) {
-        if (!supportedManagers.includes(key)) {
+        if (!supportedManagers.includes(parts[0])) {
           continue
         }
-        if (supportedManagers.length > 1) {
-          _shell = _shell.with(
-            _shell.varSetStr(VIRT_MANAGER_KEY, key),
-          )
-        }
-        applied += 1
+        ;(virtMap[parts[0]] ??= []).push(parts.slice(1).join('/'))
+      }
+      const applied = Object.keys(virtMap).length
+      if (applied) {
         _shell = _shell
-          .with(
-            _shell.varSetArr(
-              VIRT_INSTANCES_KEY,
-              virtMap[key],
-            ),
-          )
-          .with([getManagerFuncName(key)])
-        if (supportedManagers.length > 1) {
-          _shell = _shell.with(
-            _shell.varUnSet(VIRT_MANAGER_KEY),
-          )
-        }
+          .with(_shell.varSetStr(VIRT_PLAN_KEY, JSON.stringify(virtMap)))
+          .with(['virtPlanRun'])
       }
       return applied
     }

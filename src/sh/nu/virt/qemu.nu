@@ -6,7 +6,7 @@ def virtQemu [] {
   if $env.VIRT_OP == tidy {
     return
   }
-  if not (virtPrompt $"use ($cmd) \(system\)") { return }
+  if ('VIRT_AGREED' not-in $env) and not (virtPrompt $"use ($cmd) \(system\)") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = $localEnv | items { |key, value| [$key, $value] }
