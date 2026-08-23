@@ -99,8 +99,6 @@ function () {
     chmod +x "${extract_dir}/nu"
     mv -f "${extract_dir}/nu" "${nu_bin}"
     rm -rf "${archive_path}" "${extract_dir}"
-    # a copy from before nu was vendored, in a dir that is on PATH
-    rm -f "${wut_home}/bin/nu"
 
     nu_lock_release
   }

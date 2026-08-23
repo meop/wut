@@ -322,8 +322,6 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
-  # a copy from before nu was vendored, in a dir that is on PATH
-  rm --force (\$wut_home | path join 'bin' \$"nu(\$ext)")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -700,8 +698,6 @@ if (\$IsWindows) {
       & chmod +x \$extractedBin
     }
     Move-Item -Force -Path \$extractedBin -Destination \$nuBin
-    # a copy from before nu was vendored, in a dir that is on PATH
-    Remove-Item -Force -Path (Join-Path \$wutHome 'bin' "nu\${ext}") -ErrorAction SilentlyContinue
     Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
 
     wutNuLockRelease \$lockDir
@@ -1044,8 +1040,6 @@ function () {
     chmod +x "\${extract_dir}/nu"
     mv -f "\${extract_dir}/nu" "\${nu_bin}"
     rm -rf "\${archive_path}" "\${extract_dir}"
-    # a copy from before nu was vendored, in a dir that is on PATH
-    rm -f "\${wut_home}/bin/nu"
 
     nu_lock_release
   }

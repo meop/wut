@@ -117,8 +117,6 @@
       & chmod +x $extractedBin
     }
     Move-Item -Force -Path $extractedBin -Destination $nuBin
-    # a copy from before nu was vendored, in a dir that is on PATH
-    Remove-Item -Force -Path (Join-Path $wutHome 'bin' "nu${ext}") -ErrorAction SilentlyContinue
     Remove-Item -Force -Recurse -Path $archivePath, $extractDir -ErrorAction SilentlyContinue
 
     wutNuLockRelease $lockDir

@@ -110,8 +110,6 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x $extracted_bin
   }
   mv --force $extracted_bin $nu_bin
-  # a copy from before nu was vendored, in a dir that is on PATH
-  rm --force ($wut_home | path join 'bin' $"nu($ext)")
   rm --force --recursive $archive_path $extract_dir
 
   wutNuLockRelease $lock_path
