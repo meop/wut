@@ -210,7 +210,6 @@ function buildAndLog(shell: Sh, environment: Env) {
 
 async function initOp(
   shell: Sh,
-  context: Ctx,
   environment: Env,
   op: string,
 ): Promise<
@@ -233,12 +232,6 @@ async function loadGroupConfig(parts: Array<string>) {
 // deno-lint-ignore no-explicit-any
 function groupOp(content: any, op: 'add' | 'remove'): any {
   return content?.operation?.[op]
-}
-
-// packages the group pulls in by name: another pack if one matches, otherwise a loose name
-function groupExtras(content: unknown): Array<string> {
-  const extras = (content as { extras?: unknown } | null)?.extras
-  return Array.isArray(extras) ? extras.filter((e): e is string => typeof e === 'string') : []
 }
 
 // another name for the whole group, for lookup only — managers still install the names they declare
@@ -384,36 +377,6 @@ function processManagerEntryLines(
   lines.push(shell.varUnSet(PACK_MANAGER_KEY))
 
   return lines
-}
-
-export type TierBlock = { label: string; pre?: Array<string>; lines: Array<string> }
-
-export function buildTierChain(tiers: Array<TierBlock>): Array<string> {
-  function buildChain(i: number): Array<string> {
-    const { label, pre = [], lines } = tiers[i]
-    const assign = i === 0 ? `mut yn = ''` : `$yn = ''`
-    const prompt = [
-      assign,
-      `if 'YES' in $env {`,
-      `  $yn = 'y'`,
-      `} else {`,
-      `  $yn = input r#'${label} [y,[n]]: '#`,
-      `}`,
-    ]
-    if (i === tiers.length - 1) {
-      return [...pre, ...prompt, `if ($yn | str lowercase) in ['', 'y', 'yes'] {`, ...lines, `}`]
-    }
-    return [
-      ...pre,
-      ...prompt,
-      `if ($yn | str lowercase) in ['', 'y', 'yes'] {`,
-      ...lines,
-      `} else {`,
-      ...buildChain(i + 1),
-      `}`,
-    ]
-  }
-  return ['do --env {', ...buildChain(0), '}']
 }
 
 function requestedIndex(requested: Array<string>, manager: string): number {
@@ -601,7 +564,6 @@ async function execOp(
 
   const { shell: _shell, allManagers } = await initOp(
     shell,
-    context,
     environment,
     op,
   )

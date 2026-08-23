@@ -2,17 +2,7 @@ import type { Ctx } from '@meop/shire/ctx'
 import type { Env } from '@meop/shire/env'
 import { assertEquals } from '@std/assert'
 
-import {
-  buildTierChain,
-  evaluateGate,
-  getManagerFuncName,
-  getRequestedManagers,
-  getSupportedManagers,
-  parseScriptFilePath,
-  resolveGroupName,
-  selectScriptEntry,
-  type TierBlock,
-} from './pack.ts'
+import { evaluateGate, getRequestedManagers, getSupportedManagers, selectScriptEntry } from './pack.ts'
 
 // --- helpers ---
 
