@@ -1,7 +1,7 @@
 export const snapshot = {};
 
 snapshot[`pwsh / file / find (redirect) 1`] = `
-\`& "\${env:WUT_HOME}/bin/nu" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/file/find?sysOsPlat=linux&wutNuPinned=1''#
+\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/file/find?sysOsPlat=linux&wutNuPinned=1''#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -9,7 +9,7 @@ snapshot[`pwsh / file / find (redirect) 1`] = `
 `;
 
 snapshot[`pwsh / file / sync (redirect) 1`] = `
-\`& "\${env:WUT_HOME}/bin/nu" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/file/sync?sysOsPlat=linux&wutNuPinned=1''#
+\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/file/sync?sysOsPlat=linux&wutNuPinned=1''#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -17,7 +17,7 @@ snapshot[`pwsh / file / sync (redirect) 1`] = `
 `;
 
 snapshot[`pwsh / pack / add (redirect) 1`] = `
-\`& "\${env:WUT_HOME}/bin/nu" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1''#
+\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1''#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -25,7 +25,7 @@ snapshot[`pwsh / pack / add (redirect) 1`] = `
 `;
 
 snapshot[`pwsh / pack / find (redirect) 1`] = `
-\`& "\${env:WUT_HOME}/bin/nu" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1''#
+\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1''#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -33,7 +33,7 @@ snapshot[`pwsh / pack / find (redirect) 1`] = `
 `;
 
 snapshot[`pwsh / virt / list (redirect) 1`] = `
-\`& "\${env:WUT_HOME}/bin/nu" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/virt/list?sysOsPlat=linux&wutNuPinned=1''#
+\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/virt/list?sysOsPlat=linux&wutNuPinned=1''#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -41,7 +41,7 @@ snapshot[`pwsh / virt / list (redirect) 1`] = `
 `;
 
 snapshot[`zsh / file / find (redirect) 1`] = `
-\`"\${WUT_HOME}/bin/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/file/find?sysOsPlat=linux&wutNuPinned=1'\\\\''#
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/file/find?sysOsPlat=linux&wutNuPinned=1'\\\\''#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -49,7 +49,7 @@ snapshot[`zsh / file / find (redirect) 1`] = `
 `;
 
 snapshot[`zsh / file / sync (redirect) 1`] = `
-\`"\${WUT_HOME}/bin/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/file/sync?sysOsPlat=linux&wutNuPinned=1'\\\\''#
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/file/sync?sysOsPlat=linux&wutNuPinned=1'\\\\''#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -57,7 +57,7 @@ snapshot[`zsh / file / sync (redirect) 1`] = `
 `;
 
 snapshot[`zsh / pack / add (redirect) 1`] = `
-\`"\${WUT_HOME}/bin/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'\\\\''#
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'\\\\''#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -65,7 +65,7 @@ snapshot[`zsh / pack / add (redirect) 1`] = `
 `;
 
 snapshot[`zsh / pack / find (redirect) 1`] = `
-\`"\${WUT_HOME}/bin/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'\\\\''#
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'\\\\''#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -73,7 +73,7 @@ snapshot[`zsh / pack / find (redirect) 1`] = `
 `;
 
 snapshot[`zsh / virt / list (redirect) 1`] = `
-\`"\${WUT_HOME}/bin/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/virt/list?sysOsPlat=linux&wutNuPinned=1'\\\\''#
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/virt/list?sysOsPlat=linux&wutNuPinned=1'\\\\''#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 

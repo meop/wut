@@ -6,7 +6,7 @@ function () {
 
   export WUT_HOME="${WUT_HOME:-${HOME}/.wut}"
   local wut_home="${WUT_HOME}"
-  local nu_bin="${wut_home}/bin/nu"
+  local nu_bin="${wut_home}/vendor/nu"
   local nu_vers="${NU_VERS_MAJOR}.${NU_VERS_MINOR}.${NU_VERS_PATCH}"
 
   function nu_vers_current {
@@ -37,7 +37,7 @@ function () {
     esac
 
     # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-    local work_dir="${wut_home}/bin/.nu"
+    local work_dir="${wut_home}/vendor/.nu"
     mkdir -p "${work_dir}"
 
     local lock_dir="${work_dir}/nu.lock"
@@ -99,6 +99,8 @@ function () {
     chmod +x "${extract_dir}/nu"
     mv -f "${extract_dir}/nu" "${nu_bin}"
     rm -rf "${archive_path}" "${extract_dir}"
+    # a copy from before nu was vendored, in a dir that is on PATH
+    rm -f "${wut_home}/bin/nu"
 
     nu_lock_release
   }

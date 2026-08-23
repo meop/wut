@@ -17,10 +17,10 @@ const sysOsPlatToNativeShell: Record<string, string> = {
 function pinnedNuBinCmd(shell: Sh, sysOsPlat: string): string {
   const ext = sysOsPlat === 'winnt' ? '.exe' : ''
   return shell.name === 'pwsh'
-    ? `& "\${env:WUT_HOME}/bin/nu${ext}"`
+    ? `& "\${env:WUT_HOME}/vendor/nu${ext}"`
     : shell.name === 'zsh'
-    ? `"\${WUT_HOME}/bin/nu${ext}"`
-    : `^($env.WUT_HOME | path join 'bin' 'nu${ext}')`
+    ? `"\${WUT_HOME}/vendor/nu${ext}"`
+    : `^($env.WUT_HOME | path join 'vendor' 'nu${ext}')`
 }
 
 export async function redirectShell(

@@ -35,7 +35,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = ($wut_home | path join 'bin' '.nu')
+  let work_dir = ($wut_home | path join 'vendor' '.nu')
   mkdir $work_dir
 
   let lock_path = ($work_dir | path join 'nu.lock')
@@ -110,6 +110,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x $extracted_bin
   }
   mv --force $extracted_bin $nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force ($wut_home | path join 'bin' $"nu($ext)")
   rm --force --recursive $archive_path $extract_dir
 
   wutNuLockRelease $lock_path
@@ -124,7 +126,7 @@ def --env wutNuSync [] {
   $env.WUT_HOME = ($env.WUT_HOME? | default ($env.HOME | path join '.wut'))
   let wut_home = $env.WUT_HOME
   let ext = if $env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = ($wut_home | path join 'bin' $"nu($ext)")
+  let nu_bin = ($wut_home | path join 'vendor' $"nu($ext)")
   let nu_vers = $"($env.NU_VERS_MAJOR).($env.NU_VERS_MINOR).($env.NU_VERS_PATCH)"
 
   wutNuInstall $wut_home $nu_bin $nu_vers $ext

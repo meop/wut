@@ -39,7 +39,7 @@
     }
 
     # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nuBin path
-    $workDir = Join-Path $wutHome 'bin' '.nu'
+    $workDir = Join-Path $wutHome 'vendor' '.nu'
     New-Item -ItemType Directory -Force -Path $workDir | Out-Null
 
     $lockDir = Join-Path $workDir 'nu.lock'
@@ -117,6 +117,8 @@
       & chmod +x $extractedBin
     }
     Move-Item -Force -Path $extractedBin -Destination $nuBin
+    # a copy from before nu was vendored, in a dir that is on PATH
+    Remove-Item -Force -Path (Join-Path $wutHome 'bin' "nu${ext}") -ErrorAction SilentlyContinue
     Remove-Item -Force -Recurse -Path $archivePath, $extractDir -ErrorAction SilentlyContinue
 
     wutNuLockRelease $lockDir
@@ -130,7 +132,7 @@
   $env:WUT_HOME = $env:WUT_HOME ?? "${env:HOME}/.wut"
   $wutHome = $env:WUT_HOME
   $ext = if ($SYS_OS_PLAT -eq 'winnt') { '.exe' } else { '' }
-  $nuBin = Join-Path $wutHome 'bin' "nu${ext}"
+  $nuBin = Join-Path $wutHome 'vendor' "nu${ext}"
   $nuVers = "${NU_VERS_MAJOR}.${NU_VERS_MINOR}.${NU_VERS_PATCH}"
 
   wutNuInstall $wutHome $nuBin $nuVers $ext

@@ -1,7 +1,7 @@
 export const snapshot = {};
 
 snapshot[`nu / alpine / add 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -9,7 +9,7 @@ snapshot[`nu / alpine / add 1`] = `
 `;
 
 snapshot[`nu / alpine / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -17,7 +17,7 @@ snapshot[`nu / alpine / find 1`] = `
 `;
 
 snapshot[`nu / alpine / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -25,7 +25,7 @@ snapshot[`nu / alpine / list 1`] = `
 `;
 
 snapshot[`nu / alpine / out 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -33,7 +33,7 @@ snapshot[`nu / alpine / out 1`] = `
 `;
 
 snapshot[`nu / alpine / rem 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -41,7 +41,7 @@ snapshot[`nu / alpine / rem 1`] = `
 `;
 
 snapshot[`nu / alpine / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -49,7 +49,7 @@ snapshot[`nu / alpine / sync 1`] = `
 `;
 
 snapshot[`nu / alpine / tidy 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -57,7 +57,7 @@ snapshot[`nu / alpine / tidy 1`] = `
 `;
 
 snapshot[`nu / arch / add 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -65,7 +65,7 @@ snapshot[`nu / arch / add 1`] = `
 `;
 
 snapshot[`nu / arch / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -73,7 +73,7 @@ snapshot[`nu / arch / find 1`] = `
 `;
 
 snapshot[`nu / arch / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -81,7 +81,7 @@ snapshot[`nu / arch / list 1`] = `
 `;
 
 snapshot[`nu / arch / out 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -89,7 +89,7 @@ snapshot[`nu / arch / out 1`] = `
 `;
 
 snapshot[`nu / arch / rem 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -97,7 +97,7 @@ snapshot[`nu / arch / rem 1`] = `
 `;
 
 snapshot[`nu / arch / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -105,7 +105,7 @@ snapshot[`nu / arch / sync 1`] = `
 `;
 
 snapshot[`nu / arch / add (shell group) — wide 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/shell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/shell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -113,7 +113,7 @@ snapshot[`nu / arch / add (shell group) — wide 1`] = `
 `;
 
 snapshot[`nu / arch / rem (shell group) — pinpoint 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/shell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/shell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -121,7 +121,7 @@ snapshot[`nu / arch / rem (shell group) — pinpoint 1`] = `
 `;
 
 snapshot[`nu / arch / tidy 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -129,7 +129,7 @@ snapshot[`nu / arch / tidy 1`] = `
 `;
 
 snapshot[`nu / rocky / add 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -137,7 +137,7 @@ snapshot[`nu / rocky / add 1`] = `
 `;
 
 snapshot[`nu / rocky / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -145,7 +145,7 @@ snapshot[`nu / rocky / find 1`] = `
 `;
 
 snapshot[`nu / rocky / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -153,7 +153,7 @@ snapshot[`nu / rocky / list 1`] = `
 `;
 
 snapshot[`nu / rocky / out 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -161,7 +161,7 @@ snapshot[`nu / rocky / out 1`] = `
 `;
 
 snapshot[`nu / rocky / rem 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -169,7 +169,7 @@ snapshot[`nu / rocky / rem 1`] = `
 `;
 
 snapshot[`nu / rocky / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -177,7 +177,7 @@ snapshot[`nu / rocky / sync 1`] = `
 `;
 
 snapshot[`nu / rocky / tidy 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -185,7 +185,7 @@ snapshot[`nu / rocky / tidy 1`] = `
 `;
 
 snapshot[`nu / ubuntu / add 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -193,7 +193,7 @@ snapshot[`nu / ubuntu / add 1`] = `
 `;
 
 snapshot[`nu / ubuntu / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -201,7 +201,7 @@ snapshot[`nu / ubuntu / find 1`] = `
 `;
 
 snapshot[`nu / ubuntu / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -209,7 +209,7 @@ snapshot[`nu / ubuntu / list 1`] = `
 `;
 
 snapshot[`nu / ubuntu / out 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -217,7 +217,7 @@ snapshot[`nu / ubuntu / out 1`] = `
 `;
 
 snapshot[`nu / ubuntu / rem 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -225,7 +225,7 @@ snapshot[`nu / ubuntu / rem 1`] = `
 `;
 
 snapshot[`nu / ubuntu / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -233,7 +233,7 @@ snapshot[`nu / ubuntu / sync 1`] = `
 `;
 
 snapshot[`nu / ubuntu / tidy 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -241,7 +241,7 @@ snapshot[`nu / ubuntu / tidy 1`] = `
 `;
 
 snapshot[`nu / void / add 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -249,7 +249,7 @@ snapshot[`nu / void / add 1`] = `
 `;
 
 snapshot[`nu / void / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -257,7 +257,7 @@ snapshot[`nu / void / find 1`] = `
 `;
 
 snapshot[`nu / void / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -265,7 +265,7 @@ snapshot[`nu / void / list 1`] = `
 `;
 
 snapshot[`nu / void / out 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -273,7 +273,7 @@ snapshot[`nu / void / out 1`] = `
 `;
 
 snapshot[`nu / void / rem 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -281,7 +281,7 @@ snapshot[`nu / void / rem 1`] = `
 `;
 
 snapshot[`nu / void / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -289,7 +289,7 @@ snapshot[`nu / void / sync 1`] = `
 `;
 
 snapshot[`nu / void / tidy 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -297,7 +297,7 @@ snapshot[`nu / void / tidy 1`] = `
 `;
 
 snapshot[`nu / suse / add 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -305,7 +305,7 @@ snapshot[`nu / suse / add 1`] = `
 `;
 
 snapshot[`nu / suse / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -313,7 +313,7 @@ snapshot[`nu / suse / find 1`] = `
 `;
 
 snapshot[`nu / suse / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -321,7 +321,7 @@ snapshot[`nu / suse / list 1`] = `
 `;
 
 snapshot[`nu / suse / out 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -329,7 +329,7 @@ snapshot[`nu / suse / out 1`] = `
 `;
 
 snapshot[`nu / suse / rem 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -337,7 +337,7 @@ snapshot[`nu / suse / rem 1`] = `
 `;
 
 snapshot[`nu / suse / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -345,7 +345,7 @@ snapshot[`nu / suse / sync 1`] = `
 `;
 
 snapshot[`nu / suse / tidy 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -353,7 +353,7 @@ snapshot[`nu / suse / tidy 1`] = `
 `;
 
 snapshot[`nu / darwin / add 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=darwin&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=darwin&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -361,7 +361,7 @@ snapshot[`nu / darwin / add 1`] = `
 `;
 
 snapshot[`nu / darwin / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=darwin&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=darwin&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -369,7 +369,7 @@ snapshot[`nu / darwin / find 1`] = `
 `;
 
 snapshot[`nu / darwin / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=darwin&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=darwin&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -377,7 +377,7 @@ snapshot[`nu / darwin / list 1`] = `
 `;
 
 snapshot[`nu / darwin / out 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=darwin&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=darwin&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -385,7 +385,7 @@ snapshot[`nu / darwin / out 1`] = `
 `;
 
 snapshot[`nu / darwin / rem 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=darwin&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=darwin&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -393,7 +393,7 @@ snapshot[`nu / darwin / rem 1`] = `
 `;
 
 snapshot[`nu / darwin / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=darwin&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=darwin&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -401,7 +401,7 @@ snapshot[`nu / darwin / sync 1`] = `
 `;
 
 snapshot[`nu / darwin / tidy 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=darwin&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=darwin&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -409,7 +409,7 @@ snapshot[`nu / darwin / tidy 1`] = `
 `;
 
 snapshot[`nu / winnt / add 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=winnt&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=winnt&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -417,7 +417,7 @@ snapshot[`nu / winnt / add 1`] = `
 `;
 
 snapshot[`nu / winnt / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=winnt&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=winnt&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -425,7 +425,7 @@ snapshot[`nu / winnt / find 1`] = `
 `;
 
 snapshot[`nu / winnt / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=winnt&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=winnt&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -433,7 +433,7 @@ snapshot[`nu / winnt / list 1`] = `
 `;
 
 snapshot[`nu / winnt / out 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=winnt&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=winnt&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -441,7 +441,7 @@ snapshot[`nu / winnt / out 1`] = `
 `;
 
 snapshot[`nu / winnt / rem 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=winnt&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=winnt&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -449,7 +449,7 @@ snapshot[`nu / winnt / rem 1`] = `
 `;
 
 snapshot[`nu / winnt / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=winnt&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=winnt&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -457,7 +457,7 @@ snapshot[`nu / winnt / sync 1`] = `
 `;
 
 snapshot[`nu / winnt / tidy 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=winnt&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=winnt&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -465,7 +465,7 @@ snapshot[`nu / winnt / tidy 1`] = `
 `;
 
 snapshot[`nu / winnt / find (no names) 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find?sysOsPlat=winnt&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find?sysOsPlat=winnt&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -473,7 +473,7 @@ snapshot[`nu / winnt / find (no names) 1`] = `
 `;
 
 snapshot[`nu / darwin / find (no names) 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find?sysOsPlat=darwin&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find?sysOsPlat=darwin&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -481,7 +481,7 @@ snapshot[`nu / darwin / find (no names) 1`] = `
 `;
 
 snapshot[`nu / arch / find (-m apt) 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/--managers/apt/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/--managers/apt/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -489,7 +489,7 @@ snapshot[`nu / arch / find (-m apt) 1`] = `
 `;
 
 snapshot[`nu / arch / find (-m yay) 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/--managers/yay/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/--managers/yay/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -497,7 +497,7 @@ snapshot[`nu / arch / find (-m yay) 1`] = `
 `;
 
 snapshot[`nu / darwin / add (claude) 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/claude?sysOsPlat=darwin&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/claude?sysOsPlat=darwin&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -505,7 +505,7 @@ snapshot[`nu / darwin / add (claude) 1`] = `
 `;
 
 snapshot[`nu / winnt / add (claude) 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/claude?sysOsPlat=winnt&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/claude?sysOsPlat=winnt&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -513,7 +513,7 @@ snapshot[`nu / winnt / add (claude) 1`] = `
 `;
 
 snapshot[`nu / darwin / add (rust) 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/rust?sysOsPlat=darwin&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/rust?sysOsPlat=darwin&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -521,7 +521,7 @@ snapshot[`nu / darwin / add (rust) 1`] = `
 `;
 
 snapshot[`nu / arch / add (nushell) 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/nushell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/nushell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -529,7 +529,7 @@ snapshot[`nu / arch / add (nushell) 1`] = `
 `;
 
 snapshot[`nu / ubuntu / add (nushell) 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/nushell?sysOsPlat=linux&sysOs=ubuntu&sysOsLike=debian&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/nushell?sysOsPlat=linux&sysOs=ubuntu&sysOsLike=debian&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -537,7 +537,7 @@ snapshot[`nu / ubuntu / add (nushell) 1`] = `
 `;
 
 snapshot[`nu / darwin / add (ai-code) 1`] = `
-\`^(\$env.WUT_HOME | path join 'bin' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/ai-code?sysOsPlat=darwin&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/ai-code?sysOsPlat=darwin&wutNuPinned=1'#
 
 ^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
 
@@ -783,7 +783,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -858,6 +858,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$"nu(\$ext)")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -872,7 +874,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$"nu(\$ext)")
+  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
   let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -1062,7 +1064,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -1137,6 +1139,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$"nu(\$ext)")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -1151,7 +1155,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$"nu(\$ext)")
+  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
   let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -1792,7 +1796,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -1867,6 +1871,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$"nu(\$ext)")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -1881,7 +1887,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$"nu(\$ext)")
+  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
   let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -2539,7 +2545,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -2614,6 +2620,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$"nu(\$ext)")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -2628,7 +2636,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$"nu(\$ext)")
+  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
   let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -3288,7 +3296,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -3363,6 +3371,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -3377,7 +3387,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -4825,7 +4835,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -4900,6 +4910,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -4914,7 +4926,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -6381,7 +6393,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -6456,6 +6468,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -6470,7 +6484,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -7937,7 +7951,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -8012,6 +8026,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -8026,7 +8042,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -9529,7 +9545,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -9604,6 +9620,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -9618,7 +9636,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -11085,7 +11103,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -11160,6 +11178,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -11174,7 +11194,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -12639,7 +12659,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -12714,6 +12734,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -12728,7 +12750,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -14162,7 +14184,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -14237,6 +14259,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -14251,7 +14275,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -15685,7 +15709,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -15760,6 +15784,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -15774,7 +15800,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -17224,7 +17250,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -17299,6 +17325,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -17313,7 +17341,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -18763,7 +18791,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -18838,6 +18866,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -18852,7 +18882,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -20319,7 +20349,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -20394,6 +20424,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -20408,7 +20440,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -21875,7 +21907,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -21950,6 +21982,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -21964,7 +21998,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -23413,7 +23447,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -23488,6 +23522,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -23502,7 +23538,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -24950,7 +24986,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -25025,6 +25061,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -25039,7 +25077,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -26506,7 +26544,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -26581,6 +26619,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$"nu(\$ext)")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -26595,7 +26635,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$"nu(\$ext)")
+  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
   let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -27187,7 +27227,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -27262,6 +27302,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$"nu(\$ext)")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -27276,7 +27318,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$"nu(\$ext)")
+  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
   let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -27927,7 +27969,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -28002,6 +28044,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -28016,7 +28060,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -29483,7 +29527,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -29558,6 +29602,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -29572,7 +29618,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
@@ -31075,7 +31121,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'bin' '.nu')
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
   let lock_path = (\$work_dir | path join 'nu.lock')
@@ -31150,6 +31196,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
+  # a copy from before nu was vendored, in a dir that is on PATH
+  rm --force (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
   rm --force --recursive \$archive_path \$extract_dir
 
   wutNuLockRelease \$lock_path
@@ -31164,7 +31212,7 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'bin' \$\\"nu(\$ext)\\")
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext

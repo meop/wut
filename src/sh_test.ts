@@ -110,13 +110,13 @@ Deno.test('execNativeShell - special characters are safely wrapped', () => {
 Deno.test('execScriptShell - nu flavor on linux invokes the pinned binary, not bare nu', () => {
   const shell = new ZSh()
   const result = execScriptShell(shell, 'linux', 'nu', 'print hello')
-  assertEquals(result.startsWith('"${WUT_HOME}/bin/nu"'), true)
+  assertEquals(result.startsWith('"${WUT_HOME}/vendor/nu"'), true)
 })
 
 Deno.test('execScriptShell - nu flavor on winnt invokes the pinned .exe', () => {
   const shell = new PowerSh()
   const result = execScriptShell(shell, 'winnt', 'nu', 'print hello')
-  assertEquals(result.startsWith('& "${env:WUT_HOME}/bin/nu.exe"'), true)
+  assertEquals(result.startsWith('& "${env:WUT_HOME}/vendor/nu.exe"'), true)
 })
 
 Deno.test('execScriptShell - pwsh flavor delegates to execNativeShell', () => {
