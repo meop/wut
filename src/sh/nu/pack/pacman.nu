@@ -17,7 +17,7 @@ def --env packPacman [] {
     return
   }
 
-  if ($env.PACK_OP not-in ['add', 'remove']) and not (packPrompt $"use ($mgr) \(system\)") { return }
+  if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($mgr) \(system\)") { return }
   let cmd = if $mgr == pacman { packElevate $mgr } else { $mgr }
 
   match $env.PACK_OP {

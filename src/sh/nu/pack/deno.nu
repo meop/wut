@@ -9,7 +9,7 @@ def --env packDeno [] {
     return
   }
 
-  if ($env.PACK_OP not-in ['add', 'remove']) and not (packPrompt $"use ($cmd) \(user\)") { return }
+  if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($cmd) \(user\)") { return }
 
   def getBinDir [] {
     [$env.HOME '.deno' bin] | path join

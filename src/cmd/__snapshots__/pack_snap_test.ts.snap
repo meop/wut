@@ -1436,6 +1436,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -1562,7 +1582,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$"use (\$cmd) \\\\(system\\\\)") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$"use (\$cmd) \\\\(system\\\\)") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -2170,6 +2190,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -2304,7 +2344,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$"use (\$mgr) \\\\(system\\\\)") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$"use (\$mgr) \\\\(system\\\\)") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -2921,6 +2961,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -3055,7 +3115,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$"use (\$mgr) \\\\(system\\\\)") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$"use (\$mgr) \\\\(system\\\\)") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -3672,6 +3732,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -3802,7 +3882,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -3872,7 +3952,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -3914,7 +3994,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -3977,7 +4057,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -4021,7 +4101,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -4080,7 +4160,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -4137,7 +4217,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -4185,7 +4265,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -4234,7 +4314,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -4282,7 +4362,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -4324,7 +4404,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -4381,7 +4461,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -4439,7 +4519,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -4487,7 +4567,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -4531,7 +4611,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -4580,7 +4660,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -5215,6 +5295,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -5345,7 +5445,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -5415,7 +5515,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -5457,7 +5557,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -5520,7 +5620,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -5564,7 +5664,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -5623,7 +5723,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -5680,7 +5780,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -5728,7 +5828,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -5777,7 +5877,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -5825,7 +5925,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -5867,7 +5967,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -5924,7 +6024,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -5982,7 +6082,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -6030,7 +6130,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -6074,7 +6174,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -6123,7 +6223,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -6775,6 +6875,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -6905,7 +7025,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -6975,7 +7095,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -7017,7 +7137,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -7080,7 +7200,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -7124,7 +7244,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -7183,7 +7303,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -7240,7 +7360,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -7288,7 +7408,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -7337,7 +7457,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -7385,7 +7505,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -7427,7 +7547,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -7484,7 +7604,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -7542,7 +7662,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -7590,7 +7710,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -7634,7 +7754,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -7683,7 +7803,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -8335,6 +8455,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -8465,7 +8605,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -8535,7 +8675,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -8577,7 +8717,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -8640,7 +8780,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -8684,7 +8824,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -8743,7 +8883,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -8800,7 +8940,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -8848,7 +8988,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -8897,7 +9037,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -8945,7 +9085,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -8987,7 +9127,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -9044,7 +9184,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -9102,7 +9242,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -9150,7 +9290,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -9194,7 +9334,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -9243,7 +9383,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -9931,6 +10071,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -10061,7 +10221,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -10131,7 +10291,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -10173,7 +10333,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -10236,7 +10396,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -10280,7 +10440,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -10339,7 +10499,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -10396,7 +10556,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -10444,7 +10604,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -10493,7 +10653,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -10541,7 +10701,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -10583,7 +10743,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -10640,7 +10800,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -10698,7 +10858,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -10746,7 +10906,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -10790,7 +10950,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -10839,7 +10999,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -11491,6 +11651,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -11621,7 +11801,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -11691,7 +11871,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -11733,7 +11913,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -11796,7 +11976,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -11840,7 +12020,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -11899,7 +12079,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -11956,7 +12136,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -12004,7 +12184,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -12053,7 +12233,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -12101,7 +12281,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -12143,7 +12323,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -12200,7 +12380,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -12258,7 +12438,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -12306,7 +12486,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -12350,7 +12530,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -12399,7 +12579,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -13047,6 +13227,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -13177,7 +13377,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -13247,7 +13447,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -13289,7 +13489,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -13352,7 +13552,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -13396,7 +13596,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -13455,7 +13655,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -13512,7 +13712,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -13560,7 +13760,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -13609,7 +13809,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -13657,7 +13857,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -13699,7 +13899,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -13756,7 +13956,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -13814,7 +14014,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -13862,7 +14062,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -13906,7 +14106,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -13955,7 +14155,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -14007,22 +14207,7 @@ def --env packZypper [] {
 
 \$env.PACK_MANAGERS = [ r#'bun'#, r#'cargo'#, r#'deno'#, r#'ghpm'#, r#'pnpm'#, r#'uv'#, r#'apk'#, r#'apt'#, r#'brew'#, r#'choco'#, r#'dnf'#, r#'pacman'#, r#'paru'#, r#'scoop'#, r#'winget'#, r#'xbps'#, r#'yay'#, r#'zypper'# ]
 
-packBun
-packCargo
-packDeno
-packGhpm
-packPnpm
-packUv
-packApk
-packApt
-packBrew
-packChoco
-packDnf
-packPacman
-packScoop
-packWinget
-packXbps
-packZypper
+packSyncPlanRun
 "
 `;
 
@@ -14574,6 +14759,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -14704,7 +14909,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -14774,7 +14979,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -14816,7 +15021,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -14879,7 +15084,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -14923,7 +15128,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -14982,7 +15187,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -15039,7 +15244,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -15087,7 +15292,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -15136,7 +15341,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -15184,7 +15389,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -15226,7 +15431,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -15283,7 +15488,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -15341,7 +15546,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -15389,7 +15594,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -15433,7 +15638,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -15482,7 +15687,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -16103,6 +16308,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -16233,7 +16458,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -16303,7 +16528,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -16345,7 +16570,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -16408,7 +16633,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -16452,7 +16677,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -16511,7 +16736,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -16568,7 +16793,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -16616,7 +16841,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -16665,7 +16890,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -16713,7 +16938,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -16755,7 +16980,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -16812,7 +17037,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -16870,7 +17095,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -16918,7 +17143,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -16962,7 +17187,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -17011,7 +17236,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -17646,6 +17871,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -17776,7 +18021,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -17846,7 +18091,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -17888,7 +18133,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -17951,7 +18196,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -17995,7 +18240,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -18054,7 +18299,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -18111,7 +18356,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -18159,7 +18404,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -18208,7 +18453,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -18256,7 +18501,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -18298,7 +18543,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -18355,7 +18600,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -18413,7 +18658,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -18461,7 +18706,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -18505,7 +18750,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -18554,7 +18799,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -19189,6 +19434,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -19319,7 +19584,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -19389,7 +19654,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -19431,7 +19696,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -19494,7 +19759,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -19538,7 +19803,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -19597,7 +19862,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -19654,7 +19919,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -19702,7 +19967,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -19751,7 +20016,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -19799,7 +20064,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -19841,7 +20106,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -19898,7 +20163,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -19956,7 +20221,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -20004,7 +20269,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -20048,7 +20313,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -20097,7 +20362,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -20749,6 +21014,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -20879,7 +21164,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -20949,7 +21234,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -20991,7 +21276,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -21054,7 +21339,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -21098,7 +21383,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -21157,7 +21442,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -21214,7 +21499,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -21262,7 +21547,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -21311,7 +21596,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -21359,7 +21644,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -21401,7 +21686,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -21458,7 +21743,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -21516,7 +21801,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -21564,7 +21849,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -21608,7 +21893,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -21657,7 +21942,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -22309,6 +22594,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -22439,7 +22744,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -22509,7 +22814,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -22551,7 +22856,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -22614,7 +22919,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -22658,7 +22963,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -22717,7 +23022,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -22774,7 +23079,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -22822,7 +23127,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -22871,7 +23176,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -22919,7 +23224,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -22961,7 +23266,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -23018,7 +23323,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -23076,7 +23381,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -23124,7 +23429,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -23168,7 +23473,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -23217,7 +23522,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -23849,6 +24154,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -23979,7 +24304,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -24049,7 +24374,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -24091,7 +24416,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -24154,7 +24479,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -24198,7 +24523,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -24257,7 +24582,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -24314,7 +24639,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -24362,7 +24687,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -24411,7 +24736,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -24459,7 +24784,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -24501,7 +24826,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -24558,7 +24883,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -24616,7 +24941,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -24664,7 +24989,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -24708,7 +25033,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -24757,7 +25082,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -25392,6 +25717,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -25522,7 +25867,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -25592,7 +25937,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -25634,7 +25979,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -25697,7 +26042,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -25741,7 +26086,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -25800,7 +26145,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -25857,7 +26202,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -25905,7 +26250,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -25954,7 +26299,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -26002,7 +26347,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -26044,7 +26389,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -26101,7 +26446,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -26159,7 +26504,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -26207,7 +26552,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -26251,7 +26596,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -26300,7 +26645,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -26949,6 +27294,26 @@ def --env packPlanRun [] {
       packRunLoose \$entry.manager
     } catch { |e|
       packMarkFailed (\$entry.names | str join ', ') \$e.msg
+    }
+  }
+  packReport
+}
+
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
     }
   }
   packReport
@@ -27639,6 +28004,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -27765,7 +28150,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$"use (\$cmd) \\\\(system\\\\)") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$"use (\$cmd) \\\\(system\\\\)") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -28381,6 +28766,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -28511,7 +28916,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -28581,7 +28986,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -28623,7 +29028,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -28686,7 +29091,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -28730,7 +29135,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -28789,7 +29194,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -28846,7 +29251,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -28894,7 +29299,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -28943,7 +29348,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -28991,7 +29396,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -29033,7 +29438,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -29090,7 +29495,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -29148,7 +29553,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -29196,7 +29601,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -29240,7 +29645,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -29289,7 +29694,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -29941,6 +30346,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -30071,7 +30496,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -30141,7 +30566,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -30183,7 +30608,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -30246,7 +30671,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -30290,7 +30715,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -30349,7 +30774,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -30406,7 +30831,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -30454,7 +30879,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -30503,7 +30928,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -30551,7 +30976,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -30593,7 +31018,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -30650,7 +31075,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -30708,7 +31133,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -30756,7 +31181,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -30800,7 +31225,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -30849,7 +31274,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -31537,6 +31962,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if (\$here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] (\$here | each { |m| [\$m] })
+  if not (packPrompt 'use pack') { return }
+
+  \$env.PACK_AGREED = '1'
+  for m in \$here {
+    try {
+      packCallManager \$m
+    } catch { |e|
+      packMarkFailed \$m \$e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match \$env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
@@ -31667,7 +32112,7 @@ def --env packBun [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -31737,7 +32182,7 @@ def --env packCargo [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -31779,7 +32224,7 @@ def --env packDeno [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   def getBinDir [] {
     [\$env.HOME '.deno' bin] | path join
@@ -31842,7 +32287,7 @@ def --env packGhpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -31886,7 +32331,7 @@ def --env packPnpm [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -31945,7 +32390,7 @@ def --env packUv [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under \`uv tool dir\`/<name> (undocumented as a stable path,
@@ -32002,7 +32447,7 @@ def --env packApk [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -32050,7 +32495,7 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -32099,7 +32544,7 @@ def --env packBrew [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -32147,7 +32592,7 @@ def --env packChoco [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -32189,7 +32634,7 @@ def --env packDnf [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -32246,7 +32691,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
   match \$env.PACK_OP {
@@ -32304,7 +32749,7 @@ def --env packScoop [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -32352,7 +32797,7 @@ def --env packWinget [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(user/system\\\\)\\") { return }
 
   match \$env.PACK_OP {
     add => {
@@ -32396,7 +32841,7 @@ def --env packXbps [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {
@@ -32445,7 +32890,7 @@ def --env packZypper [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   match \$env.PACK_OP {

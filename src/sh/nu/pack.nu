@@ -270,6 +270,26 @@ def --env packPlanRun [] {
   packReport
 }
 
+def --env packSyncPlanRun [] {
+  let here = (packManagersHere)
+  if ($here | is-empty) {
+    return
+  }
+
+  packTable ['manager'] ($here | each { |m| [$m] })
+  if not (packPrompt 'use pack') { return }
+
+  $env.PACK_AGREED = '1'
+  for m in $here {
+    try {
+      packCallManager $m
+    } catch { |e|
+      packMarkFailed $m $e.msg
+    }
+  }
+  packReport
+}
+
 def packNothingToDo [key: string] {
   match $env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),

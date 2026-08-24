@@ -9,7 +9,7 @@ def --env packWinget [] {
     return
   }
 
-  if ($env.PACK_OP not-in ['add', 'remove']) and not (packPrompt $"use ($cmd) \(user/system\)") { return }
+  if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($cmd) \(user/system\)") { return }
 
   match $env.PACK_OP {
     add => {

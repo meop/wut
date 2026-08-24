@@ -635,6 +635,13 @@ async function execOp(
     result = result.with(['packPlanRun'])
 
     return buildAndLog(result, environment)
+  } else if (op === 'sync') {
+    if (names.length) {
+      result = setOpNames(result, op, names)
+    }
+    result = result.with(['packSyncPlanRun'])
+
+    return buildAndLog(result, environment)
   }
 
   const remaining = names.filter((n) => !found.includes(n))

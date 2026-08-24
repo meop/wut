@@ -9,7 +9,7 @@ def --env packUv [] {
     return
   }
 
-  if ($env.PACK_OP not-in ['add', 'remove']) and not (packPrompt $"use ($cmd) \(user\)") { return }
+  if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($cmd) \(user\)") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under `uv tool dir`/<name> (undocumented as a stable path,
