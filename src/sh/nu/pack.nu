@@ -63,23 +63,25 @@ def packHttpGetPypi [term: string] {
 
 
 # the check is shown, its output is not: the answer is the exit code, and the output would bury the plan
-def packOk [cmds: list<string>] {
+def --env packOk [cmds: list<string>] {
+  $env.PACK_PRINTED = '1'
   opPrintCmd ...$cmds
   (run-external ($cmds | first) ...($cmds | skip 1) | complete | get exit_code) == 0
 }
 
-def packHttpOk [url: string] {
+def --env packHttpOk [url: string] {
+  $env.PACK_PRINTED = '1'
   opPrintCmd 'http get' $url
   let res = (try { http get --full --redirect-mode follow $url } catch { null })
   ($res != null) and ($res.status == 200)
 }
 
 # by name, not by search: the registries answer 404 for a name that does not exist
-def packExistsNpm [name: string] {
+def --env packExistsNpm [name: string] {
   packHttpOk $"https://registry.npmjs.org/($name)"
 }
 
-def packExistsJsr [name: string] {
+def --env packExistsJsr [name: string] {
   if not ($name | str starts-with '@') {
     return false
   }
@@ -90,12 +92,12 @@ def packExistsJsr [name: string] {
   packHttpOk $"https://api.jsr.io/scopes/($parts | get 0)/packages/($parts | get 1)"
 }
 
-def packExistsPypi [name: string] {
+def --env packExistsPypi [name: string] {
   packHttpOk $"https://pypi.org/pypi/($name)/json"
 }
 
 # choosing a manager needs an exact name, not the substring search 'find' runs: pacman has nushell, not nushel
-def packExists [manager: string, name: string] {
+def --env packExists [manager: string, name: string] {
   match $manager {
     # --non-interactive: an inherited tty (wut's own) would otherwise pass ghpm's isatty
     # check, letting an unresolved name fall through to an interactive search-and-pick prompt
@@ -123,7 +125,7 @@ def packExists [manager: string, name: string] {
   }
 }
 
-def packRefresh [manager: string] {
+def --env packRefresh [manager: string] {
   match $manager {
     ghpm => { packOp [ghpm refresh] },
     apk => { packOp [(packElevate 'apk') update] },
@@ -155,12 +157,12 @@ def packManagersHere [] {
   ($env.PACK_MANAGERS? | default []) | where { |m| which $m | is-not-empty }
 }
 
-def packRefreshAll [] {
+def --env packRefreshAll [] {
   for m in (packManagersHere) { packRefresh $m }
 }
 
 # the first manager here that really has it, in the order wut prefers
-def packFindFirst [name: string] {
+def --env packFindFirst [name: string] {
   for m in (packManagersHere) {
     if (packExists $m $name) { return $m }
   }
@@ -180,6 +182,15 @@ def --env packCallManager [manager: string] {
     apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
+  }
+}
+
+def --env packRequireManager [...names: string] {
+  for name in $names {
+    if (which $name | is-empty) {
+      $env.PACK_PRINTED = '1'
+      opPrintWarn $"manager not installed: ($name)"
+    }
   }
 }
 
@@ -247,7 +258,7 @@ def --env packPlanRun [] {
     return
   }
 
-  if ($loose | is-not-empty) {
+  if 'PACK_PRINTED' in $env {
     opPrint ''
   }
   packTable ['group' 'manager' 'packages'] $rows
@@ -279,6 +290,9 @@ def --env packSyncPlanRun [] {
     return
   }
 
+  if 'PACK_PRINTED' in $env {
+    opPrint ''
+  }
   packTable ['manager'] ($here | each { |m| [$m] })
   if not (packPrompt 'use pack') { return }
 
@@ -347,10 +361,12 @@ def packReport [] {
 
 # no try wrapper: an install that fails has to reach the caller so the run can report it
 def --env packOpStrict [cmds: list<string>] {
+  $env.PACK_PRINTED = '1'
   opPrintMaybeRunCmd ...$cmds
 }
 
 def --env packOp [cmds: list<string>] {
+  $env.PACK_PRINTED = '1'
   opPrintMaybeRunCmd try '{' ...$cmds '}'
 }
 

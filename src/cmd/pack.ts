@@ -66,6 +66,7 @@ const PACK_OP_KEY = [PACK_KEY, 'op']
 const PACK_OP_NAMES_KEY = (op: string) => [PACK_KEY, op, 'names']
 // the units the client picks from, as data; their bodies live in packRunUnit
 const PACK_PLAN_KEY = [PACK_KEY, 'plan']
+const PACK_PRINTED_KEY = [PACK_KEY, 'printed']
 
 // '-m pacman,ghpm' both narrows to those managers and states which to prefer, so the list order wins
 export const SCRIPT_PATH = 'script'
@@ -572,7 +573,9 @@ async function execOp(
   const requested = getRequestedManagers(environment)
   const unknown = requested.filter((m) => m !== SCRIPT_PATH && !MANAGERS.includes(m))
   if (unknown.length) {
-    result = result.with(result.printWarn(`manager not known: ${unknown.join(', ')}`))
+    result = result
+      .with(result.printWarn(`manager not known: ${unknown.join(', ')}`))
+      .with(result.varSetStr(PACK_PRINTED_KEY, '1'))
   }
   if (requested.length && !allManagers.length && !requested.includes(SCRIPT_PATH)) {
     return buildAndLog(result, environment)
