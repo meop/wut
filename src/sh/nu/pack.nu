@@ -97,7 +97,10 @@ def packExistsPypi [name: string] {
 # choosing a manager needs an exact name, not the substring search 'find' runs: pacman has nushell, not nushel
 def packExists [manager: string, name: string] {
   match $manager {
-    ghpm => (packOk [ghpm info $name]),
+    # --non-interactive: an inherited tty (wut's own) would otherwise pass ghpm's isatty
+    # check, letting an unresolved name fall through to an interactive search-and-pick prompt
+    # mid-plan instead of just failing
+    ghpm => (packOk [ghpm info $name --non-interactive]),
     cargo => (packOk [cargo info $name]),
     uv => (packExistsPypi $name),
     # bun and pnpm are npm clients; jsr is deno's own registry, so it answers there first
