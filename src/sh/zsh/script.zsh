@@ -69,6 +69,7 @@ function scriptPlanShow {
   if [[ $YES ]]; then
     yn=y
   else
+    opPrint ''
     read "yn?use script [y,[n]]: "
   fi
   [[ -z $yn || ${(L)yn} == y || ${(L)yn} == yes ]]

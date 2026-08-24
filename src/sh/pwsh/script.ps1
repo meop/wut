@@ -68,6 +68,7 @@ function scriptPlanShow {
   if ($YES) {
     $yn = 'y'
   } else {
+    opPrint ''
     $yn = Read-Host 'use script [y,[n]]'
   }
   return ($yn -eq '') -or ($yn.ToLower() -eq 'y') -or ($yn.ToLower() -eq 'yes')

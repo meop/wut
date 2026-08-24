@@ -49,6 +49,7 @@ def scriptPlanShow [] {
   if 'YES' in $env {
     $yn = 'y'
   } else {
+    opPrint ''
     $yn = input 'use script [y,[n]]: '
   }
   ($yn | str downcase) in ['', 'y', 'yes']

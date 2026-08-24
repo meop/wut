@@ -323,6 +323,7 @@ def scriptPlanShow [] {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
+    opPrint ''
     \$yn = input 'use script [y,[n]]: '
   }
   (\$yn | str downcase) in ['', 'y', 'yes']
@@ -666,6 +667,7 @@ def scriptPlanShow [] {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
+    opPrint ''
     \$yn = input 'use script [y,[n]]: '
   }
   (\$yn | str downcase) in ['', 'y', 'yes']
@@ -1045,6 +1047,7 @@ function scriptPlanShow {
   if (\$YES) {
     \$yn = 'y'
   } else {
+    opPrint ''
     \$yn = Read-Host 'use script [y,[n]]'
   }
   return (\$yn -eq '') -or (\$yn.ToLower() -eq 'y') -or (\$yn.ToLower() -eq 'yes')
@@ -1395,6 +1398,7 @@ function scriptPlanShow {
   if [[ \$YES ]]; then
     yn=y
   else
+    opPrint ''
     read "yn?use script [y,[n]]: "
   fi
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
@@ -1745,6 +1749,7 @@ function scriptPlanShow {
   if [[ \$YES ]]; then
     yn=y
   else
+    opPrint ''
     read "yn?use script [y,[n]]: "
   fi
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
@@ -2097,6 +2102,7 @@ function scriptPlanShow {
   if [[ \$YES ]]; then
     yn=y
   else
+    opPrint ''
     read "yn?use script [y,[n]]: "
   fi
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
@@ -3568,6 +3574,7 @@ function scriptPlanShow {
   if [[ \$YES ]]; then
     yn=y
   else
+    opPrint ''
     read "yn?use script [y,[n]]: "
   fi
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
@@ -3918,6 +3925,7 @@ def scriptPlanShow [] {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
+    opPrint ''
     \$yn = input 'use script [y,[n]]: '
   }
   (\$yn | str downcase) in ['', 'y', 'yes']
@@ -4285,6 +4293,7 @@ function scriptPlanShow {
   if [[ \$YES ]]; then
     yn=y
   else
+    opPrint ''
     read "yn?use script [y,[n]]: "
   fi
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
@@ -4687,6 +4696,7 @@ function scriptPlanShow {
   if (\$YES) {
     \$yn = 'y'
   } else {
+    opPrint ''
     \$yn = Read-Host 'use script [y,[n]]'
   }
   return (\$yn -eq '') -or (\$yn.ToLower() -eq 'y') -or (\$yn.ToLower() -eq 'yes')
@@ -5057,6 +5067,7 @@ function scriptPlanShow {
   if [[ \$YES ]]; then
     yn=y
   else
+    opPrint ''
     read "yn?use script [y,[n]]: "
   fi
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
@@ -5409,6 +5420,7 @@ function scriptPlanShow {
   if [[ \$YES ]]; then
     yn=y
   else
+    opPrint ''
     read "yn?use script [y,[n]]: "
   fi
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
@@ -5788,6 +5800,7 @@ def scriptPlanShow [] {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
+    opPrint ''
     \$yn = input 'use script [y,[n]]: '
   }
   (\$yn | str downcase) in ['', 'y', 'yes']
@@ -6163,6 +6176,7 @@ function scriptPlanShow {
   if [[ \$YES ]]; then
     yn=y
   else
+    opPrint ''
     read "yn?use script [y,[n]]: "
   fi
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
@@ -6518,6 +6532,7 @@ function scriptPlanShow {
   if [[ \$YES ]]; then
     yn=y
   else
+    opPrint ''
     read "yn?use script [y,[n]]: "
   fi
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
@@ -6863,6 +6878,7 @@ def scriptPlanShow [] {
   if 'YES' in \$env {
     \$yn = 'y'
   } else {
+    opPrint ''
     \$yn = input 'use script [y,[n]]: '
   }
   (\$yn | str downcase) in ['', 'y', 'yes']
@@ -7238,6 +7254,7 @@ function scriptPlanShow {
   if [[ \$YES ]]; then
     yn=y
   else
+    opPrint ''
     read "yn?use script [y,[n]]: "
   fi
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
@@ -7624,6 +7641,7 @@ function scriptPlanShow {
   if [[ \$YES ]]; then
     yn=y
   else
+    opPrint ''
     read "yn?use script [y,[n]]: "
   fi
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]

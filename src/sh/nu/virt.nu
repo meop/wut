@@ -21,7 +21,14 @@ def virtDeepMerge [base, override] {
 
 
 def virtManagerHere [manager: string] {
-  which $manager | is-not-empty
+  let bin = match $manager {
+    docker => 'docker',
+    lxc => 'lxc-ls',
+    podman => 'podman',
+    qemu => 'qemu-img',
+    _ => $manager,
+  }
+  which $bin | is-not-empty
 }
 
 def --env virtCallManager [manager: string] {
@@ -78,6 +85,7 @@ def virtPrompt [label: string] {
   if YES in $env {
     $yn = 'y'
   } else {
+    opPrint ''
     $yn = input $"($label) [y,[n]]: "
   }
   ($yn | str lowercase) in ['', 'y', 'yes']
