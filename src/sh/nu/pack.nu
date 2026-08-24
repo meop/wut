@@ -247,6 +247,9 @@ def --env packPlanRun [] {
     return
   }
 
+  if ($loose | is-not-empty) {
+    opPrint ''
+  }
   packTable ['group' 'manager' 'packages'] $rows
   if not (packPrompt 'use pack') { return }
 
