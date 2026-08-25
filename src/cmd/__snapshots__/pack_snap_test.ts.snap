@@ -1450,7 +1450,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -1655,7 +1657,7 @@ packFindGroup r#'lang-rustup'#
   }
 }
 
-packApt
+packManagerPlanRun
 \`
 `;
 
@@ -2223,7 +2225,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -2445,7 +2449,7 @@ packFindGroup r#'lang-rustup'#
   }
 }
 
-packPacman
+packManagerPlanRun
 \`
 `;
 
@@ -3013,7 +3017,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -3237,7 +3243,7 @@ packFindGroup r#'shell-zsh'# r#'pacman'#
   }
 }
 
-packPacman
+packManagerPlanRun
 \`
 `;
 
@@ -3803,7 +3809,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -4802,22 +4810,7 @@ packFindGroup r#'shell-zsh'# r#'ghpm'# r#'cargo'# r#'brew'# r#'pacman'# r#'xbps'
   }
 }
 
-packBun
-packCargo
-packDeno
-packGhpm
-packPnpm
-packUv
-packApk
-packApt
-packBrew
-packChoco
-packDnf
-packPacman
-packScoop
-packWinget
-packXbps
-packZypper
+packManagerPlanRun
 "
 `;
 
@@ -5385,7 +5378,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -6984,7 +6979,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -8583,7 +8580,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -10218,7 +10217,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -11817,7 +11818,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -13412,7 +13415,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -14397,7 +14402,7 @@ def --env packZypper [] {
 
 \$env.PACK_MANAGERS = [ r#'bun'#, r#'cargo'#, r#'deno'#, r#'ghpm'#, r#'pnpm'#, r#'uv'#, r#'apk'#, r#'apt'#, r#'brew'#, r#'choco'#, r#'dnf'#, r#'pacman'#, r#'paru'#, r#'scoop'#, r#'winget'#, r#'xbps'#, r#'yay'#, r#'zypper'# ]
 
-packSyncPlanRun
+packManagerPlanRun
 "
 `;
 
@@ -14963,7 +14968,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -15948,22 +15955,7 @@ def --env packZypper [] {
 
 \$env.PACK_MANAGERS = [ r#'bun'#, r#'cargo'#, r#'deno'#, r#'ghpm'#, r#'pnpm'#, r#'uv'#, r#'apk'#, r#'apt'#, r#'brew'#, r#'choco'#, r#'dnf'#, r#'pacman'#, r#'paru'#, r#'scoop'#, r#'winget'#, r#'xbps'#, r#'yay'#, r#'zypper'# ]
 
-packBun
-packCargo
-packDeno
-packGhpm
-packPnpm
-packUv
-packApk
-packApt
-packBrew
-packChoco
-packDnf
-packPacman
-packScoop
-packWinget
-packXbps
-packZypper
+packManagerPlanRun
 "
 `;
 
@@ -16531,7 +16523,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -17530,22 +17524,7 @@ packFindGroup r#'shell-nu (nushell)'# r#'ghpm'# r#'cargo'# r#'brew'# r#'pacman'#
 
 \$env.PACK_FIND_NAMES = [ r#'nu'# ]
 
-packBun
-packCargo
-packDeno
-packGhpm
-packPnpm
-packUv
-packApk
-packApt
-packBrew
-packChoco
-packDnf
-packPacman
-packScoop
-packWinget
-packXbps
-packZypper
+packManagerPlanRun
 "
 `;
 
@@ -18113,7 +18092,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -19112,22 +19093,7 @@ packFindGroup r#'shell-nu (nushell)'# r#'ghpm'# r#'cargo'# r#'brew'# r#'pacman'#
 
 \$env.PACK_FIND_NAMES = [ r#'nushell'# ]
 
-packBun
-packCargo
-packDeno
-packGhpm
-packPnpm
-packUv
-packApk
-packApt
-packBrew
-packChoco
-packDnf
-packPacman
-packScoop
-packWinget
-packXbps
-packZypper
+packManagerPlanRun
 "
 `;
 
@@ -19695,7 +19661,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -21294,7 +21262,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -22893,7 +22863,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -23891,22 +23863,7 @@ do --env {
 
 \$env.PACK_FIND_NAMES = [ r#'nosuchpackage'# ]
 
-packBun
-packCargo
-packDeno
-packGhpm
-packPnpm
-packUv
-packApk
-packApt
-packBrew
-packChoco
-packDnf
-packPacman
-packScoop
-packWinget
-packXbps
-packZypper
+packManagerPlanRun
 "
 `;
 
@@ -24472,7 +24429,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -25471,22 +25430,7 @@ packFindGroup r#'shell-zsh'# r#'ghpm'# r#'cargo'# r#'brew'# r#'pacman'# r#'xbps'
   }
 }
 
-packBun
-packCargo
-packDeno
-packGhpm
-packPnpm
-packUv
-packApk
-packApt
-packBrew
-packChoco
-packDnf
-packPacman
-packScoop
-packWinget
-packXbps
-packZypper
+packManagerPlanRun
 "
 `;
 
@@ -26054,7 +25998,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -27655,7 +27601,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -28379,7 +28327,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -29160,7 +29110,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -30759,7 +30711,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return
@@ -32394,7 +32348,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if (\$here | is-empty) {
     return

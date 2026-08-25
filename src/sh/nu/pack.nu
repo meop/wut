@@ -284,7 +284,9 @@ def --env packPlanRun [] {
   packReport
 }
 
-def --env packSyncPlanRun [] {
+# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
+# has a per-package decision to make — the only question is which managers this run touches
+def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if ($here | is-empty) {
     return

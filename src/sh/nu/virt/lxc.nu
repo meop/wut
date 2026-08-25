@@ -106,7 +106,7 @@ def virtLxc [] {
   }
 
   def doRem [cmd, instance] {
-    let wasRunning = ^sudo $"($cmd)-ls" --running | complete | get stdout | split row ' ' | str trim | where { |l| $l | is-not-empty } | any { |l| $l == $instance }
+    let wasRunning = ^sudo $"($cmd)-ls" --running | complete | get stdout | split words | any { |l| $l == $instance }
     if $wasRunning {
       opPrintMaybeRunCmd sudo $"($cmd)-stop" --name $instance
     }
@@ -124,7 +124,7 @@ def virtLxc [] {
   match $env.VIRT_OP {
     add => {
       for instance in $env.VIRT_INSTANCES {
-        if (^sudo $"($cmd)-ls" --running | complete | get stdout | split row ' ' | str trim | where { |l| $l | is-not-empty } | any { |l| $l == $instance }) {
+        if (^sudo $"($cmd)-ls" --running | complete | get stdout | split words | any { |l| $l == $instance }) {
           opPrintWarn $"`($cmd)` instance `($instance)` is already added"
           continue
         }
@@ -134,7 +134,8 @@ def virtLxc [] {
     }
     list => {
       let filters = if ($env.VIRT_INSTANCES | is-not-empty) { $env.VIRT_INSTANCES } else { [] }
-      let allInstances = ^sudo $"($cmd)-ls" | complete | get stdout | split row ' ' | str trim | where { is-not-empty }
+      # bare lxc-ls wraps names across lines at terminal width, not just spaces within one
+      let allInstances = ^sudo $"($cmd)-ls" | complete | get stdout | split words
       let instances = if ($filters | is-not-empty) {
         $allInstances | where { |i| $filters | all { |f| $i | str contains --ignore-case $f } }
       } else {
@@ -165,7 +166,7 @@ def virtLxc [] {
           continue
         }
 
-        if (^sudo $"($cmd)-ls" --running | complete | get stdout | split row ' ' | str trim | where { |l| $l | is-not-empty } | any { |l| $l == $instance }) {
+        if (^sudo $"($cmd)-ls" --running | complete | get stdout | split words | any { |l| $l == $instance }) {
           opPrintMaybeRunCmd sudo $"($cmd)-stop" --name $instance
         }
 

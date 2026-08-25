@@ -74,6 +74,20 @@ code and the plan stays data. The client picks each group's winner — the first
 the group's own order — and resolves loose names with `packExists`, an exact check per manager, not the substring search
 `find` uses. Refreshes run before those checks so the answers are current.
 
+`sync`, `tidy`, `list`, `outdated`, `info`, and a named `find` have no per-package decision to make — the only question
+is which managers this run touches — so they share a plainer plan, `packManagerPlanRun`: a `manager` column, one
+question, then each manager present gets its turn:
+
+```
+manager
+-------
+brew
+cargo
+pacman
+
+use pack [y,[n]]:
+```
+
 ## Nothing viable is an absence, not a plan
 
 A group whose every path needs a manager this machine lacks is not something to show you and refuse to do. The client
@@ -112,14 +126,21 @@ Silence is the bug, not continuing. A failure that scrolled past is the thing th
 
 ## The same shape elsewhere
 
-`virt` and `script` follow it too.
+`virt`, `script`, and `file` follow it too.
 
 `virt` plans manager against instances, filters by what is on this PATH, shows the table and asks once, then sets
 `VIRT_AGREED` so no manager function asks again. A manager the plan needs but the machine lacks is reported rather than
-prompted about.
+prompted about. `list` plans the same way as `add`/`rem`/`sync`/`tidy` — every op goes through `virtPlanRun`, so there
+is no op left that asks per manager.
 
 `script` is the awkward one, because its fan out spans processes: the calling shell runs what it owns and hops to nu or
 pwsh for the rest. The table has to cover those too, and it can — `has_cmd` is answerable from any shell on the same
 machine — so the shell you invoked builds a row for every match and asks once, and each hop carries `wutAgreed=1` and
 neither plans nor asks. The scripts themselves still ask their own questions once running: those are per action consent
 written into the script, not a manager choice.
+
+`file` only has one op that touches disk — `sync` — so it is the only one that plans. `diff`, `find`, and `list` read
+and print; there is nothing to agree to, so they no longer ask at all. `sync`'s table is `tool` and `files`, one row per
+dotfile group actually here (a tool's compound key doubles as its candidate bin names, same `which` check the sync loop
+itself uses), plus a `clears:` line when a destination directory gets wiped before the copy. One question, then the copy
+runs to the end.

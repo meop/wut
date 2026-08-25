@@ -39,7 +39,6 @@ const VIRT_OP_KEY = [VIRT_KEY, 'op']
 const VIRT_PODMAN_NETWORKS_KEY = [VIRT_KEY, 'podman', 'networks']
 const VIRT_OP_PARTS_KEY = (op: string) => [VIRT_KEY, op, 'parts']
 
-const VIRT_INSTANCES_KEY = [VIRT_KEY, 'instances']
 // manager -> instances, for the client to filter by what is here and run after one prompt
 const VIRT_PLAN_KEY = [VIRT_KEY, 'plan']
 
@@ -56,12 +55,6 @@ function getSupportedManagers(context: Ctx, environment: Env) {
   }
 
   return managers
-}
-
-function getManagerFuncName(manager: string, prefix = VIRT_KEY) {
-  return manager
-    ? `${prefix}${manager[0].toUpperCase()}${manager.slice(1).replaceAll('-', '').replaceAll('_', '').toLowerCase()}`
-    : ''
 }
 
 function buildAndLog(shell: Sh, environment: Env) {
@@ -214,18 +207,14 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       const managersToOp = managerFilters.length > 0
         ? supportedManagers.filter((m) => managerFilters.some((f) => m.includes(f)))
         : supportedManagers
-      for (const supportedManager of managersToOp) {
-        if (supportedManagers.length > 1) {
-          _shell = _shell.with(
-            _shell.varSetStr(VIRT_MANAGER_KEY, supportedManager),
-          )
-        }
+      // same plan-then-ask-once path as add/rem/sync/tidy, so listing across managers asks once too
+      const virtMap: Record<string, Array<string>> = Object.fromEntries(
+        managersToOp.map((m) => [m, instanceFilters]),
+      )
+      if (Object.keys(virtMap).length) {
         _shell = _shell
-          .with(_shell.varSetArr(VIRT_INSTANCES_KEY, instanceFilters))
-          .with([getManagerFuncName(supportedManager)])
-        if (supportedManagers.length > 1) {
-          _shell = _shell.with(_shell.varUnSet(VIRT_MANAGER_KEY))
-        }
+          .with(_shell.varSetStr(VIRT_PLAN_KEY, JSON.stringify(virtMap)))
+          .with(['virtPlanRun'])
       }
     } else {
       let results = await getCfgDirDump(dirParts, {

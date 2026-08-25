@@ -8,15 +8,66 @@ def replaceEnv [line] {
   }
   return $l
 }
-def file [] {
+
+# ghpm's table: a rule as wide as each header, columns padded to their widest cell, the last one loose
+def fileTable [headers: list<string>, rows: list<list<string>>] {
+  let widths = ($headers | enumerate | each { |h|
+    [($h.item | str length)] ++ ($rows | each { |r| $r | get -o $h.index | default '' | str length }) | math max
+  })
+  let line = { |cells: list<string>|
+    $cells | enumerate | each { |c|
+      if $c.index == (($cells | length) - 1) { $c.item } else { $c.item | fill --alignment left --width ($widths | get $c.index) }
+    } | str join ' '
+  }
+  opPrint (do $line $headers)
+  opPrint (do $line ($headers | each { |h| '-' | fill --alignment left --width ($h | str length) --character '-' }))
+  for r in $rows { opPrint (do $line $r) }
+}
+
+def filePrompt [label: string] {
   mut yn = ''
   if YES in $env {
     $yn = 'y'
   } else {
-    $yn = input r#'use file (user) [y,[n]]: '#
+    opPrint ''
+    $yn = input $"($label) [y,[n]]: "
   }
-  if not (($yn | str lowercase) in ['', 'y', 'yes']) {
-    return
+  ($yn | str lowercase) in ['', 'y', 'yes']
+}
+
+# a tool's compound key doubles as its candidate bin names, same as the per-pair check the sync loop already does
+def fileBinHere [tool: string] {
+  $tool | split row ',' | any { |alias| which $alias | is-not-empty }
+}
+
+# diff, find, and list only read and print — nothing to agree to. sync is the one op that pushes files, so it is
+# the one that plans: which tools are here, how many files each, and which destination dirs get cleared first
+def filePlanShow [] {
+  let pairs = ($env.FILE_SYNC_PATH_PAIRS? | default []) | where { |p| fileBinHere ($p | split row '|' | get 0) }
+  if ($pairs | is-empty) {
+    return true
+  }
+
+  let tools = ($pairs | each { |p| $p | split row '|' | get 0 })
+  let rows = ($tools | uniq | sort | each { |t|
+    [$t, ($tools | where { |x| $x == $t } | length | into string)]
+  })
+  fileTable ['tool' 'files'] $rows
+
+  let clearDirs = ($env.FILE_SYNC_CLEAR_DIRS? | default []) | where { |d| fileBinHere ($d | split row '|' | get 0) }
+  if ($clearDirs | is-not-empty) {
+    let dirs = ($clearDirs | each { |d| $d | split row '|' | get 1 })
+    opPrintWarn $"clears: ($dirs | str join ', ')"
+  }
+
+  filePrompt 'use file sync'
+}
+
+def file [] {
+  if $env.FILE_OP == sync {
+    if not (filePlanShow) {
+      return
+    }
   }
   match $env.FILE_OP {
     diff => {

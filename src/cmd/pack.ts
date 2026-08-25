@@ -310,19 +310,6 @@ function printGroups(shell: Sh, entries: Array<string>) {
   return shell.with(shell.gatedFunc('use pack', lines))
 }
 
-function callManagers(shell: Sh, managers: Array<string>) {
-  const seen = new Set<string>()
-  const calls: Array<string> = []
-  for (const m of managers) {
-    const fn = getManagerCallName(m)
-    if (!seen.has(fn)) {
-      seen.add(fn)
-      calls.push(fn)
-    }
-  }
-  return shell.with(calls)
-}
-
 function setOpNames(shell: Sh, op: string, names: Array<string>) {
   return shell.with(
     shell.varSetArr(PACK_OP_NAMES_KEY(op), names),
@@ -592,7 +579,7 @@ async function execOp(
   }
 
   if (op === 'tidy') {
-    return buildAndLog(callManagers(result, allManagers), environment)
+    return buildAndLog(result.with(['packManagerPlanRun']), environment)
   }
 
   const names = environment.getSplit(PACK_OP_NAMES_KEY(op))
@@ -642,7 +629,7 @@ async function execOp(
     if (names.length) {
       result = setOpNames(result, op, names)
     }
-    result = result.with(['packSyncPlanRun'])
+    result = result.with(['packManagerPlanRun'])
 
     return buildAndLog(result, environment)
   }
@@ -651,12 +638,12 @@ async function execOp(
 
   if ((op === 'find' && names.length) || op === 'list' || op === 'outdated' || op === 'info') {
     result = setOpNames(result, op, names)
-    result = callManagers(result, allManagers)
+    result = result.with(['packManagerPlanRun'])
   } else if (remaining.length || !names.length) {
     if (remaining.length) {
       result = setOpNames(result, op, remaining)
     }
-    result = callManagers(result, allManagers)
+    result = result.with(['packManagerPlanRun'])
   }
 
   return buildAndLog(result, environment)
