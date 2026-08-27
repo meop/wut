@@ -86,29 +86,37 @@ All ops use **AND semantics** (every filter term must match; more terms = narrow
 two philosophies — **WIDE** (substring, act on all) or **PINPOINT** (exact-wins then first, act on one). See
 [docs/COMMANDS.md](docs/COMMANDS.md) for the per-op table and implementation.
 
-Config file structure (`file.yaml`, `script.yaml` gates) is documented in [docs/RULES.md](docs/RULES.md).
-
 ## One Decision
 
 Every op resolves data on the server, lets the **client** filter it by what is actually installed
 (`packManagerHere`/`virtManagerHere`/`fileBinHere`/`scriptHasCmd`), summarises, and asks at most once. The server never
 pre-renders a listing — pre-rendered text has nowhere left to apply that filter. A prompt guards commands run on the
-machine, never a listing, so `find` ops do not ask. See [docs/PACK.md](docs/PACK.md), which covers the plan shape for
-`pack` and how `virt`, `script` and `file` follow it.
+machine, never a listing, so `find` ops do not ask. See [docs/OPS.md](docs/OPS.md).
+
+## Docs
+
+Cross-cutting:
+
+- [docs/OPS.md](docs/OPS.md) — the shape every command shares: server resolves, client filters, one prompt
+- [docs/COMMANDS.md](docs/COMMANDS.md) — how filters resolve to targets (WIDE vs PINPOINT), per-op table
+- [docs/RULES.md](docs/RULES.md) — config file shapes: `file.yaml`, pack group yaml, `script.yaml` gates
+- [docs/NUSHELL.md](docs/NUSHELL.md) — nu parsing quirks that have caused bugs
+- [docs/TESTS.md](docs/TESTS.md) — test architecture, snapshots, adding cases
+
+Per command:
+
+- [docs/PACK.md](docs/PACK.md) — groups, tiers, loose names, the plan
+- [docs/VIRT.md](docs/VIRT.md) — instance layout, podman layers and builds, qemu variants, add vs run
+- [docs/FILE.md](docs/FILE.md) — keys as bin checks, and the one op that writes
+- [docs/SCRIPT.md](docs/SCRIPT.md) — shell ownership and hops, client-side `has_cmd`
 
 ## Multi-Shell Support
 
 The server primarily generates nushell scripts. `pwsh`/`zsh` shells are redirected to nushell equivalents for commands
 with complex logic (pack, file, virt). See `file.ts`, `virt.ts`, `pack.ts` for redirect implementation.
 
-`script exec` is the exception: each script runs in the shell it is written for. One script hops wholesale; an action
-alone fans out, running the calling shell's own scripts inline and hopping once per other shell with `wutShellOnly`
-appended, which stops that hop from fanning out again.
-
-Every script is owned by exactly one shell, so an overlay never runs twice. The calling shell wins ties — a hop it never
-has to make is the cheapest one — and the rest fall back most native first (zsh > pwsh > nu). Both sides of a hop have
-to agree on ownership or a script runs twice or not at all, which is why the hop also carries `wutShellFrom`: the leaf
-resolves against the shell the run started in, not the shell rendering its own response.
+`script exec` is the exception: each script runs in the shell it is written for, and hops between shells to fan out.
+That ownership and hop protocol is in [docs/SCRIPT.md](docs/SCRIPT.md).
 
 ## Nushell Pitfalls
 

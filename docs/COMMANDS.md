@@ -73,7 +73,7 @@ names with OR semantics — each name is resolved independently.
 while `wut s e setup ptyxis` names a tool and pinpoints to one. The cli reads action first; the config tree is tool
 first (`ptyxis/setup.zsh`), so `script` reverses its filters before globbing. The `has_cmd` gate is client-side, so a
 fanned out run skips tools that are not on the client's PATH, and `find` leaves them out of the listing — see
-[RULES.md](RULES.md#script.yaml-gate-enforcement).
+[RULES.md](RULES.md#scriptyaml-gate-enforcement).
 
 Primitives in `src/cfg.ts`: `preferExactMatches(parts, filters)` (exact-wins) and `pinpointMatch(parts, filters)`
 (exact-wins then first). `script exec`, `virt rem` and `pack remove` apply pinpoint at their own layer — script over the

@@ -126,45 +126,5 @@ Silence is the bug, not continuing. A failure that scrolled past is the thing th
 
 ## The same shape elsewhere
 
-`virt`, `script`, and `file` follow it too.
-
-`virt` plans manager against instances, filters by what is on this PATH, shows the table and asks once, then sets
-`VIRT_AGREED` so no manager function asks again. A manager the plan needs but the machine lacks is reported rather than
-prompted about. `add`, `rem`, `list`, `run`, `sync` and `tidy` all go through `virtPlanRun`; `find` goes through
-`virtFindRun`, which filters and reports the same way but does not ask, because it only prints.
-
-`script` is the awkward one, because its fan out spans processes: the calling shell runs what it owns and hops to nu or
-pwsh for the rest. The table has to cover those too, and it can — `has_cmd` is answerable from any shell on the same
-machine — so the shell you invoked builds a row for every match and asks once, and each hop carries `wutAgreed=1` and
-neither plans nor asks. The scripts themselves still ask their own questions once running: those are per action consent
-written into the script, not a manager choice.
-
-`file` only has one op that touches disk — `sync` — so it is the only one that plans. `diff`, `find`, and `list` read
-and print; there is nothing to agree to, so they no longer ask at all. `sync`'s table is `tool` and `files`, one row per
-dotfile group actually here (a tool's compound key doubles as its candidate bin names, same `which` check the sync loop
-itself uses), plus a `clears:` line when a destination directory gets wiped before the copy. One question, then the copy
-runs to the end.
-
-## What earns a prompt
-
-A prompt means "here is what wut decided, do you agree". Printing what the server already worked out is not something to
-agree to, so the rule is: **a prompt guards commands run on the machine, never a listing.**
-
-| Op                                                                                 | Asks | Because                                    |
-| ---------------------------------------------------------------------------------- | ---- | ------------------------------------------ |
-| `pack add`/`remove`                                                                | once | installs                                   |
-| `pack find` (with a name), `list`, `outdated`, `sync`, `info`                      | once | runs a manager search or a manager command |
-| `virt add`/`rem`/`list`/`run`/`sync`/`tidy`                                        | once | runs a manager command                     |
-| `script exec`                                                                      | once | runs scripts                               |
-| `file sync`                                                                        | once | writes files, clears directories           |
-| `pack find`'s group listing, `virt find`, `script find`, `file find`/`list`/`diff` | no   | prints what the server sent                |
-
-Two things follow. A find that only prints must not ask — `virt find` and `script find` used to, and `pack find` asked
-twice, once for the listing and again for the search. And the ask always comes **after** the availability filter, so a
-machine with nothing installed is told `manager not installed: ...` rather than asked a question whose answer changes
-nothing.
-
-The filter is the client's alone — `packManagerHere`, `virtManagerHere`, `fileBinHere`, `scriptHasCmd`. The server sends
-resolved data and never pre-renders the listing, because pre-rendered text has nowhere left to apply the filter. That is
-exactly how `virt find` drifted: it shipped `opPrint` lines, so it offered lxc, podman and qemu on machines that had
-none of them.
+`virt`, `script` and `file` follow this shape too; it is written up on its own in [OPS.md](OPS.md), with each command's
+specifics in [VIRT.md](VIRT.md), [SCRIPT.md](SCRIPT.md) and [FILE.md](FILE.md).

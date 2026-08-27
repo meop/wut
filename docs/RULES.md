@@ -200,58 +200,6 @@ same thing; a companion is a second thing the group installs.
 alias exactly, the way a full group name matches, and structural path matches are preferred over alias matches when both
 hit.
 
-## virt instance layout
-
-An instance is named by its path under the host: `cfg/virt/<sys_host>/<manager>/<instance>.yaml`. The manager is part of
-that path everywhere — `find`, `add`, `list`, `rem` all filter on it — and `sys_host` is why one config repo serves
-every machine without a gate.
-
-`podman` is the exception, and takes one more level. `<pod>.yaml` is the pod itself — `metadata.name`, the
-`io.podman.kube.network` and mac annotations, `spec.hostname`, and nothing else — while `<pod>/<instance>.yaml` files
-each contribute containers and volumes that are merged onto it (`podman.nu`, layers 2 and 3). A pod yaml carrying
-containers of its own would still work, but it hides the pod's identity in with one instance's payload, so keep it a
-shell. This is also why a pod alone is not actionable: `add` and `rem` skip a podman path with no instance part.
-
-`qemu` takes a deeper level with the opposite meaning. `<instance>/<variant>.yaml` is another _way to configure_ an
-instance, not another instance — `glass/vga.yaml` and `glass/vfio.yaml` are the emulated-gpu and passthrough spellings
-of `glass`. `virtDeepMerge` appends lists, so a variant adds to its base's `qemu.arguments` rather than replacing them:
-whatever a variant may set, the base must leave out. `-display` belongs in the variants for that reason.
-
-`run` and `add` both reach a variant, but only when a filter names it — `wut v run glass vfio`, `wut v add glass vfio`.
-`wut v add glass` is glass itself and never fans out over its variants, and `add` resolves the variant back to the base
-for the service name, so the unit stays `qemu-glass.service` either way. `rem`, `sync` and `tidy` act on that installed
-unit and so stop at the instance, and `find` lists the instance once however many variants it has.
-
-`run` is qemu's alone — the other managers have no foreground mode, so naming one is refused rather than planned.
-
-`docker` instances are plain compose files, served whole to `docker compose --file -`. `docker.nu` reads
-`services.*.volumes` to pre-create bind sources, in both the `source: … target: …` and `host:container` spellings, so
-those paths are written out in full — nothing substitutes `{host}` in a compose file.
-
-## podman image builds
-
-A pod yaml may open with a `kind: Build` doc naming images to build before the pod starts:
-
-```yaml
----
-kind: Build
-images:
-  - name: localhost/app:latest
-    filePath: '/virt/{host}/podman/{pod}/Dockerfile.app'
-    buildContextPath: '/srv/virt/podman/{host}/{pod}'
----
-kind: Pod
-metadata:
-  name: '{pod}'
-```
-
-`filePath` is a `/cfg` route path, not a local one: the client fetches the Containerfile over HTTP, writes it into
-`buildContextPath`, and builds. An instance then names the built image like any other — `image: localhost/app:latest`.
-
-`Build` is wut's own kind and is stripped before anything reaches podman (`processYaml`). `{host}`, `{pod}` and
-`{instance}` are substituted in both docs. An image already built in this run is not built again, so several instances
-may share one.
-
 ## script.yaml Gate Enforcement
 
 `script.yaml` defines gate conditions that must be met for scripts to be available/executable. All gates are enforced at
@@ -288,22 +236,8 @@ two levels for consistency.
 Gates must match in both places — scripts are both discovered only on appropriate systems (YAML) and protected against
 accidental execution on incompatible ones (script body).
 
-**Client-side gates:**
-
-`sys_*` gates are resolved on the server, from context the client sent. `has_cmd` cannot be — the server does not know
-what is on the client's PATH — so it compiles into the emitted script instead, via `scriptHasCmd` from
-`src/sh/<shell>/script.<ext>`:
-
-- `script find` hands the whole listing to the client (`scriptFindGroup`), which drops tools whose command is missing,
-  and drops the action heading entirely when nothing under it survives
-- `script exec` with an action alone wraps each block in the gate, so a fanned out run silently skips what the client
-  cannot use — the same shape as a `pack` manager function returning early
-- `script exec` with a tool named does **not** wrap it: the run was asked for by name, so the script's own check gets to
-  say `'<tool> is not installed'`
-
-Declare `has_cmd` only where the tool must already exist — `install` actions must stay ungated, or they would skip
-exactly when they are needed. A script that gates on something other than a command (an app bundle, a config file) keeps
-that check in its body only.
+`sys_*` gates are resolved on the server. `has_cmd` cannot be, and compiles into the emitted script instead — see
+[SCRIPT.md](SCRIPT.md#has_cmd-is-the-clients).
 
 **Examples:**
 
