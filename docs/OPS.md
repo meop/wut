@@ -59,6 +59,10 @@ list managers it had never checked for.
 | `script find`                               | action, tool count       | the action listing   |
 | `script exec`                               | action, tool, shell      | the scripts          |
 
+`src/cmd/prompt_test.ts` holds this: it asserts that every op reaches a prompt, that each find asks through its own plan
+runner, and that wut's `use <cmd>` gate is never emitted inline — the shape that asked before it had filtered anything,
+and that let `pack find` ask twice.
+
 Once means once for the whole run. `PACK_AGREED`, `VIRT_AGREED` and `wutAgreed=1` carry the answer past the first
 question, so `pack find`'s search phase and every manager function downstream act without asking again.
 
