@@ -52,5 +52,5 @@ def scriptPlanShow [] {
     opPrint ''
     $yn = input 'use script [y,[n]]: '
   }
-  ($yn | str downcase) in ['', 'y', 'yes']
+  ($yn | str lowercase) in ['', 'y', 'yes']
 }
