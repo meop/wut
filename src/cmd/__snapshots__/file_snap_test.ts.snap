@@ -1,115 +1,185 @@
 export const snapshot = {};
 
 snapshot[`nu / darwin / diff 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=darwin&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=darwin&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / darwin / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=darwin&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=darwin&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / darwin / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=darwin&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=darwin&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / linux / diff 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=linux&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=linux&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / linux / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=linux&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=linux&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / linux / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=linux&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=linux&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / linux / find (with filter) 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find/git?sysOsPlat=linux&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find/git?sysOsPlat=linux&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / linux / find (with sysHost) 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=linux&sysHost=testhost&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=linux&sysHost=testhost&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / darwin / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=darwin&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=darwin&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / linux / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=linux&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=linux&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / winnt / diff 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=winnt&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=winnt&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / winnt / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=winnt&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=winnt&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / winnt / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=winnt&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=winnt&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / winnt / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=winnt&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=winnt&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / linux / find (pinned) 1`] = `
@@ -427,7 +497,7 @@ def fileBinHere [tool: string] {
 }
 
 # diff, find, and list only read and print — nothing to agree to. sync is the one op that pushes files, so it is
-# the one that plans: which tools are here, how many files each, and which destination dirs get cleared first
+# the one that plans: which tools are here, and how many files and destination dirs each one accounts for
 def filePlanShow [] {
   let pairs = (\$env.FILE_SYNC_PATH_PAIRS? | default []) | where { |p| fileBinHere (\$p | split row '|' | get 0) }
   let clearDirs = (\$env.FILE_SYNC_CLEAR_DIRS? | default []) | where { |d| fileBinHere (\$d | split row '|' | get 0) }
@@ -928,7 +998,7 @@ def fileBinHere [tool: string] {
 }
 
 # diff, find, and list only read and print — nothing to agree to. sync is the one op that pushes files, so it is
-# the one that plans: which tools are here, how many files each, and which destination dirs get cleared first
+# the one that plans: which tools are here, and how many files and destination dirs each one accounts for
 def filePlanShow [] {
   let pairs = (\$env.FILE_SYNC_PATH_PAIRS? | default []) | where { |p| fileBinHere (\$p | split row '|' | get 0) }
   let clearDirs = (\$env.FILE_SYNC_CLEAR_DIRS? | default []) | where { |d| fileBinHere (\$d | split row '|' | get 0) }
@@ -1429,7 +1499,7 @@ def fileBinHere [tool: string] {
 }
 
 # diff, find, and list only read and print — nothing to agree to. sync is the one op that pushes files, so it is
-# the one that plans: which tools are here, how many files each, and which destination dirs get cleared first
+# the one that plans: which tools are here, and how many files and destination dirs each one accounts for
 def filePlanShow [] {
   let pairs = (\$env.FILE_SYNC_PATH_PAIRS? | default []) | where { |p| fileBinHere (\$p | split row '|' | get 0) }
   let clearDirs = (\$env.FILE_SYNC_CLEAR_DIRS? | default []) | where { |d| fileBinHere (\$d | split row '|' | get 0) }
@@ -1932,7 +2002,7 @@ def fileBinHere [tool: string] {
 }
 
 # diff, find, and list only read and print — nothing to agree to. sync is the one op that pushes files, so it is
-# the one that plans: which tools are here, how many files each, and which destination dirs get cleared first
+# the one that plans: which tools are here, and how many files and destination dirs each one accounts for
 def filePlanShow [] {
   let pairs = (\$env.FILE_SYNC_PATH_PAIRS? | default []) | where { |p| fileBinHere (\$p | split row '|' | get 0) }
   let clearDirs = (\$env.FILE_SYNC_CLEAR_DIRS? | default []) | where { |d| fileBinHere (\$d | split row '|' | get 0) }
@@ -2435,7 +2505,7 @@ def fileBinHere [tool: string] {
 }
 
 # diff, find, and list only read and print — nothing to agree to. sync is the one op that pushes files, so it is
-# the one that plans: which tools are here, how many files each, and which destination dirs get cleared first
+# the one that plans: which tools are here, and how many files and destination dirs each one accounts for
 def filePlanShow [] {
   let pairs = (\$env.FILE_SYNC_PATH_PAIRS? | default []) | where { |p| fileBinHere (\$p | split row '|' | get 0) }
   let clearDirs = (\$env.FILE_SYNC_CLEAR_DIRS? | default []) | where { |d| fileBinHere (\$d | split row '|' | get 0) }
@@ -2938,7 +3008,7 @@ def fileBinHere [tool: string] {
 }
 
 # diff, find, and list only read and print — nothing to agree to. sync is the one op that pushes files, so it is
-# the one that plans: which tools are here, how many files each, and which destination dirs get cleared first
+# the one that plans: which tools are here, and how many files and destination dirs each one accounts for
 def filePlanShow [] {
   let pairs = (\$env.FILE_SYNC_PATH_PAIRS? | default []) | where { |p| fileBinHere (\$p | split row '|' | get 0) }
   let clearDirs = (\$env.FILE_SYNC_CLEAR_DIRS? | default []) | where { |d| fileBinHere (\$d | split row '|' | get 0) }
@@ -3439,7 +3509,7 @@ def fileBinHere [tool: string] {
 }
 
 # diff, find, and list only read and print — nothing to agree to. sync is the one op that pushes files, so it is
-# the one that plans: which tools are here, how many files each, and which destination dirs get cleared first
+# the one that plans: which tools are here, and how many files and destination dirs each one accounts for
 def filePlanShow [] {
   let pairs = (\$env.FILE_SYNC_PATH_PAIRS? | default []) | where { |p| fileBinHere (\$p | split row '|' | get 0) }
   let clearDirs = (\$env.FILE_SYNC_CLEAR_DIRS? | default []) | where { |d| fileBinHere (\$d | split row '|' | get 0) }
@@ -4218,7 +4288,7 @@ def fileBinHere [tool: string] {
 }
 
 # diff, find, and list only read and print — nothing to agree to. sync is the one op that pushes files, so it is
-# the one that plans: which tools are here, how many files each, and which destination dirs get cleared first
+# the one that plans: which tools are here, and how many files and destination dirs each one accounts for
 def filePlanShow [] {
   let pairs = (\$env.FILE_SYNC_PATH_PAIRS? | default []) | where { |p| fileBinHere (\$p | split row '|' | get 0) }
   let clearDirs = (\$env.FILE_SYNC_CLEAR_DIRS? | default []) | where { |d| fileBinHere (\$d | split row '|' | get 0) }
@@ -4719,7 +4789,7 @@ def fileBinHere [tool: string] {
 }
 
 # diff, find, and list only read and print — nothing to agree to. sync is the one op that pushes files, so it is
-# the one that plans: which tools are here, how many files each, and which destination dirs get cleared first
+# the one that plans: which tools are here, and how many files and destination dirs each one accounts for
 def filePlanShow [] {
   let pairs = (\$env.FILE_SYNC_PATH_PAIRS? | default []) | where { |p| fileBinHere (\$p | split row '|' | get 0) }
   let clearDirs = (\$env.FILE_SYNC_CLEAR_DIRS? | default []) | where { |d| fileBinHere (\$d | split row '|' | get 0) }

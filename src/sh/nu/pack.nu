@@ -214,6 +214,16 @@ def packManagerHere [manager: string] {
   ($manager == 'script') or (which $manager | is-not-empty)
 }
 
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = ($candidates | where { |c| packManagerHere $c })
+  if ($managers | is-empty) {
+    return
+  }
+  opPrint $label
+  opPrint $"  ($managers | str join ', ')"
+}
+
 # the first path whose manager is on this machine wins the group, in the order the group stated
 def packPickPath [unit: record] {
   $unit.paths | where { |p| packManagerHere $p.manager } | first 1 | get -o 0

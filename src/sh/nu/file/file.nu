@@ -41,7 +41,7 @@ def fileBinHere [tool: string] {
 }
 
 # diff, find, and list only read and print — nothing to agree to. sync is the one op that pushes files, so it is
-# the one that plans: which tools are here, how many files each, and which destination dirs get cleared first
+# the one that plans: which tools are here, and how many files and destination dirs each one accounts for
 def filePlanShow [] {
   let pairs = ($env.FILE_SYNC_PATH_PAIRS? | default []) | where { |p| fileBinHere ($p | split row '|' | get 0) }
   let clearDirs = ($env.FILE_SYNC_CLEAR_DIRS? | default []) | where { |d| fileBinHere ($d | split row '|' | get 0) }

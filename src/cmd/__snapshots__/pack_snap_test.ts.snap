@@ -1,547 +1,887 @@
 export const snapshot = {};
 
 snapshot[`nu / alpine / add 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / alpine / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / alpine / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / alpine / out 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / alpine / rem 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / alpine / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / alpine / tidy 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=alpine&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / arch / add 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / arch / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / arch / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / arch / out 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / arch / rem 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / arch / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / arch / add (shell group) — wide 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/shell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/shell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / arch / rem (shell group) — pinpoint 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/shell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/shell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / arch / tidy 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / rocky / add 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / rocky / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / rocky / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / rocky / out 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / rocky / rem 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / rocky / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / rocky / tidy 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=rocky&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / ubuntu / add 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / ubuntu / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / ubuntu / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / ubuntu / out 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / ubuntu / rem 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / ubuntu / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / ubuntu / tidy 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / void / add 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / void / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / void / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / void / out 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / void / rem 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / void / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / void / tidy 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=void&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / suse / add 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / suse / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / suse / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / suse / out 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / suse / rem 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / suse / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / suse / tidy 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=suse&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / darwin / add 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=darwin&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=darwin&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / darwin / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=darwin&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=darwin&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / darwin / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=darwin&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=darwin&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / darwin / out 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=darwin&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=darwin&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / darwin / rem 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=darwin&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=darwin&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / darwin / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=darwin&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=darwin&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / darwin / tidy 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=darwin&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=darwin&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / winnt / add 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=winnt&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=winnt&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / winnt / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=winnt&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=winnt&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / winnt / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=winnt&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=winnt&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / winnt / out 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=winnt&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=winnt&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / winnt / rem 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=winnt&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=winnt&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / winnt / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=winnt&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=winnt&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / winnt / tidy 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=winnt&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=winnt&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / winnt / find (no names) 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find?sysOsPlat=winnt&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find?sysOsPlat=winnt&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / darwin / find (no names) 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find?sysOsPlat=darwin&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find?sysOsPlat=darwin&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / arch / find (-m apt) 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/--managers/apt/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/--managers/apt/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / arch / find (-m yay) 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/--managers/yay/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/--managers/yay/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / darwin / add (claude) 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/claude?sysOsPlat=darwin&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/claude?sysOsPlat=darwin&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / winnt / add (claude) 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/claude?sysOsPlat=winnt&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/claude?sysOsPlat=winnt&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / darwin / add (rust) 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/rust?sysOsPlat=darwin&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/rust?sysOsPlat=darwin&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / arch / add (nushell) 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/nushell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/nushell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / ubuntu / add (nushell) 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/nushell?sysOsPlat=linux&sysOs=ubuntu&sysOsLike=debian&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/nushell?sysOsPlat=linux&sysOs=ubuntu&sysOsLike=debian&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / darwin / add (ai-code) 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/ai-code?sysOsPlat=darwin&wutNuPinned=1'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/ai-code?sysOsPlat=darwin&wutNuPinned=1'#
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-'##\`
+'##"
 `;
 
 snapshot[`nu / no-sys / add 1`] = `
@@ -881,7 +1221,12 @@ def --env wutNuSync [] {
 wutNuSync
 
 
-^(\$nu.current-exe) --no-config-file -c \$"( http get --raw --redirect-mode follow \$env.REQ_URL_SH )"
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
 \`
 `;
@@ -1378,6 +1723,16 @@ def packTable [headers: list<string>, rows: list<list<string>>] {
 def packManagerHere [manager: string] {
   # a script is gated by the server, so if it reached the plan this machine can run it
   (\$manager == 'script') or (which \$manager | is-not-empty)
+}
+
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$"  (\$managers | str join ', ')"
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -2154,6 +2509,16 @@ def packTable [headers: list<string>, rows: list<list<string>>] {
 def packManagerHere [manager: string] {
   # a script is gated by the server, so if it reached the plan this machine can run it
   (\$manager == 'script') or (which \$manager | is-not-empty)
+}
+
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$"  (\$managers | str join ', ')"
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -2949,6 +3314,16 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$"  (\$managers | str join ', ')"
+}
+
 # the first path whose manager is on this machine wins the group, in the order the group stated
 def packPickPath [unit: record] {
   \$unit.paths | where { |p| packManagerHere \$p.manager } | first 1 | get -o 0
@@ -3741,6 +4116,16 @@ def packTable [headers: list<string>, rows: list<list<string>>] {
 def packManagerHere [manager: string] {
   # a script is gated by the server, so if it reached the plan this machine can run it
   (\$manager == 'script') or (which \$manager | is-not-empty)
+}
+
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -5312,6 +5697,16 @@ def packTable [headers: list<string>, rows: list<list<string>>] {
 def packManagerHere [manager: string] {
   # a script is gated by the server, so if it reached the plan this machine can run it
   (\$manager == 'script') or (which \$manager | is-not-empty)
+}
+
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -6915,6 +7310,16 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
+}
+
 # the first path whose manager is on this machine wins the group, in the order the group stated
 def packPickPath [unit: record] {
   \$unit.paths | where { |p| packManagerHere \$p.manager } | first 1 | get -o 0
@@ -8514,6 +8919,16 @@ def packTable [headers: list<string>, rows: list<list<string>>] {
 def packManagerHere [manager: string] {
   # a script is gated by the server, so if it reached the plan this machine can run it
   (\$manager == 'script') or (which \$manager | is-not-empty)
+}
+
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -10153,6 +10568,16 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
+}
+
 # the first path whose manager is on this machine wins the group, in the order the group stated
 def packPickPath [unit: record] {
   \$unit.paths | where { |p| packManagerHere \$p.manager } | first 1 | get -o 0
@@ -11754,6 +12179,16 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
+}
+
 # the first path whose manager is on this machine wins the group, in the order the group stated
 def packPickPath [unit: record] {
   \$unit.paths | where { |p| packManagerHere \$p.manager } | first 1 | get -o 0
@@ -13348,6 +13783,16 @@ def packTable [headers: list<string>, rows: list<list<string>>] {
 def packManagerHere [manager: string] {
   # a script is gated by the server, so if it reached the plan this machine can run it
   (\$manager == 'script') or (which \$manager | is-not-empty)
+}
+
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -15031,6 +15476,16 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
+}
+
 # the first path whose manager is on this machine wins the group, in the order the group stated
 def packPickPath [unit: record] {
   \$unit.paths | where { |p| packManagerHere \$p.manager } | first 1 | get -o 0
@@ -16606,6 +17061,16 @@ def packTable [headers: list<string>, rows: list<list<string>>] {
 def packManagerHere [manager: string] {
   # a script is gated by the server, so if it reached the plan this machine can run it
   (\$manager == 'script') or (which \$manager | is-not-empty)
+}
+
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -18187,6 +18652,16 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$"  (\$managers | str join ', ')"
+}
+
 # the first path whose manager is on this machine wins the group, in the order the group stated
 def packPickPath [unit: record] {
   \$unit.paths | where { |p| packManagerHere \$p.manager } | first 1 | get -o 0
@@ -18979,6 +19454,16 @@ def packTable [headers: list<string>, rows: list<list<string>>] {
 def packManagerHere [manager: string] {
   # a script is gated by the server, so if it reached the plan this machine can run it
   (\$manager == 'script') or (which \$manager | is-not-empty)
+}
+
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -20534,6 +21019,16 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
+}
+
 # the first path whose manager is on this machine wins the group, in the order the group stated
 def packPickPath [unit: record] {
   \$unit.paths | where { |p| packManagerHere \$p.manager } | first 1 | get -o 0
@@ -22087,6 +22582,16 @@ def packTable [headers: list<string>, rows: list<list<string>>] {
 def packManagerHere [manager: string] {
   # a script is gated by the server, so if it reached the plan this machine can run it
   (\$manager == 'script') or (which \$manager | is-not-empty)
+}
+
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -23658,6 +24163,16 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
+}
+
 # the first path whose manager is on this machine wins the group, in the order the group stated
 def packPickPath [unit: record] {
   \$unit.paths | where { |p| packManagerHere \$p.manager } | first 1 | get -o 0
@@ -25225,6 +25740,16 @@ def packTable [headers: list<string>, rows: list<list<string>>] {
 def packManagerHere [manager: string] {
   # a script is gated by the server, so if it reached the plan this machine can run it
   (\$manager == 'script') or (which \$manager | is-not-empty)
+}
+
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -26828,6 +27353,16 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
+}
+
 # the first path whose manager is on this machine wins the group, in the order the group stated
 def packPickPath [unit: record] {
   \$unit.paths | where { |p| packManagerHere \$p.manager } | first 1 | get -o 0
@@ -28429,6 +28964,16 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
+}
+
 # the first path whose manager is on this machine wins the group, in the order the group stated
 def packPickPath [unit: record] {
   \$unit.paths | where { |p| packManagerHere \$p.manager } | first 1 | get -o 0
@@ -29993,6 +30538,16 @@ def packTable [headers: list<string>, rows: list<list<string>>] {
 def packManagerHere [manager: string] {
   # a script is gated by the server, so if it reached the plan this machine can run it
   (\$manager == 'script') or (which \$manager | is-not-empty)
+}
+
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -31564,6 +32119,16 @@ def packTable [headers: list<string>, rows: list<list<string>>] {
 def packManagerHere [manager: string] {
   # a script is gated by the server, so if it reached the plan this machine can run it
   (\$manager == 'script') or (which \$manager | is-not-empty)
+}
+
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -33169,6 +33734,16 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$"  (\$managers | str join ', ')"
+}
+
 # the first path whose manager is on this machine wins the group, in the order the group stated
 def packPickPath [unit: record] {
   \$unit.paths | where { |p| packManagerHere \$p.manager } | first 1 | get -o 0
@@ -33892,6 +34467,16 @@ def packTable [headers: list<string>, rows: list<list<string>>] {
 def packManagerHere [manager: string] {
   # a script is gated by the server, so if it reached the plan this machine can run it
   (\$manager == 'script') or (which \$manager | is-not-empty)
+}
+
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$"  (\$managers | str join ', ')"
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -34674,6 +35259,16 @@ def packTable [headers: list<string>, rows: list<list<string>>] {
 def packManagerHere [manager: string] {
   # a script is gated by the server, so if it reached the plan this machine can run it
   (\$manager == 'script') or (which \$manager | is-not-empty)
+}
+
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -36275,6 +36870,16 @@ def packTable [headers: list<string>, rows: list<list<string>>] {
 def packManagerHere [manager: string] {
   # a script is gated by the server, so if it reached the plan this machine can run it
   (\$manager == 'script') or (which \$manager | is-not-empty)
+}
+
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -37912,6 +38517,16 @@ def packTable [headers: list<string>, rows: list<list<string>>] {
 def packManagerHere [manager: string] {
   # a script is gated by the server, so if it reached the plan this machine can run it
   (\$manager == 'script') or (which \$manager | is-not-empty)
+}
+
+# the server sends every manager the group names; only the client knows which are installed
+def packFindGroup [label: string, ...candidates: string] {
+  let managers = (\$candidates | where { |c| packManagerHere \$c })
+  if (\$managers | is-empty) {
+    return
+  }
+  opPrint \$label
+  opPrint \$\\"  (\$managers | str join ', ')\\"
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
