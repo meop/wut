@@ -5,7 +5,7 @@ import { Fmt } from '@meop/shire/serde'
 import type { Sh } from '@meop/shire/sh'
 
 import { getCfgDirDump, getCfgFileContent, getCfgFileLoad } from '../cfg.ts'
-import { execScriptShell, redirectCommonShell } from '../sh.ts'
+import { execScriptShell, getScriptFlavorOpPreamble, redirectCommonShell } from '../sh.ts'
 
 export class PackCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -154,9 +154,10 @@ function buildCmdRunLines(
   plat: string,
   shellFlavor: string,
   commands: Array<string>,
+  announce: boolean,
 ): Array<string> {
   return [
-    ...commands.flatMap((cmd) => shell.print(`  ${cmd}`)),
+    ...(announce ? commands.flatMap((cmd) => shell.print(`  ${cmd}`)) : []),
     `if 'NOOP' not-in $env { ${execScriptShell(shell, plat, shellFlavor, commands.join('\n'))} }`,
   ]
 }
@@ -172,10 +173,9 @@ async function buildFileRunLines(
   if (!fileContent) {
     return null
   }
-  return [
-    ...shell.print(`  ${filePath}`),
-    `if 'NOOP' not-in $env { ${execScriptShell(shell, plat, shellFlavor, fileContent)} }`,
-  ]
+  const preamble = await getScriptFlavorOpPreamble(shellFlavor)
+  const scriptContent = preamble ? `${preamble}\n${fileContent}` : fileContent
+  return [`if 'NOOP' not-in $env { ${execScriptShell(shell, plat, shellFlavor, scriptContent)} }`]
 }
 
 async function loadManagerFiles(
@@ -348,7 +348,7 @@ function processManagerEntryLines(
   if (op === 'add') {
     const preScript = entry[nativeShell as 'pwsh' | 'zsh']
     if (preScript?.commands?.length) {
-      lines.push(...buildCmdRunLines(shell, plat, nativeShell, preScript.commands))
+      lines.push(...buildCmdRunLines(shell, plat, nativeShell, preScript.commands, true))
     }
   }
 
@@ -358,7 +358,7 @@ function processManagerEntryLines(
   if (op === 'remove') {
     const postScript = remEntry?.[nativeShell]
     if (postScript?.commands?.length) {
-      lines.push(...buildCmdRunLines(shell, plat, nativeShell, postScript.commands))
+      lines.push(...buildCmdRunLines(shell, plat, nativeShell, postScript.commands, true))
     }
   }
 
@@ -419,7 +419,7 @@ async function buildGroupUnit(
       }
       const { shellFlavor, entry } = selected
       const lines = entry.commands?.length
-        ? buildCmdRunLines(shell, plat, shellFlavor, entry.commands)
+        ? buildCmdRunLines(shell, plat, shellFlavor, entry.commands, false)
         : entry.file
         ? await buildFileRunLines(shell, plat, shellFlavor, entry.file)
         : null

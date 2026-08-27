@@ -44,21 +44,21 @@ def fileBinHere [tool: string] {
 # the one that plans: which tools are here, how many files each, and which destination dirs get cleared first
 def filePlanShow [] {
   let pairs = ($env.FILE_SYNC_PATH_PAIRS? | default []) | where { |p| fileBinHere ($p | split row '|' | get 0) }
-  if ($pairs | is-empty) {
+  let clearDirs = ($env.FILE_SYNC_CLEAR_DIRS? | default []) | where { |d| fileBinHere ($d | split row '|' | get 0) }
+  if ($pairs | is-empty) and ($clearDirs | is-empty) {
     return true
   }
 
-  let tools = ($pairs | each { |p| $p | split row '|' | get 0 })
-  let rows = ($tools | uniq | sort | each { |t|
-    [$t, ($tools | where { |x| $x == $t } | length | into string)]
+  let fileTools = ($pairs | each { |p| $p | split row '|' | get 0 })
+  let dirTools = ($clearDirs | each { |d| $d | split row '|' | get 0 })
+  let rows = (($fileTools ++ $dirTools) | uniq | sort | each { |t|
+    [
+      $t,
+      ($fileTools | where { |x| $x == $t } | length | into string),
+      ($dirTools | where { |x| $x == $t } | length | into string),
+    ]
   })
-  fileTable ['tool' 'files'] $rows
-
-  let clearDirs = ($env.FILE_SYNC_CLEAR_DIRS? | default []) | where { |d| fileBinHere ($d | split row '|' | get 0) }
-  if ($clearDirs | is-not-empty) {
-    let dirs = ($clearDirs | each { |d| $d | split row '|' | get 1 })
-    opPrintWarn $"clears: ($dirs | str join ', ')"
-  }
+  fileTable ['tool' 'files' 'directories'] $rows
 
   filePrompt 'use file sync'
 }

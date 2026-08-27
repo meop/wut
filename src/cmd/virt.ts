@@ -21,6 +21,7 @@ export class VirtCmd extends CmdBase implements Cmd {
       new VirtCmdFind([...this.scopes, this.name]),
       new VirtCmdList([...this.scopes, this.name]),
       new VirtCmdRem([...this.scopes, this.name]),
+      new VirtCmdRun([...this.scopes, this.name]),
       new VirtCmdSync([...this.scopes, this.name]),
       new VirtCmdTidy([...this.scopes, this.name]),
     ]
@@ -120,7 +121,12 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
           if (!managerGroup.has('')) {
             managerGroup.set('', [])
           }
-          managerGroup.get('')!.push(pod)
+          // a variant file (qemu's test/vga.yaml) is a way to run an instance, not another instance, so it lands on
+          // the same name its own yaml already put here
+          const instances = managerGroup.get('')!
+          if (!instances.includes(pod)) {
+            instances.push(pod)
+          }
         }
       }
     }
@@ -220,8 +226,13 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       let results = await getCfgDirDump(dirParts, {
         extension: Fmt.yaml,
         filters: filters.length ? filters : undefined,
+        flexible: true,
       })
-      if (op === 'rem' && filters.length) {
+      if (op !== 'run') {
+        // only `run` may resolve into a variant folder (eg. qemu's glass/vfio.yaml)
+        results = results.filter((parts) => parts[0] === 'podman' || parts.length <= 2)
+      }
+      if ((op === 'rem' || op === 'run') && filters.length) {
         results = preferExactMatches(results, filters)
           .filter((parts) => parts[1] && !(parts[0] === 'podman' && !parts[2]))
           .slice(0, 1)
@@ -295,6 +306,25 @@ export class VirtCmdRem extends CmdBase implements Cmd {
     this.name = 'rem'
     this.description = 'remove on local'
     this.aliases = ['r', 'rm', 'rem', 'remove', 'un', 'unin', 'uninstall']
+    this.arguments = [
+      { name: 'parts', description: 'path part(s) to match', required: true },
+    ]
+  }
+  override async work(
+    shell: Sh,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
+    return await execOp(shell, context, environment, this.name)
+  }
+}
+
+export class VirtCmdRun extends CmdBase implements Cmd {
+  constructor(scopes: Array<string>) {
+    super(scopes)
+    this.name = 'run'
+    this.description = 'run ad-hoc in foreground (no service)'
+    this.aliases = ['ru']
     this.arguments = [
       { name: 'parts', description: 'path part(s) to match', required: true },
     ]

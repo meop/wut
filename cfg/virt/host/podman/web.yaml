@@ -1,25 +1,15 @@
 ---
+kind: Build
+images:
+  - name: localhost/app:latest
+    filePath: '/virt/{host}/podman/{pod}/Dockerfile.app'
+    buildContextPath: '/srv/virt/podman/{host}/{pod}'
+---
 kind: Pod
 metadata:
+  name: '{pod}'
   annotations:
-    io.podman.annotations.uts/{instance}-web: private
-    io.podman.annotations.hostname/{instance}-web: '{pod}-{instance}-web'
+    io.podman.kube.network: net0
+    io.podman.kube.podmanargs.mac-address: '02:50:6f:00:77:65'
 spec:
-  containers:
-    - name: '{instance}-web'
-      image: lscr.io/linuxserver/heimdall:latest
-      env:
-        - name: PGID
-          value: '10000'
-        - name: PUID
-          value: '9000'
-        - name: TZ
-          value: 'UTC'
-      volumeMounts:
-        - name: '{instance}-web-config'
-          mountPath: /config
-  volumes:
-    - name: '{instance}-web-config'
-      hostPath:
-        path: '/srv/virt/podman/{host}/{pod}/{instance}/web/config'
-        type: DirectoryOrCreate
+  hostname: '{pod}'

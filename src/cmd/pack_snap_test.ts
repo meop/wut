@@ -478,6 +478,55 @@ Deno.test('nu / ubuntu / add (pinned, rustup)', async (t) => {
   // brew's entry is gated to darwin
   assertEquals(body.includes("$env.PACK_MANAGER = r#'brew'#"), false)
 })
+// a script "file" entry is spawned as its own process at runtime, so it never inherits this response's
+// own op* definitions — it needs its shell's op preamble loaded into it directly (see getScriptFlavorOpPreamble)
+Deno.test('nu / linux / add (pinned, script file entry carries its own op preamble)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/scriptfile?sysOsPlat=linux&wutNuPinned=1'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('function opPrintWarn'), true)
+  assertEquals(body.includes('function opPrintMaybeRunCmd'), true)
+  assertEquals(body.includes("opPrintWarn 'fixture script for buildFileRunLines regression coverage'"), true)
+})
+// the manager functions are defined long before the plan is, so ordering is only readable inside the arm itself
+function planArm(body: string, id: string) {
+  const start = body.indexOf(`r#'${id}'# => {`)
+  return start < 0 ? '' : body.slice(start).split('\n    }')[0]
+}
+// a manager entry may carry native-shell commands around its own call: add taps before installing, remove untaps
+// after uninstalling, and only the platform's native shell is read
+Deno.test('nu / linux / add (pinned, manager pre hook runs before the manager call)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/hooks?sysOsPlat=linux&wutNuPinned=1'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  const arm = planArm(body, 'test-hooks|brew')
+  const hook = arm.indexOf('brew tap meop/tap')
+  const call = arm.indexOf('\npackBrew')
+  assertEquals(hook > -1, true)
+  assertEquals(call > -1, true)
+  assertEquals(hook < call, true)
+})
+Deno.test('nu / linux / remove (pinned, manager post hook runs after the manager call)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/remove/hooks?sysOsPlat=linux&wutNuPinned=1'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  const arm = planArm(body, 'test-hooks|brew')
+  const call = arm.indexOf('\npackBrew')
+  const hook = arm.indexOf('brew untap meop/tap')
+  assertEquals(hook > -1, true)
+  assertEquals(call > -1, true)
+  assertEquals(call < hook, true)
+  // remove states no names of its own: the ones add declared are the ones it hands the manager
+  assertEquals(arm.includes("$env.PACK_REMOVE_NAMES = [ r#'hooks'# ]"), true)
+})
+// a manager with nothing to undo is simply absent from remove
+Deno.test('nu / linux / remove (pinned, -m pacman has no post hook)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/-m/pacman/remove/hooks?sysOsPlat=linux&wutNuPinned=1'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('packPacman'), true)
+  assertEquals(body.includes('untap'), false)
+})
 // name-less ops hand every supported manager its own turn
 Deno.test('nu / arch / sync (pinned)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/sync?${PIN_ARCH}`))).text()

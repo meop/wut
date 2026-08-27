@@ -1,0 +1,25 @@
+---
+name: svc
+services:
+  db:
+    environment:
+      - POSTGRES_DB=svc
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+    hostname: svc-db
+    image: docker.io/library/postgres:16
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /srv/virt/docker/host/svc/db/data
+        target: /var/lib/postgresql/data
+  web:
+    depends_on:
+      - db
+    hostname: svc-web
+    image: docker.io/library/nginx:latest
+    ports:
+      - '8080:80/tcp'
+    restart: unless-stopped
+    volumes:
+      - /srv/virt/docker/host/svc/web/conf:/etc/nginx/conf.d

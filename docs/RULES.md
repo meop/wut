@@ -8,13 +8,13 @@
 
 - `maps` - Array of file/directory mappings from config to local filesystem
 - `aliases` - Array of alternative names for find operations (e.g., zed: [zeditor, zed-cli])
-- `permission` - Optional permission settings for files (Windows ACLs, Unix chmod)
 
 **Map Properties:**
 
 - `in` - Source path (supports directories and template substitution)
 - `out` - Destination mapping object keyed by platform (darwin, linux, winnt)
-- `permission` - Optional per-file permission settings
+- `permission` - Optional permission settings (Windows ACLs, Unix chmod), per map only — there is no entry level
+  `permission`
 
 **Directory Support:** If `in` is a directory, `file.ts` automatically syncs all files within it using `isDirPath()` and
 `getFilePaths()`, creating separate sync pairs for each file found.
@@ -103,12 +103,12 @@ operation:
       pacman:
         names:
           - nushell
-    script:
-      zsh:
-        file: cfg/script/docker/install.zsh
-        gate:
-          sys_os_plat:
-            - linux
+      script:
+        zsh:
+          file: cfg/script/docker/install.zsh
+          gate:
+            sys_os_plat:
+              - linux
 ```
 
 A manager entry may carry a `gate`, read exactly like a script entry's, for a manager that only applies on some
@@ -120,13 +120,47 @@ the end.
 `ghpm` is always a user manager and `pacman` is always a system one, so wut derives the tier from the manager and owns
 the preference order — user managers, then `script`, then system managers. A yaml that also declared the tier could
 declare it wrongly (a system manager filed under `user:` silently never matched), which is why there is one flat
-`manager` map. `script` is a sibling because it is not a manager. `remove` takes the same shape.
+`manager` map. `script` is a key inside that map, not beside it: it is spelled where a manager would be so one loop
+walks every install path in file order, and it is what makes `-m ghpm,script` orderable against real managers.
 
 The order of the managers in the file is the group's preference, and the first one present on the machine wins it. `-m`
 overrides that for one invocation and takes a list: `wut p -m pacman,ghpm add nu` narrows to those two and prefers
 pacman, whatever wut's own order says. `script` is spellable in that list, so naming managers excludes scripts by
 default — `-m ghpm,pacman` — while `-m script` runs only the script and `-m ghpm,script` prefers ghpm and falls to the
 script.
+
+## pack manager hooks and remove
+
+A manager entry may also carry a shell key — `pwsh` or `zsh` — holding `commands` that run around the manager call. Only
+the platform's native shell is read (`pwsh` on winnt, `zsh` elsewhere), so a hook states the shell it is written in
+rather than a gate:
+
+```yaml
+---
+operation:
+  add:
+    manager:
+      brew:
+        zsh:
+          commands:
+            - brew tap anomalyco/tap
+        names:
+          - opencode
+  remove:
+    manager:
+      brew:
+        zsh:
+          commands:
+            - brew untap anomalyco/tap
+```
+
+`add` runs its hook **before** the manager call, `remove` runs its hook **after** — tap then install, uninstall then
+untap.
+
+`remove` therefore does not repeat `add`'s shape: it is a post-hook map only, keyed by manager and then by shell. The
+package names a removal passes to the manager come from that manager's `add` entry, so a group never states its names
+twice and the two halves cannot drift apart. A manager with nothing to undo is simply absent from `remove`, and a group
+that needs no hooks at all has no `remove` key.
 
 ## pack group aliases
 
@@ -137,15 +171,15 @@ found by:
 ---
 aliases:
   - nushell
-add:
-  user:
-    ghpm:
-      names:
-        - nu
-  system:
-    pacman:
-      names:
-        - nushell
+operation:
+  add:
+    manager:
+      ghpm:
+        names:
+          - nu
+      pacman:
+        names:
+          - nushell
 ```
 
 `wut p f nushell`, `wut p add nushell` and `wut p rem nushell` now all reach this group, and `find` shows the alias in
@@ -165,6 +199,51 @@ same thing; a companion is a second thing the group installs.
 `find` matches aliases by substring, like it matches group and package names. Resolution for `add`/`remove` matches an
 alias exactly, the way a full group name matches, and structural path matches are preferred over alias matches when both
 hit.
+
+## virt instance layout
+
+An instance is named by its path under the host: `cfg/virt/<sys_host>/<manager>/<instance>.yaml`. The manager is part of
+that path everywhere — `find`, `add`, `list`, `rem` all filter on it — and `sys_host` is why one config repo serves
+every machine without a gate.
+
+`podman` is the exception, and takes one more level. `<pod>.yaml` is the pod itself — `metadata.name`, the
+`io.podman.kube.network` and mac annotations, `spec.hostname`, and nothing else — while `<pod>/<instance>.yaml` files
+each contribute containers and volumes that are merged onto it (`podman.nu`, layers 2 and 3). A pod yaml carrying
+containers of its own would still work, but it hides the pod's identity in with one instance's payload, so keep it a
+shell. This is also why a pod alone is not actionable: `add` and `rem` skip a podman path with no instance part.
+
+`qemu` takes a deeper level with the opposite meaning. `<instance>/<variant>.yaml` is another _way to run_ an instance,
+not another instance — `test/vga.yaml` and `test/vfio.yaml` are the emulated-gpu and passthrough spellings of `test`.
+Only `run` resolves into a variant folder; `add`, `rem`, `sync` and `tidy` stop at the instance, and `find` lists the
+instance once however many variants it has.
+
+`docker` instances are plain compose files, served whole to `docker compose --file -`. `docker.nu` reads
+`services.*.volumes` to pre-create bind sources, in both the `source: … target: …` and `host:container` spellings, so
+those paths are written out in full — nothing substitutes `{host}` in a compose file.
+
+## podman image builds
+
+A pod yaml may open with a `kind: Build` doc naming images to build before the pod starts:
+
+```yaml
+---
+kind: Build
+images:
+  - name: localhost/app:latest
+    filePath: '/virt/{host}/podman/{pod}/Dockerfile.app'
+    buildContextPath: '/srv/virt/podman/{host}/{pod}'
+---
+kind: Pod
+metadata:
+  name: '{pod}'
+```
+
+`filePath` is a `/cfg` route path, not a local one: the client fetches the Containerfile over HTTP, writes it into
+`buildContextPath`, and builds. An instance then names the built image like any other — `image: localhost/app:latest`.
+
+`Build` is wut's own kind and is stripped before anything reaches podman (`processYaml`). `{host}`, `{pod}` and
+`{instance}` are substituted in both docs. An image already built in this run is not built again, so several instances
+may share one.
 
 ## script.yaml Gate Enforcement
 

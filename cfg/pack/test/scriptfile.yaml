@@ -1,0 +1,10 @@
+---
+operation:
+  add:
+    manager:
+      script:
+        zsh:
+          file: cfg/script/scriptfile/install.zsh
+          gate:
+            sys_os_plat:
+              - linux

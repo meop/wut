@@ -1,0 +1,25 @@
+---
+kind: Pod
+metadata:
+  annotations:
+    io.podman.annotations.uts/{instance}-hub: private
+    io.podman.annotations.hostname/{instance}-hub: '{pod}-{instance}-hub'
+spec:
+  containers:
+    - name: '{instance}-hub'
+      image: lscr.io/linuxserver/heimdall:latest
+      env:
+        - name: PGID
+          value: '10000'
+        - name: PUID
+          value: '9000'
+        - name: TZ
+          value: 'UTC'
+      volumeMounts:
+        - name: '{instance}-hub-config'
+          mountPath: /config
+  volumes:
+    - name: '{instance}-hub-config'
+      hostPath:
+        path: '/srv/virt/podman/{host}/{pod}/{instance}/hub/config'
+        type: DirectoryOrCreate

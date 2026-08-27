@@ -1,8 +1,8 @@
 ---
 environment:
-  - WARE_IMAGES_DIR_PATH=/srv/ware/images
-  - TMP_QEMU_DIR_PATH=/tmp/qemu
-  - VIRT_QEMU_DIR_PATH=/srv/virt/qemu
+  - ware_images_dir_path=/srv/ware/images
+  - tmp_qemu_dir_path=/tmp/qemu
+  - virt_qemu_dir_path=/srv/virt/qemu
 qemu:
   architecture:
     x86_64:

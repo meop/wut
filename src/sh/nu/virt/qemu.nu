@@ -31,10 +31,30 @@ def virtQemu [] {
     } | into cell-path
   }
 
-  def doAdd [cmd, instance] {
+  def fetchInstanceYaml [cmd, name] {
+    opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($name).yaml'#" | from yaml
+  }
+
+  # requested is "glass" or "glass/vfio" (fragment folder) — either way, instance resolves to "glass"
+  def resolveInstance [cmd, requested] {
+    if not ($requested | str contains '/') {
+      return {instance: $requested, config: (fetchInstanceYaml $cmd $requested)}
+    }
+    let baseName = ($requested | split row '/' | first)
+    let baseConfig = fetchInstanceYaml $cmd $baseName
+    let fragmentConfig = fetchInstanceYaml $cmd $requested
+    {instance: $baseName, config: (virtDeepMerge $baseConfig $fragmentConfig)}
+  }
+
+  def qemuInstanceRunning [instance] {
+    (^pgrep --ignore-ancestors --full --list-full $"^qemu-system.*($instance)" | complete | get stdout | is-not-empty)
+  }
+
+  def buildQemuSetup [cmd, instance] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($cmd).yaml'#"
-    let configVm = opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml'#"
-    let merged = virtDeepMerge ($config | from yaml) ($configVm | from yaml)
+    let resolved = resolveInstance $cmd $instance
+    let instance = $resolved.instance
+    let merged = virtDeepMerge ($config | from yaml) $resolved.config
 
     mut qemuEnv = {}
 
@@ -45,37 +65,80 @@ def virtQemu [] {
     $qemuEnv = $qemuEnv | upsert 'instance' $instance
 
     let cpuStat = ^lscpu
-    $qemuEnv = $qemuEnv | upsert 'VM_CPU_SOCKETS' ($cpuStat | find --ignore-case 'socket(s)' | split row ':' | last | str trim | ansi strip)
-    $qemuEnv = $qemuEnv | upsert 'VM_CPU_CORES' ($cpuStat | find --ignore-case 'core(s)' | split row ':' | last | str trim | ansi strip)
-    $qemuEnv = $qemuEnv | upsert 'VM_CPU_THREADS' ($cpuStat | find --ignore-case 'thread(s)' | split row ':' | last | str trim | ansi strip)
+    $qemuEnv = $qemuEnv | upsert 'vm_cpu_sockets' ($cpuStat | find --ignore-case 'socket(s)' | split row ':' | last | str trim | ansi strip)
+    $qemuEnv = $qemuEnv | upsert 'vm_cpu_cores' ($cpuStat | find --ignore-case 'core(s)' | split row ':' | last | str trim | ansi strip)
+    $qemuEnv = $qemuEnv | upsert 'vm_cpu_threads' ($cpuStat | find --ignore-case 'thread(s)' | split row ':' | last | str trim | ansi strip)
 
     let cpuVendor = if ((^cat '/proc/cpuinfo' | find --ignore-case 'vendor_id' | last | split row ':' | last | str lowercase | str trim | ansi strip) | str contains 'amd') { 'amd' } else { 'intel' }
-    $qemuEnv = $qemuEnv | upsert 'VM_CPU_VENDOR' ($cpuVendor | str trim)
+    $qemuEnv = $qemuEnv | upsert 'vm_cpu_vendor' ($cpuVendor | str trim)
 
-    let nicDirPath = $"/sys/class/net/($qemuEnv.NIC)"
+    let nicDirPath = $"/sys/class/net/($qemuEnv.nic)"
     if not ($nicDirPath | path exists) {
-      opPrintWarn $"cannot add `($instance)`: NIC '($qemuEnv.NIC)' does not exist"
-      return
+      opPrintWarn $"cannot use `($instance)`: NIC '($qemuEnv.nic)' does not exist"
+      return null
     }
-    $qemuEnv = $qemuEnv | upsert 'NIC_MAC' (if ('NIC_MAC' in $qemuEnv) {
-      $qemuEnv.NIC_MAC
+    $qemuEnv = $qemuEnv | upsert 'nic_mac' (if ('nic_mac' in $qemuEnv) {
+      $qemuEnv.nic_mac
     } else {
       ^cat $"($nicDirPath)/address" | str trim
     })
-    $qemuEnv = $qemuEnv | upsert 'NIC_IF_INDEX' (if ('NIC_IF_INDEX' in $qemuEnv) {
-      $qemuEnv.NIC_IF_INDEX
+    $qemuEnv = $qemuEnv | upsert 'nic_if_index' (if ('nic_if_index' in $qemuEnv) {
+      $qemuEnv.nic_if_index
     } else {
       ^cat $"($nicDirPath)/ifindex" | str trim
     })
 
-    let sysArch = $qemuEnv.VM_SYS_ARCH
-    let sysPlat = $qemuEnv.VM_SYS_PLAT
+    let sysArch = $qemuEnv.vm_sys_arch
+    let sysPlat = $qemuEnv.vm_sys_plat
 
-    if 'VFIO_PCI_DEV_IDS' in $qemuEnv {
-      for pciDevId in (($qemuEnv.VFIO_PCI_DEV_IDS | split row ',') | enumerate) {
-        $qemuEnv = $qemuEnv | upsert $"VFIO_PCI_DEV_IDS_($pciDevId.index)" $pciDevId.item
+    if ($qemuEnv | get --optional vfio_pci_dev_ids | default '' | is-not-empty) {
+      for pciDevId in (($qemuEnv.vfio_pci_dev_ids | split row ',') | enumerate) {
+        $qemuEnv = $qemuEnv | upsert $"vfio_pci_dev_ids_($pciDevId.index)" $pciDevId.item
       }
     }
+
+    let qemuBlock = $merged | get qemu?.architecture? | get --optional $sysArch | default {}
+
+    let qemuCpuFlags = [
+      [cpu flags],
+      [cpu vendor $cpuVendor flags],
+      [cpu platform $sysPlat flags],
+      [cpu vendor $cpuVendor platform $sysPlat flags],
+    ] | each {
+      |s| let p = (intoCellPath ...$s)
+      if ($qemuBlock | get $p | is-not-empty) {
+        $qemuBlock | get $p
+      } else {
+        []
+      }
+    } | flatten
+
+    $qemuEnv = $qemuEnv | upsert 'vm_cpu_flags' (
+      if ($qemuCpuFlags | length) > 0 {
+        $",($qemuCpuFlags | str join ',')"
+      } else {
+        ''
+      }
+    )
+
+    {instance: $instance, merged: $merged, qemuEnv: $qemuEnv, qemuBlock: $qemuBlock, sysArch: $sysArch}
+  }
+
+  def doAdd [cmd, instance] {
+    let setup = buildQemuSetup $cmd $instance
+    if ($setup == null) {
+      return
+    }
+    let instance = $setup.instance
+    if (qemuInstanceRunning $instance) {
+      opPrintWarn $"`($cmd)` instance `($instance)` is already added"
+      return
+    }
+
+    let merged = $setup.merged
+    mut qemuEnv = $setup.qemuEnv
+    let qemuBlock = $setup.qemuBlock
+    let sysArch = $setup.sysArch
 
     if 'qemu' in $merged {
       let serviceName = $"qemu-($instance)"
@@ -87,16 +150,21 @@ def virtQemu [] {
       opPrintMaybeRunCmd sudo mkdir -p $serviceDirPath
       opPrintMaybeRunCmd sudo mkdir -p $configDirPath
 
-      let tmpDirPath = $"($qemuEnv.TMP_QEMU_DIR_PATH)/($instance)"
+      let tmpDirPath = $"($qemuEnv.tmp_qemu_dir_path)/($instance)"
       let pidFilePath = ($tmpDirPath | path join qemu.pid)
 
       mut serviceLines = [
         '[Unit]',
         $"Description=QEMU instance ($instance)",
-        'After=network.target',
+        'Wants=network-online.target',
+        'After=network-online.target',
+        'StartLimitIntervalSec=300',
+        'StartLimitBurst=3',
         '',
         '[Service]',
         'Type=forking',
+        'KillMode=control-group',
+        'OOMScoreAdjust=-500',
         $"PIDFile=($pidFilePath)",
         $"WorkingDirectory=($configDirPath)",
         $"ExecStartPre=/usr/bin/mkdir -p ($tmpDirPath)",
@@ -121,12 +189,12 @@ def virtQemu [] {
         'ExecStartPre=/usr/bin/sleep 2',
       ]
 
-      if 'VFIO_PCI_DEV_IDS' in $qemuEnv {
+      if ($qemuEnv | get --optional vfio_pci_dev_ids | default '' | is-not-empty) {
         let rebindScriptFilePath = ($configDirPath | path join 'rebind-vfio-pci.sh')
         let rebindLines = [
           '#!/usr/bin/bash',
           "driver='vfio-pci'",
-          $"for fullPciDevId in ($qemuEnv.VFIO_PCI_DEV_IDS | split row ',' | each { |id| $"0000:($id)" } | str join ' '); do",
+          $"for fullPciDevId in ($qemuEnv.vfio_pci_dev_ids | split row ',' | each { |id| $"0000:($id)" } | str join ' '); do",
           '  if [ -e "/sys/bus/pci/devices/$fullPciDevId/driver_override" ]; then',
           '    currentDriver=$(basename $(readlink "/sys/bus/pci/devices/$fullPciDevId/driver" 2>/dev/null) 2>/dev/null)',
           '    if [ "$currentDriver" != "$driver" ]; then',
@@ -167,34 +235,11 @@ def virtQemu [] {
 
       $serviceLines = $serviceLines | append $"ExecStartPre=-/usr/bin/rm -f ($pidFilePath)"
 
-      let qemuBlock = $merged | get qemu?.architecture? | get --optional $sysArch | default {}
       let qemuBin = $"($cmd)-system-($sysArch)"
 
-      let qemuCpuFlags = [
-        [cpu flags],
-        [cpu vendor $cpuVendor flags],
-        [cpu platform $sysPlat flags],
-        [cpu vendor $cpuVendor platform $sysPlat flags],
-      ] | each {
-        |s| let p = (intoCellPath ...$s)
-        if ($qemuBlock | get $p | is-not-empty) {
-          $qemuBlock | get $p
-        } else {
-          []
-        }
-      } | flatten
-
-      $qemuEnv = $qemuEnv | upsert 'VM_CPU_FLAGS' (
-        if ($qemuCpuFlags | length) > 0 {
-          $",($qemuCpuFlags | str join ',')"
-        } else {
-          ''
-        }
-      )
-
       let qemuScriptFilePath = ($configDirPath | path join qemu.sh)
-      let qemuArgs = replaceEnv $qemuEnv ($merged | get qemu?.arguments? | default [])
-      let cpusCount = (($qemuEnv.VM_CPU_SOCKETS | into int) * ($qemuEnv.VM_CPU_CORES | into int) * ($qemuEnv.VM_CPU_THREADS | into int))
+      let qemuArgs = (replaceEnv $qemuEnv ($merged | get qemu?.arguments? | default [])) | append [$"-pidfile ($pidFilePath)", '-daemonize']
+      let cpusCount = (($qemuEnv.vm_cpu_sockets | into int) * ($qemuEnv.vm_cpu_cores | into int) * ($qemuEnv.vm_cpu_threads | into int))
       let cpusMax = $cpusCount - 1
       let qemuCmd = $"($qemuBin)(if ($qemuArgs | length) > 0 { ' ' + ($qemuArgs | str join ' ') } else { '' })"
       # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
@@ -202,6 +247,38 @@ def virtQemu [] {
       opPrintMaybeRunCmd $"r##'((['#!/usr/bin/bash', ('exec ' + $qemuCmd)] | str join "\n") + "\n")'##" '|' sudo tee $qemuScriptFilePath '|' ignore
       opPrintMaybeRunCmd sudo chmod +x $qemuScriptFilePath
       $serviceLines = $serviceLines | append $"ExecStart=($qemuScriptFilePath)"
+
+      let qmpSocketPath = $"($tmpDirPath)/qmp.socket"
+      let shutdownScriptFilePath = ($configDirPath | path join qemu-shutdown.sh)
+      let shutdownLines = [
+        '#!/usr/bin/bash',
+        'qmpSocket="$1"',
+        'pidFile="$2"',
+        'timeoutSec="${3:-45}"',
+        '',
+        '# no qmp socket, or qemu not listening on it yet — nothing graceful to do, let systemd kill it',
+        'if [ ! -S "$qmpSocket" ]; then exit 0; fi',
+        '',
+        'pid=$(cat "$pidFile" 2>/dev/null)',
+        'if [ -z "$pid" ] || ! kill -0 "$pid" 2>/dev/null; then exit 0; fi',
+        '',
+        '{',
+        "  echo '{\"execute\":\"qmp_capabilities\"}'",
+        "  echo '{\"execute\":\"system_powerdown\"}'",
+        '} | timeout 5 socat - "UNIX-CONNECT:$qmpSocket" > /dev/null 2>&1',
+        '',
+        'waited=0',
+        'while kill -0 "$pid" 2>/dev/null; do',
+        '  if [ "$waited" -ge "$timeoutSec" ]; then exit 0; fi',
+        '  sleep 1',
+        '  waited=$((waited + 1))',
+        'done',
+      ]
+      # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+      # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+      opPrintMaybeRunCmd $"r##'(($shutdownLines | str join "\n") + "\n")'##" '|' sudo tee $shutdownScriptFilePath '|' ignore
+      opPrintMaybeRunCmd sudo chmod +x $shutdownScriptFilePath
+      $serviceLines = $serviceLines | append $"ExecStop=($shutdownScriptFilePath) ($qmpSocketPath) ($pidFilePath) 45"
 
       if ($qemuBlock | get cpu?.pin? | default false) {
         let pinScriptFilePath = ($configDirPath | path join qemu-cpu-pin.sh)
@@ -228,6 +305,8 @@ def virtQemu [] {
 
       $serviceLines = $serviceLines | append [
         'Restart=on-failure',
+        'RestartSec=5',
+        'TimeoutStopSec=60',
         '',
         '[Install]',
         'WantedBy=default.target',
@@ -236,6 +315,61 @@ def virtQemu [] {
       opPrintMaybeRunCmd sudo systemctl daemon-reload
       opPrintMaybeRunCmd sudo systemctl enable --now $serviceName
     }
+  }
+
+  # foreground, no systemd unit — skips vfio unbind/rebind and cpu-pin
+  def doRun [cmd, instance] {
+    let setup = buildQemuSetup $cmd $instance
+    if ($setup == null) {
+      return
+    }
+    let instance = $setup.instance
+    if (qemuInstanceRunning $instance) {
+      opPrintWarn $"`($cmd)` instance `($instance)` is already running"
+      return
+    }
+
+    let merged = $setup.merged
+    mut qemuEnv = $setup.qemuEnv
+    let sysArch = $setup.sysArch
+
+    if 'qemu' not-in $merged {
+      return
+    }
+
+    let configDirPath = $"/var/lib/qemu/($instance)"
+    let tmpDirPath = $"($qemuEnv.tmp_qemu_dir_path)/($instance)"
+
+    opPrintMaybeRunCmd sudo mkdir -p $configDirPath
+    opPrintMaybeRunCmd sudo mkdir -p $tmpDirPath
+
+    if 'swtpm' in $merged {
+      let swtpmScriptFilePath = ($configDirPath | path join swtpm.sh)
+      let swtpmArgs = replaceEnv $qemuEnv ($merged | get swtpm?.arguments? | default [])
+      let swtpmCmd = $"swtpm(if ($swtpmArgs | length) > 0 { ' ' + ($swtpmArgs | str join ' ') } else { '' })"
+
+      # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+      # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+      opPrintMaybeRunCmd $"r##'((['#!/usr/bin/bash', ('exec ' + $swtpmCmd)] | str join "\n") + "\n")'##" '|' sudo tee $swtpmScriptFilePath '|' ignore
+      opPrintMaybeRunCmd sudo chmod +x $swtpmScriptFilePath
+      try { opPrintMaybeRunCmd sudo pkill --full --ignore-ancestors $"^swtpm.*($instance)" }
+      opPrintMaybeRunCmd sudo rm -f $"($tmpDirPath)/tpm.socket"
+      opPrintMaybeRunCmd sudo $swtpmScriptFilePath
+    }
+
+    let qemuBin = $"($cmd)-system-($sysArch)"
+    let qemuScriptFilePath = ($configDirPath | path join qemu.sh)
+    let qemuArgs = replaceEnv $qemuEnv ($merged | get qemu?.arguments? | default [])
+    let qemuCmd = $"($qemuBin)(if ($qemuArgs | length) > 0 { ' ' + ($qemuArgs | str join ' ') } else { '' })"
+    # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+    # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+    opPrintMaybeRunCmd $"r##'((['#!/usr/bin/bash', ('exec ' + $qemuCmd)] | str join "\n") + "\n")'##" '|' sudo tee $qemuScriptFilePath '|' ignore
+    opPrintMaybeRunCmd sudo chmod +x $qemuScriptFilePath
+
+    try { opPrintMaybeRunCmd sudo $qemuScriptFilePath }
+
+    try { opPrintMaybeRunCmd sudo pkill --full --ignore-ancestors $"^swtpm.*($instance)" }
+    opPrintMaybeRunCmd sudo rm -rf $configDirPath $tmpDirPath
   }
 
   def doRem [cmd, instance] {
@@ -264,11 +398,6 @@ def virtQemu [] {
   match $env.VIRT_OP {
     add => {
       for instance in $env.VIRT_INSTANCES {
-        if (^pgrep --ignore-ancestors --full --list-full $"^qemu-system.*($instance)" | complete | get stdout | is-not-empty) {
-          opPrintWarn $"`($cmd)` instance `($instance)` is already added"
-          continue
-        }
-
         doAdd $cmd $instance
       }
     }
@@ -302,6 +431,11 @@ def virtQemu [] {
       }
       for instance in $instances {
         doRem $cmd $instance
+      }
+    }
+    run => {
+      for instance in $env.VIRT_INSTANCES {
+        doRun $cmd $instance
       }
     }
     sync => {

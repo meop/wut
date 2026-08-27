@@ -4,7 +4,7 @@ import { assertSnapshot } from '@std/testing/snapshot'
 import { checkSyntax, req } from '../_test.ts'
 import { runSrv } from '../srv.ts'
 
-// nu × linux (docker + qemu)
+// nu × linux (docker, lxc, podman, qemu)
 Deno.test('nu / linux / add', async (t) => {
   const body = await (await runSrv(req('/sh/nu/virt/add?sysOsPlat=linux'))).text()
   await assertSnapshot(t, body)
@@ -36,7 +36,7 @@ Deno.test('nu / linux / tidy', async (t) => {
   await checkSyntax('nu', body)
 })
 
-// nu × darwin (docker only)
+// nu × darwin (no managers on this plat)
 Deno.test('nu / darwin / add', async (t) => {
   const body = await (await runSrv(req('/sh/nu/virt/add?sysOsPlat=darwin'))).text()
   await assertSnapshot(t, body)
@@ -68,7 +68,7 @@ Deno.test('nu / darwin / tidy', async (t) => {
   await checkSyntax('nu', body)
 })
 
-// nu × winnt (docker only)
+// nu × winnt (no managers on this plat)
 Deno.test('nu / winnt / add', async (t) => {
   const body = await (await runSrv(req('/sh/nu/virt/add?sysOsPlat=winnt'))).text()
   await assertSnapshot(t, body)
@@ -169,9 +169,11 @@ Deno.test('nu / linux / find (pinned)', async (t) => {
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   // manager, then pod, then instance
+  assertEquals(body.includes("opPrint r#'docker'#"), true)
+  assertEquals(body.includes("opPrint r#'  svc'#"), true)
   assertEquals(body.includes("opPrint r#'podman'#"), true)
   assertEquals(body.includes("opPrint r#'  web'#"), true)
-  assertEquals(body.includes("opPrint r#'    app'#"), true)
+  assertEquals(body.includes("opPrint r#'    app, hub'#"), true)
   assertEquals(body.includes("opPrint r#'  test, test2'#"), true)
 })
 Deno.test('nu / linux / find (pinned, filtered)', async (t) => {
@@ -195,6 +197,27 @@ Deno.test('nu / linux / rem (pinned, qemu)', async (t) => {
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(body.includes('"qemu":["test"]'), true)
+})
+// docker is a supported linux manager like any other: its instances are compose files under the host's docker dir
+Deno.test('nu / linux / add (pinned, docker)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/add/docker?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('"docker":["svc"]'), true)
+})
+// only `run` resolves into a variant folder: qemu's test/vga.yaml is a way to run `test`, not a second instance
+Deno.test('nu / linux / run (pinned, qemu variant)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/run/vga?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('"qemu":["test/vga"]'), true)
+})
+// add is not run, so the variant is not an instance it can act on
+Deno.test('nu / linux / add (pinned, qemu variant is not an instance)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/add/vga?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('no instance matched: vga'), true)
 })
 Deno.test('nu / linux / list (pinned)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/virt/list?${PIN}`))).text()

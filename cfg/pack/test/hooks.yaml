@@ -1,0 +1,19 @@
+---
+operation:
+  add:
+    manager:
+      brew:
+        zsh:
+          commands:
+            - brew tap meop/tap
+        names:
+          - hooks
+      pacman:
+        names:
+          - hooks
+  remove:
+    manager:
+      brew:
+        zsh:
+          commands:
+            - brew untap meop/tap

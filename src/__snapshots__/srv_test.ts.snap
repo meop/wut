@@ -1,5 +1,16 @@
 export const snapshot = {};
 
+snapshot[`cfg / serves a file the client fetches at runtime 1`] = `
+"FROM docker.io/library/nginx:stable
+
+RUN apt-get update && apt-get install -y --no-install-recommends \\\\
+  curl \\\\
+  && rm -rf /var/lib/apt/lists/*
+"
+`;
+
+snapshot[`cfg / missing file says so rather than serving nothing 1`] = `'echo "config not found: virt/host/podman/web/Dockerfile.nope"'`;
+
 snapshot[`error / unsupported operation 1`] = `'echo "operation requested not supported: invalid"'`;
 
 snapshot[`error / unsupported shell 1`] = `'echo "shell requested not supported: invalid"'`;

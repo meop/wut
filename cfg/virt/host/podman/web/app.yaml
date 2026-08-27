@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
     - name: '{instance}-app'
-      image: lscr.io/linuxserver/nginx:latest
+      image: localhost/app:latest
       env:
         - name: PGID
           value: '10000'

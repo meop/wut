@@ -6,7 +6,7 @@ import { ZSh } from '@meop/shire/sh/zsh'
 
 import { checkSyntax, req } from './_test.ts'
 import { runSrv } from './srv.ts'
-import { execNativeShell, execScriptShell } from './sh.ts'
+import { execNativeShell, execScriptShell, getScriptFlavorOpPreamble } from './sh.ts'
 
 // pwsh → nu redirect
 Deno.test('pwsh / file / find (redirect)', async (t) => {
@@ -133,4 +133,26 @@ Deno.test('execScriptShell - zsh flavor delegates to execNativeShell', () => {
     execScriptShell(shell, 'linux', 'zsh', 'echo hello'),
     execNativeShell(shell, 'linux', 'echo hello'),
   )
+})
+
+// --- getScriptFlavorOpPreamble ---
+// a "script" manager file is spawned as its own process (buildFileRunLines in pack.ts), so it never
+// inherits this response's own op* helpers unless they are loaded into it directly
+
+Deno.test('getScriptFlavorOpPreamble - zsh flavor returns zsh op helpers', async () => {
+  const preamble = await getScriptFlavorOpPreamble('zsh')
+  assertEquals(preamble.includes('function opPrintWarn'), true)
+  assertEquals(preamble.includes('function opPrintMaybeRunCmd'), true)
+})
+
+Deno.test('getScriptFlavorOpPreamble - pwsh flavor returns pwsh op helpers', async () => {
+  const preamble = await getScriptFlavorOpPreamble('pwsh')
+  assertEquals(preamble.includes('function opPrintWarn'), true)
+  assertEquals(preamble.includes('function opPrintMaybeRunCmd'), true)
+})
+
+Deno.test('getScriptFlavorOpPreamble - nu flavor returns nu op helpers', async () => {
+  const preamble = await getScriptFlavorOpPreamble('nu')
+  assertEquals(preamble.includes('def opPrintWarn'), true)
+  assertEquals(preamble.includes('def opPrintMaybeRunCmd'), true)
 })
