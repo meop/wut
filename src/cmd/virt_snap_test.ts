@@ -168,20 +168,21 @@ Deno.test('nu / linux / find (pinned)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/virt/find?${PIN}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  // manager, then pod, then instance
-  assertEquals(body.includes("opPrint r#'docker'#"), true)
-  assertEquals(body.includes("opPrint r#'  svc'#"), true)
-  assertEquals(body.includes("opPrint r#'podman'#"), true)
-  assertEquals(body.includes("opPrint r#'  web'#"), true)
-  assertEquals(body.includes("opPrint r#'    app, hub'#"), true)
-  assertEquals(body.includes("opPrint r#'  test, test2'#"), true)
+  // data, not printed lines: podman keeps its pod level, the others have none, and the client decides which
+  // managers are actually here before any of it is shown
+  assertEquals(
+    body.includes('{"docker":["=svc"],"lxc":["=dev"],"podman":["web=app,hub"],"qemu":["=test,test2"]}'),
+    true,
+  )
+  assertEquals(/^virtFindRun$/m.test(body), true)
 })
 Deno.test('nu / linux / find (pinned, filtered)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/virt/find/qemu?${PIN}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes("opPrint r#'qemu'#"), true)
-  assertEquals(body.includes("opPrint r#'lxc'#"), false)
+  assertEquals(body.includes('{"qemu":["=test,test2"]}'), true)
+  // virt.nu itself names every manager, so the filter shows in the payload, not the body
+  assertEquals(body.includes('"lxc"'), false)
 })
 // add is WIDE: every qemu instance
 Deno.test('nu / linux / add (pinned, qemu)', async (t) => {
@@ -278,7 +279,9 @@ Deno.test('nu / darwin / find (pinned, no managers)', async (t) => {
   const body = await (await runSrv(req('/sh/nu/virt/find?sysOsPlat=darwin&sysHost=host&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes("opPrint r#'qemu'#"), false)
+  // virt.nu reads VIRT_FIND, so the absence to check is the assignment, not the name
+  assertEquals(body.includes('$env.VIRT_FIND = '), false)
+  assertEquals(/^virtFindRun$/m.test(body), false)
 })
 
 // virt plans like pack: which manager takes which instances, decided once

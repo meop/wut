@@ -46,6 +46,9 @@ const VIRT_OP_PARTS_KEY = (op: string) => [VIRT_KEY, op, 'parts']
 // manager -> instances, for the client to filter by what is here and run after one prompt
 const VIRT_PLAN_KEY = [VIRT_KEY, 'plan']
 
+// manager -> 'pod=instances' entries, filtered by what is here the same way
+const VIRT_FIND_KEY = [VIRT_KEY, 'find']
+
 function getSupportedManagers(context: Ctx, environment: Env) {
   let managers: Array<string> = []
 
@@ -89,6 +92,10 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   const filters = environment.getSplit(VIRT_OP_PARTS_KEY(op))
 
   if (op === 'find') {
+    // find needs virt.nu too now that it asks the client which managers are here; the per manager files it
+    // does not, since it never calls one
+    _shell = _shell.with(await _shell.fileLoad([VIRT_KEY], import.meta.resolve, ['..']))
+
     const allResults = await getCfgDirDump(dirParts, {
       extension: Fmt.yaml,
       flexible: true,
@@ -135,31 +142,21 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       }
     }
 
-    const shellLines: string[] = []
+    // data, not printed lines: whether a manager is on this machine is the client's to answer, the same way
+    // virtPlanRun decides it for every other op
+    const findMap: Record<string, Array<string>> = {}
     for (
       const [manager, podMap] of [...grouped.entries()].toSorted(([a], [b]) => a.localeCompare(b))
     ) {
-      shellLines.push(..._shell.print(manager))
-      for (
-        const [pod, instances] of [...podMap.entries()].toSorted(([a], [b]) => a.localeCompare(b))
-      ) {
-        if (pod !== '') {
-          shellLines.push(..._shell.print(`  ${pod}`))
-          if (instances.length > 0) {
-            shellLines.push(
-              ..._shell.print(`    ${instances.toSorted().join(', ')}`),
-            )
-          }
-        } else {
-          if (instances.length > 0) {
-            shellLines.push(
-              ..._shell.print(`  ${instances.toSorted().join(', ')}`),
-            )
-          }
-        }
-      }
+      findMap[manager] = [...podMap.entries()]
+        .toSorted(([a], [b]) => a.localeCompare(b))
+        .map(([pod, instances]) => `${pod}=${instances.toSorted().join(',')}`)
     }
-    _shell = _shell.with(_shell.gatedFunc('use virt', shellLines))
+    if (Object.keys(findMap).length) {
+      _shell = _shell
+        .with(_shell.varSetStr(VIRT_FIND_KEY, JSON.stringify(findMap)))
+        .with(['virtFindRun'])
+    }
   } else {
     _shell = _shell.with(
       await _shell.fileLoad(

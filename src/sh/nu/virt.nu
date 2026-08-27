@@ -80,6 +80,39 @@ def --env virtPlanRun [] {
   }
 }
 
+def --env virtFindRun [] {
+  let groups = ($env.VIRT_FIND? | default '{}' | from json | transpose manager entries)
+  let here = ($groups | where { |g| virtManagerHere $g.manager })
+
+  if ($here | is-empty) {
+    let missing = ($groups | each { |g| $g.manager })
+    if ($missing | is-not-empty) {
+      opPrintWarn $"manager not installed: ($missing | str join ', ')"
+    }
+    return
+  }
+
+  virtTable ['manager' 'instances'] ($here | each { |g|
+    [$g.manager, ($g.entries | each { |e| $e | split row '=' | last | split row ',' } | flatten | where { is-not-empty } | length | into string)]
+  })
+  if not (virtPrompt 'use virt') { return }
+
+  for g in $here {
+    opPrint $g.manager
+    for entry in $g.entries {
+      let parts = ($entry | split row '=')
+      let pod = ($parts | get 0)
+      let instances = ($parts | get -o 1 | default '' | split row ',' | where { is-not-empty })
+      if ($pod | is-empty) {
+        if ($instances | is-not-empty) { opPrint $"  ($instances | str join ', ')" }
+      } else {
+        opPrint $"  ($pod)"
+        if ($instances | is-not-empty) { opPrint $"    ($instances | str join ', ')" }
+      }
+    }
+  }
+}
+
 def virtPrompt [label: string] {
   mut yn = ''
   if YES in $env {
