@@ -256,8 +256,10 @@ def virtQemu [] {
         'pidFile="$2"',
         'timeoutSec="${3:-45}"',
         '',
-        '# no qmp socket, or qemu not listening on it yet — nothing graceful to do, let systemd kill it',
+        '# no qmp socket, no socat to speak it, or qemu not listening yet — let systemd kill it rather than',
+        '# sit out the whole timeout waiting on a shutdown that was never sent',
         'if [ ! -S "$qmpSocket" ]; then exit 0; fi',
+        'if ! command -v socat > /dev/null 2>&1; then exit 0; fi',
         '',
         'pid=$(cat "$pidFile" 2>/dev/null)',
         'if [ -z "$pid" ] || ! kill -0 "$pid" 2>/dev/null; then exit 0; fi',
@@ -337,14 +339,15 @@ def virtQemu [] {
       return
     }
 
-    let configDirPath = $"/var/lib/qemu/($instance)"
+    # never /var/lib/qemu/<instance>: that is doAdd's, and the unit there references every script in it
     let tmpDirPath = $"($qemuEnv.tmp_qemu_dir_path)/($instance)"
+    let runDirPath = ($tmpDirPath | path join run)
 
-    opPrintMaybeRunCmd sudo mkdir -p $configDirPath
     opPrintMaybeRunCmd sudo mkdir -p $tmpDirPath
+    opPrintMaybeRunCmd sudo mkdir -p $runDirPath
 
     if 'swtpm' in $merged {
-      let swtpmScriptFilePath = ($configDirPath | path join swtpm.sh)
+      let swtpmScriptFilePath = ($runDirPath | path join swtpm.sh)
       let swtpmArgs = replaceEnv $qemuEnv ($merged | get swtpm?.arguments? | default [])
       let swtpmCmd = $"swtpm(if ($swtpmArgs | length) > 0 { ' ' + ($swtpmArgs | str join ' ') } else { '' })"
 
@@ -358,8 +361,10 @@ def virtQemu [] {
     }
 
     let qemuBin = $"($cmd)-system-($sysArch)"
-    let qemuScriptFilePath = ($configDirPath | path join qemu.sh)
+    let qemuScriptFilePath = ($runDirPath | path join qemu.sh)
+    # doAdd appends these; run is foreground, so drop them wherever they come from
     let qemuArgs = replaceEnv $qemuEnv ($merged | get qemu?.arguments? | default [])
+      | where { |a| not (($a | str starts-with '-daemonize') or ($a | str starts-with '-pidfile')) }
     let qemuCmd = $"($qemuBin)(if ($qemuArgs | length) > 0 { ' ' + ($qemuArgs | str join ' ') } else { '' })"
     # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
     # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
@@ -369,7 +374,7 @@ def virtQemu [] {
     try { opPrintMaybeRunCmd sudo $qemuScriptFilePath }
 
     try { opPrintMaybeRunCmd sudo pkill --full --ignore-ancestors $"^swtpm.*($instance)" }
-    opPrintMaybeRunCmd sudo rm -rf $configDirPath $tmpDirPath
+    opPrintMaybeRunCmd sudo rm -rf $runDirPath
   }
 
   def doRem [cmd, instance] {

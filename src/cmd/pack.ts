@@ -173,7 +173,7 @@ async function buildFileRunLines(
   if (!fileContent) {
     return null
   }
-  const preamble = await getScriptFlavorOpPreamble(shellFlavor)
+  const preamble = await getScriptFlavorOpPreamble(plat, shellFlavor)
   const scriptContent = preamble ? `${preamble}\n${fileContent}` : fileContent
   return [`if 'NOOP' not-in $env { ${execScriptShell(shell, plat, shellFlavor, scriptContent)} }`]
 }

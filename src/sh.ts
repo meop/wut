@@ -102,9 +102,12 @@ export function execScriptShell(shell: Sh, plat: string, shellFlavor: string, cm
   return execNativeShell(shell, plat, cmd)
 }
 
-// a script file is spawned as its own process, so it never inherits this response's own op* helpers —
-// it needs its shell's op preamble loaded into it directly, the same way the top-level response gets one
-export async function getScriptFlavorOpPreamble(shellFlavor: string): Promise<string> {
-  const targetShell = shellFlavor === 'pwsh' ? new PowerSh() : shellFlavor === 'nu' ? new NuSh() : new ZSh()
+// a script file is spawned as its own process, so it needs its shell's op preamble loaded in directly.
+// resolved the way execScriptShell resolves the runner, or the preamble and the interpreter disagree
+export async function getScriptFlavorOpPreamble(plat: string, shellFlavor: string): Promise<string> {
+  if (shellFlavor === 'nu') {
+    return await new NuSh().fileLoad(['op'])
+  }
+  const targetShell = sysOsPlatToNativeShell[plat] === 'pwsh' ? new PowerSh() : new ZSh()
   return await targetShell.fileLoad(['op'])
 }

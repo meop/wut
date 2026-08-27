@@ -139,20 +139,36 @@ Deno.test('execScriptShell - zsh flavor delegates to execNativeShell', () => {
 // a "script" manager file is spawned as its own process (buildFileRunLines in pack.ts), so it never
 // inherits this response's own op* helpers unless they are loaded into it directly
 
-Deno.test('getScriptFlavorOpPreamble - zsh flavor returns zsh op helpers', async () => {
-  const preamble = await getScriptFlavorOpPreamble('zsh')
+Deno.test('getScriptFlavorOpPreamble - zsh flavor on linux returns zsh op helpers', async () => {
+  const preamble = await getScriptFlavorOpPreamble('linux', 'zsh')
   assertEquals(preamble.includes('function opPrintWarn'), true)
   assertEquals(preamble.includes('function opPrintMaybeRunCmd'), true)
 })
 
-Deno.test('getScriptFlavorOpPreamble - pwsh flavor returns pwsh op helpers', async () => {
-  const preamble = await getScriptFlavorOpPreamble('pwsh')
+Deno.test('getScriptFlavorOpPreamble - pwsh flavor on winnt returns pwsh op helpers', async () => {
+  const preamble = await getScriptFlavorOpPreamble('winnt', 'pwsh')
   assertEquals(preamble.includes('function opPrintWarn'), true)
   assertEquals(preamble.includes('function opPrintMaybeRunCmd'), true)
 })
 
-Deno.test('getScriptFlavorOpPreamble - nu flavor returns nu op helpers', async () => {
-  const preamble = await getScriptFlavorOpPreamble('nu')
-  assertEquals(preamble.includes('def opPrintWarn'), true)
-  assertEquals(preamble.includes('def opPrintMaybeRunCmd'), true)
+Deno.test('getScriptFlavorOpPreamble - nu flavor is nu on every plat', async () => {
+  for (const plat of ['darwin', 'linux', 'winnt']) {
+    const preamble = await getScriptFlavorOpPreamble(plat, 'nu')
+    assertEquals(preamble.includes('def opPrintWarn'), true)
+    assertEquals(preamble.includes('def opPrintMaybeRunCmd'), true)
+  }
+})
+
+// execScriptShell runs a non-nu script under the plat's native shell, so the preamble follows the plat, not
+// the flavor — an ungated zsh entry reached on winnt gets pwsh helpers, matching the pwsh that runs it
+Deno.test('getScriptFlavorOpPreamble - non-nu flavor follows the plat, not the flavor', async () => {
+  assertEquals((await getScriptFlavorOpPreamble('winnt', 'zsh')).includes('function opPrintWarn'), true)
+  assertEquals(
+    await getScriptFlavorOpPreamble('winnt', 'zsh'),
+    await getScriptFlavorOpPreamble('winnt', 'pwsh'),
+  )
+  assertEquals(
+    await getScriptFlavorOpPreamble('linux', 'pwsh'),
+    await getScriptFlavorOpPreamble('linux', 'zsh'),
+  )
 })
