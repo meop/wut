@@ -67,6 +67,8 @@ const PACK_OP_NAMES_KEY = (op: string) => [PACK_KEY, op, 'names']
 // the units the client picks from, as data; their bodies live in packRunUnit
 const PACK_PLAN_KEY = [PACK_KEY, 'plan']
 const PACK_PRINTED_KEY = [PACK_KEY, 'printed']
+// group label -> candidate managers, for the client to filter by what is installed
+const PACK_FIND_KEY = [PACK_KEY, 'find']
 
 // '-m pacman,ghpm' both narrows to those managers and states which to prefer, so the list order wins
 export const SCRIPT_PATH = 'script'
@@ -303,12 +305,18 @@ async function findGroups(
 }
 
 function printGroups(shell: Sh, entries: Array<string>) {
-  const lines = entries.map((entry) => {
+  const findMap: Record<string, Array<string>> = {}
+  for (const entry of entries) {
     const [label, ...candidates] = entry.split('|')
-    return ['packFindGroup', shell.toLiteral(label), ...candidates.map((c) => shell.toLiteral(c))].join(' ')
-  })
-  // print only: the one prompt this op has belongs to packManagerPlanRun, which runs the searches
-  return shell.with(lines)
+    findMap[label] = candidates
+  }
+  if (!Object.keys(findMap).length) {
+    return shell
+  }
+  // the one decision for find: this table, then the listing and the manager searches behind it
+  return shell
+    .with(shell.varSetStr(PACK_FIND_KEY, JSON.stringify(findMap)))
+    .with(['packFindRun'])
 }
 
 function setOpNames(shell: Sh, op: string, names: Array<string>) {

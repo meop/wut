@@ -1725,14 +1725,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$"  (\$managers | str join ', ')"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -1817,7 +1831,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -2000,8 +2014,9 @@ def --env packApt [] {
 
 packRequireManager r#'apt'#
 
-packFindGroup r#'lang-rustup'#
-packFindGroup r#'test-scriptfile'#
+\$env.PACK_FIND = r#'{"lang-rustup":[],"test-scriptfile":[]}'#
+
+packFindRun
 
 packManagerPlanRun
 \`
@@ -2501,14 +2516,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$"  (\$managers | str join ', ')"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -2593,7 +2622,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -2793,8 +2822,9 @@ def --env packPacman [] {
 
 packRequireManager r#'yay'#
 
-packFindGroup r#'lang-rustup'#
-packFindGroup r#'test-scriptfile'#
+\$env.PACK_FIND = r#'{"lang-rustup":[],"test-scriptfile":[]}'#
+
+packFindRun
 
 packManagerPlanRun
 \`
@@ -3294,14 +3324,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$"  (\$managers | str join ', ')"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -3386,7 +3430,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -3586,11 +3630,9 @@ def --env packPacman [] {
 
 packRequireManager r#'pacman'#
 
-packFindGroup r#'lang-rustup'#
-packFindGroup r#'shell-nu (nushell)'# r#'pacman'#
-packFindGroup r#'shell-zsh'# r#'pacman'#
-packFindGroup r#'test-hooks'# r#'pacman'#
-packFindGroup r#'test-scriptfile'#
+\$env.PACK_FIND = r#'{"lang-rustup":[],"shell-nu (nushell)":["pacman"],"shell-zsh":["pacman"],"test-hooks":["pacman"],"test-scriptfile":[]}'#
+
+packFindRun
 
 packManagerPlanRun
 \`
@@ -4088,14 +4130,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -4180,7 +4236,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -5155,11 +5211,9 @@ def --env packZypper [] {
 
 \$env.PACK_MANAGERS = [ r#'bun'#, r#'cargo'#, r#'deno'#, r#'ghpm'#, r#'pnpm'#, r#'uv'#, r#'apk'#, r#'apt'#, r#'brew'#, r#'choco'#, r#'dnf'#, r#'pacman'#, r#'paru'#, r#'scoop'#, r#'winget'#, r#'xbps'#, r#'yay'#, r#'zypper'# ]
 
-packFindGroup r#'lang-rustup'#
-packFindGroup r#'shell-nu (nushell)'# r#'ghpm'# r#'cargo'# r#'brew'# r#'pacman'# r#'xbps'# r#'winget'#
-packFindGroup r#'shell-zsh'# r#'ghpm'# r#'cargo'# r#'brew'# r#'pacman'# r#'xbps'# r#'winget'#
-packFindGroup r#'test-hooks'# r#'brew'# r#'pacman'#
-packFindGroup r#'test-scriptfile'#
+\$env.PACK_FIND = r#'{\\"lang-rustup\\":[],\\"shell-nu (nushell)\\":[\\"ghpm\\",\\"cargo\\",\\"brew\\",\\"pacman\\",\\"xbps\\",\\"winget\\"],\\"shell-zsh\\":[\\"ghpm\\",\\"cargo\\",\\"brew\\",\\"pacman\\",\\"xbps\\",\\"winget\\"],\\"test-hooks\\":[\\"brew\\",\\"pacman\\"],\\"test-scriptfile\\":[]}'#
+
+packFindRun
 
 packManagerPlanRun
 "
@@ -5659,14 +5713,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -5751,7 +5819,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -7270,14 +7338,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -7362,7 +7444,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -8881,14 +8963,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -8973,7 +9069,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -10528,14 +10624,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -10620,7 +10730,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -12139,14 +12249,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -12231,7 +12355,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -13745,14 +13869,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -13837,7 +13975,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -15436,14 +15574,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -15528,7 +15680,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -17023,14 +17175,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -17115,7 +17281,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -18612,14 +18778,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$"  (\$managers | str join ', ')"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -18704,7 +18884,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -19416,14 +19596,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -19508,7 +19702,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -20979,14 +21173,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -21071,7 +21279,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -22544,14 +22752,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -22636,7 +22858,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -23611,7 +23833,9 @@ def --env packZypper [] {
 
 \$env.PACK_MANAGERS = [ r#'bun'#, r#'cargo'#, r#'deno'#, r#'ghpm'#, r#'pnpm'#, r#'uv'#, r#'apk'#, r#'apt'#, r#'brew'#, r#'choco'#, r#'dnf'#, r#'pacman'#, r#'paru'#, r#'scoop'#, r#'winget'#, r#'xbps'#, r#'yay'#, r#'zypper'# ]
 
-packFindGroup r#'shell-nu (nushell)'# r#'ghpm'# r#'cargo'# r#'brew'# r#'pacman'# r#'xbps'# r#'winget'#
+\$env.PACK_FIND = r#'{\\"shell-nu (nushell)\\":[\\"ghpm\\",\\"cargo\\",\\"brew\\",\\"pacman\\",\\"xbps\\",\\"winget\\"]}'#
+
+packFindRun
 
 \$env.PACK_FIND_NAMES = [ r#'nu'# ]
 
@@ -24113,14 +24337,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -24205,7 +24443,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -25180,7 +25418,9 @@ def --env packZypper [] {
 
 \$env.PACK_MANAGERS = [ r#'bun'#, r#'cargo'#, r#'deno'#, r#'ghpm'#, r#'pnpm'#, r#'uv'#, r#'apk'#, r#'apt'#, r#'brew'#, r#'choco'#, r#'dnf'#, r#'pacman'#, r#'paru'#, r#'scoop'#, r#'winget'#, r#'xbps'#, r#'yay'#, r#'zypper'# ]
 
-packFindGroup r#'shell-nu (nushell)'# r#'ghpm'# r#'cargo'# r#'brew'# r#'pacman'# r#'xbps'# r#'winget'#
+\$env.PACK_FIND = r#'{\\"shell-nu (nushell)\\":[\\"ghpm\\",\\"cargo\\",\\"brew\\",\\"pacman\\",\\"xbps\\",\\"winget\\"]}'#
+
+packFindRun
 
 \$env.PACK_FIND_NAMES = [ r#'nushell'# ]
 
@@ -25682,14 +25922,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -25774,7 +26028,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -27293,14 +27547,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -27385,7 +27653,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -28904,14 +29172,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -28996,7 +29278,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -29970,7 +30252,6 @@ def --env packZypper [] {
 
 
 \$env.PACK_MANAGERS = [ r#'bun'#, r#'cargo'#, r#'deno'#, r#'ghpm'#, r#'pnpm'#, r#'uv'#, r#'apk'#, r#'apt'#, r#'brew'#, r#'choco'#, r#'dnf'#, r#'pacman'#, r#'paru'#, r#'scoop'#, r#'winget'#, r#'xbps'#, r#'yay'#, r#'zypper'# ]
-
 
 \$env.PACK_FIND_NAMES = [ r#'nosuchpackage'# ]
 
@@ -30470,14 +30751,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -30562,7 +30857,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -31537,11 +31832,9 @@ def --env packZypper [] {
 
 \$env.PACK_MANAGERS = [ r#'bun'#, r#'cargo'#, r#'deno'#, r#'ghpm'#, r#'pnpm'#, r#'uv'#, r#'apk'#, r#'apt'#, r#'brew'#, r#'choco'#, r#'dnf'#, r#'pacman'#, r#'paru'#, r#'scoop'#, r#'winget'#, r#'xbps'#, r#'yay'#, r#'zypper'# ]
 
-packFindGroup r#'lang-rustup'#
-packFindGroup r#'shell-nu (nushell)'# r#'ghpm'# r#'cargo'# r#'brew'# r#'pacman'# r#'xbps'# r#'winget'#
-packFindGroup r#'shell-zsh'# r#'ghpm'# r#'cargo'# r#'brew'# r#'pacman'# r#'xbps'# r#'winget'#
-packFindGroup r#'test-hooks'# r#'brew'# r#'pacman'#
-packFindGroup r#'test-scriptfile'#
+\$env.PACK_FIND = r#'{\\"lang-rustup\\":[],\\"shell-nu (nushell)\\":[\\"ghpm\\",\\"cargo\\",\\"brew\\",\\"pacman\\",\\"xbps\\",\\"winget\\"],\\"shell-zsh\\":[\\"ghpm\\",\\"cargo\\",\\"brew\\",\\"pacman\\",\\"xbps\\",\\"winget\\"],\\"test-hooks\\":[\\"brew\\",\\"pacman\\"],\\"test-scriptfile\\":[]}'#
+
+packFindRun
 
 packManagerPlanRun
 "
@@ -32041,14 +32334,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -32133,7 +32440,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -33654,14 +33961,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$"  (\$managers | str join ', ')"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -33746,7 +34067,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -34389,14 +34710,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$"  (\$managers | str join ', ')"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -34481,7 +34816,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -35181,14 +35516,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -35273,7 +35622,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -36792,14 +37141,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -36884,7 +37247,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {
@@ -38439,14 +38802,28 @@ def packManagerHere [manager: string] {
   (\$manager == 'script') or (which \$manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed
-def packFindGroup [label: string, ...candidates: string] {
-  let managers = (\$candidates | where { |c| packManagerHere \$c })
-  if (\$managers | is-empty) {
+# the server sends every manager the group names; only the client knows which are installed. a group with no
+# candidates at all is script satisfied and always shows
+def --env packFindRun [] {
+  let rows = (
+    \$env.PACK_FIND? | default '{}' | from json | transpose label candidates
+      | each { |g| {
+        label: \$g.label,
+        managers: (\$g.candidates | where { |c| packManagerHere \$c }),
+        shows: ((\$g.candidates | is-empty) or ((\$g.candidates | where { |c| packManagerHere \$c }) | is-not-empty)),
+      } }
+      | where shows
+  )
+  if (\$rows | is-empty) {
     return
   }
-  opPrint \$label
-  opPrint \$\\"  (\$managers | str join ', ')\\"
+
+  packTable ['group' 'managers'] (\$rows | each { |r|
+    [\$r.label, (if (\$r.managers | is-empty) { 'script' } else { \$r.managers | str join ', ' })]
+  })
+  # the table is the listing: a second pass over the same two columns says nothing new
+  if not (packPrompt 'use pack') { return }
+  \$env.PACK_AGREED = '1'
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -38531,7 +38908,7 @@ def --env packManagerPlanRun [] {
     opPrint ''
   }
   packTable ['manager'] (\$here | each { |m| [\$m] })
-  if not (packPrompt 'use pack') { return }
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt 'use pack') { return }
 
   \$env.PACK_AGREED = '1'
   for m in \$here {

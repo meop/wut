@@ -420,7 +420,7 @@ Deno.test('nu / arch / find (-m pacman, pinned)', async (t) => {
   )).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes("packFindGroup r#'shell-nu (nushell)'#"), true)
+  assertEquals(body.includes('"shell-nu (nushell)":['), true)
   // no package names in the listing at all now, from any manager
   assertEquals(body.includes('nushell.nushell'), false)
   assertEquals(body.includes("opPrint r#'  nu, nushell'#"), false)
@@ -432,7 +432,7 @@ Deno.test('nu / arch / find (no manager, pinned)', async (t) => {
   )).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes("packFindGroup r#'shell-nu (nushell)'#"), true)
+  assertEquals(body.includes('"shell-nu (nushell)":['), true)
   assertEquals(body.includes('packPacman'), true)
 })
 
@@ -548,7 +548,7 @@ Deno.test('nu / arch / find (pinned, name runs manager search too)', async (t) =
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   // the group heading carries its aliases; package names come from the manager's own search
-  assertEquals(body.includes("packFindGroup r#'shell-nu (nushell)'#"), true)
+  assertEquals(body.includes('"shell-nu (nushell)":['), true)
   assertEquals(body.includes("$env.PACK_FIND_NAMES = [ r#'nu'# ]"), true)
   assertEquals(body.includes('packPacman'), true)
 })
@@ -560,7 +560,7 @@ Deno.test('nu / arch / find (pinned, by alias)', async (t) => {
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   // the heading carries the alias, so the match explains itself
-  assertEquals(body.includes("packFindGroup r#'shell-nu (nushell)'#"), true)
+  assertEquals(body.includes('"shell-nu (nushell)":['), true)
   assertEquals(body.includes("opPrint r#'  nu, nushell'#"), false)
 })
 Deno.test('nu / arch / add (pinned, by alias installs declared names)', async (t) => {
@@ -594,7 +594,7 @@ Deno.test('nu / arch / find (pinned, candidates travel to the client)', async (t
   const body = await (await runSrv(req(`/sh/nu/pack/find?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes("packFindGroup r#'shell-nu (nushell)'# r#'ghpm'# r#'cargo'#"), true)
+  assertEquals(body.includes('"shell-nu (nushell)":["ghpm","cargo"'), true)
 })
 
 // a gate on a manager entry was silently ignored until now, so an arch-only entry was offered everywhere

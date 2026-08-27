@@ -41,23 +41,29 @@ non-interactively, so `-y` is exact.
 The plan travels as data and the bodies behind it as generated code — `PACK_PLAN` with `packRunUnit`, `VIRT_PLAN` with
 `virtPlanRun` — so code stays code and the plan stays data.
 
-## What earns a prompt
+## Every op asks, exactly once
 
-**A prompt guards commands run on the machine, never a listing.** Printing what the server already worked out is not
-something to agree to.
+There is no read-only exemption. `find` asks too, because the point of the question is not "may I change something" — it
+is _here is what I found on this machine, shall I go on_. Skipping it for the print-only ops is what let `virt find`
+list managers it had never checked for.
 
-| Op                                                                                 | Asks | Because                                    |
-| ---------------------------------------------------------------------------------- | ---- | ------------------------------------------ |
-| `pack add`/`remove`                                                                | once | installs                                   |
-| `pack find` (with a name), `list`, `outdated`, `sync`, `info`                      | once | runs a manager search or a manager command |
-| `virt add`/`rem`/`list`/`run`/`sync`/`tidy`                                        | once | runs a manager command                     |
-| `script exec`                                                                      | once | runs scripts                               |
-| `file sync`                                                                        | once | writes files, clears directories           |
-| `pack find`'s group listing, `virt find`, `script find`, `file find`/`list`/`diff` | no   | prints what the server sent                |
+| Op                                          | Table                    | Then                 |
+| ------------------------------------------- | ------------------------ | -------------------- |
+| `pack find`                                 | group, managers here     | the manager searches |
+| `pack add`/`remove`                         | group, manager, packages | installs             |
+| `pack list`/`outdated`/`sync`/`info`/`tidy` | manager                  | each manager's turn  |
+| `virt find`                                 | manager, instance count  | the instance listing |
+| `virt add`/`rem`/`list`/`run`/`sync`/`tidy` | manager, instances       | each manager's turn  |
+| `file find`                                 | tool, file count         | the tool listing     |
+| `file sync`                                 | tool, files, directories | writes and clears    |
+| `script find`                               | action, tool count       | the action listing   |
+| `script exec`                               | action, tool, shell      | the scripts          |
 
-The four finds used to disagree. `pack find` asked twice, once around the listing and again before the searches;
-`virt find` and `script find` asked before printing; `file find` did not ask at all. `gatedFunc` has no caller in wut
-for that reason — every remaining prompt sits inside a `*PlanRun`, behind a summary.
+Once means once for the whole run. `PACK_AGREED`, `VIRT_AGREED` and `wutAgreed=1` carry the answer past the first
+question, so `pack find`'s search phase and every manager function downstream act without asking again.
+
+`file diff` and `file list` are the exceptions that prove it: they take an explicit filter and print one line per pair,
+so there is no set to summarise and nothing to decide.
 
 Scripts are the one place a second question is legitimate: a script's own body may ask before it acts. That is per
 action consent written into the script, not a manager choice, and it happens after the plan was agreed.

@@ -17,7 +17,8 @@ name falls through to the managers on its own.
 ## Finding
 
 `pack find` matches on group name and aliases only. What a manager has is that manager's own search to answer, and it
-still runs after the listing when a name was given.
+still runs after the table when a name was given — behind the same single question, since `packFindRun` sets
+`PACK_AGREED`.
 
 Matching and applicability are separate questions: the first is about the name you typed, the second about the machine
 you are on. Applicability is answered in two places, because neither side knows both halves:
@@ -25,9 +26,10 @@ you are on. Applicability is answered in two places, because neither side knows 
 - **server** — does this platform have a manager the group names, or is its script gated in. `p f llm` lists the llm
   groups on arch and nothing on fedora, since none of them declares a dnf entry.
 - **client** — is one of those managers really on this PATH. The server sends each row with its candidate managers and
-  `packFindGroup` drops the row if none of them is there, so a yay-only group stays hidden on an arch box without yay.
+  `packFindRun` drops the row if none of them is there, so a yay-only group stays hidden on an arch box without yay.
 
-A row with no candidates is script satisfied and always shows.
+A row with no candidates is script satisfied and always shows. The table is the listing: group against the managers here
+(or `script`), so there is no second pass printing the same two columns again.
 
 ## Resolving
 

@@ -80,8 +80,8 @@ never sent — so the qemu package must include `socat`.
 ## Find
 
 `find` emits `VIRT_FIND` as `manager -> ['pod=instances', ...]` and `virtFindRun` filters it by `virtManagerHere`,
-reports `manager not installed: ...` when none survive, and prints. It does not prompt: it only prints. It is the one op
-that loads `virt.nu` without loading any per-manager file, since it never calls one.
+reports `manager not installed: ...` when none survive, then shows the manager/count table, asks, and prints. It is the
+one op that loads `virt.nu` without loading any per-manager file, since it never calls one.
 
 Non-podman entries carry an empty pod (`=alma,kali,void`) and print one level in; podman entries carry the pod and print
 two. A variant is not another instance, so an instance with three of them still lists once.

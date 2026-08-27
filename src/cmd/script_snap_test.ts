@@ -165,7 +165,8 @@ Deno.test('zsh / linux / find (client side has_cmd listing)', async (t) => {
   const body = await (await runSrv(req('/sh/zsh/script/find?sysOsPlat=linux'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('zsh', body)
-  assertEquals(body.includes("scriptFindGroup 'setup' 'cargo=cargo' 'docker=docker'"), true)
+  assertEquals(body.includes("scriptFindAdd 'setup' 'cargo=cargo' 'docker=docker'"), true)
+  assertEquals(body.includes('scriptFindShow'), true)
 })
 // a fanned out block is wrapped, so a client without the tool never sees its prompt
 Deno.test('nu / linux / exec (action only, gates each block on has_cmd)', async (t) => {

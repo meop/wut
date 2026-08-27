@@ -9,27 +9,59 @@ function scriptHasCmd {
 }
 
 # entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-function scriptFindGroup {
-  local label="$1"
+typeset -ga SCRIPT_FIND_ROWS
+
+# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
+function scriptFindAdd {
+  local action="$1"
   shift
-  local tools=()
-  local entry name cmds
+  local -a tools
+  local entry tool cmds
   for entry in "$@"; do
-    name="${entry%%=*}"
+    tool="${entry%%=*}"
     cmds="${entry#*=}"
-    if [[ $cmds == "$entry" || -z $cmds ]]; then
-      tools+=("$name")
-      continue
-    fi
-    if scriptHasCmd ${(s:,:)cmds}; then
-      tools+=("$name")
+    if [[ $cmds == $entry ]]; then
+      tools+=("$tool")
+    elif scriptHasCmd ${(s:,:)cmds}; then
+      tools+=("$tool")
     fi
   done
-  if (( ${#tools} == 0 )); then
-    return
+  (( ${#tools} )) || return
+  SCRIPT_FIND_ROWS+=("${action}|${(j:, :)tools}")
+}
+
+# one table, one question, then the listing
+function scriptFindShow {
+  (( ${#SCRIPT_FIND_ROWS} )) || return 1
+  local -a actions toolsets
+  local row
+  for row in "${SCRIPT_FIND_ROWS[@]}"; do
+    actions+=("${row%%|*}")
+    toolsets+=("${row#*|}")
+  done
+  local aw=6 i
+  for i in {1..${#actions}}; do
+    (( ${#actions[i]} > aw )) && aw=${#actions[i]}
+  done
+  opPrint "$(printf "%-${aw}s %s" action tools)"
+  opPrint "$(printf "%-${aw}s %s" "------" "-----")"
+  local -a t
+  for i in {1..${#actions}}; do
+    t=(${(s:, :)toolsets[i]})
+    opPrint "$(printf "%-${aw}s %s" "${actions[i]}" "${#t}")"
+  done
+  local yn=''
+  if [[ $YES ]]; then
+    yn=y
+  else
+    opPrint ''
+    read "yn?use script [y,[n]]: "
   fi
-  opPrint "$label"
-  opPrint "  ${(j:, :)tools}"
+  [[ -z $yn || ${(L)yn} == y || ${(L)yn} == yes ]] || return 1
+  for i in {1..${#actions}}; do
+    opPrint "${actions[i]}"
+    opPrint "  ${toolsets[i]}"
+  done
 }
 
 typeset -ga SCRIPT_PLAN_ROWS

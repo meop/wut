@@ -8,28 +8,57 @@ function scriptHasCmd {
 }
 
 # entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-function scriptFindGroup {
-  if ($args.Count -lt 2) {
-    return
-  }
-  $label = $args[0]
+$script:ScriptFindRows = @()
+
+# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
+function scriptFindAdd {
+  $action = $args[0]
+  $entries = if ($args.Count -gt 1) { $args[1..($args.Count - 1)] } else { @() }
   $tools = @()
-  foreach ($entry in $args[1..($args.Count - 1)]) {
-    $name, $cmds = $entry -split '=', 2
-    if (-not $cmds) {
-      $tools += $name
-      continue
-    }
-    $cmdList = $cmds -split ','
-    if (scriptHasCmd @cmdList) {
-      $tools += $name
+  foreach ($entry in $entries) {
+    $parts = $entry -split '=', 2
+    if ($parts.Count -eq 1) {
+      $tools += $parts[0]
+    } else {
+      $cmdList = $parts[1] -split ','
+      if (scriptHasCmd @cmdList) {
+        $tools += $parts[0]
+      }
     }
   }
-  if (-not $tools) {
+  if ($tools.Count -eq 0) {
     return
   }
-  opPrint $label
-  opPrint "  $($tools -join ', ')"
+  $script:ScriptFindRows += , @($action, ($tools -join ', '))
+}
+
+# one table, one question, then the listing
+function scriptFindShow {
+  if ($script:ScriptFindRows.Count -eq 0) {
+    return
+  }
+  $headers = @('action', 'tools')
+  $aw = (@($headers[0].Length) + ($script:ScriptFindRows | ForEach-Object { $_[0].Length }) | Measure-Object -Maximum).Maximum
+  opPrint ($headers[0].PadRight($aw) + ' ' + $headers[1])
+  opPrint (('-' * $headers[0].Length).PadRight($aw) + ' ' + ('-' * $headers[1].Length))
+  foreach ($r in $script:ScriptFindRows) {
+    opPrint ($r[0].PadRight($aw) + ' ' + ($r[1] -split ', ').Count)
+  }
+  $yn = ''
+  if ($YES) {
+    $yn = 'y'
+  } else {
+    opPrint ''
+    $yn = Read-Host 'use script [y,[n]]'
+  }
+  $yn = [string]$yn
+  if (-not (($yn -eq '') -or ($yn.ToLower() -eq 'y') -or ($yn.ToLower() -eq 'yes'))) {
+    return
+  }
+  foreach ($r in $script:ScriptFindRows) {
+    opPrint $r[0]
+    opPrint ('  ' + $r[1])
+  }
 }
 
 $script:ScriptPlanRows = @()
@@ -71,5 +100,6 @@ function scriptPlanShow {
     opPrint ''
     $yn = Read-Host 'use script [y,[n]]'
   }
+  $yn = [string]$yn
   return ($yn -eq '') -or ($yn.ToLower() -eq 'y') -or ($yn.ToLower() -eq 'yes')
 }

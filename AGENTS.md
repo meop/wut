@@ -89,9 +89,9 @@ two philosophies — **WIDE** (substring, act on all) or **PINPOINT** (exact-win
 ## One Decision
 
 Every op resolves data on the server, lets the **client** filter it by what is actually installed
-(`packManagerHere`/`virtManagerHere`/`fileBinHere`/`scriptHasCmd`), summarises, and asks at most once. The server never
-pre-renders a listing — pre-rendered text has nowhere left to apply that filter. A prompt guards commands run on the
-machine, never a listing, so `find` ops do not ask. See [docs/OPS.md](docs/OPS.md).
+(`packManagerHere`/`virtManagerHere`/`fileBinHere`/`scriptHasCmd`), summarises it as a table, and asks exactly once —
+`find` included. The server never pre-renders a listing, because pre-rendered text has nowhere left to apply that
+filter. See [docs/OPS.md](docs/OPS.md).
 
 ## Docs
 

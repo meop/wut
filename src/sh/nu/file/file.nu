@@ -40,8 +40,7 @@ def fileBinHere [tool: string] {
   $tool | split row ',' | any { |alias| which $alias | is-not-empty }
 }
 
-# diff, find, and list only read and print — nothing to agree to. sync is the one op that pushes files, so it is
-# the one that plans: which tools are here, and how many files and destination dirs each one accounts for
+# sync's plan: which tools are here, and how many files and destination dirs each one accounts for
 def filePlanShow [] {
   let pairs = ($env.FILE_SYNC_PATH_PAIRS? | default []) | where { |p| fileBinHere ($p | split row '|' | get 0) }
   let clearDirs = ($env.FILE_SYNC_CLEAR_DIRS? | default []) | where { |d| fileBinHere ($d | split row '|' | get 0) }
@@ -60,7 +59,7 @@ def filePlanShow [] {
   })
   fileTable ['tool' 'files' 'directories'] $rows
 
-  filePrompt 'use file sync'
+  filePrompt 'use file'
 }
 
 def file [] {
@@ -105,25 +104,25 @@ def file [] {
       }
     }
     find => {
-      for entry in $env.FILE_FIND_KEYS {
-        let parts = $entry | split row '|'
-        let keys = $parts | get 0
-        let ins = if ($parts | length) > 1 { $parts | get 1 } else { '' }
-
-        mut bin = ''
-        for alias in ($keys | split row ',') {
-          if (which $alias | is-not-empty) {
-            $bin = $alias
-            break
+      let here = (
+        ($env.FILE_FIND_KEYS? | default []) | each { |entry| $entry | split row '|' }
+          | where { |parts| fileBinHere ($parts | get 0) }
+          | each { |parts| {
+            bin: (($parts | get 0 | split row ',') | where { |a| which $a | is-not-empty } | first),
+            ins: ($parts | get -o 1 | default ''),
+          } }
+      )
+      if ($here | is-not-empty) {
+        fileTable ['tool' 'files'] ($here | each { |e|
+          [$e.bin, ($e.ins | split row ', ' | where { is-not-empty } | length | into string)]
+        })
+        if (filePrompt 'use file') {
+          for e in $here {
+            opPrint $e.bin
+            if ($e.ins | is-not-empty) {
+              opPrint $"  ($e.ins)"
+            }
           }
-        }
-        if ($bin | is-empty) {
-          continue
-        }
-
-        opPrint $bin
-        if ($ins | is-not-empty) {
-          opPrint $"  ($ins)"
         }
       }
     }

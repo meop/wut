@@ -164,19 +164,19 @@ async function findOp(shell: Sh, context: Ctx, environment: Env) {
     }
   }
 
+  // data, not printed lines: whether a tool's has_cmd gate is satisfied is the client's to answer
   const shellLines: string[] = []
   for (
     const [key, entries] of [...grouped.entries()].toSorted(([a], [b]) => a.localeCompare(b))
   ) {
-    if (entries.size === 0) {
-      shellLines.push(...shell.print(key))
-      continue
-    }
     shellLines.push(
-      ['scriptFindGroup', key, ...[...entries].toSorted()]
+      ['scriptFindAdd', key, ...[...entries].toSorted()]
         .map((part, i) => i === 0 ? part : shell.toLiteral(part))
         .join(' '),
     )
+  }
+  if (shellLines.length) {
+    shellLines.push('scriptFindShow')
   }
 
   return buildAndLog(

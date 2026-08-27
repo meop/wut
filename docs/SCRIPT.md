@@ -50,7 +50,9 @@ shell runs what it owns and hops to nu or pwsh for the rest. The table has to co
 answerable from any shell on the same machine — so the shell you invoked builds a row for every match and asks once, and
 each hop carries `wutAgreed=1` and neither plans nor asks.
 
-`script find` does not ask at all: it only prints.
+`script find` plans the same way, through `scriptFindAdd` and `scriptFindShow` — the same accumulate-then-show idiom as
+`scriptPlanAdd`/`scriptPlanShow`, and defined in all three shells because `find` renders natively rather than
+redirecting to nu.
 
 The scripts themselves still ask their own questions once running. Those are per action consent written into the script,
 not a manager choice, and they come after the plan was agreed.

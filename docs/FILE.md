@@ -15,8 +15,8 @@ own.
 
 ## Four ops, one that writes
 
-`diff`, `find` and `list` only read and print, so none of them asks. `sync` is the one op that pushes files, so it is
-the one that plans:
+`find` and `sync` both plan — filter by `fileBinHere`, table, one question. `diff` and `list` take an explicit filter
+and print one line per pair, so there is no set to summarise. `sync` is the one that writes:
 
 - `filePlanShow` shows a row per tool with how many files and how many destination directories it accounts for, then
   asks once
