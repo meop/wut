@@ -88,6 +88,14 @@ two philosophies — **WIDE** (substring, act on all) or **PINPOINT** (exact-win
 
 Config file structure (`file.yaml`, `script.yaml` gates) is documented in [docs/RULES.md](docs/RULES.md).
 
+## One Decision
+
+Every op resolves data on the server, lets the **client** filter it by what is actually installed
+(`packManagerHere`/`virtManagerHere`/`fileBinHere`/`scriptHasCmd`), summarises, and asks at most once. The server never
+pre-renders a listing — pre-rendered text has nowhere left to apply that filter. A prompt guards commands run on the
+machine, never a listing, so `find` ops do not ask. See [docs/PACK.md](docs/PACK.md), which covers the plan shape for
+`pack` and how `virt`, `script` and `file` follow it.
+
 ## Multi-Shell Support
 
 The server primarily generates nushell scripts. `pwsh`/`zsh` shells are redirected to nushell equivalents for commands

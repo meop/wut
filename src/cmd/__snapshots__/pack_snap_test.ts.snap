@@ -2000,18 +2000,8 @@ def --env packApt [] {
 
 packRequireManager r#'apt'#
 
-do --env {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input r#'use pack [y,[n]]: '#
-  }
-  if \$yn != 'n' {
 packFindGroup r#'lang-rustup'#
 packFindGroup r#'test-scriptfile'#
-  }
-}
 
 packManagerPlanRun
 \`
@@ -2803,18 +2793,8 @@ def --env packPacman [] {
 
 packRequireManager r#'yay'#
 
-do --env {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input r#'use pack [y,[n]]: '#
-  }
-  if \$yn != 'n' {
 packFindGroup r#'lang-rustup'#
 packFindGroup r#'test-scriptfile'#
-  }
-}
 
 packManagerPlanRun
 \`
@@ -3606,21 +3586,11 @@ def --env packPacman [] {
 
 packRequireManager r#'pacman'#
 
-do --env {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input r#'use pack [y,[n]]: '#
-  }
-  if \$yn != 'n' {
 packFindGroup r#'lang-rustup'#
 packFindGroup r#'shell-nu (nushell)'# r#'pacman'#
 packFindGroup r#'shell-zsh'# r#'pacman'#
 packFindGroup r#'test-hooks'# r#'pacman'#
 packFindGroup r#'test-scriptfile'#
-  }
-}
 
 packManagerPlanRun
 \`
@@ -5185,21 +5155,11 @@ def --env packZypper [] {
 
 \$env.PACK_MANAGERS = [ r#'bun'#, r#'cargo'#, r#'deno'#, r#'ghpm'#, r#'pnpm'#, r#'uv'#, r#'apk'#, r#'apt'#, r#'brew'#, r#'choco'#, r#'dnf'#, r#'pacman'#, r#'paru'#, r#'scoop'#, r#'winget'#, r#'xbps'#, r#'yay'#, r#'zypper'# ]
 
-do --env {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input r#'use pack [y,[n]]: '#
-  }
-  if \$yn != 'n' {
 packFindGroup r#'lang-rustup'#
 packFindGroup r#'shell-nu (nushell)'# r#'ghpm'# r#'cargo'# r#'brew'# r#'pacman'# r#'xbps'# r#'winget'#
 packFindGroup r#'shell-zsh'# r#'ghpm'# r#'cargo'# r#'brew'# r#'pacman'# r#'xbps'# r#'winget'#
 packFindGroup r#'test-hooks'# r#'brew'# r#'pacman'#
 packFindGroup r#'test-scriptfile'#
-  }
-}
 
 packManagerPlanRun
 "
@@ -23651,17 +23611,7 @@ def --env packZypper [] {
 
 \$env.PACK_MANAGERS = [ r#'bun'#, r#'cargo'#, r#'deno'#, r#'ghpm'#, r#'pnpm'#, r#'uv'#, r#'apk'#, r#'apt'#, r#'brew'#, r#'choco'#, r#'dnf'#, r#'pacman'#, r#'paru'#, r#'scoop'#, r#'winget'#, r#'xbps'#, r#'yay'#, r#'zypper'# ]
 
-do --env {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input r#'use pack [y,[n]]: '#
-  }
-  if \$yn != 'n' {
 packFindGroup r#'shell-nu (nushell)'# r#'ghpm'# r#'cargo'# r#'brew'# r#'pacman'# r#'xbps'# r#'winget'#
-  }
-}
 
 \$env.PACK_FIND_NAMES = [ r#'nu'# ]
 
@@ -25230,17 +25180,7 @@ def --env packZypper [] {
 
 \$env.PACK_MANAGERS = [ r#'bun'#, r#'cargo'#, r#'deno'#, r#'ghpm'#, r#'pnpm'#, r#'uv'#, r#'apk'#, r#'apt'#, r#'brew'#, r#'choco'#, r#'dnf'#, r#'pacman'#, r#'paru'#, r#'scoop'#, r#'winget'#, r#'xbps'#, r#'yay'#, r#'zypper'# ]
 
-do --env {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input r#'use pack [y,[n]]: '#
-  }
-  if \$yn != 'n' {
 packFindGroup r#'shell-nu (nushell)'# r#'ghpm'# r#'cargo'# r#'brew'# r#'pacman'# r#'xbps'# r#'winget'#
-  }
-}
 
 \$env.PACK_FIND_NAMES = [ r#'nushell'# ]
 
@@ -30031,16 +29971,6 @@ def --env packZypper [] {
 
 \$env.PACK_MANAGERS = [ r#'bun'#, r#'cargo'#, r#'deno'#, r#'ghpm'#, r#'pnpm'#, r#'uv'#, r#'apk'#, r#'apt'#, r#'brew'#, r#'choco'#, r#'dnf'#, r#'pacman'#, r#'paru'#, r#'scoop'#, r#'winget'#, r#'xbps'#, r#'yay'#, r#'zypper'# ]
 
-do --env {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input r#'use pack [y,[n]]: '#
-  }
-  if \$yn != 'n' {
-  }
-}
 
 \$env.PACK_FIND_NAMES = [ r#'nosuchpackage'# ]
 
@@ -31607,21 +31537,11 @@ def --env packZypper [] {
 
 \$env.PACK_MANAGERS = [ r#'bun'#, r#'cargo'#, r#'deno'#, r#'ghpm'#, r#'pnpm'#, r#'uv'#, r#'apk'#, r#'apt'#, r#'brew'#, r#'choco'#, r#'dnf'#, r#'pacman'#, r#'paru'#, r#'scoop'#, r#'winget'#, r#'xbps'#, r#'yay'#, r#'zypper'# ]
 
-do --env {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input r#'use pack [y,[n]]: '#
-  }
-  if \$yn != 'n' {
 packFindGroup r#'lang-rustup'#
 packFindGroup r#'shell-nu (nushell)'# r#'ghpm'# r#'cargo'# r#'brew'# r#'pacman'# r#'xbps'# r#'winget'#
 packFindGroup r#'shell-zsh'# r#'ghpm'# r#'cargo'# r#'brew'# r#'pacman'# r#'xbps'# r#'winget'#
 packFindGroup r#'test-hooks'# r#'brew'# r#'pacman'#
 packFindGroup r#'test-scriptfile'#
-  }
-}
 
 packManagerPlanRun
 "

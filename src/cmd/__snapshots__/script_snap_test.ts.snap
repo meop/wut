@@ -330,17 +330,7 @@ def scriptPlanShow [] {
 }
 
 
-do --env {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input r#'use script [y,[n]]: '#
-  }
-  if \$yn != 'n' {
 scriptFindGroup r#'setup'# r#'cargo=cargo'# r#'docker=docker'#
-  }
-}
 \`
 `;
 
@@ -674,17 +664,7 @@ def scriptPlanShow [] {
 }
 
 
-do --env {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input r#'use script [y,[n]]: '#
-  }
-  if \$yn != 'n' {
 scriptFindGroup r#'setup'# r#'cargo=cargo'# r#'docker=docker'#
-  }
-}
 \`
 `;
 
@@ -1054,17 +1034,7 @@ function scriptPlanShow {
 }
 
 
-& {
-  \$yn = ''
-  if (\$YES) {
-    \$yn = 'y'
-  } else {
-    \$yn = Read-Host "use script [y,[n]]"
-  }
-  if (\$yn -ne 'n') {
 scriptFindGroup 'setup' 'cargo=cargo' 'docker=docker'
-  }
-}
 \`
 `;
 
@@ -1405,17 +1375,7 @@ function scriptPlanShow {
 }
 
 
-function () {
-  local yn=''
-  if [[ \$YES ]]; then
-    yn='y'
-  else
-    read "yn?use script [y,[n]]: "
-  fi
-  if [[ \$yn != 'n' ]]; then
 scriptFindGroup 'setup' 'cargo=cargo'
-  fi
-}
 \`
 `;
 
@@ -1756,17 +1716,7 @@ function scriptPlanShow {
 }
 
 
-function () {
-  local yn=''
-  if [[ \$YES ]]; then
-    yn='y'
-  else
-    read "yn?use script [y,[n]]: "
-  fi
-  if [[ \$yn != 'n' ]]; then
 scriptFindGroup 'setup' 'cargo=cargo' 'docker=docker'
-  fi
-}
 \`
 `;
 
@@ -2109,16 +2059,6 @@ function scriptPlanShow {
 }
 
 
-function () {
-  local yn=''
-  if [[ \$YES ]]; then
-    yn='y'
-  else
-    read "yn?use script [y,[n]]: "
-  fi
-  if [[ \$yn != 'n' ]]; then
-  fi
-}
 \`
 `;
 
@@ -5074,17 +5014,7 @@ function scriptPlanShow {
 }
 
 
-function () {
-  local yn=''
-  if [[ \$YES ]]; then
-    yn='y'
-  else
-    read "yn?use script [y,[n]]: "
-  fi
-  if [[ \$yn != 'n' ]]; then
 scriptFindGroup 'setup' 'cargo=cargo' 'docker=docker'
-  fi
-}
 \`
 `;
 
@@ -6539,17 +6469,7 @@ function scriptPlanShow {
 }
 
 
-function () {
-  local yn=''
-  if [[ \$YES ]]; then
-    yn='y'
-  else
-    read "yn?use script [y,[n]]: "
-  fi
-  if [[ \$yn != 'n' ]]; then
 scriptFindGroup 'setup' 'cargo=cargo' 'docker=docker'
-  fi
-}
 \`
 `;
 

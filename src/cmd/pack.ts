@@ -307,7 +307,8 @@ function printGroups(shell: Sh, entries: Array<string>) {
     const [label, ...candidates] = entry.split('|')
     return ['packFindGroup', shell.toLiteral(label), ...candidates.map((c) => shell.toLiteral(c))].join(' ')
   })
-  return shell.with(shell.gatedFunc('use pack', lines))
+  // print only: the one prompt this op has belongs to packManagerPlanRun, which runs the searches
+  return shell.with(lines)
 }
 
 function setOpNames(shell: Sh, op: string, names: Array<string>) {

@@ -182,7 +182,7 @@ async function findOp(shell: Sh, context: Ctx, environment: Env) {
   return buildAndLog(
     shell
       .with(await shell.fileLoad([SCRIPT_KEY], import.meta.resolve, ['..']))
-      .with(shell.gatedFunc('use script', shellLines)),
+      .with(shellLines),
     environment,
   )
 }

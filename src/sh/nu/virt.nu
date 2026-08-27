@@ -92,11 +92,6 @@ def --env virtFindRun [] {
     return
   }
 
-  virtTable ['manager' 'instances'] ($here | each { |g|
-    [$g.manager, ($g.entries | each { |e| $e | split row '=' | last | split row ',' } | flatten | where { is-not-empty } | length | into string)]
-  })
-  if not (virtPrompt 'use virt') { return }
-
   for g in $here {
     opPrint $g.manager
     for entry in $g.entries {
