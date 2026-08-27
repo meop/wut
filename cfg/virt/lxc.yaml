@@ -1,6 +1,6 @@
 ---
 environment:
-  - VIRT_LXC_DIR_PATH=/srv/virt/lxc
+  - virt_lxc_dir_path=/srv/virt/lxc
 lxc:
   autostart: true
   config:

@@ -44,5 +44,3 @@ qemu:
     - -display none
     - -monitor unix:{tmp_qemu_dir_path}/{instance}/monitor.socket,server=on,wait=off
     - -qmp unix:{tmp_qemu_dir_path}/{instance}/qmp.socket,server=on,wait=off
-    - -pidfile {tmp_qemu_dir_path}/{instance}/qemu.pid
-    - -daemonize

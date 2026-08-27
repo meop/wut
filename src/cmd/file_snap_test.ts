@@ -153,8 +153,7 @@ Deno.test('nu / linux / sync (pinned, no match)', async (t) => {
   assertEquals(body.includes('no file matched: nosuchfile'), true)
   assertEquals(body.includes('FILE_SYNC_PATH_PAIRS'), false)
 })
-// an alias is a lookup key only: it reaches the entry and travels to the client in the heading, and never becomes
-// an in or out path of its own
+// an alias is a lookup key only, never an in or out path of its own
 Deno.test('nu / linux / find (pinned, matches an alias)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/file/find/nushell?${PIN}`))).text()
   await assertSnapshot(t, body)

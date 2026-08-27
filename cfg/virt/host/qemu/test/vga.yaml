@@ -1,7 +1,8 @@
 ---
 qemu:
   arguments:
-    ## gpu emulated (test.yaml already sets -display, so a variant must not set it again)
+    ## gpu emulated
+    - -display gtk
     - -device pcie-root-port,id=pcie_gpu,bus=pcie.0,chassis=1,addr=0x01
     - -device VGA,bus=pcie_gpu
     ## devices emulated (no drivers needed, for installing os)

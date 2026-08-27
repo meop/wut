@@ -49,7 +49,7 @@ def virtLxc [] {
 
     $lxcEnv = $lxcEnv | upsert 'instance' $instance
 
-    let lxcDirPath = $lxcEnv.VIRT_LXC_DIR_PATH
+    let lxcDirPath = $lxcEnv.virt_lxc_dir_path
     let rootfsDirPath = $"($lxcDirPath)/($instance)/rootfs"
     $lxcEnv = $lxcEnv | upsert 'rootfs' $rootfsDirPath
     let lxcEnv = $lxcEnv

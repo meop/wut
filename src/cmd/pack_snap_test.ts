@@ -488,13 +488,12 @@ Deno.test('nu / linux / add (pinned, script file entry carries its own op preamb
   assertEquals(body.includes('function opPrintMaybeRunCmd'), true)
   assertEquals(body.includes("opPrintWarn 'fixture script for buildFileRunLines regression coverage'"), true)
 })
-// the manager functions are defined long before the plan is, so ordering is only readable inside the arm itself
+// the manager functions are defined long before the plan, so ordering only reads inside the arm
 function planArm(body: string, id: string) {
   const start = body.indexOf(`r#'${id}'# => {`)
   return start < 0 ? '' : body.slice(start).split('\n    }')[0]
 }
-// a manager entry may carry native-shell commands around its own call: add taps before installing, remove untaps
-// after uninstalling, and only the platform's native shell is read
+// add taps before installing, remove untaps after uninstalling
 Deno.test('nu / linux / add (pinned, manager pre hook runs before the manager call)', async (t) => {
   const body = await (await runSrv(req('/sh/nu/pack/add/hooks?sysOsPlat=linux&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)

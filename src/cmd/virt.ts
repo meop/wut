@@ -34,6 +34,9 @@ const sysOsPlatToManager: Record<string, Array<string>> = {
   winnt: [],
 }
 
+// the others have no `run` arm, so a plan naming them would prompt and do nothing
+const RUN_MANAGERS: Array<string> = ['qemu']
+
 const VIRT_KEY = 'virt'
 const VIRT_MANAGER_KEY = [VIRT_KEY, 'manager']
 const VIRT_OP_KEY = [VIRT_KEY, 'op']
@@ -73,7 +76,9 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   }
 
   let _shell = shell.with(shell.varSetStr(VIRT_OP_KEY, op))
-  const supportedManagers = getSupportedManagers(context, environment)
+  const supportedManagers = op === 'run'
+    ? getSupportedManagers(context, environment).filter((m) => RUN_MANAGERS.includes(m))
+    : getSupportedManagers(context, environment)
 
   const manager = environment.get(VIRT_MANAGER_KEY)
   if (manager && !supportedManagers.length) {
@@ -121,8 +126,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
           if (!managerGroup.has('')) {
             managerGroup.set('', [])
           }
-          // a variant file (qemu's test/vga.yaml) is a way to run an instance, not another instance, so it lands on
-          // the same name its own yaml already put here
+          // a variant is not another instance, so it lands on the name its own yaml already put here
           const instances = managerGroup.get('')!
           if (!instances.includes(pod)) {
             instances.push(pod)
@@ -229,8 +233,12 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
         flexible: true,
       })
       if (op !== 'run') {
-        // only `run` may resolve into a variant folder (eg. qemu's glass/vfio.yaml)
-        results = results.filter((parts) => parts[0] === 'podman' || parts.length <= 2)
+        // `add glass` is glass, not its variants; `add glass vfio` names one. rem/sync/tidy act on the installed
+        // unit, which only carries the base name
+        results = results.filter((parts) =>
+          parts[0] === 'podman' || parts.length <= 2 ||
+          (op === 'add' && filters.includes(parts[2]))
+        )
       }
       if ((op === 'rem' || op === 'run') && filters.length) {
         results = preferExactMatches(results, filters)

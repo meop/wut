@@ -212,10 +212,17 @@ each contribute containers and volumes that are merged onto it (`podman.nu`, lay
 containers of its own would still work, but it hides the pod's identity in with one instance's payload, so keep it a
 shell. This is also why a pod alone is not actionable: `add` and `rem` skip a podman path with no instance part.
 
-`qemu` takes a deeper level with the opposite meaning. `<instance>/<variant>.yaml` is another _way to run_ an instance,
-not another instance — `test/vga.yaml` and `test/vfio.yaml` are the emulated-gpu and passthrough spellings of `test`.
-Only `run` resolves into a variant folder; `add`, `rem`, `sync` and `tidy` stop at the instance, and `find` lists the
-instance once however many variants it has.
+`qemu` takes a deeper level with the opposite meaning. `<instance>/<variant>.yaml` is another _way to configure_ an
+instance, not another instance — `glass/vga.yaml` and `glass/vfio.yaml` are the emulated-gpu and passthrough spellings
+of `glass`. `virtDeepMerge` appends lists, so a variant adds to its base's `qemu.arguments` rather than replacing them:
+whatever a variant may set, the base must leave out. `-display` belongs in the variants for that reason.
+
+`run` and `add` both reach a variant, but only when a filter names it — `wut v run glass vfio`, `wut v add glass vfio`.
+`wut v add glass` is glass itself and never fans out over its variants, and `add` resolves the variant back to the base
+for the service name, so the unit stays `qemu-glass.service` either way. `rem`, `sync` and `tidy` act on that installed
+unit and so stop at the instance, and `find` lists the instance once however many variants it has.
+
+`run` is qemu's alone — the other managers have no foreground mode, so naming one is refused rather than planned.
 
 `docker` instances are plain compose files, served whole to `docker compose --file -`. `docker.nu` reads
 `services.*.volumes` to pre-create bind sources, in both the `source: … target: …` and `host:container` spellings, so

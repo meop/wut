@@ -4,8 +4,7 @@ import { assertSnapshot } from '@std/testing/snapshot'
 import { checkSyntax, req } from './_test.ts'
 import { runSrv } from './srv.ts'
 
-// the /cfg route is how a running script pulls a file it needs verbatim — a Containerfile named by a podman Build
-// doc, a pod yaml — so it serves bytes, not a generated script
+// /cfg serves bytes verbatim — a podman Build doc's Containerfile is fetched through it
 Deno.test('cfg / serves a file the client fetches at runtime', async (t) => {
   const res = await runSrv(req('/cfg/virt/host/podman/web/Dockerfile.app'))
   const body = await res.text()

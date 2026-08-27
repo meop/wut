@@ -41,8 +41,5 @@ qemu:
     - -blockdev driver=file,node-name=file0,aio=native,cache.direct=on,discard=unmap,filename={virt_qemu_dir_path}/{instance}/os.raw
     - -blockdev driver=raw,node-name=ssd0,file=file0
     - -device scsi-hd,bus=scsi0.0,scsi-id=0,drive=ssd0,rotation_rate=1
-    - -display none
     - -monitor unix:{tmp_qemu_dir_path}/{instance}/monitor.socket,server=on,wait=off
     - -qmp unix:{tmp_qemu_dir_path}/{instance}/qmp.socket,server=on,wait=off
-    - -pidfile {tmp_qemu_dir_path}/{instance}/qemu.pid
-    - -daemonize

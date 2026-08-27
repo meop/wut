@@ -198,26 +198,48 @@ Deno.test('nu / linux / rem (pinned, qemu)', async (t) => {
   await checkSyntax('nu', body)
   assertEquals(body.includes('"qemu":["test"]'), true)
 })
-// docker is a supported linux manager like any other: its instances are compose files under the host's docker dir
 Deno.test('nu / linux / add (pinned, docker)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/virt/add/docker?${PIN}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(body.includes('"docker":["svc"]'), true)
 })
-// only `run` resolves into a variant folder: qemu's test/vga.yaml is a way to run `test`, not a second instance
+// a variant folder is a way to configure an instance, not a second instance
 Deno.test('nu / linux / run (pinned, qemu variant)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/virt/run/vga?${PIN}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(body.includes('"qemu":["test/vga"]'), true)
 })
-// add is not run, so the variant is not an instance it can act on
-Deno.test('nu / linux / add (pinned, qemu variant is not an instance)', async (t) => {
-  const body = await (await runSrv(req(`/sh/nu/virt/add/vga?${PIN}`))).text()
+// add reaches a variant only when a filter names it
+Deno.test('nu / linux / add (pinned, qemu variant named)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/add/test/vga?${PIN}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('no instance matched: vga'), true)
+  assertEquals(body.includes('"qemu":["test/vga"]'), true)
+})
+// and never fans out over them otherwise
+Deno.test('nu / linux / add (pinned, instance does not fan out over variants)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/add/test?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('"qemu":["test","test2"]'), true)
+})
+// rem and sync act on the installed unit, which only carries the base name
+Deno.test('nu / linux / rem (pinned, qemu variant is out of reach)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/rem/test/vga?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('no instance matched: test vga'), true)
+})
+// only qemu has a run arm, so a plan must not name another manager
+Deno.test('nu / linux / run (pinned, podman is not runnable)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/run/app?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('no instance matched: app'), true)
+  assertEquals(body.includes('def virtPodman'), false)
+  assertEquals(body.includes('def virtQemu'), true)
 })
 Deno.test('nu / linux / list (pinned)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/virt/list?${PIN}`))).text()
