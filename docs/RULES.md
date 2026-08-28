@@ -128,7 +128,7 @@ Nothing overrides that: which of the winners actually run is the numbered prompt
 
 ## pack manager hooks and remove
 
-A manager entry may also carry a shell key — `pwsh` or `zsh` — holding `commands` that run around the manager call. Only
+A manager entry may also carry a shell key — `pwsh` or `zsh` — holding `hooks` that run around the manager call. Only
 the platform's native shell is read (`pwsh` on windows, `zsh` elsewhere), so a hook states the shell it is written in
 rather than a gate:
 
@@ -139,7 +139,7 @@ operation:
     manager:
       brew:
         zsh:
-          commands:
+          hooks:
             - brew tap anomalyco/tap
         names:
           - opencode
@@ -147,12 +147,13 @@ operation:
     manager:
       brew:
         zsh:
-          commands:
+          hooks:
             - brew untap anomalyco/tap
 ```
 
-`add` runs its hook **before** the manager call, `remove` runs its hook **after** — tap then install, uninstall then
-untap.
+`add` runs its hooks **before** the manager call, `remove` runs them **after** — tap then install, uninstall then untap.
+They are named `hooks` rather than `commands` because where they run is not theirs to state: the operation they sit
+under decides it, so there is no such thing as a post-hook on `add`.
 
 `remove` therefore does not repeat `add`'s shape: it is a post-hook map only, keyed by manager and then by shell. The
 package names a removal passes to the manager come from that manager's `add` entry, so a group never states its names

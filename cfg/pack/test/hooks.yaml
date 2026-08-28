@@ -4,7 +4,7 @@ operation:
     manager:
       brew:
         zsh:
-          commands:
+          hooks:
             - brew tap meop/tap
         names:
           - hooks
@@ -15,5 +15,5 @@ operation:
     manager:
       brew:
         zsh:
-          commands:
+          hooks:
             - brew untap meop/tap

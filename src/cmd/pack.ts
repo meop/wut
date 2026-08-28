@@ -350,14 +350,19 @@ function setOpNames(shell: Sh, op: string, names: Array<string>) {
   )
 }
 
+// a hook is only ever commands: where it runs is fixed by the operation it sits under, so it never names a position
+interface HookEntry {
+  hooks?: Array<string>
+}
+
 interface ManagerEntry {
   names: Array<string>
   gate?: Record<string, Array<string>>
-  pwsh?: ScriptEntry
-  zsh?: ScriptEntry
+  pwsh?: HookEntry
+  zsh?: HookEntry
 }
 
-type RemManagerEntry = Record<string, ScriptEntry>
+type RemManagerEntry = Record<string, HookEntry>
 
 export interface ScriptEntry {
   commands?: Array<string>
@@ -380,9 +385,9 @@ function processManagerEntryLines(
   lines.push(shell.varSetStr(PACK_MANAGER_KEY, manager))
 
   if (op === 'add') {
-    const preScript = entry[nativeShell as 'pwsh' | 'zsh']
-    if (preScript?.commands?.length) {
-      lines.push(...buildCmdRunLines(shell, plat, nativeShell, preScript.commands, true))
+    const preHook = entry[nativeShell as 'pwsh' | 'zsh']
+    if (preHook?.hooks?.length) {
+      lines.push(...buildCmdRunLines(shell, plat, nativeShell, preHook.hooks, true))
     }
   }
 
@@ -390,9 +395,9 @@ function processManagerEntryLines(
   lines.push(getManagerCallName(manager))
 
   if (op === 'remove') {
-    const postScript = remEntry?.[nativeShell]
-    if (postScript?.commands?.length) {
-      lines.push(...buildCmdRunLines(shell, plat, nativeShell, postScript.commands, true))
+    const postHook = remEntry?.[nativeShell]
+    if (postHook?.hooks?.length) {
+      lines.push(...buildCmdRunLines(shell, plat, nativeShell, postHook.hooks, true))
     }
   }
 
