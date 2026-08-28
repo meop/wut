@@ -28,30 +28,30 @@ export class PackCmd extends CmdBase implements Cmd {
 
 // every manager wut knows, in the order to prefer them. which of these a machine actually has is a question only
 // the client can answer, so there is no platform or distro map here to go stale
-// sorted within each half, but a user space install is preferred over one that needs sudo, so the halves are
-// not interchangeable: this list is the default preference order
+// a user space install is preferred over one that needs sudo, so the halves are not interchangeable, and within
+// each half the order is a stated preference rather than alphabetical
 const PORTABLE_MANAGERS: Array<string> = [
-  'bun',
+  'ghpm',
   'cargo',
   'deno',
-  'ghpm',
+  'bun',
   'pnpm',
   'uv',
 ]
 
 const NATIVE_MANAGERS: Array<string> = [
+  'brew',
+  'paru',
+  'yay',
+  'pacman',
   'apk',
   'apt',
-  'brew',
-  'choco',
   'dnf',
-  'pacman',
-  'paru',
-  'scoop',
-  'winget',
   'xbps',
-  'yay',
   'zypper',
+  'winget',
+  'choco',
+  'scoop',
 ]
 
 const MANAGERS: Array<string> = [...PORTABLE_MANAGERS, ...NATIVE_MANAGERS]

@@ -164,7 +164,7 @@ Deno.test('selectScriptEntry - undefined scriptConfig returns null', () => {
 // client's numbered prompt is what picks
 Deno.test('getSupportedManagers - every manager, portable ones first', () => {
   const all = getSupportedManagers()
-  assertEquals(all.slice(0, 6), ['bun', 'cargo', 'deno', 'ghpm', 'pnpm', 'uv'])
+  assertEquals(all.slice(0, 6), ['ghpm', 'cargo', 'deno', 'bun', 'pnpm', 'uv'])
   // a user space install is preferred over one that needs sudo
   assertEquals(all.indexOf('cargo') < all.indexOf('pacman'), true)
   assertEquals(all.includes('winget'), true)

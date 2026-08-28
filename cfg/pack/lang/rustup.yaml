@@ -15,13 +15,13 @@ operation:
         gate:
           sys_os_plat:
             - darwin
+      pacman:
+        names:
+          - rustup
       apt:
         names:
           - rustup
       dnf:
-        names:
-          - rustup
-      pacman:
         names:
           - rustup
       xbps:

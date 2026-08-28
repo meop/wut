@@ -12,13 +12,14 @@
     "jsr:@std/path@^1.1.6": "1.1.6",
     "jsr:@std/testing@^1.0.20": "1.0.20",
     "jsr:@std/toml@^1.0.11": "1.0.11",
+    "jsr:@std/yaml@1.2.0": "1.2.0",
     "jsr:@std/yaml@^1.2.0": "1.2.0"
   },
   "jsr": {
     "@meop/shire@0.10.2": {
       "integrity": "3b12ea0a55a074410837c5bc7d87fa4790ad117031bab56063e38016ce5d2542",
       "dependencies": [
-        "jsr:@std/yaml"
+        "jsr:@std/yaml@^1.2.0"
       ]
     },
     "@std/assert@1.0.19": {
