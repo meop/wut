@@ -136,39 +136,30 @@ Deno.test('execScriptShell - zsh flavor delegates to execNativeShell', () => {
 })
 
 // --- getScriptFlavorOpPreamble ---
-// a "script" manager file is spawned as its own process (buildFileRunLines in pack.ts), so it never
-// inherits this response's own op* helpers unless they are loaded into it directly
+// a script is spawned as its own process, so it never inherits this response's own op* helpers unless they are
+// loaded into it directly
 
-Deno.test('getScriptFlavorOpPreamble - zsh flavor on linux returns zsh op helpers', async () => {
-  const preamble = await getScriptFlavorOpPreamble('linux', 'zsh')
+Deno.test('getScriptFlavorOpPreamble - zsh flavor returns zsh op helpers', async () => {
+  const preamble = await getScriptFlavorOpPreamble('zsh')
   assertEquals(preamble.includes('function opPrintWarn'), true)
   assertEquals(preamble.includes('function opPrintMaybeRunCmd'), true)
 })
 
-Deno.test('getScriptFlavorOpPreamble - pwsh flavor on windows returns pwsh op helpers', async () => {
-  const preamble = await getScriptFlavorOpPreamble('windows', 'pwsh')
+Deno.test('getScriptFlavorOpPreamble - pwsh flavor returns pwsh op helpers', async () => {
+  const preamble = await getScriptFlavorOpPreamble('pwsh')
   assertEquals(preamble.includes('function opPrintWarn'), true)
   assertEquals(preamble.includes('function opPrintMaybeRunCmd'), true)
 })
 
-Deno.test('getScriptFlavorOpPreamble - nu flavor is nu on every plat', async () => {
-  for (const plat of ['darwin', 'linux', 'windows']) {
-    const preamble = await getScriptFlavorOpPreamble(plat, 'nu')
-    assertEquals(preamble.includes('def opPrintWarn'), true)
-    assertEquals(preamble.includes('def opPrintMaybeRunCmd'), true)
-  }
+Deno.test('getScriptFlavorOpPreamble - nu flavor returns nu op helpers', async () => {
+  const preamble = await getScriptFlavorOpPreamble('nu')
+  assertEquals(preamble.includes('def opPrintWarn'), true)
+  assertEquals(preamble.includes('def opPrintMaybeRunCmd'), true)
 })
 
-// execScriptShell runs a non-nu script under the plat's native shell, so the preamble follows the plat, not
-// the flavor — an ungated zsh entry reached on windows gets pwsh helpers, matching the pwsh that runs it
-Deno.test('getScriptFlavorOpPreamble - non-nu flavor follows the plat, not the flavor', async () => {
-  assertEquals((await getScriptFlavorOpPreamble('windows', 'zsh')).includes('function opPrintWarn'), true)
-  assertEquals(
-    await getScriptFlavorOpPreamble('windows', 'zsh'),
-    await getScriptFlavorOpPreamble('windows', 'pwsh'),
-  )
-  assertEquals(
-    await getScriptFlavorOpPreamble('linux', 'pwsh'),
-    await getScriptFlavorOpPreamble('linux', 'zsh'),
-  )
+// script.yaml can gate a pwsh script onto linux, so the preamble follows what the script is written for, not
+// what the platform would otherwise reach for — the interpreter execScriptShell picks follows it too
+Deno.test('getScriptFlavorOpPreamble - follows the flavor, not the platform', async () => {
+  assertEquals((await getScriptFlavorOpPreamble('pwsh')).includes('function opPrintWarn'), true)
+  assertEquals((await getScriptFlavorOpPreamble('zsh')).includes('function opPrintWarn'), true)
 })

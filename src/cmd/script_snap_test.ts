@@ -4,7 +4,7 @@ import { assertSnapshot } from '@std/testing/snapshot'
 import { checkSyntax, req } from '../_test.ts'
 import { runSrv } from '../srv.ts'
 
-// nu builds the (nu ∪ zsh ∪ pwsh) overlay listing directly — find never redirects
+// every caller lands in nu, which owns the whole (nu ∪ zsh ∪ pwsh) listing
 Deno.test('nu / linux / find', async (t) => {
   const body = await (await runSrv(req('/sh/nu/script/find?sysOsPlat=linux'))).text()
   await assertSnapshot(t, body)
@@ -43,13 +43,13 @@ Deno.test('zsh / linux / find (install filter)', async (t) => {
 
 // exec tests — no fixture declares an install action, so these are the no match path
 Deno.test('nu / linux / exec (no match, warns)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/script/exec/install?sysOsPlat=linux'))).text()
+  const body = await (await runSrv(req('/sh/nu/script/exec/install?sysOsPlat=linux&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(body.includes('no script matched: install'), true)
 })
 Deno.test('nu / windows / exec (no match, warns)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/script/exec/install?sysOsPlat=windows'))).text()
+  const body = await (await runSrv(req('/sh/nu/script/exec/install?sysOsPlat=windows&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
@@ -72,7 +72,7 @@ Deno.test('zsh / linux / exec (overlay stays in the calling shell)', async (t) =
 
 // overlay: cargo exists under nu, zsh, and pwsh — whichever shell called runs its own copy, no hop
 Deno.test('nu / linux / exec (overlay, already nu)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/script/exec/setup/cargo?sysOsPlat=linux'))).text()
+  const body = await (await runSrv(req('/sh/nu/script/exec/setup/cargo?sysOsPlat=linux&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
@@ -100,105 +100,66 @@ Deno.test('nu / linux / find (undeclared script excluded)', async () => {
   assertEquals(body.includes('orphan'), false)
 })
 Deno.test('nu / linux / exec (undeclared script not runnable)', async () => {
-  const body = await (await runSrv(req('/sh/nu/script/exec/setup/orphan?sysOsPlat=linux'))).text()
+  const body = await (await runSrv(req('/sh/nu/script/exec/setup/orphan?sysOsPlat=linux&wutNuPinned=1'))).text()
   assertEquals(body.includes('this script is intentionally undeclared'), false)
 })
 
-// "--" separates match tokens from trailing script args, injected as $WUT_ARGS, not treated as filters
-Deno.test('nu / linux / exec (trailing args after -- are injected as WUT_ARGS)', async () => {
-  const body = await (await runSrv(req('/sh/nu/script/exec/setup/cargo/--/foo/bar?sysOsPlat=linux'))).text()
-  assertEquals(body.includes(`$env.WUT_ARGS = [ r#'foo'#, r#'bar'# ]`), true)
+// "--" separates match tokens from trailing script args, written into the spawned script in the syntax of the
+// shell that will read it, not into the nu that spawns it
+Deno.test('nu / linux / exec (trailing args after -- are written in zsh syntax)', async () => {
+  const body = await (await runSrv(
+    req('/sh/nu/script/exec/setup/cargo/--/foo/bar?sysOsPlat=linux&wutNuPinned=1'),
+  )).text()
+  assertEquals(body.includes(`WUT_ARGS=( 'foo' 'bar' )`), true)
   await checkSyntax('nu', body)
 })
-Deno.test('pwsh / windows / exec (trailing args after -- are injected as WUT_ARGS)', async () => {
-  const body = await (await runSrv(req('/sh/pwsh/script/exec/setup/docker/--/foo/bar?sysOsPlat=windows'))).text()
+// the same script on windows is owned by its pwsh copy, so the same args are written in pwsh syntax
+Deno.test('nu / windows / exec (trailing args after -- are written in pwsh syntax)', async () => {
+  const body = await (await runSrv(
+    req('/sh/nu/script/exec/setup/cargo/--/foo/bar?sysOsPlat=windows&wutNuPinned=1'),
+  )).text()
   assertEquals(body.includes(`$WUT_ARGS = @( 'foo', 'bar' )`), true)
-  await checkSyntax('pwsh', body)
-})
-// docker/setup has no nu copy, so nu hops to zsh (most native of what is left); the args must survive the hop URL
-Deno.test('nu / linux / exec (trailing args after -- survive a shell redirect)', async () => {
-  const body = await (await runSrv(req('/sh/nu/script/exec/setup/docker/--/foo/bar?sysOsPlat=linux'))).text()
-  assertEquals(body.includes('/sh/zsh/script/exec/setup/docker/--/foo/bar'), true)
   await checkSyntax('nu', body)
 })
 
-// an action with no tool fans out: every script gated for this machine, each in the shell that owns it
-Deno.test('zsh / linux / exec (action only, both scripts are native, no hop)', async (t) => {
+// an action with no tool fans out into one plan: every script gated for this machine, each spawned in the shell
+// that owns it, and no hop back to wut for any of them
+Deno.test('nu / linux / exec (action only, one plan, no hop)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/script/exec/setup?sysOsPlat=linux&wutNuPinned=1'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('/sh/zsh/script/exec'), false)
+  assertEquals(body.includes('/sh/pwsh/script/exec'), false)
+  assertEquals(body.includes('"tool":"cargo"'), true)
+  assertEquals(body.includes('"tool":"docker"'), true)
+})
+// a zsh caller does not render any of this: it hops to nu once, like pack, file and virt already do
+Deno.test('zsh / linux / exec (redirects to nu)', async (t) => {
   const body = await (await runSrv(req('/sh/zsh/script/exec/setup?sysOsPlat=linux'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('zsh', body)
-  assertEquals(body.includes('/sh/nu/script/exec'), false)
-  assertEquals(body.includes('/sh/pwsh/script/exec'), false)
-})
-Deno.test('nu / linux / exec (action only, runs its own and hops the rest)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/script/exec/setup?sysOsPlat=linux'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-  // cargo has a nu copy so it stays inline; docker does not, so it hops to zsh over pwsh
-  assertEquals(
-    body.includes('/sh/zsh/script/exec/setup?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu&wutAgreed=1'),
-    true,
-  )
-})
-// a fan out hop is marked, so the target runs only what it owns and never hops back
-Deno.test('zsh / linux / exec (action only, shell only hop from nu)', async (t) => {
-  const body = await (await runSrv(
-    req('/sh/zsh/script/exec/setup?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu'),
-  )).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('zsh', body)
-  assertEquals(body.includes('/sh/nu/script/exec'), false)
-  assertEquals(body.includes('/sh/pwsh/script/exec'), false)
-})
-// wutShellFrom is what keeps the two sides of a hop agreeing: the leaf must not re-claim what its caller kept
-Deno.test('zsh / linux / exec (shell only hop runs what its caller left it)', async () => {
-  const body = await (await runSrv(
-    req('/sh/zsh/script/exec/setup?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu'),
-  )).text()
-  assertEquals(body.includes('setup docker via zsh'), true)
-  // cargo stayed with nu, so the zsh leaf must not run its zsh copy as well
-  assertEquals(body.includes('setup cargo - install tools'), false)
+  assertEquals(body.includes('/sh/nu/script/exec/setup?sysOsPlat=linux&wutNuPinned=1'), true)
 })
 
 // has_cmd is a client side gate: find hands the listing over so the client drops tools it does not have
-Deno.test('zsh / linux / find (client side has_cmd listing)', async (t) => {
-  const body = await (await runSrv(req('/sh/zsh/script/find?sysOsPlat=linux'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('zsh', body)
-  assertEquals(body.includes("scriptFindAdd 'setup' 'cargo=cargo' 'docker=docker'"), true)
-  assertEquals(body.includes('scriptFindShow'), true)
-})
-// a fanned out block is wrapped, so a client without the tool never sees its prompt
-Deno.test('nu / linux / exec (action only, gates each block on has_cmd)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/script/exec/setup?sysOsPlat=linux'))).text()
+Deno.test('nu / linux / find (client side has_cmd listing)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/script/find?sysOsPlat=linux&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes("if (scriptHasCmd r#'cargo'#) {"), true)
+  assertEquals(body.includes("scriptFindAdd r#'setup'# r#'cargo=cargo'# r#'docker=docker'#"), true)
+  assertEquals(body.includes('scriptFindShow'), true)
+})
+// an action alone carries each tool's has_cmd into the plan, so the client drops what it cannot run
+Deno.test('nu / linux / exec (action only, carries has_cmd into the plan)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/script/exec/setup?sysOsPlat=linux&wutNuPinned=1'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('"cmds":["cargo"]'), true)
 })
 // a named tool is never gated, so its own 'not installed' warning still explains the no op
 Deno.test('nu / linux / exec (named tool is not gated)', async () => {
-  const body = await (await runSrv(req('/sh/nu/script/exec/setup/cargo?sysOsPlat=linux'))).text()
-  // the helper is always defined; what matters is that no block is wrapped in it
-  assertEquals(body.includes('if (scriptHasCmd'), false)
+  const body = await (await runSrv(req('/sh/nu/script/exec/setup/cargo?sysOsPlat=linux&wutNuPinned=1'))).text()
+  assertEquals(body.includes('"cmds":[]'), true)
   assertEquals(body.includes("opPrintWarn 'cargo is not installed'"), true)
   await checkSyntax('nu', body)
-})
-
-// the shell that was asked shows every match, hops included, since has_cmd is answerable here for all of them
-Deno.test('zsh / linux / exec (action only, plans every shell then asks once)', async (t) => {
-  const body = await (await runSrv(req('/sh/zsh/script/exec/setup?sysOsPlat=linux'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('zsh', body)
-  assertEquals(body.includes("scriptPlanAdd 'setup' 'cargo' 'zsh' 'cargo'"), true)
-  assertEquals(body.includes('if ! scriptPlanShow; then'), true)
-})
-// a hop carries the agreement, so the leaf neither plans nor asks
-Deno.test('zsh / linux / exec (a hop does not ask again)', async (t) => {
-  const body = await (await runSrv(
-    req('/sh/zsh/script/exec/setup?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu&wutAgreed=1'),
-  )).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('zsh', body)
-  assertEquals(/^scriptPlanAdd /m.test(body), false)
-  assertEquals(body.includes('if ! scriptPlanShow; then'), false)
 })

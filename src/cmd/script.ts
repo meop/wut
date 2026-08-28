@@ -5,7 +5,7 @@ import { Fmt } from '@meop/shire/serde'
 import type { Sh } from '@meop/shire/sh'
 
 import { type CtxFilter, getCfgDirDump, getCfgFileContent, getCfgFileLoad, pinpointMatch } from '../cfg.ts'
-import { redirectShell } from '../sh.ts'
+import { execScriptShell, getScriptFlavorOpPreamble, getScriptFlavorShell, redirectCommonShell } from '../sh.ts'
 
 export class ScriptCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -27,14 +27,10 @@ const SCRIPT_OP_ARGS_KEY = (op: string) => [SCRIPT_KEY, op, 'args']
 // separate from SCRIPT_OP_ARGS_KEY (already auto-dumped as a flat string) to avoid a double-set
 const WUT_ARGS_KEY = ['wut', 'args']
 const SCRIPT_DIR_PARTS = [SCRIPT_KEY]
+// the units the client picks from, as data; their bodies live in scriptRunUnit
+const SCRIPT_PLAN_KEY = [SCRIPT_KEY, 'plan']
 // a client side gate: the server cannot know what is on the client's path, so it compiles into the emitted script
 const HAS_CMD_KEY = 'has_cmd'
-// set on a fan out hop, so the target shell runs only what it owns and never hops onward itself
-const SHELL_ONLY_PARAM = 'wutShellOnly'
-// the caller already showed the whole plan and asked, so a hop must not ask again
-const AGREED_PARAM = 'wutAgreed'
-// the shell the run started in, carried across a hop so the target resolves ownership the same way its caller did
-const SHELL_FROM_PARAM = 'wutShellFrom'
 
 // ties go to the most native shell, so a hop lands somewhere as close to the machine as the script allows
 const SHELL_PRIORITY: Array<{ name: string; extension: string }> = [
@@ -42,14 +38,6 @@ const SHELL_PRIORITY: Array<{ name: string; extension: string }> = [
   { name: 'pwsh', extension: 'ps1' },
   { name: 'nu', extension: 'nu' },
 ]
-
-// the calling shell runs its scripts inline, so it wins ties outright — a hop it never has to make is the cheapest one
-function shellOrder(from: string): Array<{ name: string; extension: string }> {
-  return [
-    ...SHELL_PRIORITY.filter((s) => s.name === from),
-    ...SHELL_PRIORITY.filter((s) => s.name !== from),
-  ]
-}
 
 type ScriptMatch = {
   parts: Array<string>
@@ -86,40 +74,19 @@ function shellGates(
   return { filter, cmds }
 }
 
-// everything below runs only if the plan was agreed to, hops included
-function agreeLines(shell: Sh): Array<string> {
-  return shell.name === 'zsh'
-    ? ['if ! scriptPlanShow; then', '  return', 'fi']
-    : shell.name === 'pwsh'
-    ? ['if (-not (scriptPlanShow)) {', '  return', '}']
-    : ['if not (scriptPlanShow) {', '  return', '}']
-}
-
-// the client side gate, wrapped around a block the client may not be able to run
-function hasCmdLines(shell: Sh, cmds: Array<string>, lines: Array<string>): Array<string> {
-  const call = ['scriptHasCmd', ...cmds.map((cmd) => shell.toLiteral(cmd))].join(' ')
-  return shell.name === 'zsh' ? [`if ${call}; then`, ...lines, 'fi'] : [`if (${call}) {`, ...lines, '}']
-}
-
 // the cli reads action first (setup ptyxis), the config tree is tool first (ptyxis/setup)
 function toDirFilters(action: string, parts: Array<string>): Array<string> {
   return action ? [...parts, action] : parts
 }
 
-function getParam(context: Ctx, key: string): string {
-  return new URLSearchParams(context.req_srch).get(key) ?? ''
-}
-
-// every script is owned by one shell, so an overlay never runs twice — and both sides of a hop must agree on which,
-// which is why ownership resolves against the shell the run started in, not the shell rendering this response
+// every script is owned by one shell, in SHELL_PRIORITY order, so an overlay never runs twice
 async function resolveMatches(
   context: Ctx,
   content: CtxFilter | null,
   filters: Array<string>,
-  from: string,
 ): Promise<Array<ScriptMatch>> {
   const owned = new Map<string, ScriptMatch>()
-  for (const { name, extension } of shellOrder(from)) {
+  for (const { name, extension } of SHELL_PRIORITY) {
     const { filter: contextFilter, cmds } = shellGates(content, name)
     const results = await getCfgDirDump(SCRIPT_DIR_PARTS, {
       context,
@@ -147,10 +114,15 @@ function buildAndLog(shell: Sh, environment: Env) {
 }
 
 async function findOp(shell: Sh, context: Ctx, environment: Env) {
+  const redirect = await redirectCommonShell(shell, context)
+  if (redirect) {
+    return redirect
+  }
+
   const action = environment.get(SCRIPT_OP_ACTION_KEY('find')) ?? ''
   const parts = environment.getSplit(SCRIPT_OP_PARTS_KEY('find'))
   const content = await getCfgFileLoad([SCRIPT_KEY], { extension: Fmt.yaml })
-  const matches = await resolveMatches(context, content, toDirFilters(action, parts), shell.name)
+  const matches = await resolveMatches(context, content, toDirFilters(action, parts))
 
   const grouped = new Map<string, Set<string>>()
   for (const match of matches) {
@@ -188,36 +160,25 @@ async function findOp(shell: Sh, context: Ctx, environment: Env) {
 }
 
 async function execOp(shell: Sh, context: Ctx, environment: Env) {
+  const redirect = await redirectCommonShell(shell, context)
+  if (redirect) {
+    return redirect
+  }
+
   const action = environment.get(SCRIPT_OP_ACTION_KEY('exec')) ?? ''
   const parts = environment.getSplit(SCRIPT_OP_PARTS_KEY('exec'))
   const args = environment.getSplit(SCRIPT_OP_ARGS_KEY('exec'))
   const filters = toDirFilters(action, parts)
-  const shellOnly = getParam(context, SHELL_ONLY_PARAM)
-  const shellFrom = getParam(context, SHELL_FROM_PARAM) || shell.name
   const content = await getCfgFileLoad([SCRIPT_KEY], { extension: Fmt.yaml })
+  const plat = context.sys_os_plat ?? ''
 
-  let matches = await resolveMatches(context, content, filters, shellFrom)
+  let matches = await resolveMatches(context, content, filters)
 
   // a tool narrows to the one script to run, an action alone runs every script gated for this machine
   if (parts.length) {
     const [pinned] = pinpointMatch(matches.map((m) => m.parts), filters)
     matches = pinned ? matches.filter((m) => m.parts === pinned) : []
-
-    const match = matches[0]
-    if (match && match.shell !== shell.name) {
-      const redirect = await redirectShell(shell, match.shell, context)
-      if (redirect) {
-        return redirect
-      }
-    }
   }
-
-  if (shellOnly) {
-    matches = matches.filter((m) => m.shell === shellOnly)
-  }
-
-  // a named tool runs as asked, so its own 'not installed' warning still explains a no op
-  const gated = !parts.length
 
   if (!matches.length) {
     return buildAndLog(
@@ -226,65 +187,59 @@ async function execOp(shell: Sh, context: Ctx, environment: Env) {
     )
   }
 
-  const agreed = !!getParam(context, AGREED_PARAM)
-
-  let _shell = shell
-  if (matches.length && args.length) {
-    _shell = _shell.with(_shell.varSetArr(WUT_ARGS_KEY, args))
+  const units: Array<{ id: string; action: string; tool: string; shell: string; cmds: Array<string> }> = []
+  const arms: Array<string> = []
+  for (const match of matches) {
+    const fileContent = await getCfgFileContent(
+      [...SCRIPT_DIR_PARTS, ...match.parts],
+      { extension: match.extension },
+    )
+    if (fileContent == null) {
+      continue
+    }
+    const id = match.parts.join('/')
+    const targetShell = getScriptFlavorShell(match.shell)
+    const scriptContent = [
+      await getScriptFlavorOpPreamble(match.shell),
+      args.length ? targetShell.varSetArr(WUT_ARGS_KEY, args) : '',
+      fileContent,
+    ].filter((part) => part.length).join('\n')
+    units.push({
+      id,
+      action: match.parts[match.parts.length - 1],
+      tool: match.parts.slice(0, -1).join('/'),
+      shell: match.shell,
+      // a named tool runs as asked, so its own 'not installed' warning still explains a no op
+      cmds: parts.length ? [] : match.cmds,
+    })
+    arms.push(
+      `    ${shell.toLiteral(id)} => { ${execScriptShell(shell, plat, match.shell, scriptContent)} }`,
+    )
   }
-  _shell = _shell.with(await shell.fileLoad([SCRIPT_KEY], import.meta.resolve, ['..']))
 
-  // the shell that was asked shows the whole plan, hops included: has_cmd is answerable here for all of them
-  if (!agreed) {
-    for (const match of matches) {
-      const action = match.parts[match.parts.length - 1]
-      const tool = match.parts.slice(0, -1).join('/')
-      _shell = _shell.with([
-        ['scriptPlanAdd', action, tool, match.shell, ...match.cmds]
-          .map((p) => _shell.toLiteral(p))
-          .join(' ')
-          .replace(/^\S+/, 'scriptPlanAdd'),
+  if (!units.length) {
+    return buildAndLog(
+      shell.with(shell.printWarn(`no script matched: ${[action, ...parts].join(' ')}`)),
+      environment,
+    )
+  }
+
+  return buildAndLog(
+    shell
+      .with(await shell.fileLoad(['sel'], import.meta.resolve, ['..']))
+      .with(await shell.fileLoad([SCRIPT_KEY], import.meta.resolve, ['..']))
+      .with([
+        'def --env scriptRunUnit [id: string] {',
+        '  match $id {',
+        ...arms,
+        '    _ => {}',
+        '  }',
+        '}',
       ])
-    }
-  }
-  if (!agreed) {
-    _shell = _shell.with(agreeLines(shell))
-  }
-
-  for (const { name } of shellOrder(shellFrom)) {
-    const shellMatches = matches.filter((m) => m.shell === name)
-    if (!shellMatches.length) {
-      continue
-    }
-    if (name === shell.name) {
-      for (const match of shellMatches) {
-        const fileContent = await getCfgFileContent(
-          [...SCRIPT_DIR_PARTS, ...match.parts],
-          { extension: match.extension },
-        )
-        if (fileContent == null) {
-          continue
-        }
-        _shell = _shell.with(
-          gated && match.cmds.length ? hasCmdLines(shell, match.cmds, [fileContent]) : fileContent,
-        )
-      }
-      continue
-    }
-    if (shellOnly) {
-      continue
-    }
-    const redirect = await redirectShell(shell, name, context, [
-      `${SHELL_ONLY_PARAM}=${name}`,
-      `${SHELL_FROM_PARAM}=${shellFrom}`,
-      `${AGREED_PARAM}=1`,
-    ])
-    if (redirect) {
-      _shell = _shell.with(redirect)
-    }
-  }
-
-  return buildAndLog(_shell, environment)
+      .with(shell.varSetStr(SCRIPT_PLAN_KEY, JSON.stringify(units)))
+      .with(['scriptPlanRun']),
+    environment,
+  )
 }
 
 export class ScriptCmdExec extends CmdBase implements Cmd {

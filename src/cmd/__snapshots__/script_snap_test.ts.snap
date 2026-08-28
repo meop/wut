@@ -1,2248 +1,87 @@
 export const snapshot = {};
 
 snapshot[`nu / linux / find 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/script/find?sysOsPlat=linux&wutNuPinned=1'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/script/find?sysOsPlat=linux'#
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
-  \$"(\$args | flatten | str join ' ')" | print
-}
-
-def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
-  if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
-    return
-  }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
-}
-
-def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
-  if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
-    return
-  }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
-}
-
-def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
-  if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
-    return
-  }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
-}
-
-def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
-  if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
-    return
-  }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
-}
-
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
-  if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
-    return
-  }
-  let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
-  if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
-  }
-}
-
-def opMaybePrintCmd --wrapped [...args] {
-  if NOOP not-in \$env {
-    opPrintCmd ...\$args
-  }
-}
-
-def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
-}
-
-def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
-}
-
-def opMaybeRunCmd --wrapped [...args] {
-  if NOOP not-in \$env {
-    opRunCmd ...\$args
-  }
-}
-
-def opMaybeRunSilentCmd --wrapped [...args] {
-  if NOOP not-in \$env {
-    opRunSilentCmd ...\$args
-  }
-}
-
-def opPrintRunCmd --wrapped [...args] {
-  opPrintCmd ...\$args
-  opRunCmd ...\$args
-}
-
-def opPrintMaybeRunCmd --wrapped [...args] {
-  opPrintCmd ...\$args
-  opMaybeRunCmd ...\$args
-}
-
-
-\$env.SH_VERS_MAJOR = 0
-
-\$env.SH_VERS_MINOR = 114
-
-do {
-  let major = \$env.SH_VERS_MAJOR | into int
-  let minor = \$env.SH_VERS_MINOR | into int
-
-  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
-    exit 1
-  }
-}
-
-
-\$env.NU_VERS_MAJOR = 0
-
-\$env.NU_VERS_MINOR = 114
-
-\$env.NU_VERS_PATCH = 1
-
-\$env.REQ_ORIG = r#'http://x'#
-
-\$env.SYS_OS_PLAT = r#'linux'#
-
-\$env.REQ_PATH = r#'/sh/nu/script/find'#
-
-\$env.REQ_SRCH = r#'?sysOsPlat=linux'#
-
-def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
-  if not (\$nu_bin | path exists) {
-    return false
-  }
-  let installed = (do { ^\$nu_bin --version } | complete)
-  if \$installed.exit_code != 0 {
-    return false
-  }
-  (\$installed.stdout | str trim) == \$nu_vers
-}
-
-def wutNuLockRelease [lock_path: string] {
-  rm --force \$lock_path
-  # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { }
-}
-
-def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
-  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
-    return
-  }
-
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
-    'darwin_aarch64' => 'aarch64-apple-darwin',
-    'darwin_x86_64' => 'x86_64-apple-darwin',
-    'linux_aarch64' => 'aarch64-unknown-linux-gnu',
-    'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'windows_aarch64' => 'aarch64-pc-windows-msvc',
-    'windows_x86_64' => 'x86_64-pc-windows-msvc',
-    _ => '',
-  }
-  if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
-    exit 1
-  }
-
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'vendor' '.nu')
-  mkdir \$work_dir
-
-  let lock_path = (\$work_dir | path join 'nu.lock')
-  mut acquired = false
-  mut waited = 0
-  while \$waited < 240 {
-    if (wutNuVersCurrent \$nu_bin \$nu_vers) {
-      return
-    }
-    let locked = (try { "" | save \$lock_path; true } catch { false })
-    if \$locked {
-      \$acquired = true
-      break
-    }
-    sleep 500ms
-    \$waited = \$waited + 1
-  }
-  if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
-    rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { false })
-    if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
-      exit 1
-    }
-  }
-
-  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
-    wutNuLockRelease \$lock_path
-    return
-  }
-
-  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
-  let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
-
-  rm --force --recursive \$archive_path \$extract_dir
-
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
-    rm --force \$archive_path
-    wutNuLockRelease \$lock_path
-    exit 1
-  }
-
-  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
-  # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
-  let extract_target = if \$ext_archive == 'zip' {
-    mkdir \$extract_dir
-    \$extract_dir
-  } else {
-    \$work_dir
-  }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
-    rm --force --recursive \$archive_path \$extract_dir
-    wutNuLockRelease \$lock_path
-    exit 1
-  }
-
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
-  if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
-    rm --force --recursive \$archive_path \$extract_dir
-    wutNuLockRelease \$lock_path
-    exit 1
-  }
-
-  if \$env.SYS_OS_PLAT != 'windows' {
-    ^chmod +x \$extracted_bin
-  }
-  mv --force \$extracted_bin \$nu_bin
-  rm --force --recursive \$archive_path \$extract_dir
-
-  wutNuLockRelease \$lock_path
-}
-
-def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
-    opPrintWarn 'script is for darwin, linux, or windows'
-    return
-  }
-
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
-  let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
-
-  wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
-}
-
-wutNuSync
-
-
-def scriptHasCmd [...cmds: string] {
-  \$cmds | any { |cmd| which \$cmd | is-not-empty }
-}
-
-
-def --env scriptPlanAdd [action: string, tool: string, shell: string, ...cmds: string] {
-  if (\$cmds | is-not-empty) and not (scriptHasCmd ...\$cmds) {
-    return
-  }
-  load-env {SCRIPT_PLAN_ROWS: ((\$env.SCRIPT_PLAN_ROWS? | default []) | append \$"(\$action)|(\$tool)|(\$shell)")}
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
-# ghpm's table: a rule as wide as each header, columns padded to their widest cell, the last one loose
-def scriptTable [headers: list<string>, rows: list<list<string>>] {
-  let widths = (\$headers | enumerate | each { |h|
-    [(\$h.item | str length)] ++ (\$rows | each { |r| \$r | get -o \$h.index | default '' | str length }) | math max
-  })
-  let line = { |cells: list<string>|
-    \$cells | enumerate | each { |c|
-      if \$c.index == ((\$cells | length) - 1) { \$c.item } else { \$c.item | fill --alignment left --width (\$widths | get \$c.index) }
-    } | str join ' '
-  }
-  opPrint (do \$line \$headers)
-  opPrint (do \$line (\$headers | each { |h| '-' | fill --alignment left --width (\$h | str length) --character '-' }))
-  for r in \$rows { opPrint (do \$line \$r) }
-}
-
-def scriptPrompt [label: string] {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$"(\$label) [y,[n]]: "
-  }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
-
-def scriptPlanShow [] {
-  let rows = ((\$env.SCRIPT_PLAN_ROWS? | default []) | each { |r| \$r | split row '|' })
-  if (\$rows | is-empty) {
-    return false
-  }
-  scriptTable ['action' 'tool' 'shell'] \$rows
-  scriptPrompt 'use script'
-}
-
-# find accumulates the same way the plan does, so all three shells share one idiom
-def --env scriptFindAdd [action: string, ...entries: string] {
-  let tools = (
-    \$entries | each { |e| \$e | split row '=' }
-      | where { |p|
-        let cmds = (\$p | get -o 1 | default '')
-        (\$cmds | is-empty) or (scriptHasCmd ...(\$cmds | split row ','))
-      }
-      | each { |p| \$p | get 0 }
-  )
-  if (\$tools | is-empty) {
-    return
-  }
-  load-env {SCRIPT_FIND_ROWS: ((\$env.SCRIPT_FIND_ROWS? | default []) | append \$"(\$action)|(\$tools | str join ', ')")}
-}
-
-# one table, one question, then the listing
-def scriptFindShow [] {
-  let rows = ((\$env.SCRIPT_FIND_ROWS? | default []) | each { |r| \$r | split row '|' })
-  if (\$rows | is-empty) {
-    return
-  }
-  for r in \$rows {
-    opPrint (\$r | get 0)
-    opPrint \$"  (\$r | get 1)"
-  }
-  opPrint ''
-  scriptTable ['action' 'tools'] (\$rows | each { |r|
-    [(\$r | get 0), ((\$r | get 1 | split row ', ') | length | into string)]
-  })
-}
-
-
-scriptFindAdd r#'setup'# r#'cargo=cargo'# r#'docker=docker'#
-scriptFindShow
-\`
+'##"
 `;
 
 snapshot[`nu / windows / find 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/script/find?sysOsPlat=windows&wutNuPinned=1'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/script/find?sysOsPlat=windows'#
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
-  \$"(\$args | flatten | str join ' ')" | print
-}
-
-def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
-  if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
-    return
-  }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
-}
-
-def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
-  if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
-    return
-  }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
-}
-
-def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
-  if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
-    return
-  }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
-}
-
-def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
-  if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
-    return
-  }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
-}
-
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
-  if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
-    return
-  }
-  let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
-  if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
-  }
-}
-
-def opMaybePrintCmd --wrapped [...args] {
-  if NOOP not-in \$env {
-    opPrintCmd ...\$args
-  }
-}
-
-def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
-}
-
-def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
-}
-
-def opMaybeRunCmd --wrapped [...args] {
-  if NOOP not-in \$env {
-    opRunCmd ...\$args
-  }
-}
-
-def opMaybeRunSilentCmd --wrapped [...args] {
-  if NOOP not-in \$env {
-    opRunSilentCmd ...\$args
-  }
-}
-
-def opPrintRunCmd --wrapped [...args] {
-  opPrintCmd ...\$args
-  opRunCmd ...\$args
-}
-
-def opPrintMaybeRunCmd --wrapped [...args] {
-  opPrintCmd ...\$args
-  opMaybeRunCmd ...\$args
-}
-
-
-\$env.SH_VERS_MAJOR = 0
-
-\$env.SH_VERS_MINOR = 114
-
-do {
-  let major = \$env.SH_VERS_MAJOR | into int
-  let minor = \$env.SH_VERS_MINOR | into int
-
-  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
-    exit 1
-  }
-}
-
-
-\$env.NU_VERS_MAJOR = 0
-
-\$env.NU_VERS_MINOR = 114
-
-\$env.NU_VERS_PATCH = 1
-
-\$env.REQ_ORIG = r#'http://x'#
-
-\$env.SYS_OS_PLAT = r#'windows'#
-
-\$env.REQ_PATH = r#'/sh/nu/script/find'#
-
-\$env.REQ_SRCH = r#'?sysOsPlat=windows'#
-
-def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
-  if not (\$nu_bin | path exists) {
-    return false
-  }
-  let installed = (do { ^\$nu_bin --version } | complete)
-  if \$installed.exit_code != 0 {
-    return false
-  }
-  (\$installed.stdout | str trim) == \$nu_vers
-}
-
-def wutNuLockRelease [lock_path: string] {
-  rm --force \$lock_path
-  # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { }
-}
-
-def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
-  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
-    return
-  }
-
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
-    'darwin_aarch64' => 'aarch64-apple-darwin',
-    'darwin_x86_64' => 'x86_64-apple-darwin',
-    'linux_aarch64' => 'aarch64-unknown-linux-gnu',
-    'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'windows_aarch64' => 'aarch64-pc-windows-msvc',
-    'windows_x86_64' => 'x86_64-pc-windows-msvc',
-    _ => '',
-  }
-  if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
-    exit 1
-  }
-
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-  let work_dir = (\$wut_home | path join 'vendor' '.nu')
-  mkdir \$work_dir
-
-  let lock_path = (\$work_dir | path join 'nu.lock')
-  mut acquired = false
-  mut waited = 0
-  while \$waited < 240 {
-    if (wutNuVersCurrent \$nu_bin \$nu_vers) {
-      return
-    }
-    let locked = (try { "" | save \$lock_path; true } catch { false })
-    if \$locked {
-      \$acquired = true
-      break
-    }
-    sleep 500ms
-    \$waited = \$waited + 1
-  }
-  if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
-    rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { false })
-    if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
-      exit 1
-    }
-  }
-
-  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
-    wutNuLockRelease \$lock_path
-    return
-  }
-
-  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
-  let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
-
-  rm --force --recursive \$archive_path \$extract_dir
-
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
-    rm --force \$archive_path
-    wutNuLockRelease \$lock_path
-    exit 1
-  }
-
-  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
-  # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
-  let extract_target = if \$ext_archive == 'zip' {
-    mkdir \$extract_dir
-    \$extract_dir
-  } else {
-    \$work_dir
-  }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
-    rm --force --recursive \$archive_path \$extract_dir
-    wutNuLockRelease \$lock_path
-    exit 1
-  }
-
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
-  if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
-    rm --force --recursive \$archive_path \$extract_dir
-    wutNuLockRelease \$lock_path
-    exit 1
-  }
-
-  if \$env.SYS_OS_PLAT != 'windows' {
-    ^chmod +x \$extracted_bin
-  }
-  mv --force \$extracted_bin \$nu_bin
-  rm --force --recursive \$archive_path \$extract_dir
-
-  wutNuLockRelease \$lock_path
-}
-
-def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
-    opPrintWarn 'script is for darwin, linux, or windows'
-    return
-  }
-
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
-  let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
-
-  wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
-}
-
-wutNuSync
-
-
-def scriptHasCmd [...cmds: string] {
-  \$cmds | any { |cmd| which \$cmd | is-not-empty }
-}
-
-
-def --env scriptPlanAdd [action: string, tool: string, shell: string, ...cmds: string] {
-  if (\$cmds | is-not-empty) and not (scriptHasCmd ...\$cmds) {
-    return
-  }
-  load-env {SCRIPT_PLAN_ROWS: ((\$env.SCRIPT_PLAN_ROWS? | default []) | append \$"(\$action)|(\$tool)|(\$shell)")}
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
-# ghpm's table: a rule as wide as each header, columns padded to their widest cell, the last one loose
-def scriptTable [headers: list<string>, rows: list<list<string>>] {
-  let widths = (\$headers | enumerate | each { |h|
-    [(\$h.item | str length)] ++ (\$rows | each { |r| \$r | get -o \$h.index | default '' | str length }) | math max
-  })
-  let line = { |cells: list<string>|
-    \$cells | enumerate | each { |c|
-      if \$c.index == ((\$cells | length) - 1) { \$c.item } else { \$c.item | fill --alignment left --width (\$widths | get \$c.index) }
-    } | str join ' '
-  }
-  opPrint (do \$line \$headers)
-  opPrint (do \$line (\$headers | each { |h| '-' | fill --alignment left --width (\$h | str length) --character '-' }))
-  for r in \$rows { opPrint (do \$line \$r) }
-}
-
-def scriptPrompt [label: string] {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$"(\$label) [y,[n]]: "
-  }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
-
-def scriptPlanShow [] {
-  let rows = ((\$env.SCRIPT_PLAN_ROWS? | default []) | each { |r| \$r | split row '|' })
-  if (\$rows | is-empty) {
-    return false
-  }
-  scriptTable ['action' 'tool' 'shell'] \$rows
-  scriptPrompt 'use script'
-}
-
-# find accumulates the same way the plan does, so all three shells share one idiom
-def --env scriptFindAdd [action: string, ...entries: string] {
-  let tools = (
-    \$entries | each { |e| \$e | split row '=' }
-      | where { |p|
-        let cmds = (\$p | get -o 1 | default '')
-        (\$cmds | is-empty) or (scriptHasCmd ...(\$cmds | split row ','))
-      }
-      | each { |p| \$p | get 0 }
-  )
-  if (\$tools | is-empty) {
-    return
-  }
-  load-env {SCRIPT_FIND_ROWS: ((\$env.SCRIPT_FIND_ROWS? | default []) | append \$"(\$action)|(\$tools | str join ', ')")}
-}
-
-# one table, one question, then the listing
-def scriptFindShow [] {
-  let rows = ((\$env.SCRIPT_FIND_ROWS? | default []) | each { |r| \$r | split row '|' })
-  if (\$rows | is-empty) {
-    return
-  }
-  for r in \$rows {
-    opPrint (\$r | get 0)
-    opPrint \$"  (\$r | get 1)"
-  }
-  opPrint ''
-  scriptTable ['action' 'tools'] (\$rows | each { |r|
-    [(\$r | get 0), ((\$r | get 1 | split row ', ') | length | into string)]
-  })
-}
-
-
-scriptFindAdd r#'setup'# r#'cargo=cargo'# r#'docker=docker'#
-scriptFindShow
-\`
+'##"
 `;
 
 snapshot[`pwsh / windows / find 1`] = `
-\`\$REQ_URL_CFG = 'http://x/cfg'
+\`& "\${env:WUT_HOME}/vendor/nu.exe" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/script/find?sysOsPlat=windows&wutNuPinned=1''#
 
-\$REQ_URL_SH = 'http://x/sh/pwsh/script/find?sysOsPlat=windows'
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-function opPrint {
-  if (\$SUCCINCT) {
-    return
-  }
-  [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-}
-
-function opPrintErr {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::Error.WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-    return
-  }
-  [Console]::ForegroundColor = 'red'
-  [Console]::Error.WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-  [Console]::ResetColor()
-}
-
-function opPrintSucc {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-    return
-  }
-  [Console]::ForegroundColor = 'green'
-  [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-  [Console]::ResetColor()
-}
-
-function opPrintWarn {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-    return
-  }
-  [Console]::ForegroundColor = 'yellow'
-  [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-  [Console]::ResetColor()
-}
-
-function opPrintInfo {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-    return
-  }
-  [Console]::ForegroundColor = 'blue'
-  [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-  [Console]::ResetColor()
-}
-
-function opPrintCmd {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-    return
-  }
-  \$_args = \$args | ForEach-Object { \$_ }
-  [Console]::ForegroundColor = 'magenta'
-  [Console]::Write(\$_args[0])
-  [Console]::ResetColor()
-  if (\$args.Length -gt 1) {
-    [Console]::Write(' ')
-    [Console]::ForegroundColor = 'cyan'
-    [Console]::WriteLine(((\$_args | Select-Object -Skip 1) -join ' '))
-    [Console]::ResetColor()
-  }
-}
-
-function opMaybePrintCmd {
-  if (-not \$NOOP) {
-    opPrintCmd @args
-  }
-}
-
-function opRunCmd {
-  Invoke-Expression "\$((\$args | ForEach-Object { \$_ }) -join ' ')"
-}
-
-function opRunSilentCmd {
-  Invoke-Expression "\$((\$args | ForEach-Object { \$_ }) -join ' ') 6>&1 5>&1 4>&1 3>&1 2>&1 | Out-Null"
-}
-
-function opMaybeRunCmd {
-  if (-not \$NOOP) {
-    opRunCmd @args
-  }
-}
-
-function opMaybeRunSilentCmd {
-  if (-not \$NOOP) {
-    opRunSilentCmd @args
-  }
-}
-
-function opPrintRunCmd {
-  opPrintCmd @args
-  opRunCmd @args
-}
-
-function opPrintMaybeRunCmd {
-  opPrintCmd @args
-  opMaybeRunCmd @args
-}
-
-
-\$SH_VERS_MAJOR = 7
-
-\$SH_VERS_MINOR = 6
-
-& {
-  \$major = \$SH_VERS_MAJOR -as [int]
-  \$minor = \$SH_VERS_MINOR -as [int]
-
-  if (\$PSVersionTable.PSVersion.Major -lt \$major -or \$PSVersionTable.PSVersion.Minor -lt \$minor) {
-    opPrintErr "pwsh must be >= '\${major}.\${minor}' .. found '\$(\$PSVersionTable.PSVersion)' .. aborting"
-    exit 1
-  }
-}
-
-
-\$NU_VERS_MAJOR = 0
-
-\$NU_VERS_MINOR = 114
-
-\$NU_VERS_PATCH = 1
-
-\$REQ_ORIG = 'http://x'
-
-\$SYS_OS_PLAT = 'windows'
-
-\$REQ_PATH = '/sh/pwsh/script/find'
-
-\$REQ_SRCH = '?sysOsPlat=windows'
-
-& {
-  function wutNuVersCurrent ([string]\$nuBin, [string]\$nuVers) {
-    if (-not (Test-Path -Path \$nuBin -PathType Leaf)) {
-      return \$false
-    }
-    \$installed = & \$nuBin --version 2>\$null
-    if (\$LASTEXITCODE -ne 0) {
-      return \$false
-    }
-    return (\$installed | Out-String).Trim() -eq \$nuVers
-  }
-
-  function wutNuLockRelease ([string]\$lockDir) {
-    Remove-Item -Force -Recurse -Path \$lockDir -ErrorAction SilentlyContinue
-    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
-    \$workDir = Split-Path -Path \$lockDir -Parent
-    if ((Get-ChildItem -Path \$workDir -Force -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0) {
-      Remove-Item -Path \$workDir -Force -ErrorAction SilentlyContinue
-    }
-  }
-
-  function wutNuInstall ([string]\$wutHome, [string]\$nuBin, [string]\$nuVers, [string]\$ext) {
-    if (wutNuVersCurrent \$nuBin \$nuVers) {
-      return
-    }
-
-    \$triple = switch ("\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}") {
-      'darwin_aarch64' { 'aarch64-apple-darwin' }
-      'darwin_x86_64' { 'x86_64-apple-darwin' }
-      'linux_aarch64' { 'aarch64-unknown-linux-gnu' }
-      'linux_x86_64' { 'x86_64-unknown-linux-gnu' }
-      'windows_aarch64' { 'aarch64-pc-windows-msvc' }
-      'windows_x86_64' { 'x86_64-pc-windows-msvc' }
-      default { '' }
-    }
-    if (\$triple -eq '') {
-      opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
-      exit 1
-    }
-
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nuBin path
-    \$workDir = Join-Path \$wutHome 'vendor' '.nu'
-    New-Item -ItemType Directory -Force -Path \$workDir | Out-Null
-
-    \$lockDir = Join-Path \$workDir 'nu.lock'
-    \$acquired = \$false
-    \$waited = 0
-    while (\$waited -lt 240) {
-      if (wutNuVersCurrent \$nuBin \$nuVers) {
-        return
-      }
-      try {
-        New-Item -ItemType Directory -Path \$lockDir -ErrorAction Stop | Out-Null
-        \$acquired = \$true
-        break
-      } catch {
-        Start-Sleep -Milliseconds 500
-        \$waited += 1
-      }
-    }
-    if (-not \$acquired) {
-      opPrintWarn "reclaiming stale nu sync lock: \${lockDir}"
-      Remove-Item -Force -Recurse -Path \$lockDir -ErrorAction SilentlyContinue
-      try {
-        New-Item -ItemType Directory -Path \$lockDir -ErrorAction Stop | Out-Null
-      } catch {
-        opPrintErr "failed to acquire nu sync lock: \${lockDir}"
-        exit 1
-      }
-    }
-
-    if (wutNuVersCurrent \$nuBin \$nuVers) {
-      wutNuLockRelease \$lockDir
-      return
-    }
-
-    \$extArchive = if (\$SYS_OS_PLAT -eq 'windows') { 'zip' } else { 'tar.gz' }
-    \$asset = "nu-\${nuVers}-\${triple}.\${extArchive}"
-    \$url = "https://github.com/nushell/nushell/releases/download/\${nuVers}/\${asset}"
-    \$archivePath = Join-Path \$workDir \$asset
-    \$extractDir = Join-Path \$workDir "nu-\${nuVers}-\${triple}"
-
-    Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
-
-    & curl --fail-with-body --location --no-progress-meter --output \$archivePath --url \$url
-    if (\$LASTEXITCODE -ne 0) {
-      opPrintErr "failed to download nu \${nuVers}: \${url}"
-      Remove-Item -Force -Path \$archivePath -ErrorAction SilentlyContinue
-      wutNuLockRelease \$lockDir
-      exit 1
-    }
-
-    # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
-    # extractDir; tar.gz assets already contain their own nu-\${nuVers}-\${triple} folder, so they extract into workDir
-    if (\$extArchive -eq 'zip') {
-      New-Item -ItemType Directory -Force -Path \$extractDir | Out-Null
-      & tar -xf \$archivePath -C \$extractDir
-    } else {
-      & tar -xf \$archivePath -C \$workDir
-    }
-    if (\$LASTEXITCODE -ne 0) {
-      opPrintErr "failed to extract nu \${nuVers}"
-      Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
-      wutNuLockRelease \$lockDir
-      exit 1
-    }
-
-    \$extractedBin = Join-Path \$extractDir "nu\${ext}"
-    if (-not (Test-Path -Path \$extractedBin -PathType Leaf)) {
-      opPrintErr "nu binary not found in extracted archive: \${extractDir}"
-      Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
-      wutNuLockRelease \$lockDir
-      exit 1
-    }
-
-    if (\$SYS_OS_PLAT -ne 'windows') {
-      & chmod +x \$extractedBin
-    }
-    Move-Item -Force -Path \$extractedBin -Destination \$nuBin
-    Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
-
-    wutNuLockRelease \$lockDir
-  }
-
-  if (\$SYS_OS_PLAT -notin @('darwin', 'linux', 'windows')) {
-    opPrintWarn 'script is for darwin, linux, or windows'
-    return
-  }
-
-  \$env:WUT_HOME = \$env:WUT_HOME ?? "\${env:HOME}/.wut"
-  \$wutHome = \$env:WUT_HOME
-  \$ext = if (\$SYS_OS_PLAT -eq 'windows') { '.exe' } else { '' }
-  \$nuBin = Join-Path \$wutHome 'vendor' "nu\${ext}"
-  \$nuVers = "\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
-
-  wutNuInstall \$wutHome \$nuBin \$nuVers \$ext
-}
-
-
-function scriptHasCmd {
-  foreach (\$cmd in \$args) {
-    if (Get-Command \$cmd -ErrorAction SilentlyContinue) {
-      return \$true
-    }
-  }
-  return \$false
-}
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-\$script:ScriptFindRows = @()
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-function scriptFindAdd {
-  \$action = \$args[0]
-  \$entries = if (\$args.Count -gt 1) { \$args[1..(\$args.Count - 1)] } else { @() }
-  \$tools = @()
-  foreach (\$entry in \$entries) {
-    \$parts = \$entry -split '=', 2
-    if (\$parts.Count -eq 1) {
-      \$tools += \$parts[0]
-    } else {
-      \$cmdList = \$parts[1] -split ','
-      if (scriptHasCmd @cmdList) {
-        \$tools += \$parts[0]
-      }
-    }
-  }
-  if (\$tools.Count -eq 0) {
-    return
-  }
-  \$script:ScriptFindRows += , @(\$action, (\$tools -join ', '))
-}
-
-# one table, one question, then the listing
-function scriptFindShow {
-  if (\$script:ScriptFindRows.Count -eq 0) {
-    return
-  }
-  \$headers = @('action', 'tools')
-  \$aw = (@(\$headers[0].Length) + (\$script:ScriptFindRows | ForEach-Object { \$_[0].Length }) | Measure-Object -Maximum).Maximum
-  opPrint (\$headers[0].PadRight(\$aw) + ' ' + \$headers[1])
-  opPrint (('-' * \$headers[0].Length).PadRight(\$aw) + ' ' + ('-' * \$headers[1].Length))
-  foreach (\$r in \$script:ScriptFindRows) {
-    opPrint (\$r[0].PadRight(\$aw) + ' ' + (\$r[1] -split ', ').Count)
-  }
-  \$yn = ''
-  if (\$YES) {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = Read-Host 'use script [y,[n]]'
-  }
-  \$yn = [string]\$yn
-  if (-not ((\$yn -eq '') -or (\$yn.ToLower() -eq 'y') -or (\$yn.ToLower() -eq 'yes'))) {
-    return
-  }
-  foreach (\$r in \$script:ScriptFindRows) {
-    opPrint \$r[0]
-    opPrint ('  ' + \$r[1])
-  }
-}
-
-\$script:ScriptPlanRows = @()
-
-function scriptPlanAdd {
-  \$action, \$tool, \$shell = \$args[0..2]
-  \$cmds = if (\$args.Count -gt 3) { \$args[3..(\$args.Count - 1)] } else { @() }
-  if (\$cmds.Count -gt 0) {
-    if (-not (scriptHasCmd @cmds)) {
-      return
-    }
-  }
-  \$script:ScriptPlanRows += , @(\$action, \$tool, \$shell)
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
-function scriptPlanShow {
-  if (\$script:ScriptPlanRows.Count -eq 0) {
-    return \$false
-  }
-  \$headers = @('action', 'tool', 'shell')
-  \$widths = 0..2 | ForEach-Object {
-    \$i = \$_
-    (@(\$headers[\$i].Length) + (\$script:ScriptPlanRows | ForEach-Object { \$_[\$i].Length }) | Measure-Object -Maximum).Maximum
-  }
-  \$line = {
-    param(\$cells)
-    (0..2 | ForEach-Object {
-      if (\$_ -eq 2) { \$cells[\$_] } else { \$cells[\$_].PadRight(\$widths[\$_]) }
-    }) -join ' '
-  }
-  opPrint (& \$line \$headers)
-  opPrint (& \$line @(0..2 | ForEach-Object { '-' * \$headers[\$_].Length }))
-  foreach (\$r in \$script:ScriptPlanRows) { opPrint (& \$line \$r) }
-  \$yn = ''
-  if (\$YES) {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = Read-Host 'use script [y,[n]]'
-  }
-  \$yn = [string]\$yn
-  return (\$yn -eq '') -or (\$yn.ToLower() -eq 'y') -or (\$yn.ToLower() -eq 'yes')
-}
-
-
-scriptFindAdd 'setup' 'cargo=cargo' 'docker=docker'
-scriptFindShow
-\`
+'\`
 `;
 
 snapshot[`zsh / darwin / find 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/script/find?sysOsPlat=darwin&wutNuPinned=1'\\\\''#
 
-REQ_URL_SH='http://x/sh/zsh/script/find?sysOsPlat=darwin'
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  print -r -- "\$*"
-}
-
-function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
-    return
-  fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
-}
-
-function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
-  shift 1
-  if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
-  fi
-}
-
-function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
-  fi
-}
-
-function opRunCmd {
-  eval "\$*"
-}
-
-function opRunSilentCmd {
-  eval "\$*" &> /dev/null
-}
-
-function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
-  fi
-}
-
-function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
-  fi
-}
-
-function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
-}
-
-function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
-}
-
-
-SH_VERS_MAJOR=5
-
-SH_VERS_MINOR=9
-
-function () {
-  local major=\$SH_VERS_MAJOR
-  local minor=\$SH_VERS_MINOR
-
-  autoload is-at-least
-  if ! is-at-least "\${major}.\${minor}"; then
-    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
-    exit 1
-  fi
-}
-
-
-NU_VERS_MAJOR=0
-
-NU_VERS_MINOR=114
-
-NU_VERS_PATCH=1
-
-REQ_ORIG='http://x'
-
-SYS_OS_PLAT='darwin'
-
-REQ_PATH='/sh/zsh/script/find'
-
-REQ_SRCH='?sysOsPlat=darwin'
-
-function () {
-  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
-    opPrintWarn 'script is for darwin or linux'
-    return
-  fi
-
-  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
-  local wut_home="\${WUT_HOME}"
-  local nu_bin="\${wut_home}/vendor/nu"
-  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
-
-  function nu_vers_current {
-    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
-  }
-
-  function nu_lock_release {
-    rmdir "\${lock_dir}" 2> /dev/null
-    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
-    rmdir "\${lock_dir:h}" 2> /dev/null
-  }
-
-  function nu_sync {
-    if nu_vers_current; then
-      return
-    fi
-
-    local triple=''
-    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
-      darwin_aarch64) triple='aarch64-apple-darwin' ;;
-      darwin_x86_64) triple='x86_64-apple-darwin' ;;
-      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
-      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
-      *)
-        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
-        exit 1
-        ;;
-    esac
-
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-    local work_dir="\${wut_home}/vendor/.nu"
-    mkdir -p "\${work_dir}"
-
-    local lock_dir="\${work_dir}/nu.lock"
-    local acquired=0
-    local waited=0
-    while (( waited < 240 )); do
-      if nu_vers_current; then
-        return
-      fi
-      if mkdir "\${lock_dir}" 2> /dev/null; then
-        acquired=1
-        break
-      fi
-      sleep 0.5
-      waited=\$(( waited + 1 ))
-    done
-    if (( ! acquired )); then
-      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
-      rmdir "\${lock_dir}" 2> /dev/null
-      if ! mkdir "\${lock_dir}" 2> /dev/null; then
-        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
-        exit 1
-      fi
-    fi
-
-    if nu_vers_current; then
-      nu_lock_release
-      return
-    fi
-
-    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
-    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
-    local archive_path="\${work_dir}/\${asset}"
-    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
-
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
-      opPrintErr "failed to download nu \${nu_vers}: \${url}"
-      rm -f "\${archive_path}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
-      opPrintErr "failed to extract nu \${nu_vers}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if [[ ! -f "\${extract_dir}/nu" ]]; then
-      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    chmod +x "\${extract_dir}/nu"
-    mv -f "\${extract_dir}/nu" "\${nu_bin}"
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    nu_lock_release
-  }
-
-  nu_sync
-}
-
-
-function scriptHasCmd {
-  local cmd
-  for cmd in "\$@"; do
-    if type "\$cmd" > /dev/null 2>&1; then
-      return 0
-    fi
-  done
-  return 1
-}
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-typeset -ga SCRIPT_FIND_ROWS
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-function scriptFindAdd {
-  local action="\$1"
-  shift
-  local -a tools
-  local entry tool cmds
-  for entry in "\$@"; do
-    tool="\${entry%%=*}"
-    cmds="\${entry#*=}"
-    if [[ \$cmds == \$entry ]]; then
-      tools+=("\$tool")
-    elif scriptHasCmd \${(s:,:)cmds}; then
-      tools+=("\$tool")
-    fi
-  done
-  (( \${#tools} )) || return
-  SCRIPT_FIND_ROWS+=("\${action}|\${(j:, :)tools}")
-}
-
-# one table, one question, then the listing
-function scriptFindShow {
-  (( \${#SCRIPT_FIND_ROWS} )) || return 1
-  local -a actions toolsets
-  local row
-  for row in "\${SCRIPT_FIND_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    toolsets+=("\${row#*|}")
-  done
-  local aw=6 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %s" action tools)"
-  opPrint "\$(printf "%-\${aw}s %s" "------" "-----")"
-  local -a t
-  for i in {1..\${#actions}}; do
-    t=(\${(s:, :)toolsets[i]})
-    opPrint "\$(printf "%-\${aw}s %s" "\${actions[i]}" "\${#t}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]] || return 1
-  for i in {1..\${#actions}}; do
-    opPrint "\${actions[i]}"
-    opPrint "  \${toolsets[i]}"
-  done
-}
-
-typeset -ga SCRIPT_PLAN_ROWS
-
-function scriptPlanAdd {
-  local action="\$1" tool="\$2" shell="\$3"
-  shift 3
-  if (( \$# )) && ! scriptHasCmd "\$@"; then
-    return
-  fi
-  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
-function scriptPlanShow {
-  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
-    return 1
-  fi
-  local -a actions tools shells
-  local row
-  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    tools+=("\${\${row#*|}%%|*}")
-    shells+=("\${row##*|}")
-  done
-  local aw=6 tw=4 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
-  for i in {1..\${#actions}}; do
-    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
-}
-
-
-scriptFindAdd 'setup' 'cargo=cargo'
-scriptFindShow
-\`
+'\`
 `;
 
 snapshot[`zsh / linux / find 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/script/find?sysOsPlat=linux&wutNuPinned=1'\\\\''#
 
-REQ_URL_SH='http://x/sh/zsh/script/find?sysOsPlat=linux'
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  print -r -- "\$*"
-}
-
-function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
-    return
-  fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
-}
-
-function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
-  shift 1
-  if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
-  fi
-}
-
-function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
-  fi
-}
-
-function opRunCmd {
-  eval "\$*"
-}
-
-function opRunSilentCmd {
-  eval "\$*" &> /dev/null
-}
-
-function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
-  fi
-}
-
-function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
-  fi
-}
-
-function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
-}
-
-function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
-}
-
-
-SH_VERS_MAJOR=5
-
-SH_VERS_MINOR=9
-
-function () {
-  local major=\$SH_VERS_MAJOR
-  local minor=\$SH_VERS_MINOR
-
-  autoload is-at-least
-  if ! is-at-least "\${major}.\${minor}"; then
-    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
-    exit 1
-  fi
-}
-
-
-NU_VERS_MAJOR=0
-
-NU_VERS_MINOR=114
-
-NU_VERS_PATCH=1
-
-REQ_ORIG='http://x'
-
-SYS_OS_PLAT='linux'
-
-REQ_PATH='/sh/zsh/script/find'
-
-REQ_SRCH='?sysOsPlat=linux'
-
-function () {
-  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
-    opPrintWarn 'script is for darwin or linux'
-    return
-  fi
-
-  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
-  local wut_home="\${WUT_HOME}"
-  local nu_bin="\${wut_home}/vendor/nu"
-  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
-
-  function nu_vers_current {
-    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
-  }
-
-  function nu_lock_release {
-    rmdir "\${lock_dir}" 2> /dev/null
-    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
-    rmdir "\${lock_dir:h}" 2> /dev/null
-  }
-
-  function nu_sync {
-    if nu_vers_current; then
-      return
-    fi
-
-    local triple=''
-    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
-      darwin_aarch64) triple='aarch64-apple-darwin' ;;
-      darwin_x86_64) triple='x86_64-apple-darwin' ;;
-      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
-      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
-      *)
-        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
-        exit 1
-        ;;
-    esac
-
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-    local work_dir="\${wut_home}/vendor/.nu"
-    mkdir -p "\${work_dir}"
-
-    local lock_dir="\${work_dir}/nu.lock"
-    local acquired=0
-    local waited=0
-    while (( waited < 240 )); do
-      if nu_vers_current; then
-        return
-      fi
-      if mkdir "\${lock_dir}" 2> /dev/null; then
-        acquired=1
-        break
-      fi
-      sleep 0.5
-      waited=\$(( waited + 1 ))
-    done
-    if (( ! acquired )); then
-      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
-      rmdir "\${lock_dir}" 2> /dev/null
-      if ! mkdir "\${lock_dir}" 2> /dev/null; then
-        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
-        exit 1
-      fi
-    fi
-
-    if nu_vers_current; then
-      nu_lock_release
-      return
-    fi
-
-    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
-    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
-    local archive_path="\${work_dir}/\${asset}"
-    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
-
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
-      opPrintErr "failed to download nu \${nu_vers}: \${url}"
-      rm -f "\${archive_path}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
-      opPrintErr "failed to extract nu \${nu_vers}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if [[ ! -f "\${extract_dir}/nu" ]]; then
-      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    chmod +x "\${extract_dir}/nu"
-    mv -f "\${extract_dir}/nu" "\${nu_bin}"
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    nu_lock_release
-  }
-
-  nu_sync
-}
-
-
-function scriptHasCmd {
-  local cmd
-  for cmd in "\$@"; do
-    if type "\$cmd" > /dev/null 2>&1; then
-      return 0
-    fi
-  done
-  return 1
-}
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-typeset -ga SCRIPT_FIND_ROWS
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-function scriptFindAdd {
-  local action="\$1"
-  shift
-  local -a tools
-  local entry tool cmds
-  for entry in "\$@"; do
-    tool="\${entry%%=*}"
-    cmds="\${entry#*=}"
-    if [[ \$cmds == \$entry ]]; then
-      tools+=("\$tool")
-    elif scriptHasCmd \${(s:,:)cmds}; then
-      tools+=("\$tool")
-    fi
-  done
-  (( \${#tools} )) || return
-  SCRIPT_FIND_ROWS+=("\${action}|\${(j:, :)tools}")
-}
-
-# one table, one question, then the listing
-function scriptFindShow {
-  (( \${#SCRIPT_FIND_ROWS} )) || return 1
-  local -a actions toolsets
-  local row
-  for row in "\${SCRIPT_FIND_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    toolsets+=("\${row#*|}")
-  done
-  local aw=6 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %s" action tools)"
-  opPrint "\$(printf "%-\${aw}s %s" "------" "-----")"
-  local -a t
-  for i in {1..\${#actions}}; do
-    t=(\${(s:, :)toolsets[i]})
-    opPrint "\$(printf "%-\${aw}s %s" "\${actions[i]}" "\${#t}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]] || return 1
-  for i in {1..\${#actions}}; do
-    opPrint "\${actions[i]}"
-    opPrint "  \${toolsets[i]}"
-  done
-}
-
-typeset -ga SCRIPT_PLAN_ROWS
-
-function scriptPlanAdd {
-  local action="\$1" tool="\$2" shell="\$3"
-  shift 3
-  if (( \$# )) && ! scriptHasCmd "\$@"; then
-    return
-  fi
-  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
-function scriptPlanShow {
-  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
-    return 1
-  fi
-  local -a actions tools shells
-  local row
-  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    tools+=("\${\${row#*|}%%|*}")
-    shells+=("\${row##*|}")
-  done
-  local aw=6 tw=4 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
-  for i in {1..\${#actions}}; do
-    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
-}
-
-
-scriptFindAdd 'setup' 'cargo=cargo' 'docker=docker'
-scriptFindShow
-\`
+'\`
 `;
 
 snapshot[`zsh / linux / find (install filter) 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/script/find/install?sysOsPlat=linux&wutNuPinned=1'\\\\''#
 
-REQ_URL_SH='http://x/sh/zsh/script/find/install?sysOsPlat=linux'
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  print -r -- "\$*"
-}
-
-function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
-    return
-  fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
-}
-
-function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
-  shift 1
-  if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
-  fi
-}
-
-function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
-  fi
-}
-
-function opRunCmd {
-  eval "\$*"
-}
-
-function opRunSilentCmd {
-  eval "\$*" &> /dev/null
-}
-
-function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
-  fi
-}
-
-function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
-  fi
-}
-
-function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
-}
-
-function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
-}
-
-
-SH_VERS_MAJOR=5
-
-SH_VERS_MINOR=9
-
-function () {
-  local major=\$SH_VERS_MAJOR
-  local minor=\$SH_VERS_MINOR
-
-  autoload is-at-least
-  if ! is-at-least "\${major}.\${minor}"; then
-    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
-    exit 1
-  fi
-}
-
-
-NU_VERS_MAJOR=0
-
-NU_VERS_MINOR=114
-
-NU_VERS_PATCH=1
-
-REQ_ORIG='http://x'
-
-SYS_OS_PLAT='linux'
-
-REQ_PATH='/sh/zsh/script/find/install'
-
-REQ_SRCH='?sysOsPlat=linux'
-
-function () {
-  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
-    opPrintWarn 'script is for darwin or linux'
-    return
-  fi
-
-  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
-  local wut_home="\${WUT_HOME}"
-  local nu_bin="\${wut_home}/vendor/nu"
-  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
-
-  function nu_vers_current {
-    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
-  }
-
-  function nu_lock_release {
-    rmdir "\${lock_dir}" 2> /dev/null
-    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
-    rmdir "\${lock_dir:h}" 2> /dev/null
-  }
-
-  function nu_sync {
-    if nu_vers_current; then
-      return
-    fi
-
-    local triple=''
-    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
-      darwin_aarch64) triple='aarch64-apple-darwin' ;;
-      darwin_x86_64) triple='x86_64-apple-darwin' ;;
-      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
-      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
-      *)
-        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
-        exit 1
-        ;;
-    esac
-
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-    local work_dir="\${wut_home}/vendor/.nu"
-    mkdir -p "\${work_dir}"
-
-    local lock_dir="\${work_dir}/nu.lock"
-    local acquired=0
-    local waited=0
-    while (( waited < 240 )); do
-      if nu_vers_current; then
-        return
-      fi
-      if mkdir "\${lock_dir}" 2> /dev/null; then
-        acquired=1
-        break
-      fi
-      sleep 0.5
-      waited=\$(( waited + 1 ))
-    done
-    if (( ! acquired )); then
-      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
-      rmdir "\${lock_dir}" 2> /dev/null
-      if ! mkdir "\${lock_dir}" 2> /dev/null; then
-        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
-        exit 1
-      fi
-    fi
-
-    if nu_vers_current; then
-      nu_lock_release
-      return
-    fi
-
-    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
-    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
-    local archive_path="\${work_dir}/\${asset}"
-    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
-
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
-      opPrintErr "failed to download nu \${nu_vers}: \${url}"
-      rm -f "\${archive_path}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
-      opPrintErr "failed to extract nu \${nu_vers}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if [[ ! -f "\${extract_dir}/nu" ]]; then
-      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    chmod +x "\${extract_dir}/nu"
-    mv -f "\${extract_dir}/nu" "\${nu_bin}"
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    nu_lock_release
-  }
-
-  nu_sync
-}
-
-
-SCRIPT_FIND_ACTION='install'
-
-function scriptHasCmd {
-  local cmd
-  for cmd in "\$@"; do
-    if type "\$cmd" > /dev/null 2>&1; then
-      return 0
-    fi
-  done
-  return 1
-}
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-typeset -ga SCRIPT_FIND_ROWS
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-function scriptFindAdd {
-  local action="\$1"
-  shift
-  local -a tools
-  local entry tool cmds
-  for entry in "\$@"; do
-    tool="\${entry%%=*}"
-    cmds="\${entry#*=}"
-    if [[ \$cmds == \$entry ]]; then
-      tools+=("\$tool")
-    elif scriptHasCmd \${(s:,:)cmds}; then
-      tools+=("\$tool")
-    fi
-  done
-  (( \${#tools} )) || return
-  SCRIPT_FIND_ROWS+=("\${action}|\${(j:, :)tools}")
-}
-
-# one table, one question, then the listing
-function scriptFindShow {
-  (( \${#SCRIPT_FIND_ROWS} )) || return 1
-  local -a actions toolsets
-  local row
-  for row in "\${SCRIPT_FIND_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    toolsets+=("\${row#*|}")
-  done
-  local aw=6 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %s" action tools)"
-  opPrint "\$(printf "%-\${aw}s %s" "------" "-----")"
-  local -a t
-  for i in {1..\${#actions}}; do
-    t=(\${(s:, :)toolsets[i]})
-    opPrint "\$(printf "%-\${aw}s %s" "\${actions[i]}" "\${#t}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]] || return 1
-  for i in {1..\${#actions}}; do
-    opPrint "\${actions[i]}"
-    opPrint "  \${toolsets[i]}"
-  done
-}
-
-typeset -ga SCRIPT_PLAN_ROWS
-
-function scriptPlanAdd {
-  local action="\$1" tool="\$2" shell="\$3"
-  shift 3
-  if (( \$# )) && ! scriptHasCmd "\$@"; then
-    return
-  fi
-  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
-function scriptPlanShow {
-  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
-    return 1
-  fi
-  local -a actions tools shells
-  local row
-  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    tools+=("\${\${row#*|}%%|*}")
-    shells+=("\${row##*|}")
-  done
-  local aw=6 tw=4 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
-  for i in {1..\${#actions}}; do
-    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
-}
-
-
-\`
+'\`
 `;
 
 snapshot[`nu / linux / exec (no match, warns) 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/install?sysOsPlat=linux'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/install?sysOsPlat=linux&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
@@ -2374,7 +213,7 @@ do {
 
 \$env.REQ_PATH = r#'/sh/nu/script/exec/install'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
@@ -2520,7 +359,7 @@ opPrintWarn r#'no script matched: install'#
 snapshot[`nu / windows / exec (no match, warns) 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/install?sysOsPlat=windows'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/install?sysOsPlat=windows&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
@@ -2652,7 +491,7 @@ do {
 
 \$env.REQ_PATH = r#'/sh/nu/script/exec/install'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=windows'#
+\$env.REQ_SRCH = r#'?sysOsPlat=windows&wutNuPinned=1'#
 
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
@@ -2796,961 +635,48 @@ opPrintWarn r#'no script matched: install'#
 `;
 
 snapshot[`pwsh / windows / exec 1`] = `
-\`\$REQ_URL_CFG = 'http://x/cfg'
+\`& "\${env:WUT_HOME}/vendor/nu.exe" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/script/exec/install?sysOsPlat=windows&wutNuPinned=1''#
 
-\$REQ_URL_SH = 'http://x/sh/pwsh/script/exec/install?sysOsPlat=windows'
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-function opPrint {
-  if (\$SUCCINCT) {
-    return
-  }
-  [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-}
-
-function opPrintErr {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::Error.WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-    return
-  }
-  [Console]::ForegroundColor = 'red'
-  [Console]::Error.WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-  [Console]::ResetColor()
-}
-
-function opPrintSucc {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-    return
-  }
-  [Console]::ForegroundColor = 'green'
-  [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-  [Console]::ResetColor()
-}
-
-function opPrintWarn {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-    return
-  }
-  [Console]::ForegroundColor = 'yellow'
-  [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-  [Console]::ResetColor()
-}
-
-function opPrintInfo {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-    return
-  }
-  [Console]::ForegroundColor = 'blue'
-  [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-  [Console]::ResetColor()
-}
-
-function opPrintCmd {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-    return
-  }
-  \$_args = \$args | ForEach-Object { \$_ }
-  [Console]::ForegroundColor = 'magenta'
-  [Console]::Write(\$_args[0])
-  [Console]::ResetColor()
-  if (\$args.Length -gt 1) {
-    [Console]::Write(' ')
-    [Console]::ForegroundColor = 'cyan'
-    [Console]::WriteLine(((\$_args | Select-Object -Skip 1) -join ' '))
-    [Console]::ResetColor()
-  }
-}
-
-function opMaybePrintCmd {
-  if (-not \$NOOP) {
-    opPrintCmd @args
-  }
-}
-
-function opRunCmd {
-  Invoke-Expression "\$((\$args | ForEach-Object { \$_ }) -join ' ')"
-}
-
-function opRunSilentCmd {
-  Invoke-Expression "\$((\$args | ForEach-Object { \$_ }) -join ' ') 6>&1 5>&1 4>&1 3>&1 2>&1 | Out-Null"
-}
-
-function opMaybeRunCmd {
-  if (-not \$NOOP) {
-    opRunCmd @args
-  }
-}
-
-function opMaybeRunSilentCmd {
-  if (-not \$NOOP) {
-    opRunSilentCmd @args
-  }
-}
-
-function opPrintRunCmd {
-  opPrintCmd @args
-  opRunCmd @args
-}
-
-function opPrintMaybeRunCmd {
-  opPrintCmd @args
-  opMaybeRunCmd @args
-}
-
-
-\$SH_VERS_MAJOR = 7
-
-\$SH_VERS_MINOR = 6
-
-& {
-  \$major = \$SH_VERS_MAJOR -as [int]
-  \$minor = \$SH_VERS_MINOR -as [int]
-
-  if (\$PSVersionTable.PSVersion.Major -lt \$major -or \$PSVersionTable.PSVersion.Minor -lt \$minor) {
-    opPrintErr "pwsh must be >= '\${major}.\${minor}' .. found '\$(\$PSVersionTable.PSVersion)' .. aborting"
-    exit 1
-  }
-}
-
-
-\$NU_VERS_MAJOR = 0
-
-\$NU_VERS_MINOR = 114
-
-\$NU_VERS_PATCH = 1
-
-\$REQ_ORIG = 'http://x'
-
-\$SYS_OS_PLAT = 'windows'
-
-\$REQ_PATH = '/sh/pwsh/script/exec/install'
-
-\$REQ_SRCH = '?sysOsPlat=windows'
-
-& {
-  function wutNuVersCurrent ([string]\$nuBin, [string]\$nuVers) {
-    if (-not (Test-Path -Path \$nuBin -PathType Leaf)) {
-      return \$false
-    }
-    \$installed = & \$nuBin --version 2>\$null
-    if (\$LASTEXITCODE -ne 0) {
-      return \$false
-    }
-    return (\$installed | Out-String).Trim() -eq \$nuVers
-  }
-
-  function wutNuLockRelease ([string]\$lockDir) {
-    Remove-Item -Force -Recurse -Path \$lockDir -ErrorAction SilentlyContinue
-    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
-    \$workDir = Split-Path -Path \$lockDir -Parent
-    if ((Get-ChildItem -Path \$workDir -Force -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0) {
-      Remove-Item -Path \$workDir -Force -ErrorAction SilentlyContinue
-    }
-  }
-
-  function wutNuInstall ([string]\$wutHome, [string]\$nuBin, [string]\$nuVers, [string]\$ext) {
-    if (wutNuVersCurrent \$nuBin \$nuVers) {
-      return
-    }
-
-    \$triple = switch ("\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}") {
-      'darwin_aarch64' { 'aarch64-apple-darwin' }
-      'darwin_x86_64' { 'x86_64-apple-darwin' }
-      'linux_aarch64' { 'aarch64-unknown-linux-gnu' }
-      'linux_x86_64' { 'x86_64-unknown-linux-gnu' }
-      'windows_aarch64' { 'aarch64-pc-windows-msvc' }
-      'windows_x86_64' { 'x86_64-pc-windows-msvc' }
-      default { '' }
-    }
-    if (\$triple -eq '') {
-      opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
-      exit 1
-    }
-
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nuBin path
-    \$workDir = Join-Path \$wutHome 'vendor' '.nu'
-    New-Item -ItemType Directory -Force -Path \$workDir | Out-Null
-
-    \$lockDir = Join-Path \$workDir 'nu.lock'
-    \$acquired = \$false
-    \$waited = 0
-    while (\$waited -lt 240) {
-      if (wutNuVersCurrent \$nuBin \$nuVers) {
-        return
-      }
-      try {
-        New-Item -ItemType Directory -Path \$lockDir -ErrorAction Stop | Out-Null
-        \$acquired = \$true
-        break
-      } catch {
-        Start-Sleep -Milliseconds 500
-        \$waited += 1
-      }
-    }
-    if (-not \$acquired) {
-      opPrintWarn "reclaiming stale nu sync lock: \${lockDir}"
-      Remove-Item -Force -Recurse -Path \$lockDir -ErrorAction SilentlyContinue
-      try {
-        New-Item -ItemType Directory -Path \$lockDir -ErrorAction Stop | Out-Null
-      } catch {
-        opPrintErr "failed to acquire nu sync lock: \${lockDir}"
-        exit 1
-      }
-    }
-
-    if (wutNuVersCurrent \$nuBin \$nuVers) {
-      wutNuLockRelease \$lockDir
-      return
-    }
-
-    \$extArchive = if (\$SYS_OS_PLAT -eq 'windows') { 'zip' } else { 'tar.gz' }
-    \$asset = "nu-\${nuVers}-\${triple}.\${extArchive}"
-    \$url = "https://github.com/nushell/nushell/releases/download/\${nuVers}/\${asset}"
-    \$archivePath = Join-Path \$workDir \$asset
-    \$extractDir = Join-Path \$workDir "nu-\${nuVers}-\${triple}"
-
-    Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
-
-    & curl --fail-with-body --location --no-progress-meter --output \$archivePath --url \$url
-    if (\$LASTEXITCODE -ne 0) {
-      opPrintErr "failed to download nu \${nuVers}: \${url}"
-      Remove-Item -Force -Path \$archivePath -ErrorAction SilentlyContinue
-      wutNuLockRelease \$lockDir
-      exit 1
-    }
-
-    # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
-    # extractDir; tar.gz assets already contain their own nu-\${nuVers}-\${triple} folder, so they extract into workDir
-    if (\$extArchive -eq 'zip') {
-      New-Item -ItemType Directory -Force -Path \$extractDir | Out-Null
-      & tar -xf \$archivePath -C \$extractDir
-    } else {
-      & tar -xf \$archivePath -C \$workDir
-    }
-    if (\$LASTEXITCODE -ne 0) {
-      opPrintErr "failed to extract nu \${nuVers}"
-      Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
-      wutNuLockRelease \$lockDir
-      exit 1
-    }
-
-    \$extractedBin = Join-Path \$extractDir "nu\${ext}"
-    if (-not (Test-Path -Path \$extractedBin -PathType Leaf)) {
-      opPrintErr "nu binary not found in extracted archive: \${extractDir}"
-      Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
-      wutNuLockRelease \$lockDir
-      exit 1
-    }
-
-    if (\$SYS_OS_PLAT -ne 'windows') {
-      & chmod +x \$extractedBin
-    }
-    Move-Item -Force -Path \$extractedBin -Destination \$nuBin
-    Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
-
-    wutNuLockRelease \$lockDir
-  }
-
-  if (\$SYS_OS_PLAT -notin @('darwin', 'linux', 'windows')) {
-    opPrintWarn 'script is for darwin, linux, or windows'
-    return
-  }
-
-  \$env:WUT_HOME = \$env:WUT_HOME ?? "\${env:HOME}/.wut"
-  \$wutHome = \$env:WUT_HOME
-  \$ext = if (\$SYS_OS_PLAT -eq 'windows') { '.exe' } else { '' }
-  \$nuBin = Join-Path \$wutHome 'vendor' "nu\${ext}"
-  \$nuVers = "\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
-
-  wutNuInstall \$wutHome \$nuBin \$nuVers \$ext
-}
-
-
-\$SCRIPT_EXEC_ACTION = 'install'
-
-opPrintWarn 'no script matched: install'
-\`
+'\`
 `;
 
 snapshot[`zsh / darwin / exec (no match, docker not gated for darwin) 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/script/exec/setup/docker?sysOsPlat=darwin&wutNuPinned=1'\\\\''#
 
-REQ_URL_SH='http://x/sh/zsh/script/exec/setup/docker?sysOsPlat=darwin'
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  print -r -- "\$*"
-}
-
-function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
-    return
-  fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
-}
-
-function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
-  shift 1
-  if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
-  fi
-}
-
-function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
-  fi
-}
-
-function opRunCmd {
-  eval "\$*"
-}
-
-function opRunSilentCmd {
-  eval "\$*" &> /dev/null
-}
-
-function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
-  fi
-}
-
-function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
-  fi
-}
-
-function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
-}
-
-function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
-}
-
-
-SH_VERS_MAJOR=5
-
-SH_VERS_MINOR=9
-
-function () {
-  local major=\$SH_VERS_MAJOR
-  local minor=\$SH_VERS_MINOR
-
-  autoload is-at-least
-  if ! is-at-least "\${major}.\${minor}"; then
-    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
-    exit 1
-  fi
-}
-
-
-NU_VERS_MAJOR=0
-
-NU_VERS_MINOR=114
-
-NU_VERS_PATCH=1
-
-REQ_ORIG='http://x'
-
-SYS_OS_PLAT='darwin'
-
-REQ_PATH='/sh/zsh/script/exec/setup/docker'
-
-REQ_SRCH='?sysOsPlat=darwin'
-
-function () {
-  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
-    opPrintWarn 'script is for darwin or linux'
-    return
-  fi
-
-  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
-  local wut_home="\${WUT_HOME}"
-  local nu_bin="\${wut_home}/vendor/nu"
-  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
-
-  function nu_vers_current {
-    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
-  }
-
-  function nu_lock_release {
-    rmdir "\${lock_dir}" 2> /dev/null
-    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
-    rmdir "\${lock_dir:h}" 2> /dev/null
-  }
-
-  function nu_sync {
-    if nu_vers_current; then
-      return
-    fi
-
-    local triple=''
-    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
-      darwin_aarch64) triple='aarch64-apple-darwin' ;;
-      darwin_x86_64) triple='x86_64-apple-darwin' ;;
-      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
-      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
-      *)
-        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
-        exit 1
-        ;;
-    esac
-
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-    local work_dir="\${wut_home}/vendor/.nu"
-    mkdir -p "\${work_dir}"
-
-    local lock_dir="\${work_dir}/nu.lock"
-    local acquired=0
-    local waited=0
-    while (( waited < 240 )); do
-      if nu_vers_current; then
-        return
-      fi
-      if mkdir "\${lock_dir}" 2> /dev/null; then
-        acquired=1
-        break
-      fi
-      sleep 0.5
-      waited=\$(( waited + 1 ))
-    done
-    if (( ! acquired )); then
-      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
-      rmdir "\${lock_dir}" 2> /dev/null
-      if ! mkdir "\${lock_dir}" 2> /dev/null; then
-        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
-        exit 1
-      fi
-    fi
-
-    if nu_vers_current; then
-      nu_lock_release
-      return
-    fi
-
-    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
-    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
-    local archive_path="\${work_dir}/\${asset}"
-    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
-
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
-      opPrintErr "failed to download nu \${nu_vers}: \${url}"
-      rm -f "\${archive_path}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
-      opPrintErr "failed to extract nu \${nu_vers}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if [[ ! -f "\${extract_dir}/nu" ]]; then
-      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    chmod +x "\${extract_dir}/nu"
-    mv -f "\${extract_dir}/nu" "\${nu_bin}"
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    nu_lock_release
-  }
-
-  nu_sync
-}
-
-
-SCRIPT_EXEC_ACTION='setup'
-
-SCRIPT_EXEC_PARTS='docker'
-
-opPrintWarn 'no script matched: setup docker'
-\`
+'\`
 `;
 
 snapshot[`zsh / linux / exec (overlay stays in the calling shell) 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/script/exec/setup/docker?sysOsPlat=linux&wutNuPinned=1'\\\\''#
 
-REQ_URL_SH='http://x/sh/zsh/script/exec/setup/docker?sysOsPlat=linux'
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  print -r -- "\$*"
-}
-
-function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
-    return
-  fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
-}
-
-function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
-  shift 1
-  if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
-  fi
-}
-
-function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
-  fi
-}
-
-function opRunCmd {
-  eval "\$*"
-}
-
-function opRunSilentCmd {
-  eval "\$*" &> /dev/null
-}
-
-function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
-  fi
-}
-
-function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
-  fi
-}
-
-function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
-}
-
-function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
-}
-
-
-SH_VERS_MAJOR=5
-
-SH_VERS_MINOR=9
-
-function () {
-  local major=\$SH_VERS_MAJOR
-  local minor=\$SH_VERS_MINOR
-
-  autoload is-at-least
-  if ! is-at-least "\${major}.\${minor}"; then
-    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
-    exit 1
-  fi
-}
-
-
-NU_VERS_MAJOR=0
-
-NU_VERS_MINOR=114
-
-NU_VERS_PATCH=1
-
-REQ_ORIG='http://x'
-
-SYS_OS_PLAT='linux'
-
-REQ_PATH='/sh/zsh/script/exec/setup/docker'
-
-REQ_SRCH='?sysOsPlat=linux'
-
-function () {
-  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
-    opPrintWarn 'script is for darwin or linux'
-    return
-  fi
-
-  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
-  local wut_home="\${WUT_HOME}"
-  local nu_bin="\${wut_home}/vendor/nu"
-  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
-
-  function nu_vers_current {
-    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
-  }
-
-  function nu_lock_release {
-    rmdir "\${lock_dir}" 2> /dev/null
-    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
-    rmdir "\${lock_dir:h}" 2> /dev/null
-  }
-
-  function nu_sync {
-    if nu_vers_current; then
-      return
-    fi
-
-    local triple=''
-    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
-      darwin_aarch64) triple='aarch64-apple-darwin' ;;
-      darwin_x86_64) triple='x86_64-apple-darwin' ;;
-      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
-      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
-      *)
-        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
-        exit 1
-        ;;
-    esac
-
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-    local work_dir="\${wut_home}/vendor/.nu"
-    mkdir -p "\${work_dir}"
-
-    local lock_dir="\${work_dir}/nu.lock"
-    local acquired=0
-    local waited=0
-    while (( waited < 240 )); do
-      if nu_vers_current; then
-        return
-      fi
-      if mkdir "\${lock_dir}" 2> /dev/null; then
-        acquired=1
-        break
-      fi
-      sleep 0.5
-      waited=\$(( waited + 1 ))
-    done
-    if (( ! acquired )); then
-      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
-      rmdir "\${lock_dir}" 2> /dev/null
-      if ! mkdir "\${lock_dir}" 2> /dev/null; then
-        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
-        exit 1
-      fi
-    fi
-
-    if nu_vers_current; then
-      nu_lock_release
-      return
-    fi
-
-    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
-    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
-    local archive_path="\${work_dir}/\${asset}"
-    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
-
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
-      opPrintErr "failed to download nu \${nu_vers}: \${url}"
-      rm -f "\${archive_path}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
-      opPrintErr "failed to extract nu \${nu_vers}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if [[ ! -f "\${extract_dir}/nu" ]]; then
-      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    chmod +x "\${extract_dir}/nu"
-    mv -f "\${extract_dir}/nu" "\${nu_bin}"
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    nu_lock_release
-  }
-
-  nu_sync
-}
-
-
-SCRIPT_EXEC_ACTION='setup'
-
-SCRIPT_EXEC_PARTS='docker'
-
-function scriptHasCmd {
-  local cmd
-  for cmd in "\$@"; do
-    if type "\$cmd" > /dev/null 2>&1; then
-      return 0
-    fi
-  done
-  return 1
-}
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-typeset -ga SCRIPT_FIND_ROWS
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-function scriptFindAdd {
-  local action="\$1"
-  shift
-  local -a tools
-  local entry tool cmds
-  for entry in "\$@"; do
-    tool="\${entry%%=*}"
-    cmds="\${entry#*=}"
-    if [[ \$cmds == \$entry ]]; then
-      tools+=("\$tool")
-    elif scriptHasCmd \${(s:,:)cmds}; then
-      tools+=("\$tool")
-    fi
-  done
-  (( \${#tools} )) || return
-  SCRIPT_FIND_ROWS+=("\${action}|\${(j:, :)tools}")
-}
-
-# one table, one question, then the listing
-function scriptFindShow {
-  (( \${#SCRIPT_FIND_ROWS} )) || return 1
-  local -a actions toolsets
-  local row
-  for row in "\${SCRIPT_FIND_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    toolsets+=("\${row#*|}")
-  done
-  local aw=6 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %s" action tools)"
-  opPrint "\$(printf "%-\${aw}s %s" "------" "-----")"
-  local -a t
-  for i in {1..\${#actions}}; do
-    t=(\${(s:, :)toolsets[i]})
-    opPrint "\$(printf "%-\${aw}s %s" "\${actions[i]}" "\${#t}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]] || return 1
-  for i in {1..\${#actions}}; do
-    opPrint "\${actions[i]}"
-    opPrint "  \${toolsets[i]}"
-  done
-}
-
-typeset -ga SCRIPT_PLAN_ROWS
-
-function scriptPlanAdd {
-  local action="\$1" tool="\$2" shell="\$3"
-  shift 3
-  if (( \$# )) && ! scriptHasCmd "\$@"; then
-    return
-  fi
-  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
-function scriptPlanShow {
-  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
-    return 1
-  fi
-  local -a actions tools shells
-  local row
-  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    tools+=("\${\${row#*|}%%|*}")
-    shells+=("\${row##*|}")
-  done
-  local aw=6 tw=4 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
-  for i in {1..\${#actions}}; do
-    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
-}
-
-
-scriptPlanAdd 'setup' 'docker' 'zsh' 'docker'
-
-if ! scriptPlanShow; then
-  return
-fi
-
-function () {
-  if ! type docker > /dev/null; then
-    opPrintWarn 'docker is not installed'
-    return
-  fi
-  opPrintInfo 'setup docker via zsh'
-}
-
-\`
+'\`
 `;
 
 snapshot[`nu / linux / exec (overlay, already nu) 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/setup/cargo?sysOsPlat=linux'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/setup/cargo?sysOsPlat=linux&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
@@ -3882,7 +808,7 @@ do {
 
 \$env.REQ_PATH = r#'/sh/nu/script/exec/setup/cargo'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
@@ -4023,19 +949,54 @@ wutNuSync
 
 \$env.SCRIPT_EXEC_PARTS = r#'cargo'#
 
+def wutSelectParse [choice: string, max: int] {
+  let trimmed = (\$choice | str trim)
+  if (\$trimmed | is-empty) {
+    return (1..\$max | each { |i| \$i })
+  }
+  mut picked = []
+  for part in (\$trimmed | split row --regex '[, ]+' | where { |p| \$p | is-not-empty }) {
+    let bounds = if (\$part | str contains '-') {
+      let halves = (\$part | split row '-')
+      if (\$halves | length) != 2 {
+        return null
+      }
+      [(try { \$halves | get 0 | into int } catch { null }), (try { \$halves | get 1 | into int } catch { null })]
+    } else {
+      let n = (try { \$part | into int } catch { null })
+      if \$n == 0 {
+        return null
+      }
+      [\$n, \$n]
+    }
+    let from = (\$bounds | get 0)
+    let to = (\$bounds | get 1)
+    if \$from == null or \$to == null or \$from < 1 or \$to > \$max or \$from > \$to {
+      return null
+    }
+    for i in \$from..\$to {
+      if \$i not-in \$picked {
+        \$picked = (\$picked | append \$i)
+      }
+    }
+  }
+  \$picked | sort
+}
+
+def wutSelectRead [max: int] {
+  if YES in \$env {
+    return (1..\$max | each { |i| \$i })
+  }
+  opPrint ''
+  wutSelectParse (input \$"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): ") \$max
+}
+
+
 def scriptHasCmd [...cmds: string] {
   \$cmds | any { |cmd| which \$cmd | is-not-empty }
 }
 
 
-def --env scriptPlanAdd [action: string, tool: string, shell: string, ...cmds: string] {
-  if (\$cmds | is-not-empty) and not (scriptHasCmd ...\$cmds) {
-    return
-  }
-  load-env {SCRIPT_PLAN_ROWS: ((\$env.SCRIPT_PLAN_ROWS? | default []) | append \$"(\$action)|(\$tool)|(\$shell)")}
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
 # ghpm's table: a rule as wide as each header, columns padded to their widest cell, the last one loose
 def scriptTable [headers: list<string>, rows: list<list<string>>] {
   let widths = (\$headers | enumerate | each { |h|
@@ -4051,24 +1012,25 @@ def scriptTable [headers: list<string>, rows: list<list<string>>] {
   for r in \$rows { opPrint (do \$line \$r) }
 }
 
-def scriptPrompt [label: string] {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$"(\$label) [y,[n]]: "
+def --env scriptPlanRun [] {
+  let units = (\$env.SCRIPT_PLAN? | default '[]' | from json)
+  # a has_cmd gate is the client's: a script whose tool is missing is not offered, and an action alone is all wut has
+  let here = (\$units | where { |u| (\$u.cmds | is-empty) or (scriptHasCmd ...\$u.cmds) })
+  if (\$here | is-empty) {
+    opPrintWarn 'nothing to do'
+    return
   }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
-def scriptPlanShow [] {
-  let rows = ((\$env.SCRIPT_PLAN_ROWS? | default []) | each { |r| \$r | split row '|' })
-  if (\$rows | is-empty) {
-    return false
+  scriptTable ['action' 'tool' 'shell'] (\$here | enumerate | each { |u|
+    [\$"(\$u.index + 1)\\\\) (\$u.item.action)", \$u.item.tool, \$u.item.shell]
+  })
+  let picked = (wutSelectRead (\$here | length))
+  if \$picked == null {
+    return
   }
-  scriptTable ['action' 'tool' 'shell'] \$rows
-  scriptPrompt 'use script'
+  for i in \$picked {
+    scriptRunUnit (\$here | get (\$i - 1) | get id)
+  }
 }
 
 # find accumulates the same way the plan does, so all three shells share one idiom
@@ -4104,1670 +1066,199 @@ def scriptFindShow [] {
 }
 
 
-scriptPlanAdd r#'setup'# r#'cargo'# r#'nu'# r#'cargo'#
-
-if not (scriptPlanShow) {
-  return
+def --env scriptRunUnit [id: string] {
+  match \$id {
+    r#'cargo/setup'# => { zsh --no-rcs -c r#'function opPrint {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  print -r -- "\$*"
 }
 
-do {
-  if not (which cargo | is-not-empty) {
+function opPrintErr {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*" >&2
+    return
+  fi
+  print -n "\\\\033[0;31m" >&2
+  print -n -r -- "\$*" >&2
+  print "\\\\033[0m" >&2
+}
+
+function opPrintSucc {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;32m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintWarn {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;33m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintInfo {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;34m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintCmd {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;35m"
+  print -n -r "\$1"
+  print -n "\\\\033[0m"
+  shift 1
+  if [[ \$* ]]; then
+    print -n " \\\\033[0;36m"
+    print -n -r -- "\$*"
+    print "\\\\033[0m"
+  fi
+}
+
+function opMaybePrintCmd {
+  if [[ -z \$NOOP ]]; then
+    opPrintCmd "\$@"
+  fi
+}
+
+function opRunCmd {
+  eval "\$*"
+}
+
+function opRunSilentCmd {
+  eval "\$*" &> /dev/null
+}
+
+function opMaybeRunCmd {
+  if [[ -z \$NOOP ]]; then
+    opRunCmd "\$@"
+  fi
+}
+
+function opMaybeRunSilentCmd {
+  if [[ -z \$NOOP ]]; then
+    opRunSilentCmd "\$@"
+  fi
+}
+
+function opPrintRunCmd {
+  opPrintCmd "\$@"
+  opRunCmd "\$@"
+}
+
+function opPrintMaybeRunCmd {
+  opPrintCmd "\$@"
+  opMaybeRunCmd "\$@"
+}
+
+function () {
+  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
+    opPrintWarn 'script is for darwin or linux'
+    return
+  fi
+  if ! type cargo > /dev/null; then
     opPrintWarn 'cargo is not installed'
     return
-  }
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input 'setup cargo - install tools (user) [y,[n]]: '
-  }
-  if \$yn != 'n' {
-    opPrintMaybeRunCmd cargo binstall cargo-cache
-    opPrintMaybeRunCmd cargo binstall cargo-nextest
-    opPrintMaybeRunCmd cargo binstall cargo-update
+  fi
+  local yn=''
+  if [[ \$YES ]]; then
+    yn=y
+  else
+    read 'yn?setup cargo - install tools (user) [y,[n]]: '
+  fi
+  if [[ \$yn == n ]]; then
+    return
+  fi
+  local url='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
+  opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "\${url}" '|' bash
+  opPrintMaybeRunCmd cargo binstall cargo-cache
+  opPrintMaybeRunCmd cargo binstall cargo-update
+}
+'# }
+    _ => {}
   }
 }
 
+\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":[]}]'#
+
+scriptPlanRun
 \`
 `;
 
 snapshot[`zsh / linux / exec (overlay stays in the calling shell, cargo) 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/script/exec/setup/cargo?sysOsPlat=linux&wutNuPinned=1'\\\\''#
 
-REQ_URL_SH='http://x/sh/zsh/script/exec/setup/cargo?sysOsPlat=linux'
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  print -r -- "\$*"
-}
-
-function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
-    return
-  fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
-}
-
-function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
-  shift 1
-  if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
-  fi
-}
-
-function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
-  fi
-}
-
-function opRunCmd {
-  eval "\$*"
-}
-
-function opRunSilentCmd {
-  eval "\$*" &> /dev/null
-}
-
-function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
-  fi
-}
-
-function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
-  fi
-}
-
-function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
-}
-
-function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
-}
-
-
-SH_VERS_MAJOR=5
-
-SH_VERS_MINOR=9
-
-function () {
-  local major=\$SH_VERS_MAJOR
-  local minor=\$SH_VERS_MINOR
-
-  autoload is-at-least
-  if ! is-at-least "\${major}.\${minor}"; then
-    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
-    exit 1
-  fi
-}
-
-
-NU_VERS_MAJOR=0
-
-NU_VERS_MINOR=114
-
-NU_VERS_PATCH=1
-
-REQ_ORIG='http://x'
-
-SYS_OS_PLAT='linux'
-
-REQ_PATH='/sh/zsh/script/exec/setup/cargo'
-
-REQ_SRCH='?sysOsPlat=linux'
-
-function () {
-  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
-    opPrintWarn 'script is for darwin or linux'
-    return
-  fi
-
-  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
-  local wut_home="\${WUT_HOME}"
-  local nu_bin="\${wut_home}/vendor/nu"
-  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
-
-  function nu_vers_current {
-    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
-  }
-
-  function nu_lock_release {
-    rmdir "\${lock_dir}" 2> /dev/null
-    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
-    rmdir "\${lock_dir:h}" 2> /dev/null
-  }
-
-  function nu_sync {
-    if nu_vers_current; then
-      return
-    fi
-
-    local triple=''
-    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
-      darwin_aarch64) triple='aarch64-apple-darwin' ;;
-      darwin_x86_64) triple='x86_64-apple-darwin' ;;
-      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
-      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
-      *)
-        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
-        exit 1
-        ;;
-    esac
-
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-    local work_dir="\${wut_home}/vendor/.nu"
-    mkdir -p "\${work_dir}"
-
-    local lock_dir="\${work_dir}/nu.lock"
-    local acquired=0
-    local waited=0
-    while (( waited < 240 )); do
-      if nu_vers_current; then
-        return
-      fi
-      if mkdir "\${lock_dir}" 2> /dev/null; then
-        acquired=1
-        break
-      fi
-      sleep 0.5
-      waited=\$(( waited + 1 ))
-    done
-    if (( ! acquired )); then
-      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
-      rmdir "\${lock_dir}" 2> /dev/null
-      if ! mkdir "\${lock_dir}" 2> /dev/null; then
-        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
-        exit 1
-      fi
-    fi
-
-    if nu_vers_current; then
-      nu_lock_release
-      return
-    fi
-
-    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
-    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
-    local archive_path="\${work_dir}/\${asset}"
-    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
-
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
-      opPrintErr "failed to download nu \${nu_vers}: \${url}"
-      rm -f "\${archive_path}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
-      opPrintErr "failed to extract nu \${nu_vers}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if [[ ! -f "\${extract_dir}/nu" ]]; then
-      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    chmod +x "\${extract_dir}/nu"
-    mv -f "\${extract_dir}/nu" "\${nu_bin}"
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    nu_lock_release
-  }
-
-  nu_sync
-}
-
-
-SCRIPT_EXEC_ACTION='setup'
-
-SCRIPT_EXEC_PARTS='cargo'
-
-function scriptHasCmd {
-  local cmd
-  for cmd in "\$@"; do
-    if type "\$cmd" > /dev/null 2>&1; then
-      return 0
-    fi
-  done
-  return 1
-}
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-typeset -ga SCRIPT_FIND_ROWS
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-function scriptFindAdd {
-  local action="\$1"
-  shift
-  local -a tools
-  local entry tool cmds
-  for entry in "\$@"; do
-    tool="\${entry%%=*}"
-    cmds="\${entry#*=}"
-    if [[ \$cmds == \$entry ]]; then
-      tools+=("\$tool")
-    elif scriptHasCmd \${(s:,:)cmds}; then
-      tools+=("\$tool")
-    fi
-  done
-  (( \${#tools} )) || return
-  SCRIPT_FIND_ROWS+=("\${action}|\${(j:, :)tools}")
-}
-
-# one table, one question, then the listing
-function scriptFindShow {
-  (( \${#SCRIPT_FIND_ROWS} )) || return 1
-  local -a actions toolsets
-  local row
-  for row in "\${SCRIPT_FIND_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    toolsets+=("\${row#*|}")
-  done
-  local aw=6 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %s" action tools)"
-  opPrint "\$(printf "%-\${aw}s %s" "------" "-----")"
-  local -a t
-  for i in {1..\${#actions}}; do
-    t=(\${(s:, :)toolsets[i]})
-    opPrint "\$(printf "%-\${aw}s %s" "\${actions[i]}" "\${#t}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]] || return 1
-  for i in {1..\${#actions}}; do
-    opPrint "\${actions[i]}"
-    opPrint "  \${toolsets[i]}"
-  done
-}
-
-typeset -ga SCRIPT_PLAN_ROWS
-
-function scriptPlanAdd {
-  local action="\$1" tool="\$2" shell="\$3"
-  shift 3
-  if (( \$# )) && ! scriptHasCmd "\$@"; then
-    return
-  fi
-  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
-function scriptPlanShow {
-  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
-    return 1
-  fi
-  local -a actions tools shells
-  local row
-  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    tools+=("\${\${row#*|}%%|*}")
-    shells+=("\${row##*|}")
-  done
-  local aw=6 tw=4 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
-  for i in {1..\${#actions}}; do
-    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
-}
-
-
-scriptPlanAdd 'setup' 'cargo' 'zsh' 'cargo'
-
-if ! scriptPlanShow; then
-  return
-fi
-
-function () {
-  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
-    opPrintWarn 'script is for darwin or linux'
-    return
-  fi
-  if ! type cargo > /dev/null; then
-    opPrintWarn 'cargo is not installed'
-    return
-  fi
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    read 'yn?setup cargo - install tools (user) [y,[n]]: '
-  fi
-  if [[ \$yn == n ]]; then
-    return
-  fi
-  local url='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
-  opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "\${url}" '|' bash
-  opPrintMaybeRunCmd cargo binstall cargo-cache
-  opPrintMaybeRunCmd cargo binstall cargo-update
-}
-
-\`
+'\`
 `;
 
 snapshot[`pwsh / windows / exec (overlay stays in the calling shell) 1`] = `
-\`\$REQ_URL_CFG = 'http://x/cfg'
+\`& "\${env:WUT_HOME}/vendor/nu.exe" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/script/exec/setup/cargo?sysOsPlat=windows&wutNuPinned=1''#
 
-\$REQ_URL_SH = 'http://x/sh/pwsh/script/exec/setup/cargo?sysOsPlat=windows'
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-function opPrint {
-  if (\$SUCCINCT) {
-    return
-  }
-  [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-}
-
-function opPrintErr {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::Error.WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-    return
-  }
-  [Console]::ForegroundColor = 'red'
-  [Console]::Error.WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-  [Console]::ResetColor()
-}
-
-function opPrintSucc {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-    return
-  }
-  [Console]::ForegroundColor = 'green'
-  [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-  [Console]::ResetColor()
-}
-
-function opPrintWarn {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-    return
-  }
-  [Console]::ForegroundColor = 'yellow'
-  [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-  [Console]::ResetColor()
-}
-
-function opPrintInfo {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-    return
-  }
-  [Console]::ForegroundColor = 'blue'
-  [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-  [Console]::ResetColor()
-}
-
-function opPrintCmd {
-  if (\$SUCCINCT) {
-    return
-  }
-  if (\$GRAYSCALE) {
-    [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
-    return
-  }
-  \$_args = \$args | ForEach-Object { \$_ }
-  [Console]::ForegroundColor = 'magenta'
-  [Console]::Write(\$_args[0])
-  [Console]::ResetColor()
-  if (\$args.Length -gt 1) {
-    [Console]::Write(' ')
-    [Console]::ForegroundColor = 'cyan'
-    [Console]::WriteLine(((\$_args | Select-Object -Skip 1) -join ' '))
-    [Console]::ResetColor()
-  }
-}
-
-function opMaybePrintCmd {
-  if (-not \$NOOP) {
-    opPrintCmd @args
-  }
-}
-
-function opRunCmd {
-  Invoke-Expression "\$((\$args | ForEach-Object { \$_ }) -join ' ')"
-}
-
-function opRunSilentCmd {
-  Invoke-Expression "\$((\$args | ForEach-Object { \$_ }) -join ' ') 6>&1 5>&1 4>&1 3>&1 2>&1 | Out-Null"
-}
-
-function opMaybeRunCmd {
-  if (-not \$NOOP) {
-    opRunCmd @args
-  }
-}
-
-function opMaybeRunSilentCmd {
-  if (-not \$NOOP) {
-    opRunSilentCmd @args
-  }
-}
-
-function opPrintRunCmd {
-  opPrintCmd @args
-  opRunCmd @args
-}
-
-function opPrintMaybeRunCmd {
-  opPrintCmd @args
-  opMaybeRunCmd @args
-}
-
-
-\$SH_VERS_MAJOR = 7
-
-\$SH_VERS_MINOR = 6
-
-& {
-  \$major = \$SH_VERS_MAJOR -as [int]
-  \$minor = \$SH_VERS_MINOR -as [int]
-
-  if (\$PSVersionTable.PSVersion.Major -lt \$major -or \$PSVersionTable.PSVersion.Minor -lt \$minor) {
-    opPrintErr "pwsh must be >= '\${major}.\${minor}' .. found '\$(\$PSVersionTable.PSVersion)' .. aborting"
-    exit 1
-  }
-}
-
-
-\$NU_VERS_MAJOR = 0
-
-\$NU_VERS_MINOR = 114
-
-\$NU_VERS_PATCH = 1
-
-\$REQ_ORIG = 'http://x'
-
-\$SYS_OS_PLAT = 'windows'
-
-\$REQ_PATH = '/sh/pwsh/script/exec/setup/cargo'
-
-\$REQ_SRCH = '?sysOsPlat=windows'
-
-& {
-  function wutNuVersCurrent ([string]\$nuBin, [string]\$nuVers) {
-    if (-not (Test-Path -Path \$nuBin -PathType Leaf)) {
-      return \$false
-    }
-    \$installed = & \$nuBin --version 2>\$null
-    if (\$LASTEXITCODE -ne 0) {
-      return \$false
-    }
-    return (\$installed | Out-String).Trim() -eq \$nuVers
-  }
-
-  function wutNuLockRelease ([string]\$lockDir) {
-    Remove-Item -Force -Recurse -Path \$lockDir -ErrorAction SilentlyContinue
-    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
-    \$workDir = Split-Path -Path \$lockDir -Parent
-    if ((Get-ChildItem -Path \$workDir -Force -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0) {
-      Remove-Item -Path \$workDir -Force -ErrorAction SilentlyContinue
-    }
-  }
-
-  function wutNuInstall ([string]\$wutHome, [string]\$nuBin, [string]\$nuVers, [string]\$ext) {
-    if (wutNuVersCurrent \$nuBin \$nuVers) {
-      return
-    }
-
-    \$triple = switch ("\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}") {
-      'darwin_aarch64' { 'aarch64-apple-darwin' }
-      'darwin_x86_64' { 'x86_64-apple-darwin' }
-      'linux_aarch64' { 'aarch64-unknown-linux-gnu' }
-      'linux_x86_64' { 'x86_64-unknown-linux-gnu' }
-      'windows_aarch64' { 'aarch64-pc-windows-msvc' }
-      'windows_x86_64' { 'x86_64-pc-windows-msvc' }
-      default { '' }
-    }
-    if (\$triple -eq '') {
-      opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
-      exit 1
-    }
-
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nuBin path
-    \$workDir = Join-Path \$wutHome 'vendor' '.nu'
-    New-Item -ItemType Directory -Force -Path \$workDir | Out-Null
-
-    \$lockDir = Join-Path \$workDir 'nu.lock'
-    \$acquired = \$false
-    \$waited = 0
-    while (\$waited -lt 240) {
-      if (wutNuVersCurrent \$nuBin \$nuVers) {
-        return
-      }
-      try {
-        New-Item -ItemType Directory -Path \$lockDir -ErrorAction Stop | Out-Null
-        \$acquired = \$true
-        break
-      } catch {
-        Start-Sleep -Milliseconds 500
-        \$waited += 1
-      }
-    }
-    if (-not \$acquired) {
-      opPrintWarn "reclaiming stale nu sync lock: \${lockDir}"
-      Remove-Item -Force -Recurse -Path \$lockDir -ErrorAction SilentlyContinue
-      try {
-        New-Item -ItemType Directory -Path \$lockDir -ErrorAction Stop | Out-Null
-      } catch {
-        opPrintErr "failed to acquire nu sync lock: \${lockDir}"
-        exit 1
-      }
-    }
-
-    if (wutNuVersCurrent \$nuBin \$nuVers) {
-      wutNuLockRelease \$lockDir
-      return
-    }
-
-    \$extArchive = if (\$SYS_OS_PLAT -eq 'windows') { 'zip' } else { 'tar.gz' }
-    \$asset = "nu-\${nuVers}-\${triple}.\${extArchive}"
-    \$url = "https://github.com/nushell/nushell/releases/download/\${nuVers}/\${asset}"
-    \$archivePath = Join-Path \$workDir \$asset
-    \$extractDir = Join-Path \$workDir "nu-\${nuVers}-\${triple}"
-
-    Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
-
-    & curl --fail-with-body --location --no-progress-meter --output \$archivePath --url \$url
-    if (\$LASTEXITCODE -ne 0) {
-      opPrintErr "failed to download nu \${nuVers}: \${url}"
-      Remove-Item -Force -Path \$archivePath -ErrorAction SilentlyContinue
-      wutNuLockRelease \$lockDir
-      exit 1
-    }
-
-    # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
-    # extractDir; tar.gz assets already contain their own nu-\${nuVers}-\${triple} folder, so they extract into workDir
-    if (\$extArchive -eq 'zip') {
-      New-Item -ItemType Directory -Force -Path \$extractDir | Out-Null
-      & tar -xf \$archivePath -C \$extractDir
-    } else {
-      & tar -xf \$archivePath -C \$workDir
-    }
-    if (\$LASTEXITCODE -ne 0) {
-      opPrintErr "failed to extract nu \${nuVers}"
-      Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
-      wutNuLockRelease \$lockDir
-      exit 1
-    }
-
-    \$extractedBin = Join-Path \$extractDir "nu\${ext}"
-    if (-not (Test-Path -Path \$extractedBin -PathType Leaf)) {
-      opPrintErr "nu binary not found in extracted archive: \${extractDir}"
-      Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
-      wutNuLockRelease \$lockDir
-      exit 1
-    }
-
-    if (\$SYS_OS_PLAT -ne 'windows') {
-      & chmod +x \$extractedBin
-    }
-    Move-Item -Force -Path \$extractedBin -Destination \$nuBin
-    Remove-Item -Force -Recurse -Path \$archivePath, \$extractDir -ErrorAction SilentlyContinue
-
-    wutNuLockRelease \$lockDir
-  }
-
-  if (\$SYS_OS_PLAT -notin @('darwin', 'linux', 'windows')) {
-    opPrintWarn 'script is for darwin, linux, or windows'
-    return
-  }
-
-  \$env:WUT_HOME = \$env:WUT_HOME ?? "\${env:HOME}/.wut"
-  \$wutHome = \$env:WUT_HOME
-  \$ext = if (\$SYS_OS_PLAT -eq 'windows') { '.exe' } else { '' }
-  \$nuBin = Join-Path \$wutHome 'vendor' "nu\${ext}"
-  \$nuVers = "\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
-
-  wutNuInstall \$wutHome \$nuBin \$nuVers \$ext
-}
-
-
-\$SCRIPT_EXEC_ACTION = 'setup'
-
-\$SCRIPT_EXEC_PARTS = 'cargo'
-
-function scriptHasCmd {
-  foreach (\$cmd in \$args) {
-    if (Get-Command \$cmd -ErrorAction SilentlyContinue) {
-      return \$true
-    }
-  }
-  return \$false
-}
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-\$script:ScriptFindRows = @()
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-function scriptFindAdd {
-  \$action = \$args[0]
-  \$entries = if (\$args.Count -gt 1) { \$args[1..(\$args.Count - 1)] } else { @() }
-  \$tools = @()
-  foreach (\$entry in \$entries) {
-    \$parts = \$entry -split '=', 2
-    if (\$parts.Count -eq 1) {
-      \$tools += \$parts[0]
-    } else {
-      \$cmdList = \$parts[1] -split ','
-      if (scriptHasCmd @cmdList) {
-        \$tools += \$parts[0]
-      }
-    }
-  }
-  if (\$tools.Count -eq 0) {
-    return
-  }
-  \$script:ScriptFindRows += , @(\$action, (\$tools -join ', '))
-}
-
-# one table, one question, then the listing
-function scriptFindShow {
-  if (\$script:ScriptFindRows.Count -eq 0) {
-    return
-  }
-  \$headers = @('action', 'tools')
-  \$aw = (@(\$headers[0].Length) + (\$script:ScriptFindRows | ForEach-Object { \$_[0].Length }) | Measure-Object -Maximum).Maximum
-  opPrint (\$headers[0].PadRight(\$aw) + ' ' + \$headers[1])
-  opPrint (('-' * \$headers[0].Length).PadRight(\$aw) + ' ' + ('-' * \$headers[1].Length))
-  foreach (\$r in \$script:ScriptFindRows) {
-    opPrint (\$r[0].PadRight(\$aw) + ' ' + (\$r[1] -split ', ').Count)
-  }
-  \$yn = ''
-  if (\$YES) {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = Read-Host 'use script [y,[n]]'
-  }
-  \$yn = [string]\$yn
-  if (-not ((\$yn -eq '') -or (\$yn.ToLower() -eq 'y') -or (\$yn.ToLower() -eq 'yes'))) {
-    return
-  }
-  foreach (\$r in \$script:ScriptFindRows) {
-    opPrint \$r[0]
-    opPrint ('  ' + \$r[1])
-  }
-}
-
-\$script:ScriptPlanRows = @()
-
-function scriptPlanAdd {
-  \$action, \$tool, \$shell = \$args[0..2]
-  \$cmds = if (\$args.Count -gt 3) { \$args[3..(\$args.Count - 1)] } else { @() }
-  if (\$cmds.Count -gt 0) {
-    if (-not (scriptHasCmd @cmds)) {
-      return
-    }
-  }
-  \$script:ScriptPlanRows += , @(\$action, \$tool, \$shell)
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
-function scriptPlanShow {
-  if (\$script:ScriptPlanRows.Count -eq 0) {
-    return \$false
-  }
-  \$headers = @('action', 'tool', 'shell')
-  \$widths = 0..2 | ForEach-Object {
-    \$i = \$_
-    (@(\$headers[\$i].Length) + (\$script:ScriptPlanRows | ForEach-Object { \$_[\$i].Length }) | Measure-Object -Maximum).Maximum
-  }
-  \$line = {
-    param(\$cells)
-    (0..2 | ForEach-Object {
-      if (\$_ -eq 2) { \$cells[\$_] } else { \$cells[\$_].PadRight(\$widths[\$_]) }
-    }) -join ' '
-  }
-  opPrint (& \$line \$headers)
-  opPrint (& \$line @(0..2 | ForEach-Object { '-' * \$headers[\$_].Length }))
-  foreach (\$r in \$script:ScriptPlanRows) { opPrint (& \$line \$r) }
-  \$yn = ''
-  if (\$YES) {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = Read-Host 'use script [y,[n]]'
-  }
-  \$yn = [string]\$yn
-  return (\$yn -eq '') -or (\$yn.ToLower() -eq 'y') -or (\$yn.ToLower() -eq 'yes')
-}
-
-
-scriptPlanAdd 'setup' 'cargo' 'pwsh' 'cargo'
-
-if (-not (scriptPlanShow)) {
-  return
-}
-
-& {
-  if (-not \$IsWindows) {
-    opPrintWarn 'script is for windows'
-    return
-  }
-  if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) {
-    opPrintWarn 'cargo is not installed'
-    return
-  }
-  \$yn = ''
-  if (\$YES) {
-    \$yn = 'y'
-  } else {
-    \$yn = Read-Host 'setup cargo - install tools (user) [y,[n]]: '
-  }
-  if (\$yn -ne 'n') {
-    \$url = 'https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.ps1'
-    opPrintMaybeRunCmd irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri \$url '|' iex
-    opPrintMaybeRunCmd cargo binstall cargo-cache
-    opPrintMaybeRunCmd cargo binstall cargo-update
-  }
-}
-
-\`
+'\`
 `;
 
 snapshot[`zsh / linux / find (overlay dedup) 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/script/find/setup?sysOsPlat=linux&wutNuPinned=1'\\\\''#
 
-REQ_URL_SH='http://x/sh/zsh/script/find/setup?sysOsPlat=linux'
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  print -r -- "\$*"
-}
-
-function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
-    return
-  fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
-}
-
-function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
-  shift 1
-  if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
-  fi
-}
-
-function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
-  fi
-}
-
-function opRunCmd {
-  eval "\$*"
-}
-
-function opRunSilentCmd {
-  eval "\$*" &> /dev/null
-}
-
-function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
-  fi
-}
-
-function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
-  fi
-}
-
-function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
-}
-
-function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
-}
-
-
-SH_VERS_MAJOR=5
-
-SH_VERS_MINOR=9
-
-function () {
-  local major=\$SH_VERS_MAJOR
-  local minor=\$SH_VERS_MINOR
-
-  autoload is-at-least
-  if ! is-at-least "\${major}.\${minor}"; then
-    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
-    exit 1
-  fi
-}
-
-
-NU_VERS_MAJOR=0
-
-NU_VERS_MINOR=114
-
-NU_VERS_PATCH=1
-
-REQ_ORIG='http://x'
-
-SYS_OS_PLAT='linux'
-
-REQ_PATH='/sh/zsh/script/find/setup'
-
-REQ_SRCH='?sysOsPlat=linux'
-
-function () {
-  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
-    opPrintWarn 'script is for darwin or linux'
-    return
-  fi
-
-  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
-  local wut_home="\${WUT_HOME}"
-  local nu_bin="\${wut_home}/vendor/nu"
-  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
-
-  function nu_vers_current {
-    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
-  }
-
-  function nu_lock_release {
-    rmdir "\${lock_dir}" 2> /dev/null
-    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
-    rmdir "\${lock_dir:h}" 2> /dev/null
-  }
-
-  function nu_sync {
-    if nu_vers_current; then
-      return
-    fi
-
-    local triple=''
-    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
-      darwin_aarch64) triple='aarch64-apple-darwin' ;;
-      darwin_x86_64) triple='x86_64-apple-darwin' ;;
-      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
-      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
-      *)
-        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
-        exit 1
-        ;;
-    esac
-
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-    local work_dir="\${wut_home}/vendor/.nu"
-    mkdir -p "\${work_dir}"
-
-    local lock_dir="\${work_dir}/nu.lock"
-    local acquired=0
-    local waited=0
-    while (( waited < 240 )); do
-      if nu_vers_current; then
-        return
-      fi
-      if mkdir "\${lock_dir}" 2> /dev/null; then
-        acquired=1
-        break
-      fi
-      sleep 0.5
-      waited=\$(( waited + 1 ))
-    done
-    if (( ! acquired )); then
-      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
-      rmdir "\${lock_dir}" 2> /dev/null
-      if ! mkdir "\${lock_dir}" 2> /dev/null; then
-        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
-        exit 1
-      fi
-    fi
-
-    if nu_vers_current; then
-      nu_lock_release
-      return
-    fi
-
-    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
-    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
-    local archive_path="\${work_dir}/\${asset}"
-    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
-
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
-      opPrintErr "failed to download nu \${nu_vers}: \${url}"
-      rm -f "\${archive_path}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
-      opPrintErr "failed to extract nu \${nu_vers}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if [[ ! -f "\${extract_dir}/nu" ]]; then
-      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    chmod +x "\${extract_dir}/nu"
-    mv -f "\${extract_dir}/nu" "\${nu_bin}"
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    nu_lock_release
-  }
-
-  nu_sync
-}
-
-
-SCRIPT_FIND_ACTION='setup'
-
-function scriptHasCmd {
-  local cmd
-  for cmd in "\$@"; do
-    if type "\$cmd" > /dev/null 2>&1; then
-      return 0
-    fi
-  done
-  return 1
-}
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-typeset -ga SCRIPT_FIND_ROWS
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-function scriptFindAdd {
-  local action="\$1"
-  shift
-  local -a tools
-  local entry tool cmds
-  for entry in "\$@"; do
-    tool="\${entry%%=*}"
-    cmds="\${entry#*=}"
-    if [[ \$cmds == \$entry ]]; then
-      tools+=("\$tool")
-    elif scriptHasCmd \${(s:,:)cmds}; then
-      tools+=("\$tool")
-    fi
-  done
-  (( \${#tools} )) || return
-  SCRIPT_FIND_ROWS+=("\${action}|\${(j:, :)tools}")
-}
-
-# one table, one question, then the listing
-function scriptFindShow {
-  (( \${#SCRIPT_FIND_ROWS} )) || return 1
-  local -a actions toolsets
-  local row
-  for row in "\${SCRIPT_FIND_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    toolsets+=("\${row#*|}")
-  done
-  local aw=6 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %s" action tools)"
-  opPrint "\$(printf "%-\${aw}s %s" "------" "-----")"
-  local -a t
-  for i in {1..\${#actions}}; do
-    t=(\${(s:, :)toolsets[i]})
-    opPrint "\$(printf "%-\${aw}s %s" "\${actions[i]}" "\${#t}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]] || return 1
-  for i in {1..\${#actions}}; do
-    opPrint "\${actions[i]}"
-    opPrint "  \${toolsets[i]}"
-  done
-}
-
-typeset -ga SCRIPT_PLAN_ROWS
-
-function scriptPlanAdd {
-  local action="\$1" tool="\$2" shell="\$3"
-  shift 3
-  if (( \$# )) && ! scriptHasCmd "\$@"; then
-    return
-  fi
-  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
-function scriptPlanShow {
-  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
-    return 1
-  fi
-  local -a actions tools shells
-  local row
-  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    tools+=("\${\${row#*|}%%|*}")
-    shells+=("\${row##*|}")
-  done
-  local aw=6 tw=4 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
-  for i in {1..\${#actions}}; do
-    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
-}
-
-
-scriptFindAdd 'setup' 'cargo=cargo' 'docker=docker'
-scriptFindShow
-\`
+'\`
 `;
 
-snapshot[`zsh / linux / exec (action only, both scripts are native, no hop) 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
-
-REQ_URL_SH='http://x/sh/zsh/script/exec/setup?sysOsPlat=linux'
-
-function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  print -r -- "\$*"
-}
-
-function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
-    return
-  fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
-}
-
-function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
-}
-
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
-    return
-  fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
-  shift 1
-  if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
-  fi
-}
-
-function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
-  fi
-}
-
-function opRunCmd {
-  eval "\$*"
-}
-
-function opRunSilentCmd {
-  eval "\$*" &> /dev/null
-}
-
-function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
-  fi
-}
-
-function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
-  fi
-}
-
-function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
-}
-
-function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
-}
-
-
-SH_VERS_MAJOR=5
-
-SH_VERS_MINOR=9
-
-function () {
-  local major=\$SH_VERS_MAJOR
-  local minor=\$SH_VERS_MINOR
-
-  autoload is-at-least
-  if ! is-at-least "\${major}.\${minor}"; then
-    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
-    exit 1
-  fi
-}
-
-
-NU_VERS_MAJOR=0
-
-NU_VERS_MINOR=114
-
-NU_VERS_PATCH=1
-
-REQ_ORIG='http://x'
-
-SYS_OS_PLAT='linux'
-
-REQ_PATH='/sh/zsh/script/exec/setup'
-
-REQ_SRCH='?sysOsPlat=linux'
-
-function () {
-  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
-    opPrintWarn 'script is for darwin or linux'
-    return
-  fi
-
-  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
-  local wut_home="\${WUT_HOME}"
-  local nu_bin="\${wut_home}/vendor/nu"
-  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
-
-  function nu_vers_current {
-    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
-  }
-
-  function nu_lock_release {
-    rmdir "\${lock_dir}" 2> /dev/null
-    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
-    rmdir "\${lock_dir:h}" 2> /dev/null
-  }
-
-  function nu_sync {
-    if nu_vers_current; then
-      return
-    fi
-
-    local triple=''
-    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
-      darwin_aarch64) triple='aarch64-apple-darwin' ;;
-      darwin_x86_64) triple='x86_64-apple-darwin' ;;
-      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
-      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
-      *)
-        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
-        exit 1
-        ;;
-    esac
-
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-    local work_dir="\${wut_home}/vendor/.nu"
-    mkdir -p "\${work_dir}"
-
-    local lock_dir="\${work_dir}/nu.lock"
-    local acquired=0
-    local waited=0
-    while (( waited < 240 )); do
-      if nu_vers_current; then
-        return
-      fi
-      if mkdir "\${lock_dir}" 2> /dev/null; then
-        acquired=1
-        break
-      fi
-      sleep 0.5
-      waited=\$(( waited + 1 ))
-    done
-    if (( ! acquired )); then
-      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
-      rmdir "\${lock_dir}" 2> /dev/null
-      if ! mkdir "\${lock_dir}" 2> /dev/null; then
-        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
-        exit 1
-      fi
-    fi
-
-    if nu_vers_current; then
-      nu_lock_release
-      return
-    fi
-
-    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
-    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
-    local archive_path="\${work_dir}/\${asset}"
-    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
-
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
-      opPrintErr "failed to download nu \${nu_vers}: \${url}"
-      rm -f "\${archive_path}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
-      opPrintErr "failed to extract nu \${nu_vers}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if [[ ! -f "\${extract_dir}/nu" ]]; then
-      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    chmod +x "\${extract_dir}/nu"
-    mv -f "\${extract_dir}/nu" "\${nu_bin}"
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    nu_lock_release
-  }
-
-  nu_sync
-}
-
-
-SCRIPT_EXEC_ACTION='setup'
-
-function scriptHasCmd {
-  local cmd
-  for cmd in "\$@"; do
-    if type "\$cmd" > /dev/null 2>&1; then
-      return 0
-    fi
-  done
-  return 1
-}
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-typeset -ga SCRIPT_FIND_ROWS
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-function scriptFindAdd {
-  local action="\$1"
-  shift
-  local -a tools
-  local entry tool cmds
-  for entry in "\$@"; do
-    tool="\${entry%%=*}"
-    cmds="\${entry#*=}"
-    if [[ \$cmds == \$entry ]]; then
-      tools+=("\$tool")
-    elif scriptHasCmd \${(s:,:)cmds}; then
-      tools+=("\$tool")
-    fi
-  done
-  (( \${#tools} )) || return
-  SCRIPT_FIND_ROWS+=("\${action}|\${(j:, :)tools}")
-}
-
-# one table, one question, then the listing
-function scriptFindShow {
-  (( \${#SCRIPT_FIND_ROWS} )) || return 1
-  local -a actions toolsets
-  local row
-  for row in "\${SCRIPT_FIND_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    toolsets+=("\${row#*|}")
-  done
-  local aw=6 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %s" action tools)"
-  opPrint "\$(printf "%-\${aw}s %s" "------" "-----")"
-  local -a t
-  for i in {1..\${#actions}}; do
-    t=(\${(s:, :)toolsets[i]})
-    opPrint "\$(printf "%-\${aw}s %s" "\${actions[i]}" "\${#t}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]] || return 1
-  for i in {1..\${#actions}}; do
-    opPrint "\${actions[i]}"
-    opPrint "  \${toolsets[i]}"
-  done
-}
-
-typeset -ga SCRIPT_PLAN_ROWS
-
-function scriptPlanAdd {
-  local action="\$1" tool="\$2" shell="\$3"
-  shift 3
-  if (( \$# )) && ! scriptHasCmd "\$@"; then
-    return
-  fi
-  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
-function scriptPlanShow {
-  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
-    return 1
-  fi
-  local -a actions tools shells
-  local row
-  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    tools+=("\${\${row#*|}%%|*}")
-    shells+=("\${row##*|}")
-  done
-  local aw=6 tw=4 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
-  for i in {1..\${#actions}}; do
-    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
-}
-
-
-scriptPlanAdd 'setup' 'cargo' 'zsh' 'cargo'
-
-scriptPlanAdd 'setup' 'docker' 'zsh' 'docker'
-
-if ! scriptPlanShow; then
-  return
-fi
-
-if scriptHasCmd 'cargo'; then
-function () {
-  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
-    opPrintWarn 'script is for darwin or linux'
-    return
-  fi
-  if ! type cargo > /dev/null; then
-    opPrintWarn 'cargo is not installed'
-    return
-  fi
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    read 'yn?setup cargo - install tools (user) [y,[n]]: '
-  fi
-  if [[ \$yn == n ]]; then
-    return
-  fi
-  local url='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
-  opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "\${url}" '|' bash
-  opPrintMaybeRunCmd cargo binstall cargo-cache
-  opPrintMaybeRunCmd cargo binstall cargo-update
-}
-
-fi
-
-if scriptHasCmd 'docker'; then
-function () {
-  if ! type docker > /dev/null; then
-    opPrintWarn 'docker is not installed'
-    return
-  fi
-  opPrintInfo 'setup docker via zsh'
-}
-
-fi
-\`
-`;
-
-snapshot[`nu / linux / exec (action only, runs its own and hops the rest) 1`] = `
+snapshot[`nu / linux / exec (action only, one plan, no hop) 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/setup?sysOsPlat=linux'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/setup?sysOsPlat=linux&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
@@ -5899,7 +1390,7 @@ do {
 
 \$env.REQ_PATH = r#'/sh/nu/script/exec/setup'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
@@ -6038,19 +1529,54 @@ wutNuSync
 
 \$env.SCRIPT_EXEC_ACTION = r#'setup'#
 
+def wutSelectParse [choice: string, max: int] {
+  let trimmed = (\$choice | str trim)
+  if (\$trimmed | is-empty) {
+    return (1..\$max | each { |i| \$i })
+  }
+  mut picked = []
+  for part in (\$trimmed | split row --regex '[, ]+' | where { |p| \$p | is-not-empty }) {
+    let bounds = if (\$part | str contains '-') {
+      let halves = (\$part | split row '-')
+      if (\$halves | length) != 2 {
+        return null
+      }
+      [(try { \$halves | get 0 | into int } catch { null }), (try { \$halves | get 1 | into int } catch { null })]
+    } else {
+      let n = (try { \$part | into int } catch { null })
+      if \$n == 0 {
+        return null
+      }
+      [\$n, \$n]
+    }
+    let from = (\$bounds | get 0)
+    let to = (\$bounds | get 1)
+    if \$from == null or \$to == null or \$from < 1 or \$to > \$max or \$from > \$to {
+      return null
+    }
+    for i in \$from..\$to {
+      if \$i not-in \$picked {
+        \$picked = (\$picked | append \$i)
+      }
+    }
+  }
+  \$picked | sort
+}
+
+def wutSelectRead [max: int] {
+  if YES in \$env {
+    return (1..\$max | each { |i| \$i })
+  }
+  opPrint ''
+  wutSelectParse (input \$"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): ") \$max
+}
+
+
 def scriptHasCmd [...cmds: string] {
   \$cmds | any { |cmd| which \$cmd | is-not-empty }
 }
 
 
-def --env scriptPlanAdd [action: string, tool: string, shell: string, ...cmds: string] {
-  if (\$cmds | is-not-empty) and not (scriptHasCmd ...\$cmds) {
-    return
-  }
-  load-env {SCRIPT_PLAN_ROWS: ((\$env.SCRIPT_PLAN_ROWS? | default []) | append \$"(\$action)|(\$tool)|(\$shell)")}
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
 # ghpm's table: a rule as wide as each header, columns padded to their widest cell, the last one loose
 def scriptTable [headers: list<string>, rows: list<list<string>>] {
   let widths = (\$headers | enumerate | each { |h|
@@ -6066,24 +1592,25 @@ def scriptTable [headers: list<string>, rows: list<list<string>>] {
   for r in \$rows { opPrint (do \$line \$r) }
 }
 
-def scriptPrompt [label: string] {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$"(\$label) [y,[n]]: "
+def --env scriptPlanRun [] {
+  let units = (\$env.SCRIPT_PLAN? | default '[]' | from json)
+  # a has_cmd gate is the client's: a script whose tool is missing is not offered, and an action alone is all wut has
+  let here = (\$units | where { |u| (\$u.cmds | is-empty) or (scriptHasCmd ...\$u.cmds) })
+  if (\$here | is-empty) {
+    opPrintWarn 'nothing to do'
+    return
   }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
-def scriptPlanShow [] {
-  let rows = ((\$env.SCRIPT_PLAN_ROWS? | default []) | each { |r| \$r | split row '|' })
-  if (\$rows | is-empty) {
-    return false
+  scriptTable ['action' 'tool' 'shell'] (\$here | enumerate | each { |u|
+    [\$"(\$u.index + 1)\\\\) (\$u.item.action)", \$u.item.tool, \$u.item.shell]
+  })
+  let picked = (wutSelectRead (\$here | length))
+  if \$picked == null {
+    return
   }
-  scriptTable ['action' 'tool' 'shell'] \$rows
-  scriptPrompt 'use script'
+  for i in \$picked {
+    scriptRunUnit (\$here | get (\$i - 1) | get id)
+  }
 }
 
 # find accumulates the same way the plan does, so all three shells share one idiom
@@ -6119,49 +1646,9 @@ def scriptFindShow [] {
 }
 
 
-scriptPlanAdd r#'setup'# r#'cargo'# r#'nu'# r#'cargo'#
-
-scriptPlanAdd r#'setup'# r#'docker'# r#'zsh'# r#'docker'#
-
-if not (scriptPlanShow) {
-  return
-}
-
-if (scriptHasCmd r#'cargo'#) {
-do {
-  if not (which cargo | is-not-empty) {
-    opPrintWarn 'cargo is not installed'
-    return
-  }
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input 'setup cargo - install tools (user) [y,[n]]: '
-  }
-  if \$yn != 'n' {
-    opPrintMaybeRunCmd cargo binstall cargo-cache
-    opPrintMaybeRunCmd cargo binstall cargo-nextest
-    opPrintMaybeRunCmd cargo binstall cargo-update
-  }
-}
-
-}
-
-zsh --no-rcs -c r#'REQ_URL_SH='http://x/sh/zsh/script/exec/setup?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu&wutAgreed=1'
-
-eval "\$( curl --fail-with-body --location --no-progress-meter --url \$REQ_URL_SH )"
-
-'#
-\`
-`;
-
-snapshot[`zsh / linux / exec (action only, shell only hop from nu) 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
-
-REQ_URL_SH='http://x/sh/zsh/script/exec/setup?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu'
-
-function opPrint {
+def --env scriptRunUnit [id: string] {
+  match \$id {
+    r#'cargo/setup'# => { zsh --no-rcs -c r#'function opPrint {
   if [[ \$SUCCINCT ]]; then
     return
   fi
@@ -6275,265 +1762,144 @@ function opPrintMaybeRunCmd {
   opMaybeRunCmd "\$@"
 }
 
-
-SH_VERS_MAJOR=5
-
-SH_VERS_MINOR=9
-
-function () {
-  local major=\$SH_VERS_MAJOR
-  local minor=\$SH_VERS_MINOR
-
-  autoload is-at-least
-  if ! is-at-least "\${major}.\${minor}"; then
-    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
-    exit 1
-  fi
-}
-
-
-NU_VERS_MAJOR=0
-
-NU_VERS_MINOR=114
-
-NU_VERS_PATCH=1
-
-REQ_ORIG='http://x'
-
-SYS_OS_PLAT='linux'
-
-REQ_PATH='/sh/zsh/script/exec/setup'
-
-REQ_SRCH='?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu'
-
 function () {
   if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
     opPrintWarn 'script is for darwin or linux'
     return
   fi
-
-  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
-  local wut_home="\${WUT_HOME}"
-  local nu_bin="\${wut_home}/vendor/nu"
-  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
-
-  function nu_vers_current {
-    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
-  }
-
-  function nu_lock_release {
-    rmdir "\${lock_dir}" 2> /dev/null
-    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
-    rmdir "\${lock_dir:h}" 2> /dev/null
-  }
-
-  function nu_sync {
-    if nu_vers_current; then
-      return
-    fi
-
-    local triple=''
-    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
-      darwin_aarch64) triple='aarch64-apple-darwin' ;;
-      darwin_x86_64) triple='x86_64-apple-darwin' ;;
-      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
-      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
-      *)
-        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
-        exit 1
-        ;;
-    esac
-
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-    local work_dir="\${wut_home}/vendor/.nu"
-    mkdir -p "\${work_dir}"
-
-    local lock_dir="\${work_dir}/nu.lock"
-    local acquired=0
-    local waited=0
-    while (( waited < 240 )); do
-      if nu_vers_current; then
-        return
-      fi
-      if mkdir "\${lock_dir}" 2> /dev/null; then
-        acquired=1
-        break
-      fi
-      sleep 0.5
-      waited=\$(( waited + 1 ))
-    done
-    if (( ! acquired )); then
-      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
-      rmdir "\${lock_dir}" 2> /dev/null
-      if ! mkdir "\${lock_dir}" 2> /dev/null; then
-        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
-        exit 1
-      fi
-    fi
-
-    if nu_vers_current; then
-      nu_lock_release
-      return
-    fi
-
-    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
-    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
-    local archive_path="\${work_dir}/\${asset}"
-    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
-
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
-      opPrintErr "failed to download nu \${nu_vers}: \${url}"
-      rm -f "\${archive_path}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
-      opPrintErr "failed to extract nu \${nu_vers}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if [[ ! -f "\${extract_dir}/nu" ]]; then
-      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    chmod +x "\${extract_dir}/nu"
-    mv -f "\${extract_dir}/nu" "\${nu_bin}"
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    nu_lock_release
-  }
-
-  nu_sync
-}
-
-
-SCRIPT_EXEC_ACTION='setup'
-
-function scriptHasCmd {
-  local cmd
-  for cmd in "\$@"; do
-    if type "\$cmd" > /dev/null 2>&1; then
-      return 0
-    fi
-  done
-  return 1
-}
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-typeset -ga SCRIPT_FIND_ROWS
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-function scriptFindAdd {
-  local action="\$1"
-  shift
-  local -a tools
-  local entry tool cmds
-  for entry in "\$@"; do
-    tool="\${entry%%=*}"
-    cmds="\${entry#*=}"
-    if [[ \$cmds == \$entry ]]; then
-      tools+=("\$tool")
-    elif scriptHasCmd \${(s:,:)cmds}; then
-      tools+=("\$tool")
-    fi
-  done
-  (( \${#tools} )) || return
-  SCRIPT_FIND_ROWS+=("\${action}|\${(j:, :)tools}")
-}
-
-# one table, one question, then the listing
-function scriptFindShow {
-  (( \${#SCRIPT_FIND_ROWS} )) || return 1
-  local -a actions toolsets
-  local row
-  for row in "\${SCRIPT_FIND_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    toolsets+=("\${row#*|}")
-  done
-  local aw=6 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %s" action tools)"
-  opPrint "\$(printf "%-\${aw}s %s" "------" "-----")"
-  local -a t
-  for i in {1..\${#actions}}; do
-    t=(\${(s:, :)toolsets[i]})
-    opPrint "\$(printf "%-\${aw}s %s" "\${actions[i]}" "\${#t}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]] || return 1
-  for i in {1..\${#actions}}; do
-    opPrint "\${actions[i]}"
-    opPrint "  \${toolsets[i]}"
-  done
-}
-
-typeset -ga SCRIPT_PLAN_ROWS
-
-function scriptPlanAdd {
-  local action="\$1" tool="\$2" shell="\$3"
-  shift 3
-  if (( \$# )) && ! scriptHasCmd "\$@"; then
+  if ! type cargo > /dev/null; then
+    opPrintWarn 'cargo is not installed'
     return
   fi
-  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
-function scriptPlanShow {
-  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
-    return 1
-  fi
-  local -a actions tools shells
-  local row
-  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    tools+=("\${\${row#*|}%%|*}")
-    shells+=("\${row##*|}")
-  done
-  local aw=6 tw=4 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
-  for i in {1..\${#actions}}; do
-    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
-  done
   local yn=''
   if [[ \$YES ]]; then
     yn=y
   else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
+    read 'yn?setup cargo - install tools (user) [y,[n]]: '
   fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+  if [[ \$yn == n ]]; then
+    return
+  fi
+  local url='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
+  opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "\${url}" '|' bash
+  opPrintMaybeRunCmd cargo binstall cargo-cache
+  opPrintMaybeRunCmd cargo binstall cargo-update
+}
+'# }
+    r#'docker/setup'# => { zsh --no-rcs -c r#'function opPrint {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  print -r -- "\$*"
 }
 
+function opPrintErr {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*" >&2
+    return
+  fi
+  print -n "\\\\033[0;31m" >&2
+  print -n -r -- "\$*" >&2
+  print "\\\\033[0m" >&2
+}
 
-scriptPlanAdd 'setup' 'docker' 'zsh' 'docker'
+function opPrintSucc {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;32m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
 
-if ! scriptPlanShow; then
-  return
-fi
+function opPrintWarn {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;33m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
 
-if scriptHasCmd 'docker'; then
+function opPrintInfo {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;34m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintCmd {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;35m"
+  print -n -r "\$1"
+  print -n "\\\\033[0m"
+  shift 1
+  if [[ \$* ]]; then
+    print -n " \\\\033[0;36m"
+    print -n -r -- "\$*"
+    print "\\\\033[0m"
+  fi
+}
+
+function opMaybePrintCmd {
+  if [[ -z \$NOOP ]]; then
+    opPrintCmd "\$@"
+  fi
+}
+
+function opRunCmd {
+  eval "\$*"
+}
+
+function opRunSilentCmd {
+  eval "\$*" &> /dev/null
+}
+
+function opMaybeRunCmd {
+  if [[ -z \$NOOP ]]; then
+    opRunCmd "\$@"
+  fi
+}
+
+function opMaybeRunSilentCmd {
+  if [[ -z \$NOOP ]]; then
+    opRunSilentCmd "\$@"
+  fi
+}
+
+function opPrintRunCmd {
+  opPrintCmd "\$@"
+  opRunCmd "\$@"
+}
+
+function opPrintMaybeRunCmd {
+  opPrintCmd "\$@"
+  opMaybeRunCmd "\$@"
+}
+
 function () {
   if ! type docker > /dev/null; then
     opPrintWarn 'docker is not installed'
@@ -6541,389 +1907,385 @@ function () {
   fi
   opPrintInfo 'setup docker via zsh'
 }
+'# }
+    _ => {}
+  }
+}
 
-fi
+\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"]},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"]}]'#
+
+scriptPlanRun
 \`
 `;
 
-snapshot[`zsh / linux / find (client side has_cmd listing) 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
+snapshot[`zsh / linux / exec (redirects to nu) 1`] = `
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/script/exec/setup?sysOsPlat=linux&wutNuPinned=1'\\\\''#
 
-REQ_URL_SH='http://x/sh/zsh/script/find?sysOsPlat=linux'
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+rm --force --permanent \$scriptFilePath
+if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 
-function opPrint {
-  if [[ \$SUCCINCT ]]; then
+'\`
+`;
+
+snapshot[`nu / linux / find (client side has_cmd listing) 1`] = `
+\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/script/find?sysOsPlat=linux&wutNuPinned=1'#
+
+def opPrint --wrapped [...args] {
+  if SUCCINCT in \$env {
     return
-  fi
-  print -r -- "\$*"
+  }
+  \$"(\$args | flatten | str join ' ')" | print
 }
 
-function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
+def opPrintErr --wrapped [...args] {
+  if SUCCINCT in \$env {
     return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print --stderr
     return
-  fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
+  }
+  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
 }
 
-function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
+def opPrintSucc --wrapped [...args] {
+  if SUCCINCT in \$env {
     return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
     return
-  fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  }
+  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
 }
 
-function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
+def opPrintWarn --wrapped [...args] {
+  if SUCCINCT in \$env {
     return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
     return
-  fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  }
+  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
 }
 
-function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
+def opPrintInfo --wrapped [...args] {
+  if SUCCINCT in \$env {
     return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
     return
-  fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  }
+  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
 }
 
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
+def opPrintCmd --wrapped [...args] {
+  if SUCCINCT in \$env {
     return
-  fi
-  if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+  }
+  if GRAYSCALE in \$env {
+    \$"(\$args | flatten | str join ' ')" | print
     return
-  fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
-  shift 1
-  if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
-  fi
+  }
+  let args = \$args | flatten
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  if (\$args | length) > 1 {
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  }
 }
 
-function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
-  fi
+def opMaybePrintCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opPrintCmd ...\$args
+  }
 }
 
-function opRunCmd {
-  eval "\$*"
+def opRunCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
 }
 
-function opRunSilentCmd {
-  eval "\$*" &> /dev/null
+def opRunSilentCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
 }
 
-function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
-  fi
+def opMaybeRunCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunCmd ...\$args
+  }
 }
 
-function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
-  fi
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunSilentCmd ...\$args
+  }
 }
 
-function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
 }
 
-function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opMaybeRunCmd ...\$args
 }
 
 
-SH_VERS_MAJOR=5
+\$env.SH_VERS_MAJOR = 0
 
-SH_VERS_MINOR=9
+\$env.SH_VERS_MINOR = 114
 
-function () {
-  local major=\$SH_VERS_MAJOR
-  local minor=\$SH_VERS_MINOR
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
 
-  autoload is-at-least
-  if ! is-at-least "\${major}.\${minor}"; then
-    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
     exit 1
-  fi
+  }
 }
 
 
-NU_VERS_MAJOR=0
+\$env.NU_VERS_MAJOR = 0
 
-NU_VERS_MINOR=114
+\$env.NU_VERS_MINOR = 114
 
-NU_VERS_PATCH=1
+\$env.NU_VERS_PATCH = 1
 
-REQ_ORIG='http://x'
+\$env.REQ_ORIG = r#'http://x'#
 
-SYS_OS_PLAT='linux'
+\$env.SYS_OS_PLAT = r#'linux'#
 
-REQ_PATH='/sh/zsh/script/find'
+\$env.REQ_PATH = r#'/sh/nu/script/find'#
 
-REQ_SRCH='?sysOsPlat=linux'
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
-function () {
-  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
-    opPrintWarn 'script is for darwin or linux'
+def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
+  if not (\$nu_bin | path exists) {
+    return false
+  }
+  let installed = (do { ^\$nu_bin --version } | complete)
+  if \$installed.exit_code != 0 {
+    return false
+  }
+  (\$installed.stdout | str trim) == \$nu_vers
+}
+
+def wutNuLockRelease [lock_path: string] {
+  rm --force \$lock_path
+  # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
+  try { rm (\$lock_path | path dirname) } catch { }
+}
+
+def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
+  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
     return
-  fi
-
-  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
-  local wut_home="\${WUT_HOME}"
-  local nu_bin="\${wut_home}/vendor/nu"
-  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
-
-  function nu_vers_current {
-    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
   }
 
-  function nu_lock_release {
-    rmdir "\${lock_dir}" 2> /dev/null
-    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
-    rmdir "\${lock_dir:h}" 2> /dev/null
+  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+    'darwin_aarch64' => 'aarch64-apple-darwin',
+    'darwin_x86_64' => 'x86_64-apple-darwin',
+    'linux_aarch64' => 'aarch64-unknown-linux-gnu',
+    'linux_x86_64' => 'x86_64-unknown-linux-gnu',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
+    _ => '',
+  }
+  if \$triple == '' {
+    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    exit 1
   }
 
-  function nu_sync {
-    if nu_vers_current; then
+  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
+  mkdir \$work_dir
+
+  let lock_path = (\$work_dir | path join 'nu.lock')
+  mut acquired = false
+  mut waited = 0
+  while \$waited < 240 {
+    if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
-    fi
-
-    local triple=''
-    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
-      darwin_aarch64) triple='aarch64-apple-darwin' ;;
-      darwin_x86_64) triple='x86_64-apple-darwin' ;;
-      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
-      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
-      *)
-        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
-        exit 1
-        ;;
-    esac
-
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-    local work_dir="\${wut_home}/vendor/.nu"
-    mkdir -p "\${work_dir}"
-
-    local lock_dir="\${work_dir}/nu.lock"
-    local acquired=0
-    local waited=0
-    while (( waited < 240 )); do
-      if nu_vers_current; then
-        return
-      fi
-      if mkdir "\${lock_dir}" 2> /dev/null; then
-        acquired=1
-        break
-      fi
-      sleep 0.5
-      waited=\$(( waited + 1 ))
-    done
-    if (( ! acquired )); then
-      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
-      rmdir "\${lock_dir}" 2> /dev/null
-      if ! mkdir "\${lock_dir}" 2> /dev/null; then
-        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
-        exit 1
-      fi
-    fi
-
-    if nu_vers_current; then
-      nu_lock_release
-      return
-    fi
-
-    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
-    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
-    local archive_path="\${work_dir}/\${asset}"
-    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
-
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
-      opPrintErr "failed to download nu \${nu_vers}: \${url}"
-      rm -f "\${archive_path}"
-      nu_lock_release
+    }
+    let locked = (try { "" | save \$lock_path; true } catch { false })
+    if \$locked {
+      \$acquired = true
+      break
+    }
+    sleep 500ms
+    \$waited = \$waited + 1
+  }
+  if not \$acquired {
+    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    rm --force \$lock_path
+    let locked = (try { "" | save \$lock_path; true } catch { false })
+    if not \$locked {
+      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
       exit 1
-    fi
-
-    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
-      opPrintErr "failed to extract nu \${nu_vers}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if [[ ! -f "\${extract_dir}/nu" ]]; then
-      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    chmod +x "\${extract_dir}/nu"
-    mv -f "\${extract_dir}/nu" "\${nu_bin}"
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    nu_lock_release
+    }
   }
 
-  nu_sync
+  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    wutNuLockRelease \$lock_path
+    return
+  }
+
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
+  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
+  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let archive_path = (\$work_dir | path join \$asset)
+  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+
+  rm --force --recursive \$archive_path \$extract_dir
+
+  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    rm --force \$archive_path
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
+  let extract_target = if \$ext_archive == 'zip' {
+    mkdir \$extract_dir
+    \$extract_dir
+  } else {
+    \$work_dir
+  }
+  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    rm --force --recursive \$archive_path \$extract_dir
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  if not (\$extracted_bin | path exists) {
+    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    rm --force --recursive \$archive_path \$extract_dir
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  if \$env.SYS_OS_PLAT != 'windows' {
+    ^chmod +x \$extracted_bin
+  }
+  mv --force \$extracted_bin \$nu_bin
+  rm --force --recursive \$archive_path \$extract_dir
+
+  wutNuLockRelease \$lock_path
+}
+
+def --env wutNuSync [] {
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
+    return
+  }
+
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  let wut_home = \$env.WUT_HOME
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
+  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
+  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+
+  wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
+}
+
+wutNuSync
+
+
+def scriptHasCmd [...cmds: string] {
+  \$cmds | any { |cmd| which \$cmd | is-not-empty }
 }
 
 
-function scriptHasCmd {
-  local cmd
-  for cmd in "\$@"; do
-    if type "\$cmd" > /dev/null 2>&1; then
-      return 0
-    fi
-  done
-  return 1
+# ghpm's table: a rule as wide as each header, columns padded to their widest cell, the last one loose
+def scriptTable [headers: list<string>, rows: list<list<string>>] {
+  let widths = (\$headers | enumerate | each { |h|
+    [(\$h.item | str length)] ++ (\$rows | each { |r| \$r | get -o \$h.index | default '' | str length }) | math max
+  })
+  let line = { |cells: list<string>|
+    \$cells | enumerate | each { |c|
+      if \$c.index == ((\$cells | length) - 1) { \$c.item } else { \$c.item | fill --alignment left --width (\$widths | get \$c.index) }
+    } | str join ' '
+  }
+  opPrint (do \$line \$headers)
+  opPrint (do \$line (\$headers | each { |h| '-' | fill --alignment left --width (\$h | str length) --character '-' }))
+  for r in \$rows { opPrint (do \$line \$r) }
 }
 
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-typeset -ga SCRIPT_FIND_ROWS
+def --env scriptPlanRun [] {
+  let units = (\$env.SCRIPT_PLAN? | default '[]' | from json)
+  # a has_cmd gate is the client's: a script whose tool is missing is not offered, and an action alone is all wut has
+  let here = (\$units | where { |u| (\$u.cmds | is-empty) or (scriptHasCmd ...\$u.cmds) })
+  if (\$here | is-empty) {
+    opPrintWarn 'nothing to do'
+    return
+  }
 
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-function scriptFindAdd {
-  local action="\$1"
-  shift
-  local -a tools
-  local entry tool cmds
-  for entry in "\$@"; do
-    tool="\${entry%%=*}"
-    cmds="\${entry#*=}"
-    if [[ \$cmds == \$entry ]]; then
-      tools+=("\$tool")
-    elif scriptHasCmd \${(s:,:)cmds}; then
-      tools+=("\$tool")
-    fi
-  done
-  (( \${#tools} )) || return
-  SCRIPT_FIND_ROWS+=("\${action}|\${(j:, :)tools}")
+  scriptTable ['action' 'tool' 'shell'] (\$here | enumerate | each { |u|
+    [\$"(\$u.index + 1)\\\\) (\$u.item.action)", \$u.item.tool, \$u.item.shell]
+  })
+  let picked = (wutSelectRead (\$here | length))
+  if \$picked == null {
+    return
+  }
+  for i in \$picked {
+    scriptRunUnit (\$here | get (\$i - 1) | get id)
+  }
+}
+
+# find accumulates the same way the plan does, so all three shells share one idiom
+def --env scriptFindAdd [action: string, ...entries: string] {
+  let tools = (
+    \$entries | each { |e| \$e | split row '=' }
+      | where { |p|
+        let cmds = (\$p | get -o 1 | default '')
+        (\$cmds | is-empty) or (scriptHasCmd ...(\$cmds | split row ','))
+      }
+      | each { |p| \$p | get 0 }
+  )
+  if (\$tools | is-empty) {
+    return
+  }
+  load-env {SCRIPT_FIND_ROWS: ((\$env.SCRIPT_FIND_ROWS? | default []) | append \$"(\$action)|(\$tools | str join ', ')")}
 }
 
 # one table, one question, then the listing
-function scriptFindShow {
-  (( \${#SCRIPT_FIND_ROWS} )) || return 1
-  local -a actions toolsets
-  local row
-  for row in "\${SCRIPT_FIND_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    toolsets+=("\${row#*|}")
-  done
-  local aw=6 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %s" action tools)"
-  opPrint "\$(printf "%-\${aw}s %s" "------" "-----")"
-  local -a t
-  for i in {1..\${#actions}}; do
-    t=(\${(s:, :)toolsets[i]})
-    opPrint "\$(printf "%-\${aw}s %s" "\${actions[i]}" "\${#t}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]] || return 1
-  for i in {1..\${#actions}}; do
-    opPrint "\${actions[i]}"
-    opPrint "  \${toolsets[i]}"
-  done
-}
-
-typeset -ga SCRIPT_PLAN_ROWS
-
-function scriptPlanAdd {
-  local action="\$1" tool="\$2" shell="\$3"
-  shift 3
-  if (( \$# )) && ! scriptHasCmd "\$@"; then
+def scriptFindShow [] {
+  let rows = ((\$env.SCRIPT_FIND_ROWS? | default []) | each { |r| \$r | split row '|' })
+  if (\$rows | is-empty) {
     return
-  fi
-  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
-function scriptPlanShow {
-  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
-    return 1
-  fi
-  local -a actions tools shells
-  local row
-  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    tools+=("\${\${row#*|}%%|*}")
-    shells+=("\${row##*|}")
-  done
-  local aw=6 tw=4 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
-  for i in {1..\${#actions}}; do
-    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+  }
+  for r in \$rows {
+    opPrint (\$r | get 0)
+    opPrint \$"  (\$r | get 1)"
+  }
+  opPrint ''
+  scriptTable ['action' 'tools'] (\$rows | each { |r|
+    [(\$r | get 0), ((\$r | get 1 | split row ', ') | length | into string)]
+  })
 }
 
 
-scriptFindAdd 'setup' 'cargo=cargo' 'docker=docker'
+scriptFindAdd r#'setup'# r#'cargo=cargo'# r#'docker=docker'#
 scriptFindShow
 \`
 `;
 
-snapshot[`nu / linux / exec (action only, gates each block on has_cmd) 1`] = `
+snapshot[`nu / linux / exec (action only, carries has_cmd into the plan) 1`] = `
 \`\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
-\$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/setup?sysOsPlat=linux'#
+\$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/setup?sysOsPlat=linux&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
@@ -7055,7 +2417,7 @@ do {
 
 \$env.REQ_PATH = r#'/sh/nu/script/exec/setup'#
 
-\$env.REQ_SRCH = r#'?sysOsPlat=linux'#
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
@@ -7194,19 +2556,54 @@ wutNuSync
 
 \$env.SCRIPT_EXEC_ACTION = r#'setup'#
 
+def wutSelectParse [choice: string, max: int] {
+  let trimmed = (\$choice | str trim)
+  if (\$trimmed | is-empty) {
+    return (1..\$max | each { |i| \$i })
+  }
+  mut picked = []
+  for part in (\$trimmed | split row --regex '[, ]+' | where { |p| \$p | is-not-empty }) {
+    let bounds = if (\$part | str contains '-') {
+      let halves = (\$part | split row '-')
+      if (\$halves | length) != 2 {
+        return null
+      }
+      [(try { \$halves | get 0 | into int } catch { null }), (try { \$halves | get 1 | into int } catch { null })]
+    } else {
+      let n = (try { \$part | into int } catch { null })
+      if \$n == 0 {
+        return null
+      }
+      [\$n, \$n]
+    }
+    let from = (\$bounds | get 0)
+    let to = (\$bounds | get 1)
+    if \$from == null or \$to == null or \$from < 1 or \$to > \$max or \$from > \$to {
+      return null
+    }
+    for i in \$from..\$to {
+      if \$i not-in \$picked {
+        \$picked = (\$picked | append \$i)
+      }
+    }
+  }
+  \$picked | sort
+}
+
+def wutSelectRead [max: int] {
+  if YES in \$env {
+    return (1..\$max | each { |i| \$i })
+  }
+  opPrint ''
+  wutSelectParse (input \$"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): ") \$max
+}
+
+
 def scriptHasCmd [...cmds: string] {
   \$cmds | any { |cmd| which \$cmd | is-not-empty }
 }
 
 
-def --env scriptPlanAdd [action: string, tool: string, shell: string, ...cmds: string] {
-  if (\$cmds | is-not-empty) and not (scriptHasCmd ...\$cmds) {
-    return
-  }
-  load-env {SCRIPT_PLAN_ROWS: ((\$env.SCRIPT_PLAN_ROWS? | default []) | append \$"(\$action)|(\$tool)|(\$shell)")}
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
 # ghpm's table: a rule as wide as each header, columns padded to their widest cell, the last one loose
 def scriptTable [headers: list<string>, rows: list<list<string>>] {
   let widths = (\$headers | enumerate | each { |h|
@@ -7222,24 +2619,25 @@ def scriptTable [headers: list<string>, rows: list<list<string>>] {
   for r in \$rows { opPrint (do \$line \$r) }
 }
 
-def scriptPrompt [label: string] {
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$"(\$label) [y,[n]]: "
+def --env scriptPlanRun [] {
+  let units = (\$env.SCRIPT_PLAN? | default '[]' | from json)
+  # a has_cmd gate is the client's: a script whose tool is missing is not offered, and an action alone is all wut has
+  let here = (\$units | where { |u| (\$u.cmds | is-empty) or (scriptHasCmd ...\$u.cmds) })
+  if (\$here | is-empty) {
+    opPrintWarn 'nothing to do'
+    return
   }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
-def scriptPlanShow [] {
-  let rows = ((\$env.SCRIPT_PLAN_ROWS? | default []) | each { |r| \$r | split row '|' })
-  if (\$rows | is-empty) {
-    return false
+  scriptTable ['action' 'tool' 'shell'] (\$here | enumerate | each { |u|
+    [\$"(\$u.index + 1)\\\\) (\$u.item.action)", \$u.item.tool, \$u.item.shell]
+  })
+  let picked = (wutSelectRead (\$here | length))
+  if \$picked == null {
+    return
   }
-  scriptTable ['action' 'tool' 'shell'] \$rows
-  scriptPrompt 'use script'
+  for i in \$picked {
+    scriptRunUnit (\$here | get (\$i - 1) | get id)
+  }
 }
 
 # find accumulates the same way the plan does, so all three shells share one idiom
@@ -7275,49 +2673,9 @@ def scriptFindShow [] {
 }
 
 
-scriptPlanAdd r#'setup'# r#'cargo'# r#'nu'# r#'cargo'#
-
-scriptPlanAdd r#'setup'# r#'docker'# r#'zsh'# r#'docker'#
-
-if not (scriptPlanShow) {
-  return
-}
-
-if (scriptHasCmd r#'cargo'#) {
-do {
-  if not (which cargo | is-not-empty) {
-    opPrintWarn 'cargo is not installed'
-    return
-  }
-  mut yn = ''
-  if 'YES' in \$env {
-    \$yn = 'y'
-  } else {
-    \$yn = input 'setup cargo - install tools (user) [y,[n]]: '
-  }
-  if \$yn != 'n' {
-    opPrintMaybeRunCmd cargo binstall cargo-cache
-    opPrintMaybeRunCmd cargo binstall cargo-nextest
-    opPrintMaybeRunCmd cargo binstall cargo-update
-  }
-}
-
-}
-
-zsh --no-rcs -c r#'REQ_URL_SH='http://x/sh/zsh/script/exec/setup?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu&wutAgreed=1'
-
-eval "\$( curl --fail-with-body --location --no-progress-meter --url \$REQ_URL_SH )"
-
-'#
-\`
-`;
-
-snapshot[`zsh / linux / exec (action only, plans every shell then asks once) 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
-
-REQ_URL_SH='http://x/sh/zsh/script/exec/setup?sysOsPlat=linux'
-
-function opPrint {
+def --env scriptRunUnit [id: string] {
+  match \$id {
+    r#'cargo/setup'# => { zsh --no-rcs -c r#'function opPrint {
   if [[ \$SUCCINCT ]]; then
     return
   fi
@@ -7431,267 +2789,6 @@ function opPrintMaybeRunCmd {
   opMaybeRunCmd "\$@"
 }
 
-
-SH_VERS_MAJOR=5
-
-SH_VERS_MINOR=9
-
-function () {
-  local major=\$SH_VERS_MAJOR
-  local minor=\$SH_VERS_MINOR
-
-  autoload is-at-least
-  if ! is-at-least "\${major}.\${minor}"; then
-    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
-    exit 1
-  fi
-}
-
-
-NU_VERS_MAJOR=0
-
-NU_VERS_MINOR=114
-
-NU_VERS_PATCH=1
-
-REQ_ORIG='http://x'
-
-SYS_OS_PLAT='linux'
-
-REQ_PATH='/sh/zsh/script/exec/setup'
-
-REQ_SRCH='?sysOsPlat=linux'
-
-function () {
-  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
-    opPrintWarn 'script is for darwin or linux'
-    return
-  fi
-
-  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
-  local wut_home="\${WUT_HOME}"
-  local nu_bin="\${wut_home}/vendor/nu"
-  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
-
-  function nu_vers_current {
-    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
-  }
-
-  function nu_lock_release {
-    rmdir "\${lock_dir}" 2> /dev/null
-    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
-    rmdir "\${lock_dir:h}" 2> /dev/null
-  }
-
-  function nu_sync {
-    if nu_vers_current; then
-      return
-    fi
-
-    local triple=''
-    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
-      darwin_aarch64) triple='aarch64-apple-darwin' ;;
-      darwin_x86_64) triple='x86_64-apple-darwin' ;;
-      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
-      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
-      *)
-        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
-        exit 1
-        ;;
-    esac
-
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-    local work_dir="\${wut_home}/vendor/.nu"
-    mkdir -p "\${work_dir}"
-
-    local lock_dir="\${work_dir}/nu.lock"
-    local acquired=0
-    local waited=0
-    while (( waited < 240 )); do
-      if nu_vers_current; then
-        return
-      fi
-      if mkdir "\${lock_dir}" 2> /dev/null; then
-        acquired=1
-        break
-      fi
-      sleep 0.5
-      waited=\$(( waited + 1 ))
-    done
-    if (( ! acquired )); then
-      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
-      rmdir "\${lock_dir}" 2> /dev/null
-      if ! mkdir "\${lock_dir}" 2> /dev/null; then
-        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
-        exit 1
-      fi
-    fi
-
-    if nu_vers_current; then
-      nu_lock_release
-      return
-    fi
-
-    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
-    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
-    local archive_path="\${work_dir}/\${asset}"
-    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
-
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
-      opPrintErr "failed to download nu \${nu_vers}: \${url}"
-      rm -f "\${archive_path}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
-      opPrintErr "failed to extract nu \${nu_vers}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if [[ ! -f "\${extract_dir}/nu" ]]; then
-      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    chmod +x "\${extract_dir}/nu"
-    mv -f "\${extract_dir}/nu" "\${nu_bin}"
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    nu_lock_release
-  }
-
-  nu_sync
-}
-
-
-SCRIPT_EXEC_ACTION='setup'
-
-function scriptHasCmd {
-  local cmd
-  for cmd in "\$@"; do
-    if type "\$cmd" > /dev/null 2>&1; then
-      return 0
-    fi
-  done
-  return 1
-}
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-typeset -ga SCRIPT_FIND_ROWS
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-function scriptFindAdd {
-  local action="\$1"
-  shift
-  local -a tools
-  local entry tool cmds
-  for entry in "\$@"; do
-    tool="\${entry%%=*}"
-    cmds="\${entry#*=}"
-    if [[ \$cmds == \$entry ]]; then
-      tools+=("\$tool")
-    elif scriptHasCmd \${(s:,:)cmds}; then
-      tools+=("\$tool")
-    fi
-  done
-  (( \${#tools} )) || return
-  SCRIPT_FIND_ROWS+=("\${action}|\${(j:, :)tools}")
-}
-
-# one table, one question, then the listing
-function scriptFindShow {
-  (( \${#SCRIPT_FIND_ROWS} )) || return 1
-  local -a actions toolsets
-  local row
-  for row in "\${SCRIPT_FIND_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    toolsets+=("\${row#*|}")
-  done
-  local aw=6 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %s" action tools)"
-  opPrint "\$(printf "%-\${aw}s %s" "------" "-----")"
-  local -a t
-  for i in {1..\${#actions}}; do
-    t=(\${(s:, :)toolsets[i]})
-    opPrint "\$(printf "%-\${aw}s %s" "\${actions[i]}" "\${#t}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]] || return 1
-  for i in {1..\${#actions}}; do
-    opPrint "\${actions[i]}"
-    opPrint "  \${toolsets[i]}"
-  done
-}
-
-typeset -ga SCRIPT_PLAN_ROWS
-
-function scriptPlanAdd {
-  local action="\$1" tool="\$2" shell="\$3"
-  shift 3
-  if (( \$# )) && ! scriptHasCmd "\$@"; then
-    return
-  fi
-  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
-function scriptPlanShow {
-  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
-    return 1
-  fi
-  local -a actions tools shells
-  local row
-  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    tools+=("\${\${row#*|}%%|*}")
-    shells+=("\${row##*|}")
-  done
-  local aw=6 tw=4 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
-  for i in {1..\${#actions}}; do
-    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
-}
-
-
-scriptPlanAdd 'setup' 'cargo' 'zsh' 'cargo'
-
-scriptPlanAdd 'setup' 'docker' 'zsh' 'docker'
-
-if ! scriptPlanShow; then
-  return
-fi
-
-if scriptHasCmd 'cargo'; then
 function () {
   if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
     opPrintWarn 'script is for darwin or linux'
@@ -7715,28 +2812,8 @@ function () {
   opPrintMaybeRunCmd cargo binstall cargo-cache
   opPrintMaybeRunCmd cargo binstall cargo-update
 }
-
-fi
-
-if scriptHasCmd 'docker'; then
-function () {
-  if ! type docker > /dev/null; then
-    opPrintWarn 'docker is not installed'
-    return
-  fi
-  opPrintInfo 'setup docker via zsh'
-}
-
-fi
-\`
-`;
-
-snapshot[`zsh / linux / exec (a hop does not ask again) 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
-
-REQ_URL_SH='http://x/sh/zsh/script/exec/setup?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu&wutAgreed=1'
-
-function opPrint {
+'# }
+    r#'docker/setup'# => { zsh --no-rcs -c r#'function opPrint {
   if [[ \$SUCCINCT ]]; then
     return
   fi
@@ -7850,259 +2927,6 @@ function opPrintMaybeRunCmd {
   opMaybeRunCmd "\$@"
 }
 
-
-SH_VERS_MAJOR=5
-
-SH_VERS_MINOR=9
-
-function () {
-  local major=\$SH_VERS_MAJOR
-  local minor=\$SH_VERS_MINOR
-
-  autoload is-at-least
-  if ! is-at-least "\${major}.\${minor}"; then
-    opPrintErr "zsh must be >= '\${major}.\${minor}' .. found '\${ZSH_VERSION}' .. aborting"
-    exit 1
-  fi
-}
-
-
-NU_VERS_MAJOR=0
-
-NU_VERS_MINOR=114
-
-NU_VERS_PATCH=1
-
-REQ_ORIG='http://x'
-
-SYS_OS_PLAT='linux'
-
-REQ_PATH='/sh/zsh/script/exec/setup'
-
-REQ_SRCH='?sysOsPlat=linux&wutShellOnly=zsh&wutShellFrom=nu&wutAgreed=1'
-
-function () {
-  if [[ \$SYS_OS_PLAT != darwin && \$SYS_OS_PLAT != linux ]]; then
-    opPrintWarn 'script is for darwin or linux'
-    return
-  fi
-
-  export WUT_HOME="\${WUT_HOME:-\${HOME}/.wut}"
-  local wut_home="\${WUT_HOME}"
-  local nu_bin="\${wut_home}/vendor/nu"
-  local nu_vers="\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
-
-  function nu_vers_current {
-    [[ -x "\${nu_bin}" ]] && [[ "\$("\${nu_bin}" --version 2> /dev/null)" == "\${nu_vers}" ]]
-  }
-
-  function nu_lock_release {
-    rmdir "\${lock_dir}" 2> /dev/null
-    # best-effort: only removes it if now empty, so a concurrent process's own in-flight files are never touched
-    rmdir "\${lock_dir:h}" 2> /dev/null
-  }
-
-  function nu_sync {
-    if nu_vers_current; then
-      return
-    fi
-
-    local triple=''
-    case "\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}" in
-      darwin_aarch64) triple='aarch64-apple-darwin' ;;
-      darwin_x86_64) triple='x86_64-apple-darwin' ;;
-      linux_aarch64) triple='aarch64-unknown-linux-gnu' ;;
-      linux_x86_64) triple='x86_64-unknown-linux-gnu' ;;
-      *)
-        opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
-        exit 1
-        ;;
-    esac
-
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
-    local work_dir="\${wut_home}/vendor/.nu"
-    mkdir -p "\${work_dir}"
-
-    local lock_dir="\${work_dir}/nu.lock"
-    local acquired=0
-    local waited=0
-    while (( waited < 240 )); do
-      if nu_vers_current; then
-        return
-      fi
-      if mkdir "\${lock_dir}" 2> /dev/null; then
-        acquired=1
-        break
-      fi
-      sleep 0.5
-      waited=\$(( waited + 1 ))
-    done
-    if (( ! acquired )); then
-      opPrintWarn "reclaiming stale nu sync lock: \${lock_dir}"
-      rmdir "\${lock_dir}" 2> /dev/null
-      if ! mkdir "\${lock_dir}" 2> /dev/null; then
-        opPrintErr "failed to acquire nu sync lock: \${lock_dir}"
-        exit 1
-      fi
-    fi
-
-    if nu_vers_current; then
-      nu_lock_release
-      return
-    fi
-
-    local asset="nu-\${nu_vers}-\${triple}.tar.gz"
-    local url="https://github.com/nushell/nushell/releases/download/\${nu_vers}/\${asset}"
-    local archive_path="\${work_dir}/\${asset}"
-    local extract_dir="\${work_dir}/nu-\${nu_vers}-\${triple}"
-
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    if ! curl --fail-with-body --location --no-progress-meter --output "\${archive_path}" --url "\${url}"; then
-      opPrintErr "failed to download nu \${nu_vers}: \${url}"
-      rm -f "\${archive_path}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if ! tar -xzf "\${archive_path}" -C "\${work_dir}"; then
-      opPrintErr "failed to extract nu \${nu_vers}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    if [[ ! -f "\${extract_dir}/nu" ]]; then
-      opPrintErr "nu binary not found in extracted archive: \${extract_dir}"
-      rm -rf "\${archive_path}" "\${extract_dir}"
-      nu_lock_release
-      exit 1
-    fi
-
-    chmod +x "\${extract_dir}/nu"
-    mv -f "\${extract_dir}/nu" "\${nu_bin}"
-    rm -rf "\${archive_path}" "\${extract_dir}"
-
-    nu_lock_release
-  }
-
-  nu_sync
-}
-
-
-SCRIPT_EXEC_ACTION='setup'
-
-function scriptHasCmd {
-  local cmd
-  for cmd in "\$@"; do
-    if type "\$cmd" > /dev/null 2>&1; then
-      return 0
-    fi
-  done
-  return 1
-}
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-typeset -ga SCRIPT_FIND_ROWS
-
-# entries are 'tool' (always listed) or 'tool=cmd[,cmd]' (listed only when the client has one of the cmds)
-function scriptFindAdd {
-  local action="\$1"
-  shift
-  local -a tools
-  local entry tool cmds
-  for entry in "\$@"; do
-    tool="\${entry%%=*}"
-    cmds="\${entry#*=}"
-    if [[ \$cmds == \$entry ]]; then
-      tools+=("\$tool")
-    elif scriptHasCmd \${(s:,:)cmds}; then
-      tools+=("\$tool")
-    fi
-  done
-  (( \${#tools} )) || return
-  SCRIPT_FIND_ROWS+=("\${action}|\${(j:, :)tools}")
-}
-
-# one table, one question, then the listing
-function scriptFindShow {
-  (( \${#SCRIPT_FIND_ROWS} )) || return 1
-  local -a actions toolsets
-  local row
-  for row in "\${SCRIPT_FIND_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    toolsets+=("\${row#*|}")
-  done
-  local aw=6 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %s" action tools)"
-  opPrint "\$(printf "%-\${aw}s %s" "------" "-----")"
-  local -a t
-  for i in {1..\${#actions}}; do
-    t=(\${(s:, :)toolsets[i]})
-    opPrint "\$(printf "%-\${aw}s %s" "\${actions[i]}" "\${#t}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]] || return 1
-  for i in {1..\${#actions}}; do
-    opPrint "\${actions[i]}"
-    opPrint "  \${toolsets[i]}"
-  done
-}
-
-typeset -ga SCRIPT_PLAN_ROWS
-
-function scriptPlanAdd {
-  local action="\$1" tool="\$2" shell="\$3"
-  shift 3
-  if (( \$# )) && ! scriptHasCmd "\$@"; then
-    return
-  fi
-  SCRIPT_PLAN_ROWS+=("\${action}|\${tool}|\${shell}")
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
-function scriptPlanShow {
-  if (( \${#SCRIPT_PLAN_ROWS} == 0 )); then
-    return 1
-  fi
-  local -a actions tools shells
-  local row
-  for row in "\${SCRIPT_PLAN_ROWS[@]}"; do
-    actions+=("\${row%%|*}")
-    tools+=("\${\${row#*|}%%|*}")
-    shells+=("\${row##*|}")
-  done
-  local aw=6 tw=4 i
-  for i in {1..\${#actions}}; do
-    (( \${#actions[i]} > aw )) && aw=\${#actions[i]}
-    (( \${#tools[i]} > tw )) && tw=\${#tools[i]}
-  done
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" action tool shell)"
-  opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "------" "----" "-----")"
-  for i in {1..\${#actions}}; do
-    opPrint "\$(printf "%-\${aw}s %-\${tw}s %s" "\${actions[i]}" "\${tools[i]}" "\${shells[i]}")"
-  done
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    opPrint ''
-    read "yn?use script [y,[n]]: "
-  fi
-  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
-}
-
-
-if scriptHasCmd 'docker'; then
 function () {
   if ! type docker > /dev/null; then
     opPrintWarn 'docker is not installed'
@@ -8110,7 +2934,13 @@ function () {
   fi
   opPrintInfo 'setup docker via zsh'
 }
+'# }
+    _ => {}
+  }
+}
 
-fi
+\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"]},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"]}]'#
+
+scriptPlanRun
 \`
 `;

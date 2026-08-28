@@ -95,19 +95,18 @@ export function execNativeShell(shell: Sh, plat: string, cmd: string): string {
 }
 
 export function execScriptShell(shell: Sh, plat: string, shellFlavor: string, cmd: string): string {
-  if (shellFlavor === 'nu') {
-    const targetShell = new NuSh()
-    return `${pinnedNuBinCmd(shell, plat)} ${targetShell.execArgs(shell.toLiteral(cmd))}`
-  }
-  return execNativeShell(shell, plat, cmd)
+  const targetShell = getScriptFlavorShell(shellFlavor)
+  const bin = shellFlavor === 'nu' ? pinnedNuBinCmd(shell, plat) : shellFlavor
+  return `${bin} ${targetShell.execArgs(shell.toLiteral(cmd))}`
 }
 
-// a script file is spawned as its own process, so it needs its shell's op preamble loaded in directly.
-// resolved the way execScriptShell resolves the runner, or the preamble and the interpreter disagree
-export async function getScriptFlavorOpPreamble(plat: string, shellFlavor: string): Promise<string> {
-  if (shellFlavor === 'nu') {
-    return await new NuSh().fileLoad(['op'])
-  }
-  const targetShell = sysOsPlatToNativeShell[plat] === 'pwsh' ? new PowerSh() : new ZSh()
-  return await targetShell.fileLoad(['op'])
+// a script is read by the shell it is written for, which is not always the platform's native one: script.yaml can
+// gate a pwsh script onto linux
+export function getScriptFlavorShell(shellFlavor: string): Sh {
+  return shellFlavor === 'nu' ? new NuSh() : shellFlavor === 'pwsh' ? new PowerSh() : new ZSh()
+}
+
+// a script file is spawned as its own process, so it needs its shell's op preamble loaded in directly
+export async function getScriptFlavorOpPreamble(shellFlavor: string): Promise<string> {
+  return await getScriptFlavorShell(shellFlavor).fileLoad(['op'])
 }

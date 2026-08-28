@@ -67,27 +67,26 @@ Dotfile synchronization — nu × all platforms × all ops (`diff`, `find`, `lis
 
 Script discovery and execution — all shells × all platforms:
 
-| Shell | Platforms                 |
-| ----- | ------------------------- |
-| nu    | linux → native redirect   |
-| nu    | windows → native redirect |
-| pwsh  | windows                   |
-| zsh   | darwin, linux             |
+| Shell | Platforms      |
+| ----- | -------------- |
+| nu    | linux, windows |
+| pwsh  | windows        |
+| zsh   | darwin, linux  |
 
 ### `src/sh_test.ts`
 
 pwsh/zsh → nu redirect — one representative op per command per shell:
 
-| Shell | Commands redirected to nu                            |
-| ----- | ---------------------------------------------------- |
-| pwsh  | file/find, file/sync, pack/add, pack/find, virt/list |
-| zsh   | file/find, file/sync, pack/add, pack/find, virt/list |
+| Shell | Commands redirected to nu                                         |
+| ----- | ----------------------------------------------------------------- |
+| pwsh  | file/find, file/sync, pack/add, pack/find, virt/list, script/exec |
+| zsh   | file/find, file/sync, pack/add, pack/find, virt/list, script/exec |
 
 ## Following the redirect: `wutNuPinned=1`
 
-`pack`, `file` and `virt` call `redirectCommonShell` first, so **any** request without `wutNuPinned=1` in its query
-string renders the hop to the pinned nu and nothing else — group listings, manager calls, path pairs and filters are all
-on the far side of it. A snapshot taken without the param asserts the bootstrap, not the op.
+Every command calls `redirectCommonShell` first, so **any** request without `wutNuPinned=1` in its query string renders
+the hop to the pinned nu and nothing else — group listings, manager calls, path pairs and filters are all on the far
+side of it. A snapshot taken without the param asserts the bootstrap, not the op.
 
 Both forms are worth having. Without the param, the test pins the hop URL; with it, the test pins what the client
 actually runs:
@@ -99,8 +98,7 @@ runSrv(req('/sh/nu/pack/find?sysOsPlat=linux&sysOs=arch'))
 runSrv(req('/sh/nu/pack/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'))
 ```
 
-`script` never redirects wholesale, so its tests need no param — but its fan out hops do carry `wutShellOnly` and
-`wutShellFrom`, and a test that wants the leaf must pass both.
+`script` redirects like the rest, so its tests pass `wutNuPinned=1` to reach the body rather than the hop.
 
 ## Adding New Test Cases
 

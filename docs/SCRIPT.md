@@ -1,21 +1,23 @@
-# Script: ownership, hops, and client-side gates
+# Script: ownership and client-side gates
 
 How `script` decides which shell runs what, and why one of its gates cannot be answered on the server. The shape it
 shares with every other command is in [OPS.md](OPS.md); the `script.yaml` gate types and the rule that every gate is
 declared twice are in [RULES.md](RULES.md#scriptyaml-gate-enforcement).
 
-## One shell owns each script
+## One shell owns each script, and nu spawns it
 
-The server primarily generates nushell, and `pack`, `file` and `virt` redirect `pwsh`/`zsh` callers to the nu
-equivalent. `script exec` is the exception: each script runs in the shell it is written for.
+`script` redirects `pwsh`/`zsh` callers to nu exactly like `pack`, `file` and `virt`. nu then owns the plan, the gate
+and the listing, and spawns each script in the shell it is written for — the same `execScriptShell` a `pack` group's
+`script` tier already used to run a zsh entry from nu.
 
-One script hops wholesale. An action alone fans out — the calling shell runs its own scripts inline and hops once per
-other shell with `wutShellOnly` appended, which stops that hop from fanning out again.
+Every script is owned by exactly one shell, so an overlay never runs twice: ownership is `SHELL_PRIORITY` order, most
+native first (zsh > pwsh > nu), narrowed by the platform gates the server already applied. It no longer depends on which
+shell you typed into, so the same machine runs the same script whatever you invoke from.
 
-Every script is owned by exactly one shell, so an overlay never runs twice. The calling shell wins ties — a hop it never
-has to make is the cheapest one — and the rest fall back most native first (zsh > pwsh > nu). Both sides of a hop have
-to agree on ownership or a script runs twice or not at all, which is why the hop also carries `wutShellFrom`: the leaf
-resolves against the shell the run started in, not the shell rendering its own response.
+What a script needs written into it — its shell's op preamble, and `WUT_ARGS` when `--` was used — is written in that
+shell's own syntax, since it is read by that shell and not by the nu that spawned it. `getScriptFlavorShell` resolves
+the flavor, and both the preamble and the interpreter follow it rather than the platform: `script.yaml` is free to gate
+a pwsh script onto linux.
 
 ## Tool-first config, action-first cli
 
@@ -43,16 +45,13 @@ Declare `has_cmd` only where the tool must already exist — `install` actions m
 exactly when they are needed. A script that gates on something other than a command (an app bundle, a config file) keeps
 that check in its body only.
 
-## Planning across processes
+## Planning
 
-`script` is the awkward one for [OPS.md](OPS.md)'s one-decision rule, because its fan out spans processes: the calling
-shell runs what it owns and hops to nu or pwsh for the rest. The table has to cover those too, and it can — `has_cmd` is
-answerable from any shell on the same machine — so the shell you invoked builds a row for every match and asks once, and
-each hop carries `wutAgreed=1` and neither plans nor asks.
+`script` plans like every other command now: the server emits `SCRIPT_PLAN` as data and the bodies behind ids in a
+generated `scriptRunUnit`, and `scriptPlanRun` drops what `has_cmd` rules out, tables what is left, and spawns only what
+was picked. There is nothing to carry across processes, because the decision is made once before any script is spawned.
 
-`script find` accumulates the same way, through `scriptFindAdd` and `scriptFindShow` — the same idiom as
-`scriptPlanAdd`/`scriptPlanShow`, and defined in all three shells because `find` renders natively rather than
-redirecting to nu. It no longer asks: it prints what it matched and stops, per [OPS.md](OPS.md).
+`script find` prints what it matched and stops, per [OPS.md](OPS.md) — it has nothing left to do once you answer.
 
 The scripts themselves still ask their own questions once running. Those are per action consent written into the script,
 not a manager choice, and they come after the plan was agreed.

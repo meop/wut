@@ -3,14 +3,6 @@ def scriptHasCmd [...cmds: string] {
 }
 
 
-def --env scriptPlanAdd [action: string, tool: string, shell: string, ...cmds: string] {
-  if ($cmds | is-not-empty) and not (scriptHasCmd ...$cmds) {
-    return
-  }
-  load-env {SCRIPT_PLAN_ROWS: (($env.SCRIPT_PLAN_ROWS? | default []) | append $"($action)|($tool)|($shell)")}
-}
-
-# one table, one question: a script that runs after this does not ask whether to run
 # ghpm's table: a rule as wide as each header, columns padded to their widest cell, the last one loose
 def scriptTable [headers: list<string>, rows: list<list<string>>] {
   let widths = ($headers | enumerate | each { |h|
@@ -26,24 +18,25 @@ def scriptTable [headers: list<string>, rows: list<list<string>>] {
   for r in $rows { opPrint (do $line $r) }
 }
 
-def scriptPrompt [label: string] {
-  mut yn = ''
-  if 'YES' in $env {
-    $yn = 'y'
-  } else {
-    opPrint ''
-    $yn = input $"($label) [y,[n]]: "
+def --env scriptPlanRun [] {
+  let units = ($env.SCRIPT_PLAN? | default '[]' | from json)
+  # a has_cmd gate is the client's: a script whose tool is missing is not offered, and an action alone is all wut has
+  let here = ($units | where { |u| ($u.cmds | is-empty) or (scriptHasCmd ...$u.cmds) })
+  if ($here | is-empty) {
+    opPrintWarn 'nothing to do'
+    return
   }
-  ($yn | str lowercase) in ['', 'y', 'yes']
-}
 
-def scriptPlanShow [] {
-  let rows = (($env.SCRIPT_PLAN_ROWS? | default []) | each { |r| $r | split row '|' })
-  if ($rows | is-empty) {
-    return false
+  scriptTable ['action' 'tool' 'shell'] ($here | enumerate | each { |u|
+    [$"($u.index + 1)\) ($u.item.action)", $u.item.tool, $u.item.shell]
+  })
+  let picked = (wutSelectRead ($here | length))
+  if $picked == null {
+    return
   }
-  scriptTable ['action' 'tool' 'shell'] $rows
-  scriptPrompt 'use script'
+  for i in $picked {
+    scriptRunUnit ($here | get ($i - 1) | get id)
+  }
 }
 
 # find accumulates the same way the plan does, so all three shells share one idiom

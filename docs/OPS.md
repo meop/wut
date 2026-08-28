@@ -70,8 +70,8 @@ The ops with nothing to show first are the ones whose output _is_ the manager ru
 `src/cmd/prompt_test.ts` holds this: that every op with work left reaches a prompt, that a `find` reaches none, that
 `pack find` with an unresolved name does, and that a gate is never emitted inline.
 
-Once means once for the whole run. `PACK_AGREED`, `VIRT_AGREED` and `wutAgreed=1` carry the answer past the first
-question, so every manager function downstream acts without asking again.
+Once means once for the whole run. `PACK_AGREED` and `VIRT_AGREED` carry the answer past the first question, so every
+manager function downstream acts without asking again.
 
 The expensive half always sits behind the gate: `pack add`'s loose-name lookups and `pack find`'s search both run
 against the managers you picked, not every one installed. A gate the work happens in front of is decoration.
