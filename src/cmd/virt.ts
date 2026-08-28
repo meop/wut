@@ -13,9 +13,7 @@ export class VirtCmd extends CmdBase implements Cmd {
     this.name = 'virt'
     this.description = 'virtual manager ops'
     this.aliases = ['v', 'vi', 'vir', 'virtual']
-    this.options = [
-      { keys: ['-m', '--manager'], description: 'manager to use' },
-    ]
+    this.options = []
     this.commands = [
       new VirtCmdAdd([...this.scopes, this.name]),
       new VirtCmdFind([...this.scopes, this.name]),
@@ -38,7 +36,6 @@ const sysOsPlatToManager: Record<string, Array<string>> = {
 const RUN_MANAGERS: Array<string> = ['qemu']
 
 const VIRT_KEY = 'virt'
-const VIRT_MANAGER_KEY = [VIRT_KEY, 'manager']
 const VIRT_OP_KEY = [VIRT_KEY, 'op']
 const VIRT_PODMAN_NETWORKS_KEY = [VIRT_KEY, 'podman', 'networks']
 const VIRT_OP_PARTS_KEY = (op: string) => [VIRT_KEY, op, 'parts']
@@ -49,16 +46,13 @@ const VIRT_PLAN_KEY = [VIRT_KEY, 'plan']
 // manager -> 'pod=instances' entries, filtered by what is here the same way
 const VIRT_FIND_KEY = [VIRT_KEY, 'find']
 
-function getSupportedManagers(context: Ctx, environment: Env) {
-  let managers: Array<string> = []
+function getSupportedManagers(context: Ctx) {
+  const managers: Array<string> = []
 
   const sysOsPlat = context.sys_os_plat
 
   if (sysOsPlat) {
     managers.push(...(sysOsPlatToManager[sysOsPlat] ?? []))
-  }
-  if (environment.get(VIRT_MANAGER_KEY)) {
-    managers = managers.filter((p) => p === environment.get(VIRT_MANAGER_KEY))
   }
 
   return managers
@@ -80,13 +74,8 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
 
   let _shell = shell.with(shell.varSetStr(VIRT_OP_KEY, op))
   const supportedManagers = op === 'run'
-    ? getSupportedManagers(context, environment).filter((m) => RUN_MANAGERS.includes(m))
-    : getSupportedManagers(context, environment)
-
-  const manager = environment.get(VIRT_MANAGER_KEY)
-  if (manager && !supportedManagers.length) {
-    return buildAndLog(_shell.with(_shell.printWarn(`manager not supported: ${manager}`)), environment)
-  }
+    ? getSupportedManagers(context).filter((m) => RUN_MANAGERS.includes(m))
+    : getSupportedManagers(context)
 
   const dirParts = [VIRT_KEY, context.sys_host ?? '']
   const filters = environment.getSplit(VIRT_OP_PARTS_KEY(op))
@@ -94,7 +83,9 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   if (op === 'find') {
     // find needs virt.nu too now that it asks the client which managers are here; the per manager files it
     // does not, since it never calls one
-    _shell = _shell.with(await _shell.fileLoad([VIRT_KEY], import.meta.resolve, ['..']))
+    _shell = _shell
+      .with(await _shell.fileLoad(['sel'], import.meta.resolve, ['..']))
+      .with(await _shell.fileLoad([VIRT_KEY], import.meta.resolve, ['..']))
 
     const allResults = await getCfgDirDump(dirParts, {
       extension: Fmt.yaml,
@@ -158,13 +149,15 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
         .with(['virtFindRun'])
     }
   } else {
-    _shell = _shell.with(
-      await _shell.fileLoad(
-        [VIRT_KEY],
-        import.meta.resolve,
-        ['..'],
-      ),
-    )
+    _shell = _shell
+      .with(await _shell.fileLoad(['sel'], import.meta.resolve, ['..']))
+      .with(
+        await _shell.fileLoad(
+          [VIRT_KEY],
+          import.meta.resolve,
+          ['..'],
+        ),
+      )
 
     for (const supportedManager of supportedManagers) {
       _shell = _shell.with(

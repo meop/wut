@@ -257,14 +257,6 @@ Deno.test('nu / linux / add (pinned, podman carries networks)', async (t) => {
   await checkSyntax('nu', body)
   assertEquals(body.includes('VIRT_PODMAN_NETWORKS'), true)
 })
-// -m naming something this client cannot use: say so, do nothing
-Deno.test('nu / linux / find (pinned, -m unsupported)', async (t) => {
-  const body = await (await runSrv(req(`/sh/nu/virt/-m/bogus/find?${PIN}`))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-  assertEquals(body.includes('manager not supported: bogus'), true)
-  assertEquals(/^virt[A-Z]/m.test(body), false)
-})
 // a filter that matched nothing is a no op, and says so rather than running silently
 Deno.test('nu / linux / add (pinned, no match)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/virt/add/nosuchthing?${PIN}`))).text()

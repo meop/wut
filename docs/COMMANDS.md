@@ -44,15 +44,12 @@ A filter that matches nothing is a no op, and every op says so rather than emitt
 
 | Command  | Message                          | When                                                  |
 | -------- | -------------------------------- | ----------------------------------------------------- |
-| `pack`   | `manager not supported: <name>`  | `-m` names a manager this client has no support for   |
-| `virt`   | `manager not supported: <name>`  | same                                                  |
 | `virt`   | `no instance matched: <filters>` | an add/rem/sync filter resolved to no instance        |
 | `file`   | `no file matched: <filters>`     | a filter resolved to no config key                    |
 | `script` | `no script matched: <filters>`   | an action, or action plus tool, resolved to no script |
 
-`find` ops are exempt: an empty result is the answer to a search, not a failure. Note the asymmetry this fixes — an
-unmatched `-m` used to leave an **empty** manager list, which then read as "no list to filter by" and listed every
-group, including names for managers the client cannot use.
+`find` ops are exempt: an empty result is the answer to a search, not a failure. `pack` and `virt` have no manager
+filter to mismatch: the numbered prompt narrows the run instead, and it can only offer what the client actually has.
 
 Example fixtures exercise the split: `virt add qemu` → `[test, test2]` (WIDE) vs `virt rem qemu` → `[test]` (PINPOINT);
 `pack add shell` → both shell groups vs `pack rem shell` → the first.

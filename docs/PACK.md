@@ -42,8 +42,7 @@ manager that actually had it, with a final `?` for names nothing had.
 2. A group's `group` tier lists other groups (or loose names). The walk is iterative over a stack with a visited set of
    resolved group names, so a cycle stops and a diamond resolves once.
 3. Preference is fixed at **user managers > script > system managers**. The yaml carries one flat `manager` map and says
-   nothing about tiers; wut derives the tier from the manager and owns the order. `-m a,b` overrides both the candidate
-   set and the order for one invocation.
+   nothing about tiers; wut derives the tier from the manager and owns the order.
 
 ## Planning, client side
 
@@ -59,41 +58,38 @@ The server cannot know which managers exist on the machine, so it emits resolved
 
 ## One decision
 
-The plan renders as a table and asks once:
+The plan collapses to one numbered row per manager, and the numbers are the decision:
 
 ```
-group        manager packages
------        ------- --------
-term-ghostty pacman  ghostty
-term-wt      -       needs winget
+manager   packages
+-------   --------
+1) pacman ghostty, zsh
+2) ghpm   nu
+3) script rustup
 
-use pack [y,[n]]:
+enter number(s) [empty=all] (0=quit | 1[,][-]3):
 ```
 
-There are no per-manager prompts — a prompt was never a veto, it was "here is what wut decided, do you agree", and
-asking it seven times only obscured that. Declining does nothing at all; agreeing runs the plan non-interactively, so
-`-y` is exact. To force a manager, say so up front: `wut p -m pacman add nu` plans only that manager, and `-m` can name
-`script` too.
+Empty takes every manager, `0` quits, and anything else is a selection in ghpm's syntax — `1 3`, `1,3`, `1-3`, or a mix.
+Picking a manager takes everything it won, which is why the packages column names them: the number is the only thing to
+read, but what rides along with it is stated.
+
+Selecting rather than confirming is what removed `-m`. A yes/no gate could only accept or reject the whole plan, so
+narrowing it meant cancelling, re-typing the command with a flag, and re-reading the same table. The list already had to
+be built and shown; letting it be answered is the same table doing one more job.
+
+There are no per-manager prompts either — a prompt was never a veto, it was "here is what wut decided, do you agree",
+and asking it seven times only obscured that. Whatever is picked runs non-interactively, so `-y` is exact and takes
+everything.
 
 The server emits the plan as data (`PACK_PLAN`) and the bodies behind ids in a generated `packRunUnit`, so code stays
 code and the plan stays data. The client picks each group's winner — the first path whose manager is on this PATH, in
 the group's own order — and resolves loose names with `packExists`, an exact check per manager. Refreshes run before
 those checks so the answers are current. `find`'s remaining names resolve the same way (`packFindFirst`), just after its
-own gate rather than add's.
+own gate rather than add's, and they answer to a `?` row so they can be taken or left like any manager.
 
 `sync`, `tidy`, `list`, `outdated` and `info` have no per-package decision to make — the only question is which managers
-this run touches — so they share a plainer plan, `packManagerPlanRun`: a `manager` column, one question, then each
-manager present gets its turn:
-
-```
-manager
--------
-brew
-cargo
-pacman
-
-use pack [y,[n]]:
-```
+this run touches — so they share a plainer plan, `packManagerPlanRun`, whose rows are just the managers present.
 
 ## Nothing viable is an absence, not a plan
 
@@ -128,8 +124,8 @@ Execution fails loud:
 - each unit runs inside its own `try`; a failure is recorded and the rest continue
 - installs go through `packOpStrict`, which does not swallow the error the way `packOp` does
 - the report prints only exceptions — what failed, what nothing could serve
-- a failure exits non-zero; a name nothing carries does not, since that is an answer rather than a fault of the run,
-  and exiting on it makes the client shell render its own error over a warning wut already stated plainly
+- a failure exits non-zero; a name nothing carries does not, since that is an answer rather than a fault of the run, and
+  exiting on it makes the client shell render its own error over a warning wut already stated plainly
 
 Silence is the bug, not continuing. A failure that scrolled past is the thing this replaces.
 

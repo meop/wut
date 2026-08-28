@@ -1,8 +1,7 @@
 import type { Ctx } from '@meop/shire/ctx'
-import type { Env } from '@meop/shire/env'
 import { assertEquals } from '@std/assert'
 
-import { evaluateGate, getRequestedManagers, getSupportedManagers, selectScriptEntry } from './pack.ts'
+import { evaluateGate, getSupportedManagers, selectScriptEntry } from './pack.ts'
 
 // --- helpers ---
 
@@ -12,20 +11,6 @@ function mkCtx(overrides: Partial<Ctx> = {}): Ctx {
     req_path: '/',
     req_srch: '',
     ...overrides,
-  }
-}
-
-function mkEnv(packManagers?: string): Env {
-  return {
-    store: {},
-    get(key: Array<string>): string | undefined {
-      return key.join('.') === 'pack.managers' ? packManagers : undefined
-    },
-    getSplit(_key: Array<string>): Array<string> {
-      return []
-    },
-    set(_key: Array<string>, _value: string): void {},
-    setAppend(_key: Array<string>, _value: string): void {},
   }
 }
 
@@ -175,31 +160,14 @@ Deno.test('selectScriptEntry - undefined scriptConfig returns null', () => {
 
 // --- getSupportedManagers ---
 
-// the manager list is one ordered list now: no platform or distro maps, -m filters and orders it
-Deno.test('getSupportedManagers - no -m returns every manager, portable ones first', () => {
-  const all = getSupportedManagers(mkEnv())
+// the manager list is one ordered list: no platform or distro maps, and no way to narrow it, since the
+// client's numbered prompt is what picks
+Deno.test('getSupportedManagers - every manager, portable ones first', () => {
+  const all = getSupportedManagers()
   assertEquals(all.slice(0, 6), ['bun', 'cargo', 'deno', 'ghpm', 'pnpm', 'uv'])
   // a user space install is preferred over one that needs sudo
   assertEquals(all.indexOf('cargo') < all.indexOf('pacman'), true)
   assertEquals(all.includes('winget'), true)
-})
-
-Deno.test('getSupportedManagers - -m filters and orders', () => {
-  assertEquals(getSupportedManagers(mkEnv('pacman,ghpm')), ['pacman', 'ghpm'])
-  assertEquals(getSupportedManagers(mkEnv('ghpm,pacman')), ['ghpm', 'pacman'])
-})
-
-Deno.test('getSupportedManagers - -m drops names wut does not know', () => {
-  assertEquals(getSupportedManagers(mkEnv('bogus,pacman')), ['pacman'])
-})
-
-Deno.test('getSupportedManagers - naming only script leaves no managers', () => {
-  assertEquals(getSupportedManagers(mkEnv('script')), [])
-})
-
-Deno.test('getRequestedManagers - splits, trims, and drops empties', () => {
-  assertEquals(getRequestedManagers(mkEnv(' pacman , ghpm ,')), ['pacman', 'ghpm'])
-  assertEquals(getRequestedManagers(mkEnv()), [])
 })
 
 // --- manager entry gates ---

@@ -239,22 +239,31 @@ def --env packFindRun [] {
     return
   }
 
-  let managerRows = (
-    $groups | group-by { |g| $g.winner.manager } | transpose manager entries
-      | each { |m| [$m.manager, ($m.entries | length | into string)] }
-  )
-  let rows = $managerRows ++ (if ($remaining | is-empty) { [] } else { [['?', ($remaining | length | into string)]] })
-  packTable ['manager' 'groups'] $rows
-  if not (packPrompt 'use pack') { return }
+  let byManager = ($groups | group-by { |g| $g.winner.manager } | transpose manager entries)
+  # '?' stands for the typed names no group claimed, which no manager has answered for yet
+  let choices = ($byManager | each { |m| $m.manager }) ++ (if ($remaining | is-empty) { [] } else { ['?'] })
+  packTable ['manager' 'groups'] ($choices | enumerate | each { |c|
+    let count = if $c.item == '?' {
+      $remaining | length
+    } else {
+      $byManager | where manager == $c.item | get 0.entries | length
+    }
+    [$"($c.index + 1)\) ($c.item)", ($count | into string)]
+  })
+  let picked = (wutSelectRead ($choices | length))
+  if $picked == null {
+    return
+  }
+  let chosen = ($picked | each { |i| $choices | get ($i - 1) })
   $env.PACK_AGREED = '1'
 
-  for g in $groups {
+  for g in ($groups | where { |g| $g.winner.manager in $chosen }) {
     opPrint $g.label
     opPrint $"  ($g.winner.manager)"
     opPrint $"    ($g.winner.pkg)"
   }
 
-  if ($remaining | is-empty) {
+  if ($remaining | is-empty) or ('?' not-in $chosen) {
     return
   }
   opPrint ''
@@ -288,17 +297,13 @@ def --env packPlanRun [] {
 
   # a group whose every path needs a manager this machine lacks is not a plan, it is an absence: drop it, and let
   # the name it came from fall through to a find like any other unclaimed name
-  mut rows = []
   mut detail = []
-  mut runnable = []
   mut served = []
   for unit in $units {
     let path = (packPickPath $unit)
     if $path != null {
-      $runnable = ($runnable | append $path.id)
       $served = ($served | append $unit.name)
-      $rows = ($rows | append [[$unit.group, $path.manager, ($path.names | length | into string)]])
-      $detail = ($detail | append { group: $unit.group, manager: $path.manager, names: $path.names })
+      $detail = ($detail | append { manager: $path.manager, group: $unit.group, id: $path.id, names: $path.names })
     }
   }
 
@@ -313,13 +318,18 @@ def --env packPlanRun [] {
       if $winner == null {
         load-env {PACK_UNSERVED: (($env.PACK_UNSERVED? | default []) | append $name)}
       } else {
-        $rows = ($rows | append [[$name, $winner, '1']])
         $looseFor = ($looseFor | upsert $winner (($looseFor | get -o $winner | default []) | append $name))
       }
     }
   }
 
-  if ($rows | is-empty) {
+  let units = $detail
+  let looseNames = $looseFor
+  # one row per manager, in the order wut prefers them, so the numbers pick a manager and everything it won
+  let unitManagers = ($units | each { |d| $d.manager })
+  let here = (packManagersHere | where { |m| ($m in $unitManagers) or ($m in ($looseNames | columns)) })
+  let managers = if 'script' in $unitManagers { ['script'] ++ $here } else { $here }
+  if ($managers | is-empty) {
     packReport
     return
   }
@@ -327,32 +337,27 @@ def --env packPlanRun [] {
   if 'PACK_PRINTED' in $env {
     opPrint ''
   }
-  packTable ['group' 'manager' 'packages'] $rows
-  if not (packPrompt 'use pack') { return }
-
-  for d in $detail {
-    opPrint $d.group
-    opPrint $"  ($d.manager)"
-    opPrint $"    (($d.names | str join ', '))"
+  packTable ['manager' 'packages'] ($managers | enumerate | each { |m|
+    let owned = ($units | where manager == $m.item | each { |d| $d.names } | flatten)
+    let loose = ($looseNames | get -o $m.item | default [])
+    [$"($m.index + 1)\) ($m.item)", (($owned ++ $loose) | str join ', ')]
+  })
+  let picked = (wutSelectRead ($managers | length))
+  if $picked == null {
+    return
   }
-  if ($looseFor | columns | is-not-empty) {
-    opPrint ''
-    for m in ($looseFor | columns) {
-      opPrint $m
-      opPrint $"  (($looseFor | get $m) | str join ', ')"
-    }
-  }
+  let chosen = ($picked | each { |i| $managers | get ($i - 1) })
 
   # agreed once, up front: nothing below asks again
   $env.PACK_AGREED = '1'
-  for id in $runnable {
+  for d in ($units | where { |d| $d.manager in $chosen }) {
     try {
-      packRunUnit $id
+      packRunUnit $d.id
     } catch { |e|
-      packMarkFailed $id $e.msg
+      packMarkFailed $d.id $e.msg
     }
   }
-  for entry in ($looseFor | transpose manager names) {
+  for entry in ($looseNames | transpose manager names | where { |e| $e.manager in $chosen }) {
     load-env {PACK_LOOSE_NAMES: $entry.names}
     try {
       packRunLoose $entry.manager
@@ -374,11 +379,18 @@ def --env packManagerPlanRun [] {
   if 'PACK_PRINTED' in $env {
     opPrint ''
   }
-  packTable ['manager'] ($here | each { |m| [$m] })
-  if ('PACK_AGREED' not-in $env) and not (packPrompt 'use pack') { return }
+  mut chosen = $here
+  if 'PACK_AGREED' not-in $env {
+    packTable ['manager'] ($here | enumerate | each { |m| [$"($m.index + 1)\) ($m.item)"] })
+    let picked = (wutSelectRead ($here | length))
+    if $picked == null {
+      return
+    }
+    $chosen = ($picked | each { |i| $here | get ($i - 1) })
+  }
 
   $env.PACK_AGREED = '1'
-  for m in $here {
+  for m in $chosen {
     try {
       packCallManager $m
     } catch { |e|

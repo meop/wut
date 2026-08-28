@@ -16,8 +16,9 @@ import { runSrv } from '../srv.ts'
 // a script's own 'setup cargo - ...' question is not wut's gate and is allowed to sit inline, so the inline check
 // looks for the 'use <cmd>' gate specifically
 
-const PROMPT = '[y,[n]]'
-const GATE = /use \w+ \[y,\[n\]\]/
+// a confirm or a numbered selection: both are the one question an op asks
+const PROMPT = /\[y,\[n\]\]|enter number\\?\(s\\?\)/
+const GATE = /use \w+ \[y,\[n\]\]|enter number\\?\(s\\?\)/
 
 function defBodies(body: string): Map<string, string> {
   const out = new Map<string, string>()
@@ -62,7 +63,7 @@ const calls = (text: string, name: string) => new RegExp(`(?:^|[\\n{;|(])\\s*${n
 // a def prompts if it holds the question or calls something that does — packFindRun asks through packPrompt
 function promptingDefs(body: string): Set<string> {
   const defs = defBodies(body)
-  const prompting = new Set([...defs].filter(([, b]) => b.includes(PROMPT)).map(([n]) => n))
+  const prompting = new Set([...defs].filter(([, b]) => PROMPT.test(b)).map(([n]) => n))
   for (let changed = true; changed;) {
     changed = false
     for (const [n, b] of defs) {

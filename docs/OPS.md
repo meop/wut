@@ -31,12 +31,15 @@ The client then does the same three things, in this order:
 
 1. **filter** the server's data by that predicate
 2. **summarise** what is left, as a table
-3. **ask once**, and run the whole thing without asking again
+3. **ask once**, and run what was picked without asking again
 
 Order matters. The filter comes first so a machine with nothing installed is _told_ — `manager not installed: ...` —
-rather than asked a question whose answer changes nothing. And the ask is once, for the plan as a whole: a prompt was
-never a veto, it is "here is what wut decided, do you agree". Declining does nothing at all; agreeing runs the plan
-non-interactively, so `-y` is exact.
+rather than asked a question whose answer changes nothing. And the ask is once, for the plan as a whole.
+
+`pack` and `virt` ask it as a numbered selection over the summary rather than a yes/no: empty takes everything, `0`
+quits, and `1 3` / `1,3` / `1-3` take a subset, in ghpm's syntax. The rows were already built and shown, so answering
+them is cheaper than cancelling to re-run behind a filter flag — which is why neither command has one. `-y` takes
+everything.
 
 The plan travels as data and the bodies behind it as generated code — `PACK_PLAN` with `packRunUnit`, `VIRT_PLAN` with
 `virtPlanRun` — so code stays code and the plan stays data.

@@ -13,9 +13,6 @@ export class PackCmd extends CmdBase implements Cmd {
     this.name = 'pack'
     this.description = 'package manager ops'
     this.aliases = ['p', 'pa', 'pac', 'package']
-    this.options = [
-      { keys: ['-m', '--managers'], description: 'manager(s) to use, in order of preference' },
-    ]
     this.commands = [
       new PackCmdAdd([...this.scopes, this.name]),
       new PackCmdFind([...this.scopes, this.name]),
@@ -66,23 +63,12 @@ const PACK_OP_KEY = [PACK_KEY, 'op']
 const PACK_OP_NAMES_KEY = (op: string) => [PACK_KEY, op, 'names']
 // the units the client picks from, as data; their bodies live in packRunUnit
 const PACK_PLAN_KEY = [PACK_KEY, 'plan']
-const PACK_PRINTED_KEY = [PACK_KEY, 'printed']
 const PACK_FIND_KEY = [PACK_KEY, 'find']
 
-// '-m pacman,ghpm' both narrows to those managers and states which to prefer, so the list order wins
 export const SCRIPT_PATH = 'script'
 
-export function getRequestedManagers(environment: Env): Array<string> {
-  return (environment.get(PACK_MANAGERS_KEY) ?? '')
-    .split(',')
-    .map((m) => m.trim())
-    .filter((m) => m.length > 0)
-}
-
-// naming only 'script' leaves no managers at all, which is the point of naming it
-export function getSupportedManagers(environment: Env): Array<string> {
-  const asked = getRequestedManagers(environment)
-  return asked.length ? asked.filter((m) => m !== SCRIPT_PATH && MANAGERS.includes(m)) : [...MANAGERS]
+export function getSupportedManagers(): Array<string> {
+  return [...MANAGERS]
 }
 
 function getNativeShellForPlat(plat: string): string {
@@ -183,7 +169,9 @@ async function loadManagerFiles(
   shell: Sh,
   managers: Array<string>,
 ) {
-  let _shell = shell.with(await shell.fileLoad([PACK_KEY], import.meta.resolve, ['..']))
+  let _shell = shell
+    .with(await shell.fileLoad(['sel'], import.meta.resolve, ['..']))
+    .with(await shell.fileLoad([PACK_KEY], import.meta.resolve, ['..']))
   const loadedFiles = new Set<string>()
   for (const manager of managers) {
     const fileKey = managerAliasMap[manager] ?? manager
@@ -212,7 +200,6 @@ function buildAndLog(shell: Sh, environment: Env) {
 
 async function initOp(
   shell: Sh,
-  environment: Env,
   op: string,
 ): Promise<
   {
@@ -221,7 +208,7 @@ async function initOp(
   }
 > {
   let _shell = shell.with(shell.varSetStr(PACK_OP_KEY, op))
-  const allManagers = getSupportedManagers(environment)
+  const allManagers = getSupportedManagers()
   _shell = await loadManagerFiles(_shell, allManagers)
   return { shell: _shell, allManagers }
 }
@@ -414,11 +401,6 @@ function processManagerEntryLines(
   return lines
 }
 
-function requestedIndex(requested: Array<string>, manager: string): number {
-  const index = requested.indexOf(manager)
-  return index < 0 ? requested.length : index
-}
-
 export type PlanPath = { id: string; manager: string; names: Array<string> }
 export type PlanUnit = { group: string; name: string; paths: Array<PlanPath> }
 
@@ -430,8 +412,6 @@ async function buildGroupUnit(
   op: string,
   allManagers: Array<string>,
   name: string,
-  requested: Array<string>,
-  managerSpecified: boolean,
   cliName: string,
 ): Promise<{ unit: PlanUnit | null; arms: Array<string> }> {
   const content = await loadGroupConfig(name.split('-'))
@@ -454,7 +434,7 @@ async function buildGroupUnit(
   for (const tier of Object.keys(managerConfig)) {
     const id = `${name}|${tier}`
     if (tier === SCRIPT_PATH) {
-      if (op !== 'add' || (managerSpecified && !requested.includes(SCRIPT_PATH))) {
+      if (op !== 'add') {
         continue
       }
       const selected = selectScriptEntry(
@@ -483,10 +463,6 @@ async function buildGroupUnit(
     }
     paths.push({ id, manager: tier, names: entry.names })
     addArm(id, processManagerEntryLines(shell, context, op, tier, entry, remConfig?.[tier]))
-  }
-
-  if (requested.length > 1) {
-    paths.sort((a, b) => requestedIndex(requested, a.manager) - requestedIndex(requested, b.manager))
   }
 
   return { unit: paths.length ? { group: name, name: cliName, paths } : null, arms }
@@ -540,8 +516,6 @@ async function buildPlan(
   op: string,
   allManagers: Array<string>,
   names: Array<string>,
-  requested: Array<string>,
-  managerSpecified: boolean,
 ): Promise<{ units: Array<PlanUnit>; arms: Array<string>; claimed: Array<string> }> {
   const units: Array<PlanUnit> = []
   const arms: Array<string> = []
@@ -565,8 +539,6 @@ async function buildPlan(
         op,
         allManagers,
         resolvedName,
-        requested,
-        managerSpecified,
         name,
       )
       if (unit) {
@@ -593,32 +565,11 @@ async function execOp(
     return redirect
   }
 
-  const { shell: _shell, allManagers } = await initOp(
-    shell,
-    environment,
-    op,
-  )
+  const { shell: _shell, allManagers } = await initOp(shell, op)
   let result = _shell
 
-  const requested = getRequestedManagers(environment)
-  const unknown = requested.filter((m) => m !== SCRIPT_PATH && !MANAGERS.includes(m))
-  if (unknown.length) {
-    result = result
-      .with(result.printWarn(`manager not known: ${unknown.join(', ')}`))
-      .with(result.varSetStr(PACK_PRINTED_KEY, '1'))
-  }
-  if (requested.length && !allManagers.length && !requested.includes(SCRIPT_PATH)) {
-    return buildAndLog(result, environment)
-  }
   if (allManagers.length) {
     result = result.with(result.varSetArr(PACK_MANAGERS_KEY, allManagers))
-  }
-  // whether a named manager is actually here is the client's to report
-  if (requested.length) {
-    const named = requested.filter((m) => m !== SCRIPT_PATH && MANAGERS.includes(m))
-    if (named.length) {
-      result = result.with([['packRequireManager', ...named.map((m) => result.toLiteral(m))].join(' ')])
-    }
   }
 
   if (op === 'tidy') {
@@ -626,10 +577,9 @@ async function execOp(
   }
 
   const names = environment.getSplit(PACK_OP_NAMES_KEY(op))
-  const managerSpecified = !!environment.get(PACK_MANAGERS_KEY)
 
   if (op === 'find') {
-    const hasContext = context.sys_os_plat || context.sys_os || requested.length
+    const hasContext = context.sys_os_plat || context.sys_os
     const { entries: groupEntries, found } = await findGroups(
       names.length ? names : undefined,
       hasContext ? allManagers : null,
@@ -646,8 +596,6 @@ async function execOp(
       op,
       allManagers,
       names,
-      requested,
-      managerSpecified,
     )
 
     // names no group claimed have no stated manager, so the client finds one for them

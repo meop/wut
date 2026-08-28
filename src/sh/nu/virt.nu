@@ -69,16 +69,22 @@ def --env virtPlanRun [] {
     return
   }
 
-  virtTable ['manager' 'instances'] ($here | each { |e| [$e.manager, ($e.instances | length | into string)] })
-  if not (virtPrompt 'use virt') { return }
+  virtTable ['manager' 'instances'] ($here | enumerate | each { |e|
+    [$"($e.index + 1)\) ($e.item.manager)", ($e.item.instances | length | into string)]
+  })
+  let picked = (wutSelectRead ($here | length))
+  if $picked == null {
+    return
+  }
+  let chosen = ($picked | each { |i| $here | get ($i - 1) })
 
-  for e in $here {
+  for e in $chosen {
     opPrint $e.manager
     opPrint $"  ($e.instances | str join ', ')"
   }
 
   $env.VIRT_AGREED = '1'
-  for entry in $here {
+  for entry in $chosen {
     load-env {VIRT_MANAGER: $entry.manager, VIRT_INSTANCES: $entry.instances}
     virtCallManager $entry.manager
     hide-env VIRT_MANAGER
@@ -97,12 +103,16 @@ def --env virtFindRun [] {
     return
   }
 
-  virtTable ['manager' 'instances'] ($here | each { |g|
-    [$g.manager, ($g.entries | each { |e| $e | split row '=' | last | split row ',' } | flatten | where { is-not-empty } | length | into string)]
+  virtTable ['manager' 'instances'] ($here | enumerate | each { |g|
+    [$"($g.index + 1)\) ($g.item.manager)", ($g.item.entries | each { |e| $e | split row '=' | last | split row ',' } | flatten | where { is-not-empty } | length | into string)]
   })
-  if not (virtPrompt 'use virt') { return }
+  let picked = (wutSelectRead ($here | length))
+  if $picked == null {
+    return
+  }
+  let chosen = ($picked | each { |i| $here | get ($i - 1) })
 
-  for g in $here {
+  for g in $chosen {
     opPrint $g.manager
     for entry in $g.entries {
       let parts = ($entry | split row '=')

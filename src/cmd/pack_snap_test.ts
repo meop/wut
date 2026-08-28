@@ -325,20 +325,6 @@ Deno.test('nu / darwin / find (no names)', async (t) => {
   await checkSyntax('nu', body)
 })
 
-// nu × arch × find with unsupported manager (-m apt on arch → empty group list)
-Deno.test('nu / arch / find (-m apt)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/-m/apt/find?sysOsPlat=linux&sysOs=arch'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-
-// nu × arch × find with supported manager (-m yay on arch → yay-keyed groups only)
-Deno.test('nu / arch / find (-m yay)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/-m/yay/find?sysOsPlat=linux&sysOs=arch'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-})
-
 // nu × darwin × add (claude) — multi-tier: script + system
 Deno.test('nu / darwin / add (claude)', async (t) => {
   const body = await (await runSrv(req('/sh/nu/pack/add/claude?sysOsPlat=darwin'))).text()
@@ -390,39 +376,6 @@ Deno.test('nu / no-sys / add', async (t) => {
 
 // the pinned hop is where the real body lives: everything above only captures the redirect to it
 
-// -m names a manager this client cannot use: say so, list nothing, search nothing
-Deno.test('nu / arch / find (-m apt, pinned)', async (t) => {
-  const body = await (await runSrv(
-    req('/sh/nu/pack/-m/apt/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'),
-  )).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-  // apt is a manager wut knows, so the plan includes it and the client reports it missing
-  assertEquals(body.includes("packRequireManager r#'apt'#"), true)
-})
-// the listing is matched on names and aliases, but still only offers what this machine could install
-Deno.test('nu / arch / find (-m yay, pinned)', async (t) => {
-  const body = await (await runSrv(
-    req('/sh/nu/pack/-m/yay/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'),
-  )).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-  assertEquals(body.includes('manager not known'), false)
-  // the fixture group declares pacman, not yay, so narrowing to yay drops it
-  assertEquals(body.includes('shell-nu'), false)
-  // yay aliases onto the pacman function
-  assertEquals(body.includes('packPacman'), true)
-})
-// -m narrows each group's candidates to just that manager, package name included
-Deno.test('nu / arch / find (-m pacman, pinned)', async (t) => {
-  const body = await (await runSrv(
-    req('/sh/nu/pack/-m/pacman/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'),
-  )).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-  assertEquals(body.includes('"shell-nu":[{"manager":"pacman","pkg":"nushell"}]'), true)
-  assertEquals(body.includes('nushell.nushell'), false)
-})
 // no -m: the union of every manager this client supports
 Deno.test('nu / arch / find (no manager, pinned)', async (t) => {
   const body = await (await runSrv(
@@ -517,12 +470,13 @@ Deno.test('nu / linux / remove (pinned, manager post hook runs after the manager
   assertEquals(arm.includes("$env.PACK_REMOVE_NAMES = [ r#'hooks'# ]"), true)
 })
 // a manager with nothing to undo is simply absent from remove
-Deno.test('nu / linux / remove (pinned, -m pacman has no post hook)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/-m/pacman/remove/hooks?sysOsPlat=linux&wutNuPinned=1'))).text()
+Deno.test('nu / linux / remove (pinned, a manager with no post hook)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/remove/hooks?sysOsPlat=linux&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('packPacman'), true)
-  assertEquals(body.includes('untap'), false)
+  const arm = planArm(body, 'test-hooks|pacman')
+  assertEquals(arm.includes('packPacman'), true)
+  assertEquals(arm.includes('untap'), false)
 })
 // name-less ops hand every supported manager its own turn
 Deno.test('nu / arch / sync (pinned)', async (t) => {
@@ -604,30 +558,6 @@ Deno.test('nu / darwin / add (pinned, manager entry gate keeps it off this platf
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(body.includes("$env.PACK_ADD_NAMES = [ r#'rustup'# ]"), true)
-})
-
-// -m is an ordered preference over install paths, and 'script' is one of them
-Deno.test('nu / arch / add (pinned, -m script only)', async (t) => {
-  const body = await (await runSrv(
-    req(`/sh/nu/pack/-m/script/add/rustup?${PIN_ARCH.replace('&wutNuPinned=1', '')}&wutNuPinned=1`),
-  ))
-    .text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-  assertEquals(body.includes('"manager":"script"'), true)
-  // naming script alone leaves the managers out
-  assertEquals(body.includes('"manager":"apt"'), false)
-})
-
-Deno.test('nu / ubuntu / add (pinned, -m ghpm,script orders the script after the manager)', async (t) => {
-  const body = await (await runSrv(
-    req('/sh/nu/pack/-m/apt,script/add/rustup?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'),
-  )).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-  const apt = body.indexOf('"manager":"apt"')
-  const script = body.indexOf('"manager":"script"')
-  assertEquals(apt > 0 && script > apt, true)
 })
 
 // the plan is data, its bodies are code behind ids, and the client runs it after one prompt
