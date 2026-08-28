@@ -96,7 +96,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk $"https://pypi.org/pypi/($name)/json"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with `& $cmd_path`, so a subcommand's `exit 1` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as $LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']

@@ -1232,7 +1232,7 @@ if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 `;
 
 snapshot[`nu / arch / find (-m apt, pinned) 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/-m/apt/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
@@ -1240,7 +1240,7 @@ def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
     return
   }
-  \$"(\$args | flatten | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -1248,10 +1248,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -1259,10 +1259,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -1270,10 +1270,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -1281,10 +1281,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -1292,13 +1292,13 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
   let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   }
 }
 
@@ -1309,11 +1309,11 @@ def opMaybePrintCmd --wrapped [...args] {
 }
 
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -1348,7 +1348,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -1392,7 +1392,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
@@ -1402,7 +1402,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     _ => '',
   }
   if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
   }
 
@@ -1417,7 +1417,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { false })
     if \$locked {
       \$acquired = true
       break
@@ -1426,11 +1426,11 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$waited = \$waited + 1
   }
   if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { false })
     if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
     }
   }
@@ -1441,15 +1441,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
+  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
 
   rm --force --recursive \$archive_path \$extract_dir
 
   if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
@@ -1464,15 +1464,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$work_dir
   }
   if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
   if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
@@ -1496,8 +1496,8 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
+  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
 }
@@ -1514,7 +1514,7 @@ def --env packDo [cmds: list<string>] {
 }
 
 def packElevate [cmd: string] {
-  if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
+  if (which sudo | is-not-empty) { \$\\"sudo (\$cmd)\\" } else { \$cmd }
 }
 
 def --env packFiltered [cmds: list<string>, names: list<string>] {
@@ -1552,21 +1552,21 @@ def packHttpGet [url: string, transform: closure] {
 }
 
 def packHttpGetNpm [term: string] {
-  packHttpGet \$"https://registry.npmjs.org/-/v1/search?text=(\$term)&size=(\$PACK_HTTP_GET_LIMIT)" { |body|
+  packHttpGet \$\\"https://registry.npmjs.org/-/v1/search?text=(\$term)&size=(\$PACK_HTTP_GET_LIMIT)\\" { |body|
     \$body | get objects
       | each { |p| {registry: 'npm', name: \$p.package.name, version: \$p.package.version, description: (\$p.package.description? | default '')} }
   }
 }
 
 def packHttpGetJsr [term: string] {
-  packHttpGet \$"https://api.jsr.io/packages?query=(\$term)&limit=(\$PACK_HTTP_GET_LIMIT)" { |body|
+  packHttpGet \$\\"https://api.jsr.io/packages?query=(\$term)&limit=(\$PACK_HTTP_GET_LIMIT)\\" { |body|
     \$body | get items
-      | each { |p| {registry: 'jsr', name: \$"@(\$p.scope)/(\$p.name)", version: (\$p.latestVersion? | default ''), description: (\$p.description? | default '')} }
+      | each { |p| {registry: 'jsr', name: \$\\"@(\$p.scope)/(\$p.name)\\", version: (\$p.latestVersion? | default ''), description: (\$p.description? | default '')} }
   }
 }
 
 def packHttpGetPypi [term: string] {
-  packHttpGet \$"https://pypi.org/pypi/(\$term)/json" { |body|
+  packHttpGet \$\\"https://pypi.org/pypi/(\$term)/json\\" { |body|
     let info = \$body.info
     [{registry: 'pypi', name: \$info.name, version: \$info.version, description: (\$info.summary? | default '')}]
   }
@@ -1589,7 +1589,7 @@ def --env packHttpOk [url: string] {
 
 # by name, not by search: the registries answer 404 for a name that does not exist
 def --env packExistsNpm [name: string] {
-  packHttpOk \$"https://registry.npmjs.org/(\$name)"
+  packHttpOk \$\\"https://registry.npmjs.org/(\$name)\\"
 }
 
 def --env packExistsJsr [name: string] {
@@ -1600,14 +1600,15 @@ def --env packExistsJsr [name: string] {
   if (\$parts | length) != 2 {
     return false
   }
-  packHttpOk \$"https://api.jsr.io/scopes/(\$parts | get 0)/packages/(\$parts | get 1)"
+  packHttpOk \$\\"https://api.jsr.io/scopes/(\$parts | get 0)/packages/(\$parts | get 1)\\"
 }
 
 def --env packExistsPypi [name: string] {
-  packHttpOk \$"https://pypi.org/pypi/(\$name)/json"
+  packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -1652,7 +1653,7 @@ def --env packRefresh [manager: string] {
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
-    xbps => { packOp [\$"(packElevate 'xbps')-install" --sync] },
+    xbps => { packOp [\$\\"(packElevate 'xbps')-install\\" --sync] },
     zypper => { packOp [(packElevate 'zypper') refresh] },
     scoop => { packOp [(packScoopCmd) update] },
     winget => { packOp [winget source update] },
@@ -1689,7 +1690,7 @@ def --env packFindFirst [name: string] {
 }
 
 def --env packRunLoose [manager: string] {
-  let key = \$"PACK_(\$env.PACK_OP | str uppercase)_NAMES"
+  let key = \$\\"PACK_(\$env.PACK_OP | str uppercase)_NAMES\\"
   load-env {(\$key): \$env.PACK_LOOSE_NAMES}
   packCallManager \$manager
 }
@@ -1708,7 +1709,7 @@ def --env packRequireManager [...names: string] {
   for name in \$names {
     if (which \$name | is-empty) {
       \$env.PACK_PRINTED = '1'
-      opPrintWarn \$"manager not installed: (\$name)"
+      opPrintWarn \$\\"manager not installed: (\$name)\\"
     }
   }
 }
@@ -1738,7 +1739,7 @@ def packFindWinner [candidates: list] {
 }
 
 def --env packFindRun [] {
-  let parsed = (\$env.PACK_FIND? | default '{"groups":{},"remaining":[]}' | from json)
+  let parsed = (\$env.PACK_FIND? | default '{\\"groups\\":{},\\"remaining\\":[]}' | from json)
   let remaining = (\$parsed.remaining? | default [])
   let groups = (
     \$parsed.groups | transpose label candidates
@@ -1760,8 +1761,8 @@ def --env packFindRun [] {
 
   for g in \$groups {
     opPrint \$g.label
-    opPrint \$"  (\$g.winner.manager)"
-    opPrint \$"    (\$g.winner.pkg)"
+    opPrint \$\\"  (\$g.winner.manager)\\"
+    opPrint \$\\"    (\$g.winner.pkg)\\"
   }
 
   if (\$remaining | is-empty) {
@@ -1780,11 +1781,11 @@ def --env packFindRun [] {
   }
   for m in (\$byManager | columns) {
     opPrint \$m
-    opPrint \$"  ((\$byManager | get \$m) | str join ', ')"
+    opPrint \$\\"  ((\$byManager | get \$m) | str join ', ')\\"
   }
   if (\$missing | is-not-empty) {
     opPrint '?'
-    opPrint \$"  (\$missing | str join ', ')"
+    opPrint \$\\"  (\$missing | str join ', ')\\"
   }
 }
 
@@ -1842,14 +1843,14 @@ def --env packPlanRun [] {
 
   for d in \$detail {
     opPrint \$d.group
-    opPrint \$"  (\$d.manager)"
-    opPrint \$"    ((\$d.names | str join ', '))"
+    opPrint \$\\"  (\$d.manager)\\"
+    opPrint \$\\"    ((\$d.names | str join ', '))\\"
   }
   if (\$looseFor | columns | is-not-empty) {
     opPrint ''
     for m in (\$looseFor | columns) {
       opPrint \$m
-      opPrint \$"  ((\$looseFor | get \$m) | str join ', ')"
+      opPrint \$\\"  ((\$looseFor | get \$m) | str join ', ')\\"
     }
   }
 
@@ -1919,7 +1920,7 @@ def --env packMutate [
   if (\$names | is-empty) {
     return
   }
-  if ('PACK_AGREED' not-in \$env) and not (packPrompt \$"(\$label): (\$names | str join ', ')") {
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"(\$label): (\$names | str join ', ')\\") {
     return
   }
   if \$each {
@@ -1931,7 +1932,7 @@ def --env packMutate [
 }
 
 def --env packMarkFailed [what: string, why: string] {
-  load-env {PACK_FAILED: ((\$env.PACK_FAILED? | default []) | append \$"(\$what): (\$why | lines | first)")}
+  load-env {PACK_FAILED: ((\$env.PACK_FAILED? | default []) | append \$\\"(\$what): (\$why | lines | first)\\")}
 }
 
 # only the exceptions: a clean run says nothing
@@ -1939,11 +1940,11 @@ def packReport [] {
   let unserved = (\$env.PACK_UNSERVED? | default [])
   let failed = (\$env.PACK_FAILED? | default [])
   if (\$unserved | is-not-empty) {
-    opPrintWarn \$"no manager had: (\$unserved | str join ', ')"
+    opPrintWarn \$\\"no manager had: (\$unserved | str join ', ')\\"
   }
   if (\$failed | is-not-empty) {
     opPrintErr 'failed:'
-    for f in \$failed { opPrintErr \$"  (\$f)" }
+    for f in \$failed { opPrintErr \$\\"  (\$f)\\" }
   }
   if (\$failed | is-not-empty) or (\$unserved | is-not-empty) {
     exit 1
@@ -2003,7 +2004,7 @@ def packPrompt [label: string] {
     \$yn = 'y'
   } else {
     opPrint ''
-    \$yn = input \$"(\$label) [y,[n]]: "
+    \$yn = input \$\\"(\$label) [y,[n]]: \\"
   }
   (\$yn | str lowercase) in ['', 'y', 'yes']
 }
@@ -2020,14 +2021,14 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$"use (\$cmd) \\\\(system\\\\)") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'apt' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd 'apt' \$"use apt \\\\(system\\\\)" { |n| packGrepFind [\$cmd search] \$n } [\$cmd install]
+      packOpAdd 'apt' \$\\"use apt \\\\(system\\\\)\\" { |n| packGrepFind [\$cmd search] \$n } [\$cmd install]
     }
     info => {
       packOpInfo [\$cmd show]
@@ -2039,7 +2040,7 @@ def --env packApt [] {
       packOpOutdated [\$cmd list --upgradable]
     }
     remove => {
-      packOpRemove 'apt' \$"use apt \\\\(system\\\\)" { |n| packGrepList [\$cmd list --installed] \$n } [\$cmd purge --autoremove]
+      packOpRemove 'apt' \$\\"use apt \\\\(system\\\\)\\" { |n| packGrepList [\$cmd list --installed] \$n } [\$cmd purge --autoremove]
     }
     sync => {
       packOpSync [\$cmd full-upgrade] [\$cmd install]
@@ -2056,14 +2057,14 @@ def --env packApt [] {
 
 packRequireManager r#'apt'#
 
-\$env.PACK_FIND = r#'{"groups":{"lang-rustup":[{"manager":"apt","pkg":"rustup"}],"test-scriptfile":[{"manager":"script","pkg":"cfg/script/scriptfile/install.zsh"}]},"remaining":[]}'#
+\$env.PACK_FIND = r#'{\\"groups\\":{\\"lang-rustup\\":[{\\"manager\\":\\"apt\\",\\"pkg\\":\\"rustup\\"}],\\"test-scriptfile\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"cfg/script/scriptfile/install.zsh\\"}]},\\"remaining\\":[]}'#
 
 packFindRun
-\`
+"
 `;
 
 snapshot[`nu / arch / find (-m yay, pinned) 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/-m/yay/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
@@ -2071,7 +2072,7 @@ def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
     return
   }
-  \$"(\$args | flatten | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -2079,10 +2080,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -2090,10 +2091,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -2101,10 +2102,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -2112,10 +2113,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -2123,13 +2124,13 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
   let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   }
 }
 
@@ -2140,11 +2141,11 @@ def opMaybePrintCmd --wrapped [...args] {
 }
 
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -2179,7 +2180,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -2223,7 +2224,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
@@ -2233,7 +2234,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     _ => '',
   }
   if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
   }
 
@@ -2248,7 +2249,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { false })
     if \$locked {
       \$acquired = true
       break
@@ -2257,11 +2258,11 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$waited = \$waited + 1
   }
   if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { false })
     if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
     }
   }
@@ -2272,15 +2273,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
+  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
 
   rm --force --recursive \$archive_path \$extract_dir
 
   if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
@@ -2295,15 +2296,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$work_dir
   }
   if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
   if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
@@ -2327,8 +2328,8 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
+  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
 }
@@ -2345,7 +2346,7 @@ def --env packDo [cmds: list<string>] {
 }
 
 def packElevate [cmd: string] {
-  if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
+  if (which sudo | is-not-empty) { \$\\"sudo (\$cmd)\\" } else { \$cmd }
 }
 
 def --env packFiltered [cmds: list<string>, names: list<string>] {
@@ -2383,21 +2384,21 @@ def packHttpGet [url: string, transform: closure] {
 }
 
 def packHttpGetNpm [term: string] {
-  packHttpGet \$"https://registry.npmjs.org/-/v1/search?text=(\$term)&size=(\$PACK_HTTP_GET_LIMIT)" { |body|
+  packHttpGet \$\\"https://registry.npmjs.org/-/v1/search?text=(\$term)&size=(\$PACK_HTTP_GET_LIMIT)\\" { |body|
     \$body | get objects
       | each { |p| {registry: 'npm', name: \$p.package.name, version: \$p.package.version, description: (\$p.package.description? | default '')} }
   }
 }
 
 def packHttpGetJsr [term: string] {
-  packHttpGet \$"https://api.jsr.io/packages?query=(\$term)&limit=(\$PACK_HTTP_GET_LIMIT)" { |body|
+  packHttpGet \$\\"https://api.jsr.io/packages?query=(\$term)&limit=(\$PACK_HTTP_GET_LIMIT)\\" { |body|
     \$body | get items
-      | each { |p| {registry: 'jsr', name: \$"@(\$p.scope)/(\$p.name)", version: (\$p.latestVersion? | default ''), description: (\$p.description? | default '')} }
+      | each { |p| {registry: 'jsr', name: \$\\"@(\$p.scope)/(\$p.name)\\", version: (\$p.latestVersion? | default ''), description: (\$p.description? | default '')} }
   }
 }
 
 def packHttpGetPypi [term: string] {
-  packHttpGet \$"https://pypi.org/pypi/(\$term)/json" { |body|
+  packHttpGet \$\\"https://pypi.org/pypi/(\$term)/json\\" { |body|
     let info = \$body.info
     [{registry: 'pypi', name: \$info.name, version: \$info.version, description: (\$info.summary? | default '')}]
   }
@@ -2420,7 +2421,7 @@ def --env packHttpOk [url: string] {
 
 # by name, not by search: the registries answer 404 for a name that does not exist
 def --env packExistsNpm [name: string] {
-  packHttpOk \$"https://registry.npmjs.org/(\$name)"
+  packHttpOk \$\\"https://registry.npmjs.org/(\$name)\\"
 }
 
 def --env packExistsJsr [name: string] {
@@ -2431,14 +2432,15 @@ def --env packExistsJsr [name: string] {
   if (\$parts | length) != 2 {
     return false
   }
-  packHttpOk \$"https://api.jsr.io/scopes/(\$parts | get 0)/packages/(\$parts | get 1)"
+  packHttpOk \$\\"https://api.jsr.io/scopes/(\$parts | get 0)/packages/(\$parts | get 1)\\"
 }
 
 def --env packExistsPypi [name: string] {
-  packHttpOk \$"https://pypi.org/pypi/(\$name)/json"
+  packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -2483,7 +2485,7 @@ def --env packRefresh [manager: string] {
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
-    xbps => { packOp [\$"(packElevate 'xbps')-install" --sync] },
+    xbps => { packOp [\$\\"(packElevate 'xbps')-install\\" --sync] },
     zypper => { packOp [(packElevate 'zypper') refresh] },
     scoop => { packOp [(packScoopCmd) update] },
     winget => { packOp [winget source update] },
@@ -2520,7 +2522,7 @@ def --env packFindFirst [name: string] {
 }
 
 def --env packRunLoose [manager: string] {
-  let key = \$"PACK_(\$env.PACK_OP | str uppercase)_NAMES"
+  let key = \$\\"PACK_(\$env.PACK_OP | str uppercase)_NAMES\\"
   load-env {(\$key): \$env.PACK_LOOSE_NAMES}
   packCallManager \$manager
 }
@@ -2539,7 +2541,7 @@ def --env packRequireManager [...names: string] {
   for name in \$names {
     if (which \$name | is-empty) {
       \$env.PACK_PRINTED = '1'
-      opPrintWarn \$"manager not installed: (\$name)"
+      opPrintWarn \$\\"manager not installed: (\$name)\\"
     }
   }
 }
@@ -2569,7 +2571,7 @@ def packFindWinner [candidates: list] {
 }
 
 def --env packFindRun [] {
-  let parsed = (\$env.PACK_FIND? | default '{"groups":{},"remaining":[]}' | from json)
+  let parsed = (\$env.PACK_FIND? | default '{\\"groups\\":{},\\"remaining\\":[]}' | from json)
   let remaining = (\$parsed.remaining? | default [])
   let groups = (
     \$parsed.groups | transpose label candidates
@@ -2591,8 +2593,8 @@ def --env packFindRun [] {
 
   for g in \$groups {
     opPrint \$g.label
-    opPrint \$"  (\$g.winner.manager)"
-    opPrint \$"    (\$g.winner.pkg)"
+    opPrint \$\\"  (\$g.winner.manager)\\"
+    opPrint \$\\"    (\$g.winner.pkg)\\"
   }
 
   if (\$remaining | is-empty) {
@@ -2611,11 +2613,11 @@ def --env packFindRun [] {
   }
   for m in (\$byManager | columns) {
     opPrint \$m
-    opPrint \$"  ((\$byManager | get \$m) | str join ', ')"
+    opPrint \$\\"  ((\$byManager | get \$m) | str join ', ')\\"
   }
   if (\$missing | is-not-empty) {
     opPrint '?'
-    opPrint \$"  (\$missing | str join ', ')"
+    opPrint \$\\"  (\$missing | str join ', ')\\"
   }
 }
 
@@ -2673,14 +2675,14 @@ def --env packPlanRun [] {
 
   for d in \$detail {
     opPrint \$d.group
-    opPrint \$"  (\$d.manager)"
-    opPrint \$"    ((\$d.names | str join ', '))"
+    opPrint \$\\"  (\$d.manager)\\"
+    opPrint \$\\"    ((\$d.names | str join ', '))\\"
   }
   if (\$looseFor | columns | is-not-empty) {
     opPrint ''
     for m in (\$looseFor | columns) {
       opPrint \$m
-      opPrint \$"  ((\$looseFor | get \$m) | str join ', ')"
+      opPrint \$\\"  ((\$looseFor | get \$m) | str join ', ')\\"
     }
   }
 
@@ -2750,7 +2752,7 @@ def --env packMutate [
   if (\$names | is-empty) {
     return
   }
-  if ('PACK_AGREED' not-in \$env) and not (packPrompt \$"(\$label): (\$names | str join ', ')") {
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"(\$label): (\$names | str join ', ')\\") {
     return
   }
   if \$each {
@@ -2762,7 +2764,7 @@ def --env packMutate [
 }
 
 def --env packMarkFailed [what: string, why: string] {
-  load-env {PACK_FAILED: ((\$env.PACK_FAILED? | default []) | append \$"(\$what): (\$why | lines | first)")}
+  load-env {PACK_FAILED: ((\$env.PACK_FAILED? | default []) | append \$\\"(\$what): (\$why | lines | first)\\")}
 }
 
 # only the exceptions: a clean run says nothing
@@ -2770,11 +2772,11 @@ def packReport [] {
   let unserved = (\$env.PACK_UNSERVED? | default [])
   let failed = (\$env.PACK_FAILED? | default [])
   if (\$unserved | is-not-empty) {
-    opPrintWarn \$"no manager had: (\$unserved | str join ', ')"
+    opPrintWarn \$\\"no manager had: (\$unserved | str join ', ')\\"
   }
   if (\$failed | is-not-empty) {
     opPrintErr 'failed:'
-    for f in \$failed { opPrintErr \$"  (\$f)" }
+    for f in \$failed { opPrintErr \$\\"  (\$f)\\" }
   }
   if (\$failed | is-not-empty) or (\$unserved | is-not-empty) {
     exit 1
@@ -2834,7 +2836,7 @@ def packPrompt [label: string] {
     \$yn = 'y'
   } else {
     opPrint ''
-    \$yn = input \$"(\$label) [y,[n]]: "
+    \$yn = input \$\\"(\$label) [y,[n]]: \\"
   }
   (\$yn | str lowercase) in ['', 'y', 'yes']
 }
@@ -2859,7 +2861,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$"use (\$mgr) \\\\(system\\\\)") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
 
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
@@ -2867,7 +2869,7 @@ def --env packPacman [] {
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd 'pacman' \$"use (\$mgr) \\\\(system\\\\)" { |n| packGrepFind [\$cmd --sync --search] \$n } [\$cmd --sync --needed]
+      packOpAdd 'pacman' \$\\"use (\$mgr) \\\\(system\\\\)\\" { |n| packGrepFind [\$cmd --sync --search] \$n } [\$cmd --sync --needed]
     }
     info => {
       packOpInfo [\$cmd --sync --info]
@@ -2879,7 +2881,7 @@ def --env packPacman [] {
       packOpOutdated [\$cmd --query --upgrades]
     }
     remove => {
-      packOpRemove 'pacman' \$"use (\$mgr) \\\\(system\\\\)" { |n| packGrepList [\$cmd --query] \$n } [\$cmd --remove --nosave --recursive]
+      packOpRemove 'pacman' \$\\"use (\$mgr) \\\\(system\\\\)\\" { |n| packGrepList [\$cmd --query] \$n } [\$cmd --remove --nosave --recursive]
     }
     sync => {
       packOpSync [\$cmd --sync --sysupgrade] [\$cmd --sync --needed]
@@ -2905,14 +2907,14 @@ def --env packPacman [] {
 
 packRequireManager r#'yay'#
 
-\$env.PACK_FIND = r#'{"groups":{"test-scriptfile":[{"manager":"script","pkg":"cfg/script/scriptfile/install.zsh"}]},"remaining":[]}'#
+\$env.PACK_FIND = r#'{\\"groups\\":{\\"test-scriptfile\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"cfg/script/scriptfile/install.zsh\\"}]},\\"remaining\\":[]}'#
 
 packFindRun
-\`
+"
 `;
 
 snapshot[`nu / arch / find (-m pacman, pinned) 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/-m/pacman/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
@@ -2920,7 +2922,7 @@ def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
     return
   }
-  \$"(\$args | flatten | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -2928,10 +2930,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -2939,10 +2941,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -2950,10 +2952,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -2961,10 +2963,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -2972,13 +2974,13 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
   let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   }
 }
 
@@ -2989,11 +2991,11 @@ def opMaybePrintCmd --wrapped [...args] {
 }
 
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -3028,7 +3030,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -3072,7 +3074,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
@@ -3082,7 +3084,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     _ => '',
   }
   if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
   }
 
@@ -3097,7 +3099,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { false })
     if \$locked {
       \$acquired = true
       break
@@ -3106,11 +3108,11 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$waited = \$waited + 1
   }
   if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { false })
     if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
     }
   }
@@ -3121,15 +3123,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
+  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
 
   rm --force --recursive \$archive_path \$extract_dir
 
   if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
@@ -3144,15 +3146,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$work_dir
   }
   if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
   if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
@@ -3176,8 +3178,8 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
+  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
 }
@@ -3194,7 +3196,7 @@ def --env packDo [cmds: list<string>] {
 }
 
 def packElevate [cmd: string] {
-  if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
+  if (which sudo | is-not-empty) { \$\\"sudo (\$cmd)\\" } else { \$cmd }
 }
 
 def --env packFiltered [cmds: list<string>, names: list<string>] {
@@ -3232,21 +3234,21 @@ def packHttpGet [url: string, transform: closure] {
 }
 
 def packHttpGetNpm [term: string] {
-  packHttpGet \$"https://registry.npmjs.org/-/v1/search?text=(\$term)&size=(\$PACK_HTTP_GET_LIMIT)" { |body|
+  packHttpGet \$\\"https://registry.npmjs.org/-/v1/search?text=(\$term)&size=(\$PACK_HTTP_GET_LIMIT)\\" { |body|
     \$body | get objects
       | each { |p| {registry: 'npm', name: \$p.package.name, version: \$p.package.version, description: (\$p.package.description? | default '')} }
   }
 }
 
 def packHttpGetJsr [term: string] {
-  packHttpGet \$"https://api.jsr.io/packages?query=(\$term)&limit=(\$PACK_HTTP_GET_LIMIT)" { |body|
+  packHttpGet \$\\"https://api.jsr.io/packages?query=(\$term)&limit=(\$PACK_HTTP_GET_LIMIT)\\" { |body|
     \$body | get items
-      | each { |p| {registry: 'jsr', name: \$"@(\$p.scope)/(\$p.name)", version: (\$p.latestVersion? | default ''), description: (\$p.description? | default '')} }
+      | each { |p| {registry: 'jsr', name: \$\\"@(\$p.scope)/(\$p.name)\\", version: (\$p.latestVersion? | default ''), description: (\$p.description? | default '')} }
   }
 }
 
 def packHttpGetPypi [term: string] {
-  packHttpGet \$"https://pypi.org/pypi/(\$term)/json" { |body|
+  packHttpGet \$\\"https://pypi.org/pypi/(\$term)/json\\" { |body|
     let info = \$body.info
     [{registry: 'pypi', name: \$info.name, version: \$info.version, description: (\$info.summary? | default '')}]
   }
@@ -3269,7 +3271,7 @@ def --env packHttpOk [url: string] {
 
 # by name, not by search: the registries answer 404 for a name that does not exist
 def --env packExistsNpm [name: string] {
-  packHttpOk \$"https://registry.npmjs.org/(\$name)"
+  packHttpOk \$\\"https://registry.npmjs.org/(\$name)\\"
 }
 
 def --env packExistsJsr [name: string] {
@@ -3280,14 +3282,15 @@ def --env packExistsJsr [name: string] {
   if (\$parts | length) != 2 {
     return false
   }
-  packHttpOk \$"https://api.jsr.io/scopes/(\$parts | get 0)/packages/(\$parts | get 1)"
+  packHttpOk \$\\"https://api.jsr.io/scopes/(\$parts | get 0)/packages/(\$parts | get 1)\\"
 }
 
 def --env packExistsPypi [name: string] {
-  packHttpOk \$"https://pypi.org/pypi/(\$name)/json"
+  packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -3332,7 +3335,7 @@ def --env packRefresh [manager: string] {
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
-    xbps => { packOp [\$"(packElevate 'xbps')-install" --sync] },
+    xbps => { packOp [\$\\"(packElevate 'xbps')-install\\" --sync] },
     zypper => { packOp [(packElevate 'zypper') refresh] },
     scoop => { packOp [(packScoopCmd) update] },
     winget => { packOp [winget source update] },
@@ -3369,7 +3372,7 @@ def --env packFindFirst [name: string] {
 }
 
 def --env packRunLoose [manager: string] {
-  let key = \$"PACK_(\$env.PACK_OP | str uppercase)_NAMES"
+  let key = \$\\"PACK_(\$env.PACK_OP | str uppercase)_NAMES\\"
   load-env {(\$key): \$env.PACK_LOOSE_NAMES}
   packCallManager \$manager
 }
@@ -3388,7 +3391,7 @@ def --env packRequireManager [...names: string] {
   for name in \$names {
     if (which \$name | is-empty) {
       \$env.PACK_PRINTED = '1'
-      opPrintWarn \$"manager not installed: (\$name)"
+      opPrintWarn \$\\"manager not installed: (\$name)\\"
     }
   }
 }
@@ -3418,7 +3421,7 @@ def packFindWinner [candidates: list] {
 }
 
 def --env packFindRun [] {
-  let parsed = (\$env.PACK_FIND? | default '{"groups":{},"remaining":[]}' | from json)
+  let parsed = (\$env.PACK_FIND? | default '{\\"groups\\":{},\\"remaining\\":[]}' | from json)
   let remaining = (\$parsed.remaining? | default [])
   let groups = (
     \$parsed.groups | transpose label candidates
@@ -3440,8 +3443,8 @@ def --env packFindRun [] {
 
   for g in \$groups {
     opPrint \$g.label
-    opPrint \$"  (\$g.winner.manager)"
-    opPrint \$"    (\$g.winner.pkg)"
+    opPrint \$\\"  (\$g.winner.manager)\\"
+    opPrint \$\\"    (\$g.winner.pkg)\\"
   }
 
   if (\$remaining | is-empty) {
@@ -3460,11 +3463,11 @@ def --env packFindRun [] {
   }
   for m in (\$byManager | columns) {
     opPrint \$m
-    opPrint \$"  ((\$byManager | get \$m) | str join ', ')"
+    opPrint \$\\"  ((\$byManager | get \$m) | str join ', ')\\"
   }
   if (\$missing | is-not-empty) {
     opPrint '?'
-    opPrint \$"  (\$missing | str join ', ')"
+    opPrint \$\\"  (\$missing | str join ', ')\\"
   }
 }
 
@@ -3522,14 +3525,14 @@ def --env packPlanRun [] {
 
   for d in \$detail {
     opPrint \$d.group
-    opPrint \$"  (\$d.manager)"
-    opPrint \$"    ((\$d.names | str join ', '))"
+    opPrint \$\\"  (\$d.manager)\\"
+    opPrint \$\\"    ((\$d.names | str join ', '))\\"
   }
   if (\$looseFor | columns | is-not-empty) {
     opPrint ''
     for m in (\$looseFor | columns) {
       opPrint \$m
-      opPrint \$"  ((\$looseFor | get \$m) | str join ', ')"
+      opPrint \$\\"  ((\$looseFor | get \$m) | str join ', ')\\"
     }
   }
 
@@ -3599,7 +3602,7 @@ def --env packMutate [
   if (\$names | is-empty) {
     return
   }
-  if ('PACK_AGREED' not-in \$env) and not (packPrompt \$"(\$label): (\$names | str join ', ')") {
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"(\$label): (\$names | str join ', ')\\") {
     return
   }
   if \$each {
@@ -3611,7 +3614,7 @@ def --env packMutate [
 }
 
 def --env packMarkFailed [what: string, why: string] {
-  load-env {PACK_FAILED: ((\$env.PACK_FAILED? | default []) | append \$"(\$what): (\$why | lines | first)")}
+  load-env {PACK_FAILED: ((\$env.PACK_FAILED? | default []) | append \$\\"(\$what): (\$why | lines | first)\\")}
 }
 
 # only the exceptions: a clean run says nothing
@@ -3619,11 +3622,11 @@ def packReport [] {
   let unserved = (\$env.PACK_UNSERVED? | default [])
   let failed = (\$env.PACK_FAILED? | default [])
   if (\$unserved | is-not-empty) {
-    opPrintWarn \$"no manager had: (\$unserved | str join ', ')"
+    opPrintWarn \$\\"no manager had: (\$unserved | str join ', ')\\"
   }
   if (\$failed | is-not-empty) {
     opPrintErr 'failed:'
-    for f in \$failed { opPrintErr \$"  (\$f)" }
+    for f in \$failed { opPrintErr \$\\"  (\$f)\\" }
   }
   if (\$failed | is-not-empty) or (\$unserved | is-not-empty) {
     exit 1
@@ -3683,7 +3686,7 @@ def packPrompt [label: string] {
     \$yn = 'y'
   } else {
     opPrint ''
-    \$yn = input \$"(\$label) [y,[n]]: "
+    \$yn = input \$\\"(\$label) [y,[n]]: \\"
   }
   (\$yn | str lowercase) in ['', 'y', 'yes']
 }
@@ -3708,7 +3711,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$"use (\$mgr) \\\\(system\\\\)") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
 
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
@@ -3716,7 +3719,7 @@ def --env packPacman [] {
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd 'pacman' \$"use (\$mgr) \\\\(system\\\\)" { |n| packGrepFind [\$cmd --sync --search] \$n } [\$cmd --sync --needed]
+      packOpAdd 'pacman' \$\\"use (\$mgr) \\\\(system\\\\)\\" { |n| packGrepFind [\$cmd --sync --search] \$n } [\$cmd --sync --needed]
     }
     info => {
       packOpInfo [\$cmd --sync --info]
@@ -3728,7 +3731,7 @@ def --env packPacman [] {
       packOpOutdated [\$cmd --query --upgrades]
     }
     remove => {
-      packOpRemove 'pacman' \$"use (\$mgr) \\\\(system\\\\)" { |n| packGrepList [\$cmd --query] \$n } [\$cmd --remove --nosave --recursive]
+      packOpRemove 'pacman' \$\\"use (\$mgr) \\\\(system\\\\)\\" { |n| packGrepList [\$cmd --query] \$n } [\$cmd --remove --nosave --recursive]
     }
     sync => {
       packOpSync [\$cmd --sync --sysupgrade] [\$cmd --sync --needed]
@@ -3754,10 +3757,10 @@ def --env packPacman [] {
 
 packRequireManager r#'pacman'#
 
-\$env.PACK_FIND = r#'{"groups":{"lang-rustup":[{"manager":"pacman","pkg":"rustup"}],"shell-nu":[{"manager":"pacman","pkg":"nushell"}],"shell-zsh":[{"manager":"pacman","pkg":"zsh"}],"test-hooks":[{"manager":"pacman","pkg":"hooks"}],"test-scriptfile":[{"manager":"script","pkg":"cfg/script/scriptfile/install.zsh"}]},"remaining":[]}'#
+\$env.PACK_FIND = r#'{\\"groups\\":{\\"lang-rustup\\":[{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"rustup\\"}],\\"shell-nu\\":[{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"nushell\\"}],\\"shell-zsh\\":[{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"zsh\\"}],\\"test-hooks\\":[{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"hooks\\"}],\\"test-scriptfile\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"cfg/script/scriptfile/install.zsh\\"}]},\\"remaining\\":[]}'#
 
 packFindRun
-\`
+"
 `;
 
 snapshot[`nu / arch / find (no manager, pinned) 1`] = `
@@ -4134,7 +4137,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -5684,7 +5688,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -7278,7 +7283,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -8872,7 +8878,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -10502,7 +10509,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -12096,7 +12104,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -13685,7 +13694,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -15359,7 +15369,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -16929,7 +16940,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -18126,7 +18138,7 @@ packPlanRun
 `;
 
 snapshot[`nu / linux / remove (pinned, -m pacman has no post hook) 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/-m/pacman/remove/hooks?sysOsPlat=linux&wutNuPinned=1'#
 
@@ -18134,7 +18146,7 @@ def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
     return
   }
-  \$"(\$args | flatten | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -18142,10 +18154,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -18153,10 +18165,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -18164,10 +18176,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -18175,10 +18187,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -18186,13 +18198,13 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
   let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   }
 }
 
@@ -18203,11 +18215,11 @@ def opMaybePrintCmd --wrapped [...args] {
 }
 
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -18242,7 +18254,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -18284,7 +18296,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
@@ -18294,7 +18306,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     _ => '',
   }
   if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
   }
 
@@ -18309,7 +18321,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { false })
     if \$locked {
       \$acquired = true
       break
@@ -18318,11 +18330,11 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$waited = \$waited + 1
   }
   if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { false })
     if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
     }
   }
@@ -18333,15 +18345,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
+  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
 
   rm --force --recursive \$archive_path \$extract_dir
 
   if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
@@ -18356,15 +18368,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$work_dir
   }
   if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
   if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
@@ -18388,8 +18400,8 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
+  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
 }
@@ -18408,7 +18420,7 @@ def --env packDo [cmds: list<string>] {
 }
 
 def packElevate [cmd: string] {
-  if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
+  if (which sudo | is-not-empty) { \$\\"sudo (\$cmd)\\" } else { \$cmd }
 }
 
 def --env packFiltered [cmds: list<string>, names: list<string>] {
@@ -18446,21 +18458,21 @@ def packHttpGet [url: string, transform: closure] {
 }
 
 def packHttpGetNpm [term: string] {
-  packHttpGet \$"https://registry.npmjs.org/-/v1/search?text=(\$term)&size=(\$PACK_HTTP_GET_LIMIT)" { |body|
+  packHttpGet \$\\"https://registry.npmjs.org/-/v1/search?text=(\$term)&size=(\$PACK_HTTP_GET_LIMIT)\\" { |body|
     \$body | get objects
       | each { |p| {registry: 'npm', name: \$p.package.name, version: \$p.package.version, description: (\$p.package.description? | default '')} }
   }
 }
 
 def packHttpGetJsr [term: string] {
-  packHttpGet \$"https://api.jsr.io/packages?query=(\$term)&limit=(\$PACK_HTTP_GET_LIMIT)" { |body|
+  packHttpGet \$\\"https://api.jsr.io/packages?query=(\$term)&limit=(\$PACK_HTTP_GET_LIMIT)\\" { |body|
     \$body | get items
-      | each { |p| {registry: 'jsr', name: \$"@(\$p.scope)/(\$p.name)", version: (\$p.latestVersion? | default ''), description: (\$p.description? | default '')} }
+      | each { |p| {registry: 'jsr', name: \$\\"@(\$p.scope)/(\$p.name)\\", version: (\$p.latestVersion? | default ''), description: (\$p.description? | default '')} }
   }
 }
 
 def packHttpGetPypi [term: string] {
-  packHttpGet \$"https://pypi.org/pypi/(\$term)/json" { |body|
+  packHttpGet \$\\"https://pypi.org/pypi/(\$term)/json\\" { |body|
     let info = \$body.info
     [{registry: 'pypi', name: \$info.name, version: \$info.version, description: (\$info.summary? | default '')}]
   }
@@ -18483,7 +18495,7 @@ def --env packHttpOk [url: string] {
 
 # by name, not by search: the registries answer 404 for a name that does not exist
 def --env packExistsNpm [name: string] {
-  packHttpOk \$"https://registry.npmjs.org/(\$name)"
+  packHttpOk \$\\"https://registry.npmjs.org/(\$name)\\"
 }
 
 def --env packExistsJsr [name: string] {
@@ -18494,14 +18506,15 @@ def --env packExistsJsr [name: string] {
   if (\$parts | length) != 2 {
     return false
   }
-  packHttpOk \$"https://api.jsr.io/scopes/(\$parts | get 0)/packages/(\$parts | get 1)"
+  packHttpOk \$\\"https://api.jsr.io/scopes/(\$parts | get 0)/packages/(\$parts | get 1)\\"
 }
 
 def --env packExistsPypi [name: string] {
-  packHttpOk \$"https://pypi.org/pypi/(\$name)/json"
+  packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -18546,7 +18559,7 @@ def --env packRefresh [manager: string] {
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
-    xbps => { packOp [\$"(packElevate 'xbps')-install" --sync] },
+    xbps => { packOp [\$\\"(packElevate 'xbps')-install\\" --sync] },
     zypper => { packOp [(packElevate 'zypper') refresh] },
     scoop => { packOp [(packScoopCmd) update] },
     winget => { packOp [winget source update] },
@@ -18583,7 +18596,7 @@ def --env packFindFirst [name: string] {
 }
 
 def --env packRunLoose [manager: string] {
-  let key = \$"PACK_(\$env.PACK_OP | str uppercase)_NAMES"
+  let key = \$\\"PACK_(\$env.PACK_OP | str uppercase)_NAMES\\"
   load-env {(\$key): \$env.PACK_LOOSE_NAMES}
   packCallManager \$manager
 }
@@ -18602,7 +18615,7 @@ def --env packRequireManager [...names: string] {
   for name in \$names {
     if (which \$name | is-empty) {
       \$env.PACK_PRINTED = '1'
-      opPrintWarn \$"manager not installed: (\$name)"
+      opPrintWarn \$\\"manager not installed: (\$name)\\"
     }
   }
 }
@@ -18632,7 +18645,7 @@ def packFindWinner [candidates: list] {
 }
 
 def --env packFindRun [] {
-  let parsed = (\$env.PACK_FIND? | default '{"groups":{},"remaining":[]}' | from json)
+  let parsed = (\$env.PACK_FIND? | default '{\\"groups\\":{},\\"remaining\\":[]}' | from json)
   let remaining = (\$parsed.remaining? | default [])
   let groups = (
     \$parsed.groups | transpose label candidates
@@ -18654,8 +18667,8 @@ def --env packFindRun [] {
 
   for g in \$groups {
     opPrint \$g.label
-    opPrint \$"  (\$g.winner.manager)"
-    opPrint \$"    (\$g.winner.pkg)"
+    opPrint \$\\"  (\$g.winner.manager)\\"
+    opPrint \$\\"    (\$g.winner.pkg)\\"
   }
 
   if (\$remaining | is-empty) {
@@ -18674,11 +18687,11 @@ def --env packFindRun [] {
   }
   for m in (\$byManager | columns) {
     opPrint \$m
-    opPrint \$"  ((\$byManager | get \$m) | str join ', ')"
+    opPrint \$\\"  ((\$byManager | get \$m) | str join ', ')\\"
   }
   if (\$missing | is-not-empty) {
     opPrint '?'
-    opPrint \$"  (\$missing | str join ', ')"
+    opPrint \$\\"  (\$missing | str join ', ')\\"
   }
 }
 
@@ -18736,14 +18749,14 @@ def --env packPlanRun [] {
 
   for d in \$detail {
     opPrint \$d.group
-    opPrint \$"  (\$d.manager)"
-    opPrint \$"    ((\$d.names | str join ', '))"
+    opPrint \$\\"  (\$d.manager)\\"
+    opPrint \$\\"    ((\$d.names | str join ', '))\\"
   }
   if (\$looseFor | columns | is-not-empty) {
     opPrint ''
     for m in (\$looseFor | columns) {
       opPrint \$m
-      opPrint \$"  ((\$looseFor | get \$m) | str join ', ')"
+      opPrint \$\\"  ((\$looseFor | get \$m) | str join ', ')\\"
     }
   }
 
@@ -18813,7 +18826,7 @@ def --env packMutate [
   if (\$names | is-empty) {
     return
   }
-  if ('PACK_AGREED' not-in \$env) and not (packPrompt \$"(\$label): (\$names | str join ', ')") {
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"(\$label): (\$names | str join ', ')\\") {
     return
   }
   if \$each {
@@ -18825,7 +18838,7 @@ def --env packMutate [
 }
 
 def --env packMarkFailed [what: string, why: string] {
-  load-env {PACK_FAILED: ((\$env.PACK_FAILED? | default []) | append \$"(\$what): (\$why | lines | first)")}
+  load-env {PACK_FAILED: ((\$env.PACK_FAILED? | default []) | append \$\\"(\$what): (\$why | lines | first)\\")}
 }
 
 # only the exceptions: a clean run says nothing
@@ -18833,11 +18846,11 @@ def packReport [] {
   let unserved = (\$env.PACK_UNSERVED? | default [])
   let failed = (\$env.PACK_FAILED? | default [])
   if (\$unserved | is-not-empty) {
-    opPrintWarn \$"no manager had: (\$unserved | str join ', ')"
+    opPrintWarn \$\\"no manager had: (\$unserved | str join ', ')\\"
   }
   if (\$failed | is-not-empty) {
     opPrintErr 'failed:'
-    for f in \$failed { opPrintErr \$"  (\$f)" }
+    for f in \$failed { opPrintErr \$\\"  (\$f)\\" }
   }
   if (\$failed | is-not-empty) or (\$unserved | is-not-empty) {
     exit 1
@@ -18897,7 +18910,7 @@ def packPrompt [label: string] {
     \$yn = 'y'
   } else {
     opPrint ''
-    \$yn = input \$"(\$label) [y,[n]]: "
+    \$yn = input \$\\"(\$label) [y,[n]]: \\"
   }
   (\$yn | str lowercase) in ['', 'y', 'yes']
 }
@@ -18922,7 +18935,7 @@ def --env packPacman [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$"use (\$mgr) \\\\(system\\\\)") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$mgr) \\\\(system\\\\)\\") { return }
 
   let cmd = if \$mgr == pacman { packElevate \$mgr } else { \$mgr }
 
@@ -18930,7 +18943,7 @@ def --env packPacman [] {
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd 'pacman' \$"use (\$mgr) \\\\(system\\\\)" { |n| packGrepFind [\$cmd --sync --search] \$n } [\$cmd --sync --needed]
+      packOpAdd 'pacman' \$\\"use (\$mgr) \\\\(system\\\\)\\" { |n| packGrepFind [\$cmd --sync --search] \$n } [\$cmd --sync --needed]
     }
     info => {
       packOpInfo [\$cmd --sync --info]
@@ -18942,7 +18955,7 @@ def --env packPacman [] {
       packOpOutdated [\$cmd --query --upgrades]
     }
     remove => {
-      packOpRemove 'pacman' \$"use (\$mgr) \\\\(system\\\\)" { |n| packGrepList [\$cmd --query] \$n } [\$cmd --remove --nosave --recursive]
+      packOpRemove 'pacman' \$\\"use (\$mgr) \\\\(system\\\\)\\" { |n| packGrepList [\$cmd --query] \$n } [\$cmd --remove --nosave --recursive]
     }
     sync => {
       packOpSync [\$cmd --sync --sysupgrade] [\$cmd --sync --needed]
@@ -18980,12 +18993,12 @@ hide-env PACK_MANAGER
   }
 }
 
-\$env.PACK_PLAN = r#'[{"group":"test-hooks","name":"hooks","paths":[{"id":"test-hooks|pacman","manager":"pacman","names":["hooks"]}]}]'#
+\$env.PACK_PLAN = r#'[{\\"group\\":\\"test-hooks\\",\\"name\\":\\"hooks\\",\\"paths\\":[{\\"id\\":\\"test-hooks|pacman\\",\\"manager\\":\\"pacman\\",\\"names\\":[\\"hooks\\"]}]}]'#
 
 \$env.PACK_REMOVE_NAMES = [  ]
 
 packPlanRun
-\`
+"
 `;
 
 snapshot[`nu / arch / sync (pinned) 1`] = `
@@ -19362,7 +19375,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -20908,7 +20922,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -22456,7 +22471,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -24006,7 +24022,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -25556,7 +25573,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -27150,7 +27168,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -28744,7 +28763,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -30292,7 +30312,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -31842,7 +31863,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -33061,7 +33083,7 @@ packPlanRun
 `;
 
 snapshot[`nu / arch / add (pinned, -m script only) 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/-m/script/add/rustup?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
@@ -33069,7 +33091,7 @@ def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
     return
   }
-  \$"(\$args | flatten | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -33077,10 +33099,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -33088,10 +33110,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -33099,10 +33121,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -33110,10 +33132,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -33121,13 +33143,13 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
   let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   }
 }
 
@@ -33138,11 +33160,11 @@ def opMaybePrintCmd --wrapped [...args] {
 }
 
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -33177,7 +33199,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -33221,7 +33243,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
@@ -33231,7 +33253,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     _ => '',
   }
   if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
   }
 
@@ -33246,7 +33268,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { false })
     if \$locked {
       \$acquired = true
       break
@@ -33255,11 +33277,11 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$waited = \$waited + 1
   }
   if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { false })
     if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
     }
   }
@@ -33270,15 +33292,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
+  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
 
   rm --force --recursive \$archive_path \$extract_dir
 
   if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
@@ -33293,15 +33315,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$work_dir
   }
   if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
   if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
@@ -33325,8 +33347,8 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
+  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
 }
@@ -33345,7 +33367,7 @@ def --env packDo [cmds: list<string>] {
 }
 
 def packElevate [cmd: string] {
-  if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
+  if (which sudo | is-not-empty) { \$\\"sudo (\$cmd)\\" } else { \$cmd }
 }
 
 def --env packFiltered [cmds: list<string>, names: list<string>] {
@@ -33383,21 +33405,21 @@ def packHttpGet [url: string, transform: closure] {
 }
 
 def packHttpGetNpm [term: string] {
-  packHttpGet \$"https://registry.npmjs.org/-/v1/search?text=(\$term)&size=(\$PACK_HTTP_GET_LIMIT)" { |body|
+  packHttpGet \$\\"https://registry.npmjs.org/-/v1/search?text=(\$term)&size=(\$PACK_HTTP_GET_LIMIT)\\" { |body|
     \$body | get objects
       | each { |p| {registry: 'npm', name: \$p.package.name, version: \$p.package.version, description: (\$p.package.description? | default '')} }
   }
 }
 
 def packHttpGetJsr [term: string] {
-  packHttpGet \$"https://api.jsr.io/packages?query=(\$term)&limit=(\$PACK_HTTP_GET_LIMIT)" { |body|
+  packHttpGet \$\\"https://api.jsr.io/packages?query=(\$term)&limit=(\$PACK_HTTP_GET_LIMIT)\\" { |body|
     \$body | get items
-      | each { |p| {registry: 'jsr', name: \$"@(\$p.scope)/(\$p.name)", version: (\$p.latestVersion? | default ''), description: (\$p.description? | default '')} }
+      | each { |p| {registry: 'jsr', name: \$\\"@(\$p.scope)/(\$p.name)\\", version: (\$p.latestVersion? | default ''), description: (\$p.description? | default '')} }
   }
 }
 
 def packHttpGetPypi [term: string] {
-  packHttpGet \$"https://pypi.org/pypi/(\$term)/json" { |body|
+  packHttpGet \$\\"https://pypi.org/pypi/(\$term)/json\\" { |body|
     let info = \$body.info
     [{registry: 'pypi', name: \$info.name, version: \$info.version, description: (\$info.summary? | default '')}]
   }
@@ -33420,7 +33442,7 @@ def --env packHttpOk [url: string] {
 
 # by name, not by search: the registries answer 404 for a name that does not exist
 def --env packExistsNpm [name: string] {
-  packHttpOk \$"https://registry.npmjs.org/(\$name)"
+  packHttpOk \$\\"https://registry.npmjs.org/(\$name)\\"
 }
 
 def --env packExistsJsr [name: string] {
@@ -33431,14 +33453,15 @@ def --env packExistsJsr [name: string] {
   if (\$parts | length) != 2 {
     return false
   }
-  packHttpOk \$"https://api.jsr.io/scopes/(\$parts | get 0)/packages/(\$parts | get 1)"
+  packHttpOk \$\\"https://api.jsr.io/scopes/(\$parts | get 0)/packages/(\$parts | get 1)\\"
 }
 
 def --env packExistsPypi [name: string] {
-  packHttpOk \$"https://pypi.org/pypi/(\$name)/json"
+  packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -33483,7 +33506,7 @@ def --env packRefresh [manager: string] {
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
-    xbps => { packOp [\$"(packElevate 'xbps')-install" --sync] },
+    xbps => { packOp [\$\\"(packElevate 'xbps')-install\\" --sync] },
     zypper => { packOp [(packElevate 'zypper') refresh] },
     scoop => { packOp [(packScoopCmd) update] },
     winget => { packOp [winget source update] },
@@ -33520,7 +33543,7 @@ def --env packFindFirst [name: string] {
 }
 
 def --env packRunLoose [manager: string] {
-  let key = \$"PACK_(\$env.PACK_OP | str uppercase)_NAMES"
+  let key = \$\\"PACK_(\$env.PACK_OP | str uppercase)_NAMES\\"
   load-env {(\$key): \$env.PACK_LOOSE_NAMES}
   packCallManager \$manager
 }
@@ -33539,7 +33562,7 @@ def --env packRequireManager [...names: string] {
   for name in \$names {
     if (which \$name | is-empty) {
       \$env.PACK_PRINTED = '1'
-      opPrintWarn \$"manager not installed: (\$name)"
+      opPrintWarn \$\\"manager not installed: (\$name)\\"
     }
   }
 }
@@ -33569,7 +33592,7 @@ def packFindWinner [candidates: list] {
 }
 
 def --env packFindRun [] {
-  let parsed = (\$env.PACK_FIND? | default '{"groups":{},"remaining":[]}' | from json)
+  let parsed = (\$env.PACK_FIND? | default '{\\"groups\\":{},\\"remaining\\":[]}' | from json)
   let remaining = (\$parsed.remaining? | default [])
   let groups = (
     \$parsed.groups | transpose label candidates
@@ -33591,8 +33614,8 @@ def --env packFindRun [] {
 
   for g in \$groups {
     opPrint \$g.label
-    opPrint \$"  (\$g.winner.manager)"
-    opPrint \$"    (\$g.winner.pkg)"
+    opPrint \$\\"  (\$g.winner.manager)\\"
+    opPrint \$\\"    (\$g.winner.pkg)\\"
   }
 
   if (\$remaining | is-empty) {
@@ -33611,11 +33634,11 @@ def --env packFindRun [] {
   }
   for m in (\$byManager | columns) {
     opPrint \$m
-    opPrint \$"  ((\$byManager | get \$m) | str join ', ')"
+    opPrint \$\\"  ((\$byManager | get \$m) | str join ', ')\\"
   }
   if (\$missing | is-not-empty) {
     opPrint '?'
-    opPrint \$"  (\$missing | str join ', ')"
+    opPrint \$\\"  (\$missing | str join ', ')\\"
   }
 }
 
@@ -33673,14 +33696,14 @@ def --env packPlanRun [] {
 
   for d in \$detail {
     opPrint \$d.group
-    opPrint \$"  (\$d.manager)"
-    opPrint \$"    ((\$d.names | str join ', '))"
+    opPrint \$\\"  (\$d.manager)\\"
+    opPrint \$\\"    ((\$d.names | str join ', '))\\"
   }
   if (\$looseFor | columns | is-not-empty) {
     opPrint ''
     for m in (\$looseFor | columns) {
       opPrint \$m
-      opPrint \$"  ((\$looseFor | get \$m) | str join ', ')"
+      opPrint \$\\"  ((\$looseFor | get \$m) | str join ', ')\\"
     }
   }
 
@@ -33750,7 +33773,7 @@ def --env packMutate [
   if (\$names | is-empty) {
     return
   }
-  if ('PACK_AGREED' not-in \$env) and not (packPrompt \$"(\$label): (\$names | str join ', ')") {
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"(\$label): (\$names | str join ', ')\\") {
     return
   }
   if \$each {
@@ -33762,7 +33785,7 @@ def --env packMutate [
 }
 
 def --env packMarkFailed [what: string, why: string] {
-  load-env {PACK_FAILED: ((\$env.PACK_FAILED? | default []) | append \$"(\$what): (\$why | lines | first)")}
+  load-env {PACK_FAILED: ((\$env.PACK_FAILED? | default []) | append \$\\"(\$what): (\$why | lines | first)\\")}
 }
 
 # only the exceptions: a clean run says nothing
@@ -33770,11 +33793,11 @@ def packReport [] {
   let unserved = (\$env.PACK_UNSERVED? | default [])
   let failed = (\$env.PACK_FAILED? | default [])
   if (\$unserved | is-not-empty) {
-    opPrintWarn \$"no manager had: (\$unserved | str join ', ')"
+    opPrintWarn \$\\"no manager had: (\$unserved | str join ', ')\\"
   }
   if (\$failed | is-not-empty) {
     opPrintErr 'failed:'
-    for f in \$failed { opPrintErr \$"  (\$f)" }
+    for f in \$failed { opPrintErr \$\\"  (\$f)\\" }
   }
   if (\$failed | is-not-empty) or (\$unserved | is-not-empty) {
     exit 1
@@ -33834,7 +33857,7 @@ def packPrompt [label: string] {
     \$yn = 'y'
   } else {
     opPrint ''
-    \$yn = input \$"(\$label) [y,[n]]: "
+    \$yn = input \$\\"(\$label) [y,[n]]: \\"
   }
   (\$yn | str lowercase) in ['', 'y', 'yes']
 }
@@ -33849,16 +33872,16 @@ if 'NOOP' not-in \$env { zsh --no-rcs -c r#'curl --proto '=https' --tlsv1.2 -sSf
   }
 }
 
-\$env.PACK_PLAN = r#'[{"group":"lang-rustup","name":"rustup","paths":[{"id":"lang-rustup|script","manager":"script","names":["curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs '|' sh"]}]}]'#
+\$env.PACK_PLAN = r#'[{\\"group\\":\\"lang-rustup\\",\\"name\\":\\"rustup\\",\\"paths\\":[{\\"id\\":\\"lang-rustup|script\\",\\"manager\\":\\"script\\",\\"names\\":[\\"curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs '|' sh\\"]}]}]'#
 
 \$env.PACK_ADD_NAMES = [  ]
 
 packPlanRun
-\`
+"
 `;
 
 snapshot[`nu / ubuntu / add (pinned, -m ghpm,script orders the script after the manager) 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/-m/apt,script/add/rustup?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
 
@@ -33866,7 +33889,7 @@ def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
     return
   }
-  \$"(\$args | flatten | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -33874,10 +33897,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -33885,10 +33908,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -33896,10 +33919,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -33907,10 +33930,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -33918,13 +33941,13 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
   let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   }
 }
 
@@ -33935,11 +33958,11 @@ def opMaybePrintCmd --wrapped [...args] {
 }
 
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -33974,7 +33997,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -34018,7 +34041,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
@@ -34028,7 +34051,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     _ => '',
   }
   if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
   }
 
@@ -34043,7 +34066,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { false })
     if \$locked {
       \$acquired = true
       break
@@ -34052,11 +34075,11 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$waited = \$waited + 1
   }
   if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { false })
     if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
     }
   }
@@ -34067,15 +34090,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
+  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
 
   rm --force --recursive \$archive_path \$extract_dir
 
   if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
@@ -34090,15 +34113,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$work_dir
   }
   if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
   if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
@@ -34122,8 +34145,8 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
+  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
 }
@@ -34142,7 +34165,7 @@ def --env packDo [cmds: list<string>] {
 }
 
 def packElevate [cmd: string] {
-  if (which sudo | is-not-empty) { \$"sudo (\$cmd)" } else { \$cmd }
+  if (which sudo | is-not-empty) { \$\\"sudo (\$cmd)\\" } else { \$cmd }
 }
 
 def --env packFiltered [cmds: list<string>, names: list<string>] {
@@ -34180,21 +34203,21 @@ def packHttpGet [url: string, transform: closure] {
 }
 
 def packHttpGetNpm [term: string] {
-  packHttpGet \$"https://registry.npmjs.org/-/v1/search?text=(\$term)&size=(\$PACK_HTTP_GET_LIMIT)" { |body|
+  packHttpGet \$\\"https://registry.npmjs.org/-/v1/search?text=(\$term)&size=(\$PACK_HTTP_GET_LIMIT)\\" { |body|
     \$body | get objects
       | each { |p| {registry: 'npm', name: \$p.package.name, version: \$p.package.version, description: (\$p.package.description? | default '')} }
   }
 }
 
 def packHttpGetJsr [term: string] {
-  packHttpGet \$"https://api.jsr.io/packages?query=(\$term)&limit=(\$PACK_HTTP_GET_LIMIT)" { |body|
+  packHttpGet \$\\"https://api.jsr.io/packages?query=(\$term)&limit=(\$PACK_HTTP_GET_LIMIT)\\" { |body|
     \$body | get items
-      | each { |p| {registry: 'jsr', name: \$"@(\$p.scope)/(\$p.name)", version: (\$p.latestVersion? | default ''), description: (\$p.description? | default '')} }
+      | each { |p| {registry: 'jsr', name: \$\\"@(\$p.scope)/(\$p.name)\\", version: (\$p.latestVersion? | default ''), description: (\$p.description? | default '')} }
   }
 }
 
 def packHttpGetPypi [term: string] {
-  packHttpGet \$"https://pypi.org/pypi/(\$term)/json" { |body|
+  packHttpGet \$\\"https://pypi.org/pypi/(\$term)/json\\" { |body|
     let info = \$body.info
     [{registry: 'pypi', name: \$info.name, version: \$info.version, description: (\$info.summary? | default '')}]
   }
@@ -34217,7 +34240,7 @@ def --env packHttpOk [url: string] {
 
 # by name, not by search: the registries answer 404 for a name that does not exist
 def --env packExistsNpm [name: string] {
-  packHttpOk \$"https://registry.npmjs.org/(\$name)"
+  packHttpOk \$\\"https://registry.npmjs.org/(\$name)\\"
 }
 
 def --env packExistsJsr [name: string] {
@@ -34228,14 +34251,15 @@ def --env packExistsJsr [name: string] {
   if (\$parts | length) != 2 {
     return false
   }
-  packHttpOk \$"https://api.jsr.io/scopes/(\$parts | get 0)/packages/(\$parts | get 1)"
+  packHttpOk \$\\"https://api.jsr.io/scopes/(\$parts | get 0)/packages/(\$parts | get 1)\\"
 }
 
 def --env packExistsPypi [name: string] {
-  packHttpOk \$"https://pypi.org/pypi/(\$name)/json"
+  packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -34280,7 +34304,7 @@ def --env packRefresh [manager: string] {
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
-    xbps => { packOp [\$"(packElevate 'xbps')-install" --sync] },
+    xbps => { packOp [\$\\"(packElevate 'xbps')-install\\" --sync] },
     zypper => { packOp [(packElevate 'zypper') refresh] },
     scoop => { packOp [(packScoopCmd) update] },
     winget => { packOp [winget source update] },
@@ -34317,7 +34341,7 @@ def --env packFindFirst [name: string] {
 }
 
 def --env packRunLoose [manager: string] {
-  let key = \$"PACK_(\$env.PACK_OP | str uppercase)_NAMES"
+  let key = \$\\"PACK_(\$env.PACK_OP | str uppercase)_NAMES\\"
   load-env {(\$key): \$env.PACK_LOOSE_NAMES}
   packCallManager \$manager
 }
@@ -34336,7 +34360,7 @@ def --env packRequireManager [...names: string] {
   for name in \$names {
     if (which \$name | is-empty) {
       \$env.PACK_PRINTED = '1'
-      opPrintWarn \$"manager not installed: (\$name)"
+      opPrintWarn \$\\"manager not installed: (\$name)\\"
     }
   }
 }
@@ -34366,7 +34390,7 @@ def packFindWinner [candidates: list] {
 }
 
 def --env packFindRun [] {
-  let parsed = (\$env.PACK_FIND? | default '{"groups":{},"remaining":[]}' | from json)
+  let parsed = (\$env.PACK_FIND? | default '{\\"groups\\":{},\\"remaining\\":[]}' | from json)
   let remaining = (\$parsed.remaining? | default [])
   let groups = (
     \$parsed.groups | transpose label candidates
@@ -34388,8 +34412,8 @@ def --env packFindRun [] {
 
   for g in \$groups {
     opPrint \$g.label
-    opPrint \$"  (\$g.winner.manager)"
-    opPrint \$"    (\$g.winner.pkg)"
+    opPrint \$\\"  (\$g.winner.manager)\\"
+    opPrint \$\\"    (\$g.winner.pkg)\\"
   }
 
   if (\$remaining | is-empty) {
@@ -34408,11 +34432,11 @@ def --env packFindRun [] {
   }
   for m in (\$byManager | columns) {
     opPrint \$m
-    opPrint \$"  ((\$byManager | get \$m) | str join ', ')"
+    opPrint \$\\"  ((\$byManager | get \$m) | str join ', ')\\"
   }
   if (\$missing | is-not-empty) {
     opPrint '?'
-    opPrint \$"  (\$missing | str join ', ')"
+    opPrint \$\\"  (\$missing | str join ', ')\\"
   }
 }
 
@@ -34470,14 +34494,14 @@ def --env packPlanRun [] {
 
   for d in \$detail {
     opPrint \$d.group
-    opPrint \$"  (\$d.manager)"
-    opPrint \$"    ((\$d.names | str join ', '))"
+    opPrint \$\\"  (\$d.manager)\\"
+    opPrint \$\\"    ((\$d.names | str join ', '))\\"
   }
   if (\$looseFor | columns | is-not-empty) {
     opPrint ''
     for m in (\$looseFor | columns) {
       opPrint \$m
-      opPrint \$"  ((\$looseFor | get \$m) | str join ', ')"
+      opPrint \$\\"  ((\$looseFor | get \$m) | str join ', ')\\"
     }
   }
 
@@ -34547,7 +34571,7 @@ def --env packMutate [
   if (\$names | is-empty) {
     return
   }
-  if ('PACK_AGREED' not-in \$env) and not (packPrompt \$"(\$label): (\$names | str join ', ')") {
+  if ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"(\$label): (\$names | str join ', ')\\") {
     return
   }
   if \$each {
@@ -34559,7 +34583,7 @@ def --env packMutate [
 }
 
 def --env packMarkFailed [what: string, why: string] {
-  load-env {PACK_FAILED: ((\$env.PACK_FAILED? | default []) | append \$"(\$what): (\$why | lines | first)")}
+  load-env {PACK_FAILED: ((\$env.PACK_FAILED? | default []) | append \$\\"(\$what): (\$why | lines | first)\\")}
 }
 
 # only the exceptions: a clean run says nothing
@@ -34567,11 +34591,11 @@ def packReport [] {
   let unserved = (\$env.PACK_UNSERVED? | default [])
   let failed = (\$env.PACK_FAILED? | default [])
   if (\$unserved | is-not-empty) {
-    opPrintWarn \$"no manager had: (\$unserved | str join ', ')"
+    opPrintWarn \$\\"no manager had: (\$unserved | str join ', ')\\"
   }
   if (\$failed | is-not-empty) {
     opPrintErr 'failed:'
-    for f in \$failed { opPrintErr \$"  (\$f)" }
+    for f in \$failed { opPrintErr \$\\"  (\$f)\\" }
   }
   if (\$failed | is-not-empty) or (\$unserved | is-not-empty) {
     exit 1
@@ -34631,7 +34655,7 @@ def packPrompt [label: string] {
     \$yn = 'y'
   } else {
     opPrint ''
-    \$yn = input \$"(\$label) [y,[n]]: "
+    \$yn = input \$\\"(\$label) [y,[n]]: \\"
   }
   (\$yn | str lowercase) in ['', 'y', 'yes']
 }
@@ -34648,14 +34672,14 @@ def --env packApt [] {
     return
   }
 
-  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$"use (\$cmd) \\\\(system\\\\)") { return }
+  if (\$env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in \$env) and not (packPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   let cmd = packElevate \$cmd
 
   if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'apt' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd 'apt' \$"use apt \\\\(system\\\\)" { |n| packGrepFind [\$cmd search] \$n } [\$cmd install]
+      packOpAdd 'apt' \$\\"use apt \\\\(system\\\\)\\" { |n| packGrepFind [\$cmd search] \$n } [\$cmd install]
     }
     info => {
       packOpInfo [\$cmd show]
@@ -34667,7 +34691,7 @@ def --env packApt [] {
       packOpOutdated [\$cmd list --upgradable]
     }
     remove => {
-      packOpRemove 'apt' \$"use apt \\\\(system\\\\)" { |n| packGrepList [\$cmd list --installed] \$n } [\$cmd purge --autoremove]
+      packOpRemove 'apt' \$\\"use apt \\\\(system\\\\)\\" { |n| packGrepList [\$cmd list --installed] \$n } [\$cmd purge --autoremove]
     }
     sync => {
       packOpSync [\$cmd full-upgrade] [\$cmd install]
@@ -34699,12 +34723,12 @@ hide-env PACK_MANAGER
   }
 }
 
-\$env.PACK_PLAN = r#'[{"group":"lang-rustup","name":"rustup","paths":[{"id":"lang-rustup|apt","manager":"apt","names":["rustup"]},{"id":"lang-rustup|script","manager":"script","names":["curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs '|' sh"]}]}]'#
+\$env.PACK_PLAN = r#'[{\\"group\\":\\"lang-rustup\\",\\"name\\":\\"rustup\\",\\"paths\\":[{\\"id\\":\\"lang-rustup|apt\\",\\"manager\\":\\"apt\\",\\"names\\":[\\"rustup\\"]},{\\"id\\":\\"lang-rustup|script\\",\\"manager\\":\\"script\\",\\"names\\":[\\"curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs '|' sh\\"]}]}]'#
 
 \$env.PACK_ADD_NAMES = [  ]
 
 packPlanRun
-\`
+"
 `;
 
 snapshot[`nu / arch / add (pinned, emits a plan and a dispatcher) 1`] = `
@@ -35083,7 +35107,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -36677,7 +36702,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
@@ -38307,7 +38333,8 @@ def --env packExistsPypi [name: string] {
   packHttpOk \$\\"https://pypi.org/pypi/(\$name)/json\\"
 }
 
-# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# scoop dispatches subcommands with \`& \$cmd_path\`, so a subcommand's \`exit 1\` ends only that nested script and
+# scoop.ps1 still completes 0. the code survives only as \$LASTEXITCODE, which -Command exits with
 # https://github.com/ScoopInstaller/Scoop/issues/3936
 def packScoopCmd [] {
   ['powershell' '-NoProfile' '-Command' 'scoop']
