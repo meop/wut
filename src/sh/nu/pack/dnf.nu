@@ -12,27 +12,25 @@ def --env packDnf [] {
   if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($cmd) \(system\)") { return }
   let cmd = packElevate $cmd
 
+  if $env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'dnf' }
+
   match $env.PACK_OP {
     add => {
-      packOp [$cmd makecache]
       packOpAdd 'dnf' $"use dnf \(system\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
     info => {
-      packOp [$cmd makecache]
       packOpInfo [$cmd info]
     }
     list => {
       packOpList [$cmd list --installed]
     }
     outdated => {
-      packOp [$cmd makecache]
       packOpOutdated [$cmd list --upgrades]
     }
     remove => {
       packOpRemove 'dnf' $"use dnf \(system\)" { |n| packGrepList [$cmd list --installed] $n } [$cmd remove]
     }
     sync => {
-      packOp [$cmd makecache]
       packOpSync [$cmd distro-sync] [$cmd upgrade]
     }
     tidy => {

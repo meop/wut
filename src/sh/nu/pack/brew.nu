@@ -11,27 +11,25 @@ def --env packBrew [] {
 
   if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($cmd) \(user\)") { return }
 
+  if $env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'brew' }
+
   match $env.PACK_OP {
     add => {
-      packOp [$cmd update]
       packOpAdd 'brew' $"use brew \(user\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
     info => {
-      packOp [$cmd update]
       packOpInfo [$cmd info]
     }
     list => {
       packOpList [$cmd list]
     }
     outdated => {
-      packOp [$cmd update]
       packOpOutdated [$cmd outdated]
     }
     remove => {
       packOpRemove 'brew' $"use brew \(user\)" { |n| packGrepList [$cmd list] $n } [$cmd uninstall]
     }
     sync => {
-      packOp [$cmd update]
       packOpSync [$cmd upgrade --greedy] [$cmd upgrade --greedy]
     }
     tidy => {

@@ -12,27 +12,25 @@ def --env packApt [] {
   if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($cmd) \(system\)") { return }
   let cmd = packElevate $cmd
 
+  if $env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'apt' }
+
   match $env.PACK_OP {
     add => {
-      packOp [$cmd update]
       packOpAdd 'apt' $"use apt \(system\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
     info => {
-      packOp [$cmd update]
       packOpInfo [$cmd show]
     }
     list => {
       packOpList [$cmd list --installed]
     }
     outdated => {
-      packOp [$cmd update]
       packOpOutdated [$cmd list --upgradable]
     }
     remove => {
       packOpRemove 'apt' $"use apt \(system\)" { |n| packGrepList [$cmd list --installed] $n } [$cmd purge --autoremove]
     }
     sync => {
-      packOp [$cmd update]
       packOpSync [$cmd full-upgrade] [$cmd install]
     }
     tidy => {

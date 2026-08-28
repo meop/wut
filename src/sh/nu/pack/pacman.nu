@@ -18,29 +18,28 @@ def --env packPacman [] {
   }
 
   if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($mgr) \(system\)") { return }
+
   let cmd = if $mgr == pacman { packElevate $mgr } else { $mgr }
+
+  if $env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh $mgr }
 
   match $env.PACK_OP {
     add => {
-      packOp [$cmd --sync --refresh]
       packOpAdd 'pacman' $"use ($mgr) \(system\)" { |n| packGrepFind [$cmd --sync --search] $n } [$cmd --sync --needed]
     }
     info => {
-      packOp [$cmd --sync --refresh]
       packOpInfo [$cmd --sync --info]
     }
     list => {
       packOpList [$cmd --query]
     }
     outdated => {
-      packOp [$cmd --sync --refresh]
       packOpOutdated [$cmd --query --upgrades]
     }
     remove => {
       packOpRemove 'pacman' $"use ($mgr) \(system\)" { |n| packGrepList [$cmd --query] $n } [$cmd --remove --nosave --recursive]
     }
     sync => {
-      packOp [$cmd --sync --refresh]
       packOpSync [$cmd --sync --sysupgrade] [$cmd --sync --needed]
     }
     tidy => {

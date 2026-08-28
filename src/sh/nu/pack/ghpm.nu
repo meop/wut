@@ -11,9 +11,10 @@ def --env packGhpm [] {
 
   if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($cmd) \(user\)") { return }
 
+  if $env.PACK_OP == 'add' { packRefresh 'ghpm' }
+
   match $env.PACK_OP {
     add => {
-      packOp [$cmd refresh]
       packOpAdd 'ghpm' $"use ghpm \(user\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
     info => {

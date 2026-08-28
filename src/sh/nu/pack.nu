@@ -96,6 +96,12 @@ def --env packExistsPypi [name: string] {
   packHttpOk $"https://pypi.org/pypi/($name)/json"
 }
 
+# scoop's .cmd shim drops the exit code; only powershell resolves its .ps1 shim, which keeps it
+# https://github.com/ScoopInstaller/Scoop/issues/3936
+def packScoopCmd [] {
+  ['powershell' '-NoProfile' '-Command' 'scoop']
+}
+
 # choosing a manager needs an exact name, not the substring search 'find' runs: pacman has nushell, not nushel
 def --env packExists [manager: string, name: string] {
   match $manager {
@@ -119,7 +125,7 @@ def --env packExists [manager: string, name: string] {
     xbps => (packOk [xbps-query --repository --show $name]),
     zypper => (packOk [zypper --non-interactive info $name]),
     choco => (packOk [choco info $name]),
-    scoop => (packOk [scoop info $name]),
+    scoop => (packOk ((packScoopCmd) ++ [info $name])),
     winget => (packOk [winget show --exact --id $name]),
     _ => false,
   }
@@ -130,13 +136,15 @@ def --env packRefresh [manager: string] {
     ghpm => { packOp [ghpm refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
-    dnf => { packOp [(packElevate 'dnf') check-update] },
+    brew => { packOp [brew update] },
+    dnf => { packOp [(packElevate 'dnf') makecache] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
-    xbps => { packOp [(packElevate 'xbps') -install --sync] },
+    xbps => { packOp [$"(packElevate 'xbps')-install" --sync] },
     zypper => { packOp [(packElevate 'zypper') refresh] },
-    scoop => { packOp [scoop update] },
+    scoop => { packOp [(packScoopCmd) update] },
+    winget => { packOp [winget source update] },
     _ => {},
   }
 }

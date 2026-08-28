@@ -12,13 +12,13 @@ def --env packZypper [] {
   if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($cmd) \(system\)") { return }
   let cmd = packElevate $cmd
 
+  if $env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'zypper' }
+
   match $env.PACK_OP {
     add => {
-      packOp [$cmd refresh]
       packOpAdd 'zypper' $"use zypper \(system\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
     info => {
-      packOp [$cmd refresh]
       packOpInfo [$cmd info]
     }
     list => {
@@ -27,7 +27,6 @@ def --env packZypper [] {
       packOpList [$cmd packages --installed-only]
     }
     outdated => {
-      packOp [$cmd refresh]
       packOpOutdated [$cmd list-updates]
     }
     remove => {
@@ -35,7 +34,6 @@ def --env packZypper [] {
       packOpRemove 'zypper' $"use zypper \(system\)" { |n| packGrepList [$cmd packages --installed-only] $n } [$cmd uninstall]
     }
     sync => {
-      packOp [$cmd refresh]
       packOpSync [$cmd update] [$cmd install]
     }
     tidy => {
