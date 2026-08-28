@@ -1,5 +1,3 @@
-# ghpm's selection syntax: comma or space separated, ranges as a-b, empty takes everything, 0 quits.
-# null means quit, which invalid input is treated as too, rather than re-asking
 def wutSelectParse [choice: string, max: int] {
   let trimmed = ($choice | str trim)
   if ($trimmed | is-empty) {

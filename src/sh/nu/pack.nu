@@ -240,7 +240,6 @@ def --env packFindRun [] {
   }
 
   let byManager = ($groups | group-by { |g| $g.winner.manager } | transpose manager entries)
-  # '?' stands for the typed names no group claimed, which no manager has answered for yet
   let choices = ($byManager | each { |m| $m.manager }) ++ (if ($remaining | is-empty) { [] } else { ['?'] })
   packTable ['manager' 'groups'] ($choices | enumerate | each { |c|
     let count = if $c.item == '?' {
@@ -325,7 +324,6 @@ def --env packPlanRun [] {
 
   let units = $detail
   let looseNames = $looseFor
-  # one row per manager, in the order wut prefers them, so the numbers pick a manager and everything it won
   let unitManagers = ($units | each { |d| $d.manager })
   let here = (packManagersHere | where { |m| ($m in $unitManagers) or ($m in ($looseNames | columns)) })
   let managers = if 'script' in $unitManagers { ['script'] ++ $here } else { $here }
@@ -447,7 +445,6 @@ def packReport [] {
     opPrintErr 'failed:'
     for f in $failed { opPrintErr $"  ($f)" }
   }
-  # a name nothing carries is an answer, not a failure of the run, so only a real failure exits non-zero
   if ($failed | is-not-empty) {
     exit 1
   }

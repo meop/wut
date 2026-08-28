@@ -28,8 +28,6 @@ export class PackCmd extends CmdBase implements Cmd {
 
 // every manager wut knows, in the order to prefer them. which of these a machine actually has is a question only
 // the client can answer, so there is no platform or distro map here to go stale
-// a user space install is preferred over one that needs sudo, so the halves are not interchangeable, and within
-// each half the order is a stated preference rather than alphabetical
 const PORTABLE_MANAGERS: Array<string> = [
   'ghpm',
   'cargo',
@@ -350,7 +348,6 @@ function setOpNames(shell: Sh, op: string, names: Array<string>) {
   )
 }
 
-// a hook is only ever commands: where it runs is fixed by the operation it sits under, so it never names a position
 interface HookEntry {
   hooks?: Array<string>
 }
