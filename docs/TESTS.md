@@ -41,10 +41,10 @@ During CI, run `deno task test` (without `--update`) — any unexpected script c
 Package manager commands — nu × all supported managers × all 7 ops (`add`, `find`, `list`, `out`, `rem`, `sync`,
 `tidy`):
 
-| Shell | Platforms / managers                                                                                                              |
-| ----- | --------------------------------------------------------------------------------------------------------------------------------- |
-| nu    | alpine (apk), arch (yay+pacman), ubuntu (apt), rocky (dnf), void (xbps), suse (zypper), darwin (brew), winnt (choco+scoop+winget) |
-| nu    | no-sys params → bootstrap script                                                                                                  |
+| Shell | Platforms / managers                                                                                                                |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| nu    | alpine (apk), arch (yay+pacman), ubuntu (apt), rocky (dnf), void (xbps), suse (zypper), darwin (brew), windows (choco+scoop+winget) |
+| nu    | no-sys params → bootstrap script                                                                                                    |
 
 ### `src/cmd/virt_snap_test.ts`
 
@@ -52,27 +52,27 @@ Virtual machine management — nu × all platforms × all ops (`add`, `find`, `l
 
 | Shell | Platforms                                                     |
 | ----- | ------------------------------------------------------------- |
-| nu    | linux (docker+qemu), darwin (docker), winnt (docker)          |
+| nu    | linux (docker+qemu), darwin (docker), windows (docker)        |
 | nu    | linux with `sysHost` — exercises real instance config loading |
 
 ### `src/cmd/file_snap_test.ts`
 
 Dotfile synchronization — nu × all platforms × all ops (`diff`, `find`, `list`, `sync`):
 
-| Shell | Platforms            |
-| ----- | -------------------- |
-| nu    | linux, darwin, winnt |
+| Shell | Platforms              |
+| ----- | ---------------------- |
+| nu    | linux, darwin, windows |
 
 ### `src/cmd/script_snap_test.ts`
 
 Script discovery and execution — all shells × all platforms:
 
-| Shell | Platforms               |
-| ----- | ----------------------- |
-| nu    | linux → native redirect |
-| nu    | winnt → native redirect |
-| pwsh  | winnt                   |
-| zsh   | darwin, linux           |
+| Shell | Platforms                 |
+| ----- | ------------------------- |
+| nu    | linux → native redirect   |
+| nu    | windows → native redirect |
+| pwsh  | windows                   |
+| zsh   | darwin, linux             |
 
 ### `src/sh_test.ts`
 

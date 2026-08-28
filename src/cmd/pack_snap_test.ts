@@ -274,46 +274,46 @@ Deno.test('nu / darwin / tidy', async (t) => {
   await checkSyntax('nu', body)
 })
 
-// nu × winnt (choco + scoop + winget)
-Deno.test('nu / winnt / add', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=winnt'))).text()
+// nu × windows (choco + scoop + winget)
+Deno.test('nu / windows / add', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / winnt / find', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/find/firefox?sysOsPlat=winnt'))).text()
+Deno.test('nu / windows / find', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/find/firefox?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / winnt / list', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/list?sysOsPlat=winnt'))).text()
+Deno.test('nu / windows / list', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/list?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / winnt / out', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/out?sysOsPlat=winnt'))).text()
+Deno.test('nu / windows / out', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/out?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / winnt / rem', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/rem/firefox?sysOsPlat=winnt'))).text()
+Deno.test('nu / windows / rem', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/rem/firefox?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / winnt / sync', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/sync?sysOsPlat=winnt'))).text()
+Deno.test('nu / windows / sync', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/sync?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / winnt / tidy', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=winnt'))).text()
+Deno.test('nu / windows / tidy', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
 
-// nu × winnt × find (no names — exercises PACK_FIND_NAMES='')
-Deno.test('nu / winnt / find (no names)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/find?sysOsPlat=winnt'))).text()
+// nu × windows × find (no names — exercises PACK_FIND_NAMES='')
+Deno.test('nu / windows / find (no names)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/find?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
@@ -346,9 +346,9 @@ Deno.test('nu / darwin / add (claude)', async (t) => {
   await checkSyntax('nu', body)
 })
 
-// nu × winnt × add (claude) — buildTierChain on winnt: script(pwsh) + system(winget)
-Deno.test('nu / winnt / add (claude)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/claude?sysOsPlat=winnt'))).text()
+// nu × windows × add (claude) — buildTierChain on windows: script(pwsh) + system(winget)
+Deno.test('nu / windows / add (claude)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/claude?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })

@@ -52,7 +52,7 @@ Deno.test('evaluateGate - matching plat passes', () => {
 
 Deno.test('evaluateGate - mismatched plat fails', () => {
   assertEquals(
-    evaluateGate({ sys_os_plat: ['linux'] }, mkCtx({ sys_os_plat: 'winnt' })),
+    evaluateGate({ sys_os_plat: ['linux'] }, mkCtx({ sys_os_plat: 'windows' })),
     false,
   )
 })
@@ -141,7 +141,7 @@ Deno.test('selectScriptEntry - picks a native shell entry when its gate matches'
 
 Deno.test('selectScriptEntry - skips an entry whose gate fails, uses the next one that matches', () => {
   const scriptConfig = {
-    nu: { file: 'cfg/script/foo/install.nu', gate: { sys_os_plat: ['winnt'] } },
+    nu: { file: 'cfg/script/foo/install.nu', gate: { sys_os_plat: ['windows'] } },
     zsh: { file: 'cfg/script/foo/install.zsh', gate: { sys_os_plat: ['linux'] } },
   }
   assertEquals(
@@ -153,13 +153,13 @@ Deno.test('selectScriptEntry - skips an entry whose gate fails, uses the next on
 Deno.test('selectScriptEntry - entry with no gate always matches', () => {
   const scriptConfig = { pwsh: { file: 'cfg/script/choco/install.ps1' } }
   assertEquals(
-    selectScriptEntry(scriptConfig, mkCtx({ sys_os_plat: 'winnt' })),
+    selectScriptEntry(scriptConfig, mkCtx({ sys_os_plat: 'windows' })),
     { shellFlavor: 'pwsh', entry: scriptConfig.pwsh },
   )
 })
 
 Deno.test('selectScriptEntry - no entry gate matches returns null', () => {
-  const scriptConfig = { pwsh: { file: 'cfg/script/choco/install.ps1', gate: { sys_os_plat: ['winnt'] } } }
+  const scriptConfig = { pwsh: { file: 'cfg/script/choco/install.ps1', gate: { sys_os_plat: ['windows'] } } }
   assertEquals(
     selectScriptEntry(scriptConfig, mkCtx({ sys_os_plat: 'linux' })),
     null,

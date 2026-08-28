@@ -1,7 +1,7 @@
 import { assertEquals, assertThrows } from '@std/assert'
 import { join } from '@std/path'
 
-import { getPlatAclPermCmds, toRelParts, toUnixPath, toWinntPath } from './path.ts'
+import { getPlatAclPermCmds, toRelParts, toUnixPath, toWindowsPath } from './path.ts'
 
 Deno.test('toRelParts - splits relative path into parts', () => {
   const dir = join('/tmp', 'mydir')
@@ -35,12 +35,12 @@ Deno.test('toUnixPath - no change for already-unix paths', () => {
   assertEquals(toUnixPath('/home/user/file.txt'), '/home/user/file.txt')
 })
 
-Deno.test('toWinntPath - replaces forward slashes with backslashes', () => {
-  assertEquals(toWinntPath('C:/Users/test/file.txt'), 'C:\\Users\\test\\file.txt')
+Deno.test('toWindowsPath - replaces forward slashes with backslashes', () => {
+  assertEquals(toWindowsPath('C:/Users/test/file.txt'), 'C:\\Users\\test\\file.txt')
 })
 
-Deno.test('toWinntPath - no change for already-winnt paths', () => {
-  assertEquals(toWinntPath('C:\\Users\\test\\file.txt'), 'C:\\Users\\test\\file.txt')
+Deno.test('toWindowsPath - no change for already-windows paths', () => {
+  assertEquals(toWindowsPath('C:\\Users\\test\\file.txt'), 'C:\\Users\\test\\file.txt')
 })
 
 Deno.test('getPlatAclPermCmds - darwin returns chmod', () => {
@@ -56,9 +56,9 @@ Deno.test('getPlatAclPermCmds - linux returns chmod', () => {
   assertEquals(cmds[0].startsWith('chmod'), true)
 })
 
-Deno.test('getPlatAclPermCmds - winnt returns icacls reset + grant', () => {
+Deno.test('getPlatAclPermCmds - windows returns icacls reset + grant', () => {
   const cmds = getPlatAclPermCmds(
-    'winnt',
+    'windows',
     'C:\\Users\\test\\.ssh',
     { user: { read: true, write: true }, group: { read: true } },
     'testuser',

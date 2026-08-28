@@ -5,7 +5,7 @@ git:
       out:
         darwin: '{HOME}/.gitconfig'
         linux: '{HOME}/.gitconfig'
-        winnt: '{HOME}/.gitconfig'
+        windows: '{HOME}/.gitconfig'
 nu:
   aliases:
     - nushell
@@ -14,41 +14,41 @@ nu:
       out:
         darwin: '{HOME}/.config/nushell/autoload'
         linux: '{HOME}/.config/nushell/autoload'
-        winnt: '{APPDATA}/nushell/autoload'
+        windows: '{APPDATA}/nushell/autoload'
     - in: env.nu
       out:
         darwin: '{HOME}/.config/nushell/env.nu'
         linux: '{HOME}/.config/nushell/env.nu'
-        winnt: '{APPDATA}/nushell/env.nu'
+        windows: '{APPDATA}/nushell/env.nu'
     - in: config.nu
       out:
         darwin: '{HOME}/.config/nushell/config.nu'
         linux: '{HOME}/.config/nushell/config.nu'
-        winnt: '{APPDATA}/nushell/config.nu'
+        windows: '{APPDATA}/nushell/config.nu'
 pwsh:
   maps:
     - in: pwsh
       out:
         darwin: '{HOME}/.pwsh'
         linux: '{HOME}/.pwsh'
-        winnt: '{HOME}/.pwsh'
+        windows: '{HOME}/.pwsh'
     - in: env.ps1
       out:
         darwin: '{HOME}/.config/powershell/env.ps1'
         linux: '{HOME}/.config/powershell/env.ps1'
-        winnt: '{HOME}/Documents/PowerShell/env.ps1'
+        windows: '{HOME}/Documents/PowerShell/env.ps1'
     - in: profile.ps1
       out:
         darwin: '{HOME}/.config/powershell/profile.ps1'
         linux: '{HOME}/.config/powershell/profile.ps1'
-        winnt: '{HOME}/Documents/PowerShell/profile.ps1'
+        windows: '{HOME}/Documents/PowerShell/profile.ps1'
 ssh:
   maps:
     - in: config
       out:
         darwin: '{HOME}/.ssh/config'
         linux: '{HOME}/.ssh/config'
-        winnt: '{HOME}/.ssh/config'
+        windows: '{HOME}/.ssh/config'
       permission:
         user:
           read: true
@@ -57,7 +57,7 @@ ssh:
       out:
         darwin: '{HOME}/.hushlogin'
         linux: '{HOME}/.hushlogin'
-        winnt: '{HOME}/.hushlogin'
+        windows: '{HOME}/.hushlogin'
 zsh:
   maps:
     - in: zsh

@@ -663,8 +663,8 @@ if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 '##"
 `;
 
-snapshot[`nu / winnt / add 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=winnt&wutNuPinned=1'#
+snapshot[`nu / windows / add 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=windows&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
@@ -676,8 +676,8 @@ if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 '##"
 `;
 
-snapshot[`nu / winnt / find 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=winnt&wutNuPinned=1'#
+snapshot[`nu / windows / find 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=windows&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
@@ -689,8 +689,8 @@ if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 '##"
 `;
 
-snapshot[`nu / winnt / list 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=winnt&wutNuPinned=1'#
+snapshot[`nu / windows / list 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=windows&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
@@ -702,8 +702,8 @@ if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 '##"
 `;
 
-snapshot[`nu / winnt / out 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=winnt&wutNuPinned=1'#
+snapshot[`nu / windows / out 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=windows&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
@@ -715,8 +715,8 @@ if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 '##"
 `;
 
-snapshot[`nu / winnt / rem 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=winnt&wutNuPinned=1'#
+snapshot[`nu / windows / rem 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=windows&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
@@ -728,8 +728,8 @@ if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 '##"
 `;
 
-snapshot[`nu / winnt / sync 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=winnt&wutNuPinned=1'#
+snapshot[`nu / windows / sync 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=windows&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
@@ -741,8 +741,8 @@ if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 '##"
 `;
 
-snapshot[`nu / winnt / tidy 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=winnt&wutNuPinned=1'#
+snapshot[`nu / windows / tidy 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=windows&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
@@ -754,8 +754,8 @@ if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 '##"
 `;
 
-snapshot[`nu / winnt / find (no names) 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find?sysOsPlat=winnt&wutNuPinned=1'#
+snapshot[`nu / windows / find (no names) 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find?sysOsPlat=windows&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
@@ -819,8 +819,8 @@ if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 '##"
 `;
 
-snapshot[`nu / winnt / add (claude) 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/claude?sysOsPlat=winnt&wutNuPinned=1'#
+snapshot[`nu / windows / add (claude) 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/claude?sysOsPlat=windows&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
@@ -1037,7 +1037,7 @@ if \$env.SYS_CPU_VEND != null {
 \$env.SYS_OS_PLAT = match (uname | get kernel-name | str lowercase) {
   darwin => 'darwin',
   linux => 'linux',
-  windows_nt => 'winnt',
+  windows_nt => 'windows',
   \$x => \$x,
 }
 \$env.REQ_URL_SH = \$"(\$env.REQ_URL_SH)&sysOsPlat=(\$env.SYS_OS_PLAT)"
@@ -1113,8 +1113,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -1156,7 +1156,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
   let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
   let archive_path = (\$work_dir | path join \$asset)
@@ -1171,7 +1171,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -1194,7 +1194,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -1204,14 +1204,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
   let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
 
@@ -1397,8 +1397,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -1440,7 +1440,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
   let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
   let archive_path = (\$work_dir | path join \$asset)
@@ -1455,7 +1455,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -1478,7 +1478,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -1488,14 +1488,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
   let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
 
@@ -2188,8 +2188,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -2231,7 +2231,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
   let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
   let archive_path = (\$work_dir | path join \$asset)
@@ -2246,7 +2246,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -2269,7 +2269,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -2279,14 +2279,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
   let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
 
@@ -2996,8 +2996,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -3039,7 +3039,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
   let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
   let archive_path = (\$work_dir | path join \$asset)
@@ -3054,7 +3054,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -3077,7 +3077,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -3087,14 +3087,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
   let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
 
@@ -3804,8 +3804,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -3847,7 +3847,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -3862,7 +3862,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -3885,7 +3885,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -3895,14 +3895,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -5385,8 +5385,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -5428,7 +5428,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -5443,7 +5443,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -5466,7 +5466,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -5476,14 +5476,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -7010,8 +7010,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -7053,7 +7053,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -7068,7 +7068,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -7091,7 +7091,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -7101,14 +7101,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -8635,8 +8635,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -8678,7 +8678,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -8693,7 +8693,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -8716,7 +8716,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -8726,14 +8726,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -10296,8 +10296,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -10339,7 +10339,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -10354,7 +10354,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -10377,7 +10377,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -10387,14 +10387,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -11921,8 +11921,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -11964,7 +11964,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -11979,7 +11979,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -12002,7 +12002,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -12012,14 +12012,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -13541,8 +13541,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -13584,7 +13584,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -13599,7 +13599,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -13622,7 +13622,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -13632,14 +13632,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -15246,8 +15246,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -15289,7 +15289,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -15304,7 +15304,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -15327,7 +15327,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -15337,14 +15337,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -16847,8 +16847,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -16890,7 +16890,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -16905,7 +16905,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -16928,7 +16928,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -16938,14 +16938,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -18448,8 +18448,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -18491,7 +18491,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
   let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
   let archive_path = (\$work_dir | path join \$asset)
@@ -18506,7 +18506,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -18529,7 +18529,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -18539,14 +18539,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
   let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
 
@@ -19270,8 +19270,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -19313,7 +19313,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -19328,7 +19328,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -19351,7 +19351,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -19361,14 +19361,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -20847,8 +20847,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -20890,7 +20890,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -20905,7 +20905,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -20928,7 +20928,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -20938,14 +20938,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -22424,8 +22424,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -22467,7 +22467,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -22482,7 +22482,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -22505,7 +22505,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -22515,14 +22515,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -24009,8 +24009,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -24052,7 +24052,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -24067,7 +24067,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -24090,7 +24090,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -24100,14 +24100,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -25594,8 +25594,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -25637,7 +25637,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -25652,7 +25652,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -25675,7 +25675,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -25685,14 +25685,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -27219,8 +27219,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -27262,7 +27262,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -27277,7 +27277,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -27300,7 +27300,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -27310,14 +27310,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -28844,8 +28844,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -28887,7 +28887,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -28902,7 +28902,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -28925,7 +28925,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -28935,14 +28935,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -30425,8 +30425,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -30468,7 +30468,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -30483,7 +30483,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -30506,7 +30506,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -30516,14 +30516,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -32006,8 +32006,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -32049,7 +32049,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -32064,7 +32064,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -32087,7 +32087,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -32097,14 +32097,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -33631,8 +33631,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -33674,7 +33674,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
   let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
   let archive_path = (\$work_dir | path join \$asset)
@@ -33689,7 +33689,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -33712,7 +33712,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -33722,14 +33722,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
   let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
 
@@ -34380,8 +34380,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -34423,7 +34423,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
   let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
   let archive_path = (\$work_dir | path join \$asset)
@@ -34438,7 +34438,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -34461,7 +34461,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -34471,14 +34471,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
   let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
 
@@ -35188,8 +35188,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -35231,7 +35231,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -35246,7 +35246,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -35269,7 +35269,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -35279,14 +35279,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -36813,8 +36813,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -36856,7 +36856,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -36871,7 +36871,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -36894,7 +36894,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -36904,14 +36904,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
@@ -38474,8 +38474,8 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
     'linux_x86_64' => 'x86_64-unknown-linux-gnu',
-    'winnt_aarch64' => 'aarch64-pc-windows-msvc',
-    'winnt_x86_64' => 'x86_64-pc-windows-msvc',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
   if \$triple == '' {
@@ -38517,7 +38517,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let ext_archive = if \$env.SYS_OS_PLAT == 'winnt' { 'zip' } else { 'tar.gz' }
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
   let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
   let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
@@ -38532,7 +38532,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
   let extract_target = if \$ext_archive == 'zip' {
     mkdir \$extract_dir
@@ -38555,7 +38555,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  if \$env.SYS_OS_PLAT != 'winnt' {
+  if \$env.SYS_OS_PLAT != 'windows' {
     ^chmod +x \$extracted_bin
   }
   mv --force \$extracted_bin \$nu_bin
@@ -38565,14 +38565,14 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 }
 
 def --env wutNuSync [] {
-  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'winnt'] {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
-  let ext = if \$env.SYS_OS_PLAT == 'winnt' { '.exe' } else { '' }
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
   let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 

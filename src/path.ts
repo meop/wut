@@ -47,7 +47,7 @@ function getFsAclUnixVal(perm: AclPerm) {
   return permBlocks.join(',')
 }
 
-function getFsAclWinntSymVal(itemPerm?: AclPermScope) {
+function getFsAclWindowsSymVal(itemPerm?: AclPermScope) {
   const symbols: Array<string> = []
   if (itemPerm?.read) {
     symbols.push('gr')
@@ -62,17 +62,17 @@ function getFsAclWinntSymVal(itemPerm?: AclPermScope) {
   return symbols.join(',')
 }
 
-function getFsAclWinntVal(perm: AclPerm, user: string) {
+function getFsAclWindowsVal(perm: AclPerm, user: string) {
   const permBlocks: Array<string> = []
-  const userPerms = getFsAclWinntSymVal(perm.user)
+  const userPerms = getFsAclWindowsSymVal(perm.user)
   if (userPerms !== '') {
     permBlocks.push(`"${user}:(${userPerms})"`)
   }
-  const groupPerms = getFsAclWinntSymVal(perm.group)
+  const groupPerms = getFsAclWindowsSymVal(perm.group)
   if (groupPerms !== '') {
     permBlocks.push(`"Administrators:(${groupPerms})"`)
   }
-  const otherPerms = getFsAclWinntSymVal(perm.other)
+  const otherPerms = getFsAclWindowsSymVal(perm.other)
   if (otherPerms !== '') {
     permBlocks.push(`"SYSTEM:(${otherPerms})"`)
   }
@@ -83,7 +83,7 @@ export function toUnixPath(filePath: string) {
   return filePath.replaceAll('\\', '/')
 }
 
-export function toWinntPath(filePath: string) {
+export function toWindowsPath(filePath: string) {
   return filePath.replaceAll('/', '\\')
 }
 
@@ -97,10 +97,10 @@ export function getPlatAclPermCmds(
     case 'darwin':
     case 'linux':
       return [`chmod -R a-s,${getFsAclUnixVal(perm)} '${toUnixPath(path)}'`]
-    case 'winnt':
+    case 'windows':
       return [
-        `icacls '${toWinntPath(path)}' /t /reset`,
-        `icacls '${toWinntPath(path)}' /t /inheritance:r /grant ${getFsAclWinntVal(perm, user)}`,
+        `icacls '${toWindowsPath(path)}' /t /reset`,
+        `icacls '${toWindowsPath(path)}' /t /inheritance:r /grant ${getFsAclWindowsVal(perm, user)}`,
       ]
     default:
       throw new Error(`unsupported os platform: ${plat}`)

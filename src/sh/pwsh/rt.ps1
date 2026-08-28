@@ -29,8 +29,8 @@
       'darwin_x86_64' { 'x86_64-apple-darwin' }
       'linux_aarch64' { 'aarch64-unknown-linux-gnu' }
       'linux_x86_64' { 'x86_64-unknown-linux-gnu' }
-      'winnt_aarch64' { 'aarch64-pc-windows-msvc' }
-      'winnt_x86_64' { 'x86_64-pc-windows-msvc' }
+      'windows_aarch64' { 'aarch64-pc-windows-msvc' }
+      'windows_x86_64' { 'x86_64-pc-windows-msvc' }
       default { '' }
     }
     if ($triple -eq '') {
@@ -74,7 +74,7 @@
       return
     }
 
-    $extArchive = if ($SYS_OS_PLAT -eq 'winnt') { 'zip' } else { 'tar.gz' }
+    $extArchive = if ($SYS_OS_PLAT -eq 'windows') { 'zip' } else { 'tar.gz' }
     $asset = "nu-${nuVers}-${triple}.${extArchive}"
     $url = "https://github.com/nushell/nushell/releases/download/${nuVers}/${asset}"
     $archivePath = Join-Path $workDir $asset
@@ -90,7 +90,7 @@
       exit 1
     }
 
-    # zip assets (winnt) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+    # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
     # extractDir; tar.gz assets already contain their own nu-${nuVers}-${triple} folder, so they extract into workDir
     if ($extArchive -eq 'zip') {
       New-Item -ItemType Directory -Force -Path $extractDir | Out-Null
@@ -113,7 +113,7 @@
       exit 1
     }
 
-    if ($SYS_OS_PLAT -ne 'winnt') {
+    if ($SYS_OS_PLAT -ne 'windows') {
       & chmod +x $extractedBin
     }
     Move-Item -Force -Path $extractedBin -Destination $nuBin
@@ -122,14 +122,14 @@
     wutNuLockRelease $lockDir
   }
 
-  if ($SYS_OS_PLAT -notin @('darwin', 'linux', 'winnt')) {
-    opPrintWarn 'script is for darwin, linux, or winnt'
+  if ($SYS_OS_PLAT -notin @('darwin', 'linux', 'windows')) {
+    opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
 
   $env:WUT_HOME = $env:WUT_HOME ?? "${env:HOME}/.wut"
   $wutHome = $env:WUT_HOME
-  $ext = if ($SYS_OS_PLAT -eq 'winnt') { '.exe' } else { '' }
+  $ext = if ($SYS_OS_PLAT -eq 'windows') { '.exe' } else { '' }
   $nuBin = Join-Path $wutHome 'vendor' "nu${ext}"
   $nuVers = "${NU_VERS_MAJOR}.${NU_VERS_MINOR}.${NU_VERS_PATCH}"
 

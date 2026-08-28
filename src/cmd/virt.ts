@@ -31,7 +31,7 @@ export class VirtCmd extends CmdBase implements Cmd {
 const sysOsPlatToManager: Record<string, Array<string>> = {
   linux: ['docker', 'lxc', 'podman', 'qemu'],
   darwin: [],
-  winnt: [],
+  windows: [],
 }
 
 // the others have no `run` arm, so a plan naming them would prompt and do nothing

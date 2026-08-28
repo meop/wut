@@ -12,7 +12,7 @@
 **Map Properties:**
 
 - `in` - Source path (supports directories and template substitution)
-- `out` - Destination mapping object keyed by platform (darwin, linux, winnt)
+- `out` - Destination mapping object keyed by platform (darwin, linux, windows)
 - `permission` - Optional permission settings (Windows ACLs, Unix chmod), per map only — there is no entry level
   `permission`
 
@@ -132,7 +132,7 @@ script.
 ## pack manager hooks and remove
 
 A manager entry may also carry a shell key — `pwsh` or `zsh` — holding `commands` that run around the manager call. Only
-the platform's native shell is read (`pwsh` on winnt, `zsh` elsewhere), so a hook states the shell it is written in
+the platform's native shell is read (`pwsh` on windows, `zsh` elsewhere), so a hook states the shell it is written in
 rather than a gate:
 
 ```yaml
@@ -208,7 +208,7 @@ two levels for consistency.
 **Gate Types:**
 
 - `has_cmd` - Command(s) the script needs on the client's PATH — any one is enough. Client-side (see below)
-- `sys_os_plat` - OS platform (darwin, linux, winnt)
+- `sys_os_plat` - OS platform (darwin, linux, windows)
 - `sys_os` - Specific OS distribution (debian, ubuntu, arch, etc.) — exact match
 - `sys_os_like` - OS family substring match (e.g. `debian` matches ubuntu, kali, etc.; `arch` matches manjaro, etc.)
 - `sys_os_de` - Desktop environment (gnome, lxde, plasma, etc.)
@@ -221,7 +221,7 @@ two levels for consistency.
    - pwsh:
      ```powershell
      if (-not $IsWindows) {
-       Write-Host 'script is for winnt'
+       Write-Host 'script is for windows'
        return
      }
      ```

@@ -4,7 +4,7 @@ environment:
   - nic=br0
   - nic_mac=52:54:00:74:65:73
   - vm_sys_arch=x86_64
-  - vm_sys_plat=winnt
+  - vm_sys_plat=windows
 swtpm:
   arguments:
     - socket

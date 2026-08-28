@@ -48,7 +48,7 @@ async function render(plat: string, path: string): Promise<string> {
 
 Deno.test('a helper called where it certainly runs is defined by that same body', async () => {
   const missing: Array<string> = []
-  for (const plat of ['linux', 'winnt']) {
+  for (const plat of ['linux', 'windows']) {
     for (const path of PATHS) {
       const body = await render(plat, path)
       const defined = new Set([...body.matchAll(DEFINES)].map((m) => m[1]))
@@ -65,7 +65,7 @@ Deno.test('a helper called where it certainly runs is defined by that same body'
 Deno.test('a helper called inside a def exists in some body', async () => {
   const defined = new Set<string>()
   const called = new Map<string, string>()
-  for (const plat of ['linux', 'winnt']) {
+  for (const plat of ['linux', 'windows']) {
     for (const path of PATHS) {
       const body = await render(plat, path)
       for (const m of body.matchAll(DEFINES)) {

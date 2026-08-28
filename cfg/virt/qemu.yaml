@@ -12,7 +12,7 @@ qemu:
           - +topoext
         pin: true
         platform:
-          winnt:
+          windows:
             flags:
               - hv-relaxed
               - hv-vapic
@@ -41,6 +41,6 @@ qemu:
             flags:
               - +vmx
             platform:
-              winnt:
+              windows:
                 flags:
                   - hv-evmcs

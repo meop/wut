@@ -5,8 +5,8 @@ resolves, client filters, one prompt — is in [OPS.md](OPS.md).
 
 ## Managers
 
-`docker`, `lxc`, `podman`, `qemu`, on linux only; darwin and winnt support none. Each has a `src/sh/nu/virt/<m>.nu` with
-the same op arms, and `virtCallManager` dispatches to one.
+`docker`, `lxc`, `podman`, `qemu`, on linux only; darwin and windows support none. Each has a `src/sh/nu/virt/<m>.nu`
+with the same op arms, and `virtCallManager` dispatches to one.
 
 `run` is qemu's alone. The others manage a service or a compose file and have no foreground mode, so naming one is
 refused rather than planned — `RUN_MANAGERS` in `virt.ts` says so, and without it `wut v run app` would resolve a podman

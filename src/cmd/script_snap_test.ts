@@ -10,15 +10,15 @@ Deno.test('nu / linux / find', async (t) => {
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / winnt / find', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/script/find?sysOsPlat=winnt'))).text()
+Deno.test('nu / windows / find', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/script/find?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
 
-// pwsh × winnt
-Deno.test('pwsh / winnt / find', async (t) => {
-  const body = await (await runSrv(req('/sh/pwsh/script/find?sysOsPlat=winnt'))).text()
+// pwsh × windows
+Deno.test('pwsh / windows / find', async (t) => {
+  const body = await (await runSrv(req('/sh/pwsh/script/find?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('pwsh', body)
 })
@@ -48,13 +48,13 @@ Deno.test('nu / linux / exec (no match, warns)', async (t) => {
   await checkSyntax('nu', body)
   assertEquals(body.includes('no script matched: install'), true)
 })
-Deno.test('nu / winnt / exec (no match, warns)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/script/exec/install?sysOsPlat=winnt'))).text()
+Deno.test('nu / windows / exec (no match, warns)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/script/exec/install?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('pwsh / winnt / exec', async (t) => {
-  const body = await (await runSrv(req('/sh/pwsh/script/exec/install?sysOsPlat=winnt'))).text()
+Deno.test('pwsh / windows / exec', async (t) => {
+  const body = await (await runSrv(req('/sh/pwsh/script/exec/install?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('pwsh', body)
 })
@@ -81,8 +81,8 @@ Deno.test('zsh / linux / exec (overlay stays in the calling shell, cargo)', asyn
   await assertSnapshot(t, body)
   await checkSyntax('zsh', body)
 })
-Deno.test('pwsh / winnt / exec (overlay stays in the calling shell)', async (t) => {
-  const body = await (await runSrv(req('/sh/pwsh/script/exec/setup/cargo?sysOsPlat=winnt'))).text()
+Deno.test('pwsh / windows / exec (overlay stays in the calling shell)', async (t) => {
+  const body = await (await runSrv(req('/sh/pwsh/script/exec/setup/cargo?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('pwsh', body)
 })
@@ -110,8 +110,8 @@ Deno.test('nu / linux / exec (trailing args after -- are injected as WUT_ARGS)',
   assertEquals(body.includes(`$env.WUT_ARGS = [ r#'foo'#, r#'bar'# ]`), true)
   await checkSyntax('nu', body)
 })
-Deno.test('pwsh / winnt / exec (trailing args after -- are injected as WUT_ARGS)', async () => {
-  const body = await (await runSrv(req('/sh/pwsh/script/exec/setup/docker/--/foo/bar?sysOsPlat=winnt'))).text()
+Deno.test('pwsh / windows / exec (trailing args after -- are injected as WUT_ARGS)', async () => {
+  const body = await (await runSrv(req('/sh/pwsh/script/exec/setup/docker/--/foo/bar?sysOsPlat=windows'))).text()
   assertEquals(body.includes(`$WUT_ARGS = @( 'foo', 'bar' )`), true)
   await checkSyntax('pwsh', body)
 })

@@ -7,12 +7,12 @@ cargo:
       sys_os_plat:
         - darwin
         - linux
-        - winnt
+        - windows
     pwsh:
       has_cmd:
         - cargo
       sys_os_plat:
-        - winnt
+        - windows
     zsh:
       has_cmd:
         - cargo
@@ -26,7 +26,7 @@ docker:
         - docker
       sys_os_plat:
         - linux
-        - winnt
+        - windows
     zsh:
       has_cmd:
         - docker

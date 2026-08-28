@@ -85,9 +85,9 @@ Deno.test('execNativeShell - darwin uses zsh', () => {
   assertEquals(result.startsWith('zsh'), true)
 })
 
-Deno.test('execNativeShell - winnt uses pwsh', () => {
+Deno.test('execNativeShell - windows uses pwsh', () => {
   const shell = new NuSh()
-  const result = execNativeShell(shell, 'winnt', 'echo hello')
+  const result = execNativeShell(shell, 'windows', 'echo hello')
   assertEquals(result.startsWith('pwsh'), true)
   assertEquals(result.includes('echo hello'), true)
 })
@@ -113,17 +113,17 @@ Deno.test('execScriptShell - nu flavor on linux invokes the pinned binary, not b
   assertEquals(result.startsWith('"${WUT_HOME}/vendor/nu"'), true)
 })
 
-Deno.test('execScriptShell - nu flavor on winnt invokes the pinned .exe', () => {
+Deno.test('execScriptShell - nu flavor on windows invokes the pinned .exe', () => {
   const shell = new PowerSh()
-  const result = execScriptShell(shell, 'winnt', 'nu', 'print hello')
+  const result = execScriptShell(shell, 'windows', 'nu', 'print hello')
   assertEquals(result.startsWith('& "${env:WUT_HOME}/vendor/nu.exe"'), true)
 })
 
 Deno.test('execScriptShell - pwsh flavor delegates to execNativeShell', () => {
   const shell = new NuSh()
   assertEquals(
-    execScriptShell(shell, 'winnt', 'pwsh', 'echo hello'),
-    execNativeShell(shell, 'winnt', 'echo hello'),
+    execScriptShell(shell, 'windows', 'pwsh', 'echo hello'),
+    execNativeShell(shell, 'windows', 'echo hello'),
   )
 })
 
@@ -145,14 +145,14 @@ Deno.test('getScriptFlavorOpPreamble - zsh flavor on linux returns zsh op helper
   assertEquals(preamble.includes('function opPrintMaybeRunCmd'), true)
 })
 
-Deno.test('getScriptFlavorOpPreamble - pwsh flavor on winnt returns pwsh op helpers', async () => {
-  const preamble = await getScriptFlavorOpPreamble('winnt', 'pwsh')
+Deno.test('getScriptFlavorOpPreamble - pwsh flavor on windows returns pwsh op helpers', async () => {
+  const preamble = await getScriptFlavorOpPreamble('windows', 'pwsh')
   assertEquals(preamble.includes('function opPrintWarn'), true)
   assertEquals(preamble.includes('function opPrintMaybeRunCmd'), true)
 })
 
 Deno.test('getScriptFlavorOpPreamble - nu flavor is nu on every plat', async () => {
-  for (const plat of ['darwin', 'linux', 'winnt']) {
+  for (const plat of ['darwin', 'linux', 'windows']) {
     const preamble = await getScriptFlavorOpPreamble(plat, 'nu')
     assertEquals(preamble.includes('def opPrintWarn'), true)
     assertEquals(preamble.includes('def opPrintMaybeRunCmd'), true)
@@ -160,12 +160,12 @@ Deno.test('getScriptFlavorOpPreamble - nu flavor is nu on every plat', async () 
 })
 
 // execScriptShell runs a non-nu script under the plat's native shell, so the preamble follows the plat, not
-// the flavor — an ungated zsh entry reached on winnt gets pwsh helpers, matching the pwsh that runs it
+// the flavor — an ungated zsh entry reached on windows gets pwsh helpers, matching the pwsh that runs it
 Deno.test('getScriptFlavorOpPreamble - non-nu flavor follows the plat, not the flavor', async () => {
-  assertEquals((await getScriptFlavorOpPreamble('winnt', 'zsh')).includes('function opPrintWarn'), true)
+  assertEquals((await getScriptFlavorOpPreamble('windows', 'zsh')).includes('function opPrintWarn'), true)
   assertEquals(
-    await getScriptFlavorOpPreamble('winnt', 'zsh'),
-    await getScriptFlavorOpPreamble('winnt', 'pwsh'),
+    await getScriptFlavorOpPreamble('windows', 'zsh'),
+    await getScriptFlavorOpPreamble('windows', 'pwsh'),
   )
   assertEquals(
     await getScriptFlavorOpPreamble('linux', 'pwsh'),

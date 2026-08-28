@@ -1,6 +1,6 @@
 & {
   if (-not $IsWindows) {
-    opPrintWarn 'script is for winnt'
+    opPrintWarn 'script is for windows'
     return
   }
   if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) {

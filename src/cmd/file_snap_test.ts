@@ -66,26 +66,26 @@ Deno.test('nu / linux / list', async (t) => {
   await checkSyntax('nu', body)
 })
 
-// nu × winnt
-Deno.test('nu / winnt / diff', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/file/diff?sysOsPlat=winnt'))).text()
+// nu × windows
+Deno.test('nu / windows / diff', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/file/diff?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / winnt / find', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/file/find?sysOsPlat=winnt'))).text()
+Deno.test('nu / windows / find', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/file/find?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / winnt / sync', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/file/sync?sysOsPlat=winnt'))).text()
+Deno.test('nu / windows / sync', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/file/sync?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
 
-// nu × winnt / list
-Deno.test('nu / winnt / list', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/file/list?sysOsPlat=winnt'))).text()
+// nu × windows / list
+Deno.test('nu / windows / list', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/file/list?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
@@ -117,9 +117,9 @@ Deno.test('nu / linux / sync (pinned, filtered)', async (t) => {
   assertEquals(body.includes("r#'zsh|zsh/zshrc|{HOME}/.zshrc'#"), true)
   assertEquals(body.includes("FILE_SYNC_CLEAR_DIRS = [ r#'zsh|{HOME}/.zsh'# ]"), true)
 })
-// winnt maps the same key to different out paths
-Deno.test('nu / winnt / sync (pinned, filtered)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/file/sync/nu?sysOsPlat=winnt&wutNuPinned=1'))).text()
+// windows maps the same key to different out paths
+Deno.test('nu / windows / sync (pinned, filtered)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/file/sync/nu?sysOsPlat=windows&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(body.includes('{APPDATA}/nushell/config.nu'), true)

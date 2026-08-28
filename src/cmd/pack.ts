@@ -87,7 +87,7 @@ export function getSupportedManagers(environment: Env): Array<string> {
 }
 
 function getNativeShellForPlat(plat: string): string {
-  return plat === 'winnt' ? 'pwsh' : 'zsh'
+  return plat === 'windows' ? 'pwsh' : 'zsh'
 }
 
 export function selectScriptEntry(

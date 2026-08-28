@@ -10,12 +10,12 @@ const WUT_NU_PINNED_PARAM = 'wutNuPinned=1'
 const sysOsPlatToNativeShell: Record<string, string> = {
   darwin: 'zsh',
   linux: 'zsh',
-  winnt: 'pwsh',
+  windows: 'pwsh',
 }
 
 // nu isn't guaranteed to be on PATH yet, so invoke wut's own pinned binary instead
 function pinnedNuBinCmd(shell: Sh, sysOsPlat: string): string {
-  const ext = sysOsPlat === 'winnt' ? '.exe' : ''
+  const ext = sysOsPlat === 'windows' ? '.exe' : ''
   return shell.name === 'pwsh'
     ? `& "\${env:WUT_HOME}/vendor/nu${ext}"`
     : shell.name === 'zsh'
