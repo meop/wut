@@ -126,6 +126,27 @@ walks every install path in file order, so a script is ordered against real mana
 The order of the managers in the file is the group's preference, and the first one present on the machine wins it.
 Nothing overrides that: which of the winners actually run is the numbered prompt's answer, not a flag's.
 
+That order is stated once, in `MANAGERS`, and every group yaml is written to match it:
+
+```
+ghpm  cargo  deno  bun  pnpm  uv          user space, no sudo
+script                                     what a group runs instead of a package
+brew  paru  yay  pacman                    darwin, then arch
+apk  apt  dnf  xbps  zypper                one distro each
+scoop  choco  winget                       windows
+```
+
+Three axes decide it, applied in that order:
+
+- **user, then script, then system** — an install that needs no sudo is preferred to one that does, which is why `scoop`
+  leads the windows three and `winget`, the one the OS ships, trails them
+- **darwin, then linux, then windows** — a machine only has one of these, so this is about reading order, not contest
+- **superset before base** — `paru` and `yay` wrap `pacman` and can install everything it can plus the AUR, so reaching
+  for the narrower one first would install less than asked
+
+Alphabetical is not one of them. Sorting the list reads as an order without being one, and it put `choco` ahead of
+`winget` and `bun` ahead of `ghpm` for no reason anyone stated.
+
 ## pack manager hooks and remove
 
 A manager entry may also carry a shell key — `pwsh` or `zsh` — holding `hooks` that run around the manager call. Only
