@@ -56,7 +56,6 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
   for r in $rows { opPrint (do $line $r) }
 }
 
-# one table, one question, then a run that does not ask again
 def --env virtPlanRun [] {
   let plan = ($env.VIRT_PLAN? | default '{}' | from json)
   let here = ($plan | transpose manager instances | where { |e| virtManagerHere $e.manager })
@@ -69,19 +68,23 @@ def --env virtPlanRun [] {
     return
   }
 
+  for e in $here {
+    opPrint $e.manager
+    if ($e.instances | is-not-empty) {
+      opPrint $"  ($e.instances | str join ', ')"
+    }
+  }
+
+  opPrint ''
+  # an empty instance list is not none, it is every one the manager has, which only the manager can name
   virtTable ['manager' 'instances'] ($here | enumerate | each { |e|
-    [$"($e.index + 1)\) ($e.item.manager)", ($e.item.instances | length | into string)]
+    [$"($e.index + 1)\) ($e.item.manager)", (if ($e.item.instances | is-empty) { 'all' } else { $e.item.instances | length | into string })]
   })
   let picked = (wutSelectRead ($here | length))
   if $picked == null {
     return
   }
   let chosen = ($picked | each { |i| $here | get ($i - 1) })
-
-  for e in $chosen {
-    opPrint $e.manager
-    opPrint $"  ($e.instances | str join ', ')"
-  }
 
   $env.VIRT_AGREED = '1'
   for entry in $chosen {
@@ -103,16 +106,7 @@ def --env virtFindRun [] {
     return
   }
 
-  virtTable ['manager' 'instances'] ($here | enumerate | each { |g|
-    [$"($g.index + 1)\) ($g.item.manager)", ($g.item.entries | each { |e| $e | split row '=' | last | split row ',' } | flatten | where { is-not-empty } | length | into string)]
-  })
-  let picked = (wutSelectRead ($here | length))
-  if $picked == null {
-    return
-  }
-  let chosen = ($picked | each { |i| $here | get ($i - 1) })
-
-  for g in $chosen {
+  for g in $here {
     opPrint $g.manager
     for entry in $g.entries {
       let parts = ($entry | split row '=')

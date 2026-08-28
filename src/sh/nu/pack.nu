@@ -172,7 +172,11 @@ def --env packRefreshAll [] {
 
 # the first manager here that really has it, in the order wut prefers
 def --env packFindFirst [name: string] {
-  for m in (packManagersHere) {
+  packFindFirstIn (packManagersHere) $name
+}
+
+def --env packFindFirstIn [managers: list<string>, name: string] {
+  for m in $managers {
     if (packExists $m $name) { return $m }
   }
   null
@@ -227,55 +231,60 @@ def packFindWinner [candidates: list] {
   $candidates | where { |c| packManagerHere $c.manager } | first 1 | get -o 0
 }
 
-def --env packFindRun [] {
+def --env packFindShow [] {
   let parsed = ($env.PACK_FIND? | default '{"groups":{},"remaining":[]}' | from json)
-  let remaining = ($parsed.remaining? | default [])
   let groups = (
     $parsed.groups | transpose label candidates
       | each { |g| { label: $g.label, winner: (packFindWinner $g.candidates) } }
       | where { |g| $g.winner != null }
   )
-  if ($groups | is-empty) and ($remaining | is-empty) {
+  if ($groups | is-empty) {
+    return
+  }
+  for m in ($groups | group-by { |g| $g.winner.manager } | transpose manager entries) {
+    opPrint $m.manager
+    for g in $m.entries {
+      opPrint $"  ($g.label)"
+      opPrint $"    ($g.winner.pkg)"
+    }
+  }
+}
+
+# a name no group claimed is only resolvable by asking managers, so that search is the one thing find gates
+def --env packFindSearch [] {
+  let parsed = ($env.PACK_FIND? | default '{"groups":{},"remaining":[]}' | from json)
+  let remaining = ($parsed.remaining? | default [])
+  if ($remaining | is-empty) {
+    return
+  }
+  let here = (packManagersHere)
+  if ($here | is-empty) {
+    opPrintWarn $"no manager installed to search for: ($remaining | str join ', ')"
     return
   }
 
-  let byManager = ($groups | group-by { |g| $g.winner.manager } | transpose manager entries)
-  let choices = ($byManager | each { |m| $m.manager }) ++ (if ($remaining | is-empty) { [] } else { ['?'] })
-  packTable ['manager' 'groups'] ($choices | enumerate | each { |c|
-    let count = if $c.item == '?' {
-      $remaining | length
-    } else {
-      $byManager | where manager == $c.item | get 0.entries | length
-    }
-    [$"($c.index + 1)\) ($c.item)", ($count | into string)]
-  })
-  let picked = (wutSelectRead ($choices | length))
+  opPrint '?'
+  opPrint $"  ($remaining | str join ', ')"
+  opPrint ''
+  packTable ['manager'] ($here | enumerate | each { |m| [$"($m.index + 1)\) ($m.item)"] })
+  let picked = (wutSelectRead ($here | length))
   if $picked == null {
     return
   }
-  let chosen = ($picked | each { |i| $choices | get ($i - 1) })
+  let chosen = ($picked | each { |i| $here | get ($i - 1) })
   $env.PACK_AGREED = '1'
 
-  for g in ($groups | where { |g| $g.winner.manager in $chosen }) {
-    opPrint $g.label
-    opPrint $"  ($g.winner.manager)"
-    opPrint $"    ($g.winner.pkg)"
-  }
-
-  if ($remaining | is-empty) or ('?' not-in $chosen) {
-    return
-  }
-  opPrint ''
   mut byManager = {}
   mut missing = []
   for name in $remaining {
-    let m = (packFindFirst $name)
+    let m = (packFindFirstIn $chosen $name)
     if $m == null {
       $missing = ($missing | append $name)
     } else {
       $byManager = ($byManager | upsert $m (($byManager | get -o $m | default []) | append $name))
     }
   }
+  opPrint ''
   for m in ($byManager | columns) {
     opPrint $m
     opPrint $"  (($byManager | get $m) | str join ', ')"
@@ -305,13 +314,58 @@ def --env packPlanRun [] {
       $detail = ($detail | append { manager: $path.manager, group: $unit.group, id: $path.id, names: $path.names })
     }
   }
+  let planned = $detail
 
   let fellThrough = ($units | each { |u| $u.name } | uniq | where { |n| $n not-in $served })
   let loose = ((packNameList 'PACK_ADD_NAMES') ++ (packNameList 'PACK_REMOVE_NAMES') ++ $fellThrough | uniq)
 
-  mut looseFor = {}
-  if ($loose | is-not-empty) {
+  let planManagers = ($planned | each { |d| $d.manager } | uniq)
+  if ($planManagers | is-empty) and ($loose | is-empty) {
+    opPrintWarn 'nothing to do'
+    return
+  }
+
+  if 'PACK_PRINTED' in $env {
+    opPrint ''
+  }
+  for m in $planManagers {
+    opPrint $m
+    for d in ($planned | where manager == $m) {
+      opPrint $"  ($d.group)"
+      opPrint $"    ($d.names | str join ', ')"
+    }
+  }
+
+  # '?' is the names no group claimed: which manager carries them is only known by asking, so it waits for the gate
+  let choices = $planManagers ++ (if ($loose | is-empty) { [] } else { ['?'] })
+  opPrint ''
+  packTable ['manager' 'packages'] ($choices | enumerate | each { |c|
+    let count = if $c.item == '?' {
+      $loose | length
+    } else {
+      $planned | where manager == $c.item | each { |d| $d.names } | flatten | length
+    }
+    [$"($c.index + 1)\) ($c.item)", ($count | into string)]
+  })
+  let picked = (wutSelectRead ($choices | length))
+  if $picked == null {
+    return
+  }
+  let chosen = ($picked | each { |i| $choices | get ($i - 1) })
+
+  # agreed once, up front: nothing below asks again
+  $env.PACK_AGREED = '1'
+  for d in ($planned | where { |d| $d.manager in $chosen }) {
+    try {
+      packRunUnit $d.id
+    } catch { |e|
+      packMarkFailed $d.id $e.msg
+    }
+  }
+
+  if ('?' in $chosen) and ($loose | is-not-empty) {
     packRefreshAll
+    mut looseFor = {}
     for name in $loose {
       let winner = (packFindFirst $name)
       if $winner == null {
@@ -320,57 +374,24 @@ def --env packPlanRun [] {
         $looseFor = ($looseFor | upsert $winner (($looseFor | get -o $winner | default []) | append $name))
       }
     }
-  }
-
-  let units = $detail
-  let looseNames = $looseFor
-  let unitManagers = ($units | each { |d| $d.manager })
-  let here = (packManagersHere | where { |m| ($m in $unitManagers) or ($m in ($looseNames | columns)) })
-  let managers = if 'script' in $unitManagers { ['script'] ++ $here } else { $here }
-  if ($managers | is-empty) {
-    packReport
-    return
-  }
-
-  if 'PACK_PRINTED' in $env {
-    opPrint ''
-  }
-  packTable ['manager' 'packages'] ($managers | enumerate | each { |m|
-    let owned = ($units | where manager == $m.item | each { |d| $d.names } | flatten)
-    let loose = ($looseNames | get -o $m.item | default [])
-    [$"($m.index + 1)\) ($m.item)", (($owned ++ $loose) | str join ', ')]
-  })
-  let picked = (wutSelectRead ($managers | length))
-  if $picked == null {
-    return
-  }
-  let chosen = ($picked | each { |i| $managers | get ($i - 1) })
-
-  # agreed once, up front: nothing below asks again
-  $env.PACK_AGREED = '1'
-  for d in ($units | where { |d| $d.manager in $chosen }) {
-    try {
-      packRunUnit $d.id
-    } catch { |e|
-      packMarkFailed $d.id $e.msg
-    }
-  }
-  for entry in ($looseNames | transpose manager names | where { |e| $e.manager in $chosen }) {
-    load-env {PACK_LOOSE_NAMES: $entry.names}
-    try {
-      packRunLoose $entry.manager
-    } catch { |e|
-      packMarkFailed ($entry.names | str join ', ') $e.msg
+    for entry in ($looseFor | transpose manager names) {
+      load-env {PACK_LOOSE_NAMES: $entry.names}
+      try {
+        packRunLoose $entry.manager
+      } catch { |e|
+        packMarkFailed ($entry.names | str join ', ') $e.msg
+      }
     }
   }
   packReport
 }
 
-# the manager-only plan: sync, tidy, list, outdated, info, and a named find all share it, since none of them
-# has a per-package decision to make — the only question is which managers this run touches
+# sync, tidy, list, outdated and info know nothing until a manager runs, so there is no detail to show first:
+# the only question is which managers this run touches
 def --env packManagerPlanRun [] {
   let here = (packManagersHere)
   if ($here | is-empty) {
+    opPrintWarn 'no manager installed'
     return
   }
 

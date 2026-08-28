@@ -15,11 +15,12 @@ own.
 
 ## Four ops, one that writes
 
-`find` and `sync` both plan — filter by `fileBinHere`, table, one question. `diff` and `list` take an explicit filter
-and print one line per pair, so there is no set to summarise. `sync` is the one that writes:
+`find` and `sync` both filter by `fileBinHere`. `find` prints what it matched and stops — it has nothing left to do once
+you answer. `diff` and `list` take an explicit filter and print one line per pair, so there is no set to summarise.
+`sync` is the one that writes, and the one that asks:
 
-- `filePlanShow` shows a row per tool with how many files and how many destination directories it accounts for, then
-  asks once
+- `filePlanShow` shows a numbered row per tool with how many files and how many destination directories it accounts for,
+  and the tools picked are the only ones written
 - a `maps` entry whose `in` is a directory expands to every file inside it, and the destination is cleared first —
   `rm --force --permanent --recursive` — so a removed source file does not survive in place
 - `permission` blocks are applied after the copy, as chmod on unix and ACL commands on windows (`getPlatAclPermCmds`)

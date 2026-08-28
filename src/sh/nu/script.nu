@@ -68,12 +68,12 @@ def scriptFindShow [] {
   if ($rows | is-empty) {
     return
   }
-  scriptTable ['action' 'tools'] ($rows | each { |r|
-    [($r | get 0), (($r | get 1 | split row ', ') | length | into string)]
-  })
-  if not (scriptPrompt 'use script') { return }
   for r in $rows {
     opPrint ($r | get 0)
     opPrint $"  ($r | get 1)"
   }
+  opPrint ''
+  scriptTable ['action' 'tools'] ($rows | each { |r|
+    [($r | get 0), (($r | get 1 | split row ', ') | length | into string)]
+  })
 }

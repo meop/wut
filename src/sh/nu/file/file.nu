@@ -50,24 +50,28 @@ def filePlanShow [] {
 
   let fileTools = ($pairs | each { |p| $p | split row '|' | get 0 })
   let dirTools = ($clearDirs | each { |d| $d | split row '|' | get 0 })
-  let rows = (($fileTools ++ $dirTools) | uniq | sort | each { |t|
+  let tools = (($fileTools ++ $dirTools) | uniq | sort)
+  fileTable ['tool' 'files' 'directories'] ($tools | enumerate | each { |t|
     [
-      $t,
-      ($fileTools | where { |x| $x == $t } | length | into string),
-      ($dirTools | where { |x| $x == $t } | length | into string),
+      $"($t.index + 1)\) ($t.item)",
+      ($fileTools | where { |x| $x == $t.item } | length | into string),
+      ($dirTools | where { |x| $x == $t.item } | length | into string),
     ]
   })
-  fileTable ['tool' 'files' 'directories'] $rows
+  let picked = (wutSelectRead ($tools | length))
+  if $picked == null {
+    return false
+  }
+  load-env {FILE_SYNC_TOOLS: ($picked | each { |i| $tools | get ($i - 1) })}
+  true
+}
 
-  filePrompt 'use file'
+def fileToolChosen [tool: string] {
+  let chosen = ($env.FILE_SYNC_TOOLS? | default [])
+  ($chosen | is-empty) or ($tool in $chosen)
 }
 
 def file [] {
-  if $env.FILE_OP == sync {
-    if not (filePlanShow) {
-      return
-    }
-  }
   match $env.FILE_OP {
     diff => {
       for pair in $env.FILE_DIFF_PATH_PAIRS {
@@ -113,17 +117,16 @@ def file [] {
           } }
       )
       if ($here | is-not-empty) {
+        for e in $here {
+          opPrint $e.bin
+          if ($e.ins | is-not-empty) {
+            opPrint $"  ($e.ins)"
+          }
+        }
+        opPrint ''
         fileTable ['tool' 'files'] ($here | each { |e|
           [$e.bin, ($e.ins | split row ', ' | where { is-not-empty } | length | into string)]
         })
-        if (filePrompt 'use file') {
-          for e in $here {
-            opPrint $e.bin
-            if ($e.ins | is-not-empty) {
-              opPrint $"  ($e.ins)"
-            }
-          }
-        }
       }
     }
     list => {
@@ -158,7 +161,7 @@ def file [] {
             break
           }
         }
-        if ($bin | is-empty) {
+        if ($bin | is-empty) or (not (fileToolChosen $dirParts.0)) {
           continue
         }
 
@@ -177,7 +180,7 @@ def file [] {
             break
           }
         }
-        if ($bin | is-empty) {
+        if ($bin | is-empty) or (not (fileToolChosen $pairParts.0)) {
           continue
         }
 

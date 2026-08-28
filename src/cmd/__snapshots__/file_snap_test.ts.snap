@@ -454,6 +454,49 @@ def --env wutNuSync [] {
 wutNuSync
 
 
+def wutSelectParse [choice: string, max: int] {
+  let trimmed = (\$choice | str trim)
+  if (\$trimmed | is-empty) {
+    return (1..\$max | each { |i| \$i })
+  }
+  mut picked = []
+  for part in (\$trimmed | split row --regex '[, ]+' | where { |p| \$p | is-not-empty }) {
+    let bounds = if (\$part | str contains '-') {
+      let halves = (\$part | split row '-')
+      if (\$halves | length) != 2 {
+        return null
+      }
+      [(try { \$halves | get 0 | into int } catch { null }), (try { \$halves | get 1 | into int } catch { null })]
+    } else {
+      let n = (try { \$part | into int } catch { null })
+      if \$n == 0 {
+        return null
+      }
+      [\$n, \$n]
+    }
+    let from = (\$bounds | get 0)
+    let to = (\$bounds | get 1)
+    if \$from == null or \$to == null or \$from < 1 or \$to > \$max or \$from > \$to {
+      return null
+    }
+    for i in \$from..\$to {
+      if \$i not-in \$picked {
+        \$picked = (\$picked | append \$i)
+      }
+    }
+  }
+  \$picked | sort
+}
+
+def wutSelectRead [max: int] {
+  if YES in \$env {
+    return (1..\$max | each { |i| \$i })
+  }
+  opPrint ''
+  wutSelectParse (input \$\\"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): \\") \$max
+}
+
+
 def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
@@ -506,24 +549,28 @@ def filePlanShow [] {
 
   let fileTools = (\$pairs | each { |p| \$p | split row '|' | get 0 })
   let dirTools = (\$clearDirs | each { |d| \$d | split row '|' | get 0 })
-  let rows = ((\$fileTools ++ \$dirTools) | uniq | sort | each { |t|
+  let tools = ((\$fileTools ++ \$dirTools) | uniq | sort)
+  fileTable ['tool' 'files' 'directories'] (\$tools | enumerate | each { |t|
     [
-      \$t,
-      (\$fileTools | where { |x| \$x == \$t } | length | into string),
-      (\$dirTools | where { |x| \$x == \$t } | length | into string),
+      \$\\"(\$t.index + 1)\\\\) (\$t.item)\\",
+      (\$fileTools | where { |x| \$x == \$t.item } | length | into string),
+      (\$dirTools | where { |x| \$x == \$t.item } | length | into string),
     ]
   })
-  fileTable ['tool' 'files' 'directories'] \$rows
+  let picked = (wutSelectRead (\$tools | length))
+  if \$picked == null {
+    return false
+  }
+  load-env {FILE_SYNC_TOOLS: (\$picked | each { |i| \$tools | get (\$i - 1) })}
+  true
+}
 
-  filePrompt 'use file'
+def fileToolChosen [tool: string] {
+  let chosen = (\$env.FILE_SYNC_TOOLS? | default [])
+  (\$chosen | is-empty) or (\$tool in \$chosen)
 }
 
 def file [] {
-  if \$env.FILE_OP == sync {
-    if not (filePlanShow) {
-      return
-    }
-  }
   match \$env.FILE_OP {
     diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
@@ -569,17 +616,16 @@ def file [] {
           } }
       )
       if (\$here | is-not-empty) {
+        for e in \$here {
+          opPrint \$e.bin
+          if (\$e.ins | is-not-empty) {
+            opPrint \$\\"  (\$e.ins)\\"
+          }
+        }
+        opPrint ''
         fileTable ['tool' 'files'] (\$here | each { |e|
           [\$e.bin, (\$e.ins | split row ', ' | where { is-not-empty } | length | into string)]
         })
-        if (filePrompt 'use file') {
-          for e in \$here {
-            opPrint \$e.bin
-            if (\$e.ins | is-not-empty) {
-              opPrint \$\\"  (\$e.ins)\\"
-            }
-          }
-        }
       }
     }
     list => {
@@ -614,7 +660,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$dirParts.0)) {
           continue
         }
 
@@ -633,7 +679,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$pairParts.0)) {
           continue
         }
 
@@ -954,6 +1000,49 @@ wutNuSync
 
 \$env.FILE_FIND_PARTS = r#'zsh'#
 
+def wutSelectParse [choice: string, max: int] {
+  let trimmed = (\$choice | str trim)
+  if (\$trimmed | is-empty) {
+    return (1..\$max | each { |i| \$i })
+  }
+  mut picked = []
+  for part in (\$trimmed | split row --regex '[, ]+' | where { |p| \$p | is-not-empty }) {
+    let bounds = if (\$part | str contains '-') {
+      let halves = (\$part | split row '-')
+      if (\$halves | length) != 2 {
+        return null
+      }
+      [(try { \$halves | get 0 | into int } catch { null }), (try { \$halves | get 1 | into int } catch { null })]
+    } else {
+      let n = (try { \$part | into int } catch { null })
+      if \$n == 0 {
+        return null
+      }
+      [\$n, \$n]
+    }
+    let from = (\$bounds | get 0)
+    let to = (\$bounds | get 1)
+    if \$from == null or \$to == null or \$from < 1 or \$to > \$max or \$from > \$to {
+      return null
+    }
+    for i in \$from..\$to {
+      if \$i not-in \$picked {
+        \$picked = (\$picked | append \$i)
+      }
+    }
+  }
+  \$picked | sort
+}
+
+def wutSelectRead [max: int] {
+  if YES in \$env {
+    return (1..\$max | each { |i| \$i })
+  }
+  opPrint ''
+  wutSelectParse (input \$\\"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): \\") \$max
+}
+
+
 def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
@@ -1006,24 +1095,28 @@ def filePlanShow [] {
 
   let fileTools = (\$pairs | each { |p| \$p | split row '|' | get 0 })
   let dirTools = (\$clearDirs | each { |d| \$d | split row '|' | get 0 })
-  let rows = ((\$fileTools ++ \$dirTools) | uniq | sort | each { |t|
+  let tools = ((\$fileTools ++ \$dirTools) | uniq | sort)
+  fileTable ['tool' 'files' 'directories'] (\$tools | enumerate | each { |t|
     [
-      \$t,
-      (\$fileTools | where { |x| \$x == \$t } | length | into string),
-      (\$dirTools | where { |x| \$x == \$t } | length | into string),
+      \$\\"(\$t.index + 1)\\\\) (\$t.item)\\",
+      (\$fileTools | where { |x| \$x == \$t.item } | length | into string),
+      (\$dirTools | where { |x| \$x == \$t.item } | length | into string),
     ]
   })
-  fileTable ['tool' 'files' 'directories'] \$rows
+  let picked = (wutSelectRead (\$tools | length))
+  if \$picked == null {
+    return false
+  }
+  load-env {FILE_SYNC_TOOLS: (\$picked | each { |i| \$tools | get (\$i - 1) })}
+  true
+}
 
-  filePrompt 'use file'
+def fileToolChosen [tool: string] {
+  let chosen = (\$env.FILE_SYNC_TOOLS? | default [])
+  (\$chosen | is-empty) or (\$tool in \$chosen)
 }
 
 def file [] {
-  if \$env.FILE_OP == sync {
-    if not (filePlanShow) {
-      return
-    }
-  }
   match \$env.FILE_OP {
     diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
@@ -1069,17 +1162,16 @@ def file [] {
           } }
       )
       if (\$here | is-not-empty) {
+        for e in \$here {
+          opPrint \$e.bin
+          if (\$e.ins | is-not-empty) {
+            opPrint \$\\"  (\$e.ins)\\"
+          }
+        }
+        opPrint ''
         fileTable ['tool' 'files'] (\$here | each { |e|
           [\$e.bin, (\$e.ins | split row ', ' | where { is-not-empty } | length | into string)]
         })
-        if (filePrompt 'use file') {
-          for e in \$here {
-            opPrint \$e.bin
-            if (\$e.ins | is-not-empty) {
-              opPrint \$\\"  (\$e.ins)\\"
-            }
-          }
-        }
       }
     }
     list => {
@@ -1114,7 +1206,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$dirParts.0)) {
           continue
         }
 
@@ -1133,7 +1225,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$pairParts.0)) {
           continue
         }
 
@@ -1454,6 +1546,49 @@ wutNuSync
 
 \$env.FILE_SYNC_PARTS = r#'zsh'#
 
+def wutSelectParse [choice: string, max: int] {
+  let trimmed = (\$choice | str trim)
+  if (\$trimmed | is-empty) {
+    return (1..\$max | each { |i| \$i })
+  }
+  mut picked = []
+  for part in (\$trimmed | split row --regex '[, ]+' | where { |p| \$p | is-not-empty }) {
+    let bounds = if (\$part | str contains '-') {
+      let halves = (\$part | split row '-')
+      if (\$halves | length) != 2 {
+        return null
+      }
+      [(try { \$halves | get 0 | into int } catch { null }), (try { \$halves | get 1 | into int } catch { null })]
+    } else {
+      let n = (try { \$part | into int } catch { null })
+      if \$n == 0 {
+        return null
+      }
+      [\$n, \$n]
+    }
+    let from = (\$bounds | get 0)
+    let to = (\$bounds | get 1)
+    if \$from == null or \$to == null or \$from < 1 or \$to > \$max or \$from > \$to {
+      return null
+    }
+    for i in \$from..\$to {
+      if \$i not-in \$picked {
+        \$picked = (\$picked | append \$i)
+      }
+    }
+  }
+  \$picked | sort
+}
+
+def wutSelectRead [max: int] {
+  if YES in \$env {
+    return (1..\$max | each { |i| \$i })
+  }
+  opPrint ''
+  wutSelectParse (input \$\\"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): \\") \$max
+}
+
+
 def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
@@ -1506,24 +1641,28 @@ def filePlanShow [] {
 
   let fileTools = (\$pairs | each { |p| \$p | split row '|' | get 0 })
   let dirTools = (\$clearDirs | each { |d| \$d | split row '|' | get 0 })
-  let rows = ((\$fileTools ++ \$dirTools) | uniq | sort | each { |t|
+  let tools = ((\$fileTools ++ \$dirTools) | uniq | sort)
+  fileTable ['tool' 'files' 'directories'] (\$tools | enumerate | each { |t|
     [
-      \$t,
-      (\$fileTools | where { |x| \$x == \$t } | length | into string),
-      (\$dirTools | where { |x| \$x == \$t } | length | into string),
+      \$\\"(\$t.index + 1)\\\\) (\$t.item)\\",
+      (\$fileTools | where { |x| \$x == \$t.item } | length | into string),
+      (\$dirTools | where { |x| \$x == \$t.item } | length | into string),
     ]
   })
-  fileTable ['tool' 'files' 'directories'] \$rows
+  let picked = (wutSelectRead (\$tools | length))
+  if \$picked == null {
+    return false
+  }
+  load-env {FILE_SYNC_TOOLS: (\$picked | each { |i| \$tools | get (\$i - 1) })}
+  true
+}
 
-  filePrompt 'use file'
+def fileToolChosen [tool: string] {
+  let chosen = (\$env.FILE_SYNC_TOOLS? | default [])
+  (\$chosen | is-empty) or (\$tool in \$chosen)
 }
 
 def file [] {
-  if \$env.FILE_OP == sync {
-    if not (filePlanShow) {
-      return
-    }
-  }
   match \$env.FILE_OP {
     diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
@@ -1569,17 +1708,16 @@ def file [] {
           } }
       )
       if (\$here | is-not-empty) {
+        for e in \$here {
+          opPrint \$e.bin
+          if (\$e.ins | is-not-empty) {
+            opPrint \$\\"  (\$e.ins)\\"
+          }
+        }
+        opPrint ''
         fileTable ['tool' 'files'] (\$here | each { |e|
           [\$e.bin, (\$e.ins | split row ', ' | where { is-not-empty } | length | into string)]
         })
-        if (filePrompt 'use file') {
-          for e in \$here {
-            opPrint \$e.bin
-            if (\$e.ins | is-not-empty) {
-              opPrint \$\\"  (\$e.ins)\\"
-            }
-          }
-        }
       }
     }
     list => {
@@ -1614,7 +1752,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$dirParts.0)) {
           continue
         }
 
@@ -1633,7 +1771,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$pairParts.0)) {
           continue
         }
 
@@ -1678,6 +1816,9 @@ def file [] {
 
 \$env.FILE_OP = r#'sync'#
 
+if not (filePlanShow) {
+  return
+}
 file
 "
 `;
@@ -1956,6 +2097,49 @@ wutNuSync
 
 \$env.FILE_SYNC_PARTS = r#'nu'#
 
+def wutSelectParse [choice: string, max: int] {
+  let trimmed = (\$choice | str trim)
+  if (\$trimmed | is-empty) {
+    return (1..\$max | each { |i| \$i })
+  }
+  mut picked = []
+  for part in (\$trimmed | split row --regex '[, ]+' | where { |p| \$p | is-not-empty }) {
+    let bounds = if (\$part | str contains '-') {
+      let halves = (\$part | split row '-')
+      if (\$halves | length) != 2 {
+        return null
+      }
+      [(try { \$halves | get 0 | into int } catch { null }), (try { \$halves | get 1 | into int } catch { null })]
+    } else {
+      let n = (try { \$part | into int } catch { null })
+      if \$n == 0 {
+        return null
+      }
+      [\$n, \$n]
+    }
+    let from = (\$bounds | get 0)
+    let to = (\$bounds | get 1)
+    if \$from == null or \$to == null or \$from < 1 or \$to > \$max or \$from > \$to {
+      return null
+    }
+    for i in \$from..\$to {
+      if \$i not-in \$picked {
+        \$picked = (\$picked | append \$i)
+      }
+    }
+  }
+  \$picked | sort
+}
+
+def wutSelectRead [max: int] {
+  if YES in \$env {
+    return (1..\$max | each { |i| \$i })
+  }
+  opPrint ''
+  wutSelectParse (input \$\\"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): \\") \$max
+}
+
+
 def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
@@ -2008,24 +2192,28 @@ def filePlanShow [] {
 
   let fileTools = (\$pairs | each { |p| \$p | split row '|' | get 0 })
   let dirTools = (\$clearDirs | each { |d| \$d | split row '|' | get 0 })
-  let rows = ((\$fileTools ++ \$dirTools) | uniq | sort | each { |t|
+  let tools = ((\$fileTools ++ \$dirTools) | uniq | sort)
+  fileTable ['tool' 'files' 'directories'] (\$tools | enumerate | each { |t|
     [
-      \$t,
-      (\$fileTools | where { |x| \$x == \$t } | length | into string),
-      (\$dirTools | where { |x| \$x == \$t } | length | into string),
+      \$\\"(\$t.index + 1)\\\\) (\$t.item)\\",
+      (\$fileTools | where { |x| \$x == \$t.item } | length | into string),
+      (\$dirTools | where { |x| \$x == \$t.item } | length | into string),
     ]
   })
-  fileTable ['tool' 'files' 'directories'] \$rows
+  let picked = (wutSelectRead (\$tools | length))
+  if \$picked == null {
+    return false
+  }
+  load-env {FILE_SYNC_TOOLS: (\$picked | each { |i| \$tools | get (\$i - 1) })}
+  true
+}
 
-  filePrompt 'use file'
+def fileToolChosen [tool: string] {
+  let chosen = (\$env.FILE_SYNC_TOOLS? | default [])
+  (\$chosen | is-empty) or (\$tool in \$chosen)
 }
 
 def file [] {
-  if \$env.FILE_OP == sync {
-    if not (filePlanShow) {
-      return
-    }
-  }
   match \$env.FILE_OP {
     diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
@@ -2071,17 +2259,16 @@ def file [] {
           } }
       )
       if (\$here | is-not-empty) {
+        for e in \$here {
+          opPrint \$e.bin
+          if (\$e.ins | is-not-empty) {
+            opPrint \$\\"  (\$e.ins)\\"
+          }
+        }
+        opPrint ''
         fileTable ['tool' 'files'] (\$here | each { |e|
           [\$e.bin, (\$e.ins | split row ', ' | where { is-not-empty } | length | into string)]
         })
-        if (filePrompt 'use file') {
-          for e in \$here {
-            opPrint \$e.bin
-            if (\$e.ins | is-not-empty) {
-              opPrint \$\\"  (\$e.ins)\\"
-            }
-          }
-        }
       }
     }
     list => {
@@ -2116,7 +2303,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$dirParts.0)) {
           continue
         }
 
@@ -2135,7 +2322,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$pairParts.0)) {
           continue
         }
 
@@ -2180,6 +2367,9 @@ def file [] {
 
 \$env.FILE_OP = r#'sync'#
 
+if not (filePlanShow) {
+  return
+}
 file
 "
 `;
@@ -2458,6 +2648,49 @@ wutNuSync
 
 \$env.FILE_SYNC_PARTS = r#'ssh'#
 
+def wutSelectParse [choice: string, max: int] {
+  let trimmed = (\$choice | str trim)
+  if (\$trimmed | is-empty) {
+    return (1..\$max | each { |i| \$i })
+  }
+  mut picked = []
+  for part in (\$trimmed | split row --regex '[, ]+' | where { |p| \$p | is-not-empty }) {
+    let bounds = if (\$part | str contains '-') {
+      let halves = (\$part | split row '-')
+      if (\$halves | length) != 2 {
+        return null
+      }
+      [(try { \$halves | get 0 | into int } catch { null }), (try { \$halves | get 1 | into int } catch { null })]
+    } else {
+      let n = (try { \$part | into int } catch { null })
+      if \$n == 0 {
+        return null
+      }
+      [\$n, \$n]
+    }
+    let from = (\$bounds | get 0)
+    let to = (\$bounds | get 1)
+    if \$from == null or \$to == null or \$from < 1 or \$to > \$max or \$from > \$to {
+      return null
+    }
+    for i in \$from..\$to {
+      if \$i not-in \$picked {
+        \$picked = (\$picked | append \$i)
+      }
+    }
+  }
+  \$picked | sort
+}
+
+def wutSelectRead [max: int] {
+  if YES in \$env {
+    return (1..\$max | each { |i| \$i })
+  }
+  opPrint ''
+  wutSelectParse (input \$\\"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): \\") \$max
+}
+
+
 def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
@@ -2510,24 +2743,28 @@ def filePlanShow [] {
 
   let fileTools = (\$pairs | each { |p| \$p | split row '|' | get 0 })
   let dirTools = (\$clearDirs | each { |d| \$d | split row '|' | get 0 })
-  let rows = ((\$fileTools ++ \$dirTools) | uniq | sort | each { |t|
+  let tools = ((\$fileTools ++ \$dirTools) | uniq | sort)
+  fileTable ['tool' 'files' 'directories'] (\$tools | enumerate | each { |t|
     [
-      \$t,
-      (\$fileTools | where { |x| \$x == \$t } | length | into string),
-      (\$dirTools | where { |x| \$x == \$t } | length | into string),
+      \$\\"(\$t.index + 1)\\\\) (\$t.item)\\",
+      (\$fileTools | where { |x| \$x == \$t.item } | length | into string),
+      (\$dirTools | where { |x| \$x == \$t.item } | length | into string),
     ]
   })
-  fileTable ['tool' 'files' 'directories'] \$rows
+  let picked = (wutSelectRead (\$tools | length))
+  if \$picked == null {
+    return false
+  }
+  load-env {FILE_SYNC_TOOLS: (\$picked | each { |i| \$tools | get (\$i - 1) })}
+  true
+}
 
-  filePrompt 'use file'
+def fileToolChosen [tool: string] {
+  let chosen = (\$env.FILE_SYNC_TOOLS? | default [])
+  (\$chosen | is-empty) or (\$tool in \$chosen)
 }
 
 def file [] {
-  if \$env.FILE_OP == sync {
-    if not (filePlanShow) {
-      return
-    }
-  }
   match \$env.FILE_OP {
     diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
@@ -2573,17 +2810,16 @@ def file [] {
           } }
       )
       if (\$here | is-not-empty) {
+        for e in \$here {
+          opPrint \$e.bin
+          if (\$e.ins | is-not-empty) {
+            opPrint \$\\"  (\$e.ins)\\"
+          }
+        }
+        opPrint ''
         fileTable ['tool' 'files'] (\$here | each { |e|
           [\$e.bin, (\$e.ins | split row ', ' | where { is-not-empty } | length | into string)]
         })
-        if (filePrompt 'use file') {
-          for e in \$here {
-            opPrint \$e.bin
-            if (\$e.ins | is-not-empty) {
-              opPrint \$\\"  (\$e.ins)\\"
-            }
-          }
-        }
       }
     }
     list => {
@@ -2618,7 +2854,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$dirParts.0)) {
           continue
         }
 
@@ -2637,7 +2873,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$pairParts.0)) {
           continue
         }
 
@@ -2682,6 +2918,9 @@ def file [] {
 
 \$env.FILE_OP = r#'sync'#
 
+if not (filePlanShow) {
+  return
+}
 file
 "
 `;
@@ -2960,6 +3199,49 @@ wutNuSync
 
 \$env.FILE_DIFF_PARTS = r#'zsh'#
 
+def wutSelectParse [choice: string, max: int] {
+  let trimmed = (\$choice | str trim)
+  if (\$trimmed | is-empty) {
+    return (1..\$max | each { |i| \$i })
+  }
+  mut picked = []
+  for part in (\$trimmed | split row --regex '[, ]+' | where { |p| \$p | is-not-empty }) {
+    let bounds = if (\$part | str contains '-') {
+      let halves = (\$part | split row '-')
+      if (\$halves | length) != 2 {
+        return null
+      }
+      [(try { \$halves | get 0 | into int } catch { null }), (try { \$halves | get 1 | into int } catch { null })]
+    } else {
+      let n = (try { \$part | into int } catch { null })
+      if \$n == 0 {
+        return null
+      }
+      [\$n, \$n]
+    }
+    let from = (\$bounds | get 0)
+    let to = (\$bounds | get 1)
+    if \$from == null or \$to == null or \$from < 1 or \$to > \$max or \$from > \$to {
+      return null
+    }
+    for i in \$from..\$to {
+      if \$i not-in \$picked {
+        \$picked = (\$picked | append \$i)
+      }
+    }
+  }
+  \$picked | sort
+}
+
+def wutSelectRead [max: int] {
+  if YES in \$env {
+    return (1..\$max | each { |i| \$i })
+  }
+  opPrint ''
+  wutSelectParse (input \$\\"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): \\") \$max
+}
+
+
 def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
@@ -3012,24 +3294,28 @@ def filePlanShow [] {
 
   let fileTools = (\$pairs | each { |p| \$p | split row '|' | get 0 })
   let dirTools = (\$clearDirs | each { |d| \$d | split row '|' | get 0 })
-  let rows = ((\$fileTools ++ \$dirTools) | uniq | sort | each { |t|
+  let tools = ((\$fileTools ++ \$dirTools) | uniq | sort)
+  fileTable ['tool' 'files' 'directories'] (\$tools | enumerate | each { |t|
     [
-      \$t,
-      (\$fileTools | where { |x| \$x == \$t } | length | into string),
-      (\$dirTools | where { |x| \$x == \$t } | length | into string),
+      \$\\"(\$t.index + 1)\\\\) (\$t.item)\\",
+      (\$fileTools | where { |x| \$x == \$t.item } | length | into string),
+      (\$dirTools | where { |x| \$x == \$t.item } | length | into string),
     ]
   })
-  fileTable ['tool' 'files' 'directories'] \$rows
+  let picked = (wutSelectRead (\$tools | length))
+  if \$picked == null {
+    return false
+  }
+  load-env {FILE_SYNC_TOOLS: (\$picked | each { |i| \$tools | get (\$i - 1) })}
+  true
+}
 
-  filePrompt 'use file'
+def fileToolChosen [tool: string] {
+  let chosen = (\$env.FILE_SYNC_TOOLS? | default [])
+  (\$chosen | is-empty) or (\$tool in \$chosen)
 }
 
 def file [] {
-  if \$env.FILE_OP == sync {
-    if not (filePlanShow) {
-      return
-    }
-  }
   match \$env.FILE_OP {
     diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
@@ -3075,17 +3361,16 @@ def file [] {
           } }
       )
       if (\$here | is-not-empty) {
+        for e in \$here {
+          opPrint \$e.bin
+          if (\$e.ins | is-not-empty) {
+            opPrint \$\\"  (\$e.ins)\\"
+          }
+        }
+        opPrint ''
         fileTable ['tool' 'files'] (\$here | each { |e|
           [\$e.bin, (\$e.ins | split row ', ' | where { is-not-empty } | length | into string)]
         })
-        if (filePrompt 'use file') {
-          for e in \$here {
-            opPrint \$e.bin
-            if (\$e.ins | is-not-empty) {
-              opPrint \$\\"  (\$e.ins)\\"
-            }
-          }
-        }
       }
     }
     list => {
@@ -3120,7 +3405,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$dirParts.0)) {
           continue
         }
 
@@ -3139,7 +3424,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$pairParts.0)) {
           continue
         }
 
@@ -3460,6 +3745,49 @@ wutNuSync
 
 \$env.FILE_LIST_PARTS = r#'zsh'#
 
+def wutSelectParse [choice: string, max: int] {
+  let trimmed = (\$choice | str trim)
+  if (\$trimmed | is-empty) {
+    return (1..\$max | each { |i| \$i })
+  }
+  mut picked = []
+  for part in (\$trimmed | split row --regex '[, ]+' | where { |p| \$p | is-not-empty }) {
+    let bounds = if (\$part | str contains '-') {
+      let halves = (\$part | split row '-')
+      if (\$halves | length) != 2 {
+        return null
+      }
+      [(try { \$halves | get 0 | into int } catch { null }), (try { \$halves | get 1 | into int } catch { null })]
+    } else {
+      let n = (try { \$part | into int } catch { null })
+      if \$n == 0 {
+        return null
+      }
+      [\$n, \$n]
+    }
+    let from = (\$bounds | get 0)
+    let to = (\$bounds | get 1)
+    if \$from == null or \$to == null or \$from < 1 or \$to > \$max or \$from > \$to {
+      return null
+    }
+    for i in \$from..\$to {
+      if \$i not-in \$picked {
+        \$picked = (\$picked | append \$i)
+      }
+    }
+  }
+  \$picked | sort
+}
+
+def wutSelectRead [max: int] {
+  if YES in \$env {
+    return (1..\$max | each { |i| \$i })
+  }
+  opPrint ''
+  wutSelectParse (input \$\\"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): \\") \$max
+}
+
+
 def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
@@ -3512,24 +3840,28 @@ def filePlanShow [] {
 
   let fileTools = (\$pairs | each { |p| \$p | split row '|' | get 0 })
   let dirTools = (\$clearDirs | each { |d| \$d | split row '|' | get 0 })
-  let rows = ((\$fileTools ++ \$dirTools) | uniq | sort | each { |t|
+  let tools = ((\$fileTools ++ \$dirTools) | uniq | sort)
+  fileTable ['tool' 'files' 'directories'] (\$tools | enumerate | each { |t|
     [
-      \$t,
-      (\$fileTools | where { |x| \$x == \$t } | length | into string),
-      (\$dirTools | where { |x| \$x == \$t } | length | into string),
+      \$\\"(\$t.index + 1)\\\\) (\$t.item)\\",
+      (\$fileTools | where { |x| \$x == \$t.item } | length | into string),
+      (\$dirTools | where { |x| \$x == \$t.item } | length | into string),
     ]
   })
-  fileTable ['tool' 'files' 'directories'] \$rows
+  let picked = (wutSelectRead (\$tools | length))
+  if \$picked == null {
+    return false
+  }
+  load-env {FILE_SYNC_TOOLS: (\$picked | each { |i| \$tools | get (\$i - 1) })}
+  true
+}
 
-  filePrompt 'use file'
+def fileToolChosen [tool: string] {
+  let chosen = (\$env.FILE_SYNC_TOOLS? | default [])
+  (\$chosen | is-empty) or (\$tool in \$chosen)
 }
 
 def file [] {
-  if \$env.FILE_OP == sync {
-    if not (filePlanShow) {
-      return
-    }
-  }
   match \$env.FILE_OP {
     diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
@@ -3575,17 +3907,16 @@ def file [] {
           } }
       )
       if (\$here | is-not-empty) {
+        for e in \$here {
+          opPrint \$e.bin
+          if (\$e.ins | is-not-empty) {
+            opPrint \$\\"  (\$e.ins)\\"
+          }
+        }
+        opPrint ''
         fileTable ['tool' 'files'] (\$here | each { |e|
           [\$e.bin, (\$e.ins | split row ', ' | where { is-not-empty } | length | into string)]
         })
-        if (filePrompt 'use file') {
-          for e in \$here {
-            opPrint \$e.bin
-            if (\$e.ins | is-not-empty) {
-              opPrint \$\\"  (\$e.ins)\\"
-            }
-          }
-        }
       }
     }
     list => {
@@ -3620,7 +3951,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$dirParts.0)) {
           continue
         }
 
@@ -3639,7 +3970,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$pairParts.0)) {
           continue
         }
 
@@ -4238,6 +4569,49 @@ wutNuSync
 
 \$env.FILE_FIND_PARTS = r#'nushell'#
 
+def wutSelectParse [choice: string, max: int] {
+  let trimmed = (\$choice | str trim)
+  if (\$trimmed | is-empty) {
+    return (1..\$max | each { |i| \$i })
+  }
+  mut picked = []
+  for part in (\$trimmed | split row --regex '[, ]+' | where { |p| \$p | is-not-empty }) {
+    let bounds = if (\$part | str contains '-') {
+      let halves = (\$part | split row '-')
+      if (\$halves | length) != 2 {
+        return null
+      }
+      [(try { \$halves | get 0 | into int } catch { null }), (try { \$halves | get 1 | into int } catch { null })]
+    } else {
+      let n = (try { \$part | into int } catch { null })
+      if \$n == 0 {
+        return null
+      }
+      [\$n, \$n]
+    }
+    let from = (\$bounds | get 0)
+    let to = (\$bounds | get 1)
+    if \$from == null or \$to == null or \$from < 1 or \$to > \$max or \$from > \$to {
+      return null
+    }
+    for i in \$from..\$to {
+      if \$i not-in \$picked {
+        \$picked = (\$picked | append \$i)
+      }
+    }
+  }
+  \$picked | sort
+}
+
+def wutSelectRead [max: int] {
+  if YES in \$env {
+    return (1..\$max | each { |i| \$i })
+  }
+  opPrint ''
+  wutSelectParse (input \$\\"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): \\") \$max
+}
+
+
 def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
@@ -4290,24 +4664,28 @@ def filePlanShow [] {
 
   let fileTools = (\$pairs | each { |p| \$p | split row '|' | get 0 })
   let dirTools = (\$clearDirs | each { |d| \$d | split row '|' | get 0 })
-  let rows = ((\$fileTools ++ \$dirTools) | uniq | sort | each { |t|
+  let tools = ((\$fileTools ++ \$dirTools) | uniq | sort)
+  fileTable ['tool' 'files' 'directories'] (\$tools | enumerate | each { |t|
     [
-      \$t,
-      (\$fileTools | where { |x| \$x == \$t } | length | into string),
-      (\$dirTools | where { |x| \$x == \$t } | length | into string),
+      \$\\"(\$t.index + 1)\\\\) (\$t.item)\\",
+      (\$fileTools | where { |x| \$x == \$t.item } | length | into string),
+      (\$dirTools | where { |x| \$x == \$t.item } | length | into string),
     ]
   })
-  fileTable ['tool' 'files' 'directories'] \$rows
+  let picked = (wutSelectRead (\$tools | length))
+  if \$picked == null {
+    return false
+  }
+  load-env {FILE_SYNC_TOOLS: (\$picked | each { |i| \$tools | get (\$i - 1) })}
+  true
+}
 
-  filePrompt 'use file'
+def fileToolChosen [tool: string] {
+  let chosen = (\$env.FILE_SYNC_TOOLS? | default [])
+  (\$chosen | is-empty) or (\$tool in \$chosen)
 }
 
 def file [] {
-  if \$env.FILE_OP == sync {
-    if not (filePlanShow) {
-      return
-    }
-  }
   match \$env.FILE_OP {
     diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
@@ -4353,17 +4731,16 @@ def file [] {
           } }
       )
       if (\$here | is-not-empty) {
+        for e in \$here {
+          opPrint \$e.bin
+          if (\$e.ins | is-not-empty) {
+            opPrint \$\\"  (\$e.ins)\\"
+          }
+        }
+        opPrint ''
         fileTable ['tool' 'files'] (\$here | each { |e|
           [\$e.bin, (\$e.ins | split row ', ' | where { is-not-empty } | length | into string)]
         })
-        if (filePrompt 'use file') {
-          for e in \$here {
-            opPrint \$e.bin
-            if (\$e.ins | is-not-empty) {
-              opPrint \$\\"  (\$e.ins)\\"
-            }
-          }
-        }
       }
     }
     list => {
@@ -4398,7 +4775,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$dirParts.0)) {
           continue
         }
 
@@ -4417,7 +4794,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$pairParts.0)) {
           continue
         }
 
@@ -4738,6 +5115,49 @@ wutNuSync
 
 \$env.FILE_FIND_PARTS = r#'gitconfig'#
 
+def wutSelectParse [choice: string, max: int] {
+  let trimmed = (\$choice | str trim)
+  if (\$trimmed | is-empty) {
+    return (1..\$max | each { |i| \$i })
+  }
+  mut picked = []
+  for part in (\$trimmed | split row --regex '[, ]+' | where { |p| \$p | is-not-empty }) {
+    let bounds = if (\$part | str contains '-') {
+      let halves = (\$part | split row '-')
+      if (\$halves | length) != 2 {
+        return null
+      }
+      [(try { \$halves | get 0 | into int } catch { null }), (try { \$halves | get 1 | into int } catch { null })]
+    } else {
+      let n = (try { \$part | into int } catch { null })
+      if \$n == 0 {
+        return null
+      }
+      [\$n, \$n]
+    }
+    let from = (\$bounds | get 0)
+    let to = (\$bounds | get 1)
+    if \$from == null or \$to == null or \$from < 1 or \$to > \$max or \$from > \$to {
+      return null
+    }
+    for i in \$from..\$to {
+      if \$i not-in \$picked {
+        \$picked = (\$picked | append \$i)
+      }
+    }
+  }
+  \$picked | sort
+}
+
+def wutSelectRead [max: int] {
+  if YES in \$env {
+    return (1..\$max | each { |i| \$i })
+  }
+  opPrint ''
+  wutSelectParse (input \$\\"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): \\") \$max
+}
+
+
 def replaceEnv [line] {
   mut l = \$line
   if (\$l | str contains '{') {
@@ -4790,24 +5210,28 @@ def filePlanShow [] {
 
   let fileTools = (\$pairs | each { |p| \$p | split row '|' | get 0 })
   let dirTools = (\$clearDirs | each { |d| \$d | split row '|' | get 0 })
-  let rows = ((\$fileTools ++ \$dirTools) | uniq | sort | each { |t|
+  let tools = ((\$fileTools ++ \$dirTools) | uniq | sort)
+  fileTable ['tool' 'files' 'directories'] (\$tools | enumerate | each { |t|
     [
-      \$t,
-      (\$fileTools | where { |x| \$x == \$t } | length | into string),
-      (\$dirTools | where { |x| \$x == \$t } | length | into string),
+      \$\\"(\$t.index + 1)\\\\) (\$t.item)\\",
+      (\$fileTools | where { |x| \$x == \$t.item } | length | into string),
+      (\$dirTools | where { |x| \$x == \$t.item } | length | into string),
     ]
   })
-  fileTable ['tool' 'files' 'directories'] \$rows
+  let picked = (wutSelectRead (\$tools | length))
+  if \$picked == null {
+    return false
+  }
+  load-env {FILE_SYNC_TOOLS: (\$picked | each { |i| \$tools | get (\$i - 1) })}
+  true
+}
 
-  filePrompt 'use file'
+def fileToolChosen [tool: string] {
+  let chosen = (\$env.FILE_SYNC_TOOLS? | default [])
+  (\$chosen | is-empty) or (\$tool in \$chosen)
 }
 
 def file [] {
-  if \$env.FILE_OP == sync {
-    if not (filePlanShow) {
-      return
-    }
-  }
   match \$env.FILE_OP {
     diff => {
       for pair in \$env.FILE_DIFF_PATH_PAIRS {
@@ -4853,17 +5277,16 @@ def file [] {
           } }
       )
       if (\$here | is-not-empty) {
+        for e in \$here {
+          opPrint \$e.bin
+          if (\$e.ins | is-not-empty) {
+            opPrint \$\\"  (\$e.ins)\\"
+          }
+        }
+        opPrint ''
         fileTable ['tool' 'files'] (\$here | each { |e|
           [\$e.bin, (\$e.ins | split row ', ' | where { is-not-empty } | length | into string)]
         })
-        if (filePrompt 'use file') {
-          for e in \$here {
-            opPrint \$e.bin
-            if (\$e.ins | is-not-empty) {
-              opPrint \$\\"  (\$e.ins)\\"
-            }
-          }
-        }
       }
     }
     list => {
@@ -4898,7 +5321,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$dirParts.0)) {
           continue
         }
 
@@ -4917,7 +5340,7 @@ def file [] {
             break
           }
         }
-        if (\$bin | is-empty) {
+        if (\$bin | is-empty) or (not (fileToolChosen \$pairParts.0)) {
           continue
         }
 

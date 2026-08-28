@@ -339,7 +339,8 @@ function printGroups(shell: Sh, entries: Array<FindEntry>, remaining: Array<stri
   const groups = Object.fromEntries(entries.map((e) => [e.label, e.candidates]))
   return shell
     .with(shell.varSetStr(PACK_FIND_KEY, JSON.stringify({ groups, remaining })))
-    .with(['packFindRun'])
+    .with(entries.length ? ['packFindShow'] : [])
+    .with(remaining.length ? ['packFindSearch'] : [])
 }
 
 function setOpNames(shell: Sh, op: string, names: Array<string>) {

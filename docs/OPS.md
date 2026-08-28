@@ -44,30 +44,37 @@ everything.
 The plan travels as data and the bodies behind it as generated code — `PACK_PLAN` with `packRunUnit`, `VIRT_PLAN` with
 `virtPlanRun` — so code stays code and the plan stays data.
 
-## Every op asks, exactly once
+## An op asks when work follows the answer
 
-There is no read-only exemption. `find` asks too, because the point of the question is not "may I change something" — it
-is _here is what I found on this machine, shall I go on_. Skipping it for the print-only ops is what let `virt find`
-list managers it had never checked for.
+Every op shows what it knows first. Whether it then asks is not about whether it writes — it is about whether anything
+is left to do once you answer:
 
-| Op                                          | Table                    | Then                         |
+| Op                                          | Shows                    | Then asks about              |
 | ------------------------------------------- | ------------------------ | ---------------------------- |
-| `pack find`                                 | manager, groups (+ `?`)  | the dump, remaining resolved |
-| `pack add`/`remove`                         | group, manager, packages | installs                     |
-| `pack list`/`outdated`/`sync`/`info`/`tidy` | manager                  | each manager's turn          |
-| `virt find`                                 | manager, instance count  | the instance listing         |
-| `virt add`/`rem`/`list`/`run`/`sync`/`tidy` | manager, instances       | each manager's turn          |
-| `file find`                                 | tool, file count         | the tool listing             |
-| `file sync`                                 | tool, files, directories | writes and clears            |
-| `script find`                               | action, tool count       | the action listing           |
-| `script exec`                               | action, tool, shell      | the scripts                  |
+| `pack add`/`remove`                         | manager, group, packages | installing them, and `?`     |
+| `pack list`/`outdated`/`info`/`sync`/`tidy` | nothing yet              | which managers to run        |
+| `virt add`/`rem`/`list`/`run`/`sync`/`tidy` | manager, instances       | which managers to run        |
+| `file sync`                                 | tool, files, directories | which tools to write         |
+| `script exec`                               | action, tool, shell      | running them                 |
+| `pack find`                                 | the groups it matched    | searching for what it cannot |
+| `virt find`, `file find`, `script find`     | everything               | — nothing left, so no prompt |
 
-`src/cmd/prompt_test.ts` holds this: it asserts that every op reaches a prompt, that each find asks through its own plan
-runner, and that wut's `use <cmd>` gate is never emitted inline — the shape that asked before it had filtered anything,
-and that let `pack find` ask twice.
+A `find` already knows what it is going to say, so answering would gate nothing: it prints and stops. `pack find` is the
+one that can have work left — a typed name no group claimed is only resolvable by asking managers — so the server emits
+`packFindSearch` beside `packFindShow` only when there is something to search for, and that search is what the prompt
+guards.
+
+The ops with nothing to show first are the ones whose output _is_ the manager running: `list`, `outdated`, `info`,
+`sync` and `tidy` cannot describe a plan they have not run yet. They go straight to the table.
+
+`src/cmd/prompt_test.ts` holds this: that every op with work left reaches a prompt, that a `find` reaches none, that
+`pack find` with an unresolved name does, and that a gate is never emitted inline.
 
 Once means once for the whole run. `PACK_AGREED`, `VIRT_AGREED` and `wutAgreed=1` carry the answer past the first
-question, so `pack find`'s remaining-name resolution and every manager function downstream act without asking again.
+question, so every manager function downstream acts without asking again.
+
+The expensive half always sits behind the gate: `pack add`'s loose-name lookups and `pack find`'s search both run
+against the managers you picked, not every one installed. A gate the work happens in front of is decoration.
 
 `file diff` and `file list` are the exceptions that prove it: they take an explicit filter and print one line per pair,
 so there is no set to summarise and nothing to decide.

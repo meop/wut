@@ -28,10 +28,10 @@ you are on. Applicability is answered in two places, because neither side knows 
 - **client** — is one of those candidates really on this PATH. `packFindWinner` picks the first one that is, in the
   group's own declared order — the same rule `packPickPath` uses for add.
 
-The table sums up before asking: one row per manager that won at least one group, its count, then a `?` row for however
-many typed names no group claimed (nothing, on a bare `pack find`). Agreeing dumps the detail: each claimed group with
-its winning manager and package name (or the script's rel file path), then whatever wasn't claimed grouped by the
-manager that actually had it, with a final `?` for names nothing had.
+`packFindShow` prints what matched — manager, then group, then the package name (or the script's rel file path) — and
+that is the whole of it when every typed name was claimed. A name no group claimed is the only thing find cannot answer
+on its own, so the server emits `packFindSearch` too: it lists the unclaimed names under `?`, tables the managers it
+would ask, and searches only the ones picked. Nothing to search for means no table and no question.
 
 ## Resolving
 

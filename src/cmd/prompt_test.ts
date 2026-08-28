@@ -80,9 +80,8 @@ function asks(body: string): boolean {
   return [...promptingDefs(body)].some((n) => calls(topLevel(body), n))
 }
 
+// an op asks when work follows the answer: something to install, write, remove, or a manager to go run
 const ASKING = [
-  'pack/find',
-  'pack/find/nu',
   'pack/add/nu',
   'pack/remove/nu',
   'pack/list',
@@ -90,11 +89,8 @@ const ASKING = [
   'pack/info',
   'pack/sync',
   'pack/tidy',
-  'file/find',
   'file/sync/zsh',
-  'script/find',
   'script/exec/setup',
-  'virt/find',
   'virt/list',
   'virt/add/qemu',
   'virt/rem/qemu',
@@ -103,11 +99,20 @@ const ASKING = [
   'virt/tidy',
 ]
 
+// a find already knows everything it is going to say, so answering would gate nothing
+const SHOWING = [
+  'pack/find',
+  'pack/find/nu',
+  'file/find',
+  'script/find',
+  'virt/find',
+]
+
 const PARAMS = 'sysOsPlat=linux&sysOs=arch&sysHost=host&wutNuPinned=1'
 
 Deno.test('no op prompts inline: a prompt is only ever reached through a def', async () => {
   const inline: Array<string> = []
-  for (const path of ASKING) {
+  for (const path of [...ASKING, ...SHOWING]) {
     const body = await (await runSrv(req(`/sh/nu/${path}?${PARAMS}`))).text()
     if (GATE.test(topLevel(body))) {
       inline.push(path)
@@ -127,16 +132,19 @@ Deno.test('every op that acts on the machine asks first', async () => {
   assertEquals(silent, [])
 })
 
-// find is the one that kept losing its prompt, and the one whose table has to come from the client's filter
-Deno.test('each find asks through its own plan runner', async () => {
-  const runners: Record<string, string> = {
-    'pack/find/nu': 'packFindRun',
-    'virt/find': 'virtFindRun',
-    'script/find': 'scriptFindShow',
-  }
-  for (const [path, runner] of Object.entries(runners)) {
+Deno.test('a find shows what it knows and stops', async () => {
+  const asking: Array<string> = []
+  for (const path of SHOWING) {
     const body = await (await runSrv(req(`/sh/nu/${path}?${PARAMS}`))).text()
-    assertEquals([path, 'called', new RegExp(`^${runner}$`, 'm').test(body)], [path, 'called', true])
-    assertEquals([path, 'asks', promptingDefs(body).has(runner)], [path, 'asks', true])
+    if (asks(body)) {
+      asking.push(path)
+    }
   }
+  assertEquals(asking, [])
+})
+
+// the exception: a name no group claimed is only resolvable by asking managers, so that search is gated
+Deno.test('pack find gates the search it has left to do', async () => {
+  const body = await (await runSrv(req(`/sh/nu/pack/find/nu/nosuchpkg?${PARAMS}`))).text()
+  assertEquals(asks(body), true)
 })

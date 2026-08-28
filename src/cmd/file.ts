@@ -94,13 +94,15 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     return body
   }
 
-  _shell = _shell.with(
-    await _shell.fileLoad(
-      [FILE_KEY, FILE_KEY],
-      import.meta.resolve,
-      ['..'],
-    ),
-  )
+  _shell = _shell
+    .with(await _shell.fileLoad(['sel'], import.meta.resolve, ['..']))
+    .with(
+      await _shell.fileLoad(
+        [FILE_KEY, FILE_KEY],
+        import.meta.resolve,
+        ['..'],
+      ),
+    )
 
   if (op === 'find') {
     _shell = _shell.with(
@@ -186,7 +188,9 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   }
 
   _shell = _shell.with(_shell.varSetStr(FILE_OP_KEY, op))
-  _shell = _shell.with([FILE_KEY])
+  _shell = _shell.with(
+    op === 'sync' ? ['if not (filePlanShow) {', '  return', '}', FILE_KEY] : [FILE_KEY],
+  )
 
   const body = _shell.build()
 
