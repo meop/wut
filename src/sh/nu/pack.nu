@@ -435,7 +435,8 @@ def packReport [] {
     opPrintErr 'failed:'
     for f in $failed { opPrintErr $"  ($f)" }
   }
-  if ($failed | is-not-empty) or ($unserved | is-not-empty) {
+  # a name nothing carries is an answer, not a failure of the run, so only a real failure exits non-zero
+  if ($failed | is-not-empty) {
     exit 1
   }
 }

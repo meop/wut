@@ -127,7 +127,9 @@ Execution fails loud:
 
 - each unit runs inside its own `try`; a failure is recorded and the rest continue
 - installs go through `packOpStrict`, which does not swallow the error the way `packOp` does
-- the report prints only exceptions — what failed, what nothing could serve — and exits non-zero
+- the report prints only exceptions — what failed, what nothing could serve
+- a failure exits non-zero; a name nothing carries does not, since that is an answer rather than a fault of the run,
+  and exiting on it makes the client shell render its own error over a warning wut already stated plainly
 
 Silence is the bug, not continuing. A failure that scrolled past is the thing this replaces.
 
