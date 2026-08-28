@@ -17,10 +17,6 @@ def --env packZypper [] {
       packOp [$cmd refresh]
       packOpAdd 'zypper' $"use zypper \(system\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
-    find => {
-      packOp [$cmd refresh]
-      packOpFind [$cmd search]
-    }
     info => {
       packOp [$cmd refresh]
       packOpInfo [$cmd info]

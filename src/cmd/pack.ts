@@ -67,7 +67,6 @@ const PACK_OP_NAMES_KEY = (op: string) => [PACK_KEY, op, 'names']
 // the units the client picks from, as data; their bodies live in packRunUnit
 const PACK_PLAN_KEY = [PACK_KEY, 'plan']
 const PACK_PRINTED_KEY = [PACK_KEY, 'printed']
-// group label -> candidate managers, for the client to filter by what is installed
 const PACK_FIND_KEY = [PACK_KEY, 'find']
 
 // '-m pacman,ghpm' both narrows to those managers and states which to prefer, so the list order wins
@@ -243,38 +242,84 @@ function groupAliases(content: unknown): Array<string> {
   return Array.isArray(aliases) ? aliases.filter((a): a is string => typeof a === 'string') : []
 }
 
+// every manager's declared package identifier for this group, e.g. 'windirstat' or 'WinDirStat.WinDirStat'
+// deno-lint-ignore no-explicit-any
+function groupPackageNames(content: any): Array<string> {
+  const managerConfig = (groupOp(content, 'add')?.manager ?? {}) as Record<string, ManagerEntry>
+  const names: Array<string> = []
+  for (const tier of Object.keys(managerConfig)) {
+    if (tier === SCRIPT_PATH) {
+      continue
+    }
+    names.push(...(managerConfig[tier]?.names ?? []))
+  }
+  return names
+}
+
+function matchesNameParts(groupParts: Array<string>, queryParts: Array<string>, query: string): boolean {
+  if (queryParts.length > groupParts.length) {
+    return false
+  }
+  const isPrefix = groupParts.slice(0, queryParts.length).every((p, i) => p === queryParts[i])
+  const isSuffix = groupParts.slice(groupParts.length - queryParts.length).every((p, i) => p === queryParts[i])
+  const isLastPart = groupParts[groupParts.length - 1] === query
+  return isPrefix || isSuffix || isLastPart
+}
+
+// add and find both resolve a typed name the same way: the group's own path segments (prefix/suffix/last-part),
+// or a startsWith hit on an alias or a declared package name
+function matchesGroupQuery(groupParts: Array<string>, content: unknown, query: string): boolean {
+  if (matchesNameParts(groupParts, query.split('-'), query)) {
+    return true
+  }
+  const q = query.toLowerCase()
+  return groupAliases(content).some((a) => a.toLowerCase().startsWith(q)) ||
+    groupPackageNames(content).some((n) => n.toLowerCase().startsWith(q))
+}
+
+export type FindCandidate = { manager: string; pkg: string }
+export type FindEntry = { label: string; candidates: Array<FindCandidate> }
+
 // a group is on offer here if this platform has a manager it names, or its script is gated in. the managers it names
-// are only candidates: whether one is really on this machine is the client's to answer
+// are only candidates, in declared order: whether one is really on this machine is the client's to answer
 function groupCandidates(
   // deno-lint-ignore no-explicit-any
   content: any,
   allManagers: Array<string> | null,
   context: Ctx | null,
-): Array<string> | null {
+): Array<FindCandidate> | null {
   if (!allManagers || !context) {
     return []
   }
   const managerConfig = (groupOp(content, 'add')?.manager ?? {}) as Record<string, ManagerEntry>
-  if (selectScriptEntry(managerConfig[SCRIPT_PATH] as unknown as Record<string, ScriptEntry>, context)) {
-    return []
+  const candidates: Array<FindCandidate> = []
+  for (const tier of Object.keys(managerConfig)) {
+    if (tier === SCRIPT_PATH) {
+      const selected = selectScriptEntry(managerConfig[tier] as unknown as Record<string, ScriptEntry>, context)
+      if (selected?.entry.file) {
+        candidates.push({ manager: SCRIPT_PATH, pkg: selected.entry.file })
+      }
+      continue
+    }
+    const entry = managerConfig[tier]
+    if (!entry?.names?.length || !allManagers.includes(tier) || !evaluateGate(entry.gate, context)) {
+      continue
+    }
+    candidates.push({ manager: tier, pkg: entry.names.join(', ') })
   }
-  const candidates = Object.keys(managerConfig).filter((m) =>
-    m !== SCRIPT_PATH && allManagers.includes(m) && evaluateGate(managerConfig[m]?.gate, context)
-  )
   return candidates.length ? candidates : null
 }
 
-// matched on group name and aliases only: what a manager has is that manager's own search to answer
 async function findGroups(
   filters: Array<string> | undefined,
   allManagers: Array<string> | null,
   context: Ctx | null,
-): Promise<{ entries: Array<string>; found: Array<string> }> {
+): Promise<{ entries: Array<FindEntry>; found: Array<string> }> {
   const results = await getCfgDirDump([PACK_KEY], {
     extension: Fmt.yaml,
     flexible: true,
   })
-  const entries: Array<string> = []
+  const entries: Array<FindEntry> = []
   const found: Array<string> = []
   for (const r of results) {
     const name = r.join('-')
@@ -286,9 +331,8 @@ async function findGroups(
     if (candidates == null) {
       continue
     }
-    const aliases = groupAliases(content).toSorted()
     if (filters?.length) {
-      const matched = filters.filter((f) => name.includes(f) || aliases.some((a) => a.includes(f)))
+      const matched = filters.filter((f) => matchesGroupQuery(r, content, f))
       if (matched.length !== filters.length) {
         continue
       }
@@ -298,24 +342,18 @@ async function findGroups(
         }
       }
     }
-    const label = aliases.length ? `${name} (${aliases.join(', ')})` : name
-    entries.push([label, ...candidates].join('|'))
+    entries.push({ label: name, candidates })
   }
-  return { entries: entries.toSorted(), found }
+  return { entries: entries.toSorted((a, b) => a.label.localeCompare(b.label)), found }
 }
 
-function printGroups(shell: Sh, entries: Array<string>) {
-  const findMap: Record<string, Array<string>> = {}
-  for (const entry of entries) {
-    const [label, ...candidates] = entry.split('|')
-    findMap[label] = candidates
-  }
-  if (!Object.keys(findMap).length) {
+function printGroups(shell: Sh, entries: Array<FindEntry>, remaining: Array<string>) {
+  if (!entries.length && !remaining.length) {
     return shell
   }
-  // the one decision for find: this table, then the listing and the manager searches behind it
+  const groups = Object.fromEntries(entries.map((e) => [e.label, e.candidates]))
   return shell
-    .with(shell.varSetStr(PACK_FIND_KEY, JSON.stringify(findMap)))
+    .with(shell.varSetStr(PACK_FIND_KEY, JSON.stringify({ groups, remaining })))
     .with(['packFindRun'])
 }
 
@@ -467,20 +505,16 @@ export async function resolveGroupName(name: string): Promise<Array<string>> {
     if (matched.includes(resolvedName) || aliasMatched.includes(resolvedName)) {
       continue
     }
-    if (nameParts.length <= parts.length) {
-      const isPrefix = parts.slice(0, nameParts.length).every((p, i) => p === nameParts[i])
-      const isSuffix = parts.slice(parts.length - nameParts.length).every((
-        p,
-        i,
-      ) => p === nameParts[i])
-      const isLastPart = parts[parts.length - 1] === name
-      if (isPrefix || isSuffix || isLastPart) {
-        matched.push(resolvedName)
-        continue
-      }
+    if (matchesNameParts(parts, nameParts, name)) {
+      matched.push(resolvedName)
+      continue
     }
-    // an alias stands in for the whole group name, so it matches like a full name does
-    if (groupAliases(await loadGroupConfig(parts)).includes(name)) {
+    const content = await loadGroupConfig(parts)
+    const q = name.toLowerCase()
+    if (
+      groupAliases(content).some((a) => a.toLowerCase().startsWith(q)) ||
+      groupPackageNames(content).some((n) => n.toLowerCase().startsWith(q))
+    ) {
       aliasMatched.push(resolvedName)
     }
   }
@@ -593,17 +627,18 @@ async function execOp(
 
   const names = environment.getSplit(PACK_OP_NAMES_KEY(op))
   const managerSpecified = !!environment.get(PACK_MANAGERS_KEY)
-  let found: Array<string> = []
 
   if (op === 'find') {
     const hasContext = context.sys_os_plat || context.sys_os || requested.length
-    const { entries: groupEntries, found: groupFilterFound } = await findGroups(
+    const { entries: groupEntries, found } = await findGroups(
       names.length ? names : undefined,
       hasContext ? allManagers : null,
       hasContext ? context : null,
     )
-    found = groupFilterFound
-    result = printGroups(result, groupEntries)
+    const remaining = names.filter((n) => !found.includes(n))
+    result = printGroups(result, groupEntries, remaining)
+
+    return buildAndLog(result, environment)
   } else if (op === 'add' || op === 'remove') {
     const { units, arms, claimed } = await buildPlan(
       result,
@@ -614,7 +649,6 @@ async function execOp(
       requested,
       managerSpecified,
     )
-    found = claimed
 
     // names no group claimed have no stated manager, so the client finds one for them
     const loose = names.filter((n) => !claimed.includes(n))
@@ -643,15 +677,8 @@ async function execOp(
     return buildAndLog(result, environment)
   }
 
-  const remaining = names.filter((n) => !found.includes(n))
-
-  if ((op === 'find' && names.length) || op === 'list' || op === 'outdated' || op === 'info') {
+  if (op === 'list' || op === 'outdated' || op === 'info') {
     result = setOpNames(result, op, names)
-    result = result.with(['packManagerPlanRun'])
-  } else if (remaining.length || !names.length) {
-    if (remaining.length) {
-      result = setOpNames(result, op, remaining)
-    }
     result = result.with(['packManagerPlanRun'])
   }
 

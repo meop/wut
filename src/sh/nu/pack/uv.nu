@@ -29,11 +29,6 @@ def --env packUv [] {
     add => {
       packOpAdd 'uv' $"use uv \(user\)" { |n| packHttpGetPypi $n | is-not-empty } [$cmd tool install] --each
     }
-    find => {
-      for term in $env.PACK_FIND_NAMES {
-        packHttpGetPypi $term | print
-      }
-    }
     info => {
       for term in $env.PACK_INFO_NAMES {
         packOp [$cmd pip show --python (getToolPython $term) $term]

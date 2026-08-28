@@ -413,17 +413,15 @@ Deno.test('nu / arch / find (-m yay, pinned)', async (t) => {
   // yay aliases onto the pacman function
   assertEquals(body.includes('packPacman'), true)
 })
-// the heading is the group and its aliases, never the package names
+// -m narrows each group's candidates to just that manager, package name included
 Deno.test('nu / arch / find (-m pacman, pinned)', async (t) => {
   const body = await (await runSrv(
     req('/sh/nu/pack/-m/pacman/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'),
   )).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('"shell-nu (nushell)":['), true)
-  // no package names in the listing at all now, from any manager
+  assertEquals(body.includes('"shell-nu":[{"manager":"pacman","pkg":"nushell"}]'), true)
   assertEquals(body.includes('nushell.nushell'), false)
-  assertEquals(body.includes("opPrint r#'  nu, nushell'#"), false)
 })
 // no -m: the union of every manager this client supports
 Deno.test('nu / arch / find (no manager, pinned)', async (t) => {
@@ -432,7 +430,7 @@ Deno.test('nu / arch / find (no manager, pinned)', async (t) => {
   )).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('"shell-nu (nushell)":['), true)
+  assertEquals(body.includes('"shell-nu":['), true)
   assertEquals(body.includes('packPacman'), true)
 })
 
@@ -542,14 +540,13 @@ Deno.test('nu / arch / tidy (pinned)', async (t) => {
   assertEquals(body.includes("$env.PACK_OP = r#'tidy'#"), true)
   assertEquals(body.includes('packPacman'), true)
 })
-// find with a name still runs the managers' own search after listing groups
-Deno.test('nu / arch / find (pinned, name runs manager search too)', async (t) => {
+// a name a group already claims needs no separate manager check
+Deno.test('nu / arch / find (pinned, a claimed name skips the manager check)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/find/nu?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  // the group heading carries its aliases; package names come from the manager's own search
-  assertEquals(body.includes('"shell-nu (nushell)":['), true)
-  assertEquals(body.includes("$env.PACK_FIND_NAMES = [ r#'nu'# ]"), true)
+  assertEquals(body.includes('"shell-nu":['), true)
+  assertEquals(body.includes('"remaining":[]'), true)
   assertEquals(body.includes('packPacman'), true)
 })
 
@@ -559,9 +556,8 @@ Deno.test('nu / arch / find (pinned, by alias)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/find/nushell?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  // the heading carries the alias, so the match explains itself
-  assertEquals(body.includes('"shell-nu (nushell)":['), true)
-  assertEquals(body.includes("opPrint r#'  nu, nushell'#"), false)
+  assertEquals(body.includes('"shell-nu":['), true)
+  assertEquals(body.includes('"remaining":[]'), true)
 })
 Deno.test('nu / arch / add (pinned, by alias installs declared names)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/add/nushell?${PIN_ARCH}`))).text()
@@ -584,8 +580,8 @@ Deno.test('nu / arch / find (pinned, unknown name)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/find/nosuchpackage?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes("$env.PACK_FIND_NAMES = [ r#'nosuchpackage'# ]"), true)
-  assertEquals(body.includes('packPacman'), true)
+  assertEquals(body.includes('"groups":{}'), true)
+  assertEquals(body.includes('"remaining":["nosuchpackage"]'), true)
   assertEquals(body.includes('packPacman'), true)
 })
 
@@ -594,7 +590,10 @@ Deno.test('nu / arch / find (pinned, candidates travel to the client)', async (t
   const body = await (await runSrv(req(`/sh/nu/pack/find?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('"shell-nu (nushell)":["ghpm","cargo"'), true)
+  assertEquals(
+    body.includes('"shell-nu":[{"manager":"ghpm","pkg":"nu"},{"manager":"cargo","pkg":"nu"}'),
+    true,
+  )
 })
 
 // a gate on a manager entry was silently ignored until now, so an arch-only entry was offered everywhere

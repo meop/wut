@@ -17,10 +17,6 @@ def --env packApt [] {
       packOp [$cmd update]
       packOpAdd 'apt' $"use apt \(system\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
-    find => {
-      packOp [$cmd update]
-      packOpFind [$cmd search]
-    }
     info => {
       packOp [$cmd update]
       packOpInfo [$cmd show]

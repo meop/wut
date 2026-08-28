@@ -15,9 +15,6 @@ def --env packCargo [] {
     add => {
       packOpAdd 'cargo' $"use cargo \(user\)" { |n| packGrepFind [$cmd search] $n } [$cmd binstall --locked]
     }
-    find => {
-      packOpFind [$cmd search]
-    }
     info => {
       packOpInfo [$cmd info]
     }

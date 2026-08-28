@@ -16,25 +16,29 @@ name falls through to the managers on its own.
 
 ## Finding
 
-`pack find` matches on group name and aliases only. What a manager has is that manager's own search to answer, and it
-still runs after the table when a name was given — behind the same single question, since `packFindRun` sets
-`PACK_AGREED`.
+`pack find` resolves a typed name exactly like `add` does — the same path match, alias, or declared package name (see
+Resolving, below) — so a name either command would recognize, the other does too. A name no group claims is not dropped;
+it becomes a **remaining** name, checked against real managers after the gate, the same way add checks a loose one.
 
 Matching and applicability are separate questions: the first is about the name you typed, the second about the machine
 you are on. Applicability is answered in two places, because neither side knows both halves:
 
 - **server** — does this platform have a manager the group names, or is its script gated in. `p f llm` lists the llm
   groups on arch and nothing on fedora, since none of them declares a dnf entry.
-- **client** — is one of those managers really on this PATH. The server sends each row with its candidate managers and
-  `packFindRun` drops the row if none of them is there, so a yay-only group stays hidden on an arch box without yay.
+- **client** — is one of those candidates really on this PATH. `packFindWinner` picks the first one that is, in the
+  group's own declared order — the same rule `packPickPath` uses for add.
 
-A row with no candidates is script satisfied and always shows. The table is the listing: group against the managers here
-(or `script`), so there is no second pass printing the same two columns again.
+The table sums up before asking: one row per manager that won at least one group, its count, then a `?` row for however
+many typed names no group claimed (nothing, on a bare `pack find`). Agreeing dumps the detail: each claimed group with
+its winning manager and package name (or the script's rel file path), then whatever wasn't claimed grouped by the
+manager that actually had it, with a final `?` for names nothing had.
 
 ## Resolving
 
-1. Each cli name resolves to groups via `resolveGroupName` (path match, then alias). A name matching no group is a
-   **loose name**.
+1. Each cli name resolves to groups via `resolveGroupName`: the group's own path (prefix, suffix, or last segment), or a
+   `startsWith` hit on an alias or a declared package name (`windirstat` reaches a group named `desktop-tool-extra`
+   because some manager under it declares that exact package). `find` matches the same way, via `matchesGroupQuery`. A
+   name matching no group is a **loose name**.
 2. A group's `group` tier lists other groups (or loose names). The walk is iterative over a stack with a visited set of
    resolved group names, so a cycle stops and a diamond resolves once.
 3. Preference is fixed at **user managers > script > system managers**. The yaml carries one flat `manager` map and says
@@ -73,12 +77,13 @@ asking it seven times only obscured that. Declining does nothing at all; agreein
 
 The server emits the plan as data (`PACK_PLAN`) and the bodies behind ids in a generated `packRunUnit`, so code stays
 code and the plan stays data. The client picks each group's winner — the first path whose manager is on this PATH, in
-the group's own order — and resolves loose names with `packExists`, an exact check per manager, not the substring search
-`find` uses. Refreshes run before those checks so the answers are current.
+the group's own order — and resolves loose names with `packExists`, an exact check per manager. Refreshes run before
+those checks so the answers are current. `find`'s remaining names resolve the same way (`packFindFirst`), just after its
+own gate rather than add's.
 
-`sync`, `tidy`, `list`, `outdated`, `info`, and a named `find` have no per-package decision to make — the only question
-is which managers this run touches — so they share a plainer plan, `packManagerPlanRun`: a `manager` column, one
-question, then each manager present gets its turn:
+`sync`, `tidy`, `list`, `outdated` and `info` have no per-package decision to make — the only question is which managers
+this run touches — so they share a plainer plan, `packManagerPlanRun`: a `manager` column, one question, then each
+manager present gets its turn:
 
 ```
 manager
@@ -101,9 +106,9 @@ wut p add term      on arch     term-ghostty pacman ghostty
                                 or, if dnf has no term:  no manager had: term
 ```
 
-The find that does this is `packExists`, an exact check per manager, not the substring search `find` runs — choosing a
-manager and researching a partial name are different questions, and only the first may claim a package. Every check is
-printed as the command it is, its output swallowed, since the answer is an exit code and the output would bury the plan:
+The check that does this is `packExists`, an exact per-manager check — the same one `pack find` uses for whatever no
+group claims. Only the first manager in preference order may claim a name. Every check is printed as the command it is,
+its output swallowed, since the answer is an exit code and the output would bury the plan:
 
 ```
 http get https://registry.npmjs.org/ripgrep-x

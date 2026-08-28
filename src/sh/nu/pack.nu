@@ -214,28 +214,59 @@ def packManagerHere [manager: string] {
   ($manager == 'script') or (which $manager | is-not-empty)
 }
 
-# the server sends every manager the group names; only the client knows which are installed. a group with no
-# candidates at all is script satisfied and always shows
+def packFindWinner [candidates: list] {
+  $candidates | where { |c| packManagerHere $c.manager } | first 1 | get -o 0
+}
+
 def --env packFindRun [] {
-  let rows = (
-    $env.PACK_FIND? | default '{}' | from json | transpose label candidates
-      | each { |g| {
-        label: $g.label,
-        managers: ($g.candidates | where { |c| packManagerHere $c }),
-        shows: (($g.candidates | is-empty) or (($g.candidates | where { |c| packManagerHere $c }) | is-not-empty)),
-      } }
-      | where shows
+  let parsed = ($env.PACK_FIND? | default '{"groups":{},"remaining":[]}' | from json)
+  let remaining = ($parsed.remaining? | default [])
+  let groups = (
+    $parsed.groups | transpose label candidates
+      | each { |g| { label: $g.label, winner: (packFindWinner $g.candidates) } }
+      | where { |g| $g.winner != null }
   )
-  if ($rows | is-empty) {
+  if ($groups | is-empty) and ($remaining | is-empty) {
     return
   }
 
-  packTable ['group' 'managers'] ($rows | each { |r|
-    [$r.label, (if ($r.managers | is-empty) { 'script' } else { $r.managers | str join ', ' })]
-  })
-  # the table is the listing: a second pass over the same two columns says nothing new
+  let managerRows = (
+    $groups | group-by { |g| $g.winner.manager } | transpose manager entries
+      | each { |m| [$m.manager, ($m.entries | length | into string)] }
+  )
+  let rows = $managerRows ++ (if ($remaining | is-empty) { [] } else { [['?', ($remaining | length | into string)]] })
+  packTable ['manager' 'groups'] $rows
   if not (packPrompt 'use pack') { return }
   $env.PACK_AGREED = '1'
+
+  for g in $groups {
+    opPrint $g.label
+    opPrint $"  ($g.winner.manager)"
+    opPrint $"    ($g.winner.pkg)"
+  }
+
+  if ($remaining | is-empty) {
+    return
+  }
+  opPrint ''
+  mut byManager = {}
+  mut missing = []
+  for name in $remaining {
+    let m = (packFindFirst $name)
+    if $m == null {
+      $missing = ($missing | append $name)
+    } else {
+      $byManager = ($byManager | upsert $m (($byManager | get -o $m | default []) | append $name))
+    }
+  }
+  for m in ($byManager | columns) {
+    opPrint $m
+    opPrint $"  (($byManager | get $m) | str join ', ')"
+  }
+  if ($missing | is-not-empty) {
+    opPrint '?'
+    opPrint $"  ($missing | str join ', ')"
+  }
 }
 
 # the first path whose manager is on this machine wins the group, in the order the group stated
@@ -249,6 +280,7 @@ def --env packPlanRun [] {
   # a group whose every path needs a manager this machine lacks is not a plan, it is an absence: drop it, and let
   # the name it came from fall through to a find like any other unclaimed name
   mut rows = []
+  mut detail = []
   mut runnable = []
   mut served = []
   for unit in $units {
@@ -256,7 +288,8 @@ def --env packPlanRun [] {
     if $path != null {
       $runnable = ($runnable | append $path.id)
       $served = ($served | append $unit.name)
-      $rows = ($rows | append [[$unit.group, $path.manager, ($path.names | str join ', ')]])
+      $rows = ($rows | append [[$unit.group, $path.manager, ($path.names | length | into string)]])
+      $detail = ($detail | append { group: $unit.group, manager: $path.manager, names: $path.names })
     }
   }
 
@@ -271,7 +304,7 @@ def --env packPlanRun [] {
       if $winner == null {
         load-env {PACK_UNSERVED: (($env.PACK_UNSERVED? | default []) | append $name)}
       } else {
-        $rows = ($rows | append [[$name, $winner, $name]])
+        $rows = ($rows | append [[$name, $winner, '1']])
         $looseFor = ($looseFor | upsert $winner (($looseFor | get -o $winner | default []) | append $name))
       }
     }
@@ -287,6 +320,19 @@ def --env packPlanRun [] {
   }
   packTable ['group' 'manager' 'packages'] $rows
   if not (packPrompt 'use pack') { return }
+
+  for d in $detail {
+    opPrint $d.group
+    opPrint $"  ($d.manager)"
+    opPrint $"    (($d.names | str join ', '))"
+  }
+  if ($looseFor | columns | is-not-empty) {
+    opPrint ''
+    for m in ($looseFor | columns) {
+      opPrint $m
+      opPrint $"  (($looseFor | get $m) | str join ', ')"
+    }
+  }
 
   # agreed once, up front: nothing below asks again
   $env.PACK_AGREED = '1'
@@ -398,12 +444,6 @@ def --env packOp [cmds: list<string>] {
 
 def --env packOpAdd [key: string, label: string, finder: closure, cmds: list<string>, --each] {
   packMutate $key $label PACK_ADD_NAMES $finder $cmds $each
-}
-
-def --env packOpFind [cmds: list<string>] {
-  for term in $env.PACK_FIND_NAMES {
-    packDo ($cmds ++ [$term])
-  }
 }
 
 def --env packOpInfo [cmds: list<string>] {

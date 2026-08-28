@@ -15,9 +15,6 @@ def --env packPnpm [] {
     add => {
       packOpAdd 'pnpm' $"use pnpm \(user\)" { |n| packGrepFind [$cmd search] $n } [$cmd add --global]
     }
-    find => {
-      packOpFind [$cmd search]
-    }
     info => {
       packOpInfo [$cmd info]
     }

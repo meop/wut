@@ -69,8 +69,13 @@ def --env virtPlanRun [] {
     return
   }
 
-  virtTable ['manager' 'instances'] ($here | each { |e| [$e.manager, ($e.instances | str join ', ')] })
+  virtTable ['manager' 'instances'] ($here | each { |e| [$e.manager, ($e.instances | length | into string)] })
   if not (virtPrompt 'use virt') { return }
+
+  for e in $here {
+    opPrint $e.manager
+    opPrint $"  ($e.instances | str join ', ')"
+  }
 
   $env.VIRT_AGREED = '1'
   for entry in $here {

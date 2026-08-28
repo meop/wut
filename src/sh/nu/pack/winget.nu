@@ -16,10 +16,6 @@ def --env packWinget [] {
       packOp [$cmd source update]
       packOpAdd 'winget' $"use winget \(user/system\)" { |n| packGrepFind [$cmd search --id] $n } [$cmd install] --each
     }
-    find => {
-      packOp [$cmd source update]
-      packOpFind [$cmd search]
-    }
     info => {
       packOp [$cmd source update]
       packOpInfo [$cmd show]

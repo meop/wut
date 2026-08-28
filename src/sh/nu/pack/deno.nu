@@ -27,11 +27,6 @@ def --env packDeno [] {
     add => {
       packOpAdd 'deno' $"use deno \(user\)" { |n| [(packHttpGetNpm $n), (packHttpGetJsr $n)] | flatten | is-not-empty } [$cmd install --force --global] --each
     }
-    find => {
-      for term in $env.PACK_FIND_NAMES {
-        [(packHttpGetNpm $term), (packHttpGetJsr $term)] | flatten | print
-      }
-    }
     info => {
       for term in $env.PACK_INFO_NAMES {
         packDo [$cmd info $"npm:($term)"]

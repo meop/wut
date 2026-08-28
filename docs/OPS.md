@@ -47,24 +47,24 @@ There is no read-only exemption. `find` asks too, because the point of the quest
 is _here is what I found on this machine, shall I go on_. Skipping it for the print-only ops is what let `virt find`
 list managers it had never checked for.
 
-| Op                                          | Table                    | Then                 |
-| ------------------------------------------- | ------------------------ | -------------------- |
-| `pack find`                                 | group, managers here     | the manager searches |
-| `pack add`/`remove`                         | group, manager, packages | installs             |
-| `pack list`/`outdated`/`sync`/`info`/`tidy` | manager                  | each manager's turn  |
-| `virt find`                                 | manager, instance count  | the instance listing |
-| `virt add`/`rem`/`list`/`run`/`sync`/`tidy` | manager, instances       | each manager's turn  |
-| `file find`                                 | tool, file count         | the tool listing     |
-| `file sync`                                 | tool, files, directories | writes and clears    |
-| `script find`                               | action, tool count       | the action listing   |
-| `script exec`                               | action, tool, shell      | the scripts          |
+| Op                                          | Table                    | Then                         |
+| ------------------------------------------- | ------------------------ | ---------------------------- |
+| `pack find`                                 | manager, groups (+ `?`)  | the dump, remaining resolved |
+| `pack add`/`remove`                         | group, manager, packages | installs                     |
+| `pack list`/`outdated`/`sync`/`info`/`tidy` | manager                  | each manager's turn          |
+| `virt find`                                 | manager, instance count  | the instance listing         |
+| `virt add`/`rem`/`list`/`run`/`sync`/`tidy` | manager, instances       | each manager's turn          |
+| `file find`                                 | tool, file count         | the tool listing             |
+| `file sync`                                 | tool, files, directories | writes and clears            |
+| `script find`                               | action, tool count       | the action listing           |
+| `script exec`                               | action, tool, shell      | the scripts                  |
 
 `src/cmd/prompt_test.ts` holds this: it asserts that every op reaches a prompt, that each find asks through its own plan
 runner, and that wut's `use <cmd>` gate is never emitted inline — the shape that asked before it had filtered anything,
 and that let `pack find` ask twice.
 
 Once means once for the whole run. `PACK_AGREED`, `VIRT_AGREED` and `wutAgreed=1` carry the answer past the first
-question, so `pack find`'s search phase and every manager function downstream act without asking again.
+question, so `pack find`'s remaining-name resolution and every manager function downstream act without asking again.
 
 `file diff` and `file list` are the exceptions that prove it: they take an explicit filter and print one line per pair,
 so there is no set to summarise and nothing to decide.

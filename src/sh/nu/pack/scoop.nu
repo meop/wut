@@ -16,10 +16,6 @@ def --env packScoop [] {
       packOp [$cmd update]
       packOpAdd 'scoop' $"use scoop \(user\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
-    find => {
-      packOp [$cmd update]
-      packOpFind [$cmd search]
-    }
     info => {
       packOp [$cmd update]
       packOpInfo [$cmd info]

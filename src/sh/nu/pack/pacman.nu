@@ -25,10 +25,6 @@ def --env packPacman [] {
       packOp [$cmd --sync --refresh]
       packOpAdd 'pacman' $"use ($mgr) \(system\)" { |n| packGrepFind [$cmd --sync --search] $n } [$cmd --sync --needed]
     }
-    find => {
-      packOp [$cmd --sync --refresh]
-      packOpFind [$cmd --sync --search]
-    }
     info => {
       packOp [$cmd --sync --refresh]
       packOpInfo [$cmd --sync --info]

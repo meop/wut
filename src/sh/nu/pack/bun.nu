@@ -19,11 +19,6 @@ def --env packBun [] {
     add => {
       packOpAdd 'bun' $"use bun \(user\)" { |n| [(packHttpGetNpm $n), (packHttpGetJsr $n)] | flatten | is-not-empty } [$cmd add --force --global]
     }
-    find => {
-      for term in $env.PACK_FIND_NAMES {
-        [(packHttpGetNpm $term), (packHttpGetJsr $term)] | flatten | print
-      }
-    }
     info => {
       packOpInfo [$cmd info]
     }

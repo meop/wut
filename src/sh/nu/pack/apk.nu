@@ -17,10 +17,6 @@ def --env packApk [] {
       packOp [$cmd update]
       packOpAdd 'apk' $"use apk \(system\)" { |n| packGrepFind [$cmd search] $n } [$cmd add]
     }
-    find => {
-      packOp [$cmd update]
-      packOpFind [$cmd search]
-    }
     info => {
       packOp [$cmd update]
       packOpInfo [$cmd info]

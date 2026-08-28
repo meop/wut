@@ -16,10 +16,6 @@ def --env packGhpm [] {
       packOp [$cmd refresh]
       packOpAdd 'ghpm' $"use ghpm \(user\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
-    find => {
-      packOp [$cmd refresh]
-      packOpFind [$cmd search]
-    }
     info => {
       packOpInfo [$cmd info]
     }

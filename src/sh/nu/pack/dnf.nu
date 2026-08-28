@@ -17,10 +17,6 @@ def --env packDnf [] {
       packOp [$cmd makecache]
       packOpAdd 'dnf' $"use dnf \(system\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
-    find => {
-      packOp [$cmd makecache]
-      packOpFind [$cmd search]
-    }
     info => {
       packOp [$cmd makecache]
       packOpInfo [$cmd info]

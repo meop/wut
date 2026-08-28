@@ -17,10 +17,6 @@ def --env packXbps [] {
       packOp [$"($cmd)-install" --sync]
       packOpAdd 'xbps' $"use xbps \(system\)" { |n| packGrepFind [$"($cmd)-query" --repository --search] $n } [$"($cmd)-install"]
     }
-    find => {
-      packOp [$"($cmd)-install" --sync]
-      packOpFind [$"($cmd)-query" --repository --search]
-    }
     info => {
       packOp [$"($cmd)-install" --sync]
       packOpInfo [$"($cmd)-query" --repository --show]

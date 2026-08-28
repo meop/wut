@@ -15,9 +15,6 @@ def --env packChoco [] {
     add => {
       packOpAdd 'choco' $"use choco \(user/system\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
-    find => {
-      packOpFind [$cmd search]
-    }
     info => {
       packOpInfo [$cmd info]
     }

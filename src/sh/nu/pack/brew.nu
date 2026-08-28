@@ -16,10 +16,6 @@ def --env packBrew [] {
       packOp [$cmd update]
       packOpAdd 'brew' $"use brew \(user\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
     }
-    find => {
-      packOp [$cmd update]
-      packOpFind [$cmd search]
-    }
     info => {
       packOp [$cmd update]
       packOpInfo [$cmd info]
