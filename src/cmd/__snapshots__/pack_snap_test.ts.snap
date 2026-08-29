@@ -2822,7 +2822,7 @@ def --env packWinget [] {
 
 \$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
 
-\$env.PACK_FIND = r#'{\\"groups\\":{\\"lang-rustup\\":[{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"rustlang.rustup\\"}],\\"shell-nu\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"nushell.nushell\\"}],\\"shell-zsh\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"zsh\\"}],\\"test-hooks\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"hooks\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"hooks\\"}],\\"test-scriptfile\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"cfg/script/scriptfile/install.zsh\\"}]},\\"remaining\\":[]}'#
+\$env.PACK_FIND = r#'{\\"groups\\":{\\"lang-rustup\\":[{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"rustlang.rustup\\"}],\\"shell-nu\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"nushell.nushell\\"}],\\"shell-zsh\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"zsh, zsh-completions\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"zsh, zsh-completions\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"zsh\\"}],\\"test-hooks\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"hooks\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"hooks\\"}],\\"test-scriptfile\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"cfg/script/scriptfile/install.zsh\\"}]},\\"remaining\\":[]}'#
 
 packFindShow
 
@@ -7824,28 +7824,28 @@ hide-env PACK_MANAGER
 packWinget
 hide-env PACK_MANAGER
     }
-    r#'shell-zsh|ghpm'# => {
-\$env.PACK_MANAGER = r#'ghpm'#
-\$env.PACK_ADD_NAMES = [ r#'zsh'# ]
-packGhpm
-hide-env PACK_MANAGER
-    }
-    r#'shell-zsh|cargo'# => {
-\$env.PACK_MANAGER = r#'cargo'#
-\$env.PACK_ADD_NAMES = [ r#'zsh'# ]
-packCargo
-hide-env PACK_MANAGER
-    }
     r#'shell-zsh|brew'# => {
 \$env.PACK_MANAGER = r#'brew'#
-\$env.PACK_ADD_NAMES = [ r#'zsh'# ]
+\$env.PACK_ADD_NAMES = [ r#'zsh'#, r#'zsh-completions'# ]
 packBrew
 hide-env PACK_MANAGER
     }
     r#'shell-zsh|pacman'# => {
 \$env.PACK_MANAGER = r#'pacman'#
-\$env.PACK_ADD_NAMES = [ r#'zsh'# ]
+\$env.PACK_ADD_NAMES = [ r#'zsh'#, r#'zsh-completions'# ]
 packPacman
+hide-env PACK_MANAGER
+    }
+    r#'shell-zsh|apt'# => {
+\$env.PACK_MANAGER = r#'apt'#
+\$env.PACK_ADD_NAMES = [ r#'zsh'# ]
+packApt
+hide-env PACK_MANAGER
+    }
+    r#'shell-zsh|dnf'# => {
+\$env.PACK_MANAGER = r#'dnf'#
+\$env.PACK_ADD_NAMES = [ r#'zsh'# ]
+packDnf
 hide-env PACK_MANAGER
     }
     r#'shell-zsh|xbps'# => {
@@ -7854,17 +7854,11 @@ hide-env PACK_MANAGER
 packXbps
 hide-env PACK_MANAGER
     }
-    r#'shell-zsh|winget'# => {
-\$env.PACK_MANAGER = r#'winget'#
-\$env.PACK_ADD_NAMES = [ r#'zsh'# ]
-packWinget
-hide-env PACK_MANAGER
-    }
     _ => {}
   }
 }
 
-\$env.PACK_PLAN = r#'[{\\"group\\":\\"shell-nu\\",\\"name\\":\\"shell\\",\\"paths\\":[{\\"id\\":\\"shell-nu|ghpm\\",\\"manager\\":\\"ghpm\\",\\"names\\":[\\"nu\\"]},{\\"id\\":\\"shell-nu|cargo\\",\\"manager\\":\\"cargo\\",\\"names\\":[\\"nu\\"]},{\\"id\\":\\"shell-nu|brew\\",\\"manager\\":\\"brew\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|pacman\\",\\"manager\\":\\"pacman\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|xbps\\",\\"manager\\":\\"xbps\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|winget\\",\\"manager\\":\\"winget\\",\\"names\\":[\\"nushell.nushell\\"]}]},{\\"group\\":\\"shell-zsh\\",\\"name\\":\\"shell\\",\\"paths\\":[{\\"id\\":\\"shell-zsh|ghpm\\",\\"manager\\":\\"ghpm\\",\\"names\\":[\\"zsh\\"]},{\\"id\\":\\"shell-zsh|cargo\\",\\"manager\\":\\"cargo\\",\\"names\\":[\\"zsh\\"]},{\\"id\\":\\"shell-zsh|brew\\",\\"manager\\":\\"brew\\",\\"names\\":[\\"zsh\\"]},{\\"id\\":\\"shell-zsh|pacman\\",\\"manager\\":\\"pacman\\",\\"names\\":[\\"zsh\\"]},{\\"id\\":\\"shell-zsh|xbps\\",\\"manager\\":\\"xbps\\",\\"names\\":[\\"zsh\\"]},{\\"id\\":\\"shell-zsh|winget\\",\\"manager\\":\\"winget\\",\\"names\\":[\\"zsh\\"]}]}]'#
+\$env.PACK_PLAN = r#'[{\\"group\\":\\"shell-nu\\",\\"name\\":\\"shell\\",\\"paths\\":[{\\"id\\":\\"shell-nu|ghpm\\",\\"manager\\":\\"ghpm\\",\\"names\\":[\\"nu\\"]},{\\"id\\":\\"shell-nu|cargo\\",\\"manager\\":\\"cargo\\",\\"names\\":[\\"nu\\"]},{\\"id\\":\\"shell-nu|brew\\",\\"manager\\":\\"brew\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|pacman\\",\\"manager\\":\\"pacman\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|xbps\\",\\"manager\\":\\"xbps\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|winget\\",\\"manager\\":\\"winget\\",\\"names\\":[\\"nushell.nushell\\"]}]},{\\"group\\":\\"shell-zsh\\",\\"name\\":\\"shell\\",\\"paths\\":[{\\"id\\":\\"shell-zsh|brew\\",\\"manager\\":\\"brew\\",\\"names\\":[\\"zsh\\",\\"zsh-completions\\"]},{\\"id\\":\\"shell-zsh|pacman\\",\\"manager\\":\\"pacman\\",\\"names\\":[\\"zsh\\",\\"zsh-completions\\"]},{\\"id\\":\\"shell-zsh|apt\\",\\"manager\\":\\"apt\\",\\"names\\":[\\"zsh\\"]},{\\"id\\":\\"shell-zsh|dnf\\",\\"manager\\":\\"dnf\\",\\"names\\":[\\"zsh\\"]},{\\"id\\":\\"shell-zsh|xbps\\",\\"manager\\":\\"xbps\\",\\"names\\":[\\"zsh\\"]}]}]'#
 
 \$env.PACK_ADD_NAMES = [  ]
 
@@ -30966,7 +30960,7 @@ def --env packWinget [] {
 
 \$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
 
-\$env.PACK_FIND = r#'{\\"groups\\":{\\"lang-rustup\\":[{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"rustlang.rustup\\"}],\\"shell-nu\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"nushell.nushell\\"}],\\"shell-zsh\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"zsh\\"}],\\"test-hooks\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"hooks\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"hooks\\"}],\\"test-scriptfile\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"cfg/script/scriptfile/install.zsh\\"}]},\\"remaining\\":[]}'#
+\$env.PACK_FIND = r#'{\\"groups\\":{\\"lang-rustup\\":[{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"rustlang.rustup\\"}],\\"shell-nu\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"nushell.nushell\\"}],\\"shell-zsh\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"zsh, zsh-completions\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"zsh, zsh-completions\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"zsh\\"}],\\"test-hooks\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"hooks\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"hooks\\"}],\\"test-scriptfile\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"cfg/script/scriptfile/install.zsh\\"}]},\\"remaining\\":[]}'#
 
 packFindShow
 
@@ -35968,28 +35962,28 @@ hide-env PACK_MANAGER
 packWinget
 hide-env PACK_MANAGER
     }
-    r#'shell-zsh|ghpm'# => {
-\$env.PACK_MANAGER = r#'ghpm'#
-\$env.PACK_ADD_NAMES = [ r#'zsh'# ]
-packGhpm
-hide-env PACK_MANAGER
-    }
-    r#'shell-zsh|cargo'# => {
-\$env.PACK_MANAGER = r#'cargo'#
-\$env.PACK_ADD_NAMES = [ r#'zsh'# ]
-packCargo
-hide-env PACK_MANAGER
-    }
     r#'shell-zsh|brew'# => {
 \$env.PACK_MANAGER = r#'brew'#
-\$env.PACK_ADD_NAMES = [ r#'zsh'# ]
+\$env.PACK_ADD_NAMES = [ r#'zsh'#, r#'zsh-completions'# ]
 packBrew
 hide-env PACK_MANAGER
     }
     r#'shell-zsh|pacman'# => {
 \$env.PACK_MANAGER = r#'pacman'#
-\$env.PACK_ADD_NAMES = [ r#'zsh'# ]
+\$env.PACK_ADD_NAMES = [ r#'zsh'#, r#'zsh-completions'# ]
 packPacman
+hide-env PACK_MANAGER
+    }
+    r#'shell-zsh|apt'# => {
+\$env.PACK_MANAGER = r#'apt'#
+\$env.PACK_ADD_NAMES = [ r#'zsh'# ]
+packApt
+hide-env PACK_MANAGER
+    }
+    r#'shell-zsh|dnf'# => {
+\$env.PACK_MANAGER = r#'dnf'#
+\$env.PACK_ADD_NAMES = [ r#'zsh'# ]
+packDnf
 hide-env PACK_MANAGER
     }
     r#'shell-zsh|xbps'# => {
@@ -35998,17 +35992,11 @@ hide-env PACK_MANAGER
 packXbps
 hide-env PACK_MANAGER
     }
-    r#'shell-zsh|winget'# => {
-\$env.PACK_MANAGER = r#'winget'#
-\$env.PACK_ADD_NAMES = [ r#'zsh'# ]
-packWinget
-hide-env PACK_MANAGER
-    }
     _ => {}
   }
 }
 
-\$env.PACK_PLAN = r#'[{\\"group\\":\\"shell-nu\\",\\"name\\":\\"shell\\",\\"paths\\":[{\\"id\\":\\"shell-nu|ghpm\\",\\"manager\\":\\"ghpm\\",\\"names\\":[\\"nu\\"]},{\\"id\\":\\"shell-nu|cargo\\",\\"manager\\":\\"cargo\\",\\"names\\":[\\"nu\\"]},{\\"id\\":\\"shell-nu|brew\\",\\"manager\\":\\"brew\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|pacman\\",\\"manager\\":\\"pacman\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|xbps\\",\\"manager\\":\\"xbps\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|winget\\",\\"manager\\":\\"winget\\",\\"names\\":[\\"nushell.nushell\\"]}]},{\\"group\\":\\"shell-zsh\\",\\"name\\":\\"shell\\",\\"paths\\":[{\\"id\\":\\"shell-zsh|ghpm\\",\\"manager\\":\\"ghpm\\",\\"names\\":[\\"zsh\\"]},{\\"id\\":\\"shell-zsh|cargo\\",\\"manager\\":\\"cargo\\",\\"names\\":[\\"zsh\\"]},{\\"id\\":\\"shell-zsh|brew\\",\\"manager\\":\\"brew\\",\\"names\\":[\\"zsh\\"]},{\\"id\\":\\"shell-zsh|pacman\\",\\"manager\\":\\"pacman\\",\\"names\\":[\\"zsh\\"]},{\\"id\\":\\"shell-zsh|xbps\\",\\"manager\\":\\"xbps\\",\\"names\\":[\\"zsh\\"]},{\\"id\\":\\"shell-zsh|winget\\",\\"manager\\":\\"winget\\",\\"names\\":[\\"zsh\\"]}]}]'#
+\$env.PACK_PLAN = r#'[{\\"group\\":\\"shell-nu\\",\\"name\\":\\"shell\\",\\"paths\\":[{\\"id\\":\\"shell-nu|ghpm\\",\\"manager\\":\\"ghpm\\",\\"names\\":[\\"nu\\"]},{\\"id\\":\\"shell-nu|cargo\\",\\"manager\\":\\"cargo\\",\\"names\\":[\\"nu\\"]},{\\"id\\":\\"shell-nu|brew\\",\\"manager\\":\\"brew\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|pacman\\",\\"manager\\":\\"pacman\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|xbps\\",\\"manager\\":\\"xbps\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|winget\\",\\"manager\\":\\"winget\\",\\"names\\":[\\"nushell.nushell\\"]}]},{\\"group\\":\\"shell-zsh\\",\\"name\\":\\"shell\\",\\"paths\\":[{\\"id\\":\\"shell-zsh|brew\\",\\"manager\\":\\"brew\\",\\"names\\":[\\"zsh\\",\\"zsh-completions\\"]},{\\"id\\":\\"shell-zsh|pacman\\",\\"manager\\":\\"pacman\\",\\"names\\":[\\"zsh\\",\\"zsh-completions\\"]},{\\"id\\":\\"shell-zsh|apt\\",\\"manager\\":\\"apt\\",\\"names\\":[\\"zsh\\"]},{\\"id\\":\\"shell-zsh|dnf\\",\\"manager\\":\\"dnf\\",\\"names\\":[\\"zsh\\"]},{\\"id\\":\\"shell-zsh|xbps\\",\\"manager\\":\\"xbps\\",\\"names\\":[\\"zsh\\"]}]}]'#
 
 \$env.PACK_ADD_NAMES = [  ]
 

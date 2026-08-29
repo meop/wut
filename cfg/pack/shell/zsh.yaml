@@ -2,21 +2,20 @@
 operation:
   add:
     manager:
-      ghpm:
-        names:
-          - zsh
-      cargo:
-        names:
-          - zsh
       brew:
         names:
           - zsh
+          - zsh-completions
       pacman:
         names:
           - zsh
-      xbps:
+          - zsh-completions
+      apt:
         names:
           - zsh
-      winget:
+      dnf:
+        names:
+          - zsh
+      xbps:
         names:
           - zsh

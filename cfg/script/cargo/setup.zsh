@@ -11,7 +11,7 @@ function () {
   if [[ $YES ]]; then
     yn=y
   else
-    read 'yn?setup cargo - install tools (user) [y,[n]]: '
+    read 'yn?setup - cargo - install tools (user) [y,[n]]: '
   fi
   if [[ $yn == n ]]; then
     return
