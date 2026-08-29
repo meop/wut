@@ -4,6 +4,33 @@ export function req(path: string): Request {
   return new Request('http://x' + path)
 }
 
+// runs a nu script and returns its stdout, so client-side decisions can be asserted rather than only snapshotted
+export async function runNu(body: string): Promise<string | null> {
+  const tmpFile = await Deno.makeTempFile({ suffix: '.nu' })
+  try {
+    await Deno.writeTextFile(tmpFile, body)
+    let result: Deno.CommandOutput
+    try {
+      result = await new Deno.Command('nu', {
+        args: ['--no-config-file', tmpFile],
+        stdout: 'piped',
+        stderr: 'piped',
+      }).output()
+    } catch (e) {
+      if (e instanceof Deno.errors.NotFound) {
+        return null
+      }
+      throw e
+    }
+    if (result.code !== 0) {
+      assert(false, `nu run failed:\n${new TextDecoder().decode(result.stderr)}`)
+    }
+    return new TextDecoder().decode(result.stdout).trim()
+  } finally {
+    await Deno.remove(tmpFile)
+  }
+}
+
 export async function checkSyntax(shell: 'nu' | 'pwsh' | 'zsh', body: string): Promise<void> {
   if (shell === 'nu') {
     const cmd = new Deno.Command('nu', {

@@ -2,7 +2,7 @@
 
 ## Architecture Overview
 
-The test suite validates the server's shell script generation pipeline across two tiers:
+The test suite validates the server's shell script generation pipeline across three tiers:
 
 **Tier 1 — Snapshot tests**: Call `runSrv()` directly with synthetic `Request` objects and snapshot the generated script
 as text. These are fast, require no Docker or real shells, and exercise the full TypeScript + snippet assembly pipeline.
@@ -10,12 +10,16 @@ as text. These are fast, require no Docker or real shells, and exercise the full
 **Tier 2 — Syntax checks**: Feed each generated script through its shell's parser (`nu`, `zsh`, `pwsh`) to catch syntax
 errors. If a shell binary is not installed, its checks are silently skipped — no hard failure.
 
+**Tier 3 — Client decisions**: Run a nu snippet for real, against a PATH built for the test, and assert what it answers.
+Only for the decisions the server cannot make, since they read the machine (`src/sh/nu/pack_test.ts`). Skipped the same
+way when `nu` is missing.
+
 Snapshot files are committed to the repo under `src/cmd/__snapshots__/`, so script diffs are visible in PRs.
 
 ## Running Tests
 
 ```bash
-# Run all tests (Tier 1 + Tier 2)
+# Run all tests (every tier)
 deno task test
 
 # Generate or regenerate snapshots (first run, or after intentional changes)
@@ -41,10 +45,10 @@ During CI, run `deno task test` (without `--update`) — any unexpected script c
 Package manager commands — nu × all supported managers × all 7 ops (`add`, `find`, `list`, `out`, `rem`, `sync`,
 `tidy`):
 
-| Shell | Platforms / managers                                                                                                                |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| nu    | alpine (apk), arch (yay+pacman), ubuntu (apt), rocky (dnf), void (xbps), suse (zypper), darwin (brew), windows (choco+scoop+winget) |
-| nu    | no-sys params → bootstrap script                                                                                                    |
+| Shell | Platforms / managers                                                                                                                   |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| nu    | alpine (apk), arch (pacman family), ubuntu (apt), rocky (dnf), void (xbps), suse (zypper), darwin (brew), windows (choco+scoop+winget) |
+| nu    | no-sys params → bootstrap script                                                                                                       |
 
 ### `src/cmd/virt_snap_test.ts`
 
@@ -81,6 +85,13 @@ pwsh/zsh → nu redirect — one representative op per command per shell:
 | ----- | ----------------------------------------------------------------- |
 | pwsh  | file/find, file/sync, pack/add, pack/find, virt/list, script/exec |
 | zsh   | file/find, file/sync, pack/add, pack/find, virt/list, script/exec |
+
+### `src/sh/nu/pack_test.ts`
+
+Tier 3 — the client's own decisions. Some of what wut emits is only answerable where `which` runs, so `runNu` sources
+`src/sh/nu/pack.nu` against a PATH of stub binaries and asserts what it returns. Today that covers collapsing the
+`paru`/`yay`/`pacman` family to one manager (see [PACK.md](PACK.md#the-pacman-family-is-one-manager)). Like Tier 2, it
+skips silently when `nu` is not installed.
 
 ## Following the redirect: `wutNuPinned=1`
 

@@ -1,16 +1,10 @@
 def --env packPacman [] {
-  let mgr = if PACK_MANAGER in $env {
-    $env.PACK_MANAGER
-  } else if (which yay | is-not-empty) {
-    'yay'
-  } else if (which paru | is-not-empty) {
-    'paru'
-  } else {
-    'pacman'
-  }
+  # the yaml states the narrowest manager that can serve the group; packManagerBest widens it to the aur helper here
+  let declared = ($env.PACK_MANAGER? | default 'pacman')
+  let mgr = (packManagerBest $declared)
   if (
-    ($mgr not-in ['yay', 'paru', 'pacman']) or
-    (which $mgr | is-empty) or
+    ($declared not-in $PACK_PACMAN_FAMILY) or
+    ($mgr == null) or
     ('PACK_OP' not-in $env) or
     (packNothingToDo 'pacman')
   ) {

@@ -91,6 +91,18 @@ own gate rather than add's, and they answer to a `?` row so they can be taken or
 `sync`, `tidy`, `list`, `outdated` and `info` have no per-package decision to make — the only question is which managers
 this run touches — so they share a plainer plan, `packManagerPlanRun`, whose rows are just the managers present.
 
+## The pacman family is one manager
+
+`paru` and `yay` are AUR helpers wrapping `pacman`, so a machine carrying all three has one manager wearing three names,
+not three to choose between. Offering them side by side asked the same question three times and, for the ops with no
+per-package decision, ran the same upgrade three times over.
+
+The client resolves the family to a single winner — `paru`, then `yay`, then `pacman` — and that winner is what the plan
+shows and what runs. Which of the three a group's yaml declared only narrows what is acceptable: an entry naming
+`pacman` is a repo package, so any of the three serves it, while one naming `paru` or `yay` is from the AUR, so bare
+`pacman` cannot. `packManagerBest` answers both questions at once — it maps a declared manager to the one that will
+actually run here, or `null` when nothing can — which is why `packManagerHere` is now a null check over it.
+
 ## Nothing viable is an absence, not a plan
 
 A group whose every path needs a manager this machine lacks is not something to show you and refuse to do. The client

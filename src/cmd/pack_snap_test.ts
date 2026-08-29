@@ -41,7 +41,7 @@ Deno.test('nu / alpine / tidy', async (t) => {
   await checkSyntax('nu', body)
 })
 
-// nu × arch (pacman + paru + yay)
+// nu × arch (the pacman family, which the client collapses to one)
 Deno.test('nu / arch / add', async (t) => {
   const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch'))).text()
   await assertSnapshot(t, body)

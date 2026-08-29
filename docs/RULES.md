@@ -147,6 +147,10 @@ Three axes decide it, applied in that order:
 Alphabetical is not one of them. Sorting the list reads as an order without being one, and it put `choco` ahead of
 `winget` and `bun` ahead of `ghpm` for no reason anyone stated.
 
+`paru`, `yay` and `pacman` are one manager as far as a machine is concerned, so the client collapses them to whichever
+of the three is here, in that order — see [PACK.md](PACK.md#the-pacman-family-is-one-manager). Declare the narrowest one
+that can serve the group: `pacman` for a repo package, `yay` for an AUR one.
+
 ## pack manager hooks and remove
 
 A manager entry may also carry a shell key — `pwsh` or `zsh` — holding `hooks` that run around the manager call. Only

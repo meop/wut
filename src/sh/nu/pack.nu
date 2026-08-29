@@ -162,8 +162,36 @@ def packNameList [key: string] {
   }
 }
 
+const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
+
+# paru and yay are both aur helpers wrapping pacman, so either serves what the other or pacman declared, while
+# pacman alone cannot serve an aur entry
+def packPacmanBest [declared: string] {
+  let usable = if $declared == 'pacman' { $PACK_PACMAN_FAMILY } else { ['paru', 'yay'] }
+  $usable | where { |m| which $m | is-not-empty } | first 1 | get -o 0
+}
+
+# which manager actually serves a declared one on this machine, or null
+def packManagerBest [manager: string] {
+  if $manager == 'script' {
+    # a script is gated by the server, so if it reached the plan this machine can run it
+    'script'
+  } else if $manager in $PACK_PACMAN_FAMILY {
+    packPacmanBest $manager
+  } else if (which $manager | is-not-empty) {
+    $manager
+  } else {
+    null
+  }
+}
+
+def packManagerHere [manager: string] {
+  (packManagerBest $manager) != null
+}
+
+# the pacman family collapses to one entry, so it is never offered or run three times over
 def packManagersHere [] {
-  ($env.PACK_MANAGERS? | default []) | where { |m| which $m | is-not-empty }
+  ($env.PACK_MANAGERS? | default []) | each { |m| packManagerBest $m } | compact | uniq
 }
 
 def --env packRefreshAll [] {
@@ -222,13 +250,12 @@ def packTable [headers: list<string>, rows: list<list<string>>] {
   for r in $rows { opPrint (do $line $r) }
 }
 
-def packManagerHere [manager: string] {
-  # a script is gated by the server, so if it reached the plan this machine can run it
-  ($manager == 'script') or (which $manager | is-not-empty)
-}
-
 def packFindWinner [candidates: list] {
-  $candidates | where { |c| packManagerHere $c.manager } | first 1 | get -o 0
+  for c in $candidates {
+    let m = (packManagerBest $c.manager)
+    if $m != null { return { manager: $m, pkg: $c.pkg } }
+  }
+  null
 }
 
 def --env packFindShow [] {
@@ -311,7 +338,7 @@ def --env packPlanRun [] {
     let path = (packPickPath $unit)
     if $path != null {
       $served = ($served | append $unit.name)
-      $detail = ($detail | append { manager: $path.manager, group: $unit.group, id: $path.id, names: $path.names })
+      $detail = ($detail | append { manager: (packManagerBest $path.manager), group: $unit.group, id: $path.id, names: $path.names })
     }
   }
   let planned = $detail
