@@ -144,7 +144,7 @@ def --env packRefresh [manager: string] {
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
     xbps => { packOp [$"(packElevate 'xbps')-install" --sync] },
     zypper => { packOp [(packElevate 'zypper') refresh] },
-    scoop => { packOp [(packScoopCmd) update] },
+    scoop => { packOp ((packScoopCmd) ++ [update]) },
     winget => { packOp [winget source update] },
     _ => {},
   }
