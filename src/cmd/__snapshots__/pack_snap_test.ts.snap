@@ -2874,12 +2874,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -2887,30 +2886,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -2954,11 +2949,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -2966,32 +2962,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_FIND = r#'{\\"groups\\":{\\"lang-rustup\\":[{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"rustlang.rustup\\"}],\\"shell-nu\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"nushell.nushell\\"}],\\"shell-zsh\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"zsh, zsh-completions\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"zsh, zsh-completions\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"zsh\\"}],\\"test-hooks\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"hooks\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"hooks\\"}],\\"test-scriptfile\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"cfg/script/scriptfile/install.zsh\\"}]},\\"remaining\\":[]}'#
 
@@ -4671,12 +4671,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -4684,30 +4683,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -4751,11 +4746,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -4763,32 +4759,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -6511,12 +6511,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -6524,30 +6523,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -6591,11 +6586,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -6603,32 +6599,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -8351,12 +8351,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -8364,30 +8363,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -8431,11 +8426,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -8443,32 +8439,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -10221,12 +10221,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -10234,30 +10233,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -10301,11 +10296,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -10313,32 +10309,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -12061,12 +12061,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -12074,30 +12073,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -12141,11 +12136,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -12153,32 +12149,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -13896,12 +13896,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -13909,30 +13908,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -13976,11 +13971,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -13988,32 +13984,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -15816,12 +15816,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -15829,30 +15828,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -15896,11 +15891,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -15908,32 +15904,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -17632,12 +17632,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -17645,30 +17644,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -17712,11 +17707,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -17724,32 +17720,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -19448,12 +19448,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -19461,30 +19460,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -19528,11 +19523,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -19540,32 +19536,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -21264,12 +21264,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -21277,30 +21276,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -21344,11 +21339,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -21356,32 +21352,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 packManagerPlanRun
 "
@@ -23056,12 +23056,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -23069,30 +23068,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -23136,11 +23131,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -23148,32 +23144,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 packManagerPlanRun
 "
@@ -24850,12 +24850,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -24863,30 +24862,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -24930,11 +24925,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -24942,32 +24938,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_FIND = r#'{\\"groups\\":{\\"shell-nu\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"nushell.nushell\\"}]},\\"remaining\\":[]}'#
 
@@ -26647,12 +26647,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -26660,30 +26659,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -26727,11 +26722,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -26739,32 +26735,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_FIND = r#'{\\"groups\\":{\\"shell-nu\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"nushell.nushell\\"}]},\\"remaining\\":[]}'#
 
@@ -28444,12 +28444,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -28457,30 +28456,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -28524,11 +28519,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -28536,32 +28532,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -30284,12 +30284,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -30297,30 +30296,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -30364,11 +30359,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -30376,32 +30372,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -32124,12 +32124,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -32137,30 +32136,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -32204,11 +32199,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -32216,32 +32212,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_FIND = r#'{\\"groups\\":{},\\"remaining\\":[\\"nosuchpackage\\"]}'#
 
@@ -33919,12 +33919,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -33932,30 +33931,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -33999,11 +33994,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -34011,32 +34007,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_FIND = r#'{\\"groups\\":{\\"lang-rustup\\":[{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"rustlang.rustup\\"}],\\"shell-nu\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"nushell.nushell\\"}],\\"shell-zsh\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"zsh, zsh-completions\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"zsh, zsh-completions\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"zsh\\"}],\\"test-hooks\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"hooks\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"hooks\\"}],\\"test-scriptfile\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"cfg/script/scriptfile/install.zsh\\"}]},\\"remaining\\":[]}'#
 
@@ -35716,12 +35716,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -35729,30 +35728,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -35796,11 +35791,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -35808,32 +35804,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -37556,12 +37556,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -37569,30 +37568,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -37636,11 +37631,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -37648,32 +37644,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -39396,12 +39396,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -39409,30 +39408,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -39476,11 +39471,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -39488,32 +39484,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -41266,12 +41266,11 @@ def --env packZypper [] {
 }
 
 
-def --env packScoop [] {
-  let bin = 'scoop'
-  let cmd = (packScoopCmd)
+def --env packWinget [] {
+  let cmd = 'winget'
   if (
-    (which \$bin | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
+    (which \$cmd | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -41279,30 +41278,26 @@ def --env packScoop [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd (\$cmd ++ [install])
+      packOpAdd [\$cmd install] --each
     }
     info => {
-      packOpInfo (\$cmd ++ [info])
+      packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd 'scoop')
+      packOpList (packListCmd \$cmd)
     }
     outdated => {
-      packOpOutdated (\$cmd ++ [status])
+      packOpOutdated [\$cmd upgrade]
     }
     remove => {
-      packOpRemove (\$cmd ++ [uninstall --purge])
+      packOpRemove [\$cmd uninstall] --each
     }
     sync => {
-      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
-    }
-    tidy => {
-      packOp (\$cmd ++ [cache rm --all])
-      packOp (\$cmd ++ [cleanup --all])
+      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
     }
   }
 }
@@ -41346,11 +41341,12 @@ def --env packChoco [] {
 }
 
 
-def --env packWinget [] {
-  let cmd = 'winget'
+def --env packScoop [] {
+  let bin = 'scoop'
+  let cmd = (packScoopCmd)
   if (
-    (which \$cmd | is-empty) or
-    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$cmd) or
+    (which \$bin | is-empty) or
+    ('PACK_MANAGER' in \$env and \$env.PACK_MANAGER != \$bin) or
     ('PACK_OP' not-in \$env) or
     (packNothingToDo)
   ) {
@@ -41358,32 +41354,36 @@ def --env packWinget [] {
   }
 
 
-  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'winget' }
+  if \$env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh \$bin }
 
   match \$env.PACK_OP {
     add => {
-      packOpAdd [\$cmd install] --each
+      packOpAdd (\$cmd ++ [install])
     }
     info => {
-      packOpInfo [\$cmd show]
+      packOpInfo (\$cmd ++ [info])
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
-      packOpOutdated [\$cmd upgrade]
+      packOpOutdated (\$cmd ++ [status])
     }
     remove => {
-      packOpRemove [\$cmd uninstall] --each
+      packOpRemove (\$cmd ++ [uninstall --purge])
     }
     sync => {
-      packOpSync [\$cmd upgrade --all] [\$cmd upgrade] --each
+      packOpSync (\$cmd ++ [update --all]) (\$cmd ++ [update])
+    }
+    tidy => {
+      packOp (\$cmd ++ [cache rm --all])
+      packOp (\$cmd ++ [cleanup --all])
     }
   }
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'scoop'#, r#'choco'#, r#'winget'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'cargo'#, r#'deno'#, r#'bun'#, r#'pnpm'#, r#'uv'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {

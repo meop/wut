@@ -133,13 +133,19 @@ ghpm  cargo  deno  bun  pnpm  uv          user space, no sudo
 script                                     what a group runs instead of a package
 brew  paru  yay  pacman                    darwin, then arch
 apk  apt  dnf  xbps  zypper                one distro each
-scoop  choco  winget                       windows
+winget  choco  scoop                       windows
 ```
 
-Three axes decide it, applied in that order:
+Four axes decide it, applied in that order:
 
-- **user, then script, then system** — an install that needs no sudo is preferred to one that does, which is why `scoop`
-  leads the windows three and `winget`, the one the OS ships, trails them
+- **user, then script, then system** — an install that needs no sudo is preferred to one that does, which is what puts
+  the portable six ahead of every native manager. What a native installer buys is integration with the platform's own
+  UI, and a cli tool has none to collect: on darwin native means the app store, and on a non-rolling linux it means
+  trailing upstream on patches. A gui app would weigh windows the other way — an entry in Add/Remove Programs and the
+  Start menu is worth reaching for — but that is not what these groups hold
+- **shipped before opt-in** — inside the windows three the privilege axis decides nothing, since none of them needs sudo
+  for a user-scope install. What the OS ships does: `winget` is on every windows machine and is the one wired into its
+  package UI, while `choco` and `scoop` are themselves installs someone has to have made first
 - **darwin, then linux, then windows** — a machine only has one of these, so this is about reading order, not contest
 - **superset before base** — `paru` and `yay` wrap `pacman` and can install everything it can plus the AUR, so reaching
   for the narrower one first would install less than asked

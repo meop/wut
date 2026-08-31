@@ -47,7 +47,7 @@ Package manager commands — nu × all supported managers × all 7 ops (`add`, `
 
 | Shell | Platforms / managers                                                                                                                   |
 | ----- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| nu    | alpine (apk), arch (pacman family), ubuntu (apt), rocky (dnf), void (xbps), suse (zypper), darwin (brew), windows (choco+scoop+winget) |
+| nu    | alpine (apk), arch (pacman family), ubuntu (apt), rocky (dnf), void (xbps), suse (zypper), darwin (brew), windows (winget+choco+scoop) |
 | nu    | no-sys params → bootstrap script                                                                                                       |
 
 ### `src/cmd/virt_snap_test.ts`

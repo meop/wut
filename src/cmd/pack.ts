@@ -47,9 +47,9 @@ const NATIVE_MANAGERS: Array<string> = [
   'dnf',
   'xbps',
   'zypper',
-  'scoop',
-  'choco',
   'winget',
+  'choco',
+  'scoop',
 ]
 
 const MANAGERS: Array<string> = [...PORTABLE_MANAGERS, ...NATIVE_MANAGERS]
