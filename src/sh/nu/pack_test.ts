@@ -70,6 +70,16 @@ esac`,
   "list --global") printf '/home/x/.local/share/pnpm/global/v11 (PRIVATE)\\n\u2502\\n\u251c\u2500\u2500 node@26.2.0\\n\u2514\u2500\u2500 npm@12.0.2\\n' ;;
   *) exit 1 ;;
 esac`,
+  // brew's own two answers disagree: `list` names formulae and casks alike, `list --versions <name>` resolves
+  // formulae only, so it exits 1 on a cask that is very much installed
+  brew: `case "$*" in
+  "list") printf 'jq\\nvivaldi\\nzstd\\n' ;;
+  "list --cask") printf 'vivaldi\\n' ;;
+  "list --formula") printf 'jq\\nzstd\\n' ;;
+  "list --versions vivaldi") exit 1 ;;
+  "list --versions jq") printf 'jq 1.8.1\\n' ;;
+  *) exit 1 ;;
+esac`,
   pacman: `case "$1" in
   --query) case "$2" in nushell) exit 0 ;; *) exit 1 ;; esac ;;
   *) exit 1 ;;
@@ -262,4 +272,59 @@ Deno.test('nu / pack / list runs a listing before the gate only when it has a te
   // twice: once to answer before the gate, once to dump after
   assertEquals(termed!.split('uv tool list').length - 1, 2)
   assertEquals(termed!.includes('1) uv'), true)
+})
+
+// the bug this covers: `wut p l vivaldi` found it under brew and `wut p r vivaldi` said no manager had it, moments
+// apart on the same machine. `list` reads `brew list`, which names casks; the installed check asked
+// `brew list --versions vivaldi`, which resolves formulae only and exits 1 on every cask
+Deno.test('nu / pack / brew has a cask that its formula-only version query cannot see', async () => {
+  const probe = (name: string) => `print (packInstalled 'brew' '${name}')`
+  const out = await withStubs({ brew: LISTINGS.brew }, probe('vivaldi'), ['brew'])
+  if (out == null) {
+    return
+  }
+  assertEquals(out, 'true')
+  assertEquals(await withStubs({ brew: LISTINGS.brew }, probe('jq'), ['brew']), 'true')
+  assertEquals(await withStubs({ brew: LISTINGS.brew }, probe('vivaldo'), ['brew']), 'false')
+})
+
+// vivaldi is a cask, jq a formula, and the flag on a name has to narrow the check the same way it narrows the
+// install — otherwise `--formula vivaldi` would answer true off the unnarrowed listing
+Deno.test("nu / pack / a name's flags narrow the installed check, not just the install", async () => {
+  const probe = (raw: string) => `print (packInstalled 'brew' '${raw}')`
+  const out = await withStubs({ brew: LISTINGS.brew }, probe('--cask vivaldi'), ['brew'])
+  if (out == null) {
+    return
+  }
+  assertEquals(out, 'true')
+  assertEquals(await withStubs({ brew: LISTINGS.brew }, probe('--formula jq'), ['brew']), 'true')
+  // the flavor that is not installed, under a name that is
+  assertEquals(await withStubs({ brew: LISTINGS.brew }, probe('--formula vivaldi'), ['brew']), 'false')
+  assertEquals(await withStubs({ brew: LISTINGS.brew }, probe('--cask jq'), ['brew']), 'false')
+  // a bare flag names no package at all
+  assertEquals(await withStubs({ brew: LISTINGS.brew }, probe('--cask'), ['brew']), 'false')
+})
+
+// the flags are not distributive over the call: `brew uninstall --cask a --formula b` is not a thing brew accepts,
+// so each distinct flag set gets its own invocation, in the order the names first introduce them
+Deno.test('nu / pack / names carrying different flags are issued as separate invocations', async () => {
+  const out = await withStubs(
+    { brew: LISTINGS.brew },
+    [
+      `$env.NOOP = '1'`,
+      `$env.PACK_REMOVE_NAMES = ['--cask vivaldi', 'jq', '--cask slack', '--formula node', 'zstd']`,
+      `packOpRemove [brew uninstall]`,
+    ].join('\n'),
+    ['brew'],
+    ['brew'],
+  )
+  if (out == null) {
+    return
+  }
+  const calls = out.split('\n').filter((l) => l.startsWith('brew uninstall'))
+  assertEquals(calls, [
+    'brew uninstall --cask vivaldi slack',
+    'brew uninstall jq zstd',
+    'brew uninstall --formula node',
+  ])
 })

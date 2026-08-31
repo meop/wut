@@ -58,7 +58,13 @@ def packScoopCmd [] {
 }
 
 # choosing a manager needs an exact name, not the substring search 'find' runs: pacman has nushell, not nushel
-def --env packExists [manager: string, name: string] {
+def --env packExists [manager: string, raw: string] {
+  let parts = (packNameParts $raw)
+  let name = $parts.name
+  let flags = $parts.flags
+  if ($name | is-empty) {
+    return false
+  }
   match $manager {
     # --non-interactive: an inherited tty (wut's own) would otherwise pass ghpm's isatty
     # check, letting an unresolved name fall through to an interactive search-and-pick prompt
@@ -70,7 +76,7 @@ def --env packExists [manager: string, name: string] {
     pnpm => (packExistsNpm $name),
     bun => ((packExistsNpm $name) or (packExistsJsr $name)),
     deno => ((packExistsJsr $name) or (packExistsNpm $name)),
-    brew => (packOk [brew info $name]),
+    brew => (packOk ([brew info] ++ $flags ++ [$name])),
     apk => (packOk [apk search -e $name]),
     apt => (packOk [apt-cache show $name]),
     dnf => (packOk [dnf info $name]),
@@ -189,7 +195,13 @@ def packLinesLike [lines: list<string>, term: string] {
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
 # one that actually has it here. every check is local, so the plan can run them before it asks rather than after
-def --env packInstalled [manager: string, name: string] {
+def --env packInstalled [manager: string, raw: string] {
+  let parts = (packNameParts $raw)
+  let name = $parts.name
+  let flags = $parts.flags
+  if ($name | is-empty) {
+    return false
+  }
   match $manager {
     ghpm => (packListedHas [ghpm list --long-names] $name { |l| $l | str trim }),
     cargo => (packListedHas (packListCmd 'cargo') $name { |l| packListedHead $l }),
@@ -197,7 +209,10 @@ def --env packInstalled [manager: string, name: string] {
     pnpm => (packListedHas (packListCmd 'pnpm') $name { |l| packListedNodeName $l }),
     bun => (packListedHas (packListCmd 'bun') $name { |l| packListedNodeName $l }),
     deno => (packInstalledDeno $name),
-    brew => (packOk [brew list --versions $name]),
+    # `brew list --versions <name>` answers for formulae only, so a cask is invisible to it and remove could never
+    # find one `list` had just shown. brew answers by listing, like the user managers above it, and the name's own
+    # flags narrow that listing the same way they narrow the install: `--cask vivaldi` asks `brew list --cask`
+    brew => (packListedHas ((packListCmd 'brew') ++ $flags) $name { |l| $l | str trim }),
     apk => (packOk [apk info -e $name]),
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show $name]),
@@ -239,6 +254,37 @@ def --env packRefresh [manager: string] {
     winget => { packOp [winget source update] },
     _ => {},
   }
+}
+
+# a name may carry the flags its manager needs to disambiguate it: brew spells which flavor it means with `--cask`
+# or `--formula`, for the occasional name packaged as both. the flags travel with the name they qualify rather than
+# with the entry, so one group can hold `--cask vivaldi`, `--formula node` and a plain `jq` at once
+def packNameParts [raw: string] {
+  let parts = ($raw | split row ' ' | where { |p| $p | is-not-empty })
+  {
+    flags: ($parts | where { |p| $p | str starts-with '-' }),
+    name: ($parts | where { |p| not ($p | str starts-with '-') } | str join ' '),
+  }
+}
+
+# names carrying different flags cannot share an invocation — the flags are not distributive over the whole call —
+# so they are grouped by flag set, in first-appearance order, and issued one call each
+def packNameGroups [names: list<string>] {
+  mut groups = []
+  for raw in $names {
+    let parts = (packNameParts $raw)
+    if ($parts.name | is-empty) {
+      continue
+    }
+    let key = ($parts.flags | str join ' ')
+    let at = ($groups | enumerate | where { |g| $g.item.key == $key } | get -o 0.index)
+    if $at == null {
+      $groups = ($groups | append { key: $key, flags: $parts.flags, names: [$parts.name] })
+    } else {
+      $groups = ($groups | update $at { |g| $g | update names { |r| $r.names | append $parts.name } })
+    }
+  }
+  $groups
 }
 
 # the env dump sets these as a flat string, and setOpNames may later replace them with a list
@@ -655,10 +701,12 @@ def --env packMutate [names_key: string, cmds: list<string>, each: bool] {
   if ($names | is-empty) {
     return
   }
-  if $each {
-    for n in $names { packOpStrict ($cmds ++ [$n]) }
-  } else {
-    packOpStrict ($cmds ++ $names)
+  for g in (packNameGroups $names) {
+    if $each {
+      for n in $g.names { packOpStrict ($cmds ++ $g.flags ++ [$n]) }
+    } else {
+      packOpStrict ($cmds ++ $g.flags ++ $g.names)
+    }
   }
   load-env {($names_key): []}
 }
@@ -725,12 +773,14 @@ def --env packOpSync [cmdsNoArgs: list<string>, cmds: list<string>, --each] {
     packOp $cmdsNoArgs
     return
   }
-  if $each {
-    for n in $env.PACK_SYNC_NAMES {
-      packOp ($cmds ++ [$n])
+  for g in (packNameGroups $env.PACK_SYNC_NAMES) {
+    if $each {
+      for n in $g.names {
+        packOp ($cmds ++ $g.flags ++ [$n])
+      }
+    } else {
+      packOp ($cmds ++ $g.flags ++ $g.names)
     }
-  } else {
-    packOp ($cmds ++ $env.PACK_SYNC_NAMES)
   }
 }
 

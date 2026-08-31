@@ -114,6 +114,29 @@ operation:
 A manager entry may carry a `gate`, read exactly like a script entry's, for a manager that only applies on some
 platforms. `find` honours it too, so a group whose every entry is gated out is not offered there either.
 
+## a name may carry its own flags
+
+A name is usually just a name, but a manager sometimes needs one qualified. Homebrew packages most things as either a
+formula or a cask, never both, and then the flavor is unambiguous — but for the few packaged as both, only `--cask` or
+`--formula` says which one is meant:
+
+```yaml
+brew:
+  names:
+    - --cask vivaldi
+    - --formula node
+    - jq
+```
+
+The flags belong to the name they precede, not to the entry. That is what lets one entry hold all three lines above, and
+it is why the flags cannot simply be prepended to the whole call: `brew uninstall --cask vivaldi --formula node` is not
+something brew accepts. Names are grouped by their flag set instead, in the order the names first introduce each one,
+and every group is issued as its own invocation — three names, three calls to brew.
+
+The flags qualify the checks as well, not just the install and uninstall. `--cask vivaldi` asks `brew list --cask`, so a
+formula sharing the name cannot answer for the cask, and the reverse. A line that is only a flag names no package and is
+ignored.
+
 File names carry no punctuation — the punctuated spelling is an alias. No blank lines inside the file, one newline at
 the end.
 
