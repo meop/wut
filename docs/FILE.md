@@ -15,9 +15,9 @@ own.
 
 ## Four ops, one that writes
 
-`find` and `sync` both filter by `fileBinHere`. `find` prints what it matched and stops — it has nothing left to do once
-you answer. `diff` and `list` take an explicit filter and print one line per pair, so there is no set to summarise.
-`sync` is the one that writes, and the one that asks:
+`find`, `diff` and `sync` all filter by `fileBinHere`. `find` prints what it matched and stops — it has nothing left to
+do once you answer. `list` takes an explicit filter and prints one line per pair out of what the server already sent, so
+there is no set to summarise. `sync` is the one that writes:
 
 - `filePlanShow` shows a numbered row per tool with how many files and how many destination directories it accounts for,
   and the tools picked are the only ones written
@@ -30,3 +30,9 @@ sync that destroys something.
 
 `diff` fetches each source to a temp file and runs `diff` (or `fc`), reporting a destination that does not exist rather
 than treating it as an empty diff.
+
+That fetch is why `diff` asks too, through the same `filePlanShow`: one GET per pair is the same cost `sync` pays, and
+what separates the two is that `sync` also writes the result. `diff` reads like `list` — no writes, a filter, a printout
+— but the work it does before printing is a network round trip per pair, and cost is what decides which side of the
+prompt work belongs on ([OPS.md](OPS.md#cost-decides-which-side-of-the-gate-work-sits-on)). Both ops key their plan off
+their own op name, so picking tools for a diff does not carry into a later sync.

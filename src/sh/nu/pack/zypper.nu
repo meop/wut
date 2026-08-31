@@ -4,34 +4,31 @@ def --env packZypper [] {
     (which $cmd | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
-    (packNothingToDo 'zypper')
+    (packNothingToDo)
   ) {
     return
   }
 
-  if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($cmd) \(system\)") { return }
   let cmd = packElevate $cmd
 
   if $env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'zypper' }
 
   match $env.PACK_OP {
     add => {
-      packOpAdd 'zypper' $"use zypper \(system\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
+      packOpAdd [$cmd install]
     }
     info => {
       packOpInfo [$cmd info]
     }
     list => {
-      # not `search --installed-only`: it can report packages as installed
-      # when they aren't — https://github.com/openSUSE/zypper/issues/498
-      packOpList [$cmd packages --installed-only]
+      packOpList (packListCmd $cmd)
     }
     outdated => {
       packOpOutdated [$cmd list-updates]
     }
     remove => {
       # same reason as list, above: search --installed-only isn't reliable
-      packOpRemove 'zypper' $"use zypper \(system\)" { |n| packGrepList [$cmd packages --installed-only] $n } [$cmd uninstall]
+      packOpRemove [$cmd uninstall]
     }
     sync => {
       packOpSync [$cmd update] [$cmd install]

@@ -4,12 +4,11 @@ def --env packUv [] {
     (which $cmd | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
-    (packNothingToDo 'uv')
+    (packNothingToDo)
   ) {
     return
   }
 
-  if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($cmd) \(user\)") { return }
 
   # uv doesn't expose a per-tool info command, but each tool is just an
   # isolated venv under `uv tool dir`/<name> (undocumented as a stable path,
@@ -27,7 +26,7 @@ def --env packUv [] {
 
   match $env.PACK_OP {
     add => {
-      packOpAdd 'uv' $"use uv \(user\)" { |n| packHttpGetPypi $n | is-not-empty } [$cmd tool install] --each
+      packOpAdd [$cmd tool install] --each
     }
     info => {
       for term in $env.PACK_INFO_NAMES {
@@ -35,10 +34,10 @@ def --env packUv [] {
       }
     }
     list => {
-      packOpList [$cmd tool list]
+      packOpList (packListCmd $cmd)
     }
     remove => {
-      packOpRemove 'uv' $"use uv \(user\)" { |n| packGrepList [$cmd tool list] $n } [$cmd tool uninstall]
+      packOpRemove [$cmd tool uninstall]
     }
     sync => {
       packOpSync [$cmd tool upgrade --all] [$cmd tool upgrade]

@@ -5,30 +5,29 @@ def --env packScoop [] {
     (which $bin | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $bin) or
     ('PACK_OP' not-in $env) or
-    (packNothingToDo 'scoop')
+    (packNothingToDo)
   ) {
     return
   }
 
-  if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($bin) \(user\)") { return }
 
   if $env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh $bin }
 
   match $env.PACK_OP {
     add => {
-      packOpAdd 'scoop' $"use scoop \(user\)" { |n| packGrepFind ($cmd ++ [search]) $n } ($cmd ++ [install])
+      packOpAdd ($cmd ++ [install])
     }
     info => {
       packOpInfo ($cmd ++ [info])
     }
     list => {
-      packOpList ($cmd ++ [list])
+      packOpList (packListCmd 'scoop')
     }
     outdated => {
       packOpOutdated ($cmd ++ [status])
     }
     remove => {
-      packOpRemove 'scoop' $"use scoop \(user\)" { |n| packGrepList ($cmd ++ [list]) $n } ($cmd ++ [uninstall --purge])
+      packOpRemove ($cmd ++ [uninstall --purge])
     }
     sync => {
       packOpSync ($cmd ++ [update --all]) ($cmd ++ [update])

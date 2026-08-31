@@ -6,12 +6,11 @@ def --env packPacman [] {
     ($declared not-in $PACK_PACMAN_FAMILY) or
     ($mgr == null) or
     ('PACK_OP' not-in $env) or
-    (packNothingToDo 'pacman')
+    (packNothingToDo)
   ) {
     return
   }
 
-  if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($mgr) \(system\)") { return }
 
   let cmd = if $mgr == pacman { packElevate $mgr } else { $mgr }
 
@@ -19,19 +18,19 @@ def --env packPacman [] {
 
   match $env.PACK_OP {
     add => {
-      packOpAdd 'pacman' $"use ($mgr) \(system\)" { |n| packGrepFind [$cmd --sync --search] $n } [$cmd --sync --needed]
+      packOpAdd [$cmd --sync --needed]
     }
     info => {
       packOpInfo [$cmd --sync --info]
     }
     list => {
-      packOpList [$cmd --query]
+      packOpList (packListCmd $mgr)
     }
     outdated => {
       packOpOutdated [$cmd --query --upgrades]
     }
     remove => {
-      packOpRemove 'pacman' $"use ($mgr) \(system\)" { |n| packGrepList [$cmd --query] $n } [$cmd --remove --nosave --recursive]
+      packOpRemove [$cmd --remove --nosave --recursive]
     }
     sync => {
       packOpSync [$cmd --sync --sysupgrade] [$cmd --sync --needed]

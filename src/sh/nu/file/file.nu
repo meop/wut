@@ -24,26 +24,17 @@ def fileTable [headers: list<string>, rows: list<list<string>>] {
   for r in $rows { opPrint (do $line $r) }
 }
 
-def filePrompt [label: string] {
-  mut yn = ''
-  if YES in $env {
-    $yn = 'y'
-  } else {
-    opPrint ''
-    $yn = input $"($label) [y,[n]]: "
-  }
-  ($yn | str lowercase) in ['', 'y', 'yes']
-}
 
 # a tool's compound key doubles as its candidate bin names, same as the per-pair check the sync loop already does
 def fileBinHere [tool: string] {
   $tool | split row ',' | any { |alias| which $alias | is-not-empty }
 }
 
-# sync's plan: which tools are here, and how many files and destination dirs each one accounts for
-def filePlanShow [] {
-  let pairs = ($env.FILE_SYNC_PATH_PAIRS? | default []) | where { |p| fileBinHere ($p | split row '|' | get 0) }
-  let clearDirs = ($env.FILE_SYNC_CLEAR_DIRS? | default []) | where { |d| fileBinHere ($d | split row '|' | get 0) }
+# the plan for the two ops that go to the network: which tools are here, and how many files and destination dirs
+# each one accounts for. diff fetches every source it compares, the same GET sync makes, so it is gated the same
+def filePlanShow [pairsKey: string, dirsKey: string, toolsKey: string] {
+  let pairs = ($env | get -o $pairsKey | default []) | where { |p| fileBinHere ($p | split row '|' | get 0) }
+  let clearDirs = ($env | get -o $dirsKey | default []) | where { |d| fileBinHere ($d | split row '|' | get 0) }
   if ($pairs | is-empty) and ($clearDirs | is-empty) {
     return true
   }
@@ -62,12 +53,12 @@ def filePlanShow [] {
   if $picked == null {
     return false
   }
-  load-env {FILE_SYNC_TOOLS: ($picked | each { |i| $tools | get ($i - 1) })}
+  load-env {($toolsKey): ($picked | each { |i| $tools | get ($i - 1) })}
   true
 }
 
-def fileToolChosen [tool: string] {
-  let chosen = ($env.FILE_SYNC_TOOLS? | default [])
+def fileToolChosen [toolsKey: string, tool: string] {
+  let chosen = ($env | get -o $toolsKey | default [])
   ($chosen | is-empty) or ($tool in $chosen)
 }
 
@@ -84,7 +75,7 @@ def file [] {
             break
           }
         }
-        if ($bin | is-empty) {
+        if ($bin | is-empty) or (not (fileToolChosen 'FILE_DIFF_TOOLS' $pairParts.0)) {
           continue
         }
 
@@ -161,7 +152,7 @@ def file [] {
             break
           }
         }
-        if ($bin | is-empty) or (not (fileToolChosen $dirParts.0)) {
+        if ($bin | is-empty) or (not (fileToolChosen 'FILE_SYNC_TOOLS' $dirParts.0)) {
           continue
         }
 
@@ -180,7 +171,7 @@ def file [] {
             break
           }
         }
-        if ($bin | is-empty) or (not (fileToolChosen $pairParts.0)) {
+        if ($bin | is-empty) or (not (fileToolChosen 'FILE_SYNC_TOOLS' $pairParts.0)) {
           continue
         }
 

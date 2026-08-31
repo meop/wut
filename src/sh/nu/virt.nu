@@ -122,13 +122,3 @@ def --env virtFindRun [] {
   }
 }
 
-def virtPrompt [label: string] {
-  mut yn = ''
-  if YES in $env {
-    $yn = 'y'
-  } else {
-    opPrint ''
-    $yn = input $"($label) [y,[n]]: "
-  }
-  ($yn | str lowercase) in ['', 'y', 'yes']
-}

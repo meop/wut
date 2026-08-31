@@ -4,28 +4,27 @@ def --env packPnpm [] {
     (which $cmd | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
-    (packNothingToDo 'pnpm')
+    (packNothingToDo)
   ) {
     return
   }
 
-  if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($cmd) \(user\)") { return }
 
   match $env.PACK_OP {
     add => {
-      packOpAdd 'pnpm' $"use pnpm \(user\)" { |n| packGrepFind [$cmd search] $n } [$cmd add --global]
+      packOpAdd [$cmd add --global]
     }
     info => {
       packOpInfo [$cmd info]
     }
     list => {
-      packOpList [$cmd list --global]
+      packOpList (packListCmd $cmd)
     }
     outdated => {
       packOpOutdated [$cmd outdated --global]
     }
     remove => {
-      packOpRemove 'pnpm' $"use pnpm \(user\)" { |n| packGrepList [$cmd list --global] $n } [$cmd remove --global]
+      packOpRemove [$cmd remove --global]
     }
     sync => {
       let names = if ($env.PACK_SYNC_NAMES? | is-not-empty) {

@@ -60,7 +60,7 @@ function topLevel(body: string): string {
 
 const calls = (text: string, name: string) => new RegExp(`(?:^|[\\n{;|(])\\s*${name}\\b`).test(text)
 
-// a def prompts if it holds the question or calls something that does — packFindRun asks through packPrompt
+// a def prompts if it holds the question or calls something that does — a plan runner asks through wutSelectRead
 function promptingDefs(body: string): Set<string> {
   const defs = defBodies(body)
   const prompting = new Set([...defs].filter(([, b]) => PROMPT.test(b)).map(([n]) => n))
@@ -90,6 +90,7 @@ const ASKING = [
   'pack/sync',
   'pack/tidy',
   'file/sync/zsh',
+  'file/diff/zsh',
   'script/exec/setup',
   'virt/list',
   'virt/add/qemu',

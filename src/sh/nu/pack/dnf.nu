@@ -4,31 +4,30 @@ def --env packDnf [] {
     (which $cmd | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
-    (packNothingToDo 'dnf')
+    (packNothingToDo)
   ) {
     return
   }
 
-  if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($cmd) \(system\)") { return }
   let cmd = packElevate $cmd
 
   if $env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'dnf' }
 
   match $env.PACK_OP {
     add => {
-      packOpAdd 'dnf' $"use dnf \(system\)" { |n| packGrepFind [$cmd search] $n } [$cmd install]
+      packOpAdd [$cmd install]
     }
     info => {
       packOpInfo [$cmd info]
     }
     list => {
-      packOpList [$cmd list --installed]
+      packOpList (packListCmd $cmd)
     }
     outdated => {
       packOpOutdated [$cmd list --upgrades]
     }
     remove => {
-      packOpRemove 'dnf' $"use dnf \(system\)" { |n| packGrepList [$cmd list --installed] $n } [$cmd remove]
+      packOpRemove [$cmd remove]
     }
     sync => {
       packOpSync [$cmd distro-sync] [$cmd upgrade]

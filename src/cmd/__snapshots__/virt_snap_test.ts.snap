@@ -2952,16 +2952,6 @@ def --env virtFindRun [] {
   }
 }
 
-def virtPrompt [label: string] {
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$"(\$label) [y,[n]]: "
-  }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
 
 \$env.VIRT_FIND = r#'{"docker":["=svc"],"lxc":["=dev"],"podman":["web=app,hub"],"qemu":["=test,test2"]}'#
@@ -3415,16 +3405,6 @@ def --env virtFindRun [] {
   }
 }
 
-def virtPrompt [label: string] {
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$"(\$label) [y,[n]]: "
-  }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
 
 \$env.VIRT_FIND = r#'{"qemu":["=test,test2"]}'#
@@ -3878,16 +3858,6 @@ def --env virtFindRun [] {
   }
 }
 
-def virtPrompt [label: string] {
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$\\"(\$label) [y,[n]]: \\"
-  }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
 
 def virtDocker [] {
@@ -3895,7 +3865,6 @@ def virtDocker [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   match \$env.VIRT_OP {
     add => {
       for instance in \$env.VIRT_INSTANCES {
@@ -3975,7 +3944,6 @@ def virtLxc [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []
@@ -4151,7 +4119,6 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def splitYamlDocs [] {
     \$in
@@ -4414,7 +4381,6 @@ def virtQemu [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
@@ -5319,16 +5285,6 @@ def --env virtFindRun [] {
   }
 }
 
-def virtPrompt [label: string] {
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$\\"(\$label) [y,[n]]: \\"
-  }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
 
 def virtDocker [] {
@@ -5336,7 +5292,6 @@ def virtDocker [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   match \$env.VIRT_OP {
     add => {
       for instance in \$env.VIRT_INSTANCES {
@@ -5416,7 +5371,6 @@ def virtLxc [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []
@@ -5592,7 +5546,6 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def splitYamlDocs [] {
     \$in
@@ -5855,7 +5808,6 @@ def virtQemu [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
@@ -6760,16 +6712,6 @@ def --env virtFindRun [] {
   }
 }
 
-def virtPrompt [label: string] {
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$\\"(\$label) [y,[n]]: \\"
-  }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
 
 def virtDocker [] {
@@ -6777,7 +6719,6 @@ def virtDocker [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   match \$env.VIRT_OP {
     add => {
       for instance in \$env.VIRT_INSTANCES {
@@ -6857,7 +6798,6 @@ def virtLxc [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []
@@ -7033,7 +6973,6 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def splitYamlDocs [] {
     \$in
@@ -7296,7 +7235,6 @@ def virtQemu [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
@@ -8201,16 +8139,6 @@ def --env virtFindRun [] {
   }
 }
 
-def virtPrompt [label: string] {
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$\\"(\$label) [y,[n]]: \\"
-  }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
 
 def virtQemu [] {
@@ -8221,7 +8149,6 @@ def virtQemu [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
@@ -9124,16 +9051,6 @@ def --env virtFindRun [] {
   }
 }
 
-def virtPrompt [label: string] {
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$\\"(\$label) [y,[n]]: \\"
-  }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
 
 def virtDocker [] {
@@ -9141,7 +9058,6 @@ def virtDocker [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   match \$env.VIRT_OP {
     add => {
       for instance in \$env.VIRT_INSTANCES {
@@ -9221,7 +9137,6 @@ def virtLxc [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []
@@ -9397,7 +9312,6 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def splitYamlDocs [] {
     \$in
@@ -9660,7 +9574,6 @@ def virtQemu [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
@@ -10565,16 +10478,6 @@ def --env virtFindRun [] {
   }
 }
 
-def virtPrompt [label: string] {
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$\\"(\$label) [y,[n]]: \\"
-  }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
 
 def virtDocker [] {
@@ -10582,7 +10485,6 @@ def virtDocker [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   match \$env.VIRT_OP {
     add => {
       for instance in \$env.VIRT_INSTANCES {
@@ -10662,7 +10564,6 @@ def virtLxc [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []
@@ -10838,7 +10739,6 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def splitYamlDocs [] {
     \$in
@@ -11101,7 +11001,6 @@ def virtQemu [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
@@ -12006,16 +11905,6 @@ def --env virtFindRun [] {
   }
 }
 
-def virtPrompt [label: string] {
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$\\"(\$label) [y,[n]]: \\"
-  }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
 
 def virtDocker [] {
@@ -12023,7 +11912,6 @@ def virtDocker [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   match \$env.VIRT_OP {
     add => {
       for instance in \$env.VIRT_INSTANCES {
@@ -12103,7 +11991,6 @@ def virtLxc [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []
@@ -12279,7 +12166,6 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def splitYamlDocs [] {
     \$in
@@ -12542,7 +12428,6 @@ def virtQemu [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
@@ -13445,16 +13330,6 @@ def --env virtFindRun [] {
   }
 }
 
-def virtPrompt [label: string] {
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$\\"(\$label) [y,[n]]: \\"
-  }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
 
 def virtQemu [] {
@@ -13465,7 +13340,6 @@ def virtQemu [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
@@ -14364,16 +14238,6 @@ def --env virtFindRun [] {
   }
 }
 
-def virtPrompt [label: string] {
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$\\"(\$label) [y,[n]]: \\"
-  }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
 
 def virtDocker [] {
@@ -14381,7 +14245,6 @@ def virtDocker [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   match \$env.VIRT_OP {
     add => {
       for instance in \$env.VIRT_INSTANCES {
@@ -14461,7 +14324,6 @@ def virtLxc [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []
@@ -14637,7 +14499,6 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def splitYamlDocs [] {
     \$in
@@ -14900,7 +14761,6 @@ def virtQemu [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
@@ -15805,16 +15665,6 @@ def --env virtFindRun [] {
   }
 }
 
-def virtPrompt [label: string] {
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$\\"(\$label) [y,[n]]: \\"
-  }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
 
 def virtDocker [] {
@@ -15822,7 +15672,6 @@ def virtDocker [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   match \$env.VIRT_OP {
     add => {
       for instance in \$env.VIRT_INSTANCES {
@@ -15902,7 +15751,6 @@ def virtLxc [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []
@@ -16078,7 +15926,6 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def splitYamlDocs [] {
     \$in
@@ -16341,7 +16188,6 @@ def virtQemu [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
@@ -17246,16 +17092,6 @@ def --env virtFindRun [] {
   }
 }
 
-def virtPrompt [label: string] {
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$\\"(\$label) [y,[n]]: \\"
-  }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
 
 def virtDocker [] {
@@ -17263,7 +17099,6 @@ def virtDocker [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   match \$env.VIRT_OP {
     add => {
       for instance in \$env.VIRT_INSTANCES {
@@ -17343,7 +17178,6 @@ def virtLxc [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []
@@ -17519,7 +17353,6 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def splitYamlDocs [] {
     \$in
@@ -17782,7 +17615,6 @@ def virtQemu [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
@@ -18683,16 +18515,6 @@ def --env virtFindRun [] {
   }
 }
 
-def virtPrompt [label: string] {
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$"(\$label) [y,[n]]: "
-  }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
 \`
 `;
@@ -19142,16 +18964,6 @@ def --env virtFindRun [] {
   }
 }
 
-def virtPrompt [label: string] {
-  mut yn = ''
-  if YES in \$env {
-    \$yn = 'y'
-  } else {
-    opPrint ''
-    \$yn = input \$\\"(\$label) [y,[n]]: \\"
-  }
-  (\$yn | str lowercase) in ['', 'y', 'yes']
-}
 
 
 def virtDocker [] {
@@ -19159,7 +18971,6 @@ def virtDocker [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
   match \$env.VIRT_OP {
     add => {
       for instance in \$env.VIRT_INSTANCES {
@@ -19239,7 +19050,6 @@ def virtLxc [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []
@@ -19415,7 +19225,6 @@ def virtPodman [] {
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def splitYamlDocs [] {
     \$in
@@ -19678,7 +19487,6 @@ def virtQemu [] {
   if \$env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in \$env) and not (virtPrompt \$\\"use (\$cmd) \\\\(system\\\\)\\") { return }
 
   def replaceEnv [localEnv, lines] {
     let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }

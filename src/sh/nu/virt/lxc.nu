@@ -6,7 +6,6 @@ def virtLxc [] {
   if $env.VIRT_OP == tidy {
     return
   }
-  if ('VIRT_AGREED' not-in $env) and not (virtPrompt $"use ($cmd) \(system\)") { return }
 
   def flattenLxcConfig [cfg, prefix = ''] {
     mut lines = []

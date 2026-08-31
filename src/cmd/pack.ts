@@ -630,7 +630,9 @@ async function execOp(
 
   if (op === 'list' || op === 'outdated' || op === 'info') {
     result = setOpNames(result, op, names)
-    result = result.with(['packManagerPlanRun'])
+    // list's filter is answerable locally, so it resolves before it asks; outdated and info reach the network
+    // either way, so their only question stays which managers to run
+    result = result.with([op === 'list' ? 'packListPlanRun' : 'packManagerPlanRun'])
   }
 
   return buildAndLog(result, environment)

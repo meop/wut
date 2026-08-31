@@ -44,6 +44,10 @@ const FILE_OP_PARTS_KEY = (op: string) => [FILE_KEY, op, 'parts']
 const FILE_OP_CLEAR_DIRS_KEY = (op: string) => [FILE_KEY, op, 'clear', 'dirs']
 const FILE_OP_PATH_PAIRS_KEY = (op: string) => [FILE_KEY, op, 'path', 'pairs']
 const FILE_OP_PATH_PERMS_KEY = (op: string) => [FILE_KEY, op, 'path', 'perms']
+const FILE_OP_TOOLS_KEY = (op: string) => [FILE_KEY, op, 'tools']
+
+// the nu name for a key, matching how varSet* renders it
+const shellEnvKey = (parts: Array<string>) => parts.join('_').toUpperCase()
 
 function joinKey(key: string, aliases?: Array<string>): string {
   return [key, ...aliases ?? []].join(KEY_SPLIT)
@@ -188,8 +192,20 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   }
 
   _shell = _shell.with(_shell.varSetStr(FILE_OP_KEY, op))
+  // sync writes and diff fetches: both do a GET per pair, so both state the plan and ask before any of it runs.
+  // find and list only read what the server already sent, so there is nothing to gate
+  const gated = op === 'sync' || op === 'diff'
   _shell = _shell.with(
-    op === 'sync' ? ['if not (filePlanShow) {', '  return', '}', FILE_KEY] : [FILE_KEY],
+    gated
+      ? [
+        `if not (filePlanShow '${shellEnvKey(FILE_OP_PATH_PAIRS_KEY(op))}' '${
+          shellEnvKey(FILE_OP_CLEAR_DIRS_KEY(op))
+        }' '${shellEnvKey(FILE_OP_TOOLS_KEY(op))}') {`,
+        '  return',
+        '}',
+        FILE_KEY,
+      ]
+      : [FILE_KEY],
   )
 
   const body = _shell.build()

@@ -16,52 +16,6 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
   }
 }
 
-def packGrep [cmds: list<string>, term: string] {
-  run-external ($cmds | first) ...($cmds | skip 1)
-    | complete
-    | get stdout
-    | lines
-    | any { |line| ($line | str contains --ignore-case $term) }
-}
-
-def packGrepFind [cmds: list<string>, term: string] {
-  packGrep ($cmds ++ [$term]) $term
-}
-
-def packGrepList [cmds: list<string>, term: string] {
-  packGrep $cmds $term
-}
-
-const PACK_HTTP_GET_LIMIT = 10
-
-def packHttpGet [url: string, transform: closure] {
-  let res = try { http get --full $url } catch { null }
-  if $res == null or $res.status != 200 { return [] }
-  do $transform $res.body
-}
-
-def packHttpGetNpm [term: string] {
-  packHttpGet $"https://registry.npmjs.org/-/v1/search?text=($term)&size=($PACK_HTTP_GET_LIMIT)" { |body|
-    $body | get objects
-      | each { |p| {registry: 'npm', name: $p.package.name, version: $p.package.version, description: ($p.package.description? | default '')} }
-  }
-}
-
-def packHttpGetJsr [term: string] {
-  packHttpGet $"https://api.jsr.io/packages?query=($term)&limit=($PACK_HTTP_GET_LIMIT)" { |body|
-    $body | get items
-      | each { |p| {registry: 'jsr', name: $"@($p.scope)/($p.name)", version: ($p.latestVersion? | default ''), description: ($p.description? | default '')} }
-  }
-}
-
-def packHttpGetPypi [term: string] {
-  packHttpGet $"https://pypi.org/pypi/($term)/json" { |body|
-    let info = $body.info
-    [{registry: 'pypi', name: $info.name, version: $info.version, description: ($info.summary? | default '')}]
-  }
-}
-
-
 # the check is shown, its output is not: the answer is the exit code, and the output would bury the plan
 def --env packOk [cmds: list<string>] {
   $env.PACK_PRINTED = '1'
@@ -129,6 +83,143 @@ def --env packExists [manager: string, name: string] {
     scoop => (packOk ((packScoopCmd) ++ [info $name])),
     winget => (packOk [winget show --exact --id $name]),
     _ => false,
+  }
+}
+
+# the listing is printed like any other check, its output read rather than swallowed: these managers answer by
+# what they name, not by an exit code
+def --env packListedNames [cmds: list<string>, keep: closure] {
+  $env.PACK_PRINTED = '1'
+  opPrintCmd ...$cmds
+  run-external ($cmds | first) ...($cmds | skip 1)
+    | complete
+    | get stdout
+    | lines
+    | each { |l| do $keep $l }
+    | compact
+    | where { is-not-empty }
+}
+
+def --env packListedHas [cmds: list<string>, name: string, keep: closure] {
+  (packListedNames $cmds $keep) | any { |n| ($n | str lowercase) == ($name | str lowercase) }
+}
+
+# one entry per line, its name first and its detail — binaries, versions — indented under it or marked off
+def packListedHead [line: string] {
+  if ($line | str starts-with ' ') or ($line | str starts-with (char tab)) or ($line | str starts-with '-') {
+    null
+  } else {
+    $line | split row ' ' | first | str trim --char ':'
+  }
+}
+
+# npm-style listings name a package as name@version inside a drawn tree, and a scoped name carries its own leading
+# '@', so the separator is the last one rather than the first
+def packListedNodeName [line: string] {
+  let token = ($line | split row ' ' | where { |t| ($t | str index-of --end '@') > 0 } | first 1 | get -o 0)
+  if $token == null {
+    null
+  } else {
+    $token | str substring 0..<($token | str index-of --end '@')
+  }
+}
+
+# deno keeps a global install as a shim in its bin dir with the metadata beside it under a dot name, so the listing
+# is a directory read rather than a command. the check states the path it read, since there is none to print
+def --env packDenoInstalled [] {
+  let dirPath = ([$env.HOME '.deno' bin] | path join)
+  $env.PACK_PRINTED = '1'
+  opPrintCmd 'ls' $dirPath
+  if not ($dirPath | path exists) {
+    return []
+  }
+  ls $dirPath | where type == dir | get name | path basename | str substring 1..
+}
+
+def --env packInstalledDeno [name: string] {
+  (packDenoInstalled) | any { |n| $n == $name }
+}
+
+# a manager's own installed listing, stated once. `list` dumps it and the plan reads it to answer before the gate;
+# two statements of it is how `list` and `remove` came to disagree about the same name. deno has no such command —
+# it keeps its global installs as shim directories — so it answers through packDenoInstalled instead
+def packListCmd [manager: string] {
+  match $manager {
+    ghpm => [ghpm list],
+    cargo => [cargo install --list],
+    uv => [uv tool list],
+    pnpm => [pnpm list --global],
+    bun => [bun list --global],
+    brew => [brew list],
+    apk => [apk list --installed],
+    apt => [apt list --installed],
+    dnf => [dnf list --installed],
+    yay => [yay --query],
+    paru => [paru --query],
+    pacman => [pacman --query],
+    xbps => [xbps-query --list-pkgs],
+    # not `search --installed-only`: it can report packages as installed when they aren't
+    # https://github.com/openSUSE/zypper/issues/498
+    zypper => [zypper packages --installed-only],
+    choco => [choco list],
+    scoop => ((packScoopCmd) ++ [list]),
+    winget => [winget list],
+    _ => null,
+  }
+}
+
+# `list`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
+# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+def --env packListedRaw [manager: string] {
+  if $manager == 'deno' {
+    return (packDenoInstalled)
+  }
+  let cmds = (packListCmd $manager)
+  if $cmds == null {
+    return []
+  }
+  $env.PACK_PRINTED = '1'
+  opPrintCmd ...$cmds
+  run-external ($cmds | first) ...($cmds | skip 1) | complete | get stdout | lines
+}
+
+def packLinesLike [lines: list<string>, term: string] {
+  $lines | any { |l| $l | str contains --ignore-case $term }
+}
+
+# removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
+# one that actually has it here. every check is local, so the plan can run them before it asks rather than after
+def --env packInstalled [manager: string, name: string] {
+  match $manager {
+    ghpm => (packListedHas [ghpm list --long-names] $name { |l| $l | str trim }),
+    cargo => (packListedHas (packListCmd 'cargo') $name { |l| packListedHead $l }),
+    uv => (packListedHas (packListCmd 'uv') $name { |l| packListedHead $l }),
+    pnpm => (packListedHas (packListCmd 'pnpm') $name { |l| packListedNodeName $l }),
+    bun => (packListedHas (packListCmd 'bun') $name { |l| packListedNodeName $l }),
+    deno => (packInstalledDeno $name),
+    brew => (packOk [brew list --versions $name]),
+    apk => (packOk [apk info -e $name]),
+    # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
+    apt => (packOk [dpkg-query --show $name]),
+    dnf => (packOk [rpm --query $name]),
+    yay => (packOk [pacman --query $name]),
+    paru => (packOk [pacman --query $name]),
+    pacman => (packOk [pacman --query $name]),
+    xbps => (packOk [xbps-query $name]),
+    zypper => (packOk [rpm --query $name]),
+    choco => (packListedHas [choco list --exact --limit-output $name] $name { |l| $l | split row '|' | first }),
+    scoop => (packOk ((packScoopCmd) ++ [prefix $name])),
+    winget => (packOk [winget list --exact --id $name]),
+    _ => false,
+  }
+}
+
+# add asks who could serve a name, remove asks who already has it; the walk over managers is the same either way
+def --env packClaims [manager: string, name: string] {
+  if ($env.PACK_OP? | default '') == 'remove' {
+    packInstalled $manager $name
+  } else {
+    packExists $manager $name
   }
 }
 
@@ -205,7 +296,7 @@ def --env packFindFirst [name: string] {
 
 def --env packFindFirstIn [managers: list<string>, name: string] {
   for m in $managers {
-    if (packExists $m $name) { return $m }
+    if (packClaims $m $name) { return $m }
   }
   null
 }
@@ -226,14 +317,6 @@ def --env packCallManager [manager: string] {
   }
 }
 
-def --env packRequireManager [...names: string] {
-  for name in $names {
-    if (which $name | is-empty) {
-      $env.PACK_PRINTED = '1'
-      opPrintWarn $"manager not installed: ($name)"
-    }
-  }
-}
 
 # ghpm's table: a rule as wide as each header, columns padded to their widest cell, the last one loose
 def packTable [headers: list<string>, rows: list<list<string>>] {
@@ -322,9 +405,20 @@ def --env packFindSearch [] {
   }
 }
 
-# the first path whose manager is on this machine wins the group, in the order the group stated
-def packPickPath [unit: record] {
-  $unit.paths | where { |p| packManagerHere $p.manager } | first 1 | get -o 0
+# the first path whose manager is on this machine wins the group, in the order the group stated. removing narrows
+# that: a manager that never installed the group is not the one to uninstall it from, however present it is
+def --env packPickPath [unit: record] {
+  let here = ($unit.paths | where { |p| packManagerHere $p.manager })
+  if ($env.PACK_OP? | default '') != 'remove' {
+    return ($here | first 1 | get -o 0)
+  }
+  for p in $here {
+    let m = (packManagerBest $p.manager)
+    if ($p.names | any { |n| packInstalled $m $n }) {
+      return $p
+    }
+  }
+  null
 }
 
 def --env packPlanRun [] {
@@ -346,9 +440,34 @@ def --env packPlanRun [] {
   let fellThrough = ($units | each { |u| $u.name } | uniq | where { |n| $n not-in $served })
   let loose = ((packNameList 'PACK_ADD_NAMES') ++ (packNameList 'PACK_REMOVE_NAMES') ++ $fellThrough | uniq)
 
-  let planManagers = ($planned | each { |d| $d.manager } | uniq)
-  if ($planManagers | is-empty) and ($loose | is-empty) {
-    opPrintWarn 'nothing to do'
+  # remove asks its managers a local question — what is installed — so the answer is affordable before the gate and
+  # belongs in the table, named. add asks the registries, a round trip per manager per name, so those names wait
+  # behind '?' and are only searched once something has been picked
+  mut resolved = {}
+  mut unresolved = []
+  if (($env.PACK_OP? | default '') == 'remove') and ($loose | is-not-empty) {
+    let here = (packManagersHere)
+    for name in $loose {
+      let winner = (packFindFirstIn $here $name)
+      if $winner == null {
+        $unresolved = ($unresolved | append $name)
+      } else {
+        $resolved = ($resolved | upsert $winner (($resolved | get -o $winner | default []) | append $name))
+      }
+    }
+  }
+  let looseFor = $resolved
+  let deferred = if (($env.PACK_OP? | default '') == 'remove') { [] } else { $loose }
+  if ($unresolved | is-not-empty) {
+    load-env {PACK_UNSERVED: (($env.PACK_UNSERVED? | default []) | append $unresolved)}
+  }
+
+  let planManagers = (($planned | each { |d| $d.manager }) ++ ($looseFor | columns) | uniq)
+  if ($planManagers | is-empty) and ($deferred | is-empty) {
+    packReport
+    if ($unresolved | is-empty) {
+      opPrintWarn 'nothing to do'
+    }
     return
   }
 
@@ -361,16 +480,20 @@ def --env packPlanRun [] {
       opPrint $"  ($d.group)"
       opPrint $"    ($d.names | str join ', ')"
     }
+    let own = ($looseFor | get -o $m | default [])
+    if ($own | is-not-empty) {
+      opPrint $"  ($own | str join ', ')"
+    }
   }
 
-  # '?' is the names no group claimed: which manager carries them is only known by asking, so it waits for the gate
-  let choices = $planManagers ++ (if ($loose | is-empty) { [] } else { ['?'] })
+  # '?' is the names no group claimed and nothing has resolved yet: only add leaves any, and only until the gate
+  let choices = $planManagers ++ (if ($deferred | is-empty) { [] } else { ['?'] })
   opPrint ''
   packTable ['manager' 'packages'] ($choices | enumerate | each { |c|
     let count = if $c.item == '?' {
-      $loose | length
+      $deferred | length
     } else {
-      $planned | where manager == $c.item | each { |d| $d.names } | flatten | length
+      (($planned | where manager == $c.item | each { |d| $d.names } | flatten) ++ ($looseFor | get -o $c.item | default [])) | length
     }
     [$"($c.index + 1)\) ($c.item)", ($count | into string)]
   })
@@ -390,30 +513,100 @@ def --env packPlanRun [] {
     }
   }
 
-  if ('?' in $chosen) and ($loose | is-not-empty) {
+  # the loose names remove already resolved ride with the manager row that won them; the ones add left behind ride
+  # with '?', and are searched only now, against every manager, since picking '?' is picking the search itself
+  mut running = ($looseFor | transpose manager names | where { |e| $e.manager in $chosen })
+  if ('?' in $chosen) and ($deferred | is-not-empty) {
     packRefreshAll
-    mut looseFor = {}
-    for name in $loose {
+    mut found = {}
+    for name in $deferred {
       let winner = (packFindFirst $name)
       if $winner == null {
         load-env {PACK_UNSERVED: (($env.PACK_UNSERVED? | default []) | append $name)}
       } else {
-        $looseFor = ($looseFor | upsert $winner (($looseFor | get -o $winner | default []) | append $name))
+        $found = ($found | upsert $winner (($found | get -o $winner | default []) | append $name))
       }
     }
-    for entry in ($looseFor | transpose manager names) {
-      load-env {PACK_LOOSE_NAMES: $entry.names}
-      try {
-        packRunLoose $entry.manager
-      } catch { |e|
-        packMarkFailed ($entry.names | str join ', ') $e.msg
-      }
+    $running = ($running ++ ($found | transpose manager names))
+  }
+  for entry in $running {
+    load-env {PACK_LOOSE_NAMES: $entry.names}
+    try {
+      packRunLoose $entry.manager
+    } catch { |e|
+      packMarkFailed ($entry.names | str join ', ') $e.msg
     }
   }
   packReport
 }
 
-# sync, tidy, list, outdated and info know nothing until a manager runs, so there is no detail to show first:
+# `list` is the one read op whose whole answer is local: which managers have something matching is the same listing
+# it was going to dump, so it runs before the gate and the table names the managers rather than offering all of them.
+# a bare `list` has nothing cheaper than the dump itself, so there the only question left is which managers to run
+def --env packListPlanRun [] {
+  let names = (packNameList 'PACK_LIST_NAMES')
+  if ($names | is-empty) {
+    packManagerPlanRun
+    return
+  }
+  let here = (packManagersHere)
+  if ($here | is-empty) {
+    opPrintWarn 'no manager installed'
+    return
+  }
+
+  mut hits = {}
+  for m in $here {
+    let lines = (packListedRaw $m)
+    let matched = ($names | where { |n| packLinesLike $lines $n })
+    if ($matched | is-not-empty) {
+      $hits = ($hits | upsert $m $matched)
+    }
+  }
+  let found = $hits
+  let managers = ($found | columns)
+  let missing = ($names | where { |n| not ($managers | any { |m| $n in ($found | get $m) }) })
+
+  if ($managers | is-empty) {
+    opPrintWarn $"no manager has installed: ($names | str join ', ')"
+    return
+  }
+
+  if 'PACK_PRINTED' in $env {
+    opPrint ''
+  }
+  for m in $managers {
+    opPrint $m
+    opPrint $"  (($found | get $m) | str join ', ')"
+  }
+  if ($missing | is-not-empty) {
+    opPrintWarn $"no manager has installed: ($missing | str join ', ')"
+  }
+
+  opPrint ''
+  packTable ['manager' 'packages'] ($managers | enumerate | each { |m|
+    [$"($m.index + 1)\) ($m.item)", (($found | get $m.item) | length | into string)]
+  })
+  let picked = (wutSelectRead ($managers | length))
+  if $picked == null {
+    return
+  }
+  let chosen = ($picked | each { |i| $managers | get ($i - 1) })
+
+  $env.PACK_AGREED = '1'
+  for m in $chosen {
+    # only the terms this manager actually matched, so its dump has nothing in it that came back empty
+    load-env {PACK_LIST_NAMES: ($found | get $m)}
+    try {
+      packCallManager $m
+    } catch { |e|
+      packMarkFailed $m $e.msg
+    }
+  }
+  packReport
+}
+
+# sync, tidy, outdated and info know nothing until a manager runs, so there is no detail to show first:
 # the only question is which managers this run touches
 def --env packManagerPlanRun [] {
   let here = (packManagersHere)
@@ -446,7 +639,7 @@ def --env packManagerPlanRun [] {
   packReport
 }
 
-def packNothingToDo [key: string] {
+def packNothingToDo [] {
   match $env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
     remove => ((packNameList 'PACK_REMOVE_NAMES') | is-empty),
@@ -455,19 +648,11 @@ def packNothingToDo [key: string] {
 }
 
 # by the time a manager runs, the plan has chosen it and the user has already agreed
-def --env packMutate [
-  key: string,
-  label: string,
-  names_key: string,
-  finder: closure,
-  cmds: list<string>,
-  each: bool,
-] {
+# nothing is checked or asked here: the plan already resolved who serves each name — packExists for add,
+# packInstalled for remove — and got its one answer before any manager was called
+def --env packMutate [names_key: string, cmds: list<string>, each: bool] {
   let names = (packNameList $names_key)
   if ($names | is-empty) {
-    return
-  }
-  if ('PACK_AGREED' not-in $env) and not (packPrompt $"($label): ($names | str join ', ')") {
     return
   }
   if $each {
@@ -487,7 +672,11 @@ def packReport [] {
   let unserved = ($env.PACK_UNSERVED? | default [])
   let failed = ($env.PACK_FAILED? | default [])
   if ($unserved | is-not-empty) {
-    opPrintWarn $"no manager had: ($unserved | str join ', ')"
+    if ($env.PACK_OP? | default '') == 'remove' {
+      opPrintWarn $"no manager has installed: ($unserved | str join ', ')"
+    } else {
+      opPrintWarn $"no manager had: ($unserved | str join ', ')"
+    }
   }
   if ($failed | is-not-empty) {
     opPrintErr 'failed:'
@@ -509,8 +698,8 @@ def --env packOp [cmds: list<string>] {
   opPrintMaybeRunCmd try '{' ...$cmds '}'
 }
 
-def --env packOpAdd [key: string, label: string, finder: closure, cmds: list<string>, --each] {
-  packMutate $key $label PACK_ADD_NAMES $finder $cmds $each
+def --env packOpAdd [cmds: list<string>, --each] {
+  packMutate PACK_ADD_NAMES $cmds $each
 }
 
 def --env packOpInfo [cmds: list<string>] {
@@ -527,8 +716,8 @@ def --env packOpOutdated [cmds: list<string>] {
   packFiltered $cmds ($env.PACK_OUTDATED_NAMES? | default [])
 }
 
-def --env packOpRemove [key: string, label: string, finder: closure, cmds: list<string>, --each] {
-  packMutate $key $label PACK_REMOVE_NAMES $finder $cmds $each
+def --env packOpRemove [cmds: list<string>, --each] {
+  packMutate PACK_REMOVE_NAMES $cmds $each
 }
 
 def --env packOpSync [cmdsNoArgs: list<string>, cmds: list<string>, --each] {
@@ -545,13 +734,3 @@ def --env packOpSync [cmdsNoArgs: list<string>, cmds: list<string>, --each] {
   }
 }
 
-def packPrompt [label: string] {
-  mut yn = ''
-  if YES in $env {
-    $yn = 'y'
-  } else {
-    opPrint ''
-    $yn = input $"($label) [y,[n]]: "
-  }
-  ($yn | str lowercase) in ['', 'y', 'yes']
-}

@@ -4,31 +4,30 @@ def --env packXbps [] {
     (which $"($cmd)-install" | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
-    (packNothingToDo 'xbps')
+    (packNothingToDo)
   ) {
     return
   }
 
-  if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($cmd) \(system\)") { return }
   let cmd = packElevate $cmd
 
   if $env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'xbps' }
 
   match $env.PACK_OP {
     add => {
-      packOpAdd 'xbps' $"use xbps \(system\)" { |n| packGrepFind [$"($cmd)-query" --repository --search] $n } [$"($cmd)-install"]
+      packOpAdd [$"($cmd)-install"]
     }
     info => {
       packOpInfo [$"($cmd)-query" --repository --show]
     }
     list => {
-      packOpList [$"($cmd)-query" --list-pkgs]
+      packOpList (packListCmd $cmd)
     }
     outdated => {
       packOpOutdated [$"($cmd)-install" --dry-run --update]
     }
     remove => {
-      packOpRemove 'xbps' $"use xbps \(system\)" { |n| packGrepList [$"($cmd)-query" --list-pkgs] $n } [$"($cmd)-remove" --recursive]
+      packOpRemove [$"($cmd)-remove" --recursive]
     }
     sync => {
       packOpSync [$"($cmd)-install" --update] [$"($cmd)-install" --update]

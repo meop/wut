@@ -89,9 +89,16 @@ pwsh/zsh → nu redirect — one representative op per command per shell:
 ### `src/sh/nu/pack_test.ts`
 
 Tier 3 — the client's own decisions. Some of what wut emits is only answerable where `which` runs, so `runNu` sources
-`src/sh/nu/pack.nu` against a PATH of stub binaries and asserts what it returns. Today that covers collapsing the
-`paru`/`yay`/`pacman` family to one manager (see [PACK.md](PACK.md#the-pacman-family-is-one-manager)). Like Tier 2, it
-skips silently when `nu` is not installed.
+the nu op preamble and `src/sh/nu/pack.nu` against a PATH of stub binaries and asserts what it returns. That covers
+collapsing the `paru`/`yay`/`pacman` family to one manager (see [PACK.md](PACK.md#the-pacman-family-is-one-manager)),
+and remove resolving a name to the manager that actually has it (see
+[PACK.md](PACK.md#add-and-remove-ask-different-questions)). The stubs for the second carry bodies — the real listing
+formats — since parsing them is the thing under test. Like Tier 2, it skips silently when `nu` is not installed.
+
+A decision this tier does not reach is the one a snapshot cannot see either: a snapshot pins the script wut sends, so a
+check that is emitted, looks right, and answers the wrong question still snapshots clean. That is what let `remove`
+resolve a name by asking who _could_ install it. Anything the client decides for itself belongs here, not only in a
+snapshot.
 
 ## Following the redirect: `wutNuPinned=1`
 

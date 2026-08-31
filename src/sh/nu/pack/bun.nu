@@ -8,23 +8,23 @@ def --env packBun [] {
     (which $cmd | is-empty) or
     ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
     ('PACK_OP' not-in $env) or
-    (packNothingToDo 'bun')
+    (packNothingToDo)
   ) {
     return
   }
 
-  if ($env.PACK_OP not-in ['add', 'remove']) and ('PACK_AGREED' not-in $env) and not (packPrompt $"use ($cmd) \(user\)") { return }
 
   match $env.PACK_OP {
     add => {
-      packOpAdd 'bun' $"use bun \(user\)" { |n| [(packHttpGetNpm $n), (packHttpGetJsr $n)] | flatten | is-not-empty } [$cmd add --force --global]
+      packOpAdd [$cmd add --force --global]
     }
     info => {
       packOpInfo [$cmd info]
     }
     list => {
-      opPrintCmd $cmd list --global
-      let result = (do { ^$cmd list --global } | complete)
+      let listCmd = (packListCmd $cmd)
+      opPrintCmd ...$listCmd
+      let result = (do { run-external ($listCmd | first) ...($listCmd | skip 1) } | complete)
       if $result.exit_code == 0 {
         let names = ($env.PACK_LIST_NAMES? | default [])
         if ($names | is-empty) {
@@ -39,7 +39,7 @@ def --env packBun [] {
       }
     }
     remove => {
-      packOpRemove 'bun' $"use bun \(user\)" { |n| packGrepList [$cmd list --global] $n } [$cmd remove --global]
+      packOpRemove [$cmd remove --global]
     }
     sync => {
       if ($env.PACK_SYNC_NAMES? | is-not-empty) {
