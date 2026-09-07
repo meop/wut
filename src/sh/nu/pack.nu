@@ -1,3 +1,6 @@
+# paru and yay are aur helpers wrapping pacman: one manager wearing three names
+const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
+
 def --env packDo [cmds: list<string>] {
   opPrintRunCmd try '{' ...$cmds '}'
 }
@@ -17,17 +20,34 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
 }
 
 # the check is shown, its output is not: the answer is the exit code, and the output would bury the plan
+# a few of these tools decide what a command means by looking for a project file in the cwd, so an op that is
+# about the machine answers differently depending on where you were standing when you ran wut. those run from a
+# directory picked for them, and the cwd is put back afterwards
+def --env packDoIn [dir: string, cmds: list<string>] {
+  let prev = $env.PWD
+  cd $dir
+  packDo $cmds
+  cd $prev
+}
+
 def --env packOk [cmds: list<string>] {
   $env.PACK_PRINTED = '1'
   opPrintCmd ...$cmds
   (run-external ($cmds | first) ...($cmds | skip 1) | complete | get exit_code) == 0
 }
 
+# bun, pnpm and deno all ask npm about the same name, so the round trip is made once and the answer kept
 def --env packHttpOk [url: string] {
+  let cached = ($env.PACK_FETCHED? | default [] | where key == $url | get -o 0.answer)
+  if $cached != null {
+    return $cached
+  }
   $env.PACK_PRINTED = '1'
   opPrintCmd 'http get' $url
   let res = (try { http get --full --redirect-mode follow $url } catch { null })
-  ($res != null) and ($res.status == 200)
+  let answer = (($res != null) and ($res.status == 200))
+  load-env {PACK_FETCHED: (($env.PACK_FETCHED? | default []) | append { key: $url, answer: $answer })}
+  $answer
 }
 
 # by name, not by search: the registries answer 404 for a name that does not exist
@@ -46,8 +66,32 @@ def --env packExistsJsr [name: string] {
   packHttpOk $"https://api.jsr.io/scopes/($parts | get 0)/packages/($parts | get 1)"
 }
 
+def packPypiUrl [name: string] {
+  $"https://pypi.org/pypi/($name)/json"
+}
+
 def --env packExistsPypi [name: string] {
-  packHttpOk $"https://pypi.org/pypi/($name)/json"
+  packHttpOk (packPypiUrl $name)
+}
+
+# uv has no info command of its own. an installed tool is a venv it can be asked about, and anything else is a
+# question for pypi — which is where uv would have got it — rather than an error about missing virtualenvs
+def --env packPypiInfo [name: string] {
+  let url = (packPypiUrl $name)
+  $env.PACK_PRINTED = '1'
+  opPrintCmd 'http get' $url
+  let res = (try { http get --raw --redirect-mode follow $url | from json } catch { null })
+  if $res == null {
+    opPrintWarn $"not on pypi: ($name)"
+    return
+  }
+  let info = ($res.info? | default {})
+  opPrint $"($info.name? | default $name) ($info.version? | default '')"
+  for line in [($info.summary? | default ''), ($info.home_page? | default ''), ($info.license? | default '')] {
+    if ($line | is-not-empty) {
+      opPrint $"  ($line)"
+    }
+  }
 }
 
 # scoop dispatches subcommands with `& $cmd_path`, so a subcommand's `exit 1` ends only that nested script and
@@ -93,21 +137,36 @@ def --env packExists [manager: string, raw: string] {
 }
 
 # the listing is printed like any other check, its output read rather than swallowed: these managers answer by
-# what they name, not by an exit code
+# what they name, not by an exit code. a listing is run once per run and remembered: a plan resolving five names
+# against uv asked `uv tool list` five times and printed it five times, for one answer that could not have changed
 def --env packListedNames [cmds: list<string>, keep: closure] {
+  let key = ($cmds | str join ' ')
+  let cached = ($env.PACK_LISTED? | default [] | where key == $key | get -o 0.names)
+  if $cached != null {
+    return $cached
+  }
   $env.PACK_PRINTED = '1'
   opPrintCmd ...$cmds
-  run-external ($cmds | first) ...($cmds | skip 1)
-    | complete
-    | get stdout
-    | lines
-    | each { |l| do $keep $l }
-    | compact
-    | where { is-not-empty }
+  let names = (
+    run-external ($cmds | first) ...($cmds | skip 1)
+      | complete
+      | get stdout
+      | lines
+      | each { |l| do $keep $l }
+      | compact
+      | where { is-not-empty }
+  )
+  load-env {PACK_LISTED: (($env.PACK_LISTED? | default []) | append { key: $key, names: $names })}
+  $names
+}
+
+# one name against a listing's names, the way every listing manager compares them
+def packNamesHas [names: list<string>, name: string] {
+  $names | any { |n| ($n | str lowercase) == ($name | str lowercase) }
 }
 
 def --env packListedHas [cmds: list<string>, name: string, keep: closure] {
-  (packListedNames $cmds $keep) | any { |n| ($n | str lowercase) == ($name | str lowercase) }
+  packNamesHas (packListedNames $cmds $keep) $name
 }
 
 # one entry per line, its name first and its detail — binaries, versions — indented under it or marked off
@@ -133,17 +192,31 @@ def packListedNodeName [line: string] {
 # deno keeps a global install as a shim in its bin dir with the metadata beside it under a dot name, so the listing
 # is a directory read rather than a command. the check states the path it read, since there is none to print
 def --env packDenoInstalled [] {
-  let dirPath = ([$env.HOME '.deno' bin] | path join)
+  # windows has no HOME, so nu's own answer stands in; the env var still wins where it is set
+  let dirPath = ([($env.HOME? | default $nu.home-dir) '.deno' bin] | path join)
   $env.PACK_PRINTED = '1'
   opPrintCmd 'ls' $dirPath
   if not ($dirPath | path exists) {
     return []
   }
-  ls $dirPath | where type == dir | get name | path basename | str substring 1..
+  # the metadata directory beside each shim is dot-prefixed (`.yarn` for `yarn`), and nu's `ls` hides those
+  # without `-a`: the listing answered empty on every machine, so nothing deno held was ever found
+  ls -a $dirPath | where type == dir | get name | path basename | str substring 1..
+}
+
+# pnpm states what it holds twice otherwise: a drawn tree for `list`, and `--parseable` — one full path per line,
+# `.../node_modules/<name>`, which is unambiguous where the tree's `name@version` tokens are not, and is the only
+# form that spells a scoped name whole. the tree stays the dump; every check reads this
+def --env packPnpmInstalled [] {
+  packListedNames [pnpm list --global --parseable] { |line|
+    let parts = ($line | path split)
+    let at = ($parts | enumerate | where item == 'node_modules' | get -o 0.index)
+    if $at == null { null } else { $parts | skip ($at + 1) | str join '/' }
+  }
 }
 
 def --env packInstalledDeno [name: string] {
-  (packDenoInstalled) | any { |n| $n == $name }
+  packNamesHas (packDenoInstalled) $name
 }
 
 # a manager's own installed listing, stated once. `list` dumps it and the plan reads it to answer before the gate;
@@ -180,6 +253,9 @@ def --env packListedRaw [manager: string] {
   if $manager == 'deno' {
     return (packDenoInstalled)
   }
+  if $manager == 'pnpm' {
+    return (packPnpmInstalled)
+  }
   let cmds = (packListCmd $manager)
   if $cmds == null {
     return []
@@ -194,8 +270,23 @@ def packLinesLike [lines: list<string>, term: string] {
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
-# one that actually has it here. every check is local, so the plan can run them before it asks rather than after
+# one that actually has it here. every check is local, so the plan can run them before it asks rather than after.
+# the answer is remembered for the run: a plan with five names asked uv five times for the same `uv tool list`,
+# and the guards below ask again for names the plan already resolved
 def --env packInstalled [manager: string, raw: string] {
+  # paru, yay and pacman put the same question to the same query, so one answer serves the family
+  let family = (if $manager in $PACK_PACMAN_FAMILY { 'pacman' } else { $manager })
+  let key = $"($family)|($raw)"
+  let cached = ($env.PACK_INSTALLED? | default [] | where key == $key | get -o 0.answer)
+  if $cached != null {
+    return $cached
+  }
+  let answer = (packInstalledCheck $manager $raw)
+  load-env {PACK_INSTALLED: (($env.PACK_INSTALLED? | default []) | append { key: $key, answer: $answer })}
+  $answer
+}
+
+def --env packInstalledCheck [manager: string, raw: string] {
   let parts = (packNameParts $raw)
   let name = $parts.name
   let flags = $parts.flags
@@ -206,7 +297,7 @@ def --env packInstalled [manager: string, raw: string] {
     ghpm => (packListedHas [ghpm list --long-names] $name { |l| $l | str trim }),
     cargo => (packListedHas (packListCmd 'cargo') $name { |l| packListedHead $l }),
     uv => (packListedHas (packListCmd 'uv') $name { |l| packListedHead $l }),
-    pnpm => (packListedHas (packListCmd 'pnpm') $name { |l| packListedNodeName $l }),
+    pnpm => (packNamesHas (packPnpmInstalled) $name),
     bun => (packListedHas (packListCmd 'bun') $name { |l| packListedNodeName $l }),
     deno => (packInstalledDeno $name),
     # `brew list --versions <name>` answers for formulae only, so a cask is invisible to it and remove could never
@@ -229,9 +320,15 @@ def --env packInstalled [manager: string, raw: string] {
   }
 }
 
-# add asks who could serve a name, remove asks who already has it; the walk over managers is the same either way
+# remove and a named sync both act on what is already here, so both answer with a local listing; add and find
+# ask who could serve a name and pay a round trip for it
+def packOpAsksInstalled [] {
+  ($env.PACK_OP? | default '') in ['remove', 'sync']
+}
+
+# add asks who could serve a name, remove and sync ask who already has it; the walk over managers is the same either way
 def --env packClaims [manager: string, name: string] {
-  if ($env.PACK_OP? | default '') == 'remove' {
+  if (packOpAsksInstalled) {
     packInstalled $manager $name
   } else {
     packExists $manager $name
@@ -299,8 +396,6 @@ def packNameList [key: string] {
   }
 }
 
-const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
-
 # paru and yay are both aur helpers wrapping pacman, so either serves what the other or pacman declared, while
 # pacman alone cannot serve an aur entry
 def packPacmanBest [declared: string] {
@@ -347,10 +442,29 @@ def --env packFindFirstIn [managers: list<string>, name: string] {
   null
 }
 
+# remove is PINPOINT — the one manager it uninstalls from — while sync is WIDE, so a name two managers both hold
+# is updated in both rather than left stale in whichever sorted second.
+# a `where` would read better and remember nothing: what a check learns inside a closure does not leave it
+def --env packFindEvery [managers: list<string>, name: string] {
+  if ($env.PACK_OP? | default '') != 'sync' {
+    let winner = (packFindFirstIn $managers $name)
+    return (if $winner == null { [] } else { [$winner] })
+  }
+  mut every = []
+  for m in $managers {
+    if (packClaims $m $name) {
+      $every = ($every | append $m)
+    }
+  }
+  $every
+}
+
 def --env packRunLoose [manager: string] {
   let key = $"PACK_($env.PACK_OP | str uppercase)_NAMES"
-  load-env {($key): $env.PACK_LOOSE_NAMES}
+  # stated, not implied: the manager function guards on it, and sync's own guard asks it what it holds
+  load-env {($key): $env.PACK_LOOSE_NAMES, PACK_MANAGER: $manager}
   packCallManager $manager
+  hide-env PACK_MANAGER
 }
 
 def --env packCallManager [manager: string] {
@@ -451,20 +565,31 @@ def --env packFindSearch [] {
   }
 }
 
-# the first path whose manager is on this machine wins the group, in the order the group stated. removing narrows
-# that: a manager that never installed the group is not the one to uninstall it from, however present it is
-def --env packPickPath [unit: record] {
+# the first path whose manager is on this machine wins the group, in the order the group stated. the installed ops
+# narrow that: a manager that never installed the group is not the one to act on it, however present it is.
+# remove takes the one it uninstalls from; sync is WIDE, so it takes every manager actually holding the group
+def --env packPickPaths [unit: record] {
   let here = ($unit.paths | where { |p| packManagerHere $p.manager })
-  if ($env.PACK_OP? | default '') != 'remove' {
-    return ($here | first 1 | get -o 0)
+  if not (packOpAsksInstalled) {
+    return ($here | first 1)
   }
+  mut held = []
   for p in $here {
     let m = (packManagerBest $p.manager)
-    if ($p.names | any { |n| packInstalled $m $n }) {
-      return $p
+    mut has = false
+    for n in $p.names {
+      if (packInstalled $m $n) {
+        $has = true
+      }
+    }
+    if $has {
+      if ($env.PACK_OP? | default '') != 'sync' {
+        return [$p]
+      }
+      $held = ($held | append $p)
     }
   }
-  null
+  $held
 }
 
 def --env packPlanRun [] {
@@ -475,35 +600,39 @@ def --env packPlanRun [] {
   mut detail = []
   mut served = []
   for unit in $units {
-    let path = (packPickPath $unit)
-    if $path != null {
+    let paths = (packPickPaths $unit)
+    if ($paths | is-not-empty) {
       $served = ($served | append $unit.name)
-      $detail = ($detail | append { manager: (packManagerBest $path.manager), group: $unit.group, id: $path.id, names: $path.names })
+      for path in $paths {
+        $detail = ($detail | append { manager: (packManagerBest $path.manager), group: $unit.group, id: $path.id, names: $path.names })
+      }
     }
   }
   let planned = $detail
 
   let fellThrough = ($units | each { |u| $u.name } | uniq | where { |n| $n not-in $served })
-  let loose = ((packNameList 'PACK_ADD_NAMES') ++ (packNameList 'PACK_REMOVE_NAMES') ++ $fellThrough | uniq)
+  let loose = ((packNameList 'PACK_ADD_NAMES') ++ (packNameList 'PACK_REMOVE_NAMES') ++ (packNameList 'PACK_SYNC_NAMES') ++ $fellThrough | uniq)
 
-  # remove asks its managers a local question — what is installed — so the answer is affordable before the gate and
-  # belongs in the table, named. add asks the registries, a round trip per manager per name, so those names wait
-  # behind '?' and are only searched once something has been picked
+  # remove and sync ask their managers a local question — what is installed — so the answer is affordable before the
+  # gate and belongs in the table, named. add asks the registries, a round trip per manager per name, so those names
+  # wait behind '?' and are only searched once something has been picked
   mut resolved = {}
   mut unresolved = []
-  if (($env.PACK_OP? | default '') == 'remove') and ($loose | is-not-empty) {
+  if (packOpAsksInstalled) and ($loose | is-not-empty) {
     let here = (packManagersHere)
     for name in $loose {
-      let winner = (packFindFirstIn $here $name)
-      if $winner == null {
+      let winners = (packFindEvery $here $name)
+      if ($winners | is-empty) {
         $unresolved = ($unresolved | append $name)
       } else {
-        $resolved = ($resolved | upsert $winner (($resolved | get -o $winner | default []) | append $name))
+        for winner in $winners {
+          $resolved = ($resolved | upsert $winner (($resolved | get -o $winner | default []) | append $name))
+        }
       }
     }
   }
   let looseFor = $resolved
-  let deferred = if (($env.PACK_OP? | default '') == 'remove') { [] } else { $loose }
+  let deferred = if (packOpAsksInstalled) { [] } else { $loose }
   if ($unresolved | is-not-empty) {
     load-env {PACK_UNSERVED: (($env.PACK_UNSERVED? | default []) | append $unresolved)}
   }
@@ -586,11 +715,12 @@ def --env packPlanRun [] {
   packReport
 }
 
-# `list` is the one read op whose whole answer is local: which managers have something matching is the same listing
-# it was going to dump, so it runs before the gate and the table names the managers rather than offering all of them.
-# a bare `list` has nothing cheaper than the dump itself, so there the only question left is which managers to run
-def --env packListPlanRun [] {
-  let names = (packNameList 'PACK_LIST_NAMES')
+# the read ops with a term have a local answer worth having first: which managers have something matching is the
+# same listing `list` was going to dump, and a package has to be installed before it can be out of date, so both
+# run it before the gate and the table names the managers rather than offering all of them. bare, neither has
+# anything cheaper than running the managers, so the only question left is which ones
+def --env packTermPlanRun [names_key: string] {
+  let names = (packNameList $names_key)
   if ($names | is-empty) {
     packManagerPlanRun
     return
@@ -641,8 +771,8 @@ def --env packListPlanRun [] {
 
   $env.PACK_AGREED = '1'
   for m in $chosen {
-    # only the terms this manager actually matched, so its dump has nothing in it that came back empty
-    load-env {PACK_LIST_NAMES: ($found | get $m)}
+    # only the terms this manager actually matched, so its output has nothing in it that came back empty
+    load-env {($names_key): ($found | get $m)}
     try {
       packCallManager $m
     } catch { |e|
@@ -676,13 +806,35 @@ def --env packManagerPlanRun [] {
 
   $env.PACK_AGREED = '1'
   for m in $chosen {
+    # stated, so an op that keeps per-manager detail — info's declared names — knows who is asking
+    load-env {PACK_MANAGER: $m}
     try {
       packCallManager $m
     } catch { |e|
       packMarkFailed $m $e.msg
     }
+    hide-env PACK_MANAGER
   }
   packReport
+}
+
+# a manager runs when it is here, when the plan named it or named none, and when there is anything left to do.
+# a few probe under a different name than they are declared by: xbps is reached through `xbps-install`
+def packSkip [declared: string, probe?: string] {
+  # the outer parens are load-bearing: a bare multi-line expression ends at the first newline
+  (
+    (which ($probe | default $declared) | is-empty) or
+    ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $declared) or
+    ('PACK_OP' not-in $env) or
+    (packNothingToDo)
+  )
+}
+
+# which ops want a manager's index refreshed first. ghpm states its own, narrower rule
+def --env packRefreshForOp [manager: string] {
+  if $env.PACK_OP in ['add', 'info', 'outdated', 'sync'] {
+    packRefresh $manager
+  }
 }
 
 def packNothingToDo [] {
@@ -720,7 +872,7 @@ def packReport [] {
   let unserved = ($env.PACK_UNSERVED? | default [])
   let failed = ($env.PACK_FAILED? | default [])
   if ($unserved | is-not-empty) {
-    if ($env.PACK_OP? | default '') == 'remove' {
+    if (packOpAsksInstalled) {
       opPrintWarn $"no manager has installed: ($unserved | str join ', ')"
     } else {
       opPrintWarn $"no manager had: ($unserved | str join ', ')"
@@ -750,30 +902,64 @@ def --env packOpAdd [cmds: list<string>, --each] {
   packMutate PACK_ADD_NAMES $cmds $each
 }
 
+# what to ask this manager about: the names the groups declared for it, plus whatever no group claimed, asked as
+# typed. a group that names no entry for this manager contributes nothing, so it is not asked about at all
+def --env packInfoNames [] {
+  let map = ($env.PACK_INFO_MAP? | default '{}' | from json)
+  let manager = ($env.PACK_MANAGER? | default '')
+  let keys = (if $manager in $PACK_PACMAN_FAMILY { $PACK_PACMAN_FAMILY } else { [$manager] })
+  mut declared = []
+  for k in $keys {
+    $declared = ($declared ++ ($map | get -o $k | default []))
+  }
+  ($declared | uniq) ++ (packNameList 'PACK_INFO_NAMES')
+}
+
 def --env packOpInfo [cmds: list<string>] {
-  for term in $env.PACK_INFO_NAMES {
+  for term in (packInfoNames) {
     packDo ($cmds ++ [$term])
   }
 }
 
 def --env packOpList [cmds: list<string>] {
-  packFiltered $cmds ($env.PACK_LIST_NAMES? | default [])
+  packFiltered $cmds (packNameList 'PACK_LIST_NAMES')
 }
 
 def --env packOpOutdated [cmds: list<string>] {
-  packFiltered $cmds ($env.PACK_OUTDATED_NAMES? | default [])
+  packFiltered $cmds (packNameList 'PACK_OUTDATED_NAMES')
 }
 
 def --env packOpRemove [cmds: list<string>, --each] {
   packMutate PACK_REMOVE_NAMES $cmds $each
 }
 
+# sync updates what is already here; it never installs. several of these commands cannot tell the difference —
+# `deno install --force`, `pacman --sync --needed` and `choco upgrade` install a name they do not find — so the
+# names are narrowed to the ones this manager holds rather than trusted to the command. the plan asked the same
+# question to pick the manager, and packInstalled remembers its answers, so this costs nothing and prints nothing
+def --env packSyncNames [] {
+  let names = (packNameList 'PACK_SYNC_NAMES')
+  let manager = ($env.PACK_MANAGER? | default '')
+  if ($names | is-empty) or ($manager | is-empty) {
+    return $names
+  }
+  mut held = []
+  for n in $names {
+    if (packInstalled $manager $n) {
+      $held = ($held | append $n)
+    }
+  }
+  $held
+}
+
 def --env packOpSync [cmdsNoArgs: list<string>, cmds: list<string>, --each] {
-  if ($env.PACK_SYNC_NAMES? | is-empty) {
+  # no names at all is the whole-manager upgrade; names that this manager turns out not to hold are not
+  let asked = (packNameList 'PACK_SYNC_NAMES')
+  if ($asked | is-empty) {
     packOp $cmdsNoArgs
     return
   }
-  for g in (packNameGroups $env.PACK_SYNC_NAMES) {
+  for g in (packNameGroups (packSyncNames)) {
     if $each {
       for n in $g.names {
         packOp ($cmds ++ $g.flags ++ [$n])

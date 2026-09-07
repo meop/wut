@@ -66,8 +66,10 @@ esac`,
   "tool list") printf 'git-filter-repo v2.47.0\\n- git-filter-repo\\nhf v1.29.0\\n- hf\\n' ;;
   *) exit 1 ;;
 esac`,
+  // the tree is what `list` dumps; --parseable is what every check reads, one full path per line
   pnpm: `case "$*" in
   "list --global") printf '/home/x/.local/share/pnpm/global/v11 (PRIVATE)\\n\u2502\\n\u251c\u2500\u2500 node@26.2.0\\n\u2514\u2500\u2500 npm@12.0.2\\n' ;;
+  "list --global --parseable") printf '/home/x/.local/share/pnpm/global/v11\\n/home/x/.local/share/pnpm/global/v11/bf5-19e/node_modules/node\\n/home/x/.local/share/pnpm/global/v11/833-1a0/node_modules/npm\\n/home/x/.local/share/pnpm/global/v11/aa1-2b3/node_modules/@scope/tool\\n' ;;
   *) exit 1 ;;
 esac`,
   // brew's own two answers disagree: `list` names formulae and casks alike, `list --versions <name>` resolves
@@ -162,6 +164,9 @@ Deno.test('nu / pack / the listings parse to entry names, not to their detail li
     ['pnpm', 'node', 'true'],
     ['pnpm', 'npm', 'true'],
     ['pnpm', 'nod', 'false'],
+    // a scoped name is one name, and only the path form spells it whole
+    ['pnpm', '@scope/tool', 'true'],
+    ['pnpm', 'tool', 'false'],
   ]
   for (const [manager, name, expected] of cases) {
     const out = await withStubs(LISTINGS, probe(manager, name), Object.keys(LISTINGS))
@@ -196,7 +201,7 @@ Deno.test('nu / pack / removing a group skips a present manager that never insta
   const probe = (op: string) =>
     [
       `$env.PACK_OP = '${op}'`,
-      `print (packPickPath (${JSON.stringify(unit)} | from json) | get -o id | default 'none')`,
+      `print (packPickPaths (${JSON.stringify(unit)} | from json) | each { |p| $p.id } | str join ' ')`,
     ].join('\n')
   const out = await withStubs({ ghpm: LISTINGS.ghpm, cargo: LISTINGS.cargo }, probe('remove'), ['cargo', 'ghpm'])
   if (out == null) {
@@ -208,6 +213,11 @@ Deno.test('nu / pack / removing a group skips a present manager that never insta
   assertEquals(
     await withStubs({ ghpm: LISTINGS.ghpm, cargo: LISTINGS.cargo }, probe('add'), ['cargo', 'ghpm']),
     'nu|cargo',
+  )
+  // sync asks the same installed question remove does, and being WIDE keeps every manager that answered yes
+  assertEquals(
+    await withStubs({ ghpm: LISTINGS.ghpm, cargo: LISTINGS.cargo }, probe('sync'), ['cargo', 'ghpm']),
+    'nu|ghpm',
   )
 })
 
@@ -260,7 +270,7 @@ Deno.test('nu / pack / list runs a listing before the gate only when it has a te
       ['uv'],
     )
 
-  const bare = await run('packListPlanRun')
+  const bare = await run(`packTermPlanRun 'PACK_LIST_NAMES'`)
   if (bare == null) {
     return
   }
@@ -268,7 +278,9 @@ Deno.test('nu / pack / list runs a listing before the gate only when it has a te
   assertEquals(bare.split('uv tool list').length - 1, 1)
   assertEquals(bare.includes('git-filter-repo v2.47.0'), true)
 
-  const termed = await run([`$env.PACK_LIST_NAMES = ['git-filter-repo']`, 'packListPlanRun'].join('\n'))
+  const termed = await run(
+    [`$env.PACK_LIST_NAMES = ['git-filter-repo']`, `packTermPlanRun 'PACK_LIST_NAMES'`].join('\n'),
+  )
   // twice: once to answer before the gate, once to dump after
   assertEquals(termed!.split('uv tool list').length - 1, 2)
   assertEquals(termed!.includes('1) uv'), true)
@@ -327,4 +339,293 @@ Deno.test('nu / pack / names carrying different flags are issued as separate inv
     'brew uninstall jq zstd',
     'brew uninstall --formula node',
   ])
+})
+
+// what started this: `wut p s vlc` offered all eight managers and then handed the name to each one, so a manager
+// that had never heard of vlc ran an upgrade against it — and deno, whose install is its update, installed it
+Deno.test('nu / pack / a named sync only runs the managers that hold the name', async () => {
+  const run = (names: Array<string>) =>
+    withStubs(
+      { ghpm: LISTINGS.ghpm, uv: LISTINGS.uv },
+      [
+        `$env.PACK_OP = 'sync'`,
+        `$env.YES = '1'`,
+        `$env.NOOP = '1'`,
+        `$env.PACK_PLAN = '[]'`,
+        `$env.PACK_SYNC_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
+        'packPlanRun',
+      ].join('\n'),
+      ['ghpm', 'uv'],
+      ['ghpm', 'uv'],
+    )
+
+  const held = await run(['nu'])
+  if (held == null) {
+    return
+  }
+  // ghpm has nu, uv does not: one row, one sync, and uv is never handed the name
+  assertEquals(held.includes('1) ghpm'), true)
+  assertEquals(held.includes('uv)'), false)
+  assertEquals(held.includes('ghpm sync nu'), true)
+  assertEquals(held.includes('uv tool upgrade'), false)
+
+  const absent = await run(['vlc'])
+  // nothing has it, so there is nothing to ask about: the checks answer and the run stops
+  assertEquals(absent!.includes('no manager has installed: vlc'), true)
+  assertEquals(absent!.includes('ghpm sync'), false)
+  assertEquals(absent!.includes('uv tool upgrade'), false)
+})
+
+// sync is WIDE where remove is PINPOINT: a name two managers both hold is stale in one of them if only the first
+// in preference order is updated, while uninstalling from both is a different thing than was asked for
+Deno.test('nu / pack / sync updates every manager holding a name, remove only the one it takes it from', async () => {
+  const stubs = { ghpm: LISTINGS.ghpm, uv: LISTINGS.uv }
+  const probe = (op: string) =>
+    [
+      `$env.PACK_OP = '${op}'`,
+      `print (packFindEvery (packManagersHere) 'hf' | str join ' ')`,
+    ].join('\n')
+  const both = await withStubs(
+    { ghpm: `case "$*" in\n  "list --long-names") printf 'hf\\n' ;;\n  *) exit 1 ;;\nesac`, uv: stubs.uv },
+    probe('sync'),
+    ['ghpm', 'uv'],
+  )
+  if (both == null) {
+    return
+  }
+  assertEquals(both, 'ghpm uv')
+  assertEquals(
+    await withStubs(
+      { ghpm: `case "$*" in\n  "list --long-names") printf 'hf\\n' ;;\n  *) exit 1 ;;\nesac`, uv: stubs.uv },
+      probe('remove'),
+      ['ghpm', 'uv'],
+    ),
+    'ghpm',
+  )
+})
+
+// a group states which managers can serve it, never which one did, so a sync of a group nothing here holds has the
+// same answer a loose name does: nothing to do, said once
+Deno.test('nu / pack / syncing a group no manager holds says so rather than picking one', async () => {
+  const unit = JSON.stringify({
+    group: 'media-vlc',
+    name: 'vlc',
+    paths: [
+      { id: 'media-vlc|ghpm', manager: 'ghpm', names: ['vlc'] },
+      { id: 'media-vlc|uv', manager: 'uv', names: ['vlc'] },
+    ],
+  })
+  const out = await withStubs(
+    { ghpm: LISTINGS.ghpm, uv: LISTINGS.uv },
+    [
+      `$env.PACK_OP = 'sync'`,
+      `$env.YES = '1'`,
+      `$env.NOOP = '1'`,
+      `$env.PACK_PLAN = ${JSON.stringify(`[${unit}]`)}`,
+      `$env.PACK_SYNC_NAMES = [  ]`,
+      'packPlanRun',
+    ].join('\n'),
+    ['ghpm', 'uv'],
+    ['ghpm', 'uv'],
+  )
+  if (out == null) {
+    return
+  }
+  assertEquals(out.includes('no manager has installed: vlc'), true)
+  assertEquals(out.includes('ghpm sync'), false)
+  assertEquals(out.includes('uv tool upgrade'), false)
+})
+
+// deno's install is its update: `deno install --force --global vlc@latest` installs a name it has never seen, so
+// a sync that reaches deno with an unheld name does not update anything, it adds it
+Deno.test('nu / pack / sync never installs a name the manager does not hold', async () => {
+  const run = (manager: string, names: Array<string>, files: Array<string>) =>
+    withStubs(
+      { ghpm: LISTINGS.ghpm, uv: LISTINGS.uv, pacman: LISTINGS.pacman },
+      [
+        `$env.PACK_OP = 'sync'`,
+        `$env.NOOP = '1'`,
+        `$env.PACK_MANAGER = '${manager}'`,
+        `$env.PACK_SYNC_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
+        `pack${manager[0].toUpperCase()}${manager.slice(1)}`,
+      ].join('\n'),
+      ['ghpm', 'uv', 'pacman'],
+      files,
+    )
+
+  // deno is not on this PATH at all, so the guard is asked through a manager that is: ghpm holds nu, not vlc
+  const mixed = await run('ghpm', ['nu', 'vlc'], ['ghpm'])
+  if (mixed == null) {
+    return
+  }
+  assertEquals(mixed.includes('ghpm sync nu'), true)
+  assertEquals(mixed.includes('vlc'), false)
+
+  // nothing asked for is held, so the manager runs nothing — never the whole-manager upgrade
+  const none = await run('ghpm', ['vlc'], ['ghpm'])
+  assertEquals(none!.includes('ghpm sync'), false)
+
+  // `pacman --sync --needed` would install a name it does not find, the same way. the check that answers that
+  // names vlc out loud, as every check does, so what matters is that no install line carries it
+  const native = await run('pacman', ['nushell', 'vlc'], ['pacman'])
+  assertEquals(native!.includes('--sync --needed nushell'), true)
+  assertEquals(native!.split('\n').some((l) => l.includes('--sync --needed') && l.includes('vlc')), false)
+})
+
+// the same listing answered every name in the plan and was run — and printed — once per name
+Deno.test('nu / pack / a listing is asked once a run, however many names it answers', async () => {
+  const out = await withStubs(
+    { uv: LISTINGS.uv },
+    [
+      `$env.PACK_OP = 'remove'`,
+      `mut answers = []`,
+      `for n in ['git-filter-repo', 'hf', 'nope'] { $answers = ($answers | append (packInstalled 'uv' $n)) }`,
+      `print ($answers | str join ' ')`,
+    ].join('\n'),
+    ['uv'],
+    ['uv'],
+  )
+  if (out == null) {
+    return
+  }
+  assertEquals(out.split('uv tool list').length - 1, 1)
+  assertEquals(out.trim().endsWith('true true false'), true)
+})
+
+// three ways deno's listing came back empty: nu's `ls` hides the dot directory deno keeps beside each shim, the
+// list op ran a wut function through packOp — which runs its argument in a fresh `nu -c` that has never heard of
+// it, and swallowed the not-found error — and the path was built from $env.HOME, which windows does not set
+Deno.test('nu / pack / deno lists the global installs it actually holds', async () => {
+  const seed = [
+    `mkdir ([$env.HOME '.deno' 'bin' '.yarn'] | path join)`,
+    `touch ([$env.HOME '.deno' 'bin' 'yarn'] | path join)`,
+    `touch ([$env.HOME '.deno' 'bin' 'deno'] | path join)`,
+  ]
+  const held = await withStubs({}, [...seed, `print (packDenoInstalled | str join ' ')`].join('\n'), ['deno'])
+  if (held == null) {
+    return
+  }
+  // the shim's own file is not an install, and the dot directory beside it is the only record that it is one
+  assertEquals(held.trim().endsWith('yarn'), true)
+
+  const listed = await withStubs(
+    { deno: '' },
+    [...seed, `$env.PACK_OP = 'list'`, `$env.PACK_MANAGER = 'deno'`, 'packDeno'].join('\n'),
+    ['deno'],
+    ['deno'],
+  )
+  assertEquals(listed!.includes('yarn'), true)
+  // and the check that answers for it agrees, rather than reporting nothing installed
+  const check = await withStubs({}, [...seed, `print (packInstalled 'deno' 'yarn')`].join('\n'), ['deno'])
+  assertEquals(check!.trim().endsWith('true'), true)
+})
+
+// uv has no info command: it can only be asked about a tool it already has, as the venv under `uv tool dir`.
+// pointing that at a name it does not have printed uv's own complaint about missing virtualenvs, so the fallback
+// is pypi — not exercised here, since that half reaches the network
+Deno.test('nu / pack / uv info asks the tool venv it actually has', async () => {
+  const out = await withStubs(
+    { uv: `case "$*" in\n  "tool dir") printf '%s/tools\\n' "$HOME" ;;\n  *) exit 1 ;;\nesac` },
+    [
+      `mkdir ([$env.HOME 'tools' 'hf' 'bin'] | path join)`,
+      `touch ([$env.HOME 'tools' 'hf' 'bin' 'python'] | path join)`,
+      `$env.PACK_OP = 'info'`,
+      `$env.PACK_MANAGER = 'uv'`,
+      `$env.PACK_INFO_NAMES = ['hf']`,
+      'packUv',
+    ].join('\n'),
+    ['uv'],
+    ['uv'],
+  )
+  if (out == null) {
+    return
+  }
+  assertEquals(out.includes('uv pip show --python'), true)
+  assertEquals(out.includes('/tools/hf/bin/python hf'), true)
+  assertEquals(out.includes('pypi.org'), false)
+})
+
+// a group knows each manager's own name for what was typed, and asking pacman about `nu` when the group says
+// `nushell` is asking about nothing. a name no group claimed is asked as typed, of everyone
+Deno.test('nu / pack / info asks each manager the name that manager declared', async () => {
+  const probe = (manager: string, map: string, loose: Array<string>) =>
+    withStubs(
+      {},
+      [
+        `$env.PACK_MANAGER = '${manager}'`,
+        `$env.PACK_INFO_MAP = '${map}'`,
+        `$env.PACK_INFO_NAMES = ${JSON.stringify(loose).replaceAll('"', "'")}`,
+        `print (packInfoNames | str join ' ')`,
+      ].join('\n'),
+      ['ghpm', 'pacman'],
+    )
+  const map = `{"ghpm":["nu"],"pacman":["nushell"]}`
+  const declared = await probe('pacman', map, [])
+  if (declared == null) {
+    return
+  }
+  assertEquals(declared, 'nushell')
+  assertEquals(await probe('ghpm', map, []), 'nu')
+  // the aur helpers answer to what the group declared for pacman
+  assertEquals(await probe('yay', map, []), 'nushell')
+  // a manager the group never named has nothing declared, and only the unclaimed names to ask about
+  assertEquals(await probe('uv', map, ['btm']), 'btm')
+  assertEquals(await probe('pacman', map, ['btm']), 'nushell btm')
+})
+
+// bun decides what a command means by walking up from the cwd for a package.json: `bun info` fails outside a
+// project and reads someone else's inside one, and `bun pm cache` — bun's own global cache — does the same. wut
+// runs bun from bun's own global project, seeding the manifest bun would have written, and puts the cwd back
+Deno.test('nu / pack / bun runs from its global project, whatever the cwd was', async () => {
+  const run = (op: string) =>
+    withStubs(
+      { bun: `printf '%s\\n' "$PWD"` },
+      [
+        // pointed at a temp root, so the test seeds its own global project rather than the machine's
+        `$env.BUN_INSTALL = ([$env.HOME 'bi'] | path join)`,
+        `let before = $env.PWD`,
+        `$env.PACK_OP = '${op}'`,
+        `$env.PACK_MANAGER = 'bun'`,
+        `$env.PACK_INFO_NAMES = ['chalk']`,
+        'packBun',
+        `print (if $before == $env.PWD { 'cwd kept' } else { 'cwd moved' })`,
+      ].join('\n'),
+      ['bun'],
+      ['bun'],
+    )
+
+  const listed = await run('list')
+  if (listed == null) {
+    return
+  }
+  // the stub reports where bun was run from: the global project, not the directory wut was invoked in
+  assertEquals(listed.includes('/bi/install/global'), true)
+  assertEquals(listed.trim().endsWith('cwd kept'), true)
+
+  const info = await run('info')
+  assertEquals(info!.includes('/bi/install/global'), true)
+  assertEquals(info!.trim().endsWith('cwd kept'), true)
+})
+
+// the same question asked from a rust project used to get the project's answer, and from a deno project an error
+// about the project's node_modules setting: neither op is about a project, so neither reads one
+Deno.test('nu / pack / deno asks about a package, not about the project you are standing in', async () => {
+  const out = await withStubs(
+    { deno: '' },
+    [
+      `$env.NOOP = '1'`,
+      `$env.PACK_OP = 'info'`,
+      `$env.PACK_MANAGER = 'deno'`,
+      `$env.PACK_INFO_NAMES = ['chalk']`,
+      'packDeno',
+    ].join('\n'),
+    ['deno'],
+    ['deno'],
+  )
+  if (out == null) {
+    return
+  }
+  for (const line of ['deno info --no-config --no-lock npm:chalk', 'deno info --no-config --no-lock jsr:chalk']) {
+    assertEquals(out.includes(line), true, line)
+  }
 })

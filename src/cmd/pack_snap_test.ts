@@ -389,6 +389,14 @@ Deno.test('nu / arch / find (no manager, pinned)', async (t) => {
 
 const PIN_ARCH = 'sysOsPlat=linux&sysOs=arch&wutNuPinned=1'
 
+// the managers the client is told to consider, which is what its table can offer. an op that narrows the list
+// states it again lower down, and the last statement is the one the client runs with
+function managersOffered(body: string): Array<string> {
+  const stated = [...body.matchAll(/\$env\.PACK_MANAGERS = \[(.*)\]/g)]
+  const last = stated.length ? stated[stated.length - 1][1] : ''
+  return [...last.matchAll(/r#'([^']+)'#/g)].map((m) => m[1])
+}
+
 // a group name resolves to each manager's own name for it
 Deno.test('nu / arch / add (pinned, nu group)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/add/nu?${PIN_ARCH}`))).text()
@@ -487,12 +495,76 @@ Deno.test('nu / arch / sync (pinned)', async (t) => {
     assertEquals(body.includes(fn), true)
   }
 })
+// a named sync is planned like a remove: the group resolves to each manager's own name, and the plan is what
+// decides which managers are asked at all
+Deno.test('nu / arch / sync (pinned, nu group)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/sync/nu?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("$env.PACK_SYNC_NAMES = [ r#'nushell'# ]"), true)
+  // the plan runs, rather than the manager-only prompt a bare sync gets
+  assertEquals(body.trimEnd().endsWith('packPlanRun'), true)
+})
+// a name no group claims stays loose, and the client resolves it against what is installed
+Deno.test('nu / arch / sync (pinned, loose name)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/sync/nosuchpackage?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("$env.PACK_SYNC_NAMES = [ r#'nosuchpackage'# ]"), true)
+  assertEquals(body.includes("$env.PACK_PLAN = r#'[]'#"), true)
+})
 Deno.test('nu / arch / tidy (pinned)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/tidy?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(body.includes("$env.PACK_OP = r#'tidy'#"), true)
   assertEquals(body.includes('packPacman'), true)
+  // winget states no tidy arm, so it is not one of the managers offered
+  assertEquals(managersOffered(body).includes('winget'), false)
+})
+// a manager is only offered for an op its own file can do: bun, deno and uv have no outdated command, and a row
+// for one of them was a row that ran nothing when picked
+Deno.test('nu / arch / outdated (pinned, only managers that can answer)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/outdated?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  const offered = managersOffered(body)
+  for (const m of ['bun', 'deno', 'uv']) {
+    assertEquals(offered.includes(m), false, m)
+  }
+  assertEquals(offered.includes('cargo'), true)
+  // bare, there is no term to resolve, so the plan falls through to the manager-only table
+  assertEquals(body.includes('$env.PACK_OUTDATED_NAMES = [  ]'), true)
+})
+// with a term there is a local answer first: a package has to be installed before it can be out of date
+Deno.test('nu / arch / outdated (pinned, a term resolves before the gate)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/outdated/nu?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("$env.PACK_OUTDATED_NAMES = [ r#'nu'# ]"), true)
+  assertEquals(body.trimEnd().endsWith("packTermPlanRun r#'PACK_OUTDATED_NAMES'#"), true)
+})
+// info asks every manager, so it has no plan to pick from — but each is asked the name it declared for the group,
+// and a manager the group never named is not offered a question it has nothing to put
+Deno.test('nu / arch / info (pinned, each manager its own name)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/info/nu?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('"pacman":["nushell"]'), true)
+  assertEquals(body.includes('"ghpm":["nu"]'), true)
+  assertEquals(body.includes('$env.PACK_INFO_NAMES = [  ]'), true)
+  const offered = managersOffered(body)
+  assertEquals(offered.includes('pacman'), true)
+  assertEquals(offered.includes('uv'), false)
+})
+// a name no group claims is asked as typed, of everyone
+Deno.test('nu / arch / info (pinned, an unclaimed name)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/info/nosuchpackage?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("$env.PACK_INFO_MAP = r#'{}'#"), true)
+  assertEquals(body.includes("$env.PACK_INFO_NAMES = [ r#'nosuchpackage'# ]"), true)
+  assertEquals(managersOffered(body).includes('uv'), true)
 })
 // a name a group already claims needs no separate manager check
 Deno.test('nu / arch / find (pinned, a claimed name skips the manager check)', async (t) => {

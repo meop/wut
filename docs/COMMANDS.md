@@ -20,12 +20,12 @@ the candidates — explore wide, add a filter term, act pinpoint.
 All ops use **AND semantics**: every filter term must match; more terms = narrower. Exception: `pack` takes a list of
 names with OR semantics — each name is resolved independently.
 
-| Command  | WIDE (substring, all)                                          | PINPOINT (exact-wins → first, one) |
-| -------- | -------------------------------------------------------------- | ---------------------------------- |
-| `script` | `find`, `exec` (action alone)                                  | `exec` (action + tool)             |
-| `file`   | `find`, `diff`, `list`, `sync`                                 | —                                  |
-| `pack`   | `find`, `add` (+ native-delegated: `list`, `outdated`, `sync`) | `remove`                           |
-| `virt`   | `find`, `list`, `add`, `sync`, `tidy`                          | `rem`, `run`                       |
+| Command  | WIDE (substring, all)                     | PINPOINT (exact-wins → first, one) |
+| -------- | ----------------------------------------- | ---------------------------------- |
+| `script` | `find`, `exec` (action alone)             | `exec` (action + tool)             |
+| `file`   | `find`, `diff`, `list`, `sync`            | —                                  |
+| `pack`   | `find`, `add`, `sync`, `list`, `outdated` | `remove`                           |
+| `virt`   | `find`, `list`, `add`, `sync`, `tidy`     | `rem`, `run`                       |
 
 `script exec` is the one op that splits on cardinality: `wut s e setup` runs every setup script gated for this machine,
 while `wut s e setup ptyxis` names a tool and pinpoints to one. The cli reads action first; the config tree is tool
@@ -35,8 +35,10 @@ fanned out run skips tools that are not on the client's PATH, and `find` leaves 
 
 `script exec`, `virt rem`, `virt run` and `pack remove` apply pinpoint at their own layer — script over the union of all
 three shells' matches, so a tool present in more than one shell still resolves to a single script, and podman-instance
-eligibility and group-name resolution differ from a plain path glob. `pack list`/`outdated`/`sync` delegate matching to
-the native package manager.
+eligibility and group-name resolution differ from a plain path glob. `pack list` and `pack outdated` match a term as a
+substring of what each manager reports installed, then hand the term to the manager as well. `pack sync` given names
+matches them exactly, the way `remove` does, and being WIDE it keeps every manager that answers rather than the first
+([PACK.md](PACK.md#add-and-remove-ask-different-questions)).
 
 ## Nothing matched
 

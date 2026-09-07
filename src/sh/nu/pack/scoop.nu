@@ -1,17 +1,12 @@
 def --env packScoop [] {
   let bin = 'scoop'
   let cmd = (packScoopCmd)
-  if (
-    (which $bin | is-empty) or
-    ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $bin) or
-    ('PACK_OP' not-in $env) or
-    (packNothingToDo)
-  ) {
+  if (packSkip $bin) {
     return
   }
 
 
-  if $env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh $bin }
+  packRefreshForOp $bin
 
   match $env.PACK_OP {
     add => {

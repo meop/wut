@@ -1,17 +1,12 @@
 def --env packZypper [] {
   let cmd = 'zypper'
-  if (
-    (which $cmd | is-empty) or
-    ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
-    ('PACK_OP' not-in $env) or
-    (packNothingToDo)
-  ) {
+  if (packSkip $cmd) {
     return
   }
 
   let cmd = packElevate $cmd
 
-  if $env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'zypper' }
+  packRefreshForOp 'zypper'
 
   match $env.PACK_OP {
     add => {

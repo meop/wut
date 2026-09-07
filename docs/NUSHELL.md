@@ -35,3 +35,16 @@ Known nushell parsing quirks that have caused bugs in `src/sh/nu/`. Read before 
 - **Unquoted absolute path at the start of a `()` subexpression pipeline is executed as a command.**
   `(/etc/os-release | path exists)` tries to execute `/etc/os-release` as an external command (error: "not executable").
   Quote the path: `('/etc/os-release' | path exists)`.
+
+- **A `def --env` writes into its caller, but not out of a closure.** `load-env` inside a command called from `each`,
+  `where` or `any` is discarded when the iteration ends, so a check that remembers its answer remembers nothing when it
+  is called that way. `pack.nu` walks with `mut` and `for` where the body has something to keep — see the caches in
+  `packInstalled`, `packListedNames` and `packHttpOk`.
+
+- **A multi-line boolean expression needs its own parens.** As the condition of an `if (...)` the parens are already
+  there; as the body of a `def` they are not, and the expression ends at the first newline
+  (`nu::parser::incomplete_math_expression`). Wrap the whole body in one `(...)`, as `packSkip` does.
+
+- **`const` is resolved at parse time, so it must precede its first use.** Unlike `def`, which the parser hoists, a
+  `const` declared below the command that reads it fails with `variable not found`. `PACK_PACMAN_FAMILY` sits at the top
+  of `pack.nu` for that reason.

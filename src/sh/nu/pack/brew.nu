@@ -1,16 +1,11 @@
 def --env packBrew [] {
   let cmd = 'brew'
-  if (
-    (which $cmd | is-empty) or
-    ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
-    ('PACK_OP' not-in $env) or
-    (packNothingToDo)
-  ) {
+  if (packSkip $cmd) {
     return
   }
 
 
-  if $env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh 'brew' }
+  packRefreshForOp 'brew'
 
   match $env.PACK_OP {
     add => {

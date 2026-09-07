@@ -1,11 +1,6 @@
 def --env packCargo [] {
   let cmd = 'cargo'
-  if (
-    (which $cmd | is-empty) or
-    ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
-    ('PACK_OP' not-in $env) or
-    (packNothingToDo)
-  ) {
+  if (packSkip $cmd) {
     return
   }
 

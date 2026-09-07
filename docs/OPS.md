@@ -53,7 +53,8 @@ is left to do once you answer:
 | ------------------------------------------- | ------------------------ | ---------------------------- |
 | `pack add`                                  | manager, group, packages | installing them, and `?`     |
 | `pack remove`                               | manager, group, packages | removing them                |
-| `pack list <term>`                          | manager, packages        | dumping their listings       |
+| `pack sync <names>`                         | manager, group, packages | updating them                |
+| `pack list <term>`/`outdated <term>`        | manager, packages        | running them for those terms |
 | `pack list`/`outdated`/`info`/`sync`/`tidy` | nothing yet              | which managers to run        |
 | `virt add`/`rem`/`list`/`run`/`sync`/`tidy` | manager, instances       | which managers to run        |
 | `file sync`, `file diff`                    | tool, files, directories | which tools to write or read |
@@ -66,9 +67,10 @@ one that can have work left — a typed name no group claimed is only resolvable
 `packFindSearch` beside `packFindShow` only when there is something to search for, and that search is what the prompt
 guards.
 
-The ops with nothing to show first are the ones whose output _is_ the manager running: `outdated`, `info`, `sync`,
-`tidy` and a bare `list` cannot describe a plan they have not run yet. They go straight to the table. `list` given a
-term is the one that escapes this, since the term is answerable locally — see below.
+The ops with nothing to show first are the ones whose output _is_ the manager running: `info`, `tidy` and a bare `list`,
+`outdated` or `sync` cannot describe a plan they have not run yet. They go straight to the table. Given a name, `list`,
+`outdated` and `sync` all escape this, since a name is answerable locally — see below. The table can only ever offer
+managers that can do the op at all: one whose file has no arm for it is not a choice, it is an absence.
 
 `src/cmd/prompt_test.ts` holds this: that every op with work left reaches a prompt, that a `find` reaches none, that
 `pack find` with an unresolved name does, and that a gate is never emitted inline.

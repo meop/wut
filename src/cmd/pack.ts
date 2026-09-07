@@ -1,6 +1,7 @@
 import { type Cmd, CmdBase } from '@meop/shire/cmd'
 import type { Ctx } from '@meop/shire/ctx'
 import { type Env } from '@meop/shire/env'
+import { joinKey } from '@meop/shire/reg'
 import { Fmt } from '@meop/shire/serde'
 import type { Sh } from '@meop/shire/sh'
 
@@ -62,8 +63,10 @@ const PACK_OP_NAMES_KEY = (op: string) => [PACK_KEY, op, 'names']
 // the units the client picks from, as data; their bodies live in packRunUnit
 const PACK_PLAN_KEY = [PACK_KEY, 'plan']
 const PACK_FIND_KEY = [PACK_KEY, 'find']
+// what each manager calls the groups that were typed, for the one op that asks all of them
+const PACK_INFO_MAP_KEY = [PACK_KEY, 'info', 'map']
 
-export const SCRIPT_PATH = 'script'
+const SCRIPT_PATH = 'script'
 
 export function getSupportedManagers(): Array<string> {
   return [...MANAGERS]
@@ -105,7 +108,7 @@ export function evaluateGate(
   return true
 }
 
-export function parseScriptFilePath(
+function parseScriptFilePath(
   filePath: string,
 ): { parts: Array<string>; ext: string } {
   const stripped = filePath.replace(/^cfg\//, '')
@@ -124,7 +127,7 @@ const managerAliasMap: Record<string, string> = {
   yay: 'pacman',
 }
 
-export function getManagerFuncName(manager: string, prefix = PACK_KEY) {
+function getManagerFuncName(manager: string, prefix = PACK_KEY) {
   return manager
     ? `${prefix}${manager[0].toUpperCase()}${manager.slice(1).replaceAll('-', '').replaceAll('_', '').toLowerCase()}`
     : ''
@@ -163,6 +166,14 @@ async function buildFileRunLines(
   return [`if 'NOOP' not-in $env { ${execScriptShell(shell, plat, shellFlavor, scriptContent)} }`]
 }
 
+// the ops a manager states it can do, read from the arms of its own `match $env.PACK_OP`. derived rather than
+// listed, so a manager gaining or losing an op is one edit in one file
+const ARM_OPS = ['add', 'info', 'list', 'outdated', 'remove', 'sync', 'tidy']
+
+function managerFileOps(content: string): Array<string> {
+  return ARM_OPS.filter((op) => new RegExp(`^ {4}${op} => \\{$`, 'm').test(content))
+}
+
 async function loadManagerFiles(
   shell: Sh,
   managers: Array<string>,
@@ -170,22 +181,23 @@ async function loadManagerFiles(
   let _shell = shell
     .with(await shell.fileLoad(['sel'], import.meta.resolve, ['..']))
     .with(await shell.fileLoad([PACK_KEY], import.meta.resolve, ['..']))
-  const loadedFiles = new Set<string>()
+  const loadedOps = new Map<string, Array<string>>()
   for (const manager of managers) {
     const fileKey = managerAliasMap[manager] ?? manager
-    if (!loadedFiles.has(fileKey)) {
-      _shell = _shell
-        .with(
-          await _shell.fileLoad(
-            [PACK_KEY, fileKey],
-            import.meta.resolve,
-            ['..'],
-          ),
-        )
-      loadedFiles.add(fileKey)
+    if (!loadedOps.has(fileKey)) {
+      const content = await _shell.fileLoad(
+        [PACK_KEY, fileKey],
+        import.meta.resolve,
+        ['..'],
+      )
+      _shell = _shell.with(content)
+      loadedOps.set(fileKey, managerFileOps(content))
     }
   }
-  return _shell
+  const opsByManager = new Map(
+    managers.map((m) => [m, loadedOps.get(managerAliasMap[m] ?? m) ?? []]),
+  )
+  return { shell: _shell, opsByManager }
 }
 
 function buildAndLog(shell: Sh, environment: Env) {
@@ -205,9 +217,14 @@ async function initOp(
     allManagers: Array<string>
   }
 > {
-  let _shell = shell.with(shell.varSetStr(PACK_OP_KEY, op))
-  const allManagers = getSupportedManagers()
-  _shell = await loadManagerFiles(_shell, allManagers)
+  const supported = getSupportedManagers()
+  const { shell: _shell, opsByManager } = await loadManagerFiles(
+    shell.with(shell.varSetStr(PACK_OP_KEY, op)),
+    supported,
+  )
+  // a manager with no arm for this op would be a row in the table that ran nothing when picked. `find` is not an
+  // arm at all — it is the client walking managers rather than one of them acting — so it keeps every manager
+  const allManagers = ARM_OPS.includes(op) ? supported.filter((m) => opsByManager.get(m)?.includes(op)) : supported
   return { shell: _shell, allManagers }
 }
 
@@ -262,8 +279,8 @@ function matchesGroupQuery(groupParts: Array<string>, content: unknown, query: s
     groupPackageNames(content).some((n) => n.toLowerCase().startsWith(q))
 }
 
-export type FindCandidate = { manager: string; pkg: string }
-export type FindEntry = { label: string; candidates: Array<FindCandidate> }
+type FindCandidate = { manager: string; pkg: string }
+type FindEntry = { label: string; candidates: Array<FindCandidate> }
 
 // a group is on offer here if this platform has a manager it names, or its script is gated in. the managers it names
 // are only candidates, in declared order: whether one is really on this machine is the client's to answer
@@ -362,7 +379,7 @@ interface ManagerEntry {
 
 type RemManagerEntry = Record<string, HookEntry>
 
-export interface ScriptEntry {
+interface ScriptEntry {
   commands?: Array<string>
   file?: string
   gate?: Record<string, Array<string>>
@@ -404,8 +421,8 @@ function processManagerEntryLines(
   return lines
 }
 
-export type PlanPath = { id: string; manager: string; names: Array<string> }
-export type PlanUnit = { group: string; name: string; paths: Array<PlanPath> }
+type PlanPath = { id: string; manager: string; names: Array<string> }
+type PlanUnit = { group: string; name: string; paths: Array<PlanPath> }
 
 // one install path becomes a row the client can choose plus an arm it can run, so code stays code and the
 // plan stays data
@@ -471,7 +488,7 @@ async function buildGroupUnit(
   return { unit: paths.length ? { group: name, name: cliName, paths } : null, arms }
 }
 
-export async function resolveGroupName(name: string): Promise<Array<string>> {
+async function resolveGroupName(name: string): Promise<Array<string>> {
   const nameParts = name.split('-')
   const results = await getCfgDirDump([PACK_KEY], {
     extension: Fmt.yaml,
@@ -592,7 +609,9 @@ async function execOp(
     result = printGroups(result, groupEntries, remaining)
 
     return buildAndLog(result, environment)
-  } else if (op === 'add' || op === 'remove') {
+  } else if (op === 'add' || op === 'remove' || (op === 'sync' && names.length)) {
+    // a named sync asks the same question remove does — which manager holds this — with a different verb, so it
+    // resolves through the plan rather than handing every manager a name it never installed
     const { units, arms, claimed } = await buildPlan(
       result,
       context,
@@ -620,8 +639,30 @@ async function execOp(
 
     return buildAndLog(result, environment)
   } else if (op === 'sync') {
-    if (names.length) {
-      result = setOpNames(result, op, names)
+    result = result.with(['packManagerPlanRun'])
+
+    return buildAndLog(result, environment)
+  }
+
+  if (op === 'info' && names.length) {
+    // info asks every manager, so it has no plan to pick from — but a group still knows each manager's own name
+    // for what was typed, and asking pacman about `nu` when the group says `nushell` is asking about nothing
+    const { units, claimed } = await buildPlan(result, context, op, allManagers, names)
+    const declared: Record<string, Array<string>> = {}
+    for (const unit of units) {
+      for (const path of unit.paths) {
+        declared[path.manager] = [...new Set([...(declared[path.manager] ?? []), ...path.names])]
+      }
+    }
+    result = result.with(result.varSetStr(PACK_INFO_MAP_KEY, JSON.stringify(declared)))
+    // a name no group claimed is asked as typed, of everyone, the way it always was
+    const loose = names.filter((n) => !claimed.includes(n))
+    result = setOpNames(result, op, loose)
+    // with nothing loose to ask about, a manager the groups never named has no question to put: it is not offered
+    if (!loose.length) {
+      result = result.with(
+        result.varSetArr(PACK_MANAGERS_KEY, allManagers.filter((m) => declared[m]?.length)),
+      )
     }
     result = result.with(['packManagerPlanRun'])
 
@@ -630,9 +671,12 @@ async function execOp(
 
   if (op === 'list' || op === 'outdated' || op === 'info') {
     result = setOpNames(result, op, names)
-    // list's filter is answerable locally, so it resolves before it asks; outdated and info reach the network
-    // either way, so their only question stays which managers to run
-    result = result.with([op === 'list' ? 'packListPlanRun' : 'packManagerPlanRun'])
+    // list and outdated filter what is installed, and that is answerable locally, so a term resolves before either
+    // asks. info reaches the network whatever it is given, so its only question stays which managers to run
+    const local = op === 'list' || op === 'outdated'
+    result = result.with(
+      local ? [`packTermPlanRun ${result.toLiteral(joinKey(...PACK_OP_NAMES_KEY(op)))}`] : ['packManagerPlanRun'],
+    )
   }
 
   return buildAndLog(result, environment)

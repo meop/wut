@@ -1,11 +1,6 @@
 def --env packUv [] {
   let cmd = 'uv'
-  if (
-    (which $cmd | is-empty) or
-    ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
-    ('PACK_OP' not-in $env) or
-    (packNothingToDo)
-  ) {
+  if (packSkip $cmd) {
     return
   }
 
@@ -29,8 +24,13 @@ def --env packUv [] {
       packOpAdd [$cmd tool install] --each
     }
     info => {
-      for term in $env.PACK_INFO_NAMES {
-        packOp [$cmd pip show --python (getToolPython $term) $term]
+      for term in (packInfoNames) {
+        let python = (getToolPython $term)
+        if ($python | path exists) {
+          packOp [$cmd pip show --python $python $term]
+        } else {
+          packPypiInfo $term
+        }
       }
     }
     list => {

@@ -14,7 +14,7 @@ def --env packPacman [] {
 
   let cmd = if $mgr == pacman { packElevate $mgr } else { $mgr }
 
-  if $env.PACK_OP in ['add', 'info', 'outdated', 'sync'] { packRefresh $mgr }
+  packRefreshForOp $mgr
 
   match $env.PACK_OP {
     add => {

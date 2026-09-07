@@ -1,11 +1,6 @@
 def --env packPnpm [] {
   let cmd = 'pnpm'
-  if (
-    (which $cmd | is-empty) or
-    ('PACK_MANAGER' in $env and $env.PACK_MANAGER != $cmd) or
-    ('PACK_OP' not-in $env) or
-    (packNothingToDo)
-  ) {
+  if (packSkip $cmd) {
     return
   }
 
@@ -27,20 +22,11 @@ def --env packPnpm [] {
       packOpRemove [$cmd remove --global]
     }
     sync => {
-      let names = if ($env.PACK_SYNC_NAMES? | is-not-empty) {
-        $env.PACK_SYNC_NAMES
+      # pnpm installs the runtimes it manages into the same global store; updating those is `pnpm env`, not this
+      let names = if ((packNameList 'PACK_SYNC_NAMES') | is-not-empty) {
+        packSyncNames
       } else {
-        ^$cmd ls --global --parseable
-          | lines
-          | each { |line|
-              let parts = ($line | path split)
-              let idx = ($parts | enumerate | where item == 'node_modules' | get 0?.index?)
-              if $idx == null { null } else {
-                $parts | skip ($idx + 1) | str join '/'
-              }
-            }
-          | compact
-          | where { $in != bun and $in != deno and $in != node }
+        (packPnpmInstalled) | where { $in != 'bun' and $in != 'deno' and $in != 'node' }
       }
       if ($names | is-not-empty) {
         packOp ([$cmd update --global --latest] ++ $names)

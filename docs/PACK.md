@@ -61,10 +61,27 @@ The server cannot know which managers exist on the machine, so it emits resolved
 Both walk the managers in the same preference order, but they are not asking the same thing, and reading a name's fate
 off the wrong question is how a plan ends up naming a manager that has nothing to do:
 
-|          | The question             | Answered by     | Costs                    |
-| -------- | ------------------------ | --------------- | ------------------------ |
-| `add`    | who **could** serve this | `packExists`    | a registry round trip    |
-| `remove` | who **already has** this | `packInstalled` | a local listing or query |
+|                | The question             | Answered by     | Costs                    |
+| -------------- | ------------------------ | --------------- | ------------------------ |
+| `add`          | who **could** serve this | `packExists`    | a registry round trip    |
+| `remove`       | who **already has** this | `packInstalled` | a local listing or query |
+| `sync <names>` | who **already has** this | `packInstalled` | a local listing or query |
+
+A named sync asks remove's question with a different verb — updating a package is something only the manager holding it
+can do — so `packOpAsksInstalled` is what the walk reads, not the op name. Handing the name to every manager instead is
+how `wut p s vlc` came to offer eight managers and run an upgrade against seven that had never heard of vlc. Where
+remove is PINPOINT and takes only the manager it uninstalls from, sync is WIDE ([COMMANDS.md](COMMANDS.md)) and takes
+every manager holding the name, since a name left stale in the second manager that has it is the failure mode there. A
+bare `sync` has no name to place and keeps the plainer manager-only plan.
+
+### Sync never installs
+
+Picking the right managers is not enough on its own, because several of these update commands install a name they do not
+find: `deno install --force --global vlc@latest` is deno's update _and_ its install, and `pacman --sync --needed` and
+`choco upgrade` behave the same way. That is how the vlc run ended with vlc installed under deno. So the guard is stated
+once, in `packSyncNames`, rather than trusted to fifteen commands: the names a manager is handed are narrowed to the
+ones it actually holds, and a manager left with none runs nothing — never the whole-manager upgrade, which is what _no
+names at all_ means. Wanting a package that is not here is `add`; sync only ever updates what is.
 
 A name can be available everywhere and installed in exactly one place. `git-filter-repo` is on pypi, on npm and on
 github, so every user manager could serve it — but uv is the one holding it, and only uv can let it go. Asking
@@ -73,12 +90,20 @@ never had the package.
 
 That difference decides where the work sits relative to the gate, too. `packExists` reaches the network, so add's loose
 names stay behind `?` until something is picked — see [OPS.md](OPS.md#an-op-asks-when-work-follows-the-answer).
-`packInstalled` reads what is already on the machine, so remove runs it **before** the table and states the winner by
-name. Remove has no `?` row: by the time it asks, there is nothing left to find out.
+`packInstalled` reads what is already on the machine, so remove and a named sync run it **before** the table and state
+the winner by name. Neither has a `?` row: by the time they ask, there is nothing left to find out.
 
-The same split applies one level up, to group rows. A group states which managers _can_ serve it, never which one did,
-so removing walks its stated order and takes the first whose declared names are actually installed. A group nothing
-holds is already gone — it is dropped rather than uninstalled from a manager that is merely present.
+The same split applies one level up, to group rows, in `packPickPaths`. A group states which managers _can_ serve it,
+never which one did, so removing walks its stated order and takes the first whose declared names are actually installed,
+and syncing takes every one of them. A group nothing holds is already gone — it is dropped rather than acted on through
+a manager that is merely present, and the cli name it came from falls through like any unclaimed name.
+
+Each manager states what it holds **once**. `list` dumps it and the checks read it, and two statements of the same fact
+is how `list` and `remove` came to disagree about a name. deno has no listing command at all — its global installs are
+shim directories, and the dot-prefixed metadata directory beside each shim is the only record that a shim is an install
+— so `packDenoInstalled` reads the directory. pnpm has two forms of one command and needs the second: `--parseable`
+prints one full path per line, which spells a scoped name whole where the drawn tree's `name@version` tokens do not, so
+every check reads that and the tree stays the dump.
 
 Each manager answers the installed question the exact way it can: a query that succeeds or fails by exit code where one
 exists (`pacman --query`, `brew list --versions`, `dpkg-query`, `rpm --query`), and its own listing parsed to entry
@@ -121,8 +146,65 @@ current; remove refreshes nothing, since a remote index has no bearing on what i
 resolve the way add's do (`packFindFirst`), just after its own gate rather than add's, and they answer to a `?` row so
 they can be taken or left like any manager.
 
-`sync`, `tidy`, `outdated` and `info` have no per-package decision to make — the only question is which managers this
-run touches — so they share a plainer plan, `packManagerPlanRun`, whose rows are just the managers present.
+`tidy`, `info` and a bare `sync` have no per-package decision to make — the only question is which managers this run
+touches — so they share a plainer plan, `packManagerPlanRun`, whose rows are just the managers present. A `sync` given
+names does have that decision, and takes the same plan `add` and `remove` do.
+
+`list` and `outdated` given a term share `packTermPlanRun`: both filter what is installed, and a package has to be
+installed before it can be out of date, so the same local listing answers which managers have anything matching. Bare,
+they fall through to the manager-only plan, since there is nothing cheaper than running the managers themselves.
+
+## Group first, then the name as typed
+
+`add`, `remove`, `sync` and `find` all resolve a typed name through its group before doing anything with it, and let a
+name no group claims fall through as itself. `info` now does the same: it asks every manager rather than picking one, so
+it has no plan to pick from, but a group still knows what each manager calls the thing — asking pacman about `nu` when
+the group says `nushell` is asking about nothing. The server emits `PACK_INFO_MAP`, each manager's own names for the
+groups that were typed, and `packInfoNames` hands a manager its declared names plus whatever no group claimed, asked as
+typed. With nothing unclaimed, a manager the groups never named has no question to put, so it is not offered.
+
+## Global, wherever wut was run from
+
+deno, bun, pnpm, uv and cargo all manage packages twice over — a project's and the machine's — and wut only ever means
+the machine's. Most of them say so with a flag (`--global`, `uv tool`, `cargo install`), which is the tool doing this
+itself: locate the global project, act there, come back. The ops that have no such flag decide what they mean by looking
+for a project file in the cwd, which makes the answer depend on where you were standing when you ran wut:
+
+| Command             | Standing outside a project | Standing inside one                           |
+| ------------------- | -------------------------- | --------------------------------------------- |
+| `deno info npm:<x>` | answers                    | errors on the project's `nodeModules` setting |
+| `bun info <x>`      | errors, no package.json    | answers, from that project                    |
+| `bun pm cache rm`   | errors, no package.json    | answers                                       |
+
+deno takes flags for it — `--no-config --no-lock`, on `info` and on the global installs, whose config the install was
+going to ignore anyway with a warning. bun takes none: `info` and `pm cache` are built on its installer, no flag turns
+the requirement off, and neither accepts `--global`. So wut does the sequence itself, and the place it stands is bun's
+own global project — the one `--global` installs into, under `$BUN_INSTALL`, else `$XDG_CACHE_HOME/.bun`, else `~/.bun`,
+plus `install/global`. bun creates that on the first global add and errors until then, `bun pm bin -g` included, so it
+cannot even be asked where it is on a machine that has yet to install anything; wut seeds the empty manifest bun would
+have written, which bun then keeps, adding only its own `dependencies`. `packBunRun` and `packDoIn` run there and put
+the cwd back.
+
+Every other command each of these tools is given was checked from inside a rust, node, deno and python project and
+answers the same either way.
+
+## A manager is only offered an op it can do
+
+bun, deno and uv have no outdated command; winget has no cache to clean. A row for one of them was a row that ran
+nothing when picked — the table asking a question whose answer it already knew. Each manager's file states the ops it
+can do as the arms of its own `match $env.PACK_OP`, so `managerFileOps` reads them from the file rather than from a list
+kept beside it, and `initOp` narrows `PACK_MANAGERS` to the managers that answer for this op. `find` is not an arm — it
+is the client walking managers, not one of them acting — so it keeps every manager.
+
+## An answer is asked for once
+
+The checks are cheap, not free, and a plan resolving five names against uv ran `uv tool list` five times and printed it
+five times for an answer that could not have changed between them. `packInstalled`, `packListedNames` and `packHttpOk`
+each remember what they learned for the rest of the run, keyed by the question — the manager and name, the listing
+command, the url — so the plan's answers are still there when the sync guard asks again, and bun, pnpm and deno share
+one npm round trip instead of making three. The pacman family shares one entry, since all three ask `pacman --query`.
+What a `def --env` learns inside a closure is discarded with the closure, so the walks that have something to remember
+are `for` loops rather than `where`/`any` — see [NUSHELL.md](NUSHELL.md).
 
 `list` is the one that splits on its argument. Bare, it joins them: the dump is the answer, so there is nothing to
 resolve first. Given a term, it has the same local answer `remove` does — which managers hold something matching — and
