@@ -13,7 +13,6 @@ export class VirtCmd extends CmdBase implements Cmd {
     this.name = 'virt'
     this.description = 'virtual manager ops'
     this.aliases = ['v', 'vi', 'vir', 'virtual']
-    this.options = []
     this.commands = [
       new VirtCmdAdd([...this.scopes, this.name]),
       new VirtCmdFind([...this.scopes, this.name]),
@@ -223,14 +222,12 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
         flexible: true,
       })
       if (op !== 'run') {
-        // `add glass` is glass, not its variants; `add glass vfio` names one. rem/sync/tidy act on the installed
-        // unit, which only carries the base name
         results = results.filter((parts) =>
           parts[0] === 'podman' || parts.length <= 2 ||
-          (op === 'add' && filters.includes(parts[2]))
+          (op === 'add' && filters.includes(parts[2]) && filters.some((f) => parts[1].includes(f)))
         )
       }
-      if ((op === 'rem' || op === 'run') && filters.length) {
+      if (op === 'run' && filters.length) {
         results = preferExactMatches(results, filters)
           .filter((parts) => parts[1] && !(parts[0] === 'podman' && !parts[2]))
           .slice(0, 1)

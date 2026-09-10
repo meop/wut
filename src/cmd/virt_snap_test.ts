@@ -192,12 +192,12 @@ Deno.test('nu / linux / add (pinned, qemu)', async (t) => {
   assertEquals(body.includes('"qemu":["test","test2"]'), true)
   assertEquals(/^virtPlanRun$/m.test(body), true)
 })
-// rem is PINPOINT: one, even though the same filter matched two for add
+// rem fans out like add, and like `pack` and `file` do; only run pinpoints, since it runs one in the foreground
 Deno.test('nu / linux / rem (pinned, qemu)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/virt/rem/qemu?${PIN}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('"qemu":["test"]'), true)
+  assertEquals(body.includes('"qemu":["test","test2"]'), true)
 })
 Deno.test('nu / linux / add (pinned, docker)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/virt/add/docker?${PIN}`))).text()
@@ -218,6 +218,13 @@ Deno.test('nu / linux / add (pinned, qemu variant named)', async (t) => {
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(body.includes('"qemu":["test/vga"]'), true)
+})
+// a variant name alone must not select its instance — variant names repeat across instances
+Deno.test('nu / linux / add (pinned, variant alone reaches no instance)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/add/vga?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('no instance matched: vga'), true)
 })
 // and never fans out over them otherwise
 Deno.test('nu / linux / add (pinned, instance does not fan out over variants)', async (t) => {

@@ -68,28 +68,34 @@ def --env virtPlanRun [] {
     return
   }
 
-  for e in $here {
-    opPrint $e.manager
-    if ($e.instances | is-not-empty) {
-      opPrint $"  ($e.instances | str join ', ')"
+  # one row per instance: removing a vm is destructive and they are independent of each other, so the
+  # choice has to reach a single one. an empty instance list is not none, it is every one the manager
+  # has, which only the manager can name — so it collapses to one row that stands for all of them
+  let rows = ($here | each { |e|
+    if ($e.instances | is-empty) {
+      [{manager: $e.manager, instance: 'all', every: true}]
+    } else {
+      $e.instances | each { |i| {manager: $e.manager, instance: $i, every: false} }
     }
-  }
+  } | flatten)
 
-  opPrint ''
-  # an empty instance list is not none, it is every one the manager has, which only the manager can name
-  virtTable ['manager' 'instances'] ($here | enumerate | each { |e|
-    [$"($e.index + 1)\) ($e.item.manager)", (if ($e.item.instances | is-empty) { 'all' } else { $e.item.instances | length | into string })]
+  virtTable ['manager' 'instance'] ($rows | enumerate | each { |r|
+    [$"($r.index + 1)\) ($r.item.manager)", $r.item.instance]
   })
-  let picked = (wutSelectRead ($here | length))
+  let picked = (wutSelectRead ($rows | length))
   if $picked == null {
     return
   }
-  let chosen = ($picked | each { |i| $here | get ($i - 1) })
+  let chosen = ($picked | each { |i| $rows | get ($i - 1) })
 
   $env.VIRT_AGREED = '1'
-  for entry in $chosen {
-    load-env {VIRT_MANAGER: $entry.manager, VIRT_INSTANCES: $entry.instances}
-    virtCallManager $entry.manager
+  for manager in ($chosen | each { |r| $r.manager } | uniq) {
+    let own = ($chosen | where manager == $manager)
+    load-env {
+      VIRT_MANAGER: $manager,
+      VIRT_INSTANCES: (if ($own | any { |r| $r.every }) { [] } else { $own | each { |r| $r.instance } }),
+    }
+    virtCallManager $manager
     hide-env VIRT_MANAGER
   }
 }
