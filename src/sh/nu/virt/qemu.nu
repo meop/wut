@@ -30,6 +30,12 @@ def virtQemu [] {
     } | into cell-path
   }
 
+  # one flag per line: a human reads these while working out why a vm will not boot
+  def qemuCmdWrap [cmd: string, args: list<string>] {
+    let sep = " \\\n  "
+    $cmd + (if ($args | length) > 0 { $sep + ($args | str join $sep) } else { '' })
+  }
+
   def fetchInstanceYaml [cmd, name] {
     opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($name).yaml'#" | from yaml
   }
@@ -43,6 +49,20 @@ def virtQemu [] {
     let baseConfig = fetchInstanceYaml $cmd $baseName
     let fragmentConfig = fetchInstanceYaml $cmd $requested
     {instance: $baseName, config: (virtDeepMerge $baseConfig $fragmentConfig)}
+  }
+
+  # `add glass/vfio` installs the unit as `qemu-glass`, so the variant is not recoverable from the service
+  # name — doAdd records it and sync replays it, rather than rebuilding from a base config that for some
+  # instances is not a functional vm on its own
+  def qemuVariantOf [instance] {
+    let variantFilePath = $"/var/lib/qemu/($instance)/variant"
+    if ($variantFilePath | path exists) {
+      let variant = (open --raw $variantFilePath | lines | get 0? | default '' | str trim)
+      if ($variant | is-not-empty) {
+        return $"($instance)/($variant)"
+      }
+    }
+    $instance
   }
 
   def qemuInstanceRunning [instance] {
@@ -128,6 +148,7 @@ def virtQemu [] {
     if ($setup == null) {
       return
     }
+    let requested = $instance
     let instance = $setup.instance
     if (qemuInstanceRunning $instance) {
       opPrintWarn $"`($cmd)` instance `($instance)` is already added"
@@ -148,6 +169,14 @@ def virtQemu [] {
 
       opPrintMaybeRunCmd sudo mkdir -p $serviceDirPath
       opPrintMaybeRunCmd sudo mkdir -p $configDirPath
+
+      let variantFilePath = ($configDirPath | path join variant)
+      let variant = ($requested | split row '/' | skip 1 | str join '/')
+      if ($variant | is-empty) {
+        opPrintMaybeRunCmd sudo rm -f $variantFilePath
+      } else {
+        opPrintMaybeRunCmd $"r#'(($variant) + "\n")'#" '|' sudo tee $variantFilePath '|' ignore
+      }
 
       let tmpDirPath = $"($qemuEnv.tmp_qemu_dir_path)/($instance)"
       let pidFilePath = ($tmpDirPath | path join qemu.pid)
@@ -178,21 +207,21 @@ def virtQemu [] {
         '  echo 0 > "$vtcon"',
         'done',
         'echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/unbind',
+        ## the handover needs to settle before the gpu is rebound; the early exit above skips it entirely
+        'sleep 2',
       ]
       # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
       # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
       opPrintMaybeRunCmd $"r##'(($unbindEfiFbLines | str join "\n") + "\n")'##" '|' sudo tee $unbindEfiFbScriptFilePath '|' ignore
       opPrintMaybeRunCmd sudo chmod +x $unbindEfiFbScriptFilePath
-      $serviceLines = $serviceLines | append [
-        $"ExecStartPre=($unbindEfiFbScriptFilePath)",
-        'ExecStartPre=/usr/bin/sleep 2',
-      ]
+      $serviceLines = $serviceLines | append $"ExecStartPre=($unbindEfiFbScriptFilePath)"
 
       if ($qemuEnv | get --optional vfio_pci_dev_ids | default '' | is-not-empty) {
         let rebindScriptFilePath = ($configDirPath | path join 'rebind-vfio-pci.sh')
         let rebindLines = [
           '#!/usr/bin/bash',
           "driver='vfio-pci'",
+          "rebound=''",
           $"for fullPciDevId in ($qemuEnv.vfio_pci_dev_ids | split row ',' | each { |id| $"0000:($id)" } | str join ' '); do",
           '  if [ -e "/sys/bus/pci/devices/$fullPciDevId/driver_override" ]; then',
           '    currentDriver=$(basename $(readlink "/sys/bus/pci/devices/$fullPciDevId/driver" 2>/dev/null) 2>/dev/null)',
@@ -201,34 +230,44 @@ def virtQemu [] {
           '      echo "$fullPciDevId" > "/sys/bus/pci/devices/$fullPciDevId/driver/unbind"',
           '      echo "$fullPciDevId" > "/sys/bus/pci/drivers/$driver/bind"',
           '      echo > "/sys/bus/pci/devices/$fullPciDevId/driver_override"',
+          "      rebound=1",
           '    fi',
           '  fi',
           'done',
+          ## the common case is already bound at host boot, so the settle is dead time unless something moved
+          'if [ -n "$rebound" ]; then sleep 2; fi',
         ]
         # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
         # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
         opPrintMaybeRunCmd $"r##'(($rebindLines | str join "\n") + "\n")'##" '|' sudo tee $rebindScriptFilePath '|' ignore
         opPrintMaybeRunCmd sudo chmod +x $rebindScriptFilePath
-        $serviceLines = $serviceLines | append [
-          $"ExecStartPre=($rebindScriptFilePath)",
-          'ExecStartPre=/usr/bin/sleep 2',
-        ]
+        $serviceLines = $serviceLines | append $"ExecStartPre=($rebindScriptFilePath)"
       }
 
       if 'swtpm' in $merged {
         let swtpmScriptFilePath = ($configDirPath | path join swtpm.sh)
         let swtpmArgs = replaceEnv $qemuEnv ($merged | get swtpm?.arguments? | default [])
-        let swtpmCmd = $"swtpm(if ($swtpmArgs | length) > 0 { ' ' + ($swtpmArgs | str join ' ') } else { '' })"
+        let swtpmCmd = (qemuCmdWrap 'swtpm' $swtpmArgs)
 
+        let swtpmLines = [
+          '#!/usr/bin/bash',
+          ("socketPath='" + $tmpDirPath + "/tpm.socket'"),
+          ($swtpmCmd + ' || exit 1'),
+          # --daemon returns before the control socket is listening, and qemu exits if it connects first
+          'for _ in $(seq 1 500); do',
+          '  if [ -S "$socketPath" ]; then exit 0; fi',
+          '  sleep 0.01',
+          'done',
+          'exit 1',
+        ]
         # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
         # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
-        opPrintMaybeRunCmd $"r##'((['#!/usr/bin/bash', ('exec ' + $swtpmCmd)] | str join "\n") + "\n")'##" '|' sudo tee $swtpmScriptFilePath '|' ignore
+        opPrintMaybeRunCmd $"r##'(($swtpmLines | str join "\n") + "\n")'##" '|' sudo tee $swtpmScriptFilePath '|' ignore
         opPrintMaybeRunCmd sudo chmod +x $swtpmScriptFilePath
         $serviceLines = $serviceLines | append [
           $"ExecStartPre=-/usr/bin/pkill --full \"^swtpm.*($instance)\"",
           $"ExecStartPre=-/usr/bin/rm -f ($tmpDirPath)/tpm.socket",
           $"ExecStartPre=($swtpmScriptFilePath)",
-          'ExecStartPre=/usr/bin/sleep 2',
         ]
       }
 
@@ -240,7 +279,7 @@ def virtQemu [] {
       let qemuArgs = (replaceEnv $qemuEnv ($merged | get qemu?.arguments? | default [])) | append [$"-pidfile ($pidFilePath)", '-daemonize']
       let cpusCount = (($qemuEnv.vm_cpu_sockets | into int) * ($qemuEnv.vm_cpu_cores | into int) * ($qemuEnv.vm_cpu_threads | into int))
       let cpusMax = $cpusCount - 1
-      let qemuCmd = $"($qemuBin)(if ($qemuArgs | length) > 0 { ' ' + ($qemuArgs | str join ' ') } else { '' })"
+      let qemuCmd = (qemuCmdWrap $qemuBin $qemuArgs)
       # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
       # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
       opPrintMaybeRunCmd $"r##'((['#!/usr/bin/bash', ('exec ' + $qemuCmd)] | str join "\n") + "\n")'##" '|' sudo tee $qemuScriptFilePath '|' ignore
@@ -254,9 +293,8 @@ def virtQemu [] {
         'qmpSocket="$1"',
         'pidFile="$2"',
         'timeoutSec="${3:-45}"',
-        '',
-        '# no qmp socket, no socat to speak it, or qemu not listening yet — let systemd kill it rather than',
-        '# sit out the whole timeout waiting on a shutdown that was never sent',
+        # no qmp socket, no socat to speak it, or qemu not listening yet — let systemd kill it rather than
+        # sit out the whole timeout waiting on a shutdown that was never sent
         'if [ ! -S "$qmpSocket" ]; then exit 0; fi',
         'if ! command -v socat > /dev/null 2>&1; then exit 0; fi',
         '',
@@ -285,7 +323,13 @@ def virtQemu [] {
         let pinScriptFilePath = ($configDirPath | path join qemu-cpu-pin.sh)
         let pinLines = [
           '#!/usr/bin/bash',
-          ("pid=$(cat " + $pidFilePath + ")"),
+          ("pidFile='" + $pidFilePath + "'"),
+          # -daemonize returns before the vcpu threads exist, so wait for them rather than guess at a delay
+          'for _ in $(seq 1 500); do',
+          '  pid=$(cat "$pidFile" 2>/dev/null)',
+          '  if [ -n "$pid" ] && ps --pid "$pid" -T -o ucmd | grep -q "CPU 0/KVM"; then break; fi',
+          '  sleep 0.01',
+          'done',
           'if [ -z "$pid" ]; then exit 0; fi',
           ("for i in $(seq 0 " + ($cpusMax | into string) + "); do"),
           "  spid=$(ps --pid $pid -T -o ucmd,spid | grep \"CPU $i/KVM\" | awk '{print $NF}')",
@@ -298,10 +342,7 @@ def virtQemu [] {
         # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
         opPrintMaybeRunCmd $"r##'(($pinLines | str join "\n") + "\n")'##" '|' sudo tee $pinScriptFilePath '|' ignore
         opPrintMaybeRunCmd sudo chmod +x $pinScriptFilePath
-        $serviceLines = $serviceLines | append [
-          'ExecStartPost=/usr/bin/sleep 2',
-          $"ExecStartPost=($pinScriptFilePath)",
-        ]
+        $serviceLines = $serviceLines | append $"ExecStartPost=($pinScriptFilePath)"
       }
 
       $serviceLines = $serviceLines | append [
@@ -348,7 +389,7 @@ def virtQemu [] {
     if 'swtpm' in $merged {
       let swtpmScriptFilePath = ($runDirPath | path join swtpm.sh)
       let swtpmArgs = replaceEnv $qemuEnv ($merged | get swtpm?.arguments? | default [])
-      let swtpmCmd = $"swtpm(if ($swtpmArgs | length) > 0 { ' ' + ($swtpmArgs | str join ' ') } else { '' })"
+      let swtpmCmd = (qemuCmdWrap 'swtpm' $swtpmArgs)
 
       # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
       # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
@@ -364,7 +405,7 @@ def virtQemu [] {
     # doAdd appends these; run is foreground, so drop them wherever they come from
     let qemuArgs = replaceEnv $qemuEnv ($merged | get qemu?.arguments? | default [])
       | where { |a| not (($a | str starts-with '-daemonize') or ($a | str starts-with '-pidfile')) }
-    let qemuCmd = $"($qemuBin)(if ($qemuArgs | length) > 0 { ' ' + ($qemuArgs | str join ' ') } else { '' })"
+    let qemuCmd = (qemuCmdWrap $qemuBin $qemuArgs)
     # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
     # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
     opPrintMaybeRunCmd $"r##'((['#!/usr/bin/bash', ('exec ' + $qemuCmd)] | str join "\n") + "\n")'##" '|' sudo tee $qemuScriptFilePath '|' ignore
@@ -443,14 +484,15 @@ def virtQemu [] {
       }
     }
     sync => {
-      for instance in $env.VIRT_INSTANCES {
+      for requested in $env.VIRT_INSTANCES {
+        let instance = ($requested | split row '/' | first)
         if not ($"/etc/systemd/system/qemu-($instance).service" | path exists) {
           continue
         }
 
         opPrintMaybeRunCmd sudo systemctl stop $"qemu-($instance)"
 
-        doAdd $cmd $instance
+        doAdd $cmd (if ($requested | str contains '/') { $requested } else { qemuVariantOf $instance })
       }
     }
   }
