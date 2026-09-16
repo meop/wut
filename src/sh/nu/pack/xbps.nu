@@ -1,12 +1,12 @@
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip $cmd $"($cmd)-install") {
+  let mgr = 'xbps'
+  if (packSkip $mgr $"($mgr)-install") {
     return
   }
 
-  let cmd = packElevate $cmd
+  let cmd = packElevate $mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp $mgr
 
   match $env.PACK_OP {
     add => {
@@ -16,7 +16,7 @@ def --env packXbps [] {
       packOpInfo [$"($cmd)-query" --repository --show]
     }
     list => {
-      packOpList (packListCmd $cmd)
+      packOpList (packListCmd $mgr)
     }
     outdated => {
       packOpOutdated [$"($cmd)-install" --dry-run --update]

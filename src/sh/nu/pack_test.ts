@@ -629,3 +629,45 @@ Deno.test('nu / pack / deno asks about a package, not about the project you are 
     assertEquals(out.includes(line), true, line)
   }
 })
+
+// the bug this covers: a plain `wut p l python` reached the table, took the pick and then died with
+// `apt: Can't convert to list<string>`. the elevated managers shadowed their own name with the `sudo apt` they
+// invoke, and packListCmd is keyed by the bare name, so it answered null for every one of them. only reachable
+// where sudo is on PATH, which is why the listing kept working in the tests and nowhere else
+Deno.test('nu / pack / an elevated manager still knows its own listing command', async () => {
+  // manager, the binary its listing runs, and the arguments packListCmd states for it
+  const cases: Array<[string, string, string]> = [
+    ['apk', 'apk', 'list --installed'],
+    ['apt', 'apt', 'list --installed'],
+    ['dnf', 'dnf', 'list --installed'],
+    ['xbps', 'xbps-query', '--list-pkgs'],
+    ['zypper', 'zypper', 'packages --installed-only'],
+  ]
+  for (const [manager, bin, args] of cases) {
+    const listing = `printf 'python 3.13.7\\n'`
+    const stubs: Record<string, string> = { sudo: 'exec "$@"', [manager]: listing, [bin]: listing }
+    if (manager === 'xbps') {
+      stubs['xbps-install'] = ''
+    }
+    const out = await withStubs(
+      stubs,
+      [
+        `$env.PACK_OP = 'list'`,
+        `$env.YES = '1'`,
+        `$env.PACK_LIST_NAMES = ['python']`,
+        `packTermPlanRun 'PACK_LIST_NAMES'`,
+      ]
+        .join('\n'),
+      [manager],
+      [manager],
+    )
+    if (out == null) {
+      return
+    }
+    assertEquals(out.includes('failed:'), false, `${manager}: ${out}`)
+    assertEquals(out.includes(`${bin} ${args}`), true, `${manager}: ${out}`)
+    // the dump is the manager's own listing, asked as itself: sudo belongs to the ops that change something
+    assertEquals(out.includes(`sudo ${bin}`), false, `${manager}: ${out}`)
+    assertEquals(out.includes('python 3.13.7'), true, `${manager}: ${out}`)
+  }
+})

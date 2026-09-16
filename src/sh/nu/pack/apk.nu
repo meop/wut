@@ -1,12 +1,12 @@
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip $cmd) {
+  let mgr = 'apk'
+  if (packSkip $mgr) {
     return
   }
 
-  let cmd = packElevate $cmd
+  let cmd = packElevate $mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp $mgr
 
   match $env.PACK_OP {
     add => {
@@ -16,7 +16,7 @@ def --env packApk [] {
       packOpInfo [$cmd info]
     }
     list => {
-      packOpList (packListCmd $cmd)
+      packOpList (packListCmd $mgr)
     }
     outdated => {
       packOpOutdated [$cmd list -u]

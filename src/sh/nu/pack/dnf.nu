@@ -1,12 +1,12 @@
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip $cmd) {
+  let mgr = 'dnf'
+  if (packSkip $mgr) {
     return
   }
 
-  let cmd = packElevate $cmd
+  let cmd = packElevate $mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp $mgr
 
   match $env.PACK_OP {
     add => {
@@ -16,7 +16,7 @@ def --env packDnf [] {
       packOpInfo [$cmd info]
     }
     list => {
-      packOpList (packListCmd $cmd)
+      packOpList (packListCmd $mgr)
     }
     outdated => {
       packOpOutdated [$cmd list --upgrades]

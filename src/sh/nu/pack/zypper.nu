@@ -1,12 +1,12 @@
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip $cmd) {
+  let mgr = 'zypper'
+  if (packSkip $mgr) {
     return
   }
 
-  let cmd = packElevate $cmd
+  let cmd = packElevate $mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp $mgr
 
   match $env.PACK_OP {
     add => {
@@ -16,7 +16,7 @@ def --env packZypper [] {
       packOpInfo [$cmd info]
     }
     list => {
-      packOpList (packListCmd $cmd)
+      packOpList (packListCmd $mgr)
     }
     outdated => {
       packOpOutdated [$cmd list-updates]

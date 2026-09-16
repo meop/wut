@@ -1,12 +1,12 @@
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip $cmd) {
+  let mgr = 'apt'
+  if (packSkip $mgr) {
     return
   }
 
-  let cmd = packElevate $cmd
+  let cmd = packElevate $mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp $mgr
 
   match $env.PACK_OP {
     add => {
@@ -16,7 +16,7 @@ def --env packApt [] {
       packOpInfo [$cmd show]
     }
     list => {
-      packOpList (packListCmd $cmd)
+      packOpList (packListCmd $mgr)
     }
     outdated => {
       packOpOutdated [$cmd list --upgradable]

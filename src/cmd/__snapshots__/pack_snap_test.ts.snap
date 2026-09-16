@@ -2894,14 +2894,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -2911,7 +2911,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -2930,14 +2930,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -2947,7 +2947,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -2967,14 +2967,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -2984,7 +2984,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -3004,14 +3004,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -3021,7 +3021,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -3041,14 +3041,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -3058,7 +3058,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -4889,14 +4889,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -4906,7 +4906,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -4925,14 +4925,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -4942,7 +4942,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -4962,14 +4962,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -4979,7 +4979,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -4999,14 +4999,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -5016,7 +5016,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -5036,14 +5036,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -5053,7 +5053,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -6927,14 +6927,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -6944,7 +6944,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -6963,14 +6963,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -6980,7 +6980,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -7000,14 +7000,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -7017,7 +7017,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -7037,14 +7037,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -7054,7 +7054,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -7074,14 +7074,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -7091,7 +7091,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -8965,14 +8965,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -8982,7 +8982,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -9001,14 +9001,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -9018,7 +9018,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -9038,14 +9038,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -9055,7 +9055,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -9075,14 +9075,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -9092,7 +9092,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -9112,14 +9112,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -9129,7 +9129,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -11033,14 +11033,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -11050,7 +11050,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -11069,14 +11069,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -11086,7 +11086,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -11106,14 +11106,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -11123,7 +11123,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -11143,14 +11143,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -11160,7 +11160,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -11180,14 +11180,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -11197,7 +11197,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -13071,14 +13071,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -13088,7 +13088,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -13107,14 +13107,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -13124,7 +13124,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -13144,14 +13144,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -13161,7 +13161,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -13181,14 +13181,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -13198,7 +13198,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -13218,14 +13218,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -13235,7 +13235,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -15104,14 +15104,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -15121,7 +15121,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -15140,14 +15140,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -15157,7 +15157,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -15177,14 +15177,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -15194,7 +15194,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -15214,14 +15214,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -15231,7 +15231,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -15251,14 +15251,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -15268,7 +15268,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -17222,14 +17222,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -17239,7 +17239,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -17258,14 +17258,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -17275,7 +17275,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -17295,14 +17295,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -17312,7 +17312,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -17332,14 +17332,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -17349,7 +17349,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -17369,14 +17369,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -17386,7 +17386,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -19236,14 +19236,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -19253,7 +19253,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -19272,14 +19272,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -19289,7 +19289,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -19309,14 +19309,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -19326,7 +19326,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -19346,14 +19346,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -19363,7 +19363,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -19383,14 +19383,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -19400,7 +19400,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -21250,14 +21250,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -21267,7 +21267,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -21286,14 +21286,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -21303,7 +21303,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -21323,14 +21323,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -21340,7 +21340,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -21360,14 +21360,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -21377,7 +21377,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -21397,14 +21397,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -21414,7 +21414,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -23264,14 +23264,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -23281,7 +23281,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -23300,14 +23300,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -23317,7 +23317,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -23337,14 +23337,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -23354,7 +23354,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -23374,14 +23374,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -23391,7 +23391,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -23411,14 +23411,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -23428,7 +23428,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -25256,14 +25256,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -25273,7 +25273,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -25292,14 +25292,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -25309,7 +25309,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -25329,14 +25329,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -25346,7 +25346,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -25366,14 +25366,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -25383,7 +25383,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -25403,14 +25403,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -25420,7 +25420,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -27294,14 +27294,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -27311,7 +27311,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -27330,14 +27330,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -27347,7 +27347,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -27367,14 +27367,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -27384,7 +27384,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -27404,14 +27404,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -27421,7 +27421,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -27441,14 +27441,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -27458,7 +27458,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -29294,14 +29294,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -29311,7 +29311,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -29330,14 +29330,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -29347,7 +29347,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -29367,14 +29367,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -29384,7 +29384,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -29404,14 +29404,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -29421,7 +29421,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -29441,14 +29441,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -29458,7 +29458,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -31284,14 +31284,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -31301,7 +31301,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -31320,14 +31320,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -31337,7 +31337,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -31357,14 +31357,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -31374,7 +31374,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -31394,14 +31394,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -31411,7 +31411,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -31431,14 +31431,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -31448,7 +31448,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -33278,14 +33278,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -33295,7 +33295,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -33314,14 +33314,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -33331,7 +33331,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -33351,14 +33351,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -33368,7 +33368,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -33388,14 +33388,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -33405,7 +33405,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -33425,14 +33425,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -33442,7 +33442,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -35272,14 +35272,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -35289,7 +35289,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -35308,14 +35308,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -35325,7 +35325,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -35345,14 +35345,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -35362,7 +35362,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -35382,14 +35382,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -35399,7 +35399,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -35419,14 +35419,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -35436,7 +35436,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -37270,14 +37270,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -37287,7 +37287,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -37306,14 +37306,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -37323,7 +37323,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -37343,14 +37343,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -37360,7 +37360,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -37380,14 +37380,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -37397,7 +37397,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -37417,14 +37417,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -37434,7 +37434,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -39266,14 +39266,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -39283,7 +39283,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -39302,14 +39302,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -39319,7 +39319,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -39339,14 +39339,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -39356,7 +39356,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -39376,14 +39376,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -39393,7 +39393,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -39413,14 +39413,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -39430,7 +39430,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -41261,14 +41261,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -41278,7 +41278,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -41297,14 +41297,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -41314,7 +41314,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -41334,14 +41334,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -41351,7 +41351,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -41371,14 +41371,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -41388,7 +41388,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -41408,14 +41408,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -41425,7 +41425,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -43256,14 +43256,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -43273,7 +43273,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -43292,14 +43292,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -43309,7 +43309,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -43329,14 +43329,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -43346,7 +43346,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -43366,14 +43366,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -43383,7 +43383,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -43403,14 +43403,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -43420,7 +43420,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -45294,14 +45294,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -45311,7 +45311,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -45330,14 +45330,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -45347,7 +45347,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -45367,14 +45367,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -45384,7 +45384,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -45404,14 +45404,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -45421,7 +45421,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -45441,14 +45441,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -45458,7 +45458,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -47332,14 +47332,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -47349,7 +47349,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -47368,14 +47368,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -47385,7 +47385,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -47405,14 +47405,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -47422,7 +47422,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -47442,14 +47442,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -47459,7 +47459,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -47479,14 +47479,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -47496,7 +47496,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -49325,14 +49325,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -49342,7 +49342,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -49361,14 +49361,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -49378,7 +49378,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -49398,14 +49398,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -49415,7 +49415,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -49435,14 +49435,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -49452,7 +49452,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -49472,14 +49472,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -49489,7 +49489,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -51320,14 +51320,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -51337,7 +51337,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -51356,14 +51356,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -51373,7 +51373,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -51393,14 +51393,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -51410,7 +51410,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -51430,14 +51430,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -51447,7 +51447,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -51467,14 +51467,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -51484,7 +51484,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -53358,14 +53358,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -53375,7 +53375,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -53394,14 +53394,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -53411,7 +53411,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -53431,14 +53431,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -53448,7 +53448,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -53468,14 +53468,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -53485,7 +53485,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -53505,14 +53505,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -53522,7 +53522,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -55396,14 +55396,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -55413,7 +55413,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -55432,14 +55432,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -55449,7 +55449,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -55469,14 +55469,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -55486,7 +55486,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -55506,14 +55506,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -55523,7 +55523,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -55543,14 +55543,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -55560,7 +55560,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
@@ -57464,14 +57464,14 @@ def --env packPacman [] {
 
 
 def --env packApk [] {
-  let cmd = 'apk'
-  if (packSkip \$cmd) {
+  let mgr = 'apk'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apk'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -57481,7 +57481,7 @@ def --env packApk [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list -u]
@@ -57500,14 +57500,14 @@ def --env packApk [] {
 
 
 def --env packApt [] {
-  let cmd = 'apt'
-  if (packSkip \$cmd) {
+  let mgr = 'apt'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'apt'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -57517,7 +57517,7 @@ def --env packApt [] {
       packOpInfo [\$cmd show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgradable]
@@ -57537,14 +57537,14 @@ def --env packApt [] {
 
 
 def --env packDnf [] {
-  let cmd = 'dnf'
-  if (packSkip \$cmd) {
+  let mgr = 'dnf'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'dnf'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -57554,7 +57554,7 @@ def --env packDnf [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list --upgrades]
@@ -57574,14 +57574,14 @@ def --env packDnf [] {
 
 
 def --env packXbps [] {
-  let cmd = 'xbps'
-  if (packSkip \$cmd \$\\"(\$cmd)-install\\") {
+  let mgr = 'xbps'
+  if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'xbps'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -57591,7 +57591,7 @@ def --env packXbps [] {
       packOpInfo [\$\\"(\$cmd)-query\\" --repository --show]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$\\"(\$cmd)-install\\" --dry-run --update]
@@ -57611,14 +57611,14 @@ def --env packXbps [] {
 
 
 def --env packZypper [] {
-  let cmd = 'zypper'
-  if (packSkip \$cmd) {
+  let mgr = 'zypper'
+  if (packSkip \$mgr) {
     return
   }
 
-  let cmd = packElevate \$cmd
+  let cmd = packElevate \$mgr
 
-  packRefreshForOp 'zypper'
+  packRefreshForOp \$mgr
 
   match \$env.PACK_OP {
     add => {
@@ -57628,7 +57628,7 @@ def --env packZypper [] {
       packOpInfo [\$cmd info]
     }
     list => {
-      packOpList (packListCmd \$cmd)
+      packOpList (packListCmd \$mgr)
     }
     outdated => {
       packOpOutdated [\$cmd list-updates]
