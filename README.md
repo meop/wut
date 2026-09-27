@@ -11,7 +11,7 @@ Some operations create dynamic prompts for the user and cannot be scripted.
 ## prerequisites
 
 - **wut-config** — config repository cloned as a sibling directory (`../wut-config`)
-- **Deno** or **Docker** — to run the server
+- **Deno** — to run the server
 
 ## server
 
