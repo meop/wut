@@ -349,6 +349,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.SCRIPT_EXEC_ACTION = r#'install'#
 
@@ -626,6 +631,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.SCRIPT_EXEC_ACTION = r#'install'#
@@ -943,6 +953,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.SCRIPT_EXEC_ACTION = r#'setup'#
@@ -1525,6 +1540,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.SCRIPT_EXEC_ACTION = r#'setup'#
@@ -2211,6 +2231,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 def scriptHasCmd [...cmds: string] {
   \$cmds | any { |cmd| which \$cmd | is-not-empty }
@@ -2561,6 +2586,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.SCRIPT_EXEC_ACTION = r#'setup'#

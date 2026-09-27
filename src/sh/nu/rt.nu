@@ -131,3 +131,8 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if $env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}

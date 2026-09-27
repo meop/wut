@@ -453,6 +453,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 def wutSelectParse [choice: string, max: int] {
   let trimmed = (\$choice | str trim)
@@ -987,6 +992,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.FILE_FIND_PARTS = r#'zsh'#
@@ -1524,6 +1534,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.FILE_SYNC_PARTS = r#'zsh'#
@@ -2067,6 +2082,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.FILE_SYNC_PARTS = r#'nu'#
 
@@ -2608,6 +2628,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.FILE_SYNC_PARTS = r#'ssh'#
@@ -3151,6 +3176,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.FILE_DIFF_PARTS = r#'zsh'#
 
@@ -3691,6 +3721,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.FILE_LIST_PARTS = r#'zsh'#
 
@@ -4228,6 +4263,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.FILE_SYNC_PARTS = r#'nosuchfile'#
 
@@ -4505,6 +4545,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.FILE_FIND_PARTS = r#'nushell'#
@@ -5042,6 +5087,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.FILE_FIND_PARTS = r#'gitconfig'#

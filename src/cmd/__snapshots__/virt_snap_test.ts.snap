@@ -271,6 +271,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 opPrintInfo r#'id: wut virt add | add on local
 aliases: 'a, ad, in, install'
@@ -575,6 +580,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 opPrintInfo r#'id: wut virt rem | remove on local
@@ -881,6 +891,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 opPrintInfo r#'id: wut virt add | add on local
 aliases: 'a, ad, in, install'
@@ -1185,6 +1200,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 opPrintInfo r#'id: wut virt rem | remove on local
@@ -1491,6 +1511,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 opPrintInfo r#'id: wut virt add | add on local
 aliases: 'a, ad, in, install'
@@ -1795,6 +1820,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 opPrintInfo r#'id: wut virt rem | remove on local
@@ -2102,6 +2132,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 opPrintInfo r#'id: wut virt add | add on local
@@ -2422,6 +2457,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 opPrintInfo r#'id: wut virt rem | remove on local
@@ -2781,6 +2821,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.VIRT_OP = r#'find'#
@@ -3238,6 +3283,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.VIRT_FIND_PARTS = r#'qemu'#
@@ -3697,6 +3747,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.VIRT_ADD_PARTS = r#'qemu'#
@@ -5173,6 +5228,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.VIRT_REM_PARTS = r#'qemu'#
 
@@ -6647,6 +6707,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.VIRT_ADD_PARTS = r#'docker'#
@@ -8123,6 +8188,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.VIRT_RUN_PARTS = r#'vga'#
 
@@ -9082,6 +9152,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.VIRT_ADD_PARTS = r#'test|vga'#
@@ -10558,6 +10633,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.VIRT_ADD_PARTS = r#'vga'#
 
@@ -12030,6 +12110,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.VIRT_ADD_PARTS = r#'test'#
@@ -13506,6 +13591,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.VIRT_REM_PARTS = r#'test|vga'#
 
@@ -14979,6 +15069,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.VIRT_RUN_PARTS = r#'app'#
 
@@ -15936,6 +16031,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.VIRT_OP = r#'list'#
@@ -17409,6 +17509,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.VIRT_ADD_PARTS = r#'podman'#
@@ -18885,6 +18990,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.VIRT_ADD_PARTS = r#'nosuchthing'#
 
@@ -20358,6 +20468,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.VIRT_OP = r#'find'#
 
@@ -20810,6 +20925,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.VIRT_ADD_PARTS = r#'podman'#

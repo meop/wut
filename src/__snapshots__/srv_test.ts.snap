@@ -355,6 +355,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)

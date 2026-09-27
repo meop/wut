@@ -1194,6 +1194,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
@@ -1477,6 +1482,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.PACK_OP = r#'find'#
@@ -3470,6 +3480,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.PACK_ADD_NAMES = r#'nu'#
@@ -5509,6 +5524,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.PACK_REMOVE_NAMES = r#'nu'#
 
@@ -7546,6 +7566,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.PACK_ADD_NAMES = r#'shell'#
@@ -9615,6 +9640,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.PACK_REMOVE_NAMES = r#'shell'#
 
@@ -11653,6 +11683,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.PACK_ADD_NAMES = r#'rustup'#
 
@@ -13685,6 +13720,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.PACK_ADD_NAMES = r#'scriptfile'#
@@ -15804,6 +15844,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.PACK_ADD_NAMES = r#'hooks'#
 
@@ -17818,6 +17863,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.PACK_REMOVE_NAMES = r#'hooks'#
 
@@ -19831,6 +19881,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.PACK_REMOVE_NAMES = r#'hooks'#
@@ -21848,6 +21903,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.PACK_OP = r#'sync'#
 
@@ -23837,6 +23897,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.PACK_SYNC_NAMES = r#'nu'#
@@ -25876,6 +25941,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.PACK_SYNC_NAMES = r#'nosuchpackage'#
 
@@ -27878,6 +27948,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.PACK_OP = r#'tidy'#
 
@@ -29867,6 +29942,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.PACK_OP = r#'outdated'#
@@ -31859,6 +31939,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.PACK_OUTDATED_NAMES = r#'nu'#
@@ -33853,6 +33938,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.PACK_INFO_NAMES = r#'nu'#
@@ -35852,6 +35942,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.PACK_INFO_NAMES = r#'nosuchpackage'#
 
@@ -37848,6 +37943,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.PACK_FIND_NAMES = r#'nu'#
 
@@ -39843,6 +39943,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.PACK_FIND_NAMES = r#'nushell'#
 
@@ -41837,6 +41942,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.PACK_ADD_NAMES = r#'nushell'#
@@ -43876,6 +43986,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.PACK_REMOVE_NAMES = r#'nushell'#
 
@@ -45914,6 +46029,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.PACK_FIND_NAMES = r#'nosuchpackage'#
 
@@ -47909,6 +48029,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.PACK_OP = r#'find'#
 
@@ -49901,6 +50026,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.PACK_ADD_NAMES = r#'rustup'#
@@ -51940,6 +52070,11 @@ def --env wutNuSync [] {
 
 wutNuSync
 
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
 
 \$env.PACK_ADD_NAMES = r#'nu'#
 
@@ -53977,6 +54112,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.PACK_ADD_NAMES = r#'shell'#
@@ -56045,6 +56185,11 @@ def --env wutNuSync [] {
 }
 
 wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
 
 
 \$env.PACK_ADD_NAMES = r#'nu'#
