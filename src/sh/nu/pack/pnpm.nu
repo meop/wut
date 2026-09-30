@@ -36,11 +36,13 @@ def --env packPnpm [] {
     sync => {
       let held = if ((packNameList 'PACK_SYNC_NAMES') | is-not-empty) { packSyncNames } else { packPnpmInstalled }
       # pnpm manages the node, bun and deno runtimes as well as packages, and records a runtime as the exact version
-      # it installed, so `update` has no range to move one within. a runtime is set again at its installed major —
-      # the newest release of it, the way uv's pythons stay within their minor — and only packages go to latest
+      # it installed, so `update` has no range to move one within. a runtime is set again on its line: node on lts,
+      # which is how node marks the line to stay on, and bun and deno — one stable line each — at their installed
+      # major. only packages go to latest
       let runtimes = if ($held | any { |n| $n in $PACK_PNPM_RUNTIMES }) { packPnpmRuntimes } else { [] }
       for r in ($runtimes | where { |r| $r.name in $held }) {
-        packOp [$cmd runtime set $r.name $r.major --global]
+        let spec = if $r.name == 'node' { 'lts' } else { $r.major }
+        packOp [$cmd runtime set $r.name $spec --global]
       }
       let packages = ($held | where { |n| $n not-in $PACK_PNPM_RUNTIMES })
       if ($packages | is-not-empty) {
