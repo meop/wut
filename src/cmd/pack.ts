@@ -7,6 +7,7 @@ import type { Sh } from '@meop/shire/sh'
 
 import { getCfgDirDump, getCfgFileContent, getCfgFileLoad } from '../cfg.ts'
 import { execScriptShell, getScriptFlavorOpPreamble, redirectCommonShell } from '../sh.ts'
+import { resolveToolScript } from './script.ts'
 
 export class PackCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -65,6 +66,8 @@ const PACK_PLAN_KEY = [PACK_KEY, 'plan']
 const PACK_FIND_KEY = [PACK_KEY, 'find']
 // what each manager calls the groups that were typed, for the one op that asks all of them
 const PACK_INFO_MAP_KEY = [PACK_KEY, 'info', 'map']
+// the standalone installs a bare sync asks the client to look for
+const PACK_SELF_KEY = [PACK_KEY, 'self']
 
 const SCRIPT_PATH = 'script'
 
@@ -234,7 +237,7 @@ async function loadGroupConfig(parts: Array<string>) {
 
 // operations live under 'operation', beside the group's own metadata
 // deno-lint-ignore no-explicit-any
-function groupOp(content: any, op: 'add' | 'remove'): any {
+function groupOp(content: any, op: 'add' | 'remove' | 'sync'): any {
   return content?.operation?.[op]
 }
 
@@ -366,8 +369,10 @@ function setOpNames(shell: Sh, op: string, names: Array<string>) {
   )
 }
 
+// commands run around one manager's call, in the platform's native shell
 interface HookEntry {
-  hooks?: Array<string>
+  pre?: Array<string>
+  post?: Array<string>
 }
 
 interface ManagerEntry {
@@ -399,21 +404,22 @@ function processManagerEntryLines(
 
   lines.push(shell.varSetStr(PACK_MANAGER_KEY, manager))
 
-  if (op === 'add') {
-    const preHook = entry[nativeShell as 'pwsh' | 'zsh']
-    if (preHook?.hooks?.length) {
-      lines.push(...buildCmdRunLines(shell, plat, nativeShell, preHook.hooks, true))
-    }
+  // add states its hooks beside the names it installs; remove, which declares no names of its own, beside nothing
+  const hooks = op === 'add'
+    ? entry[nativeShell as 'pwsh' | 'zsh']
+    : op === 'remove'
+    ? remEntry?.[nativeShell]
+    : undefined
+
+  if (hooks?.pre?.length) {
+    lines.push(...buildCmdRunLines(shell, plat, nativeShell, hooks.pre, true))
   }
 
   lines.push(shell.varSetArr(PACK_OP_NAMES_KEY(op), entry.names))
   lines.push(getManagerCallName(manager))
 
-  if (op === 'remove') {
-    const postHook = remEntry?.[nativeShell]
-    if (postHook?.hooks?.length) {
-      lines.push(...buildCmdRunLines(shell, plat, nativeShell, postHook.hooks, true))
-    }
+  if (hooks?.post?.length) {
+    lines.push(...buildCmdRunLines(shell, plat, nativeShell, hooks.post, true))
   }
 
   lines.push(shell.varUnSet(PACK_MANAGER_KEY))
@@ -422,7 +428,61 @@ function processManagerEntryLines(
 }
 
 type PlanPath = { id: string; manager: string; names: Array<string> }
-type PlanUnit = { group: string; name: string; paths: Array<PlanPath> }
+
+// a group whose own installer puts it somewhere it can update itself from states that path per platform, and what to
+// hand the binary there to make it do so
+type SelfUpdate = { group: string; path: string; args: Array<string> }
+
+function groupSelfUpdate(content: unknown, group: string, plat: string): SelfUpdate | null {
+  const entry = groupOp(content, 'sync')?.[SCRIPT_PATH] as { path?: Record<string, string>; args?: Array<string> }
+  const path = entry?.path?.[plat]
+  return path && entry.args?.length ? { group, path, args: entry.args } : null
+}
+
+async function findSelfUpdates(plat: string): Promise<Array<SelfUpdate>> {
+  const found: Array<SelfUpdate> = []
+  for (const parts of await getCfgDirDump([PACK_KEY], { extension: Fmt.yaml, flexible: true })) {
+    const self = groupSelfUpdate(await loadGroupConfig(parts), parts.join('-'), plat)
+    if (self) {
+      found.push(self)
+    }
+  }
+  return found
+}
+type PlanScript = { id: string; cmds: Array<string> }
+type PlanUnit = {
+  group: string
+  name: string
+  paths: Array<PlanPath>
+  pre?: Array<PlanScript>
+  post?: Array<PlanScript>
+}
+
+const GROUP_HOOKS = ['pre', 'post'] as const
+
+// a group hook names a script as tool/action — its path under cfg/script — and it runs the way `script exec <action>
+// <tool>` runs it. its arm is keyed by that path alone, so two groups naming the same script share one arm and the
+// client runs it once
+async function buildGroupScripts(
+  shell: Sh,
+  context: Ctx,
+  refs: Array<string>,
+): Promise<{ scripts: Array<PlanScript>; arms: Map<string, Array<string>> }> {
+  const scripts: Array<PlanScript> = []
+  const arms = new Map<string, Array<string>>()
+  for (const ref of refs) {
+    const parts = ref.split('/')
+    const action = parts.pop() ?? ''
+    const resolved = await resolveToolScript(shell, context, action, parts.join('/'))
+    // gated out on this platform: the group is still installed or removed, there is just nothing to run here
+    if (!resolved) {
+      continue
+    }
+    scripts.push({ id: ref, cmds: resolved.cmds })
+    arms.set(ref, [`    ${shell.toLiteral(ref)} => {`, `      ${resolved.run}`, '    }'])
+  }
+  return { scripts, arms }
+}
 
 // one install path becomes a row the client can choose plus an arm it can run, so code stays code and the
 // plan stays data
@@ -433,14 +493,15 @@ async function buildGroupUnit(
   allManagers: Array<string>,
   name: string,
   cliName: string,
-): Promise<{ unit: PlanUnit | null; arms: Array<string> }> {
+): Promise<{ unit: PlanUnit | null; arms: Array<string>; scriptArms: Map<string, Array<string>> }> {
   const content = await loadGroupConfig(name.split('-'))
   if (content == null) {
-    return { unit: null, arms: [] }
+    return { unit: null, arms: [], scriptArms: new Map() }
   }
 
   const addConfig = groupOp(content, 'add') as Record<string, unknown> | undefined
-  const remConfig = groupOp(content, 'remove')?.manager as Record<string, RemManagerEntry> | undefined
+  const removeConfig = groupOp(content, 'remove') as Record<string, unknown> | undefined
+  const remConfig = removeConfig?.manager as Record<string, RemManagerEntry> | undefined
   const plat = context.sys_os_plat ?? ''
   const managerConfig = (addConfig?.manager ?? {}) as Record<string, ManagerEntry>
 
@@ -485,7 +546,35 @@ async function buildGroupUnit(
     addArm(id, processManagerEntryLines(shell, context, op, tier, entry, remConfig?.[tier]))
   }
 
-  return { unit: paths.length ? { group: name, name: cliName, paths } : null, arms }
+  // a sync of a standalone install is that tool updating itself, so it is held — and offered — wherever its file is
+  const self = op === 'sync' ? groupSelfUpdate(content, name, plat) : null
+  if (self) {
+    const id = `${name}|${SCRIPT_PATH}`
+    paths.push({ id, manager: SCRIPT_PATH, names: [self.path] })
+    const args = self.args.map((a) => shell.toLiteral(a)).join(' ')
+    addArm(id, [`      packSelfUpdate ${shell.toLiteral(name)} ${shell.toLiteral(self.path)} [${args}]`])
+  }
+
+  if (!paths.length) {
+    return { unit: null, arms, scriptArms: new Map() }
+  }
+  const unit: PlanUnit = { group: name, name: cliName, paths }
+  const scriptArms = new Map<string, Array<string>>()
+  const opConfig = op === 'add' ? addConfig : op === 'remove' ? removeConfig : undefined
+  for (const hook of GROUP_HOOKS) {
+    const refs = opConfig?.[hook]
+    if (!Array.isArray(refs)) {
+      continue
+    }
+    const { scripts, arms: hookArms } = await buildGroupScripts(shell, context, refs as Array<string>)
+    if (scripts.length) {
+      unit[hook] = scripts
+    }
+    for (const [id, lines] of hookArms) {
+      scriptArms.set(id, lines)
+    }
+  }
+  return { unit, arms, scriptArms }
 }
 
 async function resolveGroupName(name: string): Promise<Array<string>> {
@@ -541,6 +630,7 @@ async function buildPlan(
   const arms: Array<string> = []
   const claimed: Array<string> = []
   const seen = new Set<string>()
+  const scriptArms = new Map<string, Array<string>>()
 
   for (const name of names) {
     let resolved = await resolveGroupName(name)
@@ -553,7 +643,7 @@ async function buildPlan(
         continue
       }
       seen.add(resolvedName)
-      const { unit, arms: unitArms } = await buildGroupUnit(
+      const { unit, arms: unitArms, scriptArms: unitScriptArms } = await buildGroupUnit(
         shell,
         context,
         op,
@@ -564,6 +654,9 @@ async function buildPlan(
       if (unit) {
         units.push(unit)
         arms.push(...unitArms)
+        for (const [id, lines] of unitScriptArms) {
+          scriptArms.set(id, lines)
+        }
         if (!claimed.includes(name)) {
           claimed.push(name)
         }
@@ -571,7 +664,7 @@ async function buildPlan(
     }
   }
 
-  return { units, arms, claimed }
+  return { units, arms: [...arms, ...[...scriptArms.values()].flat()], claimed }
 }
 
 async function execOp(
@@ -639,7 +732,9 @@ async function execOp(
 
     return buildAndLog(result, environment)
   } else if (op === 'sync') {
-    result = result.with(['packManagerPlanRun'])
+    result = result
+      .with(result.varSetStr(PACK_SELF_KEY, JSON.stringify(await findSelfUpdates(context.sys_os_plat ?? ''))))
+      .with(['packManagerPlanRun'])
 
     return buildAndLog(result, environment)
   }

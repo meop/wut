@@ -294,6 +294,8 @@ def --env packInstalledCheck [manager: string, raw: string] {
     return false
   }
   match $manager {
+    # a standalone install is held when the file its installer puts down is there
+    script => (packExpandPath $name | path exists),
     ghpm => (packListedHas [ghpm list --long-names] $name { |l| $l | str trim }),
     cargo => (packListedHas (packListCmd 'cargo') $name { |l| packListedHead $l }),
     uv => (packListedHas (packListCmd 'uv') $name { |l| packListedHead $l }),
@@ -604,7 +606,7 @@ def --env packPlanRun [] {
     if ($paths | is-not-empty) {
       $served = ($served | append $unit.name)
       for path in $paths {
-        $detail = ($detail | append { manager: (packManagerBest $path.manager), group: $unit.group, id: $path.id, names: $path.names })
+        $detail = ($detail | append { manager: (packManagerBest $path.manager), group: $unit.group, id: $path.id, names: $path.names, pre: ($unit.pre? | default []), post: ($unit.post? | default []) })
       }
     }
   }
@@ -654,6 +656,12 @@ def --env packPlanRun [] {
     for d in ($planned | where manager == $m) {
       opPrint $"  ($d.group)"
       opPrint $"    ($d.names | str join ', ')"
+      if ($d.pre | is-not-empty) {
+        opPrint $"    first: ($d.pre | each { |s| $s.id } | str join ', ')"
+      }
+      if ($d.post | is-not-empty) {
+        opPrint $"    then: ($d.post | each { |s| $s.id } | str join ', ')"
+      }
     }
     let own = ($looseFor | get -o $m | default [])
     if ($own | is-not-empty) {
@@ -680,13 +688,25 @@ def --env packPlanRun [] {
 
   # agreed once, up front: nothing below asks again
   $env.PACK_AGREED = '1'
-  for d in ($planned | where { |d| $d.manager in $chosen }) {
+  # the pick is the yes: a script install, or a group's pre or post script, asks nothing further once picked
+  $env.YES = '1'
+  let picked = ($planned | where { |d| $d.manager in $chosen })
+  # a group's pre scripts all run before any install or removal, while what they act on is still there
+  packRunScripts 'pre' ($picked | each { |d| $d.pre } | flatten | uniq-by id)
+  mut posts = []
+  for d in $picked {
+    let failedBefore = ($env.PACK_FAILED? | default [] | length)
     try {
       packRunUnit $d.id
     } catch { |e|
       packMarkFailed $d.id $e.msg
     }
+    # a group whose install or removal failed has nothing to follow it
+    if ($env.PACK_FAILED? | default [] | length) == $failedBefore {
+      $posts = ($posts | append $d.post)
+    }
   }
+  let donePosts = $posts
 
   # the loose names remove already resolved ride with the manager row that won them; the ones add left behind ride
   # with '?', and are searched only now, against every manager, since picking '?' is picking the search itself
@@ -712,7 +732,30 @@ def --env packPlanRun [] {
       packMarkFailed ($entry.names | str join ', ') $e.msg
     }
   }
+  # the installs put their commands where the env stage says they go, which the post scripts are about to look for
+  if ($donePosts | is-not-empty) {
+    wutPathRefresh
+  }
+  packRunScripts 'post' ($donePosts | uniq-by id)
   packReport
+}
+
+# post scripts run after every install or removal in the run, so one can lean on a tool another group just
+# installed, and pre scripts before any of them. either one's has_cmd is asked only when it is about to run, against
+# the PATH refreshed after the installs: the install is what put the command there
+def --env packRunScripts [stage: string, scripts: list] {
+  for s in $scripts {
+    if ($s.cmds | is-not-empty) and not ($s.cmds | any { |c| which $c | is-not-empty }) {
+      opPrintWarn $"($s.id) skipped: ($s.cmds | str join ' or ') not found"
+      continue
+    }
+    opPrintInfo $s.id
+    try {
+      packRunUnit $s.id
+    } catch { |e|
+      packMarkFailed $s.id $e.msg
+    }
+  }
 }
 
 # the read ops with a term have a local answer worth having first: which managers have something matching is the
@@ -784,8 +827,48 @@ def --env packTermPlanRun [names_key: string] {
 
 # sync, tidy, outdated and info know nothing until a manager runs, so there is no detail to show first:
 # the only question is which managers this run touches
+# a standalone install's path as a group states it: {HOME} and any other env name, with windows' missing HOME
+# answered the way nu answers it
+def packExpandPath [path: string] {
+  mut out = ($path | str replace --all '{HOME}' ($env.HOME? | default $nu.home-dir))
+  if ($out | str contains '{') {
+    for e in ($env | items { |k, v| [$k, $v] } | where { |e| ($e.1 | describe) == 'string' }) {
+      $out = ($out | str replace --all $"{($e.0)}" $e.1)
+    }
+  }
+  $out
+}
+
+# a tool that updates itself is asked to by the path its own installer put it at — never by whatever its name
+# resolves to, which can be another manager's copy. it is best effort: a self update that is built out, turned off
+# or refused is how a copy something else owns answers, so it is said and the run goes on
+def --env packSelfUpdate [what: string, path: string, args: list<string>] {
+  let bin = (packExpandPath $path)
+  if not ($bin | path exists) {
+    return
+  }
+  $env.PACK_PRINTED = '1'
+  opPrintCmd $bin ...$args
+  if 'NOOP' in $env {
+    return
+  }
+  let updated = (try { run-external $bin ...$args; true } catch { false })
+  if not $updated {
+    opPrintWarn $"($what) did not update itself: its self update may be off, or it refused"
+  }
+}
+
+# the standalone installs a bare sync can find here: a group states where its own installer puts the tool, and a
+# file at that path is the whole check
+def packSelfHere [] {
+  ($env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath $s.path | path exists }
+}
+
 def --env packManagerPlanRun [] {
-  let here = (packManagersHere)
+  let managers = (packManagersHere)
+  let selfHere = if ($env.PACK_OP? | default '') == 'sync' { packSelfHere } else { [] }
+  # the tools that update themselves ride as one more row, named for the install path that put them there
+  let here = if ($selfHere | is-empty) { $managers } else { $managers | append 'script' }
   if ($here | is-empty) {
     opPrintWarn 'no manager installed'
     return
@@ -806,6 +889,12 @@ def --env packManagerPlanRun [] {
 
   $env.PACK_AGREED = '1'
   for m in $chosen {
+    if $m == 'script' {
+      for s in $selfHere {
+        packSelfUpdate $s.group $s.path $s.args
+      }
+      continue
+    }
     # stated, so an op that keeps per-manager detail — info's declared names — knows who is asking
     load-env {PACK_MANAGER: $m}
     try {

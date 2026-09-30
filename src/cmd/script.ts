@@ -105,6 +105,49 @@ async function resolveMatches(
   return [...owned.values()].toSorted((a, b) => a.parts.join('/').localeCompare(b.parts.join('/')))
 }
 
+// the command that runs one matched script in the shell that owns it, with that shell's op preamble loaded in
+async function buildScriptRun(
+  shell: Sh,
+  plat: string,
+  match: ScriptMatch,
+  args: Array<string>,
+): Promise<string | null> {
+  const fileContent = await getCfgFileContent(
+    [...SCRIPT_DIR_PARTS, ...match.parts],
+    { extension: match.extension },
+  )
+  if (fileContent == null) {
+    return null
+  }
+  const targetShell = getScriptFlavorShell(match.shell)
+  const scriptContent = [
+    await getScriptFlavorOpPreamble(match.shell),
+    args.length ? targetShell.varSetArr(WUT_ARGS_KEY, args) : '',
+    fileContent,
+  ].filter((part) => part.length).join('\n')
+  return execScriptShell(shell, plat, match.shell, scriptContent)
+}
+
+// one tool's script for an action, resolved exactly as `script exec <action> <tool>` resolves it: owned by one
+// shell, gated here by its sys_ keys, its has_cmd left for the client to ask when it runs
+export async function resolveToolScript(
+  shell: Sh,
+  context: Ctx,
+  action: string,
+  tool: string,
+): Promise<{ shell: string; cmds: Array<string>; run: string } | null> {
+  const content = await getCfgFileLoad([SCRIPT_KEY], { extension: Fmt.yaml })
+  const filters = toDirFilters(action, [tool])
+  const matches = await resolveMatches(context, content, filters)
+  const [pinned] = pinpointMatch(matches.map((m) => m.parts), filters)
+  const match = matches.find((m) => m.parts === pinned)
+  if (!match) {
+    return null
+  }
+  const run = await buildScriptRun(shell, context.sys_os_plat ?? '', match, [])
+  return run == null ? null : { shell: match.shell, cmds: match.cmds, run }
+}
+
 function buildAndLog(shell: Sh, environment: Env) {
   const body = shell.build()
   if (environment.get(['log'])) {
@@ -190,20 +233,11 @@ async function execOp(shell: Sh, context: Ctx, environment: Env) {
   const units: Array<{ id: string; action: string; tool: string; shell: string; cmds: Array<string> }> = []
   const arms: Array<string> = []
   for (const match of matches) {
-    const fileContent = await getCfgFileContent(
-      [...SCRIPT_DIR_PARTS, ...match.parts],
-      { extension: match.extension },
-    )
-    if (fileContent == null) {
+    const run = await buildScriptRun(shell, plat, match, args)
+    if (run == null) {
       continue
     }
     const id = match.parts.join('/')
-    const targetShell = getScriptFlavorShell(match.shell)
-    const scriptContent = [
-      await getScriptFlavorOpPreamble(match.shell),
-      args.length ? targetShell.varSetArr(WUT_ARGS_KEY, args) : '',
-      fileContent,
-    ].filter((part) => part.length).join('\n')
     units.push({
       id,
       action: match.parts[match.parts.length - 1],
@@ -212,9 +246,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env) {
       // a named tool runs as asked, so its own 'not installed' warning still explains a no op
       cmds: parts.length ? [] : match.cmds,
     })
-    arms.push(
-      `    ${shell.toLiteral(id)} => { ${execScriptShell(shell, plat, match.shell, scriptContent)} }`,
-    )
+    arms.push(`    ${shell.toLiteral(id)} => { ${run} }`)
   }
 
   if (!units.length) {

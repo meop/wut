@@ -5,6 +5,7 @@ import { getScriptFlavorOpPreamble } from '../../sh.ts'
 
 const PACK_NU = new URL('./pack.nu', import.meta.url).pathname
 const SEL_NU = new URL('./sel.nu', import.meta.url).pathname
+const PATH_NU = new URL('./path.nu', import.meta.url).pathname
 
 // `which` is the only thing these decisions read, so a PATH of stub binaries is the whole fixture
 async function withManagers(present: Array<string>, probe: string): Promise<string | null> {
@@ -19,6 +20,7 @@ async function withStubs(
   managers: Array<string> = ['ghpm', 'brew', 'paru', 'yay', 'pacman', 'apt'],
   // manager files to source too, when the test runs an op end to end rather than probing one decision
   managerFiles: Array<string> = [],
+  allowFailure = false,
 ): Promise<string | null> {
   const dir = await Deno.makeTempDir()
   const home = await Deno.makeTempDir()
@@ -31,6 +33,7 @@ async function withStubs(
     const body = [
       // the same op helpers the client is sent, so the checks print and run exactly as they do in a real script
       await getScriptFlavorOpPreamble('nu'),
+      await Deno.readTextFile(PATH_NU),
       await Deno.readTextFile(SEL_NU),
       await Deno.readTextFile(PACK_NU),
       ...await Promise.all(
@@ -45,7 +48,7 @@ async function withStubs(
       `$env.PACK_MANAGERS = ${JSON.stringify(managers).replaceAll('"', "'")}`,
       probe,
     ].join('\n')
-    return await runNu(body)
+    return await runNu(body, allowFailure)
   } finally {
     await Deno.remove(dir, { recursive: true })
     await Deno.remove(home, { recursive: true })
@@ -670,4 +673,285 @@ Deno.test('nu / pack / an elevated manager still knows its own listing command',
     assertEquals(out.includes(`sudo ${bin}`), false, `${manager}: ${out}`)
     assertEquals(out.includes('python 3.13.7'), true, `${manager}: ${out}`)
   }
+})
+
+// a group's post scripts run only for groups that installed, after every install in the run, once however many
+// groups name them — and their has_cmd is asked then, since the install is what put the command there
+Deno.test('nu / pack / post scripts run after the installs that succeeded, once each', async () => {
+  const unit = (group: string, post: Array<[string, Array<string>]>) => ({
+    group,
+    name: group,
+    paths: [{ id: `${group}|pacman`, manager: 'pacman', names: [group] }],
+    post: post.map(([id, cmds]) => ({ id, cmds })),
+  })
+  const plan = [
+    unit('rustup', [['rustup/setup', ['rustup']], ['cargo/setup', ['cargo']]]),
+    unit('broken', [['podman/setup', []]]),
+    unit('docker', [['docker/setup', ['docker']], ['cargo/setup', ['cargo']]]),
+  ]
+  const out = await withStubs(
+    { pacman: '', rustup: '', cargo: '' },
+    [
+      // the listing and the skip notice are what is under test here, not just the decision
+      `hide-env SUCCINCT`,
+      `def --env packRunUnit [id: string] {`,
+      `  if $id == 'broken|pacman' { error make { msg: 'install failed' } }`,
+      `  print $"ran ($id)"`,
+      `}`,
+      `$env.PACK_OP = 'add'`,
+      `$env.YES = '1'`,
+      `$env.PACK_PLAN = ${JSON.stringify(JSON.stringify(plan))}`,
+      `$env.PACK_ADD_NAMES = [  ]`,
+      'packPlanRun',
+    ].join('\n'),
+    ['pacman'],
+    [],
+    true,
+  )
+  if (out == null) {
+    return
+  }
+  const ran = out.split('\n').filter((l) => l.startsWith('ran ')).map((l) => l.slice(4))
+  // every install first, then each post script once, in the order the groups named them
+  assertEquals(ran, ['rustup|pacman', 'docker|pacman', 'rustup/setup', 'cargo/setup'])
+  // the group that failed to install has nothing run after it, though the plan listed it
+  assertEquals(out.includes('then: podman/setup'), true)
+  assertEquals(ran.includes('podman/setup'), false)
+  // docker is nowhere, even after the refresh, so its post script says so rather than running
+  assertEquals(out.includes('docker/setup skipped: docker not found'), true)
+  assertEquals(out.includes('then: rustup/setup, cargo/setup'), true)
+})
+
+// the mirror: pre scripts run before any removal, while the commands they undo are still there
+Deno.test('nu / pack / pre scripts run before the removals, once each', async () => {
+  const unit = (group: string, pre: Array<[string, Array<string>]>) => ({
+    group,
+    name: group,
+    paths: [{ id: `${group}|pacman`, manager: 'pacman', names: [group] }],
+    pre: pre.map(([id, cmds]) => ({ id, cmds })),
+  })
+  const plan = [
+    unit('docker', [['docker/teardown', ['docker']]]),
+    unit('podman', [['podman/teardown', ['podman']], ['docker/teardown', ['docker']]]),
+  ]
+  const out = await withStubs(
+    // pacman answers that both are installed, so both are removed through it
+    { pacman: 'exit 0', docker: '' },
+    [
+      `hide-env SUCCINCT`,
+      `def --env packRunUnit [id: string] { print $"ran ($id)" }`,
+      `$env.PACK_OP = 'remove'`,
+      `$env.YES = '1'`,
+      `$env.PACK_PLAN = ${JSON.stringify(JSON.stringify(plan))}`,
+      `$env.PACK_REMOVE_NAMES = [  ]`,
+      'packPlanRun',
+    ].join('\n'),
+    ['pacman'],
+  )
+  if (out == null) {
+    return
+  }
+  const ran = out.split('\n').filter((l) => l.startsWith('ran ')).map((l) => l.slice(4))
+  assertEquals(ran, ['docker/teardown', 'docker|pacman', 'podman|pacman'])
+  // podman is already gone from this PATH, so there is nothing for its teardown to act on
+  assertEquals(out.includes('podman/teardown skipped: podman not found'), true)
+  assertEquals(out.includes('first: podman/teardown, docker/teardown'), true)
+})
+
+// a tool its own installer put down updates itself by that path, and it is best effort: one that refuses — built
+// without self update, turned off, owned by something else — says so, and the rest of the sync still runs
+Deno.test('nu / pack / standalone installs update themselves, and a refusal does not stop the run', async () => {
+  const self = [
+    { group: 'lang-yes', path: '{HOME}/.yes/bin/yes', args: ['self', 'update'] },
+    { group: 'lang-no', path: '{HOME}/.no/bin/no', args: ['upgrade'] },
+    { group: 'lang-absent', path: '{HOME}/.absent/bin/absent', args: ['upgrade'] },
+  ]
+  const out = await withStubs(
+    {},
+    [
+      `hide-env SUCCINCT`,
+      `mkdir ($env.HOME | path join .yes bin) ($env.HOME | path join .no bin)`,
+      `"#!/bin/sh\\necho \\"updated $*\\"\\n" | save ($env.HOME | path join .yes bin yes)`,
+      `"#!/bin/sh\\necho 'self update is disabled for this build'\\nexit 1\\n" | save ($env.HOME | path join .no bin no)`,
+      `^/bin/chmod +x ($env.HOME | path join .yes bin yes) ($env.HOME | path join .no bin no)`,
+      `$env.PACK_OP = 'sync'`,
+      `$env.YES = '1'`,
+      `$env.PACK_SELF = ${JSON.stringify(JSON.stringify(self))}`,
+      'packManagerPlanRun',
+      `print 'run finished'`,
+    ].join('\n'),
+    [],
+  )
+  if (out == null) {
+    return
+  }
+  assertEquals(out.includes('1) script'), true)
+  assertEquals(out.includes('updated self update'), true)
+  assertEquals(out.includes('lang-no did not update itself'), true)
+  // nothing at its path, so there is nothing to ask
+  assertEquals(out.includes('absent'), false)
+  // a refusal is an answer, not a failure: the run reports nothing and goes on
+  assertEquals(out.includes('failed:'), false)
+  assertEquals(out.includes('run finished'), true)
+})
+
+// cargo on PATH is rustup's proxy when a rustup sits beside it, and the toolchains update before the crates do. a
+// cargo with no rustup beside it is a distro's, and a named sync is about the crates it names
+Deno.test('nu / pack / cargo updates the toolchains first only when rustup is behind it', async () => {
+  const run = (stubs: Record<string, string>, names: Array<string>) =>
+    withStubs(
+      stubs,
+      [
+        `$env.PACK_OP = 'sync'`,
+        `$env.NOOP = '1'`,
+        `$env.PACK_MANAGER = 'cargo'`,
+        `$env.PACK_SYNC_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
+        'packCargo',
+      ].join('\n'),
+      ['cargo'],
+      ['cargo'],
+    )
+  const proxied = await run({ cargo: LISTINGS.cargo, rustup: '' }, [])
+  if (proxied == null) {
+    return
+  }
+  const lines = proxied.split('\n')
+  const rustup = lines.findIndex((l) => l.endsWith('rustup update'))
+  const crates = lines.findIndex((l) => l.includes('cargo install-update --all'))
+  assertEquals(rustup > -1, true)
+  assertEquals(rustup < crates, true)
+  assertEquals((await run({ cargo: LISTINGS.cargo }, []))!.includes('rustup update'), false)
+  assertEquals((await run({ cargo: LISTINGS.cargo, rustup: '' }, ['cargo-update']))!.includes('rustup update'), false)
+})
+
+// pnpm records a runtime as the exact version it installed, so `update` cannot move it: a runtime is set again at its
+// installed major, and only packages go to latest. a named sync touches only what it names
+Deno.test('nu / pack / pnpm moves a runtime within its major and a package to latest', async () => {
+  const pnpm = `case "$*" in
+  "list --global --parseable") printf '/h/global/v11\\n/h/global/v11/a/node_modules/node\\n/h/global/v11/b/node_modules/npm\\n' ;;
+  "list --global --json") printf '[{"dependencies":{"node":{"version":"26.2.0"},"npm":{"version":"12.0.2"}}}]' ;;
+  *) exit 1 ;;
+esac`
+  const run = (names: Array<string>) =>
+    withStubs(
+      { pnpm },
+      [
+        `$env.PACK_OP = 'sync'`,
+        `$env.NOOP = '1'`,
+        `$env.PACK_MANAGER = 'pnpm'`,
+        `$env.PACK_SYNC_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
+        'packPnpm',
+      ].join('\n'),
+      ['pnpm'],
+      ['pnpm'],
+    )
+  const bare = await run([])
+  if (bare == null) {
+    return
+  }
+  assertEquals(bare.includes('pnpm runtime set node 26 --global'), true)
+  assertEquals(bare.includes('pnpm update --global --latest npm'), true)
+  assertEquals(bare.includes('--latest node'), false)
+  const named = await run(['npm'])
+  assertEquals(named!.includes('runtime set'), false)
+  assertEquals(named!.includes('pnpm update --global --latest npm'), true)
+})
+
+// uv manages pythons as well as tools: a bare sync moves the pythons first, and a named sync is about the tools named
+Deno.test('nu / pack / uv upgrades its pythons before its tools on a bare sync', async () => {
+  const run = (names: Array<string>) =>
+    withStubs(
+      { uv: LISTINGS.uv },
+      [
+        `$env.PACK_OP = 'sync'`,
+        `$env.NOOP = '1'`,
+        `$env.PACK_MANAGER = 'uv'`,
+        `$env.PACK_SYNC_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
+        'packUv',
+      ].join('\n'),
+      ['uv'],
+      ['uv'],
+    )
+  const bare = await run([])
+  if (bare == null) {
+    return
+  }
+  const lines = bare.split('\n')
+  const pythons = lines.findIndex((l) => l.includes('uv python upgrade'))
+  const tools = lines.findIndex((l) => l.includes('uv tool upgrade --all'))
+  assertEquals(pythons > -1, true)
+  assertEquals(pythons < tools, true)
+  assertEquals((await run(['hf']))!.includes('python upgrade'), false)
+})
+
+// the run's PATH starts as the one a new shell would have: the env stage adds each place a tool lands once it exists,
+// so a command installed since the calling shell started — or by this run — is found without that shell reopening
+Deno.test('nu / pack / a refreshed PATH reaches what the env stage adds', async () => {
+  const zsh = new Deno.Command('sh', { args: ['-c', 'command -v zsh'], stdout: 'piped' }).outputSync()
+  if (!zsh.success) {
+    return
+  }
+  const out = await withStubs(
+    {},
+    [
+      `$env.SYS_OS_PLAT = 'linux'`,
+      `mkdir ($env.HOME | path join .tool bin)`,
+      `'path=($HOME/.tool/bin $path)' | save ($env.HOME | path join .zshenv)`,
+      `$env.PATH = ($env.PATH | append ['/usr/bin' '/bin'])`,
+      `print $"before: ($env.PATH | any { |p| $p | str ends-with '.tool/bin' })"`,
+      'wutPathRefresh',
+      `print $"after: ($env.PATH | any { |p| $p | str ends-with '.tool/bin' })"`,
+      `print $"kept: ('/usr/bin' in $env.PATH)"`,
+    ].join('\n'),
+    [],
+  )
+  if (out == null) {
+    return
+  }
+  assertEquals(out.includes('before: false'), true)
+  assertEquals(out.includes('after: true'), true)
+  assertEquals(out.includes('kept: true'), true)
+})
+
+// a post script whose command an install just put somewhere the calling shell never reached still runs
+Deno.test('nu / pack / a post script finds what the run just installed', async () => {
+  const zsh = new Deno.Command('sh', { args: ['-c', 'command -v zsh'], stdout: 'piped' }).outputSync()
+  if (!zsh.success) {
+    return
+  }
+  const plan = [{
+    group: 'lang-rust-rustup',
+    name: 'rustup',
+    paths: [{ id: 'lang-rust-rustup|pacman', manager: 'pacman', names: ['rustup'] }],
+    post: [{ id: 'rustup/setup', cmds: ['rustup'] }],
+  }]
+  const out = await withStubs(
+    { pacman: '' },
+    [
+      `hide-env SUCCINCT`,
+      `$env.SYS_OS_PLAT = 'linux'`,
+      `$env.PATH = ($env.PATH | append ['/usr/bin' '/bin'])`,
+      `'path=($HOME/.cargo/bin $path)' | save ($env.HOME | path join .zshenv)`,
+      // the install is what puts rustup where only the env stage knows to look
+      `def --env packRunUnit [id: string] {`,
+      `  if $id == 'lang-rust-rustup|pacman' {`,
+      `    mkdir ($env.HOME | path join .cargo bin)`,
+      `    "#!/bin/sh\\n" | save ($env.HOME | path join .cargo bin rustup)`,
+      `    ^/bin/chmod +x ($env.HOME | path join .cargo bin rustup)`,
+      `  }`,
+      `  print $"ran ($id)"`,
+      `}`,
+      `$env.PACK_OP = 'add'`,
+      `$env.YES = '1'`,
+      `$env.PACK_PLAN = ${JSON.stringify(JSON.stringify(plan))}`,
+      `$env.PACK_ADD_NAMES = [  ]`,
+      'packPlanRun',
+    ].join('\n'),
+    ['pacman'],
+  )
+  if (out == null) {
+    return
+  }
+  assertEquals(out.includes('ran rustup/setup'), true)
+  assertEquals(out.includes('skipped'), false)
 })

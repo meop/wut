@@ -1,0 +1,19 @@
+---
+operation:
+  add:
+    manager:
+      brew:
+        names:
+          - around
+      pacman:
+        names:
+          - around
+      winget:
+        names:
+          - around
+    post:
+      - cargo/setup
+      - docker/setup
+  remove:
+    pre:
+      - docker/teardown

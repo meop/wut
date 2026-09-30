@@ -40,6 +40,11 @@ def --env packUv [] {
       packOpRemove [$cmd tool uninstall]
     }
     sync => {
+      # uv manages pythons as well as tools: a bare sync moves each installed python to the newest patch of its minor
+      # before the tools, which run on them
+      if ((packNameList 'PACK_SYNC_NAMES') | is-empty) {
+        packOp [$cmd python upgrade]
+      }
       packOpSync [$cmd tool upgrade --all] [$cmd tool upgrade]
     }
     tidy => {

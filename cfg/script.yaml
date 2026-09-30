@@ -32,3 +32,9 @@ docker:
         - docker
       sys_os_plat:
         - linux
+  teardown:
+    zsh:
+      has_cmd:
+        - docker
+      sys_os_plat:
+        - linux

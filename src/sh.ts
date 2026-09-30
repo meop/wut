@@ -64,6 +64,11 @@ export async function redirectShell(
   return `${bin} ${targetShell.execArgs(shell.toLiteral(script))}`
 }
 
+// the pinned nu is where a command's client side runs: the only place a refreshed PATH has anything to serve
+export function isPinnedNu(shell: Sh, context: Ctx): boolean {
+  return shell.name === 'nu' && context.req_srch.includes(WUT_NU_PINNED_PARAM)
+}
+
 // always hops to the pinned nu, even if already running as (unpinned) nu — the marker param tracks that
 export async function redirectCommonShell(shell: Sh, context: Ctx): Promise<string | null> {
   if (context.req_srch.includes(WUT_NU_PINNED_PARAM)) {

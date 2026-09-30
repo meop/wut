@@ -2828,6 +2828,34 @@ if \$env.SYS_OS_PLAT == 'windows' {
 }
 
 
+# a tool this run installed, or one installed since the calling shell started, lands somewhere that shell's PATH may
+# not reach yet. the env stage wut deploys already knows every such place, and adds each once it exists, so the run
+# asks the native shell for the PATH a new one would start with, rather than leaving the next step to find nothing.
+# windows keeps PATH in the registry too, where installers record theirs, so that joins what the profile builds
+def --env wutPathRefresh [] {
+  let out = if \$env.SYS_OS_PLAT? == 'windows' {
+    if (which pwsh | is-empty) {
+      return
+    }
+    let cmd = "\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep"
+    ^pwsh -NoLogo -Command \$cmd | complete
+  } else {
+    if (which zsh | is-empty) {
+      return
+    }
+    ^zsh -c 'print -r -- \$PATH' | complete
+  }
+  # the last line, since an env stage is free to print on its way through
+  let path = (\$out.stdout | lines | where { is-not-empty } | last 1 | get -o 0)
+  if \$out.exit_code != 0 or \$path == null {
+    return
+  }
+  \$env.PATH = (\$path | split row (char esep) | where { is-not-empty } | uniq)
+}
+
+
+wutPathRefresh
+
 \$env.VIRT_OP = r#'find'#
 
 def wutSelectParse [choice: string, max: int] {
@@ -3289,6 +3317,34 @@ if \$env.SYS_OS_PLAT == 'windows' {
   hide-env -i PSModulePath
 }
 
+
+# a tool this run installed, or one installed since the calling shell started, lands somewhere that shell's PATH may
+# not reach yet. the env stage wut deploys already knows every such place, and adds each once it exists, so the run
+# asks the native shell for the PATH a new one would start with, rather than leaving the next step to find nothing.
+# windows keeps PATH in the registry too, where installers record theirs, so that joins what the profile builds
+def --env wutPathRefresh [] {
+  let out = if \$env.SYS_OS_PLAT? == 'windows' {
+    if (which pwsh | is-empty) {
+      return
+    }
+    let cmd = "\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep"
+    ^pwsh -NoLogo -Command \$cmd | complete
+  } else {
+    if (which zsh | is-empty) {
+      return
+    }
+    ^zsh -c 'print -r -- \$PATH' | complete
+  }
+  # the last line, since an env stage is free to print on its way through
+  let path = (\$out.stdout | lines | where { is-not-empty } | last 1 | get -o 0)
+  if \$out.exit_code != 0 or \$path == null {
+    return
+  }
+  \$env.PATH = (\$path | split row (char esep) | where { is-not-empty } | uniq)
+}
+
+
+wutPathRefresh
 
 \$env.VIRT_FIND_PARTS = r#'qemu'#
 
@@ -3753,6 +3809,34 @@ if \$env.SYS_OS_PLAT == 'windows' {
   hide-env -i PSModulePath
 }
 
+
+# a tool this run installed, or one installed since the calling shell started, lands somewhere that shell's PATH may
+# not reach yet. the env stage wut deploys already knows every such place, and adds each once it exists, so the run
+# asks the native shell for the PATH a new one would start with, rather than leaving the next step to find nothing.
+# windows keeps PATH in the registry too, where installers record theirs, so that joins what the profile builds
+def --env wutPathRefresh [] {
+  let out = if \$env.SYS_OS_PLAT? == 'windows' {
+    if (which pwsh | is-empty) {
+      return
+    }
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
+    ^pwsh -NoLogo -Command \$cmd | complete
+  } else {
+    if (which zsh | is-empty) {
+      return
+    }
+    ^zsh -c 'print -r -- \$PATH' | complete
+  }
+  # the last line, since an env stage is free to print on its way through
+  let path = (\$out.stdout | lines | where { is-not-empty } | last 1 | get -o 0)
+  if \$out.exit_code != 0 or \$path == null {
+    return
+  }
+  \$env.PATH = (\$path | split row (char esep) | where { is-not-empty } | uniq)
+}
+
+
+wutPathRefresh
 
 \$env.VIRT_ADD_PARTS = r#'qemu'#
 
@@ -5234,6 +5318,34 @@ if \$env.SYS_OS_PLAT == 'windows' {
 }
 
 
+# a tool this run installed, or one installed since the calling shell started, lands somewhere that shell's PATH may
+# not reach yet. the env stage wut deploys already knows every such place, and adds each once it exists, so the run
+# asks the native shell for the PATH a new one would start with, rather than leaving the next step to find nothing.
+# windows keeps PATH in the registry too, where installers record theirs, so that joins what the profile builds
+def --env wutPathRefresh [] {
+  let out = if \$env.SYS_OS_PLAT? == 'windows' {
+    if (which pwsh | is-empty) {
+      return
+    }
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
+    ^pwsh -NoLogo -Command \$cmd | complete
+  } else {
+    if (which zsh | is-empty) {
+      return
+    }
+    ^zsh -c 'print -r -- \$PATH' | complete
+  }
+  # the last line, since an env stage is free to print on its way through
+  let path = (\$out.stdout | lines | where { is-not-empty } | last 1 | get -o 0)
+  if \$out.exit_code != 0 or \$path == null {
+    return
+  }
+  \$env.PATH = (\$path | split row (char esep) | where { is-not-empty } | uniq)
+}
+
+
+wutPathRefresh
+
 \$env.VIRT_REM_PARTS = r#'qemu'#
 
 \$env.VIRT_OP = r#'rem'#
@@ -6713,6 +6825,34 @@ if \$env.SYS_OS_PLAT == 'windows' {
   hide-env -i PSModulePath
 }
 
+
+# a tool this run installed, or one installed since the calling shell started, lands somewhere that shell's PATH may
+# not reach yet. the env stage wut deploys already knows every such place, and adds each once it exists, so the run
+# asks the native shell for the PATH a new one would start with, rather than leaving the next step to find nothing.
+# windows keeps PATH in the registry too, where installers record theirs, so that joins what the profile builds
+def --env wutPathRefresh [] {
+  let out = if \$env.SYS_OS_PLAT? == 'windows' {
+    if (which pwsh | is-empty) {
+      return
+    }
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
+    ^pwsh -NoLogo -Command \$cmd | complete
+  } else {
+    if (which zsh | is-empty) {
+      return
+    }
+    ^zsh -c 'print -r -- \$PATH' | complete
+  }
+  # the last line, since an env stage is free to print on its way through
+  let path = (\$out.stdout | lines | where { is-not-empty } | last 1 | get -o 0)
+  if \$out.exit_code != 0 or \$path == null {
+    return
+  }
+  \$env.PATH = (\$path | split row (char esep) | where { is-not-empty } | uniq)
+}
+
+
+wutPathRefresh
 
 \$env.VIRT_ADD_PARTS = r#'docker'#
 
@@ -8194,6 +8334,34 @@ if \$env.SYS_OS_PLAT == 'windows' {
 }
 
 
+# a tool this run installed, or one installed since the calling shell started, lands somewhere that shell's PATH may
+# not reach yet. the env stage wut deploys already knows every such place, and adds each once it exists, so the run
+# asks the native shell for the PATH a new one would start with, rather than leaving the next step to find nothing.
+# windows keeps PATH in the registry too, where installers record theirs, so that joins what the profile builds
+def --env wutPathRefresh [] {
+  let out = if \$env.SYS_OS_PLAT? == 'windows' {
+    if (which pwsh | is-empty) {
+      return
+    }
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
+    ^pwsh -NoLogo -Command \$cmd | complete
+  } else {
+    if (which zsh | is-empty) {
+      return
+    }
+    ^zsh -c 'print -r -- \$PATH' | complete
+  }
+  # the last line, since an env stage is free to print on its way through
+  let path = (\$out.stdout | lines | where { is-not-empty } | last 1 | get -o 0)
+  if \$out.exit_code != 0 or \$path == null {
+    return
+  }
+  \$env.PATH = (\$path | split row (char esep) | where { is-not-empty } | uniq)
+}
+
+
+wutPathRefresh
+
 \$env.VIRT_RUN_PARTS = r#'vga'#
 
 \$env.VIRT_OP = r#'run'#
@@ -9158,6 +9326,34 @@ if \$env.SYS_OS_PLAT == 'windows' {
   hide-env -i PSModulePath
 }
 
+
+# a tool this run installed, or one installed since the calling shell started, lands somewhere that shell's PATH may
+# not reach yet. the env stage wut deploys already knows every such place, and adds each once it exists, so the run
+# asks the native shell for the PATH a new one would start with, rather than leaving the next step to find nothing.
+# windows keeps PATH in the registry too, where installers record theirs, so that joins what the profile builds
+def --env wutPathRefresh [] {
+  let out = if \$env.SYS_OS_PLAT? == 'windows' {
+    if (which pwsh | is-empty) {
+      return
+    }
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
+    ^pwsh -NoLogo -Command \$cmd | complete
+  } else {
+    if (which zsh | is-empty) {
+      return
+    }
+    ^zsh -c 'print -r -- \$PATH' | complete
+  }
+  # the last line, since an env stage is free to print on its way through
+  let path = (\$out.stdout | lines | where { is-not-empty } | last 1 | get -o 0)
+  if \$out.exit_code != 0 or \$path == null {
+    return
+  }
+  \$env.PATH = (\$path | split row (char esep) | where { is-not-empty } | uniq)
+}
+
+
+wutPathRefresh
 
 \$env.VIRT_ADD_PARTS = r#'test|vga'#
 
@@ -10639,6 +10835,34 @@ if \$env.SYS_OS_PLAT == 'windows' {
 }
 
 
+# a tool this run installed, or one installed since the calling shell started, lands somewhere that shell's PATH may
+# not reach yet. the env stage wut deploys already knows every such place, and adds each once it exists, so the run
+# asks the native shell for the PATH a new one would start with, rather than leaving the next step to find nothing.
+# windows keeps PATH in the registry too, where installers record theirs, so that joins what the profile builds
+def --env wutPathRefresh [] {
+  let out = if \$env.SYS_OS_PLAT? == 'windows' {
+    if (which pwsh | is-empty) {
+      return
+    }
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
+    ^pwsh -NoLogo -Command \$cmd | complete
+  } else {
+    if (which zsh | is-empty) {
+      return
+    }
+    ^zsh -c 'print -r -- \$PATH' | complete
+  }
+  # the last line, since an env stage is free to print on its way through
+  let path = (\$out.stdout | lines | where { is-not-empty } | last 1 | get -o 0)
+  if \$out.exit_code != 0 or \$path == null {
+    return
+  }
+  \$env.PATH = (\$path | split row (char esep) | where { is-not-empty } | uniq)
+}
+
+
+wutPathRefresh
+
 \$env.VIRT_ADD_PARTS = r#'vga'#
 
 \$env.VIRT_OP = r#'add'#
@@ -12116,6 +12340,34 @@ if \$env.SYS_OS_PLAT == 'windows' {
   hide-env -i PSModulePath
 }
 
+
+# a tool this run installed, or one installed since the calling shell started, lands somewhere that shell's PATH may
+# not reach yet. the env stage wut deploys already knows every such place, and adds each once it exists, so the run
+# asks the native shell for the PATH a new one would start with, rather than leaving the next step to find nothing.
+# windows keeps PATH in the registry too, where installers record theirs, so that joins what the profile builds
+def --env wutPathRefresh [] {
+  let out = if \$env.SYS_OS_PLAT? == 'windows' {
+    if (which pwsh | is-empty) {
+      return
+    }
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
+    ^pwsh -NoLogo -Command \$cmd | complete
+  } else {
+    if (which zsh | is-empty) {
+      return
+    }
+    ^zsh -c 'print -r -- \$PATH' | complete
+  }
+  # the last line, since an env stage is free to print on its way through
+  let path = (\$out.stdout | lines | where { is-not-empty } | last 1 | get -o 0)
+  if \$out.exit_code != 0 or \$path == null {
+    return
+  }
+  \$env.PATH = (\$path | split row (char esep) | where { is-not-empty } | uniq)
+}
+
+
+wutPathRefresh
 
 \$env.VIRT_ADD_PARTS = r#'test'#
 
@@ -13597,6 +13849,34 @@ if \$env.SYS_OS_PLAT == 'windows' {
 }
 
 
+# a tool this run installed, or one installed since the calling shell started, lands somewhere that shell's PATH may
+# not reach yet. the env stage wut deploys already knows every such place, and adds each once it exists, so the run
+# asks the native shell for the PATH a new one would start with, rather than leaving the next step to find nothing.
+# windows keeps PATH in the registry too, where installers record theirs, so that joins what the profile builds
+def --env wutPathRefresh [] {
+  let out = if \$env.SYS_OS_PLAT? == 'windows' {
+    if (which pwsh | is-empty) {
+      return
+    }
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
+    ^pwsh -NoLogo -Command \$cmd | complete
+  } else {
+    if (which zsh | is-empty) {
+      return
+    }
+    ^zsh -c 'print -r -- \$PATH' | complete
+  }
+  # the last line, since an env stage is free to print on its way through
+  let path = (\$out.stdout | lines | where { is-not-empty } | last 1 | get -o 0)
+  if \$out.exit_code != 0 or \$path == null {
+    return
+  }
+  \$env.PATH = (\$path | split row (char esep) | where { is-not-empty } | uniq)
+}
+
+
+wutPathRefresh
+
 \$env.VIRT_REM_PARTS = r#'test|vga'#
 
 \$env.VIRT_OP = r#'rem'#
@@ -15075,6 +15355,34 @@ if \$env.SYS_OS_PLAT == 'windows' {
 }
 
 
+# a tool this run installed, or one installed since the calling shell started, lands somewhere that shell's PATH may
+# not reach yet. the env stage wut deploys already knows every such place, and adds each once it exists, so the run
+# asks the native shell for the PATH a new one would start with, rather than leaving the next step to find nothing.
+# windows keeps PATH in the registry too, where installers record theirs, so that joins what the profile builds
+def --env wutPathRefresh [] {
+  let out = if \$env.SYS_OS_PLAT? == 'windows' {
+    if (which pwsh | is-empty) {
+      return
+    }
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
+    ^pwsh -NoLogo -Command \$cmd | complete
+  } else {
+    if (which zsh | is-empty) {
+      return
+    }
+    ^zsh -c 'print -r -- \$PATH' | complete
+  }
+  # the last line, since an env stage is free to print on its way through
+  let path = (\$out.stdout | lines | where { is-not-empty } | last 1 | get -o 0)
+  if \$out.exit_code != 0 or \$path == null {
+    return
+  }
+  \$env.PATH = (\$path | split row (char esep) | where { is-not-empty } | uniq)
+}
+
+
+wutPathRefresh
+
 \$env.VIRT_RUN_PARTS = r#'app'#
 
 \$env.VIRT_OP = r#'run'#
@@ -16037,6 +16345,34 @@ if \$env.SYS_OS_PLAT == 'windows' {
   hide-env -i PSModulePath
 }
 
+
+# a tool this run installed, or one installed since the calling shell started, lands somewhere that shell's PATH may
+# not reach yet. the env stage wut deploys already knows every such place, and adds each once it exists, so the run
+# asks the native shell for the PATH a new one would start with, rather than leaving the next step to find nothing.
+# windows keeps PATH in the registry too, where installers record theirs, so that joins what the profile builds
+def --env wutPathRefresh [] {
+  let out = if \$env.SYS_OS_PLAT? == 'windows' {
+    if (which pwsh | is-empty) {
+      return
+    }
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
+    ^pwsh -NoLogo -Command \$cmd | complete
+  } else {
+    if (which zsh | is-empty) {
+      return
+    }
+    ^zsh -c 'print -r -- \$PATH' | complete
+  }
+  # the last line, since an env stage is free to print on its way through
+  let path = (\$out.stdout | lines | where { is-not-empty } | last 1 | get -o 0)
+  if \$out.exit_code != 0 or \$path == null {
+    return
+  }
+  \$env.PATH = (\$path | split row (char esep) | where { is-not-empty } | uniq)
+}
+
+
+wutPathRefresh
 
 \$env.VIRT_OP = r#'list'#
 
@@ -17515,6 +17851,34 @@ if \$env.SYS_OS_PLAT == 'windows' {
   hide-env -i PSModulePath
 }
 
+
+# a tool this run installed, or one installed since the calling shell started, lands somewhere that shell's PATH may
+# not reach yet. the env stage wut deploys already knows every such place, and adds each once it exists, so the run
+# asks the native shell for the PATH a new one would start with, rather than leaving the next step to find nothing.
+# windows keeps PATH in the registry too, where installers record theirs, so that joins what the profile builds
+def --env wutPathRefresh [] {
+  let out = if \$env.SYS_OS_PLAT? == 'windows' {
+    if (which pwsh | is-empty) {
+      return
+    }
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
+    ^pwsh -NoLogo -Command \$cmd | complete
+  } else {
+    if (which zsh | is-empty) {
+      return
+    }
+    ^zsh -c 'print -r -- \$PATH' | complete
+  }
+  # the last line, since an env stage is free to print on its way through
+  let path = (\$out.stdout | lines | where { is-not-empty } | last 1 | get -o 0)
+  if \$out.exit_code != 0 or \$path == null {
+    return
+  }
+  \$env.PATH = (\$path | split row (char esep) | where { is-not-empty } | uniq)
+}
+
+
+wutPathRefresh
 
 \$env.VIRT_ADD_PARTS = r#'podman'#
 
@@ -18996,6 +19360,34 @@ if \$env.SYS_OS_PLAT == 'windows' {
 }
 
 
+# a tool this run installed, or one installed since the calling shell started, lands somewhere that shell's PATH may
+# not reach yet. the env stage wut deploys already knows every such place, and adds each once it exists, so the run
+# asks the native shell for the PATH a new one would start with, rather than leaving the next step to find nothing.
+# windows keeps PATH in the registry too, where installers record theirs, so that joins what the profile builds
+def --env wutPathRefresh [] {
+  let out = if \$env.SYS_OS_PLAT? == 'windows' {
+    if (which pwsh | is-empty) {
+      return
+    }
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
+    ^pwsh -NoLogo -Command \$cmd | complete
+  } else {
+    if (which zsh | is-empty) {
+      return
+    }
+    ^zsh -c 'print -r -- \$PATH' | complete
+  }
+  # the last line, since an env stage is free to print on its way through
+  let path = (\$out.stdout | lines | where { is-not-empty } | last 1 | get -o 0)
+  if \$out.exit_code != 0 or \$path == null {
+    return
+  }
+  \$env.PATH = (\$path | split row (char esep) | where { is-not-empty } | uniq)
+}
+
+
+wutPathRefresh
+
 \$env.VIRT_ADD_PARTS = r#'nosuchthing'#
 
 \$env.VIRT_OP = r#'add'#
@@ -20474,6 +20866,34 @@ if \$env.SYS_OS_PLAT == 'windows' {
 }
 
 
+# a tool this run installed, or one installed since the calling shell started, lands somewhere that shell's PATH may
+# not reach yet. the env stage wut deploys already knows every such place, and adds each once it exists, so the run
+# asks the native shell for the PATH a new one would start with, rather than leaving the next step to find nothing.
+# windows keeps PATH in the registry too, where installers record theirs, so that joins what the profile builds
+def --env wutPathRefresh [] {
+  let out = if \$env.SYS_OS_PLAT? == 'windows' {
+    if (which pwsh | is-empty) {
+      return
+    }
+    let cmd = "\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep"
+    ^pwsh -NoLogo -Command \$cmd | complete
+  } else {
+    if (which zsh | is-empty) {
+      return
+    }
+    ^zsh -c 'print -r -- \$PATH' | complete
+  }
+  # the last line, since an env stage is free to print on its way through
+  let path = (\$out.stdout | lines | where { is-not-empty } | last 1 | get -o 0)
+  if \$out.exit_code != 0 or \$path == null {
+    return
+  }
+  \$env.PATH = (\$path | split row (char esep) | where { is-not-empty } | uniq)
+}
+
+
+wutPathRefresh
+
 \$env.VIRT_OP = r#'find'#
 
 def wutSelectParse [choice: string, max: int] {
@@ -20931,6 +21351,34 @@ if \$env.SYS_OS_PLAT == 'windows' {
   hide-env -i PSModulePath
 }
 
+
+# a tool this run installed, or one installed since the calling shell started, lands somewhere that shell's PATH may
+# not reach yet. the env stage wut deploys already knows every such place, and adds each once it exists, so the run
+# asks the native shell for the PATH a new one would start with, rather than leaving the next step to find nothing.
+# windows keeps PATH in the registry too, where installers record theirs, so that joins what the profile builds
+def --env wutPathRefresh [] {
+  let out = if \$env.SYS_OS_PLAT? == 'windows' {
+    if (which pwsh | is-empty) {
+      return
+    }
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
+    ^pwsh -NoLogo -Command \$cmd | complete
+  } else {
+    if (which zsh | is-empty) {
+      return
+    }
+    ^zsh -c 'print -r -- \$PATH' | complete
+  }
+  # the last line, since an env stage is free to print on its way through
+  let path = (\$out.stdout | lines | where { is-not-empty } | last 1 | get -o 0)
+  if \$out.exit_code != 0 or \$path == null {
+    return
+  }
+  \$env.PATH = (\$path | split row (char esep) | where { is-not-empty } | uniq)
+}
+
+
+wutPathRefresh
 
 \$env.VIRT_ADD_PARTS = r#'podman'#
 

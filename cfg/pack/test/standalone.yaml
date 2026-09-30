@@ -1,0 +1,16 @@
+---
+operation:
+  add:
+    manager:
+      pacman:
+        names:
+          - standalone
+  sync:
+    script:
+      path:
+        darwin: '{HOME}/.standalone/bin/standalone'
+        linux: '{HOME}/.standalone/bin/standalone'
+        windows: '{HOME}/.standalone/bin/standalone.exe'
+      args:
+        - self
+        - update

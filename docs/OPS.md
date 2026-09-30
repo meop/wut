@@ -25,6 +25,20 @@ Each command has one client-side predicate for its half:
 | `file`   | `fileBinHere`     | is this tool installed                          |
 | `script` | `scriptHasCmd`    | is the command a `has_cmd` gate names installed |
 
+## The PATH wut checks is the one a new shell would have
+
+Every predicate above reads PATH, and the PATH wut inherits is the calling shell's, as it was when that shell started. A
+tool installed since then — by an earlier run, or by this one — lands somewhere it may not reach yet: `~/.cargo/bin`
+after a first rustup, `~/.ghpm/bin` after ghpm bootstraps itself, brew's keg-only `opt` dirs. Answering "not here" for
+those, or asking for a new shell, would hand work back that wut can do itself.
+
+wut already knows where such tools land: the env stage it deploys (the files `file` syncs into `~/.zsh/env`,
+`~/.pwsh/env`, `env.nu`) states every one, per platform and install approach, and adds each once it exists. So the
+client asks the native shell for the PATH a new one would start with — `zsh -c`, which reads the env stage, and on
+windows `pwsh -c`, joined with the Machine and User PATH the registry holds for installers — and takes it as its own
+before any check runs. `pack` refreshes once more after its installs, before the post scripts that look for what they
+put down. Everything the run spawns inherits the result, and no tool's location is stated anywhere in wut itself.
+
 ## Filter, summarise, ask once
 
 The client then does the same three things, in this order:

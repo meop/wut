@@ -180,11 +180,14 @@ Alphabetical is not one of them. Sorting the list reads as an order without bein
 of the three is here, in that order — see [PACK.md](PACK.md#the-pacman-family-is-one-manager). Declare the narrowest one
 that can serve the group: `pacman` for a repo package, `yay` for an AUR one.
 
-## pack manager hooks and remove
+## pack pre and post
 
-A manager entry may also carry a shell key — `pwsh` or `zsh` — holding `hooks` that run around the manager call. Only
-the platform's native shell is read (`pwsh` on windows, `zsh` elsewhere), so a hook states the shell it is written in
-rather than a gate:
+`pre` and `post` run around an operation, and they mean the same thing wherever they appear — before and after — at two
+levels. `add` and `remove` each take their own, so every slot exists: before and after an install, before and after a
+removal.
+
+**Around one manager's call**, beside its names, keyed by shell: commands in the platform's native shell (`pwsh` on
+windows, `zsh` elsewhere), so a hook states the shell it is written in rather than a gate:
 
 ```yaml
 ---
@@ -193,26 +196,73 @@ operation:
     manager:
       brew:
         zsh:
-          hooks:
+          pre:
             - brew tap anomalyco/tap
         names:
-          - opencode
+          - anomalyco/tap/opencode
   remove:
     manager:
       brew:
         zsh:
-          hooks:
+          post:
             - brew untap anomalyco/tap
 ```
 
-`add` runs its hooks **before** the manager call, `remove` runs them **after** — tap then install, uninstall then untap.
-They are named `hooks` rather than `commands` because where they run is not theirs to state: the operation they sit
-under decides it, so there is no such thing as a post-hook on `add`.
+`remove` does not repeat `add`'s shape: under a manager it holds only the shell keys, since the package names a removal
+passes to the manager come from that manager's `add` entry. A group never states its names twice, so the two halves
+cannot drift apart, and a manager with nothing to run around its removal is simply absent from `remove`.
 
-`remove` therefore does not repeat `add`'s shape: it is a post-hook map only, keyed by manager and then by shell. The
-package names a removal passes to the manager come from that manager's `add` entry, so a group never states its names
-twice and the two halves cannot drift apart. A manager with nothing to undo is simply absent from `remove`, and a group
-that needs no hooks at all has no `remove` key.
+**Around the group**, beside `manager`: scripts, named by their path under `cfg/script` as `tool/action`:
+
+```yaml
+---
+operation:
+  add:
+    manager:
+      pacman:
+        names:
+          - docker
+    post:
+      - docker/setup
+  remove:
+    pre:
+      - docker/teardown
+```
+
+Each one runs exactly as `wut s e setup docker` would — the same shell owns it, the same `sys_*` gates apply on the
+server, and its `has_cmd` is asked on the client. The script is written once and stays runnable on its own; the group
+only says when it is due. One gated off the platform is dropped from the plan while the group still installs.
+
+The two levels hold different things because they answer to different things. A manager's hook belongs to that manager's
+call — a tap only means anything to brew — so it is a command, in brew's shell. A group's script follows the group
+whichever manager won it: enabling docker's service is the same work whether pacman or a script installed docker, so it
+is a script, and runs wherever that script runs.
+
+## pack sync of a standalone install
+
+A tool whose own installer is the group's `script` path usually updates itself too, from wherever that installer put it.
+`sync.script` states that place per platform, and what to hand the binary there:
+
+```yaml
+---
+operation:
+  add:
+    manager:
+      script:
+        nu:
+          file: cfg/script/deno/install.nu
+  sync:
+    script:
+      path:
+        darwin: '{HOME}/.deno/bin/deno'
+        linux: '{HOME}/.deno/bin/deno'
+        windows: '{HOME}/.deno/bin/deno.exe'
+      args:
+        - upgrade
+```
+
+The path is the whole test of whether that install is here, so it names the file the installer writes, with `{HOME}` and
+other env names spelled the way `file.yaml` spells them. A platform with no path has no standalone install to look for.
 
 ## pack group aliases
 

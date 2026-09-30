@@ -252,6 +252,63 @@ no manager had: ripgrep-x
 Two managers answer fuzzily and need reading rather than an exit code: `ghpm search` always exits 0, so the name column
 decides, and npm and jsr are checked by name (`registry.npmjs.org/<name>`) rather than through their search endpoints.
 
+## A group's pre and post scripts run around the whole run
+
+A group's `pre` and `post` scripts ([RULES.md](RULES.md#pack-pre-and-post)) show in the plan under the group they belong
+to (`first:` and `then:`), so the one decision covers them too — picking a manager is picking its groups' scripts with
+it.
+
+Every `pre` script runs before any install or removal, while what it acts on is still there, and every `post` script
+after all of them, so one can lean on a tool another group in the same run just installed. Each runs once however many
+groups name it, and a group whose install or removal failed has no `post` run for it. A failed `pre` is reported but
+does not hold its group back — the operation is still what was asked.
+
+`has_cmd` is asked only when a script is about to run, since an install is what put the command there — and after the
+installs the run refreshes its PATH ([OPS.md](OPS.md#the-path-wut-checks-is-the-one-a-new-shell-would-have)), so a
+command that landed in `~/.cargo/bin` on a first rustup, or in brew's keg-only `opt` dirs, is found in the same run.
+
+Picking in the plan is the yes. Once the table is answered, `YES` is set for the rest of the run, so a `script` install
+path and a group's scripts run without asking the questions they would ask under a bare `script exec` — the pick already
+answered them, the same way it answers for every manager.
+
+## Tools that update themselves
+
+A tool installed by its own installer — the group's `script` path — is held by no manager, so no manager's sync would
+reach it. Each such group states where that installer puts the tool
+([RULES.md](RULES.md#pack-sync-of-a-standalone-install)), and a bare sync hands every one of those paths to the client,
+which offers a `script` row for the ones whose file is there. A named sync treats the path as one more place the name
+can be held. Either way the check is a file existing at a known path — no command runs to answer it, and it reads the
+same on every platform.
+
+The update runs the binary at that path, never whatever the name resolves to on PATH: the name can resolve to another
+manager's copy, and `deno upgrade` run against ghpm's deno overwrites a file ghpm owns. The tools do not all guard
+against that themselves — `uv self update` refuses a copy its installer did not put down, `deno upgrade` does not.
+
+Updating is best effort. A distro build usually has self update compiled out, and a user can turn it off; a copy that
+refuses answers exactly that, so it is said as a warning and is not a failure — the rest of the sync runs, and the run
+does not exit non-zero for it.
+
+## Toolchain managers
+
+Three managers manage toolchains as well as packages: rustup (cargo and rustc), uv (pythons) and pnpm (the node, bun and
+deno runtimes). A bare sync moves the toolchains before the packages, so the packages update against current ones, and
+keeps each toolchain within the line it is already on — a new major or minor is a choice, not an update. A named sync is
+about the packages it names and leaves the toolchains alone.
+
+- **rustup** is not a package manager at all: the `cargo` on PATH is usually its proxy, a link to the rustup beside it
+  (a hard link on windows) dispatching to the real cargo inside the active toolchain. That makes cargo the one manager
+  whose own binary another manager delivers, so rustup has no row of its own: a bare cargo sync looks for a `rustup`
+  beside wherever `cargo` resolves and runs `rustup update` first, best effort like a self update. That holds however
+  rustup arrived — its own installer, winget, pacman, apt or brew — since each puts the proxies beside it. A distro
+  cargo has no rustup beside it and is left to its package manager.
+- **uv** is its own top layer — it installs pythons and tools and updates itself — so a bare uv sync runs
+  `uv python
+  upgrade`, which moves each installed python to the newest patch of its minor, before
+  `uv tool upgrade --all`.
+- **pnpm** records a runtime as the exact version it installed, so `update` has no range to move one within. A runtime
+  is set again at its installed major — `pnpm runtime set node 26 --global` for a node 26 — and only packages go to
+  `--latest`, which would otherwise carry a runtime across majors.
+
 ## Failing
 
 Execution fails loud:
