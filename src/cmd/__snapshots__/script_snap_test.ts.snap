@@ -188,7 +188,7 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 
 \$env.SH_VERS_MAJOR = 0
 
-\$env.SH_VERS_MINOR = 114
+\$env.SH_VERS_MINOR = 116
 
 do {
   let major = \$env.SH_VERS_MAJOR | into int
@@ -203,9 +203,9 @@ do {
 
 \$env.NU_VERS_MAJOR = 0
 
-\$env.NU_VERS_MINOR = 114
+\$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 1
+\$env.NU_VERS_PATCH = 0
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -471,7 +471,7 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 
 \$env.SH_VERS_MAJOR = 0
 
-\$env.SH_VERS_MINOR = 114
+\$env.SH_VERS_MINOR = 116
 
 do {
   let major = \$env.SH_VERS_MAJOR | into int
@@ -486,9 +486,9 @@ do {
 
 \$env.NU_VERS_MAJOR = 0
 
-\$env.NU_VERS_MINOR = 114
+\$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 1
+\$env.NU_VERS_PATCH = 0
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -793,7 +793,7 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 
 \$env.SH_VERS_MAJOR = 0
 
-\$env.SH_VERS_MINOR = 114
+\$env.SH_VERS_MINOR = 116
 
 do {
   let major = \$env.SH_VERS_MAJOR | into int
@@ -808,9 +808,9 @@ do {
 
 \$env.NU_VERS_MAJOR = 0
 
-\$env.NU_VERS_MINOR = 114
+\$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 1
+\$env.NU_VERS_PATCH = 0
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -1380,7 +1380,7 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 
 \$env.SH_VERS_MAJOR = 0
 
-\$env.SH_VERS_MINOR = 114
+\$env.SH_VERS_MINOR = 116
 
 do {
   let major = \$env.SH_VERS_MAJOR | into int
@@ -1395,9 +1395,9 @@ do {
 
 \$env.NU_VERS_MAJOR = 0
 
-\$env.NU_VERS_MINOR = 114
+\$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 1
+\$env.NU_VERS_PATCH = 0
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -2070,7 +2070,7 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 
 \$env.SH_VERS_MAJOR = 0
 
-\$env.SH_VERS_MINOR = 114
+\$env.SH_VERS_MINOR = 116
 
 do {
   let major = \$env.SH_VERS_MAJOR | into int
@@ -2085,9 +2085,9 @@ do {
 
 \$env.NU_VERS_MAJOR = 0
 
-\$env.NU_VERS_MINOR = 114
+\$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 1
+\$env.NU_VERS_PATCH = 0
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -2426,7 +2426,7 @@ def opPrintMaybeRunCmd --wrapped [...args] {
 
 \$env.SH_VERS_MAJOR = 0
 
-\$env.SH_VERS_MINOR = 114
+\$env.SH_VERS_MINOR = 116
 
 do {
   let major = \$env.SH_VERS_MAJOR | into int
@@ -2441,9 +2441,9 @@ do {
 
 \$env.NU_VERS_MAJOR = 0
 
-\$env.NU_VERS_MINOR = 114
+\$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 1
+\$env.NU_VERS_PATCH = 0
 
 \$env.REQ_ORIG = r#'http://x'#
 
