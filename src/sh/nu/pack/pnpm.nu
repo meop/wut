@@ -1,15 +1,5 @@
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
-# the runtimes pnpm holds globally, each with the major of the exact version it recorded
-def --env packPnpmRuntimes [] {
-  $env.PACK_PRINTED = '1'
-  opPrintCmd pnpm list --global --json
-  let deps = (try { ^pnpm list --global --json | from json | get -o 0.dependencies } catch { null }) | default {}
-  $deps | transpose name info | where { |r| $r.name in $PACK_PNPM_RUNTIMES } | each { |r|
-    { name: $r.name, major: ($r.info.version | split row '.' | first) }
-  }
-}
-
 def --env packPnpm [] {
   let cmd = 'pnpm'
   if (packSkip $cmd) {
@@ -36,13 +26,9 @@ def --env packPnpm [] {
     sync => {
       let held = if ((packNameList 'PACK_SYNC_NAMES') | is-not-empty) { packSyncNames } else { packPnpmInstalled }
       # pnpm manages the node, bun and deno runtimes as well as packages, and records a runtime as the exact version
-      # it installed, so `update` has no range to move one within. a runtime is set again on its line: node on lts,
-      # which is how node marks the line to stay on, and bun and deno — one stable line each — at their installed
-      # major. only packages go to latest
-      let runtimes = if ($held | any { |n| $n in $PACK_PNPM_RUNTIMES }) { packPnpmRuntimes } else { [] }
-      for r in ($runtimes | where { |r| $r.name in $held }) {
-        let spec = if $r.name == 'node' { 'lts' } else { $r.major }
-        packOp [$cmd runtime set $r.name $spec --global]
+      # it installed, so `update` cannot move one: a runtime is set again at its latest release
+      for r in ($held | where { |n| $n in $PACK_PNPM_RUNTIMES }) {
+        packOp [$cmd runtime set $r latest --global]
       }
       let packages = ($held | where { |n| $n not-in $PACK_PNPM_RUNTIMES })
       if ($packages | is-not-empty) {

@@ -824,9 +824,9 @@ Deno.test('nu / pack / cargo updates the toolchains first only when rustup is be
   assertEquals((await run({ cargo: LISTINGS.cargo, rustup: '' }, ['cargo-update']))!.includes('rustup update'), false)
 })
 
-// pnpm records a runtime as the exact version it installed, so `update` cannot move it: node is set again on lts, bun
-// and deno at their installed major, and only packages go to latest. a named sync touches only what it names
-Deno.test('nu / pack / pnpm moves node on lts, other runtimes within their major, and a package to latest', async () => {
+// pnpm records a runtime as the exact version it installed, so `update` cannot move it: a runtime is set again at its
+// latest release, and packages update to latest. a named sync touches only what it names
+Deno.test('nu / pack / pnpm sets its runtimes to latest and updates its packages', async () => {
   const pnpm = `case "$*" in
   "list --global --parseable") printf '/h/global/v11\\n/h/global/v11/a/node_modules/node\\n/h/global/v11/b/node_modules/npm\\n/h/global/v11/c/node_modules/deno\\n' ;;
   "list --global --json") printf '[{"dependencies":{"node":{"version":"26.2.0"},"npm":{"version":"12.0.2"},"deno":{"version":"2.9.7"}}}]' ;;
@@ -849,8 +849,8 @@ esac`
   if (bare == null) {
     return
   }
-  assertEquals(bare.includes('pnpm runtime set node lts --global'), true)
-  assertEquals(bare.includes('pnpm runtime set deno 2 --global'), true)
+  assertEquals(bare.includes('pnpm runtime set node latest --global'), true)
+  assertEquals(bare.includes('pnpm runtime set deno latest --global'), true)
   assertEquals(bare.includes('pnpm update --global --latest npm'), true)
   assertEquals(bare.includes('--latest node'), false)
   const named = await run(['npm'])

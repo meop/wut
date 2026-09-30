@@ -291,9 +291,9 @@ does not exit non-zero for it.
 ## Toolchain managers
 
 Three managers manage toolchains as well as packages: rustup (cargo and rustc), uv (pythons) and pnpm (the node, bun and
-deno runtimes). A bare sync moves the toolchains before the packages, so the packages update against current ones, and
-keeps each toolchain on its line — a new major or minor is a choice, not an update. A named sync is about the packages
-it names and leaves the toolchains alone.
+deno runtimes). A bare sync moves the toolchains before the packages, so the packages update against current ones, each
+the way its manager moves them — rustup along its channels, uv within each installed minor, pnpm to the latest release.
+A named sync is about the packages it names and leaves the toolchains alone.
 
 - **rustup** is not a package manager at all: the `cargo` on PATH is usually its proxy, a link to the rustup beside it
   (a hard link on windows) dispatching to the real cargo inside the active toolchain. That makes cargo the one manager
@@ -305,10 +305,8 @@ it names and leaves the toolchains alone.
   `uv python
   upgrade`, which moves each installed python to the newest patch of its minor, before
   `uv tool upgrade --all`.
-- **pnpm** records a runtime as the exact version it installed, so `update` has no range to move one within. A runtime
-  is set again on its line — node on `lts`, the line node itself marks for staying on, and bun and deno, one stable line
-  each, at their installed major — and only packages go to `--latest`, which would otherwise carry a runtime to whatever
-  major is newest.
+- **pnpm** records a runtime as the exact version it installed, so `update` cannot move one: a runtime is set again at
+  `latest` — `pnpm runtime set node latest --global` — before the packages update to theirs.
 
 ## Failing
 
