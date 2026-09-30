@@ -163,3 +163,39 @@ Deno.test('getScriptFlavorOpPreamble - follows the flavor, not the platform', as
   assertEquals((await getScriptFlavorOpPreamble('pwsh')).includes('function opPrintWarn'), true)
   assertEquals((await getScriptFlavorOpPreamble('zsh')).includes('function opPrintWarn'), true)
 })
+
+// a pwsh script spawned from nu receives the switches as env vars, but its op helpers and its own prompts read plain
+// variables: before the preamble imported them, --noop ran the commands for real and --yes still asked
+Deno.test('pwsh / script preamble / the switches cross into a spawned pwsh script', async () => {
+  const marker = await Deno.makeTempFile()
+  await Deno.remove(marker)
+  const script = await Deno.makeTempFile({ suffix: '.ps1' })
+  try {
+    await Deno.writeTextFile(
+      script,
+      [
+        await getScriptFlavorOpPreamble('pwsh'),
+        `if ($YES) { 'yes' } else { 'asked' }`,
+        `opPrintMaybeRunCmd "'ran' | Out-File '${marker}'"`,
+      ].join('\n'),
+    )
+    let result: Deno.CommandOutput
+    try {
+      result = await new Deno.Command('pwsh', {
+        args: ['-NoProfile', '-File', script],
+        env: { NOOP: '1', YES: '1', GRAYSCALE: '1' },
+        stdout: 'piped',
+      }).output()
+    } catch (e) {
+      if (e instanceof Deno.errors.NotFound) {
+        return
+      }
+      throw e
+    }
+    assertEquals(new TextDecoder().decode(result.stdout).split('\n')[0].trim(), 'yes')
+    assertEquals(await Deno.stat(marker).then(() => true).catch(() => false), false)
+  } finally {
+    await Deno.remove(script)
+    await Deno.remove(marker).catch(() => {})
+  }
+})

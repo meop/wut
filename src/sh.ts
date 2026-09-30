@@ -106,7 +106,20 @@ export function getScriptFlavorShell(shellFlavor: string): Sh {
   return shellFlavor === 'nu' ? new NuSh() : shellFlavor === 'pwsh' ? new PowerSh() : new ZSh()
 }
 
+// the switches reach a spawned script as env vars. zsh and nu read their switches from the environment already, but
+// pwsh's op helpers and scripts read plain variables, which do not cross a process boundary — without this, a pwsh
+// script ran its commands under --noop and asked its questions under --yes
+const SWITCH_VARS = ['DEBUG', 'GRAYSCALE', 'NOOP', 'SUCCINCT', 'TRACE', 'YES']
+const PWSH_SWITCH_IMPORT = [
+  `foreach ($flag in ${SWITCH_VARS.map((v) => `'${v}'`).join(', ')}) {`,
+  '  if (Test-Path "env:$flag") {',
+  '    Set-Variable -Name $flag -Value (Get-Item "env:$flag").Value',
+  '  }',
+  '}',
+].join('\n')
+
 // a script file is spawned as its own process, so it needs its shell's op preamble loaded in directly
 export async function getScriptFlavorOpPreamble(shellFlavor: string): Promise<string> {
-  return await getScriptFlavorShell(shellFlavor).fileLoad(['op'])
+  const preamble = await getScriptFlavorShell(shellFlavor).fileLoad(['op'])
+  return shellFlavor === 'pwsh' ? `${PWSH_SWITCH_IMPORT}\n${preamble}` : preamble
 }
