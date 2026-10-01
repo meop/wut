@@ -301,8 +301,10 @@ function groupCandidates(
   for (const tier of Object.keys(managerConfig)) {
     if (tier === SCRIPT_PATH) {
       const selected = selectScriptEntry(managerConfig[tier] as unknown as Record<string, ScriptEntry>, context)
-      if (selected?.entry.file) {
-        candidates.push({ manager: SCRIPT_PATH, pkg: selected.entry.file })
+      // inline commands are as much an install path as a file, and a group whose only path here is one must still show
+      const pkg = selected?.entry.file ?? selected?.entry.commands?.join(' ')
+      if (pkg) {
+        candidates.push({ manager: SCRIPT_PATH, pkg })
       }
       continue
     }

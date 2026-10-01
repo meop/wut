@@ -698,6 +698,15 @@ Deno.test('nu / arch / find (pinned, candidates travel to the client)', async (t
   )
 })
 
+// a script of inline commands is a candidate like a script file, so a group installed only that way still shows
+Deno.test('nu / arch / find (pinned, inline script commands are a candidate)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/find/rustup?${PIN_ARCH}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('"lang-rustup":[{"manager":"script","pkg":"curl '), true)
+  assertEquals(body.includes('"remaining":[]'), true)
+})
+
 // a gate on a manager entry was silently ignored until now, so an arch-only entry was offered everywhere
 Deno.test('nu / darwin / add (pinned, manager entry gate keeps it off this platform)', async (t) => {
   const body = await (await runSrv(
