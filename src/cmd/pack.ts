@@ -166,7 +166,9 @@ async function buildFileRunLines(
   }
   const preamble = await getScriptFlavorOpPreamble(shellFlavor)
   const scriptContent = preamble ? `${preamble}\n${fileContent}` : fileContent
-  return [`if 'NOOP' not-in $env { ${execScriptShell(shell, plat, shellFlavor, scriptContent)} }`]
+  // a file carries the op preamble, so it reads --noop itself and prints what it would run, the way a group's
+  // pre and post scripts do — guarding it here kept a dry-run from showing any of its steps
+  return [execScriptShell(shell, plat, shellFlavor, scriptContent)]
 }
 
 // the ops a manager states it can do, read from the arms of its own `match $env.PACK_OP`. derived rather than

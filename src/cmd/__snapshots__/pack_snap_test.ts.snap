@@ -16578,7 +16578,7 @@ def --env packScoop [] {
 def --env packRunUnit [id: string] {
   match \$id {
     r#'test-scriptfile|script'# => {
-if 'NOOP' not-in \$env { zsh --no-rcs -c r#'function opPrint {
+zsh --no-rcs -c r#'function opPrint {
   if [[ \$SUCCINCT ]]; then
     return
   fi
@@ -16693,7 +16693,7 @@ function opPrintMaybeRunCmd {
 }
 
 opPrintWarn 'fixture script for buildFileRunLines regression coverage'
-'# }
+'#
     }
     _ => {}
   }

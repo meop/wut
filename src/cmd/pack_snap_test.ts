@@ -447,6 +447,13 @@ Deno.test('nu / linux / add (pinned, script file entry carries its own op preamb
   assertEquals(body.includes('function opPrintMaybeRunCmd'), true)
   assertEquals(body.includes("opPrintWarn 'fixture script for buildFileRunLines regression coverage'"), true)
 })
+// the file reads --noop itself, so a dry-run spawns it to print its steps rather than skipping it whole
+Deno.test('nu / linux / add (pinned, a script file runs under noop and prints its own steps)', async () => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/scriptfile?sysOsPlat=linux&wutNuPinned=1'))).text()
+  const arm = planArm(body, 'test-scriptfile|script')
+  assertEquals(arm.includes('fixture script for buildFileRunLines regression coverage'), true)
+  assertEquals(arm.includes("if 'NOOP' not-in $env"), false)
+})
 // the manager functions are defined long before the plan, so ordering only reads inside the arm
 function planArm(body: string, id: string) {
   const start = body.indexOf(`r#'${id}'# => {`)
