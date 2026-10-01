@@ -72,10 +72,9 @@ function getFsAclWindowsVal(perm: AclPerm, user: string) {
   if (groupPerms !== '') {
     permBlocks.push(`"Administrators:(${groupPerms})"`)
   }
-  const otherPerms = getFsAclWindowsSymVal(perm.other)
-  if (otherPerms !== '') {
-    permBlocks.push(`"SYSTEM:(${otherPerms})"`)
-  }
+  // removing inheritance would leave SYSTEM out, and sshd runs as SYSTEM: it could not read authorized_keys, so a key
+  // login fell back to a password. SYSTEM can read any file anyway, so it always keeps read, and other adds to that
+  permBlocks.push(`"SYSTEM:(${getFsAclWindowsSymVal({ ...perm.other, read: true })})"`)
   return permBlocks.join(' ')
 }
 

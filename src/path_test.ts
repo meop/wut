@@ -71,6 +71,21 @@ Deno.test('getPlatAclPermCmds - windows returns icacls reset + grant', () => {
   assertEquals(cmds[1].includes('testuser'), true)
 })
 
+// sshd runs as SYSTEM, so a file granted only to its user (authorized_keys) must still be readable by SYSTEM
+Deno.test('getPlatAclPermCmds - windows always grants SYSTEM read', () => {
+  const [, userOnly] = getPlatAclPermCmds('windows', 'C:\\Users\\test\\.ssh\\authorized_keys', {
+    user: { read: true, write: true },
+  }, 'testuser')
+  assertEquals(userOnly.endsWith('/grant "testuser:(gr,gw)" "SYSTEM:(gr)"'), true)
+  const [, withOther] = getPlatAclPermCmds(
+    'windows',
+    'C:\\x',
+    { user: { read: true }, other: { write: true } },
+    'testuser',
+  )
+  assertEquals(withOther.endsWith('"SYSTEM:(gr,gw)"'), true)
+})
+
 Deno.test('getPlatAclPermCmds - throws for unsupported platform', () => {
   assertThrows(() => getPlatAclPermCmds('freebsd', '/path', { user: { read: true } }, 'user'))
 })
