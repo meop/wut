@@ -836,6 +836,10 @@ def packExpandPath [path: string] {
       $out = ($out | str replace --all $"{($e.0)}" $e.1)
     }
   }
+  # the yaml writes one path for every platform's eyes; windows prints and runs its own separator
+  if $nu.os-info.name == 'windows' {
+    $out = ($out | str replace --all '/' '\')
+  }
   $out
 }
 
@@ -864,6 +868,11 @@ def packSelfHere [] {
   ($env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath $s.path | path exists }
 }
 
+# the manager a standalone install is, when it is one: the binary is named for what it runs as
+def packSelfManager [path: string] {
+  packExpandPath $path | path parse | get stem
+}
+
 def --env packManagerPlanRun [] {
   let managers = (packManagersHere)
   let selfHere = if ($env.PACK_OP? | default '') == 'sync' { packSelfHere } else { [] }
@@ -888,12 +897,21 @@ def --env packManagerPlanRun [] {
   }
 
   $env.PACK_AGREED = '1'
+  # a manager that updates itself does it right before it runs, so it syncs as its newest self; the rest wait for the
+  # script row. either way picking script is what lets them run
+  let managersChosen = ($chosen | where { |m| $m != 'script' })
+  let selfFirst = if 'script' in $chosen {
+    $selfHere | where { |s| (packSelfManager $s.path) in $managersChosen }
+  } else { [] }
   for m in $chosen {
     if $m == 'script' {
-      for s in $selfHere {
+      for s in ($selfHere | where { |s| $s not-in $selfFirst }) {
         packSelfUpdate $s.group $s.path $s.args
       }
       continue
+    }
+    for s in ($selfFirst | where { |s| (packSelfManager $s.path) == $m }) {
+      packSelfUpdate $s.group $s.path $s.args
     }
     # stated, so an op that keeps per-manager detail — info's declared names — knows who is asking
     load-env {PACK_MANAGER: $m}

@@ -795,6 +795,36 @@ Deno.test('nu / pack / standalone installs update themselves, and a refusal does
   assertEquals(out.includes('run finished'), true)
 })
 
+// a manager its own installer put down updates itself right before it syncs, not after every other manager has run;
+// a tool that is no manager waits for the script row
+Deno.test('nu / pack / a manager updates itself right before its own sync', async () => {
+  const self = [
+    { group: 'ai-code-codex', path: '{HOME}/.local/bin/codex', args: ['update'] },
+    { group: 'sys-manager-ghpm', path: '{HOME}/.ghpm/bin/ghpm', args: ['upgrade'] },
+  ]
+  const out = await withStubs(
+    { brew: '', ghpm: '' },
+    [
+      `hide-env SUCCINCT`,
+      `mkdir ($env.HOME | path join .ghpm bin) ($env.HOME | path join .local bin)`,
+      `touch ($env.HOME | path join .ghpm bin ghpm) ($env.HOME | path join .local bin codex)`,
+      `def --env packBrew [] { print 'ran brew' }`,
+      `def --env packGhpm [] { print 'ran ghpm' }`,
+      `$env.YES = '1'`,
+      `$env.PACK_OP = 'sync'`,
+      `$env.NOOP = '1'`,
+      `$env.PACK_SELF = ${JSON.stringify(JSON.stringify(self))}`,
+      'packManagerPlanRun',
+    ].join('\n'),
+    ['brew', 'ghpm'],
+  )
+  if (out == null) {
+    return
+  }
+  const order = out.split('\n').filter((l) => /^ran |upgrade$|update$/.test(l)).map((l) => l.split('/').pop())
+  assertEquals(order, ['ran brew', 'ghpm upgrade', 'ran ghpm', 'codex update'])
+})
+
 // cargo on PATH is rustup's proxy when a rustup sits beside it, and the toolchains update before the crates do. a
 // cargo with no rustup beside it is a distro's, and a named sync is about the crates it names
 Deno.test('nu / pack / cargo updates the toolchains first only when rustup is behind it', async () => {
