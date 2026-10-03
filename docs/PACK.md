@@ -284,10 +284,10 @@ The update runs the binary at that path, never whatever the name resolves to on 
 manager's copy, and `deno upgrade` run against ghpm's deno overwrites a file ghpm owns. The tools do not all guard
 against that themselves — `uv self update` refuses a copy its installer did not put down, `deno upgrade` does not.
 
-A tool that is itself a manager — ghpm, uv, deno, bun — updates itself right before that manager's sync runs, so it
-syncs as its newest self; the rest run at the `script` row. Either way, picking `script` is what lets them run. The
-binary's name is how the two are matched. On windows the path is printed and run with backslashes, whatever the yaml
-wrote.
+A tool that is itself a manager — ghpm, uv, deno, bun, pnpm — updates itself right before that manager's sync runs, so
+it syncs as its newest self: picking the manager's row is what lets it run. The rest run at the `script` row, which is
+offered only when there is one of them. The binary's name is how the two are matched. On windows the path is printed and
+run with backslashes, whatever the yaml wrote.
 
 Updating is best effort. A distro build usually has self update compiled out, and a user can turn it off; a copy that
 refuses answers exactly that, so it is said as a warning and is not a failure — the rest of the sync runs, and the run

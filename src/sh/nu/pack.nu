@@ -876,8 +876,10 @@ def packSelfManager [path: string] {
 def --env packManagerPlanRun [] {
   let managers = (packManagersHere)
   let selfHere = if ($env.PACK_OP? | default '') == 'sync' { packSelfHere } else { [] }
-  # the tools that update themselves ride as one more row, named for the install path that put them there
-  let here = if ($selfHere | is-empty) { $managers } else { $managers | append 'script' }
+  # a manager's self update runs in its own row; the rest in the script row
+  let selfManaged = ($selfHere | where { |s| (packSelfManager $s.path) in $managers })
+  let selfRest = ($selfHere | where { |s| $s not-in $selfManaged })
+  let here = if ($selfRest | is-empty) { $managers } else { $managers | append 'script' }
   if ($here | is-empty) {
     opPrintWarn 'no manager installed'
     return
@@ -897,20 +899,14 @@ def --env packManagerPlanRun [] {
   }
 
   $env.PACK_AGREED = '1'
-  # a manager that updates itself does it right before it runs, so it syncs as its newest self; the rest wait for the
-  # script row. either way picking script is what lets them run
-  let managersChosen = ($chosen | where { |m| $m != 'script' })
-  let selfFirst = if 'script' in $chosen {
-    $selfHere | where { |s| (packSelfManager $s.path) in $managersChosen }
-  } else { [] }
   for m in $chosen {
     if $m == 'script' {
-      for s in ($selfHere | where { |s| $s not-in $selfFirst }) {
+      for s in $selfRest {
         packSelfUpdate $s.group $s.path $s.args
       }
       continue
     }
-    for s in ($selfFirst | where { |s| (packSelfManager $s.path) == $m }) {
+    for s in ($selfManaged | where { |s| (packSelfManager $s.path) == $m }) {
       packSelfUpdate $s.group $s.path $s.args
     }
     # stated, so an op that keeps per-manager detail — info's declared names — knows who is asking

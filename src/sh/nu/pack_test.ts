@@ -21,6 +21,8 @@ async function withStubs(
   // manager files to source too, when the test runs an op end to end rather than probing one decision
   managerFiles: Array<string> = [],
   allowFailure = false,
+  // rows to pick instead of prompting
+  pick?: Array<number>,
 ): Promise<string | null> {
   const dir = await Deno.makeTempDir()
   const home = await Deno.makeTempDir()
@@ -34,7 +36,10 @@ async function withStubs(
       // the same op helpers the client is sent, so the checks print and run exactly as they do in a real script
       await getScriptFlavorOpPreamble('nu'),
       await Deno.readTextFile(PATH_NU),
-      await Deno.readTextFile(SEL_NU),
+      pick == null ? await Deno.readTextFile(SEL_NU) : (await Deno.readTextFile(SEL_NU)).replace(
+        /^def wutSelectRead [\s\S]*?^}$/m,
+        `def wutSelectRead [max: int] { ${JSON.stringify(pick).replaceAll(',', ' ')} }`,
+      ),
       await Deno.readTextFile(PACK_NU),
       ...await Promise.all(
         managerFiles.map((m) => Deno.readTextFile(new URL(`./pack/${m}.nu`, import.meta.url).pathname)),
@@ -823,6 +828,62 @@ Deno.test('nu / pack / a manager updates itself right before its own sync', asyn
   }
   const order = out.split('\n').filter((l) => /^ran |upgrade$|update$/.test(l)).map((l) => l.split('/').pop())
   assertEquals(order, ['ran brew', 'ghpm upgrade', 'ran ghpm', 'codex update'])
+})
+
+Deno.test('nu / pack / picking a manager alone still updates it first', async () => {
+  const self = [
+    { group: 'ai-code-codex', path: '{HOME}/.local/bin/codex', args: ['update'] },
+    { group: 'sys-manager-ghpm', path: '{HOME}/.ghpm/bin/ghpm', args: ['upgrade'] },
+  ]
+  const out = await withStubs(
+    { brew: '', ghpm: '' },
+    [
+      `hide-env SUCCINCT`,
+      `mkdir ($env.HOME | path join .ghpm bin) ($env.HOME | path join .local bin)`,
+      `touch ($env.HOME | path join .ghpm bin ghpm) ($env.HOME | path join .local bin codex)`,
+      `def --env packBrew [] { print 'ran brew' }`,
+      `def --env packGhpm [] { print 'ran ghpm' }`,
+      `$env.PACK_OP = 'sync'`,
+      `$env.NOOP = '1'`,
+      `$env.PACK_SELF = ${JSON.stringify(JSON.stringify(self))}`,
+      'packManagerPlanRun',
+    ].join('\n'),
+    ['brew', 'ghpm'],
+    [],
+    false,
+    [2],
+  )
+  if (out == null) {
+    return
+  }
+  assertEquals(out.includes('3) script'), true)
+  const order = out.split('\n').filter((l) => /^ran |upgrade$|update$/.test(l)).map((l) => l.split('/').pop())
+  assertEquals(order, ['ghpm upgrade', 'ran ghpm'])
+})
+
+Deno.test('nu / pack / no script row when every standalone install is a manager here', async () => {
+  const self = [{ group: 'sys-manager-ghpm', path: '{HOME}/.ghpm/bin/ghpm', args: ['upgrade'] }]
+  const out = await withStubs(
+    { ghpm: '' },
+    [
+      `hide-env SUCCINCT`,
+      `mkdir ($env.HOME | path join .ghpm bin)`,
+      `touch ($env.HOME | path join .ghpm bin ghpm)`,
+      `def --env packGhpm [] { print 'ran ghpm' }`,
+      `$env.YES = '1'`,
+      `$env.PACK_OP = 'sync'`,
+      `$env.NOOP = '1'`,
+      `$env.PACK_SELF = ${JSON.stringify(JSON.stringify(self))}`,
+      'packManagerPlanRun',
+    ].join('\n'),
+    ['ghpm'],
+  )
+  if (out == null) {
+    return
+  }
+  assertEquals(out.includes('script'), false)
+  const order = out.split('\n').filter((l) => /^ran |upgrade$/.test(l)).map((l) => l.split('/').pop())
+  assertEquals(order, ['ghpm upgrade', 'ran ghpm'])
 })
 
 // cargo on PATH is rustup's proxy when a rustup sits beside it, and the toolchains update before the crates do. a
