@@ -68,6 +68,10 @@ may share one.
 script, and the vfio-rebind and cpu-pin scripts where the config asks for them. It appends `-pidfile` and `-daemonize`
 itself, so a config must not state either.
 
+The guest's `-smp` topology mirrors the host's performance cores (`virtQemuHostCpus`): efficiency cores are left out —
+the `cpu_core` list on intel hybrid, `cpu_capacity` elsewhere — and the cpu-pin script puts each vcpu on the host cpu
+holding the same socket, core and thread, so the siblings the guest sees are siblings on the host.
+
 `run` is the foreground spelling: no unit, no vfio unbind/rebind, no cpu pin. It works in a `run/` subdir of the tmp dir
 and removes only that — never `/var/lib/qemu/<instance>`, which belongs to `add` and whose contents the installed unit
 still points at. It also strips `-pidfile` and `-daemonize` from the merged args wherever they came from, or the

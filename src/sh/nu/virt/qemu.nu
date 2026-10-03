@@ -1,3 +1,49 @@
+# the guest mirrors the host's performance cores: efficiency cores are left out, and `pin` lists the host cpu behind each
+# vcpu in qemu's own order (socket, core, thread), so the threads the guest sees as siblings are siblings on the host too
+def virtQemuHostCpus [sysRoot: string] {
+  let cpuDir = ($sysRoot | path join devices/system/cpu)
+  let readSys = { |path: string| open --raw $path | into string | str trim }
+  let expand = { |list: string|
+    $list | split row ',' | each { |r| let b = ($r | split row '-' | into int); seq $b.0 ($b | last) } | flatten
+  }
+  let online = (do $expand (do $readSys ($cpuDir | path join online)))
+
+  # intel hybrid names its performance cores; elsewhere the scheduler's own cpu_capacity sets a slower core type well
+  # below the rest, and a kernel without it schedules every cpu as one type
+  let coreTypeFilePath = ($sysRoot | path join devices/cpu_core/cpus)
+  let perf = if ($coreTypeFilePath | path exists) {
+    do $expand (do $readSys $coreTypeFilePath) | where { |c| $c in $online }
+  } else {
+    let capacities = $online | each { |c|
+      let f = ($cpuDir | path join $"cpu($c)/cpu_capacity")
+      {cpu: $c, capacity: (if ($f | path exists) { do $readSys $f | into int } else { 1024 })}
+    }
+    let top = ($capacities | get capacity | math max)
+    $capacities | where { |c| $c.capacity * 10 >= $top * 9 } | get cpu
+  }
+
+  let sockets = $perf | each { |c|
+    let topo = ($cpuDir | path join $"cpu($c)/topology")
+    {
+      cpu: $c,
+      socket: (do $readSys ($topo | path join physical_package_id) | into int),
+      core: (do $readSys ($topo | path join thread_siblings_list)),
+    }
+  } | group-by --to-table socket | each { |s|
+    $s.items | group-by --to-table core | each { |k| $k.items | get cpu | sort } | sort-by { first }
+  } | sort-by { first | first }
+
+  # uneven counts (a core with smt off, a socket short a core) trim to what every socket and core can mirror
+  let cores = ($sockets | each { length } | math min)
+  let threads = ($sockets | each { |s| $s | first $cores | each { length } } | flatten | math min)
+  {
+    sockets: ($sockets | length),
+    cores: $cores,
+    threads: $threads,
+    pin: ($sockets | each { |s| $s | first $cores | each { |k| $k | first $threads } } | flatten | flatten),
+  }
+}
+
 def virtQemu [] {
   let cmd = 'qemu'
   if ('VIRT_MANAGER' in $env and $env.VIRT_MANAGER != $cmd) or (which $"($cmd)-img" | is-empty) {
@@ -83,10 +129,11 @@ def virtQemu [] {
 
     $qemuEnv = $qemuEnv | upsert 'instance' $instance
 
-    let cpuStat = ^lscpu
-    $qemuEnv = $qemuEnv | upsert 'vm_cpu_sockets' ($cpuStat | find --ignore-case 'socket(s)' | split row ':' | last | str trim | ansi strip)
-    $qemuEnv = $qemuEnv | upsert 'vm_cpu_cores' ($cpuStat | find --ignore-case 'core(s)' | split row ':' | last | str trim | ansi strip)
-    $qemuEnv = $qemuEnv | upsert 'vm_cpu_threads' ($cpuStat | find --ignore-case 'thread(s)' | split row ':' | last | str trim | ansi strip)
+    let hostCpus = (virtQemuHostCpus '/sys')
+    $qemuEnv = $qemuEnv | upsert 'vm_cpu_sockets' ($hostCpus.sockets | into string)
+    $qemuEnv = $qemuEnv | upsert 'vm_cpu_cores' ($hostCpus.cores | into string)
+    $qemuEnv = $qemuEnv | upsert 'vm_cpu_threads' ($hostCpus.threads | into string)
+    $qemuEnv = $qemuEnv | upsert 'vm_cpu_pin' ($hostCpus.pin | str join ' ')
 
     let cpuVendor = if ((^cat '/proc/cpuinfo' | find --ignore-case 'vendor_id' | last | split row ':' | last | str lowercase | str trim | ansi strip) | str contains 'amd') { 'amd' } else { 'intel' }
     $qemuEnv = $qemuEnv | upsert 'vm_cpu_vendor' ($cpuVendor | str trim)
@@ -192,7 +239,7 @@ def virtQemu [] {
         '[Service]',
         'Type=forking',
         'KillMode=control-group',
-        'OOMScoreAdjust=-500',
+        'OOMScoreAdjust=-1000',
         $"PIDFile=($pidFilePath)",
         $"WorkingDirectory=($configDirPath)",
         $"ExecStartPre=/usr/bin/mkdir -p ($tmpDirPath)",
@@ -242,6 +289,8 @@ def virtQemu [] {
         opPrintMaybeRunCmd $"r##'(($rebindLines | str join "\n") + "\n")'##" '|' sudo tee $rebindScriptFilePath '|' ignore
         opPrintMaybeRunCmd sudo chmod +x $rebindScriptFilePath
         $serviceLines = $serviceLines | append $"ExecStartPre=($rebindScriptFilePath)"
+      } else {
+        opPrintMaybeRunCmd sudo rm -f ($configDirPath | path join 'rebind-vfio-pci.sh')
       }
 
       if 'swtpm' in $merged {
@@ -269,6 +318,8 @@ def virtQemu [] {
           $"ExecStartPre=-/usr/bin/rm -f ($tmpDirPath)/tpm.socket",
           $"ExecStartPre=($swtpmScriptFilePath)",
         ]
+      } else {
+        opPrintMaybeRunCmd sudo rm -f ($configDirPath | path join swtpm.sh)
       }
 
       $serviceLines = $serviceLines | append $"ExecStartPre=-/usr/bin/rm -f ($pidFilePath)"
@@ -277,8 +328,6 @@ def virtQemu [] {
 
       let qemuScriptFilePath = ($configDirPath | path join qemu.sh)
       let qemuArgs = (replaceEnv $qemuEnv ($merged | get qemu?.arguments? | default [])) | append [$"-pidfile ($pidFilePath)", '-daemonize']
-      let cpusCount = (($qemuEnv.vm_cpu_sockets | into int) * ($qemuEnv.vm_cpu_cores | into int) * ($qemuEnv.vm_cpu_threads | into int))
-      let cpusMax = $cpusCount - 1
       let qemuCmd = (qemuCmdWrap $qemuBin $qemuArgs)
       # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
       # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
@@ -331,10 +380,11 @@ def virtQemu [] {
           '  sleep 0.01',
           'done',
           'if [ -z "$pid" ]; then exit 0; fi',
-          ("for i in $(seq 0 " + ($cpusMax | into string) + "); do"),
+          ("hostCpus=(" + $qemuEnv.vm_cpu_pin + ")"),
+          'for i in "${!hostCpus[@]}"; do',
           "  spid=$(ps --pid $pid -T -o ucmd,spid | grep \"CPU $i/KVM\" | awk '{print $NF}')",
           '  if [ -n "$spid" ]; then',
-          '    taskset --pid --cpu-list $i $spid',
+          '    taskset --pid --cpu-list "${hostCpus[$i]}" $spid',
           '  fi',
           'done',
         ]
@@ -343,6 +393,8 @@ def virtQemu [] {
         opPrintMaybeRunCmd $"r##'(($pinLines | str join "\n") + "\n")'##" '|' sudo tee $pinScriptFilePath '|' ignore
         opPrintMaybeRunCmd sudo chmod +x $pinScriptFilePath
         $serviceLines = $serviceLines | append $"ExecStartPost=($pinScriptFilePath)"
+      } else {
+        opPrintMaybeRunCmd sudo rm -f ($configDirPath | path join qemu-cpu-pin.sh)
       }
 
       $serviceLines = $serviceLines | append [

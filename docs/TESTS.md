@@ -11,8 +11,8 @@ as text. These are fast, require no Docker or real shells, and exercise the full
 errors. If a shell binary is not installed, its checks are silently skipped — no hard failure.
 
 **Tier 3 — Client decisions**: Run a nu snippet for real, against a PATH built for the test, and assert what it answers.
-Only for the decisions the server cannot make, since they read the machine (`src/sh/nu/pack_test.ts`). Skipped the same
-way when `nu` is missing.
+Only for the decisions the server cannot make, since they read the machine (`src/sh/nu/pack_test.ts`,
+`src/sh/nu/virt/qemu_test.ts`). Skipped the same way when `nu` is missing.
 
 Snapshot files are committed to the repo under `src/cmd/__snapshots__/`, so script diffs are visible in PRs.
 
@@ -99,6 +99,12 @@ A decision this tier does not reach is the one a snapshot cannot see either: a s
 check that is emitted, looks right, and answers the wrong question still snapshots clean. That is what let `remove`
 resolve a name by asking who _could_ install it. Anything the client decides for itself belongs here, not only in a
 snapshot.
+
+### `src/sh/nu/virt/qemu_test.ts`
+
+Tier 3 — the host cpu topology `virtQemuHostCpus` reads from sysfs, run against a fake sysfs root per case: smt pairs,
+smt off, intel hybrid (the `cpu_core` list), amd dense cores (`cpu_capacity`), multiple sockets, and a kernel without
+`cpu_capacity`. It asserts the sockets, cores and threads the guest gets and the host cpu each vcpu is pinned to.
 
 ## Following the redirect: `wutNuPinned=1`
 
