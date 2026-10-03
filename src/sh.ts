@@ -125,6 +125,10 @@ const PWSH_SWITCH_IMPORT = [
 
 // a script file is spawned as its own process, so it needs its shell's op preamble loaded in directly
 export async function getScriptFlavorOpPreamble(shellFlavor: string): Promise<string> {
-  const preamble = await getScriptFlavorShell(shellFlavor).fileLoad(['op'])
-  return shellFlavor === 'pwsh' ? `${PWSH_SWITCH_IMPORT}\n${preamble}` : preamble
+  const shell = getScriptFlavorShell(shellFlavor)
+  const preamble = await shell.fileLoad(['op'])
+  if (shellFlavor === 'pwsh') {
+    return `${PWSH_SWITCH_IMPORT}\n${preamble}`
+  }
+  return shellFlavor === 'nu' ? `${preamble}\n${await shell.fileLoad(['json'], import.meta.resolve, ['.'])}` : preamble
 }

@@ -162,6 +162,7 @@ Deno.test('getScriptFlavorOpPreamble - nu flavor returns nu op helpers', async (
 Deno.test('getScriptFlavorOpPreamble - follows the flavor, not the platform', async () => {
   assertEquals((await getScriptFlavorOpPreamble('pwsh')).includes('function opPrintWarn'), true)
   assertEquals((await getScriptFlavorOpPreamble('zsh')).includes('function opPrintWarn'), true)
+  assertEquals((await getScriptFlavorOpPreamble('nu')).includes('def jsoncMerge'), true)
 })
 
 // a pwsh script spawned from nu receives the switches as env vars, but its op helpers and its own prompts read plain
