@@ -5,9 +5,10 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory={WUT_DIR}
-ExecStart={DENO_BIN} run --allow-all --watch src/srv.ts
+ExecStart=/usr/bin/env deno run --allow-all --watch src/srv.ts
 Restart=on-failure
 Environment=HOME=%h
+Environment=PATH={PATH}
 
 [Install]
 WantedBy=default.target

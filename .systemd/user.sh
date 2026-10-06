@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WUT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-DENO_BIN="$(which deno)"
+command -v deno >/dev/null || { echo "deno not on PATH" >&2; exit 1; }
 SERVICE_NAME="wut"
 SERVICE_TEMPLATE="$SCRIPT_DIR/wut.service"
 SERVICE_DIR="$HOME/.config/systemd/user"
@@ -14,7 +14,7 @@ cmd="${1:-}"
 case "$cmd" in
   up)
     mkdir -p "$SERVICE_DIR"
-    sed "s|{WUT_DIR}|$WUT_DIR|g; s|{DENO_BIN}|$DENO_BIN|g" "$SERVICE_TEMPLATE" > "$SERVICE_FILE"
+    sed "s|{WUT_DIR}|$WUT_DIR|g; s|{PATH}|$PATH|g" "$SERVICE_TEMPLATE" > "$SERVICE_FILE"
     sudo loginctl enable-linger "$USER"
     systemctl --user daemon-reload
     systemctl --user enable --now "$SERVICE_NAME"
