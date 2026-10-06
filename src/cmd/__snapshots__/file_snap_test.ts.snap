@@ -1,7 +1,7 @@
 export const snapshot = {};
 
 snapshot[`nu / darwin / diff 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
 \$env.SHIRE_NU_NESTED = '1'
 try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=darwin&wutNuPinned=1'#
@@ -10,28 +10,25 @@ try {
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
   \$e.raw
-}'##\`
+}'##"
 `;
 
 snapshot[`nu / darwin / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
 \$env.SHIRE_NU_NESTED = '1'
 try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=darwin&wutNuPinned=1'#
@@ -40,28 +37,25 @@ try {
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
   \$e.raw
-}'##\`
+}'##"
 `;
 
 snapshot[`nu / darwin / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
 \$env.SHIRE_NU_NESTED = '1'
 try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=darwin&wutNuPinned=1'#
@@ -70,28 +64,25 @@ try {
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
   \$e.raw
-}'##\`
+}'##"
 `;
 
 snapshot[`nu / linux / diff 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
 \$env.SHIRE_NU_NESTED = '1'
 try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=linux&wutNuPinned=1'#
@@ -100,28 +91,25 @@ try {
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
   \$e.raw
-}'##\`
+}'##"
 `;
 
 snapshot[`nu / linux / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
 \$env.SHIRE_NU_NESTED = '1'
 try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=linux&wutNuPinned=1'#
@@ -130,28 +118,25 @@ try {
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
   \$e.raw
-}'##\`
+}'##"
 `;
 
 snapshot[`nu / linux / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
 \$env.SHIRE_NU_NESTED = '1'
 try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=linux&wutNuPinned=1'#
@@ -160,28 +145,25 @@ try {
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
   \$e.raw
-}'##\`
+}'##"
 `;
 
 snapshot[`nu / linux / find (with filter) 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
 \$env.SHIRE_NU_NESTED = '1'
 try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/find/git?sysOsPlat=linux&wutNuPinned=1'#
@@ -190,28 +172,25 @@ try {
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
   \$e.raw
-}'##\`
+}'##"
 `;
 
 snapshot[`nu / linux / find (with sysHost) 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
 \$env.SHIRE_NU_NESTED = '1'
 try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=linux&sysHost=testhost&wutNuPinned=1'#
@@ -220,28 +199,25 @@ try {
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
   \$e.raw
-}'##\`
+}'##"
 `;
 
 snapshot[`nu / darwin / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
 \$env.SHIRE_NU_NESTED = '1'
 try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=darwin&wutNuPinned=1'#
@@ -250,28 +226,25 @@ try {
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
   \$e.raw
-}'##\`
+}'##"
 `;
 
 snapshot[`nu / linux / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
 \$env.SHIRE_NU_NESTED = '1'
 try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=linux&wutNuPinned=1'#
@@ -280,28 +253,25 @@ try {
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
   \$e.raw
-}'##\`
+}'##"
 `;
 
 snapshot[`nu / windows / diff 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
 \$env.SHIRE_NU_NESTED = '1'
 try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=windows&wutNuPinned=1'#
@@ -310,28 +280,25 @@ try {
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
   \$e.raw
-}'##\`
+}'##"
 `;
 
 snapshot[`nu / windows / find 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
 \$env.SHIRE_NU_NESTED = '1'
 try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=windows&wutNuPinned=1'#
@@ -340,28 +307,25 @@ try {
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
   \$e.raw
-}'##\`
+}'##"
 `;
 
 snapshot[`nu / windows / sync 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
 \$env.SHIRE_NU_NESTED = '1'
 try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=windows&wutNuPinned=1'#
@@ -370,28 +334,25 @@ try {
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
   \$e.raw
-}'##\`
+}'##"
 `;
 
 snapshot[`nu / windows / list 1`] = `
-\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
 \$env.SHIRE_NU_NESTED = '1'
 try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=windows&wutNuPinned=1'#
@@ -400,24 +361,21 @@ try {
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
   \$e.raw
-}'##\`
+}'##"
 `;
 
 snapshot[`nu / linux / find (pinned) 1`] = `
@@ -500,7 +458,24 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
-# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+# a ctrl-c: nu's own, an input prompt's, or the exit of a command it stopped (130, SIGINT, windows' ctrl-c status)
+def opInterrupted [e: record] {
+  (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510])
+}
+
+# a catch hands its error here first, so a ctrl-c is not stepped past
+def opRethrowInterrupt [e: record] {
+  if (opInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+# fires a pending ctrl-c inside a try that clears it, so what follows runs whole; true when there was one
+def opSettle [] {
+  try { do { }; false } catch { true }
+}
+
+# NuSh.quietInterrupt, line for line, for the child nu a command runs in
 def opQuietInterrupt [body: string] {
   [
     r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
@@ -508,12 +483,8 @@ def opQuietInterrupt [body: string] {
     r#'try {'#
     \$body
     r#'} catch { |e|'#
-    r#'  try {'#
-    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
-    r#'      if \$shireOuter { print '' }'#
-    r#'      exit 130'#
-    r#'    }'#
-    r#'  } catch {'#
+    r#'  let shireSettled = (try { do { }; false } catch { true })'#
+    r#'  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {'#
     r#'    if \$shireOuter { print '' }'#
     r#'    exit 130'#
     r#'  }'#
@@ -582,30 +553,6 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
-# a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
-# around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
-# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
-def wutInterrupted [e: record] {
-  let code = (\$e.details.code? | default '')
-  (
-    # wut's own nu got the ctrl-c, which it raises as this (no error code), or from an \`input\` prompt as an io one
-    (\$e.debug | str starts-with 'Interrupted ') or
-    (\$code == 'nu::shell::io::interrupted') or
-    # a command it ran died of SIGINT
-    ((\$code == 'nu::shell::terminated_by_signal') and (\$e.debug | str contains 'signal: 2,')) or
-    # a command that read the ctrl-c itself exits 130; a \`nu -c\` whose command died of SIGINT exits 254 (256 - 2)
-    ((\$code == 'nu::shell::non_zero_exit_code') and (\$e.debug =~ '^NonZeroExitCode \\\\{ exit_code: (130|254),'))
-  )
-}
-
-def wutRethrowInterrupt [e: record] {
-  if (wutInterrupted \$e) {
-    \$e.raw
-  }
-}
-
-
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
     return false
@@ -620,7 +567,7 @@ def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
 def wutNuLockRelease [lock_path: string] {
   rm --force \$lock_path
   # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { |e| wutRethrowInterrupt \$e }
+  try { rm (\$lock_path | path dirname) } catch { |e| opRethrowInterrupt \$e }
 }
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
@@ -653,7 +600,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
@@ -664,7 +611,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   if not \$acquired {
     opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if not \$locked {
       opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
@@ -786,9 +733,9 @@ def wutSelectParse [choice: string, max: int] {
       if (\$halves | length) != 2 {
         return null
       }
-      [(try { \$halves | get 0 | into int } catch { |e| wutRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| wutRethrowInterrupt \$e; null })]
+      [(try { \$halves | get 0 | into int } catch { |e| opRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| opRethrowInterrupt \$e; null })]
     } else {
-      let n = (try { \$part | into int } catch { |e| wutRethrowInterrupt \$e; null })
+      let n = (try { \$part | into int } catch { |e| opRethrowInterrupt \$e; null })
       if \$n == 0 {
         return null
       }
@@ -1036,12 +983,8 @@ def file [] {
 file
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
@@ -1129,7 +1072,24 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
-# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+# a ctrl-c: nu's own, an input prompt's, or the exit of a command it stopped (130, SIGINT, windows' ctrl-c status)
+def opInterrupted [e: record] {
+  (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510])
+}
+
+# a catch hands its error here first, so a ctrl-c is not stepped past
+def opRethrowInterrupt [e: record] {
+  if (opInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+# fires a pending ctrl-c inside a try that clears it, so what follows runs whole; true when there was one
+def opSettle [] {
+  try { do { }; false } catch { true }
+}
+
+# NuSh.quietInterrupt, line for line, for the child nu a command runs in
 def opQuietInterrupt [body: string] {
   [
     r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
@@ -1137,12 +1097,8 @@ def opQuietInterrupt [body: string] {
     r#'try {'#
     \$body
     r#'} catch { |e|'#
-    r#'  try {'#
-    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
-    r#'      if \$shireOuter { print '' }'#
-    r#'      exit 130'#
-    r#'    }'#
-    r#'  } catch {'#
+    r#'  let shireSettled = (try { do { }; false } catch { true })'#
+    r#'  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {'#
     r#'    if \$shireOuter { print '' }'#
     r#'    exit 130'#
     r#'  }'#
@@ -1211,30 +1167,6 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
-# a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
-# around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
-# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
-def wutInterrupted [e: record] {
-  let code = (\$e.details.code? | default '')
-  (
-    # wut's own nu got the ctrl-c, which it raises as this (no error code), or from an \`input\` prompt as an io one
-    (\$e.debug | str starts-with 'Interrupted ') or
-    (\$code == 'nu::shell::io::interrupted') or
-    # a command it ran died of SIGINT
-    ((\$code == 'nu::shell::terminated_by_signal') and (\$e.debug | str contains 'signal: 2,')) or
-    # a command that read the ctrl-c itself exits 130; a \`nu -c\` whose command died of SIGINT exits 254 (256 - 2)
-    ((\$code == 'nu::shell::non_zero_exit_code') and (\$e.debug =~ '^NonZeroExitCode \\\\{ exit_code: (130|254),'))
-  )
-}
-
-def wutRethrowInterrupt [e: record] {
-  if (wutInterrupted \$e) {
-    \$e.raw
-  }
-}
-
-
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
     return false
@@ -1249,7 +1181,7 @@ def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
 def wutNuLockRelease [lock_path: string] {
   rm --force \$lock_path
   # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { |e| wutRethrowInterrupt \$e }
+  try { rm (\$lock_path | path dirname) } catch { |e| opRethrowInterrupt \$e }
 }
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
@@ -1282,7 +1214,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
@@ -1293,7 +1225,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   if not \$acquired {
     opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if not \$locked {
       opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
@@ -1417,9 +1349,9 @@ def wutSelectParse [choice: string, max: int] {
       if (\$halves | length) != 2 {
         return null
       }
-      [(try { \$halves | get 0 | into int } catch { |e| wutRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| wutRethrowInterrupt \$e; null })]
+      [(try { \$halves | get 0 | into int } catch { |e| opRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| opRethrowInterrupt \$e; null })]
     } else {
-      let n = (try { \$part | into int } catch { |e| wutRethrowInterrupt \$e; null })
+      let n = (try { \$part | into int } catch { |e| opRethrowInterrupt \$e; null })
       if \$n == 0 {
         return null
       }
@@ -1667,12 +1599,8 @@ def file [] {
 file
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
@@ -1760,7 +1688,24 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
-# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+# a ctrl-c: nu's own, an input prompt's, or the exit of a command it stopped (130, SIGINT, windows' ctrl-c status)
+def opInterrupted [e: record] {
+  (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510])
+}
+
+# a catch hands its error here first, so a ctrl-c is not stepped past
+def opRethrowInterrupt [e: record] {
+  if (opInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+# fires a pending ctrl-c inside a try that clears it, so what follows runs whole; true when there was one
+def opSettle [] {
+  try { do { }; false } catch { true }
+}
+
+# NuSh.quietInterrupt, line for line, for the child nu a command runs in
 def opQuietInterrupt [body: string] {
   [
     r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
@@ -1768,12 +1713,8 @@ def opQuietInterrupt [body: string] {
     r#'try {'#
     \$body
     r#'} catch { |e|'#
-    r#'  try {'#
-    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
-    r#'      if \$shireOuter { print '' }'#
-    r#'      exit 130'#
-    r#'    }'#
-    r#'  } catch {'#
+    r#'  let shireSettled = (try { do { }; false } catch { true })'#
+    r#'  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {'#
     r#'    if \$shireOuter { print '' }'#
     r#'    exit 130'#
     r#'  }'#
@@ -1842,30 +1783,6 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
-# a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
-# around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
-# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
-def wutInterrupted [e: record] {
-  let code = (\$e.details.code? | default '')
-  (
-    # wut's own nu got the ctrl-c, which it raises as this (no error code), or from an \`input\` prompt as an io one
-    (\$e.debug | str starts-with 'Interrupted ') or
-    (\$code == 'nu::shell::io::interrupted') or
-    # a command it ran died of SIGINT
-    ((\$code == 'nu::shell::terminated_by_signal') and (\$e.debug | str contains 'signal: 2,')) or
-    # a command that read the ctrl-c itself exits 130; a \`nu -c\` whose command died of SIGINT exits 254 (256 - 2)
-    ((\$code == 'nu::shell::non_zero_exit_code') and (\$e.debug =~ '^NonZeroExitCode \\\\{ exit_code: (130|254),'))
-  )
-}
-
-def wutRethrowInterrupt [e: record] {
-  if (wutInterrupted \$e) {
-    \$e.raw
-  }
-}
-
-
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
     return false
@@ -1880,7 +1797,7 @@ def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
 def wutNuLockRelease [lock_path: string] {
   rm --force \$lock_path
   # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { |e| wutRethrowInterrupt \$e }
+  try { rm (\$lock_path | path dirname) } catch { |e| opRethrowInterrupt \$e }
 }
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
@@ -1913,7 +1830,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
@@ -1924,7 +1841,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   if not \$acquired {
     opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if not \$locked {
       opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
@@ -2048,9 +1965,9 @@ def wutSelectParse [choice: string, max: int] {
       if (\$halves | length) != 2 {
         return null
       }
-      [(try { \$halves | get 0 | into int } catch { |e| wutRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| wutRethrowInterrupt \$e; null })]
+      [(try { \$halves | get 0 | into int } catch { |e| opRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| opRethrowInterrupt \$e; null })]
     } else {
-      let n = (try { \$part | into int } catch { |e| wutRethrowInterrupt \$e; null })
+      let n = (try { \$part | into int } catch { |e| opRethrowInterrupt \$e; null })
       if \$n == 0 {
         return null
       }
@@ -2303,12 +2220,8 @@ if not (filePlanShow 'FILE_SYNC_PATH_PAIRS' 'FILE_SYNC_CLEAR_DIRS' 'FILE_SYNC_TO
 file
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
@@ -2396,7 +2309,24 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
-# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+# a ctrl-c: nu's own, an input prompt's, or the exit of a command it stopped (130, SIGINT, windows' ctrl-c status)
+def opInterrupted [e: record] {
+  (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510])
+}
+
+# a catch hands its error here first, so a ctrl-c is not stepped past
+def opRethrowInterrupt [e: record] {
+  if (opInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+# fires a pending ctrl-c inside a try that clears it, so what follows runs whole; true when there was one
+def opSettle [] {
+  try { do { }; false } catch { true }
+}
+
+# NuSh.quietInterrupt, line for line, for the child nu a command runs in
 def opQuietInterrupt [body: string] {
   [
     r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
@@ -2404,12 +2334,8 @@ def opQuietInterrupt [body: string] {
     r#'try {'#
     \$body
     r#'} catch { |e|'#
-    r#'  try {'#
-    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
-    r#'      if \$shireOuter { print '' }'#
-    r#'      exit 130'#
-    r#'    }'#
-    r#'  } catch {'#
+    r#'  let shireSettled = (try { do { }; false } catch { true })'#
+    r#'  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {'#
     r#'    if \$shireOuter { print '' }'#
     r#'    exit 130'#
     r#'  }'#
@@ -2478,30 +2404,6 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=windows&wutNuPinned=1'#
 
-# a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
-# around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
-# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
-def wutInterrupted [e: record] {
-  let code = (\$e.details.code? | default '')
-  (
-    # wut's own nu got the ctrl-c, which it raises as this (no error code), or from an \`input\` prompt as an io one
-    (\$e.debug | str starts-with 'Interrupted ') or
-    (\$code == 'nu::shell::io::interrupted') or
-    # a command it ran died of SIGINT
-    ((\$code == 'nu::shell::terminated_by_signal') and (\$e.debug | str contains 'signal: 2,')) or
-    # a command that read the ctrl-c itself exits 130; a \`nu -c\` whose command died of SIGINT exits 254 (256 - 2)
-    ((\$code == 'nu::shell::non_zero_exit_code') and (\$e.debug =~ '^NonZeroExitCode \\\\{ exit_code: (130|254),'))
-  )
-}
-
-def wutRethrowInterrupt [e: record] {
-  if (wutInterrupted \$e) {
-    \$e.raw
-  }
-}
-
-
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
     return false
@@ -2516,7 +2418,7 @@ def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
 def wutNuLockRelease [lock_path: string] {
   rm --force \$lock_path
   # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { |e| wutRethrowInterrupt \$e }
+  try { rm (\$lock_path | path dirname) } catch { |e| opRethrowInterrupt \$e }
 }
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
@@ -2549,7 +2451,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
@@ -2560,7 +2462,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   if not \$acquired {
     opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if not \$locked {
       opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
@@ -2684,9 +2586,9 @@ def wutSelectParse [choice: string, max: int] {
       if (\$halves | length) != 2 {
         return null
       }
-      [(try { \$halves | get 0 | into int } catch { |e| wutRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| wutRethrowInterrupt \$e; null })]
+      [(try { \$halves | get 0 | into int } catch { |e| opRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| opRethrowInterrupt \$e; null })]
     } else {
-      let n = (try { \$part | into int } catch { |e| wutRethrowInterrupt \$e; null })
+      let n = (try { \$part | into int } catch { |e| opRethrowInterrupt \$e; null })
       if \$n == 0 {
         return null
       }
@@ -2939,12 +2841,8 @@ if not (filePlanShow 'FILE_SYNC_PATH_PAIRS' 'FILE_SYNC_CLEAR_DIRS' 'FILE_SYNC_TO
 file
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
@@ -3032,7 +2930,24 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
-# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+# a ctrl-c: nu's own, an input prompt's, or the exit of a command it stopped (130, SIGINT, windows' ctrl-c status)
+def opInterrupted [e: record] {
+  (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510])
+}
+
+# a catch hands its error here first, so a ctrl-c is not stepped past
+def opRethrowInterrupt [e: record] {
+  if (opInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+# fires a pending ctrl-c inside a try that clears it, so what follows runs whole; true when there was one
+def opSettle [] {
+  try { do { }; false } catch { true }
+}
+
+# NuSh.quietInterrupt, line for line, for the child nu a command runs in
 def opQuietInterrupt [body: string] {
   [
     r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
@@ -3040,12 +2955,8 @@ def opQuietInterrupt [body: string] {
     r#'try {'#
     \$body
     r#'} catch { |e|'#
-    r#'  try {'#
-    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
-    r#'      if \$shireOuter { print '' }'#
-    r#'      exit 130'#
-    r#'    }'#
-    r#'  } catch {'#
+    r#'  let shireSettled = (try { do { }; false } catch { true })'#
+    r#'  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {'#
     r#'    if \$shireOuter { print '' }'#
     r#'    exit 130'#
     r#'  }'#
@@ -3114,30 +3025,6 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
-# a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
-# around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
-# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
-def wutInterrupted [e: record] {
-  let code = (\$e.details.code? | default '')
-  (
-    # wut's own nu got the ctrl-c, which it raises as this (no error code), or from an \`input\` prompt as an io one
-    (\$e.debug | str starts-with 'Interrupted ') or
-    (\$code == 'nu::shell::io::interrupted') or
-    # a command it ran died of SIGINT
-    ((\$code == 'nu::shell::terminated_by_signal') and (\$e.debug | str contains 'signal: 2,')) or
-    # a command that read the ctrl-c itself exits 130; a \`nu -c\` whose command died of SIGINT exits 254 (256 - 2)
-    ((\$code == 'nu::shell::non_zero_exit_code') and (\$e.debug =~ '^NonZeroExitCode \\\\{ exit_code: (130|254),'))
-  )
-}
-
-def wutRethrowInterrupt [e: record] {
-  if (wutInterrupted \$e) {
-    \$e.raw
-  }
-}
-
-
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
     return false
@@ -3152,7 +3039,7 @@ def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
 def wutNuLockRelease [lock_path: string] {
   rm --force \$lock_path
   # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { |e| wutRethrowInterrupt \$e }
+  try { rm (\$lock_path | path dirname) } catch { |e| opRethrowInterrupt \$e }
 }
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
@@ -3185,7 +3072,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
@@ -3196,7 +3083,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   if not \$acquired {
     opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if not \$locked {
       opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
@@ -3320,9 +3207,9 @@ def wutSelectParse [choice: string, max: int] {
       if (\$halves | length) != 2 {
         return null
       }
-      [(try { \$halves | get 0 | into int } catch { |e| wutRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| wutRethrowInterrupt \$e; null })]
+      [(try { \$halves | get 0 | into int } catch { |e| opRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| opRethrowInterrupt \$e; null })]
     } else {
-      let n = (try { \$part | into int } catch { |e| wutRethrowInterrupt \$e; null })
+      let n = (try { \$part | into int } catch { |e| opRethrowInterrupt \$e; null })
       if \$n == 0 {
         return null
       }
@@ -3575,12 +3462,8 @@ if not (filePlanShow 'FILE_SYNC_PATH_PAIRS' 'FILE_SYNC_CLEAR_DIRS' 'FILE_SYNC_TO
 file
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
@@ -3668,7 +3551,24 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
-# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+# a ctrl-c: nu's own, an input prompt's, or the exit of a command it stopped (130, SIGINT, windows' ctrl-c status)
+def opInterrupted [e: record] {
+  (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510])
+}
+
+# a catch hands its error here first, so a ctrl-c is not stepped past
+def opRethrowInterrupt [e: record] {
+  if (opInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+# fires a pending ctrl-c inside a try that clears it, so what follows runs whole; true when there was one
+def opSettle [] {
+  try { do { }; false } catch { true }
+}
+
+# NuSh.quietInterrupt, line for line, for the child nu a command runs in
 def opQuietInterrupt [body: string] {
   [
     r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
@@ -3676,12 +3576,8 @@ def opQuietInterrupt [body: string] {
     r#'try {'#
     \$body
     r#'} catch { |e|'#
-    r#'  try {'#
-    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
-    r#'      if \$shireOuter { print '' }'#
-    r#'      exit 130'#
-    r#'    }'#
-    r#'  } catch {'#
+    r#'  let shireSettled = (try { do { }; false } catch { true })'#
+    r#'  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {'#
     r#'    if \$shireOuter { print '' }'#
     r#'    exit 130'#
     r#'  }'#
@@ -3750,30 +3646,6 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
-# a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
-# around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
-# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
-def wutInterrupted [e: record] {
-  let code = (\$e.details.code? | default '')
-  (
-    # wut's own nu got the ctrl-c, which it raises as this (no error code), or from an \`input\` prompt as an io one
-    (\$e.debug | str starts-with 'Interrupted ') or
-    (\$code == 'nu::shell::io::interrupted') or
-    # a command it ran died of SIGINT
-    ((\$code == 'nu::shell::terminated_by_signal') and (\$e.debug | str contains 'signal: 2,')) or
-    # a command that read the ctrl-c itself exits 130; a \`nu -c\` whose command died of SIGINT exits 254 (256 - 2)
-    ((\$code == 'nu::shell::non_zero_exit_code') and (\$e.debug =~ '^NonZeroExitCode \\\\{ exit_code: (130|254),'))
-  )
-}
-
-def wutRethrowInterrupt [e: record] {
-  if (wutInterrupted \$e) {
-    \$e.raw
-  }
-}
-
-
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
     return false
@@ -3788,7 +3660,7 @@ def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
 def wutNuLockRelease [lock_path: string] {
   rm --force \$lock_path
   # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { |e| wutRethrowInterrupt \$e }
+  try { rm (\$lock_path | path dirname) } catch { |e| opRethrowInterrupt \$e }
 }
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
@@ -3821,7 +3693,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
@@ -3832,7 +3704,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   if not \$acquired {
     opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if not \$locked {
       opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
@@ -3956,9 +3828,9 @@ def wutSelectParse [choice: string, max: int] {
       if (\$halves | length) != 2 {
         return null
       }
-      [(try { \$halves | get 0 | into int } catch { |e| wutRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| wutRethrowInterrupt \$e; null })]
+      [(try { \$halves | get 0 | into int } catch { |e| opRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| opRethrowInterrupt \$e; null })]
     } else {
-      let n = (try { \$part | into int } catch { |e| wutRethrowInterrupt \$e; null })
+      let n = (try { \$part | into int } catch { |e| opRethrowInterrupt \$e; null })
       if \$n == 0 {
         return null
       }
@@ -4209,12 +4081,8 @@ if not (filePlanShow 'FILE_DIFF_PATH_PAIRS' 'FILE_DIFF_CLEAR_DIRS' 'FILE_DIFF_TO
 file
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
@@ -4302,7 +4170,24 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
-# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+# a ctrl-c: nu's own, an input prompt's, or the exit of a command it stopped (130, SIGINT, windows' ctrl-c status)
+def opInterrupted [e: record] {
+  (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510])
+}
+
+# a catch hands its error here first, so a ctrl-c is not stepped past
+def opRethrowInterrupt [e: record] {
+  if (opInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+# fires a pending ctrl-c inside a try that clears it, so what follows runs whole; true when there was one
+def opSettle [] {
+  try { do { }; false } catch { true }
+}
+
+# NuSh.quietInterrupt, line for line, for the child nu a command runs in
 def opQuietInterrupt [body: string] {
   [
     r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
@@ -4310,12 +4195,8 @@ def opQuietInterrupt [body: string] {
     r#'try {'#
     \$body
     r#'} catch { |e|'#
-    r#'  try {'#
-    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
-    r#'      if \$shireOuter { print '' }'#
-    r#'      exit 130'#
-    r#'    }'#
-    r#'  } catch {'#
+    r#'  let shireSettled = (try { do { }; false } catch { true })'#
+    r#'  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {'#
     r#'    if \$shireOuter { print '' }'#
     r#'    exit 130'#
     r#'  }'#
@@ -4384,30 +4265,6 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
-# a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
-# around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
-# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
-def wutInterrupted [e: record] {
-  let code = (\$e.details.code? | default '')
-  (
-    # wut's own nu got the ctrl-c, which it raises as this (no error code), or from an \`input\` prompt as an io one
-    (\$e.debug | str starts-with 'Interrupted ') or
-    (\$code == 'nu::shell::io::interrupted') or
-    # a command it ran died of SIGINT
-    ((\$code == 'nu::shell::terminated_by_signal') and (\$e.debug | str contains 'signal: 2,')) or
-    # a command that read the ctrl-c itself exits 130; a \`nu -c\` whose command died of SIGINT exits 254 (256 - 2)
-    ((\$code == 'nu::shell::non_zero_exit_code') and (\$e.debug =~ '^NonZeroExitCode \\\\{ exit_code: (130|254),'))
-  )
-}
-
-def wutRethrowInterrupt [e: record] {
-  if (wutInterrupted \$e) {
-    \$e.raw
-  }
-}
-
-
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
     return false
@@ -4422,7 +4279,7 @@ def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
 def wutNuLockRelease [lock_path: string] {
   rm --force \$lock_path
   # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { |e| wutRethrowInterrupt \$e }
+  try { rm (\$lock_path | path dirname) } catch { |e| opRethrowInterrupt \$e }
 }
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
@@ -4455,7 +4312,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
@@ -4466,7 +4323,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   if not \$acquired {
     opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if not \$locked {
       opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
@@ -4590,9 +4447,9 @@ def wutSelectParse [choice: string, max: int] {
       if (\$halves | length) != 2 {
         return null
       }
-      [(try { \$halves | get 0 | into int } catch { |e| wutRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| wutRethrowInterrupt \$e; null })]
+      [(try { \$halves | get 0 | into int } catch { |e| opRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| opRethrowInterrupt \$e; null })]
     } else {
-      let n = (try { \$part | into int } catch { |e| wutRethrowInterrupt \$e; null })
+      let n = (try { \$part | into int } catch { |e| opRethrowInterrupt \$e; null })
       if \$n == 0 {
         return null
       }
@@ -4840,12 +4697,8 @@ def file [] {
 file
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
@@ -4854,7 +4707,7 @@ file
 `;
 
 snapshot[`nu / linux / sync (pinned, no match) 1`] = `
-"let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\`let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
 \$env.SHIRE_NU_NESTED = '1'
 try {
 \$env.REQ_URL_CFG = r#'http://x/cfg'#
@@ -4865,7 +4718,7 @@ def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
     return
   }
-  \$\\"(\$args | flatten | str join ' ')\\" | print
+  \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -4873,10 +4726,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+    \$"(\$args | flatten | str join ' ')" | print --stderr
     return
   }
-  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
+  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -4884,10 +4737,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$\\"(\$args | flatten | str join ' ')\\" | print
+    \$"(\$args | flatten | str join ' ')" | print
     return
   }
-  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -4895,10 +4748,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$\\"(\$args | flatten | str join ' ')\\" | print
+    \$"(\$args | flatten | str join ' ')" | print
     return
   }
-  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -4906,10 +4759,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$\\"(\$args | flatten | str join ' ')\\" | print
+    \$"(\$args | flatten | str join ' ')" | print
     return
   }
-  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -4917,13 +4770,13 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$\\"(\$args | flatten | str join ' ')\\" | print
+    \$"(\$args | flatten | str join ' ')" | print
     return
   }
   let args = \$args | flatten
-  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
+  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
   if (\$args | length) > 1 {
-    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
   }
 }
 
@@ -4933,7 +4786,24 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
-# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+# a ctrl-c: nu's own, an input prompt's, or the exit of a command it stopped (130, SIGINT, windows' ctrl-c status)
+def opInterrupted [e: record] {
+  (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510])
+}
+
+# a catch hands its error here first, so a ctrl-c is not stepped past
+def opRethrowInterrupt [e: record] {
+  if (opInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+# fires a pending ctrl-c inside a try that clears it, so what follows runs whole; true when there was one
+def opSettle [] {
+  try { do { }; false } catch { true }
+}
+
+# NuSh.quietInterrupt, line for line, for the child nu a command runs in
 def opQuietInterrupt [body: string] {
   [
     r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
@@ -4941,26 +4811,22 @@ def opQuietInterrupt [body: string] {
     r#'try {'#
     \$body
     r#'} catch { |e|'#
-    r#'  try {'#
-    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
-    r#'      if \$shireOuter { print '' }'#
-    r#'      exit 130'#
-    r#'    }'#
-    r#'  } catch {'#
+    r#'  let shireSettled = (try { do { }; false } catch { true })'#
+    r#'  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {'#
     r#'    if \$shireOuter { print '' }'#
     r#'    exit 130'#
     r#'  }'#
     r#'  \$e.raw'#
     r#'}'#
-  ] | str join \\"\\\\n\\"
+  ] | str join "\\\\n"
 }
 
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ')")
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -4995,7 +4861,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
+    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
     exit 1
   }
 }
@@ -5015,30 +4881,6 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
-# a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
-# around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
-# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
-def wutInterrupted [e: record] {
-  let code = (\$e.details.code? | default '')
-  (
-    # wut's own nu got the ctrl-c, which it raises as this (no error code), or from an \`input\` prompt as an io one
-    (\$e.debug | str starts-with 'Interrupted ') or
-    (\$code == 'nu::shell::io::interrupted') or
-    # a command it ran died of SIGINT
-    ((\$code == 'nu::shell::terminated_by_signal') and (\$e.debug | str contains 'signal: 2,')) or
-    # a command that read the ctrl-c itself exits 130; a \`nu -c\` whose command died of SIGINT exits 254 (256 - 2)
-    ((\$code == 'nu::shell::non_zero_exit_code') and (\$e.debug =~ '^NonZeroExitCode \\\\{ exit_code: (130|254),'))
-  )
-}
-
-def wutRethrowInterrupt [e: record] {
-  if (wutInterrupted \$e) {
-    \$e.raw
-  }
-}
-
-
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
     return false
@@ -5053,7 +4895,7 @@ def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
 def wutNuLockRelease [lock_path: string] {
   rm --force \$lock_path
   # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { |e| wutRethrowInterrupt \$e }
+  try { rm (\$lock_path | path dirname) } catch { |e| opRethrowInterrupt \$e }
 }
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
@@ -5061,7 +4903,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
+  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
@@ -5071,7 +4913,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     _ => '',
   }
   if \$triple == '' {
-    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
+    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
     exit 1
   }
 
@@ -5086,7 +4928,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { "" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
@@ -5095,11 +4937,11 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$waited = \$waited + 1
   }
   if not \$acquired {
-    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
+    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
     rm --force \$lock_path
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { "" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if not \$locked {
-      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
+      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
       exit 1
     }
   }
@@ -5110,15 +4952,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
-  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
+  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
+  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
   let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
+  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
 
   rm --force --recursive \$archive_path \$extract_dir
 
   if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
-    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
+    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
@@ -5133,15 +4975,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$work_dir
   }
   if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
-    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
+    opPrintErr \$"failed to extract nu (\$nu_vers)"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
+  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
   if not (\$extracted_bin | path exists) {
-    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
+    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
@@ -5165,8 +5007,8 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
-  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
+  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
+  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
 }
@@ -5188,7 +5030,7 @@ def --env wutPathRefresh [] {
     if (which pwsh | is-empty) {
       return
     }
-    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
+    let cmd = "\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep"
     ^pwsh -NoLogo -Command \$cmd | complete
   } else {
     if (which zsh | is-empty) {
@@ -5212,17 +5054,13 @@ wutPathRefresh
 opPrintWarn r#'no file matched: nosuchfile'#
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
   \$e.raw
-}"
+}\`
 `;
 
 snapshot[`nu / linux / find (pinned, matches an alias) 1`] = `
@@ -5305,7 +5143,24 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
-# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+# a ctrl-c: nu's own, an input prompt's, or the exit of a command it stopped (130, SIGINT, windows' ctrl-c status)
+def opInterrupted [e: record] {
+  (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510])
+}
+
+# a catch hands its error here first, so a ctrl-c is not stepped past
+def opRethrowInterrupt [e: record] {
+  if (opInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+# fires a pending ctrl-c inside a try that clears it, so what follows runs whole; true when there was one
+def opSettle [] {
+  try { do { }; false } catch { true }
+}
+
+# NuSh.quietInterrupt, line for line, for the child nu a command runs in
 def opQuietInterrupt [body: string] {
   [
     r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
@@ -5313,12 +5168,8 @@ def opQuietInterrupt [body: string] {
     r#'try {'#
     \$body
     r#'} catch { |e|'#
-    r#'  try {'#
-    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
-    r#'      if \$shireOuter { print '' }'#
-    r#'      exit 130'#
-    r#'    }'#
-    r#'  } catch {'#
+    r#'  let shireSettled = (try { do { }; false } catch { true })'#
+    r#'  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {'#
     r#'    if \$shireOuter { print '' }'#
     r#'    exit 130'#
     r#'  }'#
@@ -5387,30 +5238,6 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
-# a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
-# around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
-# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
-def wutInterrupted [e: record] {
-  let code = (\$e.details.code? | default '')
-  (
-    # wut's own nu got the ctrl-c, which it raises as this (no error code), or from an \`input\` prompt as an io one
-    (\$e.debug | str starts-with 'Interrupted ') or
-    (\$code == 'nu::shell::io::interrupted') or
-    # a command it ran died of SIGINT
-    ((\$code == 'nu::shell::terminated_by_signal') and (\$e.debug | str contains 'signal: 2,')) or
-    # a command that read the ctrl-c itself exits 130; a \`nu -c\` whose command died of SIGINT exits 254 (256 - 2)
-    ((\$code == 'nu::shell::non_zero_exit_code') and (\$e.debug =~ '^NonZeroExitCode \\\\{ exit_code: (130|254),'))
-  )
-}
-
-def wutRethrowInterrupt [e: record] {
-  if (wutInterrupted \$e) {
-    \$e.raw
-  }
-}
-
-
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
     return false
@@ -5425,7 +5252,7 @@ def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
 def wutNuLockRelease [lock_path: string] {
   rm --force \$lock_path
   # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { |e| wutRethrowInterrupt \$e }
+  try { rm (\$lock_path | path dirname) } catch { |e| opRethrowInterrupt \$e }
 }
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
@@ -5458,7 +5285,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
@@ -5469,7 +5296,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   if not \$acquired {
     opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if not \$locked {
       opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
@@ -5593,9 +5420,9 @@ def wutSelectParse [choice: string, max: int] {
       if (\$halves | length) != 2 {
         return null
       }
-      [(try { \$halves | get 0 | into int } catch { |e| wutRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| wutRethrowInterrupt \$e; null })]
+      [(try { \$halves | get 0 | into int } catch { |e| opRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| opRethrowInterrupt \$e; null })]
     } else {
-      let n = (try { \$part | into int } catch { |e| wutRethrowInterrupt \$e; null })
+      let n = (try { \$part | into int } catch { |e| opRethrowInterrupt \$e; null })
       if \$n == 0 {
         return null
       }
@@ -5843,12 +5670,8 @@ def file [] {
 file
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }
@@ -5936,7 +5759,24 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
-# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+# a ctrl-c: nu's own, an input prompt's, or the exit of a command it stopped (130, SIGINT, windows' ctrl-c status)
+def opInterrupted [e: record] {
+  (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510])
+}
+
+# a catch hands its error here first, so a ctrl-c is not stepped past
+def opRethrowInterrupt [e: record] {
+  if (opInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+# fires a pending ctrl-c inside a try that clears it, so what follows runs whole; true when there was one
+def opSettle [] {
+  try { do { }; false } catch { true }
+}
+
+# NuSh.quietInterrupt, line for line, for the child nu a command runs in
 def opQuietInterrupt [body: string] {
   [
     r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
@@ -5944,12 +5784,8 @@ def opQuietInterrupt [body: string] {
     r#'try {'#
     \$body
     r#'} catch { |e|'#
-    r#'  try {'#
-    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
-    r#'      if \$shireOuter { print '' }'#
-    r#'      exit 130'#
-    r#'    }'#
-    r#'  } catch {'#
+    r#'  let shireSettled = (try { do { }; false } catch { true })'#
+    r#'  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {'#
     r#'    if \$shireOuter { print '' }'#
     r#'    exit 130'#
     r#'  }'#
@@ -6018,30 +5854,6 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
-# a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
-# around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
-# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
-def wutInterrupted [e: record] {
-  let code = (\$e.details.code? | default '')
-  (
-    # wut's own nu got the ctrl-c, which it raises as this (no error code), or from an \`input\` prompt as an io one
-    (\$e.debug | str starts-with 'Interrupted ') or
-    (\$code == 'nu::shell::io::interrupted') or
-    # a command it ran died of SIGINT
-    ((\$code == 'nu::shell::terminated_by_signal') and (\$e.debug | str contains 'signal: 2,')) or
-    # a command that read the ctrl-c itself exits 130; a \`nu -c\` whose command died of SIGINT exits 254 (256 - 2)
-    ((\$code == 'nu::shell::non_zero_exit_code') and (\$e.debug =~ '^NonZeroExitCode \\\\{ exit_code: (130|254),'))
-  )
-}
-
-def wutRethrowInterrupt [e: record] {
-  if (wutInterrupted \$e) {
-    \$e.raw
-  }
-}
-
-
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
     return false
@@ -6056,7 +5868,7 @@ def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
 def wutNuLockRelease [lock_path: string] {
   rm --force \$lock_path
   # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { |e| wutRethrowInterrupt \$e }
+  try { rm (\$lock_path | path dirname) } catch { |e| opRethrowInterrupt \$e }
 }
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
@@ -6089,7 +5901,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
@@ -6100,7 +5912,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   if not \$acquired {
     opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if not \$locked {
       opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
@@ -6224,9 +6036,9 @@ def wutSelectParse [choice: string, max: int] {
       if (\$halves | length) != 2 {
         return null
       }
-      [(try { \$halves | get 0 | into int } catch { |e| wutRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| wutRethrowInterrupt \$e; null })]
+      [(try { \$halves | get 0 | into int } catch { |e| opRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| opRethrowInterrupt \$e; null })]
     } else {
-      let n = (try { \$part | into int } catch { |e| wutRethrowInterrupt \$e; null })
+      let n = (try { \$part | into int } catch { |e| opRethrowInterrupt \$e; null })
       if \$n == 0 {
         return null
       }
@@ -6474,12 +6286,8 @@ def file [] {
 file
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
-      if \$shireOuter { print '' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '' }
     exit 130
   }

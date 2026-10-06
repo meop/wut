@@ -69,11 +69,6 @@ export function isPinnedNu(shell: Sh, context: Ctx): boolean {
   return shell.name === 'nu' && context.req_srch.includes(WUT_NU_PINNED_PARAM)
 }
 
-// nu alone needs it: its `try` catches a ctrl-c, where zsh and pwsh stop without being told to
-export async function withSig(shell: Sh): Promise<Sh> {
-  return shell.name === 'nu' ? shell.with(await shell.fileLoad(['sig'], import.meta.resolve, ['.'])) : shell
-}
-
 // always hops to the pinned nu, even if already running as (unpinned) nu — the marker param tracks that
 export async function redirectCommonShell(shell: Sh, context: Ctx): Promise<string | null> {
   if (context.req_srch.includes(WUT_NU_PINNED_PARAM)) {
@@ -107,7 +102,7 @@ export function execNativeShell(shell: Sh, plat: string, cmd: string): string {
 export function execScriptShell(shell: Sh, plat: string, shellFlavor: string, cmd: string): string {
   const targetShell = getScriptFlavorShell(shellFlavor)
   const bin = shellFlavor === 'nu' ? pinnedNuBinCmd(shell, plat) : shellFlavor
-  // a script nu runs gets the ctrl-c handling every generated nu script has; zsh and pwsh need none
+  // the same ctrl-c handling as every nu script shire builds
   return `${bin} ${targetShell.execArgs(shell.toLiteral(targetShell.quietInterrupt(cmd)))}`
 }
 

@@ -10,19 +10,16 @@ try {
 let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ ''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'') or (\$e.details.code? == ''nu::shell::io::interrupted'') {
-      if \$shireOuter { print '''' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '''' }
     exit 130
   }
@@ -40,19 +37,16 @@ try {
 let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ ''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'') or (\$e.details.code? == ''nu::shell::io::interrupted'') {
-      if \$shireOuter { print '''' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '''' }
     exit 130
   }
@@ -70,19 +64,16 @@ try {
 let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ ''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'') or (\$e.details.code? == ''nu::shell::io::interrupted'') {
-      if \$shireOuter { print '''' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '''' }
     exit 130
   }
@@ -100,19 +91,16 @@ try {
 let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ ''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'') or (\$e.details.code? == ''nu::shell::io::interrupted'') {
-      if \$shireOuter { print '''' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '''' }
     exit 130
   }
@@ -130,19 +118,16 @@ try {
 let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ ''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'') or (\$e.details.code? == ''nu::shell::io::interrupted'') {
-      if \$shireOuter { print '''' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '''' }
     exit 130
   }
@@ -160,19 +145,16 @@ try {
 let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '\\\\''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') {
-      if \$shireOuter { print '\\\\'''\\\\'' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '\\\\'''\\\\'' }
     exit 130
   }
@@ -190,19 +172,16 @@ try {
 let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '\\\\''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') {
-      if \$shireOuter { print '\\\\'''\\\\'' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '\\\\'''\\\\'' }
     exit 130
   }
@@ -220,19 +199,16 @@ try {
 let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '\\\\''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') {
-      if \$shireOuter { print '\\\\'''\\\\'' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '\\\\'''\\\\'' }
     exit 130
   }
@@ -250,19 +226,16 @@ try {
 let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '\\\\''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') {
-      if \$shireOuter { print '\\\\'''\\\\'' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '\\\\'''\\\\'' }
     exit 130
   }
@@ -280,19 +253,16 @@ try {
 let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
-try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
-# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+# settle a ctrl-c that stopped the script, so the cleanup runs whole
+try { do { } }
+rm --force --permanent \$scriptFilePath
+# the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
 
 
 } catch { |e|
-  try {
-    if (\$e.debug =~ '\\\\''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') {
-      if \$shireOuter { print '\\\\'''\\\\'' }
-      exit 130
-    }
-  } catch {
+  let shireSettled = (try { do { }; false } catch { true })
+  if \$shireSettled or (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     if \$shireOuter { print '\\\\'''\\\\'' }
     exit 130
   }

@@ -49,24 +49,36 @@ Known nushell parsing and runtime quirks that have caused bugs in `src/sh/nu/`. 
   `const` declared below the command that reads it fails with `variable not found`. `PACK_PACMAN_FAMILY` sits at the top
   of `pack.nu` for that reason.
 
-- **`try` catches ctrl-c.** A ctrl-c reaches wut's own nu as well as the command it is running, and nu raises it as an
-  `Interrupted` error that `try` catches like any other failure — a bare `try { }` included. So a loop that records the
-  failure and moves on, or a `catch { null }`, steps past the user's stop to whatever comes next, where zsh and pwsh
-  would have stopped. Every `catch` in wut's nu calls `wutRethrowInterrupt $e` (`sig.nu`) before anything else, and
-  every `try` has a catch; `sig_test.ts` fails on one that does not. The rethrown interrupt reaches the handler shire's
-  `NuSh.build()` wraps every script in (`opRunCmd` wraps the child nu each command runs in the same way), which ends the
-  run quietly with exit code 130 and the newline zsh would print after `^C`. `| complete` does not need this: the
-  interrupt surfaces on the next statement. Only SIGINT works this way: a TERM, HUP or KILL sent to the whole job kills
-  nu itself, and nu ignores QUIT.
+- **How nu handles a ctrl-c** (from its source, 0.116). It sets one interrupt flag per process (`src/signals.rs`); a
+  script's children share its process group, so every nu in a chain gets one (`crates/nu-system/src/foreground.rs`). The
+  flag is checked only at a jump or a return — a branch, a loop iteration, the end of a block — and inside commands that
+  wait or write (`crates/nu-protocol/src/ir/mod.rs`, `check_interrupt`), and raised there as `Interrupted`. A `catch` or
+  `finally` clears it only when the error it handles is `Interrupted`, or on unix `TerminatedBySignal`
+  (`crates/nu-engine/src/eval_ir.rs`, `reset_signals_if_interrupted`). Uncaught, `Interrupted` is always printed —
+  `display_errors` can hide only `NonZeroExitCode` and, on unix, `TerminatedBySignal`
+  (`crates/nu-protocol/src/config/display_errors.rs`) — which is why `termination_signal = false` never made it quiet.
 
-- **A ctrl-c stays pending until a `try` catches it.** nu raises it at its next check — a command call, a block — not
-  where it arrived, so a `catch` that was handed some other error first (the exit code of the command the ctrl-c
-  stopped) can be cut short partway through, and so can a `finally`. Work that has to happen however the command ended,
-  like the cleanup after a foreground qemu run, runs as `try { X } catch { X }`: the first attempt can be cut short, and
-  catching that clears it, so the second cannot. `sig_test.ts` accepts that shape as a catch.
+- **`try` catches ctrl-c**, a bare `try { }` included. A loop that records a failure and moves on, or a
+  `catch { null }`, steps past the user's stop where zsh and pwsh would have stopped. Every `catch` in wut's nu calls
+  shire's `opRethrowInterrupt $e` first, and every `try` has a catch; `catch_test.ts` fails on one that does not.
+  `opInterrupted` is the one test for a ctrl-c: `Interrupted`, an `input` prompt's io error, or an `exit_code` of 130 (a
+  command that read it), -2 (a command that died of SIGINT) or -1073741510 (windows' `STATUS_CONTROL_C_EXIT`). A caught
+  error carries `exit_code` for a command's failure: the code, or minus the signal for a signal death.
 
-- **A `try { }` inside an `opRunCmd` string hides how the command ended.** The inner `nu -c` swallows the error, so it
-  exits 0 even when the command was killed by a signal on its own (OOM killer, a `kill` aimed at it) and the caller sees
-  success. `pack`'s wrapper carries `PACK_TRY_CATCH`, which lets a signal death (and a 130 exit) through. Uncaught, nu
-  reports a signal death as exit code `256 - signal` (254 for SIGINT, 241 for SIGTERM, 247 for SIGKILL), not the
-  `128 + signal` a POSIX shell uses.
+- **A ctrl-c can still be pending after a catch.** The failure of a command a ctrl-c stopped is often neither
+  `Interrupted` nor a signal death — one that reads it exits 130, and windows has no signals — so the catch does not
+  clear the flag, and it fires at the next check: the first branch or return in the code after it. Code that has to run
+  however the command ended, like the cleanup after a foreground qemu run, calls `opSettle` first: `try { do { } }`,
+  whose block return is a check inside a try that clears it. The end of a `catch` block is not a check
+  (`crates/nu-engine/src/compile/keyword.rs`, `compile_try`), so `let failure = (try { … } catch { |e| $e })` keeps the
+  failure safely for after the cleanup.
+
+- **Stopping looks the same in every shell.** shire's `NuSh.build()` wraps every nu script in one handler, and
+  `opRunCmd` the child nu each command runs in: it settles, and a ctrl-c ends the run with exit code 130, no error
+  output, and the newline zsh prints after `^C` (only the outermost nu prints it). Any other error is raised again and
+  reported as before.
+
+- **A `try { }` inside an `opRunCmd` string hides how the command ended.** The inner `nu -c` swallows the error and
+  exits 0. `pack`'s wrapper carries `PACK_TRY_CATCH`, which lets an abnormal end (a negative `exit_code`: a signal on
+  unix, an NTSTATUS on windows) and a ctrl-c through. Uncaught, nu exits with a signal death's `exit_code`, so a `nu -c`
+  whose command died of SIGINT exits 254 (`-2`), not the `128 + signal` a POSIX shell uses.

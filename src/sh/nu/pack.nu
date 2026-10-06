@@ -1,10 +1,8 @@
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
-# a manager's own failure stays inside its `try`, as it always has, but a signal that ended it does not: without this
-# the inner nu reported a killed manager as a clean run. that nu then exits 256 - signal, or 130 for a manager that
-# read a ctrl-c itself, which the caller's catch records as a failure, or stops on when it was a ctrl-c
-const PACK_TRY_CATCH = r#'catch { |e| if ($e.details.code? == 'nu::shell::terminated_by_signal') or ($e.debug | str starts-with 'NonZeroExitCode { exit_code: 130,') { $e.raw } }'#
+# a manager's own failure stays inside its try; a ctrl-c or an abnormal end (negative exit code) does not
+const PACK_TRY_CATCH = r#'catch { |e| if ($e.exit_code? | default 0) < 0 or ($e.exit_code? == 130) or ($e.debug | str starts-with 'Interrupted ') { $e.raw } }'#
 
 def --env packDo [cmds: list<string>] {
   opPrintCmd try '{' ...$cmds '}'
@@ -50,7 +48,7 @@ def --env packHttpOk [url: string] {
   }
   $env.PACK_PRINTED = '1'
   opPrintCmd 'http get' $url
-  let res = (try { http get --full --redirect-mode follow $url } catch { |e| wutRethrowInterrupt $e; null })
+  let res = (try { http get --full --redirect-mode follow $url } catch { |e| opRethrowInterrupt $e; null })
   let answer = (($res != null) and ($res.status == 200))
   load-env {PACK_FETCHED: (($env.PACK_FETCHED? | default []) | append { key: $url, answer: $answer })}
   $answer
@@ -86,7 +84,7 @@ def --env packPypiInfo [name: string] {
   let url = (packPypiUrl $name)
   $env.PACK_PRINTED = '1'
   opPrintCmd 'http get' $url
-  let res = (try { http get --raw --redirect-mode follow $url | from json } catch { |e| wutRethrowInterrupt $e; null })
+  let res = (try { http get --raw --redirect-mode follow $url | from json } catch { |e| opRethrowInterrupt $e; null })
   if $res == null {
     opPrintWarn $"not on pypi: ($name)"
     return
@@ -862,7 +860,7 @@ def --env packSelfUpdate [what: string, path: string, args: list<string>] {
   if 'NOOP' in $env {
     return
   }
-  let updated = (try { run-external $bin ...$args; true } catch { |e| wutRethrowInterrupt $e; false })
+  let updated = (try { run-external $bin ...$args; true } catch { |e| opRethrowInterrupt $e; false })
   if not $updated {
     opPrintWarn $"($what) did not update itself: its self update may be off, or it refused"
   }
@@ -973,7 +971,7 @@ def --env packMutate [names_key: string, cmds: list<string>, each: bool] {
 }
 
 def --env packMarkFailed [what: string, e: record] {
-  wutRethrowInterrupt $e
+  opRethrowInterrupt $e
   load-env {PACK_FAILED: (($env.PACK_FAILED? | default []) | append $"($what): ($e.msg | lines | first)")}
 }
 

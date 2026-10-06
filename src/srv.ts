@@ -12,7 +12,7 @@ import { FileCmd } from './cmd/file.ts'
 import { PackCmd } from './cmd/pack.ts'
 import { ScriptCmd } from './cmd/script.ts'
 import { VirtCmd } from './cmd/virt.ts'
-import { isPinnedNu, withSig } from './sh.ts'
+import { isPinnedNu } from './sh.ts'
 import { SETTINGS } from './stng.ts'
 import { VERSIONS } from './vers.ts'
 
@@ -129,9 +129,9 @@ export async function runSrv(request: Request) {
     if (
       !(Object.keys(context).filter((k) => k.startsWith('sys')).some((k) => context[k as keyof Ctx]))
     ) {
-      shell = await withSig(shell.with(await shell.fileLoad(['sys'])))
       return new Response(
         shell
+          .with(await shell.fileLoad(['sys']))
           .with(await shell.fileLoad(['rt'], import.meta.resolve, ['.']))
           .with(await shell.fileLoad(['get']))
           .build(),
@@ -151,7 +151,7 @@ export async function runSrv(request: Request) {
       )
     }
 
-    shell = (await withSig(shell)).with(await shell.fileLoad(['rt'], import.meta.resolve, ['.']))
+    shell = shell.with(await shell.fileLoad(['rt'], import.meta.resolve, ['.']))
     // every check that asks what is installed here reads PATH, so it starts as the one a new shell would have
     if (isPinnedNu(shell, canonicalContext)) {
       shell = shell.with(await shell.fileLoad(['path'], import.meta.resolve, ['.'])).with(['wutPathRefresh'])

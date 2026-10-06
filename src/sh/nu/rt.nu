@@ -12,7 +12,7 @@ def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
 def wutNuLockRelease [lock_path: string] {
   rm --force $lock_path
   # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm ($lock_path | path dirname) } catch { |e| wutRethrowInterrupt $e }
+  try { rm ($lock_path | path dirname) } catch { |e| opRethrowInterrupt $e }
 }
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
@@ -45,7 +45,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent $nu_bin $nu_vers) {
       return
     }
-    let locked = (try { "" | save $lock_path; true } catch { |e| wutRethrowInterrupt $e; false })
+    let locked = (try { "" | save $lock_path; true } catch { |e| opRethrowInterrupt $e; false })
     if $locked {
       $acquired = true
       break
@@ -56,7 +56,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   if not $acquired {
     opPrintWarn $"reclaiming stale nu sync lock: ($lock_path)"
     rm --force $lock_path
-    let locked = (try { "" | save $lock_path; true } catch { |e| wutRethrowInterrupt $e; false })
+    let locked = (try { "" | save $lock_path; true } catch { |e| opRethrowInterrupt $e; false })
     if not $locked {
       opPrintErr $"failed to acquire nu sync lock: ($lock_path)"
       exit 1

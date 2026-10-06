@@ -139,12 +139,12 @@ action consent written into the script, not a manager choice, and it happens aft
 
 A ctrl-c is the user stopping wut, never a failure to record and step past. That holds in all three shells: zsh and pwsh
 stop on it without being told to, and nu would too, except that its `try` catches it — so every catch in wut's nu hands
-the error to `wutRethrowInterrupt` first (see [NUSHELL.md](NUSHELL.md)). A command that reads the ctrl-c itself and
-exits 130 counts as one. Anything else that ends a command — a failure, or a signal aimed at that command alone — is
+the error to shire's `opRethrowInterrupt` first (see [NUSHELL.md](NUSHELL.md)). A command that reads the ctrl-c itself
+and exits 130 counts as one. Anything else that ends a command — a failure, or a signal aimed at that command alone — is
 that command's failure: the run records it and goes on.
 
-Stopping looks the same in every shell, too: no error output, exit code 130, and the prompt on a new line after `^C`. nu
-gets there through shire, which wraps every nu script it builds in a handler that does exactly that.
+Stopping looks the same in every shell, too: no error output, and the prompt on a new line after `^C`. nu gets there
+through shire, which wraps every nu script it builds in a handler that does that and exits 130, as zsh does.
 
 ## Nothing matched, nothing installed
 

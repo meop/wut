@@ -206,7 +206,7 @@ def virtPodman [] {
           | each { |f| $f | path basename | str replace '.kube' '' }
           | if ($env.VIRT_INSTANCES | is-not-empty) { where { |p| $env.VIRT_INSTANCES | all { |f| $p | str contains --ignore-case $f } } } else { $in }
       } else { [] }) {
-        try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 $"($pod).service" } catch { |e| wutRethrowInterrupt $e }
+        try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 $"($pod).service" } catch { |e| opRethrowInterrupt $e }
         opPrintRunCmd sudo $cmd pod list --filter $"name=($pod)" --format '"table {{.Name}}\t{{.Status}}\t{{.Created}}\t{{.NumberOfContainers}}"'
         opPrintRunCmd sudo $cmd container list --filter $"pod=($pod)" --format '"table {{.PodName}}\t{{.Names}}\t{{.Image}}\t{{.Ports}}\t{{.State}}\t{{.Status}}"'
       }
