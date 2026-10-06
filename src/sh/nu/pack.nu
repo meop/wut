@@ -1,8 +1,14 @@
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
+# a manager's own failure stays inside its `try`, as it always has, but a signal that ended it does not: without this
+# the inner nu reported a killed manager as a clean run. that nu then exits 256 - signal, or 130 for a manager that
+# read a ctrl-c itself, which the caller's catch records as a failure, or stops on when it was a ctrl-c
+const PACK_TRY_CATCH = r#'catch { |e| if ($e.details.code? == 'nu::shell::terminated_by_signal') or ($e.debug | str starts-with 'NonZeroExitCode { exit_code: 130,') { $e.raw } }'#
+
 def --env packDo [cmds: list<string>] {
-  opPrintRunCmd try '{' ...$cmds '}'
+  opPrintCmd try '{' ...$cmds '}'
+  opRunCmd try '{' ...$cmds '}' $PACK_TRY_CATCH
 }
 
 def packElevate [cmd: string] {
@@ -44,7 +50,7 @@ def --env packHttpOk [url: string] {
   }
   $env.PACK_PRINTED = '1'
   opPrintCmd 'http get' $url
-  let res = (try { http get --full --redirect-mode follow $url } catch { |e| packRethrowInterrupt $e; null })
+  let res = (try { http get --full --redirect-mode follow $url } catch { |e| wutRethrowInterrupt $e; null })
   let answer = (($res != null) and ($res.status == 200))
   load-env {PACK_FETCHED: (($env.PACK_FETCHED? | default []) | append { key: $url, answer: $answer })}
   $answer
@@ -80,7 +86,7 @@ def --env packPypiInfo [name: string] {
   let url = (packPypiUrl $name)
   $env.PACK_PRINTED = '1'
   opPrintCmd 'http get' $url
-  let res = (try { http get --raw --redirect-mode follow $url | from json } catch { |e| packRethrowInterrupt $e; null })
+  let res = (try { http get --raw --redirect-mode follow $url | from json } catch { |e| wutRethrowInterrupt $e; null })
   if $res == null {
     opPrintWarn $"not on pypi: ($name)"
     return
@@ -856,7 +862,7 @@ def --env packSelfUpdate [what: string, path: string, args: list<string>] {
   if 'NOOP' in $env {
     return
   }
-  let updated = (try { run-external $bin ...$args; true } catch { |e| packRethrowInterrupt $e; false })
+  let updated = (try { run-external $bin ...$args; true } catch { |e| wutRethrowInterrupt $e; false })
   if not $updated {
     opPrintWarn $"($what) did not update itself: its self update may be off, or it refused"
   }
@@ -966,16 +972,8 @@ def --env packMutate [names_key: string, cmds: list<string>, each: bool] {
   load-env {($names_key): []}
 }
 
-# a ctrl-c reaches wut's own nu as well as the manager it stopped, and `try` catches it like any other failure. it
-# is the user stopping the run, so it goes on stopping it rather than being stepped past to the next prompt
-def packRethrowInterrupt [e: record] {
-  if ($e.debug | str starts-with 'Interrupted ') {
-    $e.raw
-  }
-}
-
 def --env packMarkFailed [what: string, e: record] {
-  packRethrowInterrupt $e
+  wutRethrowInterrupt $e
   load-env {PACK_FAILED: (($env.PACK_FAILED? | default []) | append $"($what): ($e.msg | lines | first)")}
 }
 
@@ -1007,7 +1005,8 @@ def --env packOpStrict [cmds: list<string>] {
 
 def --env packOp [cmds: list<string>] {
   $env.PACK_PRINTED = '1'
-  opPrintMaybeRunCmd try '{' ...$cmds '}'
+  opPrintCmd try '{' ...$cmds '}'
+  opMaybeRunCmd try '{' ...$cmds '}' $PACK_TRY_CATCH
 }
 
 def --env packOpAdd [cmds: list<string>, --each] {

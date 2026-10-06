@@ -10,9 +10,9 @@ def wutSelectParse [choice: string, max: int] {
       if ($halves | length) != 2 {
         return null
       }
-      [(try { $halves | get 0 | into int } catch { null }), (try { $halves | get 1 | into int } catch { null })]
+      [(try { $halves | get 0 | into int } catch { |e| wutRethrowInterrupt $e; null }), (try { $halves | get 1 | into int } catch { |e| wutRethrowInterrupt $e; null })]
     } else {
-      let n = (try { $part | into int } catch { null })
+      let n = (try { $part | into int } catch { |e| wutRethrowInterrupt $e; null })
       if $n == 0 {
         return null
       }

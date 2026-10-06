@@ -135,6 +135,14 @@ not one — it makes the same GET per pair that `sync` does — so it states its
 Scripts are the one place a second question is legitimate: a script's own body may ask before it acts. That is per
 action consent written into the script, not a manager choice, and it happens after the plan was agreed.
 
+## Ctrl-C stops the run
+
+A ctrl-c is the user stopping wut, never a failure to record and step past. That holds in all three shells: zsh and pwsh
+stop on it without being told to, and nu would too, except that its `try` catches it — so every catch in wut's nu hands
+the error to `wutRethrowInterrupt` first (see [NUSHELL.md](NUSHELL.md)). A command that reads the ctrl-c itself and
+exits 130 counts as one. Anything else that ends a command — a failure, or a signal aimed at that command alone — is
+that command's failure: the run records it and goes on.
+
 ## Nothing matched, nothing installed
 
 Two different absences, two different messages:

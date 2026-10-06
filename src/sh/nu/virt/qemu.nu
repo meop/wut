@@ -447,7 +447,7 @@ def virtQemu [] {
       # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
       opPrintMaybeRunCmd $"r##'((['#!/usr/bin/bash', ('exec ' + $swtpmCmd)] | str join "\n") + "\n")'##" '|' sudo tee $swtpmScriptFilePath '|' ignore
       opPrintMaybeRunCmd sudo chmod +x $swtpmScriptFilePath
-      try { opPrintMaybeRunCmd sudo pkill --full --ignore-ancestors $"^swtpm.*($instance)" }
+      try { opPrintMaybeRunCmd sudo pkill --full --ignore-ancestors $"^swtpm.*($instance)" } catch { |e| wutRethrowInterrupt $e }
       opPrintMaybeRunCmd sudo rm -f $"($tmpDirPath)/tpm.socket"
       opPrintMaybeRunCmd sudo $swtpmScriptFilePath
     }
@@ -463,10 +463,14 @@ def virtQemu [] {
     opPrintMaybeRunCmd $"r##'((['#!/usr/bin/bash', ('exec ' + $qemuCmd)] | str join "\n") + "\n")'##" '|' sudo tee $qemuScriptFilePath '|' ignore
     opPrintMaybeRunCmd sudo chmod +x $qemuScriptFilePath
 
-    try { opPrintMaybeRunCmd sudo $qemuScriptFilePath }
+    # the cleanup runs however qemu ended, and a ctrl-c that ended it stops the run once that is done
+    let failure = (try { opPrintMaybeRunCmd sudo $qemuScriptFilePath; null } catch { |e| $e })
 
-    try { opPrintMaybeRunCmd sudo pkill --full --ignore-ancestors $"^swtpm.*($instance)" }
+    try { opPrintMaybeRunCmd sudo pkill --full --ignore-ancestors $"^swtpm.*($instance)" } catch { |e| wutRethrowInterrupt $e }
     opPrintMaybeRunCmd sudo rm -rf $runDirPath
+    if $failure != null {
+      wutRethrowInterrupt $failure
+    }
   }
 
   def doRem [cmd, instance] {
@@ -507,9 +511,9 @@ def virtQemu [] {
           | each { |f| $f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
           | if ($env.VIRT_INSTANCES | is-not-empty) { where { |i| $env.VIRT_INSTANCES | all { |f| $i | str contains --ignore-case $f } } } else { $in }
       } else { [] }) {
-        try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 $"qemu-($instance).service" }
-        try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full $"^swtpm.*($instance)" }
-        try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full $"^qemu-system.*($instance)" }
+        try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 $"qemu-($instance).service" } catch { |e| wutRethrowInterrupt $e }
+        try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full $"^swtpm.*($instance)" } catch { |e| wutRethrowInterrupt $e }
+        try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full $"^qemu-system.*($instance)" } catch { |e| wutRethrowInterrupt $e }
       }
     }
     rem => {

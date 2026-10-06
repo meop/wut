@@ -6,6 +6,7 @@ import { getScriptFlavorOpPreamble } from '../../sh.ts'
 const PACK_NU = new URL('./pack.nu', import.meta.url).pathname
 const SEL_NU = new URL('./sel.nu', import.meta.url).pathname
 const PATH_NU = new URL('./path.nu', import.meta.url).pathname
+const SIG_NU = new URL('./sig.nu', import.meta.url).pathname
 
 // `which` is the only thing these decisions read, so a PATH of stub binaries is the whole fixture
 async function withManagers(present: Array<string>, probe: string): Promise<string | null> {
@@ -35,6 +36,7 @@ async function withStubs(
     const body = [
       // the same op helpers the client is sent, so the checks print and run exactly as they do in a real script
       await getScriptFlavorOpPreamble('nu'),
+      await Deno.readTextFile(SIG_NU),
       await Deno.readTextFile(PATH_NU),
       pick == null ? await Deno.readTextFile(SEL_NU) : (await Deno.readTextFile(SEL_NU)).replace(
         /^def wutSelectRead [\s\S]*?^}$/m,

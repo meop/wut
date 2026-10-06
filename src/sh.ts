@@ -69,6 +69,11 @@ export function isPinnedNu(shell: Sh, context: Ctx): boolean {
   return shell.name === 'nu' && context.req_srch.includes(WUT_NU_PINNED_PARAM)
 }
 
+// nu alone needs it: its `try` catches a ctrl-c, where zsh and pwsh stop without being told to
+export async function withSig(shell: Sh): Promise<Sh> {
+  return shell.name === 'nu' ? shell.with(await shell.fileLoad(['sig'], import.meta.resolve, ['.'])) : shell
+}
+
 // always hops to the pinned nu, even if already running as (unpinned) nu — the marker param tracks that
 export async function redirectCommonShell(shell: Sh, context: Ctx): Promise<string | null> {
   if (context.req_srch.includes(WUT_NU_PINNED_PARAM)) {

@@ -50,14 +50,16 @@ Known nushell parsing and runtime quirks that have caused bugs in `src/sh/nu/`. 
   of `pack.nu` for that reason.
 
 - **`try` catches ctrl-c.** A ctrl-c reaches wut's own nu as well as the command it is running, and nu raises it as an
-  `Interrupted` error that `try` catches like any other failure — so a loop that records the failure and moves on (each
-  manager in `pack`) or a `catch { null }` (`http get` in `packHttpOk`) steps past the user's stop to whatever comes
-  next. A `catch` that swallows or records must call `packRethrowInterrupt $e` first, which raises it again.
-  `| complete` does not have this problem: the interrupt surfaces on the next statement. Leave the catch alone where
-  carrying on is the point, like the cleanup after a foreground qemu run. Only SIGINT works this way: a TERM, HUP or
-  KILL sent to the whole job kills nu itself, and nu ignores QUIT.
+  `Interrupted` error that `try` catches like any other failure — a bare `try { }` included. So a loop that records the
+  failure and moves on, or a `catch { null }`, steps past the user's stop to whatever comes next, where zsh and pwsh
+  would have stopped. Every `catch` in wut's nu calls `wutRethrowInterrupt $e` (`sig.nu`) before anything else, and
+  every `try` has a catch; `sig_test.ts` fails on one that does not. Work that has to happen however the command ended,
+  like the cleanup after a foreground qemu run, keeps the error, does that work, then rethrows. `| complete` does not
+  need this: the interrupt surfaces on the next statement. Only SIGINT works this way: a TERM, HUP or KILL sent to the
+  whole job kills nu itself, and nu ignores QUIT.
 
 - **A `try { }` inside an `opRunCmd` string hides how the command ended.** The inner `nu -c` swallows the error, so it
   exits 0 even when the command was killed by a signal on its own (OOM killer, a `kill` aimed at it) and the caller sees
-  success. Without the `try`, nu reports a signal death as exit code `256 - signal` (254 for SIGINT, 241 for SIGTERM,
-  247 for SIGKILL), not the `128 + signal` a POSIX shell uses.
+  success. `pack`'s wrapper carries `PACK_TRY_CATCH`, which lets a signal death (and a 130 exit) through. Uncaught, nu
+  reports a signal death as exit code `256 - signal` (254 for SIGINT, 241 for SIGTERM, 247 for SIGKILL), not the
+  `128 + signal` a POSIX shell uses.

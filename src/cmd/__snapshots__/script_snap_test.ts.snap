@@ -79,7 +79,7 @@ if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 `;
 
 snapshot[`nu / linux / exec (no match, warns) 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/install?sysOsPlat=linux&wutNuPinned=1'#
 
@@ -87,7 +87,7 @@ def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
     return
   }
-  \$"(\$args | flatten | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -95,10 +95,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -106,10 +106,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -117,10 +117,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -128,10 +128,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -139,13 +139,13 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
   let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   }
 }
 
@@ -156,11 +156,11 @@ def opMaybePrintCmd --wrapped [...args] {
 }
 
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -195,7 +195,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -215,6 +215,29 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
+# a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
+# around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
+# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns
+def wutInterrupted [e: record] {
+  let code = (\$e.details.code? | default '')
+  (
+    # wut's own nu got the ctrl-c, which it raises as this (no error code), or from an \`input\` prompt as an io one
+    (\$e.debug | str starts-with 'Interrupted ') or
+    (\$code == 'nu::shell::io::interrupted') or
+    # a command it ran died of SIGINT
+    ((\$code == 'nu::shell::terminated_by_signal') and (\$e.debug | str contains 'signal: 2,')) or
+    # a command that read the ctrl-c itself exits 130; a \`nu -c\` whose command died of SIGINT exits 254 (256 - 2)
+    ((\$code == 'nu::shell::non_zero_exit_code') and (\$e.debug =~ '^NonZeroExitCode \\\\{ exit_code: (130|254),'))
+  )
+}
+
+def wutRethrowInterrupt [e: record] {
+  if (wutInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
     return false
@@ -229,7 +252,7 @@ def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
 def wutNuLockRelease [lock_path: string] {
   rm --force \$lock_path
   # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { }
+  try { rm (\$lock_path | path dirname) } catch { |e| wutRethrowInterrupt \$e }
 }
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
@@ -237,7 +260,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
@@ -247,7 +270,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     _ => '',
   }
   if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
   }
 
@@ -262,7 +285,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
@@ -271,11 +294,11 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$waited = \$waited + 1
   }
   if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
     if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
     }
   }
@@ -286,15 +309,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
+  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
 
   rm --force --recursive \$archive_path \$extract_dir
 
   if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
@@ -309,15 +332,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$work_dir
   }
   if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
   if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
@@ -341,8 +364,8 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
+  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
 }
@@ -364,7 +387,7 @@ def --env wutPathRefresh [] {
     if (which pwsh | is-empty) {
       return
     }
-    let cmd = "\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep"
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
     ^pwsh -NoLogo -Command \$cmd | complete
   } else {
     if (which zsh | is-empty) {
@@ -386,11 +409,11 @@ wutPathRefresh
 \$env.SCRIPT_EXEC_ACTION = r#'install'#
 
 opPrintWarn r#'no script matched: install'#
-\`
+"
 `;
 
 snapshot[`nu / windows / exec (no match, warns) 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/install?sysOsPlat=windows&wutNuPinned=1'#
 
@@ -398,7 +421,7 @@ def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
     return
   }
-  \$"(\$args | flatten | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -406,10 +429,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -417,10 +440,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -428,10 +451,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -439,10 +462,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -450,13 +473,13 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
   let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   }
 }
 
@@ -467,11 +490,11 @@ def opMaybePrintCmd --wrapped [...args] {
 }
 
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -506,7 +529,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -526,6 +549,29 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=windows&wutNuPinned=1'#
 
+# a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
+# around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
+# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns
+def wutInterrupted [e: record] {
+  let code = (\$e.details.code? | default '')
+  (
+    # wut's own nu got the ctrl-c, which it raises as this (no error code), or from an \`input\` prompt as an io one
+    (\$e.debug | str starts-with 'Interrupted ') or
+    (\$code == 'nu::shell::io::interrupted') or
+    # a command it ran died of SIGINT
+    ((\$code == 'nu::shell::terminated_by_signal') and (\$e.debug | str contains 'signal: 2,')) or
+    # a command that read the ctrl-c itself exits 130; a \`nu -c\` whose command died of SIGINT exits 254 (256 - 2)
+    ((\$code == 'nu::shell::non_zero_exit_code') and (\$e.debug =~ '^NonZeroExitCode \\\\{ exit_code: (130|254),'))
+  )
+}
+
+def wutRethrowInterrupt [e: record] {
+  if (wutInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
     return false
@@ -540,7 +586,7 @@ def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
 def wutNuLockRelease [lock_path: string] {
   rm --force \$lock_path
   # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { }
+  try { rm (\$lock_path | path dirname) } catch { |e| wutRethrowInterrupt \$e }
 }
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
@@ -548,7 +594,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
@@ -558,7 +604,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     _ => '',
   }
   if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
   }
 
@@ -573,7 +619,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
@@ -582,11 +628,11 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$waited = \$waited + 1
   }
   if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
     if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
     }
   }
@@ -597,15 +643,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
+  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
 
   rm --force --recursive \$archive_path \$extract_dir
 
   if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
@@ -620,15 +666,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$work_dir
   }
   if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
   if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
@@ -652,8 +698,8 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
+  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
 }
@@ -675,7 +721,7 @@ def --env wutPathRefresh [] {
     if (which pwsh | is-empty) {
       return
     }
-    let cmd = "\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep"
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
     ^pwsh -NoLogo -Command \$cmd | complete
   } else {
     if (which zsh | is-empty) {
@@ -697,7 +743,7 @@ wutPathRefresh
 \$env.SCRIPT_EXEC_ACTION = r#'install'#
 
 opPrintWarn r#'no script matched: install'#
-\`
+"
 `;
 
 snapshot[`pwsh / windows / exec 1`] = `
@@ -740,7 +786,7 @@ if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 `;
 
 snapshot[`nu / linux / exec (overlay, already nu) 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/setup/cargo?sysOsPlat=linux&wutNuPinned=1'#
 
@@ -748,7 +794,7 @@ def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
     return
   }
-  \$"(\$args | flatten | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -756,10 +802,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -767,10 +813,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -778,10 +824,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -789,10 +835,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -800,13 +846,13 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
   let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   }
 }
 
@@ -817,11 +863,11 @@ def opMaybePrintCmd --wrapped [...args] {
 }
 
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -856,7 +902,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -876,6 +922,29 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
+# a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
+# around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
+# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns
+def wutInterrupted [e: record] {
+  let code = (\$e.details.code? | default '')
+  (
+    # wut's own nu got the ctrl-c, which it raises as this (no error code), or from an \`input\` prompt as an io one
+    (\$e.debug | str starts-with 'Interrupted ') or
+    (\$code == 'nu::shell::io::interrupted') or
+    # a command it ran died of SIGINT
+    ((\$code == 'nu::shell::terminated_by_signal') and (\$e.debug | str contains 'signal: 2,')) or
+    # a command that read the ctrl-c itself exits 130; a \`nu -c\` whose command died of SIGINT exits 254 (256 - 2)
+    ((\$code == 'nu::shell::non_zero_exit_code') and (\$e.debug =~ '^NonZeroExitCode \\\\{ exit_code: (130|254),'))
+  )
+}
+
+def wutRethrowInterrupt [e: record] {
+  if (wutInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
     return false
@@ -890,7 +959,7 @@ def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
 def wutNuLockRelease [lock_path: string] {
   rm --force \$lock_path
   # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { }
+  try { rm (\$lock_path | path dirname) } catch { |e| wutRethrowInterrupt \$e }
 }
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
@@ -898,7 +967,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
@@ -908,7 +977,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     _ => '',
   }
   if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
   }
 
@@ -923,7 +992,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
@@ -932,11 +1001,11 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$waited = \$waited + 1
   }
   if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
     if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
     }
   }
@@ -947,15 +1016,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
+  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
 
   rm --force --recursive \$archive_path \$extract_dir
 
   if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
@@ -970,15 +1039,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$work_dir
   }
   if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
   if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
@@ -1002,8 +1071,8 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
+  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
 }
@@ -1025,7 +1094,7 @@ def --env wutPathRefresh [] {
     if (which pwsh | is-empty) {
       return
     }
-    let cmd = "\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep"
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
     ^pwsh -NoLogo -Command \$cmd | complete
   } else {
     if (which zsh | is-empty) {
@@ -1060,9 +1129,9 @@ def wutSelectParse [choice: string, max: int] {
       if (\$halves | length) != 2 {
         return null
       }
-      [(try { \$halves | get 0 | into int } catch { null }), (try { \$halves | get 1 | into int } catch { null })]
+      [(try { \$halves | get 0 | into int } catch { |e| wutRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| wutRethrowInterrupt \$e; null })]
     } else {
-      let n = (try { \$part | into int } catch { null })
+      let n = (try { \$part | into int } catch { |e| wutRethrowInterrupt \$e; null })
       if \$n == 0 {
         return null
       }
@@ -1087,7 +1156,7 @@ def wutSelectRead [max: int] {
     return (1..\$max | each { |i| \$i })
   }
   opPrint ''
-  wutSelectParse (input \$"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): ") \$max
+  wutSelectParse (input \$\\"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): \\") \$max
 }
 
 
@@ -1121,7 +1190,7 @@ def --env scriptPlanRun [] {
   }
 
   scriptTable ['action' 'tool' 'shell'] (\$here | enumerate | each { |u|
-    [\$"(\$u.index + 1)\\\\) (\$u.item.action)", \$u.item.tool, \$u.item.shell]
+    [\$\\"(\$u.index + 1)\\\\) (\$u.item.action)\\", \$u.item.tool, \$u.item.shell]
   })
   let picked = (wutSelectRead (\$here | length))
   if \$picked == null {
@@ -1145,7 +1214,7 @@ def --env scriptFindAdd [action: string, ...entries: string] {
   if (\$tools | is-empty) {
     return
   }
-  load-env {SCRIPT_FIND_ROWS: ((\$env.SCRIPT_FIND_ROWS? | default []) | append \$"(\$action)|(\$tools | str join ', ')")}
+  load-env {SCRIPT_FIND_ROWS: ((\$env.SCRIPT_FIND_ROWS? | default []) | append \$\\"(\$action)|(\$tools | str join ', ')\\")}
 }
 
 # one table, one question, then the listing
@@ -1156,7 +1225,7 @@ def scriptFindShow [] {
   }
   for r in \$rows {
     opPrint (\$r | get 0)
-    opPrint \$"  (\$r | get 1)"
+    opPrint \$\\"  (\$r | get 1)\\"
   }
   opPrint ''
   scriptTable ['action' 'tools'] (\$rows | each { |r|
@@ -1171,7 +1240,7 @@ def --env scriptRunUnit [id: string] {
   if [[ \$SUCCINCT ]]; then
     return
   fi
-  print -r -- "\$*"
+  print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
@@ -1179,12 +1248,12 @@ function opPrintErr {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
+    print -r -- \\"\$*\\" >&2
     return
   fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
+  print -n \\"\\\\033[0;31m\\" >&2
+  print -n -r -- \\"\$*\\" >&2
+  print \\"\\\\033[0m\\" >&2
 }
 
 function opPrintSucc {
@@ -1192,12 +1261,12 @@ function opPrintSucc {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;32m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintWarn {
@@ -1205,12 +1274,12 @@ function opPrintWarn {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;33m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintInfo {
@@ -1218,12 +1287,12 @@ function opPrintInfo {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;34m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintCmd {
@@ -1231,54 +1300,54 @@ function opPrintCmd {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
+  print -n \\"\\\\033[0;35m\\"
+  print -n -r \\"\$1\\"
+  print -n \\"\\\\033[0m\\"
   shift 1
   if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
+    print -n \\" \\\\033[0;36m\\"
+    print -n -r -- \\"\$*\\"
+    print \\"\\\\033[0m\\"
   fi
 }
 
 function opMaybePrintCmd {
   if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
+    opPrintCmd \\"\$@\\"
   fi
 }
 
 function opRunCmd {
-  eval "\$*"
+  eval \\"\$*\\"
 }
 
 function opRunSilentCmd {
-  eval "\$*" &> /dev/null
+  eval \\"\$*\\" &> /dev/null
 }
 
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
+    opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
   if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
+    opRunSilentCmd \\"\$@\\"
   fi
 }
 
 function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opRunCmd \\"\$@\\"
 }
 
 function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opMaybeRunCmd \\"\$@\\"
 }
 
 function () {
@@ -1300,7 +1369,7 @@ function () {
     return
   fi
   local url='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
-  opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "\${url}" '|' bash
+  opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url \\"\${url}\\" '|' bash
   opPrintMaybeRunCmd cargo binstall cargo-cache
   opPrintMaybeRunCmd cargo binstall cargo-update
 }
@@ -1309,10 +1378,10 @@ function () {
   }
 }
 
-\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":[]}]'#
+\$env.SCRIPT_PLAN = r#'[{\\"id\\":\\"cargo/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"cargo\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[]}]'#
 
 scriptPlanRun
-\`
+"
 `;
 
 snapshot[`zsh / linux / exec (overlay stays in the calling shell, cargo) 1`] = `
@@ -1355,7 +1424,7 @@ if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 `;
 
 snapshot[`nu / linux / exec (action only, one plan, no hop) 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/setup?sysOsPlat=linux&wutNuPinned=1'#
 
@@ -1363,7 +1432,7 @@ def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
     return
   }
-  \$"(\$args | flatten | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -1371,10 +1440,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -1382,10 +1451,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -1393,10 +1462,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -1404,10 +1473,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -1415,13 +1484,13 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
   let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   }
 }
 
@@ -1432,11 +1501,11 @@ def opMaybePrintCmd --wrapped [...args] {
 }
 
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -1471,7 +1540,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -1491,6 +1560,29 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
+# a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
+# around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
+# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns
+def wutInterrupted [e: record] {
+  let code = (\$e.details.code? | default '')
+  (
+    # wut's own nu got the ctrl-c, which it raises as this (no error code), or from an \`input\` prompt as an io one
+    (\$e.debug | str starts-with 'Interrupted ') or
+    (\$code == 'nu::shell::io::interrupted') or
+    # a command it ran died of SIGINT
+    ((\$code == 'nu::shell::terminated_by_signal') and (\$e.debug | str contains 'signal: 2,')) or
+    # a command that read the ctrl-c itself exits 130; a \`nu -c\` whose command died of SIGINT exits 254 (256 - 2)
+    ((\$code == 'nu::shell::non_zero_exit_code') and (\$e.debug =~ '^NonZeroExitCode \\\\{ exit_code: (130|254),'))
+  )
+}
+
+def wutRethrowInterrupt [e: record] {
+  if (wutInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
     return false
@@ -1505,7 +1597,7 @@ def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
 def wutNuLockRelease [lock_path: string] {
   rm --force \$lock_path
   # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { }
+  try { rm (\$lock_path | path dirname) } catch { |e| wutRethrowInterrupt \$e }
 }
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
@@ -1513,7 +1605,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
@@ -1523,7 +1615,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     _ => '',
   }
   if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
   }
 
@@ -1538,7 +1630,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
@@ -1547,11 +1639,11 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$waited = \$waited + 1
   }
   if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
     if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
     }
   }
@@ -1562,15 +1654,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
+  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
 
   rm --force --recursive \$archive_path \$extract_dir
 
   if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
@@ -1585,15 +1677,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$work_dir
   }
   if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
   if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
@@ -1617,8 +1709,8 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
+  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
 }
@@ -1640,7 +1732,7 @@ def --env wutPathRefresh [] {
     if (which pwsh | is-empty) {
       return
     }
-    let cmd = "\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep"
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
     ^pwsh -NoLogo -Command \$cmd | complete
   } else {
     if (which zsh | is-empty) {
@@ -1673,9 +1765,9 @@ def wutSelectParse [choice: string, max: int] {
       if (\$halves | length) != 2 {
         return null
       }
-      [(try { \$halves | get 0 | into int } catch { null }), (try { \$halves | get 1 | into int } catch { null })]
+      [(try { \$halves | get 0 | into int } catch { |e| wutRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| wutRethrowInterrupt \$e; null })]
     } else {
-      let n = (try { \$part | into int } catch { null })
+      let n = (try { \$part | into int } catch { |e| wutRethrowInterrupt \$e; null })
       if \$n == 0 {
         return null
       }
@@ -1700,7 +1792,7 @@ def wutSelectRead [max: int] {
     return (1..\$max | each { |i| \$i })
   }
   opPrint ''
-  wutSelectParse (input \$"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): ") \$max
+  wutSelectParse (input \$\\"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): \\") \$max
 }
 
 
@@ -1734,7 +1826,7 @@ def --env scriptPlanRun [] {
   }
 
   scriptTable ['action' 'tool' 'shell'] (\$here | enumerate | each { |u|
-    [\$"(\$u.index + 1)\\\\) (\$u.item.action)", \$u.item.tool, \$u.item.shell]
+    [\$\\"(\$u.index + 1)\\\\) (\$u.item.action)\\", \$u.item.tool, \$u.item.shell]
   })
   let picked = (wutSelectRead (\$here | length))
   if \$picked == null {
@@ -1758,7 +1850,7 @@ def --env scriptFindAdd [action: string, ...entries: string] {
   if (\$tools | is-empty) {
     return
   }
-  load-env {SCRIPT_FIND_ROWS: ((\$env.SCRIPT_FIND_ROWS? | default []) | append \$"(\$action)|(\$tools | str join ', ')")}
+  load-env {SCRIPT_FIND_ROWS: ((\$env.SCRIPT_FIND_ROWS? | default []) | append \$\\"(\$action)|(\$tools | str join ', ')\\")}
 }
 
 # one table, one question, then the listing
@@ -1769,7 +1861,7 @@ def scriptFindShow [] {
   }
   for r in \$rows {
     opPrint (\$r | get 0)
-    opPrint \$"  (\$r | get 1)"
+    opPrint \$\\"  (\$r | get 1)\\"
   }
   opPrint ''
   scriptTable ['action' 'tools'] (\$rows | each { |r|
@@ -1784,7 +1876,7 @@ def --env scriptRunUnit [id: string] {
   if [[ \$SUCCINCT ]]; then
     return
   fi
-  print -r -- "\$*"
+  print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
@@ -1792,12 +1884,12 @@ function opPrintErr {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
+    print -r -- \\"\$*\\" >&2
     return
   fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
+  print -n \\"\\\\033[0;31m\\" >&2
+  print -n -r -- \\"\$*\\" >&2
+  print \\"\\\\033[0m\\" >&2
 }
 
 function opPrintSucc {
@@ -1805,12 +1897,12 @@ function opPrintSucc {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;32m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintWarn {
@@ -1818,12 +1910,12 @@ function opPrintWarn {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;33m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintInfo {
@@ -1831,12 +1923,12 @@ function opPrintInfo {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;34m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintCmd {
@@ -1844,54 +1936,54 @@ function opPrintCmd {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
+  print -n \\"\\\\033[0;35m\\"
+  print -n -r \\"\$1\\"
+  print -n \\"\\\\033[0m\\"
   shift 1
   if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
+    print -n \\" \\\\033[0;36m\\"
+    print -n -r -- \\"\$*\\"
+    print \\"\\\\033[0m\\"
   fi
 }
 
 function opMaybePrintCmd {
   if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
+    opPrintCmd \\"\$@\\"
   fi
 }
 
 function opRunCmd {
-  eval "\$*"
+  eval \\"\$*\\"
 }
 
 function opRunSilentCmd {
-  eval "\$*" &> /dev/null
+  eval \\"\$*\\" &> /dev/null
 }
 
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
+    opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
   if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
+    opRunSilentCmd \\"\$@\\"
   fi
 }
 
 function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opRunCmd \\"\$@\\"
 }
 
 function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opMaybeRunCmd \\"\$@\\"
 }
 
 function () {
@@ -1913,7 +2005,7 @@ function () {
     return
   fi
   local url='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
-  opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "\${url}" '|' bash
+  opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url \\"\${url}\\" '|' bash
   opPrintMaybeRunCmd cargo binstall cargo-cache
   opPrintMaybeRunCmd cargo binstall cargo-update
 }
@@ -1922,7 +2014,7 @@ function () {
   if [[ \$SUCCINCT ]]; then
     return
   fi
-  print -r -- "\$*"
+  print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
@@ -1930,12 +2022,12 @@ function opPrintErr {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
+    print -r -- \\"\$*\\" >&2
     return
   fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
+  print -n \\"\\\\033[0;31m\\" >&2
+  print -n -r -- \\"\$*\\" >&2
+  print \\"\\\\033[0m\\" >&2
 }
 
 function opPrintSucc {
@@ -1943,12 +2035,12 @@ function opPrintSucc {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;32m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintWarn {
@@ -1956,12 +2048,12 @@ function opPrintWarn {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;33m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintInfo {
@@ -1969,12 +2061,12 @@ function opPrintInfo {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;34m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintCmd {
@@ -1982,54 +2074,54 @@ function opPrintCmd {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
+  print -n \\"\\\\033[0;35m\\"
+  print -n -r \\"\$1\\"
+  print -n \\"\\\\033[0m\\"
   shift 1
   if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
+    print -n \\" \\\\033[0;36m\\"
+    print -n -r -- \\"\$*\\"
+    print \\"\\\\033[0m\\"
   fi
 }
 
 function opMaybePrintCmd {
   if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
+    opPrintCmd \\"\$@\\"
   fi
 }
 
 function opRunCmd {
-  eval "\$*"
+  eval \\"\$*\\"
 }
 
 function opRunSilentCmd {
-  eval "\$*" &> /dev/null
+  eval \\"\$*\\" &> /dev/null
 }
 
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
+    opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
   if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
+    opRunSilentCmd \\"\$@\\"
   fi
 }
 
 function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opRunCmd \\"\$@\\"
 }
 
 function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opMaybeRunCmd \\"\$@\\"
 }
 
 function () {
@@ -2053,10 +2145,10 @@ function () {
   }
 }
 
-\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"]},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"]}]'#
+\$env.SCRIPT_PLAN = r#'[{\\"id\\":\\"cargo/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"cargo\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[\\"cargo\\"]},{\\"id\\":\\"docker/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"docker\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[\\"docker\\"]}]'#
 
 scriptPlanRun
-\`
+"
 `;
 
 snapshot[`zsh / linux / exec (redirects to nu) 1`] = `
@@ -2073,7 +2165,7 @@ if \$failure != null { error make --unspanned { msg: \$failure.msg } }
 `;
 
 snapshot[`nu / linux / find (client side has_cmd listing) 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/script/find?sysOsPlat=linux&wutNuPinned=1'#
 
@@ -2081,7 +2173,7 @@ def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
     return
   }
-  \$"(\$args | flatten | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -2089,10 +2181,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -2100,10 +2192,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -2111,10 +2203,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -2122,10 +2214,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -2133,13 +2225,13 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
   let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   }
 }
 
@@ -2150,11 +2242,11 @@ def opMaybePrintCmd --wrapped [...args] {
 }
 
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -2189,7 +2281,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -2209,6 +2301,29 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
+# a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
+# around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
+# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns
+def wutInterrupted [e: record] {
+  let code = (\$e.details.code? | default '')
+  (
+    # wut's own nu got the ctrl-c, which it raises as this (no error code), or from an \`input\` prompt as an io one
+    (\$e.debug | str starts-with 'Interrupted ') or
+    (\$code == 'nu::shell::io::interrupted') or
+    # a command it ran died of SIGINT
+    ((\$code == 'nu::shell::terminated_by_signal') and (\$e.debug | str contains 'signal: 2,')) or
+    # a command that read the ctrl-c itself exits 130; a \`nu -c\` whose command died of SIGINT exits 254 (256 - 2)
+    ((\$code == 'nu::shell::non_zero_exit_code') and (\$e.debug =~ '^NonZeroExitCode \\\\{ exit_code: (130|254),'))
+  )
+}
+
+def wutRethrowInterrupt [e: record] {
+  if (wutInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
     return false
@@ -2223,7 +2338,7 @@ def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
 def wutNuLockRelease [lock_path: string] {
   rm --force \$lock_path
   # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { }
+  try { rm (\$lock_path | path dirname) } catch { |e| wutRethrowInterrupt \$e }
 }
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
@@ -2231,7 +2346,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
@@ -2241,7 +2356,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     _ => '',
   }
   if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
   }
 
@@ -2256,7 +2371,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
@@ -2265,11 +2380,11 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$waited = \$waited + 1
   }
   if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
     if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
     }
   }
@@ -2280,15 +2395,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
+  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
 
   rm --force --recursive \$archive_path \$extract_dir
 
   if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
@@ -2303,15 +2418,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$work_dir
   }
   if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
   if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
@@ -2335,8 +2450,8 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
+  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
 }
@@ -2358,7 +2473,7 @@ def --env wutPathRefresh [] {
     if (which pwsh | is-empty) {
       return
     }
-    let cmd = "\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep"
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
     ^pwsh -NoLogo -Command \$cmd | complete
   } else {
     if (which zsh | is-empty) {
@@ -2407,7 +2522,7 @@ def --env scriptPlanRun [] {
   }
 
   scriptTable ['action' 'tool' 'shell'] (\$here | enumerate | each { |u|
-    [\$"(\$u.index + 1)\\\\) (\$u.item.action)", \$u.item.tool, \$u.item.shell]
+    [\$\\"(\$u.index + 1)\\\\) (\$u.item.action)\\", \$u.item.tool, \$u.item.shell]
   })
   let picked = (wutSelectRead (\$here | length))
   if \$picked == null {
@@ -2431,7 +2546,7 @@ def --env scriptFindAdd [action: string, ...entries: string] {
   if (\$tools | is-empty) {
     return
   }
-  load-env {SCRIPT_FIND_ROWS: ((\$env.SCRIPT_FIND_ROWS? | default []) | append \$"(\$action)|(\$tools | str join ', ')")}
+  load-env {SCRIPT_FIND_ROWS: ((\$env.SCRIPT_FIND_ROWS? | default []) | append \$\\"(\$action)|(\$tools | str join ', ')\\")}
 }
 
 # one table, one question, then the listing
@@ -2442,7 +2557,7 @@ def scriptFindShow [] {
   }
   for r in \$rows {
     opPrint (\$r | get 0)
-    opPrint \$"  (\$r | get 1)"
+    opPrint \$\\"  (\$r | get 1)\\"
   }
   opPrint ''
   scriptTable ['action' 'tools'] (\$rows | each { |r|
@@ -2454,11 +2569,11 @@ def scriptFindShow [] {
 scriptFindAdd r#'setup'# r#'cargo=cargo'# r#'docker=docker'#
 scriptFindAdd r#'teardown'# r#'docker=docker'#
 scriptFindShow
-\`
+"
 `;
 
 snapshot[`nu / linux / exec (action only, carries has_cmd into the plan) 1`] = `
-\`\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/setup?sysOsPlat=linux&wutNuPinned=1'#
 
@@ -2466,7 +2581,7 @@ def opPrint --wrapped [...args] {
   if SUCCINCT in \$env {
     return
   }
-  \$"(\$args | flatten | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
@@ -2474,10 +2589,10 @@ def opPrintErr --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
@@ -2485,10 +2600,10 @@ def opPrintSucc --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
@@ -2496,10 +2611,10 @@ def opPrintWarn --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
@@ -2507,10 +2622,10 @@ def opPrintInfo --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintCmd --wrapped [...args] {
@@ -2518,13 +2633,13 @@ def opPrintCmd --wrapped [...args] {
     return
   }
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
   let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   }
 }
 
@@ -2535,11 +2650,11 @@ def opMaybePrintCmd --wrapped [...args] {
 }
 
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ')"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$"(\$args | flatten | str join ' ') o+e> | silent"
+  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -2574,7 +2689,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -2594,6 +2709,29 @@ do {
 
 \$env.REQ_SRCH = r#'?sysOsPlat=linux&wutNuPinned=1'#
 
+# a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
+# around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
+# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns
+def wutInterrupted [e: record] {
+  let code = (\$e.details.code? | default '')
+  (
+    # wut's own nu got the ctrl-c, which it raises as this (no error code), or from an \`input\` prompt as an io one
+    (\$e.debug | str starts-with 'Interrupted ') or
+    (\$code == 'nu::shell::io::interrupted') or
+    # a command it ran died of SIGINT
+    ((\$code == 'nu::shell::terminated_by_signal') and (\$e.debug | str contains 'signal: 2,')) or
+    # a command that read the ctrl-c itself exits 130; a \`nu -c\` whose command died of SIGINT exits 254 (256 - 2)
+    ((\$code == 'nu::shell::non_zero_exit_code') and (\$e.debug =~ '^NonZeroExitCode \\\\{ exit_code: (130|254),'))
+  )
+}
+
+def wutRethrowInterrupt [e: record] {
+  if (wutInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+
 def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
   if not (\$nu_bin | path exists) {
     return false
@@ -2608,7 +2746,7 @@ def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
 def wutNuLockRelease [lock_path: string] {
   rm --force \$lock_path
   # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
-  try { rm (\$lock_path | path dirname) } catch { }
+  try { rm (\$lock_path | path dirname) } catch { |e| wutRethrowInterrupt \$e }
 }
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
@@ -2616,7 +2754,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     return
   }
 
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
@@ -2626,7 +2764,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     _ => '',
   }
   if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
   }
 
@@ -2641,7 +2779,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
@@ -2650,11 +2788,11 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$waited = \$waited + 1
   }
   if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| wutRethrowInterrupt \$e; false })
     if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
     }
   }
@@ -2665,15 +2803,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
+  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
 
   rm --force --recursive \$archive_path \$extract_dir
 
   if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
@@ -2688,15 +2826,15 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     \$work_dir
   }
   if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
   if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
@@ -2720,8 +2858,8 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
+  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
 }
@@ -2743,7 +2881,7 @@ def --env wutPathRefresh [] {
     if (which pwsh | is-empty) {
       return
     }
-    let cmd = "\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep"
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
     ^pwsh -NoLogo -Command \$cmd | complete
   } else {
     if (which zsh | is-empty) {
@@ -2776,9 +2914,9 @@ def wutSelectParse [choice: string, max: int] {
       if (\$halves | length) != 2 {
         return null
       }
-      [(try { \$halves | get 0 | into int } catch { null }), (try { \$halves | get 1 | into int } catch { null })]
+      [(try { \$halves | get 0 | into int } catch { |e| wutRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| wutRethrowInterrupt \$e; null })]
     } else {
-      let n = (try { \$part | into int } catch { null })
+      let n = (try { \$part | into int } catch { |e| wutRethrowInterrupt \$e; null })
       if \$n == 0 {
         return null
       }
@@ -2803,7 +2941,7 @@ def wutSelectRead [max: int] {
     return (1..\$max | each { |i| \$i })
   }
   opPrint ''
-  wutSelectParse (input \$"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): ") \$max
+  wutSelectParse (input \$\\"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): \\") \$max
 }
 
 
@@ -2837,7 +2975,7 @@ def --env scriptPlanRun [] {
   }
 
   scriptTable ['action' 'tool' 'shell'] (\$here | enumerate | each { |u|
-    [\$"(\$u.index + 1)\\\\) (\$u.item.action)", \$u.item.tool, \$u.item.shell]
+    [\$\\"(\$u.index + 1)\\\\) (\$u.item.action)\\", \$u.item.tool, \$u.item.shell]
   })
   let picked = (wutSelectRead (\$here | length))
   if \$picked == null {
@@ -2861,7 +2999,7 @@ def --env scriptFindAdd [action: string, ...entries: string] {
   if (\$tools | is-empty) {
     return
   }
-  load-env {SCRIPT_FIND_ROWS: ((\$env.SCRIPT_FIND_ROWS? | default []) | append \$"(\$action)|(\$tools | str join ', ')")}
+  load-env {SCRIPT_FIND_ROWS: ((\$env.SCRIPT_FIND_ROWS? | default []) | append \$\\"(\$action)|(\$tools | str join ', ')\\")}
 }
 
 # one table, one question, then the listing
@@ -2872,7 +3010,7 @@ def scriptFindShow [] {
   }
   for r in \$rows {
     opPrint (\$r | get 0)
-    opPrint \$"  (\$r | get 1)"
+    opPrint \$\\"  (\$r | get 1)\\"
   }
   opPrint ''
   scriptTable ['action' 'tools'] (\$rows | each { |r|
@@ -2887,7 +3025,7 @@ def --env scriptRunUnit [id: string] {
   if [[ \$SUCCINCT ]]; then
     return
   fi
-  print -r -- "\$*"
+  print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
@@ -2895,12 +3033,12 @@ function opPrintErr {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
+    print -r -- \\"\$*\\" >&2
     return
   fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
+  print -n \\"\\\\033[0;31m\\" >&2
+  print -n -r -- \\"\$*\\" >&2
+  print \\"\\\\033[0m\\" >&2
 }
 
 function opPrintSucc {
@@ -2908,12 +3046,12 @@ function opPrintSucc {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;32m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintWarn {
@@ -2921,12 +3059,12 @@ function opPrintWarn {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;33m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintInfo {
@@ -2934,12 +3072,12 @@ function opPrintInfo {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;34m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintCmd {
@@ -2947,54 +3085,54 @@ function opPrintCmd {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
+  print -n \\"\\\\033[0;35m\\"
+  print -n -r \\"\$1\\"
+  print -n \\"\\\\033[0m\\"
   shift 1
   if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
+    print -n \\" \\\\033[0;36m\\"
+    print -n -r -- \\"\$*\\"
+    print \\"\\\\033[0m\\"
   fi
 }
 
 function opMaybePrintCmd {
   if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
+    opPrintCmd \\"\$@\\"
   fi
 }
 
 function opRunCmd {
-  eval "\$*"
+  eval \\"\$*\\"
 }
 
 function opRunSilentCmd {
-  eval "\$*" &> /dev/null
+  eval \\"\$*\\" &> /dev/null
 }
 
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
+    opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
   if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
+    opRunSilentCmd \\"\$@\\"
   fi
 }
 
 function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opRunCmd \\"\$@\\"
 }
 
 function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opMaybeRunCmd \\"\$@\\"
 }
 
 function () {
@@ -3016,7 +3154,7 @@ function () {
     return
   fi
   local url='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
-  opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "\${url}" '|' bash
+  opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url \\"\${url}\\" '|' bash
   opPrintMaybeRunCmd cargo binstall cargo-cache
   opPrintMaybeRunCmd cargo binstall cargo-update
 }
@@ -3025,7 +3163,7 @@ function () {
   if [[ \$SUCCINCT ]]; then
     return
   fi
-  print -r -- "\$*"
+  print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
@@ -3033,12 +3171,12 @@ function opPrintErr {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
+    print -r -- \\"\$*\\" >&2
     return
   fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
+  print -n \\"\\\\033[0;31m\\" >&2
+  print -n -r -- \\"\$*\\" >&2
+  print \\"\\\\033[0m\\" >&2
 }
 
 function opPrintSucc {
@@ -3046,12 +3184,12 @@ function opPrintSucc {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;32m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintWarn {
@@ -3059,12 +3197,12 @@ function opPrintWarn {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;33m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintInfo {
@@ -3072,12 +3210,12 @@ function opPrintInfo {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;34m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintCmd {
@@ -3085,54 +3223,54 @@ function opPrintCmd {
     return
   fi
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
+  print -n \\"\\\\033[0;35m\\"
+  print -n -r \\"\$1\\"
+  print -n \\"\\\\033[0m\\"
   shift 1
   if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
+    print -n \\" \\\\033[0;36m\\"
+    print -n -r -- \\"\$*\\"
+    print \\"\\\\033[0m\\"
   fi
 }
 
 function opMaybePrintCmd {
   if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
+    opPrintCmd \\"\$@\\"
   fi
 }
 
 function opRunCmd {
-  eval "\$*"
+  eval \\"\$*\\"
 }
 
 function opRunSilentCmd {
-  eval "\$*" &> /dev/null
+  eval \\"\$*\\" &> /dev/null
 }
 
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
+    opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
   if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
+    opRunSilentCmd \\"\$@\\"
   fi
 }
 
 function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opRunCmd \\"\$@\\"
 }
 
 function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opMaybeRunCmd \\"\$@\\"
 }
 
 function () {
@@ -3156,8 +3294,8 @@ function () {
   }
 }
 
-\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"]},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"]}]'#
+\$env.SCRIPT_PLAN = r#'[{\\"id\\":\\"cargo/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"cargo\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[\\"cargo\\"]},{\\"id\\":\\"docker/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"docker\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[\\"docker\\"]}]'#
 
 scriptPlanRun
-\`
+"
 `;
