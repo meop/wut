@@ -1,6 +1,6 @@
 # Nushell Pitfalls
 
-Known nushell parsing quirks that have caused bugs in `src/sh/nu/`. Read before editing nushell output.
+Known nushell parsing and runtime quirks that have caused bugs in `src/sh/nu/`. Read before editing nushell output.
 
 - **`[{record} | to yaml]` is a list, not a pipeline.** In nushell 0.111+, `|` inside `[...]` is a list separator.
   `[{a: 1} | to yaml]` produces the 3-element list `[{a: 1}, "to", "yaml"]`. Use `[({a: 1} | to yaml)]` with extra
@@ -48,3 +48,16 @@ Known nushell parsing quirks that have caused bugs in `src/sh/nu/`. Read before 
 - **`const` is resolved at parse time, so it must precede its first use.** Unlike `def`, which the parser hoists, a
   `const` declared below the command that reads it fails with `variable not found`. `PACK_PACMAN_FAMILY` sits at the top
   of `pack.nu` for that reason.
+
+- **`try` catches ctrl-c.** A ctrl-c reaches wut's own nu as well as the command it is running, and nu raises it as an
+  `Interrupted` error that `try` catches like any other failure — so a loop that records the failure and moves on (each
+  manager in `pack`) or a `catch { null }` (`http get` in `packHttpOk`) steps past the user's stop to whatever comes
+  next. A `catch` that swallows or records must call `packRethrowInterrupt $e` first, which raises it again.
+  `| complete` does not have this problem: the interrupt surfaces on the next statement. Leave the catch alone where
+  carrying on is the point, like the cleanup after a foreground qemu run. Only SIGINT works this way: a TERM, HUP or
+  KILL sent to the whole job kills nu itself, and nu ignores QUIT.
+
+- **A `try { }` inside an `opRunCmd` string hides how the command ended.** The inner `nu -c` swallows the error, so it
+  exits 0 even when the command was killed by a signal on its own (OOM killer, a `kill` aimed at it) and the caller sees
+  success. Without the `try`, nu reports a signal death as exit code `256 - signal` (254 for SIGINT, 241 for SIGTERM,
+  247 for SIGKILL), not the `128 + signal` a POSIX shell uses.

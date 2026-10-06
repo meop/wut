@@ -44,7 +44,7 @@ def --env packHttpOk [url: string] {
   }
   $env.PACK_PRINTED = '1'
   opPrintCmd 'http get' $url
-  let res = (try { http get --full --redirect-mode follow $url } catch { null })
+  let res = (try { http get --full --redirect-mode follow $url } catch { |e| packRethrowInterrupt $e; null })
   let answer = (($res != null) and ($res.status == 200))
   load-env {PACK_FETCHED: (($env.PACK_FETCHED? | default []) | append { key: $url, answer: $answer })}
   $answer
@@ -80,7 +80,7 @@ def --env packPypiInfo [name: string] {
   let url = (packPypiUrl $name)
   $env.PACK_PRINTED = '1'
   opPrintCmd 'http get' $url
-  let res = (try { http get --raw --redirect-mode follow $url | from json } catch { null })
+  let res = (try { http get --raw --redirect-mode follow $url | from json } catch { |e| packRethrowInterrupt $e; null })
   if $res == null {
     opPrintWarn $"not on pypi: ($name)"
     return
@@ -699,7 +699,7 @@ def --env packPlanRun [] {
     try {
       packRunUnit $d.id
     } catch { |e|
-      packMarkFailed $d.id $e.msg
+      packMarkFailed $d.id $e
     }
     # a group whose install or removal failed has nothing to follow it
     if ($env.PACK_FAILED? | default [] | length) == $failedBefore {
@@ -729,7 +729,7 @@ def --env packPlanRun [] {
     try {
       packRunLoose $entry.manager
     } catch { |e|
-      packMarkFailed ($entry.names | str join ', ') $e.msg
+      packMarkFailed ($entry.names | str join ', ') $e
     }
   }
   # the installs put their commands where the env stage says they go, which the post scripts are about to look for
@@ -753,7 +753,7 @@ def --env packRunScripts [stage: string, scripts: list] {
     try {
       packRunUnit $s.id
     } catch { |e|
-      packMarkFailed $s.id $e.msg
+      packMarkFailed $s.id $e
     }
   }
 }
@@ -819,7 +819,7 @@ def --env packTermPlanRun [names_key: string] {
     try {
       packCallManager $m
     } catch { |e|
-      packMarkFailed $m $e.msg
+      packMarkFailed $m $e
     }
   }
   packReport
@@ -856,7 +856,7 @@ def --env packSelfUpdate [what: string, path: string, args: list<string>] {
   if 'NOOP' in $env {
     return
   }
-  let updated = (try { run-external $bin ...$args; true } catch { false })
+  let updated = (try { run-external $bin ...$args; true } catch { |e| packRethrowInterrupt $e; false })
   if not $updated {
     opPrintWarn $"($what) did not update itself: its self update may be off, or it refused"
   }
@@ -914,7 +914,7 @@ def --env packManagerPlanRun [] {
     try {
       packCallManager $m
     } catch { |e|
-      packMarkFailed $m $e.msg
+      packMarkFailed $m $e
     }
     hide-env PACK_MANAGER
   }
@@ -966,8 +966,17 @@ def --env packMutate [names_key: string, cmds: list<string>, each: bool] {
   load-env {($names_key): []}
 }
 
-def --env packMarkFailed [what: string, why: string] {
-  load-env {PACK_FAILED: (($env.PACK_FAILED? | default []) | append $"($what): ($why | lines | first)")}
+# a ctrl-c reaches wut's own nu as well as the manager it stopped, and `try` catches it like any other failure. it
+# is the user stopping the run, so it goes on stopping it rather than being stepped past to the next prompt
+def packRethrowInterrupt [e: record] {
+  if ($e.debug | str starts-with 'Interrupted ') {
+    $e.raw
+  }
+}
+
+def --env packMarkFailed [what: string, e: record] {
+  packRethrowInterrupt $e
+  load-env {PACK_FAILED: (($env.PACK_FAILED? | default []) | append $"($what): ($e.msg | lines | first)")}
 }
 
 # only the exceptions: a clean run says nothing
