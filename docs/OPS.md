@@ -146,6 +146,14 @@ that command's failure: the run records it and goes on.
 Stopping looks the same in every shell, too: no error output. nu gets there through shire, which wraps every nu script
 it builds in one handler that exits 130, as zsh does.
 
+How the shells around nu treat a ctrl-c, which the hop from the calling shell to nu relies on:
+
+- zsh waits for the command it is running, then exits with that command's status, so nu's 130 reaches the prompt.
+- pwsh waits only for a native command that runs standalone — its output going straight to the console, as the hop's
+  does. One whose output pwsh captures (`$x = & nu …`, or piped into a cmdlet) is killed on the spot
+  (`NativeCommandProcessor.StopProcessing`), which would cut nu off mid-cleanup. The hop must stay standalone.
+- A pwsh script stopped by a ctrl-c exits 0 itself; at an interactive prompt, `$LASTEXITCODE` is nu's 130.
+
 ## Nothing matched, nothing installed
 
 Two different absences, two different messages:
