@@ -143,6 +143,9 @@ the error to `wutRethrowInterrupt` first (see [NUSHELL.md](NUSHELL.md)). A comma
 exits 130 counts as one. Anything else that ends a command — a failure, or a signal aimed at that command alone — is
 that command's failure: the run records it and goes on.
 
+Stopping looks the same in every shell, too: no error output, exit code 130, and the prompt on a new line after `^C`. nu
+gets there through shire, which wraps every nu script it builds in a handler that does exactly that.
+
 ## Nothing matched, nothing installed
 
 Two different absences, two different messages:

@@ -1,189 +1,430 @@
 export const snapshot = {};
 
 snapshot[`nu / darwin / diff 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=darwin&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=darwin&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'##"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}'##\`
 `;
 
 snapshot[`nu / darwin / find 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=darwin&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=darwin&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'##"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}'##\`
 `;
 
 snapshot[`nu / darwin / sync 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=darwin&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=darwin&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'##"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}'##\`
 `;
 
 snapshot[`nu / linux / diff 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=linux&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=linux&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'##"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}'##\`
 `;
 
 snapshot[`nu / linux / find 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=linux&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=linux&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'##"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}'##\`
 `;
 
 snapshot[`nu / linux / sync 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=linux&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=linux&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'##"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}'##\`
 `;
 
 snapshot[`nu / linux / find (with filter) 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find/git?sysOsPlat=linux&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find/git?sysOsPlat=linux&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'##"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}'##\`
 `;
 
 snapshot[`nu / linux / find (with sysHost) 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=linux&sysHost=testhost&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=linux&sysHost=testhost&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'##"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}'##\`
 `;
 
 snapshot[`nu / darwin / list 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=darwin&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=darwin&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'##"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}'##\`
 `;
 
 snapshot[`nu / linux / list 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=linux&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=linux&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'##"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}'##\`
 `;
 
 snapshot[`nu / windows / diff 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=windows&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff?sysOsPlat=windows&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'##"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}'##\`
 `;
 
 snapshot[`nu / windows / find 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=windows&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=windows&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'##"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}'##\`
 `;
 
 snapshot[`nu / windows / sync 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=windows&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync?sysOsPlat=windows&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'##"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}'##\`
 `;
 
 snapshot[`nu / windows / list 1`] = `
-"^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'\$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=windows&wutNuPinned=1'#
+\`^(\$env.WUT_HOME | path join 'vendor' 'nu.exe') --no-config-file -c r##'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/file/list?sysOsPlat=windows&wutNuPinned=1'#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'##"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}'##\`
 `;
 
 snapshot[`nu / linux / find (pinned) 1`] = `
-"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/find?sysOsPlat=linux&wutNuPinned=1'#
 
@@ -259,12 +500,34 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
+# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+def opQuietInterrupt [body: string] {
+  [
+    r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
+    r#'\$env.SHIRE_NU_NESTED = '1''#
+    r#'try {'#
+    \$body
+    r#'} catch { |e|'#
+    r#'  try {'#
+    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
+    r#'      if \$shireOuter { print '' }'#
+    r#'      exit 130'#
+    r#'    }'#
+    r#'  } catch {'#
+    r#'    if \$shireOuter { print '' }'#
+    r#'    exit 130'#
+    r#'  }'#
+    r#'  \$e.raw'#
+    r#'}'#
+  ] | str join \\"\\\\n\\"
+}
+
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -321,7 +584,8 @@ do {
 
 # a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
 # around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns
+# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
+# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
 def wutInterrupted [e: record] {
   let code = (\$e.details.code? | default '')
   (
@@ -770,11 +1034,26 @@ def file [] {
 \$env.FILE_OP = r#'find'#
 
 file
-"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}"
 `;
 
 snapshot[`nu / linux / find (pinned, filtered) 1`] = `
-"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/find/zsh?sysOsPlat=linux&wutNuPinned=1'#
 
@@ -850,12 +1129,34 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
+# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+def opQuietInterrupt [body: string] {
+  [
+    r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
+    r#'\$env.SHIRE_NU_NESTED = '1''#
+    r#'try {'#
+    \$body
+    r#'} catch { |e|'#
+    r#'  try {'#
+    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
+    r#'      if \$shireOuter { print '' }'#
+    r#'      exit 130'#
+    r#'    }'#
+    r#'  } catch {'#
+    r#'    if \$shireOuter { print '' }'#
+    r#'    exit 130'#
+    r#'  }'#
+    r#'  \$e.raw'#
+    r#'}'#
+  ] | str join \\"\\\\n\\"
+}
+
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -912,7 +1213,8 @@ do {
 
 # a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
 # around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns
+# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
+# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
 def wutInterrupted [e: record] {
   let code = (\$e.details.code? | default '')
   (
@@ -1363,11 +1665,26 @@ def file [] {
 \$env.FILE_OP = r#'find'#
 
 file
-"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}"
 `;
 
 snapshot[`nu / linux / sync (pinned, filtered) 1`] = `
-"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync/zsh?sysOsPlat=linux&wutNuPinned=1'#
 
@@ -1443,12 +1760,34 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
+# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+def opQuietInterrupt [body: string] {
+  [
+    r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
+    r#'\$env.SHIRE_NU_NESTED = '1''#
+    r#'try {'#
+    \$body
+    r#'} catch { |e|'#
+    r#'  try {'#
+    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
+    r#'      if \$shireOuter { print '' }'#
+    r#'      exit 130'#
+    r#'    }'#
+    r#'  } catch {'#
+    r#'    if \$shireOuter { print '' }'#
+    r#'    exit 130'#
+    r#'  }'#
+    r#'  \$e.raw'#
+    r#'}'#
+  ] | str join \\"\\\\n\\"
+}
+
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -1505,7 +1844,8 @@ do {
 
 # a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
 # around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns
+# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
+# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
 def wutInterrupted [e: record] {
   let code = (\$e.details.code? | default '')
   (
@@ -1961,11 +2301,26 @@ if not (filePlanShow 'FILE_SYNC_PATH_PAIRS' 'FILE_SYNC_CLEAR_DIRS' 'FILE_SYNC_TO
   return
 }
 file
-"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}"
 `;
 
 snapshot[`nu / windows / sync (pinned, filtered) 1`] = `
-"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync/nu?sysOsPlat=windows&wutNuPinned=1'#
 
@@ -2041,12 +2396,34 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
+# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+def opQuietInterrupt [body: string] {
+  [
+    r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
+    r#'\$env.SHIRE_NU_NESTED = '1''#
+    r#'try {'#
+    \$body
+    r#'} catch { |e|'#
+    r#'  try {'#
+    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
+    r#'      if \$shireOuter { print '' }'#
+    r#'      exit 130'#
+    r#'    }'#
+    r#'  } catch {'#
+    r#'    if \$shireOuter { print '' }'#
+    r#'    exit 130'#
+    r#'  }'#
+    r#'  \$e.raw'#
+    r#'}'#
+  ] | str join \\"\\\\n\\"
+}
+
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -2103,7 +2480,8 @@ do {
 
 # a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
 # around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns
+# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
+# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
 def wutInterrupted [e: record] {
   let code = (\$e.details.code? | default '')
   (
@@ -2559,11 +2937,26 @@ if not (filePlanShow 'FILE_SYNC_PATH_PAIRS' 'FILE_SYNC_CLEAR_DIRS' 'FILE_SYNC_TO
   return
 }
 file
-"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}"
 `;
 
 snapshot[`nu / linux / sync (pinned, permissions) 1`] = `
-"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync/ssh?sysOsPlat=linux&wutNuPinned=1'#
 
@@ -2639,12 +3032,34 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
+# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+def opQuietInterrupt [body: string] {
+  [
+    r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
+    r#'\$env.SHIRE_NU_NESTED = '1''#
+    r#'try {'#
+    \$body
+    r#'} catch { |e|'#
+    r#'  try {'#
+    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
+    r#'      if \$shireOuter { print '' }'#
+    r#'      exit 130'#
+    r#'    }'#
+    r#'  } catch {'#
+    r#'    if \$shireOuter { print '' }'#
+    r#'    exit 130'#
+    r#'  }'#
+    r#'  \$e.raw'#
+    r#'}'#
+  ] | str join \\"\\\\n\\"
+}
+
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -2701,7 +3116,8 @@ do {
 
 # a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
 # around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns
+# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
+# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
 def wutInterrupted [e: record] {
   let code = (\$e.details.code? | default '')
   (
@@ -3157,11 +3573,26 @@ if not (filePlanShow 'FILE_SYNC_PATH_PAIRS' 'FILE_SYNC_CLEAR_DIRS' 'FILE_SYNC_TO
   return
 }
 file
-"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}"
 `;
 
 snapshot[`nu / linux / diff (pinned, filtered) 1`] = `
-"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/diff/zsh?sysOsPlat=linux&wutNuPinned=1'#
 
@@ -3237,12 +3668,34 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
+# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+def opQuietInterrupt [body: string] {
+  [
+    r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
+    r#'\$env.SHIRE_NU_NESTED = '1''#
+    r#'try {'#
+    \$body
+    r#'} catch { |e|'#
+    r#'  try {'#
+    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
+    r#'      if \$shireOuter { print '' }'#
+    r#'      exit 130'#
+    r#'    }'#
+    r#'  } catch {'#
+    r#'    if \$shireOuter { print '' }'#
+    r#'    exit 130'#
+    r#'  }'#
+    r#'  \$e.raw'#
+    r#'}'#
+  ] | str join \\"\\\\n\\"
+}
+
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -3299,7 +3752,8 @@ do {
 
 # a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
 # around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns
+# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
+# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
 def wutInterrupted [e: record] {
   let code = (\$e.details.code? | default '')
   (
@@ -3753,11 +4207,26 @@ if not (filePlanShow 'FILE_DIFF_PATH_PAIRS' 'FILE_DIFF_CLEAR_DIRS' 'FILE_DIFF_TO
   return
 }
 file
-"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}"
 `;
 
 snapshot[`nu / linux / list (pinned, filtered) 1`] = `
-"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/list/zsh?sysOsPlat=linux&wutNuPinned=1'#
 
@@ -3833,12 +4302,34 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
+# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+def opQuietInterrupt [body: string] {
+  [
+    r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
+    r#'\$env.SHIRE_NU_NESTED = '1''#
+    r#'try {'#
+    \$body
+    r#'} catch { |e|'#
+    r#'  try {'#
+    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
+    r#'      if \$shireOuter { print '' }'#
+    r#'      exit 130'#
+    r#'    }'#
+    r#'  } catch {'#
+    r#'    if \$shireOuter { print '' }'#
+    r#'    exit 130'#
+    r#'  }'#
+    r#'  \$e.raw'#
+    r#'}'#
+  ] | str join \\"\\\\n\\"
+}
+
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -3895,7 +4386,8 @@ do {
 
 # a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
 # around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns
+# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
+# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
 def wutInterrupted [e: record] {
   let code = (\$e.details.code? | default '')
   (
@@ -4346,11 +4838,26 @@ def file [] {
 \$env.FILE_OP = r#'list'#
 
 file
-"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}"
 `;
 
 snapshot[`nu / linux / sync (pinned, no match) 1`] = `
-"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/sync/nosuchfile?sysOsPlat=linux&wutNuPinned=1'#
 
@@ -4426,12 +4933,34 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
+# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+def opQuietInterrupt [body: string] {
+  [
+    r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
+    r#'\$env.SHIRE_NU_NESTED = '1''#
+    r#'try {'#
+    \$body
+    r#'} catch { |e|'#
+    r#'  try {'#
+    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
+    r#'      if \$shireOuter { print '' }'#
+    r#'      exit 130'#
+    r#'    }'#
+    r#'  } catch {'#
+    r#'    if \$shireOuter { print '' }'#
+    r#'    exit 130'#
+    r#'  }'#
+    r#'  \$e.raw'#
+    r#'}'#
+  ] | str join \\"\\\\n\\"
+}
+
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -4488,7 +5017,8 @@ do {
 
 # a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
 # around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns
+# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
+# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
 def wutInterrupted [e: record] {
   let code = (\$e.details.code? | default '')
   (
@@ -4680,11 +5210,26 @@ wutPathRefresh
 \$env.FILE_SYNC_PARTS = r#'nosuchfile'#
 
 opPrintWarn r#'no file matched: nosuchfile'#
-"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}"
 `;
 
 snapshot[`nu / linux / find (pinned, matches an alias) 1`] = `
-"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/find/nushell?sysOsPlat=linux&wutNuPinned=1'#
 
@@ -4760,12 +5305,34 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
+# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+def opQuietInterrupt [body: string] {
+  [
+    r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
+    r#'\$env.SHIRE_NU_NESTED = '1''#
+    r#'try {'#
+    \$body
+    r#'} catch { |e|'#
+    r#'  try {'#
+    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
+    r#'      if \$shireOuter { print '' }'#
+    r#'      exit 130'#
+    r#'    }'#
+    r#'  } catch {'#
+    r#'    if \$shireOuter { print '' }'#
+    r#'    exit 130'#
+    r#'  }'#
+    r#'  \$e.raw'#
+    r#'}'#
+  ] | str join \\"\\\\n\\"
+}
+
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -4822,7 +5389,8 @@ do {
 
 # a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
 # around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns
+# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
+# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
 def wutInterrupted [e: record] {
   let code = (\$e.details.code? | default '')
   (
@@ -5273,11 +5841,26 @@ def file [] {
 \$env.FILE_OP = r#'find'#
 
 file
-"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}"
 `;
 
 snapshot[`nu / linux / find (pinned, matches an in path) 1`] = `
-"\$env.REQ_URL_CFG = r#'http://x/cfg'#
+"let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
+\$env.SHIRE_NU_NESTED = '1'
+try {
+\$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/file/find/gitconfig?sysOsPlat=linux&wutNuPinned=1'#
 
@@ -5353,12 +5936,34 @@ def opMaybePrintCmd --wrapped [...args] {
   }
 }
 
+# the child nu a command runs in ends quietly on a ctrl-c too: NuSh.quietInterrupt, line for line
+def opQuietInterrupt [body: string] {
+  [
+    r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
+    r#'\$env.SHIRE_NU_NESTED = '1''#
+    r#'try {'#
+    \$body
+    r#'} catch { |e|'#
+    r#'  try {'#
+    r#'    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {'#
+    r#'      if \$shireOuter { print '' }'#
+    r#'      exit 130'#
+    r#'    }'#
+    r#'  } catch {'#
+    r#'    if \$shireOuter { print '' }'#
+    r#'    exit 130'#
+    r#'  }'#
+    r#'  \$e.raw'#
+    r#'}'#
+  ] | str join \\"\\\\n\\"
+}
+
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ')\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c \$\\"(\$args | flatten | str join ' ') o+e> | silent\\"
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -5415,7 +6020,8 @@ do {
 
 # a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a \`try\` is
 # around it: nu raises the ctrl-c it gets as an error, and \`try\` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns
+# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
+# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
 def wutInterrupted [e: record] {
   let code = (\$e.details.code? | default '')
   (
@@ -5866,5 +6472,17 @@ def file [] {
 \$env.FILE_OP = r#'find'#
 
 file
-"
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '^(Interrupted |TerminatedBySignal \\\\{ signal_name: \\"SIGINT\\"|NonZeroExitCode \\\\{ exit_code: (130|254),)') or (\$e.details.code? == 'nu::shell::io::interrupted') {
+      if \$shireOuter { print '' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '' }
+    exit 130
+  }
+  \$e.raw
+}"
 `;

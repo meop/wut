@@ -1,131 +1,301 @@
 export const snapshot = {};
 
 snapshot[`pwsh / file / find (redirect) 1`] = `
-\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/file/find?sysOsPlat=linux&wutNuPinned=1''#
+\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = (''SHIRE_NU_NESTED'' not-in \$env)
+\$env.SHIRE_NU_NESTED = ''1''
+try {
+\$env.REQ_URL_SH = r#''http://x/sh/nu/file/find?sysOsPlat=linux&wutNuPinned=1''#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'\`
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ ''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'') or (\$e.details.code? == ''nu::shell::io::interrupted'') {
+      if \$shireOuter { print '''' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '''' }
+    exit 130
+  }
+  \$e.raw
+}'\`
 `;
 
 snapshot[`pwsh / file / sync (redirect) 1`] = `
-\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/file/sync?sysOsPlat=linux&wutNuPinned=1''#
+\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = (''SHIRE_NU_NESTED'' not-in \$env)
+\$env.SHIRE_NU_NESTED = ''1''
+try {
+\$env.REQ_URL_SH = r#''http://x/sh/nu/file/sync?sysOsPlat=linux&wutNuPinned=1''#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'\`
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ ''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'') or (\$e.details.code? == ''nu::shell::io::interrupted'') {
+      if \$shireOuter { print '''' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '''' }
+    exit 130
+  }
+  \$e.raw
+}'\`
 `;
 
 snapshot[`pwsh / pack / add (redirect) 1`] = `
-\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1''#
+\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = (''SHIRE_NU_NESTED'' not-in \$env)
+\$env.SHIRE_NU_NESTED = ''1''
+try {
+\$env.REQ_URL_SH = r#''http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1''#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'\`
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ ''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'') or (\$e.details.code? == ''nu::shell::io::interrupted'') {
+      if \$shireOuter { print '''' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '''' }
+    exit 130
+  }
+  \$e.raw
+}'\`
 `;
 
 snapshot[`pwsh / pack / find (redirect) 1`] = `
-\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1''#
+\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = (''SHIRE_NU_NESTED'' not-in \$env)
+\$env.SHIRE_NU_NESTED = ''1''
+try {
+\$env.REQ_URL_SH = r#''http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1''#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'\`
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ ''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'') or (\$e.details.code? == ''nu::shell::io::interrupted'') {
+      if \$shireOuter { print '''' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '''' }
+    exit 130
+  }
+  \$e.raw
+}'\`
 `;
 
 snapshot[`pwsh / virt / list (redirect) 1`] = `
-\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#''http://x/sh/nu/virt/list?sysOsPlat=linux&wutNuPinned=1''#
+\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = (''SHIRE_NU_NESTED'' not-in \$env)
+\$env.SHIRE_NU_NESTED = ''1''
+try {
+\$env.REQ_URL_SH = r#''http://x/sh/nu/virt/list?sysOsPlat=linux&wutNuPinned=1''#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'\`
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ ''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'') or (\$e.details.code? == ''nu::shell::io::interrupted'') {
+      if \$shireOuter { print '''' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '''' }
+    exit 130
+  }
+  \$e.raw
+}'\`
 `;
 
 snapshot[`zsh / file / find (redirect) 1`] = `
-\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/file/find?sysOsPlat=linux&wutNuPinned=1'\\\\''#
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = ('\\\\''SHIRE_NU_NESTED'\\\\'' not-in \$env)
+\$env.SHIRE_NU_NESTED = '\\\\''1'\\\\''
+try {
+\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/file/find?sysOsPlat=linux&wutNuPinned=1'\\\\''#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'\`
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '\\\\''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') {
+      if \$shireOuter { print '\\\\'''\\\\'' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '\\\\'''\\\\'' }
+    exit 130
+  }
+  \$e.raw
+}'\`
 `;
 
 snapshot[`zsh / file / sync (redirect) 1`] = `
-\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/file/sync?sysOsPlat=linux&wutNuPinned=1'\\\\''#
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = ('\\\\''SHIRE_NU_NESTED'\\\\'' not-in \$env)
+\$env.SHIRE_NU_NESTED = '\\\\''1'\\\\''
+try {
+\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/file/sync?sysOsPlat=linux&wutNuPinned=1'\\\\''#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'\`
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '\\\\''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') {
+      if \$shireOuter { print '\\\\'''\\\\'' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '\\\\'''\\\\'' }
+    exit 130
+  }
+  \$e.raw
+}'\`
 `;
 
 snapshot[`zsh / pack / add (redirect) 1`] = `
-\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'\\\\''#
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = ('\\\\''SHIRE_NU_NESTED'\\\\'' not-in \$env)
+\$env.SHIRE_NU_NESTED = '\\\\''1'\\\\''
+try {
+\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'\\\\''#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'\`
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '\\\\''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') {
+      if \$shireOuter { print '\\\\'''\\\\'' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '\\\\'''\\\\'' }
+    exit 130
+  }
+  \$e.raw
+}'\`
 `;
 
 snapshot[`zsh / pack / find (redirect) 1`] = `
-\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'\\\\''#
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = ('\\\\''SHIRE_NU_NESTED'\\\\'' not-in \$env)
+\$env.SHIRE_NU_NESTED = '\\\\''1'\\\\''
+try {
+\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'\\\\''#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'\`
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '\\\\''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') {
+      if \$shireOuter { print '\\\\'''\\\\'' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '\\\\'''\\\\'' }
+    exit 130
+  }
+  \$e.raw
+}'\`
 `;
 
 snapshot[`zsh / virt / list (redirect) 1`] = `
-\`"\${WUT_HOME}/vendor/nu" --no-config-file -c '\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/virt/list?sysOsPlat=linux&wutNuPinned=1'\\\\''#
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = ('\\\\''SHIRE_NU_NESTED'\\\\'' not-in \$env)
+\$env.SHIRE_NU_NESTED = '\\\\''1'\\\\''
+try {
+\$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/virt/list?sysOsPlat=linux&wutNuPinned=1'\\\\''#
 
 # by file, not argument: a real script can exceed the command line length limit
 let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-rm --force --permanent \$scriptFilePath
-if \$failure != null { error make --unspanned { msg: \$failure.msg } }
+# a ctrl-c that ended the script is still pending here until a try catches it, and can cut the first removal short
+try { rm --force --permanent \$scriptFilePath } catch { rm --force --permanent \$scriptFilePath }
+# the script reported its own failure, so raising it again passes on its exit code without saying it twice
+if \$failure != null { \$failure.raw }
 
-'\`
+
+} catch { |e|
+  try {
+    if (\$e.debug =~ '\\\\''^(Interrupted |TerminatedBySignal \\\\{ signal_name: "SIGINT"|NonZeroExitCode \\\\{ exit_code: (130|254),)'\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') {
+      if \$shireOuter { print '\\\\'''\\\\'' }
+      exit 130
+    }
+  } catch {
+    if \$shireOuter { print '\\\\'''\\\\'' }
+    exit 130
+  }
+  \$e.raw
+}'\`
 `;

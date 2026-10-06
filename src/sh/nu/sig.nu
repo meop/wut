@@ -1,6 +1,7 @@
 # a ctrl-c means stop the run, in every shell wut speaks. zsh and pwsh already do, and so does nu, until a `try` is
 # around it: nu raises the ctrl-c it gets as an error, and `try` catches that like any other failure. so every catch
-# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns
+# in wut's nu hands its error to wutRethrowInterrupt first, and goes on with its own handling only when that returns.
+# what it rethrows reaches the handler shire's NuSh.build() wraps the whole script in, which ends it quietly with 130
 def wutInterrupted [e: record] {
   let code = ($e.details.code? | default '')
   (

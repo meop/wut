@@ -389,6 +389,11 @@ Deno.test('nu / arch / find (no manager, pinned)', async (t) => {
 
 const PIN_ARCH = 'sysOsPlat=linux&sysOs=arch&wutNuPinned=1'
 
+// the script's own last statement: NuSh.build() wraps every script in a ctrl-c handler, which comes after it
+function lastStatement(body: string): string {
+  return body.slice(0, body.lastIndexOf('\n} catch { |e|')).trimEnd()
+}
+
 // the managers the client is told to consider, which is what its table can offer. an op that narrows the list
 // states it again lower down, and the last statement is the one the client runs with
 function managersOffered(body: string): Array<string> {
@@ -586,7 +591,7 @@ Deno.test('nu / arch / sync (pinned, nu group)', async (t) => {
   await checkSyntax('nu', body)
   assertEquals(body.includes("$env.PACK_SYNC_NAMES = [ r#'nushell'# ]"), true)
   // the plan runs, rather than the manager-only prompt a bare sync gets
-  assertEquals(body.trimEnd().endsWith('packPlanRun'), true)
+  assertEquals(lastStatement(body).endsWith('packPlanRun'), true)
 })
 // a name no group claims stays loose, and the client resolves it against what is installed
 Deno.test('nu / arch / sync (pinned, loose name)', async (t) => {
@@ -625,7 +630,7 @@ Deno.test('nu / arch / outdated (pinned, a term resolves before the gate)', asyn
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(body.includes("$env.PACK_OUTDATED_NAMES = [ r#'nu'# ]"), true)
-  assertEquals(body.trimEnd().endsWith("packTermPlanRun r#'PACK_OUTDATED_NAMES'#"), true)
+  assertEquals(lastStatement(body).endsWith("packTermPlanRun r#'PACK_OUTDATED_NAMES'#"), true)
 })
 // info asks every manager, so it has no plan to pick from — but each is asked the name it declared for the group,
 // and a manager the group never named is not offered a question it has nothing to put

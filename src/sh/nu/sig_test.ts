@@ -102,6 +102,11 @@ Deno.test('nu / sig / every catch in wut nu rethrows an interrupt', async () => 
       }
       const at = `${f.path.slice(NU_DIR.length)}:${i + 1}`
       const ahead = lines.slice(i, i + 4).join('\n')
+      // cleanup that must survive a pending ctrl-c is `try { X } catch { X }`: the second attempt runs once it is caught
+      const retry = /\btry \{ (.+) \} catch \{ (.+) \}/.exec(line)
+      if (retry && retry[1] === retry[2]) {
+        return
+      }
       if (/\bcatch \{/.test(line) && !/wutRethrowInterrupt|packMarkFailed|\{ \|e\| \$e \}/.test(ahead)) {
         offenders.push(`${at} catch without wutRethrowInterrupt`)
       }

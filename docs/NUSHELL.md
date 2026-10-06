@@ -53,10 +53,17 @@ Known nushell parsing and runtime quirks that have caused bugs in `src/sh/nu/`. 
   `Interrupted` error that `try` catches like any other failure — a bare `try { }` included. So a loop that records the
   failure and moves on, or a `catch { null }`, steps past the user's stop to whatever comes next, where zsh and pwsh
   would have stopped. Every `catch` in wut's nu calls `wutRethrowInterrupt $e` (`sig.nu`) before anything else, and
-  every `try` has a catch; `sig_test.ts` fails on one that does not. Work that has to happen however the command ended,
-  like the cleanup after a foreground qemu run, keeps the error, does that work, then rethrows. `| complete` does not
-  need this: the interrupt surfaces on the next statement. Only SIGINT works this way: a TERM, HUP or KILL sent to the
-  whole job kills nu itself, and nu ignores QUIT.
+  every `try` has a catch; `sig_test.ts` fails on one that does not. The rethrown interrupt reaches the handler shire's
+  `NuSh.build()` wraps every script in (`opRunCmd` wraps the child nu each command runs in the same way), which ends the
+  run quietly with exit code 130 and the newline zsh would print after `^C`. `| complete` does not need this: the
+  interrupt surfaces on the next statement. Only SIGINT works this way: a TERM, HUP or KILL sent to the whole job kills
+  nu itself, and nu ignores QUIT.
+
+- **A ctrl-c stays pending until a `try` catches it.** nu raises it at its next check — a command call, a block — not
+  where it arrived, so a `catch` that was handed some other error first (the exit code of the command the ctrl-c
+  stopped) can be cut short partway through, and so can a `finally`. Work that has to happen however the command ended,
+  like the cleanup after a foreground qemu run, runs as `try { X } catch { X }`: the first attempt can be cut short, and
+  catching that clears it, so the second cannot. `sig_test.ts` accepts that shape as a catch.
 
 - **A `try { }` inside an `opRunCmd` string hides how the command ended.** The inner `nu -c` swallows the error, so it
   exits 0 even when the command was killed by a signal on its own (OOM killer, a `kill` aimed at it) and the caller sees

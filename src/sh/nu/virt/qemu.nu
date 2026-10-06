@@ -463,14 +463,18 @@ def virtQemu [] {
     opPrintMaybeRunCmd $"r##'((['#!/usr/bin/bash', ('exec ' + $qemuCmd)] | str join "\n") + "\n")'##" '|' sudo tee $qemuScriptFilePath '|' ignore
     opPrintMaybeRunCmd sudo chmod +x $qemuScriptFilePath
 
-    # the cleanup runs however qemu ended, and a ctrl-c that ended it stops the run once that is done
+    # the cleanup runs however qemu ended, and a ctrl-c that ended it stops the run once that is done. that ctrl-c is
+    # still pending until a try catches it, and can cut the first cleanup short, so the cleanup gets a second go
     let failure = (try { opPrintMaybeRunCmd sudo $qemuScriptFilePath; null } catch { |e| $e })
-
-    try { opPrintMaybeRunCmd sudo pkill --full --ignore-ancestors $"^swtpm.*($instance)" } catch { |e| wutRethrowInterrupt $e }
-    opPrintMaybeRunCmd sudo rm -rf $runDirPath
+    try { doRunCleanup $instance $runDirPath } catch { doRunCleanup $instance $runDirPath }
     if $failure != null {
       wutRethrowInterrupt $failure
     }
+  }
+
+  def doRunCleanup [instance, runDirPath] {
+    try { opPrintMaybeRunCmd sudo pkill --full --ignore-ancestors $"^swtpm.*($instance)" } catch { |e| wutRethrowInterrupt $e }
+    opPrintMaybeRunCmd sudo rm -rf $runDirPath
   }
 
   def doRem [cmd, instance] {
