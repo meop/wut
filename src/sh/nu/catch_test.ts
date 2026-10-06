@@ -37,8 +37,8 @@ Deno.test('nu / catch / a manager a signal or a ctrl-c ended is not kept inside 
   }
 })
 
-// every catch hands its error to opRethrowInterrupt (or packMarkFailed, which does) or keeps it for later, and every
-// try has a catch — except the settle, `try { do { } }`, whose job is to swallow the one thing it catches
+// every catch hands its error to opRethrowInterrupt (or packMarkFailed, which does) or keeps it to raise later, and
+// every try has a catch
 Deno.test('nu / catch / every catch in wut nu rethrows an interrupt', async () => {
   const offenders: Array<string> = []
   for await (const f of walk(NU_DIR, { exts: ['.nu'] })) {
@@ -49,7 +49,7 @@ Deno.test('nu / catch / every catch in wut nu rethrows an interrupt', async () =
       }
       const at = `${f.path.slice(NU_DIR.length)}:${i + 1}`
       const ahead = lines.slice(i, i + 4).join('\n')
-      if (/\bcatch \{/.test(line) && !/opRethrowInterrupt|packMarkFailed|\{ \|e\| \$e \}/.test(ahead)) {
+      if (/\bcatch \{/.test(line) && !/opRethrowInterrupt|packMarkFailed|\{ \|e\| (.+; )?\$e \}/.test(ahead)) {
         offenders.push(`${at} catch without opRethrowInterrupt`)
       }
       if (

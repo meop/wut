@@ -49,14 +49,16 @@ Known nushell parsing and runtime quirks that have caused bugs in `src/sh/nu/`. 
   `const` declared below the command that reads it fails with `variable not found`. `PACK_PACMAN_FAMILY` sits at the top
   of `pack.nu` for that reason.
 
-- **How nu handles a ctrl-c** (from its source, 0.116). It sets one interrupt flag per process (`src/signals.rs`); a
-  script's children share its process group, so every nu in a chain gets one (`crates/nu-system/src/foreground.rs`). The
-  flag is checked only at a jump or a return — a branch, a loop iteration, the end of a block — and inside commands that
-  wait or write (`crates/nu-protocol/src/ir/mod.rs`, `check_interrupt`), and raised there as `Interrupted`. A `catch` or
-  `finally` clears it only when the error it handles is `Interrupted`, or on unix `TerminatedBySignal`
-  (`crates/nu-engine/src/eval_ir.rs`, `reset_signals_if_interrupted`). Uncaught, `Interrupted` is always printed —
-  `display_errors` can hide only `NonZeroExitCode` and, on unix, `TerminatedBySignal`
-  (`crates/nu-protocol/src/config/display_errors.rs`) — which is why `termination_signal = false` never made it quiet.
+- **How nu handles a ctrl-c** (from its source, 0.116). The ctrl-c handler sets one interrupt flag per process, from a
+  thread of its own (the `ctrlc` crate's `set_handler_inner`), so nu can see a command the ctrl-c stopped exit before
+  its own flag is set. A script's children share its process group, so every nu in a chain gets one
+  (`crates/nu-system/src/foreground.rs`). The flag is checked only at a jump or a return — a branch, a loop iteration,
+  the end of a block — and inside commands that wait or write (`crates/nu-protocol/src/ir/mod.rs`, `check_interrupt`),
+  and raised there as `Interrupted`; `exit` is not a check. A `catch` or `finally` clears it only when the error it
+  handles is `Interrupted`, or on unix `TerminatedBySignal` (`crates/nu-engine/src/eval_ir.rs`,
+  `reset_signals_if_interrupted`). Uncaught, `Interrupted` is always printed — `display_errors` can hide only
+  `NonZeroExitCode` and, on unix, `TerminatedBySignal` (`crates/nu-protocol/src/config/display_errors.rs`) — which is
+  why `termination_signal = false` never made it quiet. So a ctrl-c can be raised late, anywhere.
 
 - **`try` catches ctrl-c**, a bare `try { }` included. A loop that records a failure and moves on, or a
   `catch { null }`, steps past the user's stop where zsh and pwsh would have stopped. Every `catch` in wut's nu calls
@@ -65,18 +67,13 @@ Known nushell parsing and runtime quirks that have caused bugs in `src/sh/nu/`. 
   command that read it), -2 (a command that died of SIGINT) or -1073741510 (windows' `STATUS_CONTROL_C_EXIT`). A caught
   error carries `exit_code` for a command's failure: the code, or minus the signal for a signal death.
 
-- **A ctrl-c can still be pending after a catch.** The failure of a command a ctrl-c stopped is often neither
-  `Interrupted` nor a signal death — one that reads it exits 130, and windows has no signals — so the catch does not
-  clear the flag, and it fires at the next check: the first branch or return in the code after it. Code that has to run
-  however the command ended, like the cleanup after a foreground qemu run, calls `opSettle` first: `try { do { } }`,
-  whose block return is a check inside a try that clears it. The end of a `catch` block is not a check
-  (`crates/nu-engine/src/compile/keyword.rs`, `compile_try`), so `let failure = (try { … } catch { |e| $e })` keeps the
-  failure safely for after the cleanup.
-
-- **Stopping looks the same in every shell.** shire's `NuSh.build()` wraps every nu script in one handler, and
-  `opRunCmd` the child nu each command runs in: it settles, and a ctrl-c ends the run with exit code 130, no error
-  output, and the newline zsh prints after `^C` (only the outermost nu prints it). Any other error is raised again and
-  reported as before.
+- **Quiet is one wrapper per nu process, at its top.** shire's `NuSh.build()` wraps every nu script, and `opRunCmd` the
+  child nu each command runs in: a ctrl-c that reaches the top ends the run with exit code 130 and no error output; any
+  other error is raised again and reported as before. Because the interrupt can land late, even inside the wrapper's own
+  catch, the wrapper has an outer catch that does nothing but the same exit. Nothing below the top needs to know about
+  any of this, beyond rethrowing — except cleanup that has to run however a command ended, like the one after a
+  foreground qemu run: it runs as `try { X } catch { |e| X; $e }` and raises what it caught afterwards. The interrupt
+  fires once, so if it cuts the first attempt short, the second completes.
 
 - **A `try { }` inside an `opRunCmd` string hides how the command ended.** The inner `nu -c` swallows the error and
   exits 0. `pack`'s wrapper carries `PACK_TRY_CATCH`, which lets an abnormal end (a negative `exit_code`: a signal on

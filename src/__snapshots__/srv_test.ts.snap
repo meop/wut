@@ -20,8 +20,7 @@ snapshot[`error / operation request missing 1`] = `'echo "operation request miss
 snapshot[`error / shell request missing 1`] = `'echo "shell request missing"'`;
 
 snapshot[`error / command not found (nu) 1`] = `
-\`let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)
-\$env.SHIRE_NU_NESTED = '1'
+\`try {
 try {
 \$env.REQ_URL_CFG = r#'http://x/cfg'#
 
@@ -111,27 +110,15 @@ def opRethrowInterrupt [e: record] {
   }
 }
 
-# fires a pending ctrl-c inside a try that clears it, so what follows runs whole; true when there was one
-def opSettle [] {
-  try { do { }; false } catch { true }
-}
-
 # NuSh.quietInterrupt, line for line, for the child nu a command runs in
 def opQuietInterrupt [body: string] {
-  [
-    r#'let shireOuter = ('SHIRE_NU_NESTED' not-in \$env)'#
-    r#'\$env.SHIRE_NU_NESTED = '1''#
-    r#'try {'#
-    \$body
-    r#'} catch { |e|'#
-    r#'  let shireSettled = (try { do { }; false } catch { true })'#
-    r#'  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {'#
-    r#'    if \$shireOuter { print '' }'#
-    r#'    exit 130'#
-    r#'  }'#
-    r#'  \$e.raw'#
+  let stop = [
+    r#'if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {'#
+    r#'  exit 130'#
     r#'}'#
-  ] | str join "\\\\n"
+    r#'\$e.raw'#
+  ] | each { |l| \$"  (\$l)" }
+  [r#'try {'# r#'try {'# \$body r#'} catch { |e|'# ...\$stop r#'}'# r#'} catch { |e|'# ...\$stop r#'}'#] | str join "\\\\n"
 }
 
 def opRunCmd --wrapped [...args] {
@@ -403,17 +390,21 @@ if \$env.SYS_OS_PLAT == 'windows' {
 let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# settle a ctrl-c that stopped the script, so the cleanup runs whole
-try { do { } }
-rm --force --permanent \$scriptFilePath
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
 # the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
 
 
 } catch { |e|
-  let shireSettled = (try { do { }; false } catch { true })
-  if \$shireSettled or (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
-    if \$shireOuter { print '' }
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
     exit 130
   }
   \$e.raw

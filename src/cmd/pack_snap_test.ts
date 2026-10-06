@@ -391,7 +391,7 @@ const PIN_ARCH = 'sysOsPlat=linux&sysOs=arch&wutNuPinned=1'
 
 // the script's own last statement: NuSh.build() wraps every script in a ctrl-c handler, which comes after it
 function lastStatement(body: string): string {
-  return body.slice(0, body.lastIndexOf('\n} catch { |e|')).trimEnd()
+  return body.slice(0, body.indexOf('\n} catch { |e|')).trimEnd()
 }
 
 // the managers the client is told to consider, which is what its table can offer. an op that narrows the list

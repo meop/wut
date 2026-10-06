@@ -143,8 +143,8 @@ the error to shire's `opRethrowInterrupt` first (see [NUSHELL.md](NUSHELL.md)). 
 and exits 130 counts as one. Anything else that ends a command — a failure, or a signal aimed at that command alone — is
 that command's failure: the run records it and goes on.
 
-Stopping looks the same in every shell, too: no error output, and the prompt on a new line after `^C`. nu gets there
-through shire, which wraps every nu script it builds in a handler that does that and exits 130, as zsh does.
+Stopping looks the same in every shell, too: no error output. nu gets there through shire, which wraps every nu script
+it builds in one handler that exits 130, as zsh does.
 
 ## Nothing matched, nothing installed
 

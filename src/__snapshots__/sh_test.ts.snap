@@ -1,8 +1,7 @@
 export const snapshot = {};
 
 snapshot[`pwsh / file / find (redirect) 1`] = `
-\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = (''SHIRE_NU_NESTED'' not-in \$env)
-\$env.SHIRE_NU_NESTED = ''1''
+\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c 'try {
 try {
 \$env.REQ_URL_SH = r#''http://x/sh/nu/file/find?sysOsPlat=linux&wutNuPinned=1''#
 
@@ -10,17 +9,21 @@ try {
 let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# settle a ctrl-c that stopped the script, so the cleanup runs whole
-try { do { } }
-rm --force --permanent \$scriptFilePath
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
 # the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
 
 
 } catch { |e|
-  let shireSettled = (try { do { }; false } catch { true })
-  if \$shireSettled or (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
-    if \$shireOuter { print '''' }
+  if (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     exit 130
   }
   \$e.raw
@@ -28,8 +31,7 @@ if \$failure != null { \$failure.raw }
 `;
 
 snapshot[`pwsh / file / sync (redirect) 1`] = `
-\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = (''SHIRE_NU_NESTED'' not-in \$env)
-\$env.SHIRE_NU_NESTED = ''1''
+\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c 'try {
 try {
 \$env.REQ_URL_SH = r#''http://x/sh/nu/file/sync?sysOsPlat=linux&wutNuPinned=1''#
 
@@ -37,17 +39,21 @@ try {
 let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# settle a ctrl-c that stopped the script, so the cleanup runs whole
-try { do { } }
-rm --force --permanent \$scriptFilePath
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
 # the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
 
 
 } catch { |e|
-  let shireSettled = (try { do { }; false } catch { true })
-  if \$shireSettled or (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
-    if \$shireOuter { print '''' }
+  if (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     exit 130
   }
   \$e.raw
@@ -55,8 +61,7 @@ if \$failure != null { \$failure.raw }
 `;
 
 snapshot[`pwsh / pack / add (redirect) 1`] = `
-\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = (''SHIRE_NU_NESTED'' not-in \$env)
-\$env.SHIRE_NU_NESTED = ''1''
+\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c 'try {
 try {
 \$env.REQ_URL_SH = r#''http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1''#
 
@@ -64,17 +69,21 @@ try {
 let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# settle a ctrl-c that stopped the script, so the cleanup runs whole
-try { do { } }
-rm --force --permanent \$scriptFilePath
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
 # the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
 
 
 } catch { |e|
-  let shireSettled = (try { do { }; false } catch { true })
-  if \$shireSettled or (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
-    if \$shireOuter { print '''' }
+  if (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     exit 130
   }
   \$e.raw
@@ -82,8 +91,7 @@ if \$failure != null { \$failure.raw }
 `;
 
 snapshot[`pwsh / pack / find (redirect) 1`] = `
-\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = (''SHIRE_NU_NESTED'' not-in \$env)
-\$env.SHIRE_NU_NESTED = ''1''
+\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c 'try {
 try {
 \$env.REQ_URL_SH = r#''http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1''#
 
@@ -91,17 +99,21 @@ try {
 let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# settle a ctrl-c that stopped the script, so the cleanup runs whole
-try { do { } }
-rm --force --permanent \$scriptFilePath
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
 # the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
 
 
 } catch { |e|
-  let shireSettled = (try { do { }; false } catch { true })
-  if \$shireSettled or (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
-    if \$shireOuter { print '''' }
+  if (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     exit 130
   }
   \$e.raw
@@ -109,8 +121,7 @@ if \$failure != null { \$failure.raw }
 `;
 
 snapshot[`pwsh / virt / list (redirect) 1`] = `
-\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = (''SHIRE_NU_NESTED'' not-in \$env)
-\$env.SHIRE_NU_NESTED = ''1''
+\`& "\${env:WUT_HOME}/vendor/nu" --no-config-file -c 'try {
 try {
 \$env.REQ_URL_SH = r#''http://x/sh/nu/virt/list?sysOsPlat=linux&wutNuPinned=1''#
 
@@ -118,17 +129,21 @@ try {
 let scriptFilePath = (mktemp --suffix ''.nu'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# settle a ctrl-c that stopped the script, so the cleanup runs whole
-try { do { } }
-rm --force --permanent \$scriptFilePath
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
 # the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
 
 
 } catch { |e|
-  let shireSettled = (try { do { }; false } catch { true })
-  if \$shireSettled or (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
-    if \$shireOuter { print '''' }
+  if (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with ''Interrupted '') or (\$e.details.code? == ''nu::shell::io::interrupted'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     exit 130
   }
   \$e.raw
@@ -136,8 +151,7 @@ if \$failure != null { \$failure.raw }
 `;
 
 snapshot[`zsh / file / find (redirect) 1`] = `
-\`"\${WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = ('\\\\''SHIRE_NU_NESTED'\\\\'' not-in \$env)
-\$env.SHIRE_NU_NESTED = '\\\\''1'\\\\''
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c 'try {
 try {
 \$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/file/find?sysOsPlat=linux&wutNuPinned=1'\\\\''#
 
@@ -145,17 +159,21 @@ try {
 let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# settle a ctrl-c that stopped the script, so the cleanup runs whole
-try { do { } }
-rm --force --permanent \$scriptFilePath
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
 # the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
 
 
 } catch { |e|
-  let shireSettled = (try { do { }; false } catch { true })
-  if \$shireSettled or (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
-    if \$shireOuter { print '\\\\'''\\\\'' }
+  if (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     exit 130
   }
   \$e.raw
@@ -163,8 +181,7 @@ if \$failure != null { \$failure.raw }
 `;
 
 snapshot[`zsh / file / sync (redirect) 1`] = `
-\`"\${WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = ('\\\\''SHIRE_NU_NESTED'\\\\'' not-in \$env)
-\$env.SHIRE_NU_NESTED = '\\\\''1'\\\\''
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c 'try {
 try {
 \$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/file/sync?sysOsPlat=linux&wutNuPinned=1'\\\\''#
 
@@ -172,17 +189,21 @@ try {
 let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# settle a ctrl-c that stopped the script, so the cleanup runs whole
-try { do { } }
-rm --force --permanent \$scriptFilePath
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
 # the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
 
 
 } catch { |e|
-  let shireSettled = (try { do { }; false } catch { true })
-  if \$shireSettled or (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
-    if \$shireOuter { print '\\\\'''\\\\'' }
+  if (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     exit 130
   }
   \$e.raw
@@ -190,8 +211,7 @@ if \$failure != null { \$failure.raw }
 `;
 
 snapshot[`zsh / pack / add (redirect) 1`] = `
-\`"\${WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = ('\\\\''SHIRE_NU_NESTED'\\\\'' not-in \$env)
-\$env.SHIRE_NU_NESTED = '\\\\''1'\\\\''
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c 'try {
 try {
 \$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'\\\\''#
 
@@ -199,17 +219,21 @@ try {
 let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# settle a ctrl-c that stopped the script, so the cleanup runs whole
-try { do { } }
-rm --force --permanent \$scriptFilePath
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
 # the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
 
 
 } catch { |e|
-  let shireSettled = (try { do { }; false } catch { true })
-  if \$shireSettled or (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
-    if \$shireOuter { print '\\\\'''\\\\'' }
+  if (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     exit 130
   }
   \$e.raw
@@ -217,8 +241,7 @@ if \$failure != null { \$failure.raw }
 `;
 
 snapshot[`zsh / pack / find (redirect) 1`] = `
-\`"\${WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = ('\\\\''SHIRE_NU_NESTED'\\\\'' not-in \$env)
-\$env.SHIRE_NU_NESTED = '\\\\''1'\\\\''
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c 'try {
 try {
 \$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'\\\\''#
 
@@ -226,17 +249,21 @@ try {
 let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# settle a ctrl-c that stopped the script, so the cleanup runs whole
-try { do { } }
-rm --force --permanent \$scriptFilePath
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
 # the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
 
 
 } catch { |e|
-  let shireSettled = (try { do { }; false } catch { true })
-  if \$shireSettled or (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
-    if \$shireOuter { print '\\\\'''\\\\'' }
+  if (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     exit 130
   }
   \$e.raw
@@ -244,8 +271,7 @@ if \$failure != null { \$failure.raw }
 `;
 
 snapshot[`zsh / virt / list (redirect) 1`] = `
-\`"\${WUT_HOME}/vendor/nu" --no-config-file -c 'let shireOuter = ('\\\\''SHIRE_NU_NESTED'\\\\'' not-in \$env)
-\$env.SHIRE_NU_NESTED = '\\\\''1'\\\\''
+\`"\${WUT_HOME}/vendor/nu" --no-config-file -c 'try {
 try {
 \$env.REQ_URL_SH = r#'\\\\''http://x/sh/nu/virt/list?sysOsPlat=linux&wutNuPinned=1'\\\\''#
 
@@ -253,17 +279,21 @@ try {
 let scriptFilePath = (mktemp --suffix '\\\\''.nu'\\\\'' --tmpdir)
 http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
 let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
-# settle a ctrl-c that stopped the script, so the cleanup runs whole
-try { do { } }
-rm --force --permanent \$scriptFilePath
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
 # the script reported its own failure; this passes on its exit code
 if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
 
 
 } catch { |e|
-  let shireSettled = (try { do { }; false } catch { true })
-  if \$shireSettled or (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
-    if \$shireOuter { print '\\\\'''\\\\'' }
+  if (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with '\\\\''Interrupted '\\\\'') or (\$e.details.code? == '\\\\''nu::shell::io::interrupted'\\\\'') or (\$e.exit_code? in [130, -2, -1073741510]) {
     exit 130
   }
   \$e.raw

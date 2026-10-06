@@ -463,14 +463,20 @@ def virtQemu [] {
     opPrintMaybeRunCmd $"r##'((['#!/usr/bin/bash', ('exec ' + $qemuCmd)] | str join "\n") + "\n")'##" '|' sudo tee $qemuScriptFilePath '|' ignore
     opPrintMaybeRunCmd sudo chmod +x $qemuScriptFilePath
 
-    # the cleanup runs however qemu ended; a ctrl-c that ended it stops the run after
+    # the cleanup runs however qemu ended, twice if a ctrl-c cuts it short; a ctrl-c stops the run after
     let failure = (try { opPrintMaybeRunCmd sudo $qemuScriptFilePath; null } catch { |e| $e })
-    opSettle | ignore
-    try { opPrintMaybeRunCmd sudo pkill --full --ignore-ancestors $"^swtpm.*($instance)" } catch { |e| opRethrowInterrupt $e }
-    opPrintMaybeRunCmd sudo rm -rf $runDirPath
+    let cut = (try { doRunCleanup $instance $runDirPath; null } catch { |e| doRunCleanup $instance $runDirPath; $e })
     if $failure != null {
       opRethrowInterrupt $failure
     }
+    if $cut != null {
+      opRethrowInterrupt $cut
+    }
+  }
+
+  def doRunCleanup [instance, runDirPath] {
+    try { opPrintMaybeRunCmd sudo pkill --full --ignore-ancestors $"^swtpm.*($instance)" } catch { |e| opRethrowInterrupt $e }
+    opPrintMaybeRunCmd sudo rm -rf $runDirPath
   }
 
   def doRem [cmd, instance] {
