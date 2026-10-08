@@ -249,6 +249,8 @@ def virtPodman [] {
         let podInstances = $env.VIRT_INSTANCES | where { |p| (($p | split row '/') | first) == $pod }
         doAdd $pod $podInstances $cmd
       }
+      # each pull leaves the image it replaced untagged; drop those so they do not pile up
+      opPrintMaybeRunCmd sudo $cmd image prune --force
     }
     tidy => {
       opPrintMaybeRunCmd sudo $cmd system prune --all
