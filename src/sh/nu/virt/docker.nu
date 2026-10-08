@@ -68,7 +68,7 @@ def virtDocker [] {
       }
     }
     tidy => {
-      opPrintMaybeRunCmd sudo $cmd system prune --all
+      opPrintMaybeRunCmd sudo $cmd system prune --all --force
     }
   }
 }

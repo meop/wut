@@ -253,7 +253,7 @@ def virtPodman [] {
       opPrintMaybeRunCmd sudo $cmd image prune --force
     }
     tidy => {
-      opPrintMaybeRunCmd sudo $cmd system prune --all
+      opPrintMaybeRunCmd sudo $cmd system prune --all --force
     }
   }
 }

@@ -4839,7 +4839,7 @@ def virtDocker [] {
       }
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -5278,7 +5278,7 @@ def virtPodman [] {
       opPrintMaybeRunCmd sudo \$cmd image prune --force
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -6448,7 +6448,7 @@ def virtDocker [] {
       }
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -6887,7 +6887,7 @@ def virtPodman [] {
       opPrintMaybeRunCmd sudo \$cmd image prune --force
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -8057,7 +8057,7 @@ def virtDocker [] {
       }
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -8496,7 +8496,7 @@ def virtPodman [] {
       opPrintMaybeRunCmd sudo \$cmd image prune --force
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -10758,7 +10758,7 @@ def virtDocker [] {
       }
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -11197,7 +11197,7 @@ def virtPodman [] {
       opPrintMaybeRunCmd sudo \$cmd image prune --force
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -12367,7 +12367,7 @@ def virtDocker [] {
       }
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -12806,7 +12806,7 @@ def virtPodman [] {
       opPrintMaybeRunCmd sudo \$cmd image prune --force
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -13974,7 +13974,7 @@ def virtDocker [] {
       }
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -14413,7 +14413,7 @@ def virtPodman [] {
       opPrintMaybeRunCmd sudo \$cmd image prune --force
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -15583,7 +15583,7 @@ def virtDocker [] {
       }
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -16022,7 +16022,7 @@ def virtPodman [] {
       opPrintMaybeRunCmd sudo \$cmd image prune --force
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -18278,7 +18278,7 @@ def virtDocker [] {
       }
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -18717,7 +18717,7 @@ def virtPodman [] {
       opPrintMaybeRunCmd sudo \$cmd image prune --force
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -19887,7 +19887,7 @@ def virtDocker [] {
       }
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -20326,7 +20326,7 @@ def virtPodman [] {
       opPrintMaybeRunCmd sudo \$cmd image prune --force
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -21496,7 +21496,7 @@ def virtDocker [] {
       }
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -21935,7 +21935,7 @@ def virtPodman [] {
       opPrintMaybeRunCmd sudo \$cmd image prune --force
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -23626,7 +23626,7 @@ def virtDocker [] {
       }
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
@@ -24065,7 +24065,7 @@ def virtPodman [] {
       opPrintMaybeRunCmd sudo \$cmd image prune --force
     }
     tidy => {
-      opPrintMaybeRunCmd sudo \$cmd system prune --all
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
     }
   }
 }
