@@ -63,7 +63,7 @@ Deno.test({
   },
 })
 
-Deno.test('script.nu - the listing shows each action, in order, with only the tools that apply', async () => {
+Deno.test('script.nu - the listing shows what applies, then what the gates rule out, grouped the same way', async () => {
   const out = await withPlan(
     [
       unit('b', 'setup'),
@@ -74,17 +74,27 @@ Deno.test('script.nu - the listing shows each action, in order, with only the to
     'scriptFindRun',
   )
   if (out != null) {
-    assertEquals(out.split('\n').slice(0, 4), ['install', '  c', 'setup', '  b'])
+    assertEquals(out.split('\n').slice(0, 10), [
+      'install',
+      '  c',
+      'setup',
+      '  b',
+      '',
+      'not applicable',
+      '  install',
+      '    d',
+      '  setup',
+      '    a',
+    ])
   }
 })
 
-Deno.test('script.nu - with nothing applicable the listing says so once', async () => {
+Deno.test('script.nu - with nothing applicable the listing is only that group, and no table', async () => {
   const out = await withPlan(
     [unit('b', 'install', [], ['sh']), unit('a', 'setup', ['wut-no-such-cmd'])],
     'scriptFindRun',
   )
   if (out != null) {
-    // the warning is coloured, which this compares around
-    assertEquals(out.replace(/\x1b\[[0-9;]*m/g, ''), 'not applicable: a, b')
+    assertEquals(out.split('\n'), ['not applicable', '  install', '    b', '  setup', '    a'])
   }
 })

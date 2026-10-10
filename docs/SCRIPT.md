@@ -48,10 +48,11 @@ each script's own checks, which is the script's work, so it happens once the scr
 `already set` or `already installed` itself. That keeps every setup and teardown listed wherever its tool is, ready to
 run again after a change to wut-config.
 
-`script find` lists each action with only the tools that apply, as `virt find` lists only the managers installed, and
-says `not applicable: ...` once when none do. `script exec` with an action alone tables only what applies, or says
-`nothing to do`. `script exec` with a tool named is not gated: the run was asked for by name, so the script's own
-`'<tool> is not installed'` or `'already installed'` explains a no op.
+`script find` lists each action with the tools that apply, then the ones the gates rule out as a `not applicable` group
+of the same shape, nested one level as `virt find` nests a manager's pods; its table counts only what applies.
+`script exec` with an action alone tables only what applies, or says `nothing to do`. `script exec` with a tool named is
+not gated: the run was asked for by name, so the script's own `'<tool> is not installed'` or `'already installed'`
+explains a no op.
 
 Declare `has_` only where the tool must already exist, and `no_` only on an install — never `has_` there, or it would
 skip exactly when it is needed. A script that gates on something neither a command nor a service names (an app bundle, a
