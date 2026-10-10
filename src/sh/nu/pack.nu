@@ -486,11 +486,6 @@ def --env packRefreshAll [] {
   for m in (packManagersHere) { packRefresh $m }
 }
 
-# the first manager here that really has it, in the order wut prefers
-def --env packFindFirst [name: string] {
-  packFindFirstIn (packManagersHere) $name
-}
-
 def --env packFindFirstIn [managers: list<string>, name: string] {
   for m in $managers {
     if (packClaims $m $name) { return $m }
@@ -498,14 +493,9 @@ def --env packFindFirstIn [managers: list<string>, name: string] {
   null
 }
 
-# remove is PINPOINT — the one manager it uninstalls from — while sync is WIDE, so a name two managers both hold
-# is updated in both rather than left stale in whichever sorted second.
-# a `where` would read better and remember nothing: what a check learns inside a closure does not leave it
-def --env packFindEvery [managers: list<string>, name: string] {
-  if ($env.PACK_OP? | default '') != 'sync' {
-    let winner = (packFindFirstIn $managers $name)
-    return (if $winner == null { [] } else { [$winner] })
-  }
+# every manager of these that has it, in the order given. a `where` would read better and remember nothing: what a
+# check learns inside a closure does not leave it
+def --env packClaimsAll [managers: list<string>, name: string] {
   mut every = []
   for m in $managers {
     if (packClaims $m $name) {
@@ -513,6 +503,54 @@ def --env packFindEvery [managers: list<string>, name: string] {
     }
   }
   $every
+}
+
+# add's search asks every manager rather than stopping at the first that has a name, since the first in wut's order is
+# not always the one wanted: ghpm has a github repo's release binary, go builds the same tool from source. a name only
+# one manager has goes there; when any has several, the managers are a second pick, and each name goes to the first
+# picked one that has it. -y picks every row, which is wut's order again
+def --env packSearchPick [names: list<string>] {
+  let here = (packManagersHere)
+  mut claims = {}
+  for name in $names {
+    let every = (packClaimsAll $here $name)
+    if ($every | is-empty) {
+      load-env {PACK_UNSERVED: (($env.PACK_UNSERVED? | default []) | append $name)}
+    } else {
+      $claims = ($claims | upsert $name $every)
+    }
+  }
+  if ($claims | is-empty) {
+    return {}
+  }
+  let claims = $claims
+  let ask = ($claims | values | any { |every| ($every | length) > 1 })
+  let offered = ($here | where { |m| $claims | values | any { |every| $m in $every } })
+  let chosen = if not $ask {
+    $offered
+  } else {
+    opPrint ''
+    opPrint '?'
+    for m in $offered {
+      opPrint $m
+      opPrint $"  ($claims | transpose name every | where { |c| $m in $c.every } | get name | str join ', ')"
+    }
+    opPrint ''
+    packTable ['manager' 'packages'] ($offered | enumerate | each { |o|
+      let count = ($claims | values | where { |every| $o.item in $every } | length)
+      [$"($o.index + 1)\) ($o.item)", ($count | into string)]
+    })
+    let picked = (wutSelectRead ($offered | length))
+    if $picked == null { [] } else { $picked | each { |i| $offered | get ($i - 1) } }
+  }
+  mut found = {}
+  for c in ($claims | transpose name every) {
+    let winner = ($offered | where { |m| $m in $chosen and $m in $c.every } | get -o 0)
+    if $winner != null {
+      $found = ($found | upsert $winner (($found | get -o $winner | default []) | append $c.name))
+    }
+  }
+  $found
 }
 
 def --env packRunLoose [manager: string] {
@@ -603,10 +641,11 @@ def --env packFindSearch [] {
   mut byManager = {}
   mut missing = []
   for name in $remaining {
-    let m = (packFindFirstIn $chosen $name)
-    if $m == null {
+    let every = (packClaimsAll $chosen $name)
+    if ($every | is-empty) {
       $missing = ($missing | append $name)
-    } else {
+    }
+    for m in $every {
       $byManager = ($byManager | upsert $m (($byManager | get -o $m | default []) | append $name))
     }
   }
@@ -623,7 +662,8 @@ def --env packFindSearch [] {
 
 # the first path whose manager is on this machine wins the group, in the order the group stated. the installed ops
 # narrow that: a manager that never installed the group is not the one to act on it, however present it is.
-# remove takes the one it uninstalls from; sync is WIDE, so it takes every manager actually holding the group
+# remove and sync both take every manager actually holding the group, each a row of the table, so which of them runs
+# is the pick rather than whichever the group stated first
 def --env packPickPaths [unit: record] {
   let here = ($unit.paths | where { |p| packManagerHere $p.manager })
   if not (packOpAsksInstalled) {
@@ -639,9 +679,6 @@ def --env packPickPaths [unit: record] {
       }
     }
     if $has {
-      if ($env.PACK_OP? | default '') != 'sync' {
-        return [$p]
-      }
       $held = ($held | append $p)
     }
   }
@@ -677,7 +714,9 @@ def --env packPlanRun [] {
   if (packOpAsksInstalled) and ($loose | is-not-empty) {
     let here = (packManagersHere)
     for name in $loose {
-      let winners = (packFindEvery $here $name)
+      # every manager holding it is a row: the table is where one is picked, so a name two managers both hold is not
+      # settled for you by whichever sorts first
+      let winners = (packClaimsAll $here $name)
       if ($winners | is-empty) {
         $unresolved = ($unresolved | append $name)
       } else {
@@ -767,16 +806,7 @@ def --env packPlanRun [] {
   mut running = ($looseFor | transpose manager names | where { |e| $e.manager in $chosen })
   if ('?' in $chosen) and ($deferred | is-not-empty) {
     packRefreshAll
-    mut found = {}
-    for name in $deferred {
-      let winner = (packFindFirst $name)
-      if $winner == null {
-        load-env {PACK_UNSERVED: (($env.PACK_UNSERVED? | default []) | append $name)}
-      } else {
-        $found = ($found | upsert $winner (($found | get -o $winner | default []) | append $name))
-      }
-    }
-    $running = ($running ++ ($found | transpose manager names))
+    $running = ($running ++ (packSearchPick $deferred | transpose manager names))
   }
   for entry in $running {
     load-env {PACK_LOOSE_NAMES: $entry.names}

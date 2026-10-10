@@ -37,7 +37,8 @@ fanned out run skips tools that are not on the client's PATH, and `find` leaves 
 three shells' matches, so a tool present in more than one shell still resolves to a single script, and podman-instance
 eligibility and group-name resolution differ from a plain path glob. `pack list` and `pack outdated` match a term as a
 substring of what each manager reports installed, then hand the term to the manager as well. `pack sync` given names
-matches them exactly, the way `remove` does, and being WIDE it keeps every manager that answers rather than the first
+matches them exactly, the way `remove` does. Below the group, at the manager, `add`, `remove` and `sync` all offer every
+manager that answers rather than the first, and the numbered pick decides
 ([PACK.md](PACK.md#add-and-remove-ask-different-questions)).
 
 ## Nothing matched

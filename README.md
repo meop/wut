@@ -44,7 +44,9 @@ $env.WUT_URL = 'http://my-server:9000'
 def wut --wrapped [...args] {
   mut url = $"($env.WUT_URL)" | str trim --right --char '/'
   mut url = $"($url)/sh/nu"
-  mut url = $"($url)/($args | str join '/')" | str trim --right --char '/'
+  # one path segment per argument: a name with a slash of its own (@std/path) is encoded so it stays one
+  let segments = ($args | each { |a| $a | str replace --all '%' '%25' | str replace --all '/' '%2F' | str replace --all '?' '%3F' | str replace --all '#' '%23' })
+  mut url = $"($url)/($segments | str join '/')" | str trim --right --char '/'
 
   nu --no-config-file -c $"( http get --raw --redirect-mode follow $url )"
 }
@@ -58,7 +60,9 @@ $env:WUT_URL = 'http://my-server:9000'
 function wut {
   $url = "${env:WUT_URL}".TrimEnd('/')
   $url = "${url}/sh/pwsh"
-  $url = "${url}/$($args -Join '/')".TrimEnd('/')
+  # one path segment per argument: a name with a slash of its own (@std/path) is encoded so it stays one
+  $segments = $args | ForEach-Object { "$_".Replace('%', '%25').Replace('/', '%2F').Replace('?', '%3F').Replace('#', '%23') }
+  $url = "${url}/$($segments -join '/')".TrimEnd('/')
 
   pwsh -noprofile -c "$( irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri $url )"
 }
@@ -72,7 +76,17 @@ export WUT_URL='http://my-server:9000'
 function wut {
   local url=$(echo "${WUT_URL}" | sed 's:/*$::')
   local url=$(echo "${url}/sh/zsh")
-  local url=$(echo "${url}/$(echo "$*" | sed 's/ /\//g')" | sed 's:/*$::')
+  # one path segment per argument: a name with a slash of its own (@std/path) is encoded so it stays one
+  local arg
+  local -a segments
+  for arg in "$@"; do
+    arg=${arg//\%/%25}
+    arg=${arg//\//%2F}
+    arg=${arg//\?/%3F}
+    arg=${arg//\#/%23}
+    segments+=("${arg}")
+  done
+  local url=$(echo "${url}/${(j:/:)segments}" | sed 's:/*$::')
 
   zsh --no-rcs -c "$( curl --fail-with-body --location --no-progress-meter --url $url )"
 }

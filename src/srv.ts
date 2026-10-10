@@ -53,10 +53,21 @@ const NU_VERS_PATCH_KEY = ['nu', 'vers', 'patch']
 
 const VAR_REQ_URL_OP_KEY = (op: string) => ['req', 'url', op]
 
+// each argument is one path segment, so a name that has a slash of its own (`@std/path`, `golang.org/x/tools/gopls`,
+// `extras/vscode`) arrives percent encoded and is decoded only after the split. a segment that does not decode, from
+// a client that sends a bare %, is taken as it came
+function decodeSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment)
+  } catch {
+    return segment
+  }
+}
+
 export async function runSrv(request: Request) {
   try {
     const context = getCtx(request)
-    const parts = context.req_path.split('/').filter((p) => p.length > 0)
+    const parts = context.req_path.split('/').filter((p) => p.length > 0).map(decodeSegment)
 
     if (!parts.length) {
       return new Response(`echo "operation request missing"`, {
@@ -140,7 +151,11 @@ export async function runSrv(request: Request) {
 
     const cmd = new SrvCmd()
     const canonicalParts = resolveCanonicalParts(cmd, parts.slice(2))
-    const canonicalContext: Ctx = { ...context, req_path: ['', 'sh', sh, ...canonicalParts].join('/') }
+    // encoded again, since a redirect sends this path back to the server, which splits it once more
+    const canonicalContext: Ctx = {
+      ...context,
+      req_path: ['', 'sh', sh, ...canonicalParts.map(encodeURIComponent)].join('/'),
+    }
 
     for (const e of Object.entries(canonicalContext)) {
       if (!e[1]) {

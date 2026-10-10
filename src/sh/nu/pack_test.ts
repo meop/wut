@@ -21,8 +21,8 @@ async function withStubs(
   // manager files to source too, when the test runs an op end to end rather than probing one decision
   managerFiles: Array<string> = [],
   allowFailure = false,
-  // rows to pick instead of prompting
-  pick?: Array<number>,
+  // rows to pick instead of prompting, or a body that picks them, for a run with more than one table
+  pick?: Array<number> | string,
 ): Promise<string | null> {
   const dir = await Deno.makeTempDir()
   const home = await Deno.makeTempDir()
@@ -38,7 +38,9 @@ async function withStubs(
       await Deno.readTextFile(PATH_NU),
       pick == null ? await Deno.readTextFile(SEL_NU) : (await Deno.readTextFile(SEL_NU)).replace(
         /^def wutSelectRead [\s\S]*?^}$/m,
-        `def wutSelectRead [max: int] { ${JSON.stringify(pick).replaceAll(',', ' ')} }`,
+        `def wutSelectRead [max: int] { ${
+          typeof pick === 'string' ? pick : JSON.stringify(pick).replaceAll(',', ' ')
+        } }`,
       ),
       await Deno.readTextFile(PACK_NU),
       ...await Promise.all(
@@ -384,32 +386,89 @@ Deno.test('nu / pack / a named sync only runs the managers that hold the name', 
   assertEquals(absent!.includes('uv tool upgrade'), false)
 })
 
-// sync is WIDE where remove is PINPOINT: a name two managers both hold is stale in one of them if only the first
-// in preference order is updated, while uninstalling from both is a different thing than was asked for
-Deno.test('nu / pack / sync updates every manager holding a name, remove only the one it takes it from', async () => {
-  const stubs = { ghpm: LISTINGS.ghpm, uv: LISTINGS.uv }
-  const probe = (op: string) =>
-    [
-      `$env.PACK_OP = '${op}'`,
-      `print (packFindEvery (packManagersHere) 'hf' | str join ' ')`,
-    ].join('\n')
-  const both = await withStubs(
-    { ghpm: `case "$*" in\n  "list --long-names") printf 'hf\\n' ;;\n  *) exit 1 ;;\nesac`, uv: stubs.uv },
-    probe('sync'),
-    ['ghpm', 'uv'],
-  )
-  if (both == null) {
+// add's search asks every manager, not just the first that has a name: ghpm and cargo both have lazygit here, so the
+// managers are a second pick and the name goes to the one picked. a name only one has goes there without asking,
+// and -y picks every row, which is wut's order again
+Deno.test('nu / pack / add picks between the managers that all have a name', async () => {
+  const ghpm = `case "$*" in
+  "info lazygit --non-interactive") exit 0 ;;
+  "info "*) exit 1 ;;
+  *) exit 0 ;;
+esac`
+  const cargo = `case "$*" in
+  "info lazygit"|"info onlycargo") exit 0 ;;
+  "info "*) exit 1 ;;
+  *) exit 0 ;;
+esac`
+  const run = (names: Array<string>, pick: string | null) =>
+    withStubs(
+      { ghpm, cargo },
+      [
+        `$env.PACK_OP = 'add'`,
+        ...(pick == null ? [`$env.YES = '1'`] : []),
+        `$env.NOOP = '1'`,
+        `$env.PACK_PLAN = '[]'`,
+        `$env.PACK_ADD_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
+        'packPlanRun',
+      ].join('\n'),
+      ['ghpm', 'cargo'],
+      ['ghpm', 'cargo'],
+      false,
+      // the first table holds only '?'; the second, ghpm then cargo, is answered with cargo
+      pick ?? undefined,
+    )
+  const installs = (out: string) =>
+    out.split('\n').filter((l) => /^(ghpm install|cargo binstall) /.test(l)).map((l) => l.split(' ').at(-1))
+
+  const picked = await run(['lazygit'], 'if $max == 1 { [1] } else { [2] }')
+  if (picked == null) {
     return
   }
-  assertEquals(both, 'ghpm uv')
-  assertEquals(
-    await withStubs(
-      { ghpm: `case "$*" in\n  "list --long-names") printf 'hf\\n' ;;\n  *) exit 1 ;;\nesac`, uv: stubs.uv },
-      probe('remove'),
+  assertEquals(picked.includes('2) cargo'), true)
+  assertEquals(installs(picked), ['lazygit'])
+  assertEquals(picked.includes('ghpm install'), false)
+
+  const every = (await run(['lazygit'], null))!
+  assertEquals(installs(every), ['lazygit'])
+  assertEquals(every.includes('ghpm install lazygit'), true)
+
+  // one manager has it: no second table
+  const single = (await run(['onlycargo'], 'if $max == 1 { [1] } else { [] }'))!
+  assertEquals(single.includes('2) cargo'), false)
+  assertEquals(installs(single), ['onlycargo'])
+})
+
+// remove and sync both offer every manager holding a name: a name two managers both hold is not settled by whichever
+// sorts first, the table is where one is picked. picking uv takes hf out of uv alone
+Deno.test('nu / pack / remove and sync offer every manager holding a name, and the pick decides', async () => {
+  const ghpm = `case "$*" in\n  "list --long-names") printf 'hf\\n' ;;\n  *) exit 0 ;;\nesac`
+  const run = (op: string, pick: Array<number>) =>
+    withStubs(
+      { ghpm, uv: LISTINGS.uv },
+      [
+        `$env.PACK_OP = '${op}'`,
+        `$env.NOOP = '1'`,
+        `$env.PACK_PLAN = '[]'`,
+        `$env.PACK_${op.toUpperCase()}_NAMES = ['hf']`,
+        'packPlanRun',
+      ].join('\n'),
       ['ghpm', 'uv'],
-    ),
-    'ghpm',
-  )
+      ['ghpm', 'uv'],
+      false,
+      pick,
+    )
+  const removed = await run('remove', [2])
+  if (removed == null) {
+    return
+  }
+  assertEquals(removed.includes('1) ghpm'), true)
+  assertEquals(removed.includes('2) uv'), true)
+  assertEquals(removed.includes('uv tool uninstall hf'), true)
+  assertEquals(removed.includes('ghpm uninstall'), false)
+  assertEquals((await run('remove', [1, 2]))!.includes('ghpm uninstall hf'), true)
+  const synced = (await run('sync', [1, 2]))!
+  assertEquals(synced.includes('ghpm sync hf'), true)
+  assertEquals(synced.includes('uv tool upgrade hf'), true)
 })
 
 // a group states which managers can serve it, never which one did, so a sync of a group nothing here holds has the

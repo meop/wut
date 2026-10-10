@@ -1,0 +1,13 @@
+---
+operation:
+  add:
+    manager:
+      pnpm:
+        names:
+          - '@scope/pkg'
+      go:
+        names:
+          - golang.org/x/tools/gopls
+      scoop:
+        names:
+          - extras/vscode

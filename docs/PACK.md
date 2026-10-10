@@ -50,8 +50,11 @@ The server cannot know which managers exist on the machine, so it emits resolved
 
 - **Group rows** need no search when adding. The winner is the first manager that exists here, in tier order, with names
   for this group. The yaml already stated what works; there is nothing to verify.
-- **Loose rows** need a search, because nothing has stated anything. Each manager is asked in preference order, and the
-  first that claims the name wins it.
+- **Loose rows** need a search, because nothing has stated anything. Every manager is asked, not just until one claims
+  the name: the first in wut's order is not always the one wanted (ghpm has a github repo's release binary, go builds
+  the same tool from source). A name one manager claims goes there; when any name has several, the managers that claim
+  them are a second numbered pick (`packSearchPick`), and each name goes to the first picked manager that has it. `-y`
+  picks every row, which is wut's order again.
 - A group with no manager on this machine is **config rot**: it blocks the run. Nothing installs, the row says so, and
   one yaml edit fixes it.
 - A loose name nothing can serve is a **typo**: it shows as unservable and the rest of the plan proceeds.
@@ -69,10 +72,11 @@ off the wrong question is how a plan ends up naming a manager that has nothing t
 
 A named sync asks remove's question with a different verb — updating a package is something only the manager holding it
 can do — so `packOpAsksInstalled` is what the walk reads, not the op name. Handing the name to every manager instead is
-how `wut p s vlc` came to offer eight managers and run an upgrade against seven that had never heard of vlc. Where
-remove is PINPOINT and takes only the manager it uninstalls from, sync is WIDE ([COMMANDS.md](COMMANDS.md)) and takes
-every manager holding the name, since a name left stale in the second manager that has it is the failure mode there. A
-bare `sync` has no name to place and keeps the plainer manager-only plan.
+how `wut p s vlc` came to offer eight managers and run an upgrade against seven that had never heard of vlc. Both offer
+every manager holding the name as its own row, and the pick decides which run: a name two managers hold is not settled
+by whichever sorts first, which for sync left it stale in the second and for remove took it out of the one you did not
+mean. A group's paths work the same way (`packPickPaths`). A bare `sync` has no name to place and keeps the plainer
+manager-only plan.
 
 ### Sync never installs
 
@@ -133,9 +137,9 @@ Empty takes every manager, `0` quits, and anything else is a selection in ghpm's
 Picking a manager takes everything it won, which is why the packages column names them: the number is the only thing to
 read, but what rides along with it is stated.
 
-Selecting rather than confirming is what removed `-m`. A yes/no gate could only accept or reject the whole plan, so
-narrowing it meant cancelling, re-typing the command with a flag, and re-reading the same table. The list already had to
-be built and shown; letting it be answered is the same table doing one more job.
+Selecting rather than confirming is how a run is narrowed. A yes/no gate could only accept or reject the whole plan, so
+narrowing it would mean cancelling, re-typing the command, and re-reading the same table. The list already had to be
+built and shown; letting it be answered is the same table doing one more job.
 
 There are no per-manager prompts either — a prompt was never a veto, it was "here is what wut decided, do you agree",
 and asking it seven times only obscured that. Whatever is picked runs non-interactively, so `-y` is exact and takes
@@ -146,8 +150,8 @@ The server emits the plan as data (`PACK_PLAN`) and the bodies behind ids in a g
 code and the plan stays data. The client picks each group's winner and resolves loose names with an exact per-manager
 check — `packExists` when adding, `packInstalled` when removing. Refreshes run before add's checks so the answers are
 current; remove refreshes nothing, since a remote index has no bearing on what is already here. `find`'s remaining names
-resolve the way add's do (`packFindFirst`), just after its own gate rather than add's, and they answer to a `?` row so
-they can be taken or left like any manager.
+resolve the way add's do, every manager asked (`packClaimsAll`), just after its own gate rather than add's, and each is
+listed under every manager that has it. They answer to a `?` row so they can be taken or left like any manager.
 
 `tidy`, `info` and a bare `sync` have no per-package decision to make — the only question is which managers this run
 touches — so they share a plainer plan, `packManagerPlanRun`, whose rows are just the managers present. A `sync` given
@@ -156,6 +160,14 @@ names does have that decision, and takes the same plan `add` and `remove` do.
 `list` and `outdated` given a term share `packTermPlanRun`: both filter what is installed, and a package has to be
 installed before it can be out of date, so the same local listing answers which managers have anything matching. Bare,
 they fall through to the manager-only plan, since there is nothing cheaper than running the managers themselves.
+
+## A name may have a slash of its own
+
+jsr names always carry a scope (`@std/path`), npm's may (`@scope/pkg`), a brew tap or a scoop bucket can qualify a name
+(`user/tap/formula`, `extras/vscode`), and a go tool is named by its package path (`golang.org/x/tools/gopls`). The
+client sends each argument as one path segment, so the `wut` function percent encodes the characters that would end or
+split one (`%`, `/`, `?`, `#`) and the server decodes each segment after splitting the path. A group yaml spells such
+names as they are, since they never travel in the url.
 
 ## Group first, then the name as typed
 
@@ -211,10 +223,10 @@ are `for` loops rather than `where`/`any` — see [NUSHELL.md](NUSHELL.md).
 
 `list` is the one that splits on its argument. Bare, it joins them: the dump is the answer, so there is nothing to
 resolve first. Given a term, it has the same local answer `remove` does — which managers hold something matching — and
-`packListPlanRun` runs each manager's listing before the table, so the rows name them. It stays WIDE where `remove` is
-PINPOINT: every manager that matches gets a row, and the match is a substring of the manager's own output rather than an
-exact name ([COMMANDS.md](COMMANDS.md)). The listing the check reads is `packListCmd`, the same one the dump prints, so
-the answer before the gate and the output after it cannot drift.
+`packListPlanRun` runs each manager's listing before the table, so the rows name them. Every manager that matches gets a
+row, as with `remove`, but the match is a substring of the manager's own output rather than an exact name
+([COMMANDS.md](COMMANDS.md)). The listing the check reads is `packListCmd`, the same one the dump prints, so the answer
+before the gate and the output after it cannot drift.
 
 ## The pacman family is one manager
 
@@ -240,9 +252,9 @@ wut p add term      on arch     term-ghostty pacman ghostty
 ```
 
 The check that does this is `packExists`, an exact per-manager check — the same one `pack find` uses for whatever no
-group claims. Removing runs the same walk with `packInstalled`. Only the first manager in preference order may claim a
-name. Every check is printed as the command it is, its output swallowed, since the answer is an exit code and the output
-would bury the plan:
+group claims. Removing runs the same walk with `packInstalled`. Every manager that has a name claims it, and the table
+or add's second pick decides between them. Every check is printed as the command it is, its output swallowed, since the
+answer is an exit code and the output would bury the plan:
 
 ```
 http get https://registry.npmjs.org/ripgrep-x

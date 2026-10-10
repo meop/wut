@@ -376,7 +376,7 @@ Deno.test('nu / no-sys / add', async (t) => {
 
 // the pinned hop is where the real body lives: everything above only captures the redirect to it
 
-// no -m: the union of every manager this client supports
+// the union of every manager this client supports
 Deno.test('nu / arch / find (no manager, pinned)', async (t) => {
   const body = await (await runSrv(
     req('/sh/nu/pack/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'),
