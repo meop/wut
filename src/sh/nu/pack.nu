@@ -124,6 +124,7 @@ def --env packExists [manager: string, raw: string] {
     pnpm => (packExistsNpm $name),
     bun => ((packExistsNpm $name) or (packExistsJsr $name)),
     deno => ((packExistsJsr $name) or (packExistsNpm $name)),
+    go => (packExistsGo $name),
     brew => (packOk ([brew info] ++ $flags ++ [$name])),
     apk => (packOk [apk search -e $name]),
     apt => (packOk [apt-cache show $name]),
@@ -219,6 +220,51 @@ def --env packPnpmInstalled [] {
   }
 }
 
+# go keeps each tool as one binary in its bin dir, and the binary carries the package and module it was built from:
+# `go version -m` reads them back, so the listing is a directory read like deno's
+def --env packGoTools [] {
+  let gobin = (^go env GOBIN | str trim)
+  let dirPath = if ($gobin | is-not-empty) {
+    $gobin
+  } else {
+    [(^go env GOPATH | str trim | split row (char esep) | first) bin] | path join
+  }
+  $env.PACK_PRINTED = '1'
+  opPrintCmd 'ls' $dirPath
+  if not ($dirPath | path exists) {
+    return []
+  }
+  ls $dirPath | where type == file | each { |f|
+    let fields = (^go version -m $f.name | complete | get stdout | lines | each { |l| $l | str trim | split row (char tab) })
+    let path = ($fields | where { |r| ($r | first) == 'path' } | get -o 0.1)
+    let mod = ($fields | where { |r| ($r | first) == 'mod' } | get -o 0 | default [])
+    if $path == null {
+      null
+    } else {
+      {bin: $f.name, path: $path, module: ($mod | get -o 1 | default $path), version: ($mod | get -o 2 | default '')}
+    }
+  } | compact
+}
+
+# a go tool answers to its package path, and to the name of its binary
+def packGoNamed [tool: record, name: string] {
+  packNamesHas [$tool.path ($tool.bin | path parse | get stem)] $name
+}
+
+def --env packInstalledGo [name: string] {
+  packGoTools | any { |t| packGoNamed $t $name }
+}
+
+# the module proxy knows a module by its path, and a package path may be a module's root or somewhere under it, so the
+# path and each parent are asked in turn. the proxy spells an upper case letter as ! and its lower case
+def --env packExistsGo [name: string] {
+  let parts = ($name | split row '@' | first | split row '/')
+  let escape = { |p| $p | split chars | each { |c| if ($c =~ '[A-Z]') { $"!($c | str lowercase)" } else { $c } } | str join }
+  seq ($parts | length) (-1) 1 | any { |n|
+    packHttpOk $"https://proxy.golang.org/(do $escape ($parts | first $n | str join '/'))/@latest"
+  }
+}
+
 def --env packInstalledDeno [name: string] {
   packNamesHas (packDenoInstalled) $name
 }
@@ -259,6 +305,9 @@ def --env packListedRaw [manager: string] {
   }
   if $manager == 'pnpm' {
     return (packPnpmInstalled)
+  }
+  if $manager == 'go' {
+    return (packGoTools | get path)
   }
   let cmds = (packListCmd $manager)
   if $cmds == null {
@@ -306,6 +355,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     pnpm => (packNamesHas (packPnpmInstalled) $name),
     bun => (packListedHas (packListCmd 'bun') $name { |l| packListedNodeName $l }),
     deno => (packInstalledDeno $name),
+    go => (packInstalledGo $name),
     # `brew list --versions <name>` answers for formulae only, so a cask is invisible to it and remove could never
     # find one `list` had just shown. brew answers by listing, like the user managers above it, and the name's own
     # flags narrow that listing the same way they narrow the install: `--cask vivaldi` asks `brew list --cask`
@@ -476,7 +526,7 @@ def --env packRunLoose [manager: string] {
 def --env packCallManager [manager: string] {
   match $manager {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm },
-    bun => { packBun }, deno => { packDeno }, brew => { packBrew }, apk => { packApk },
+    bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},

@@ -152,7 +152,7 @@ Nothing overrides that: which of the winners actually run is the numbered prompt
 That order is stated once, in `MANAGERS`, and every group yaml is written to match it:
 
 ```
-ghpm  cargo  deno  bun  pnpm  uv          user space, no sudo
+ghpm  cargo  deno  bun  pnpm  uv  go      user space, no sudo
 script                                     what a group runs instead of a package
 brew  paru  yay  pacman                    darwin, then arch
 apk  apt  dnf  xbps  zypper                one distro each

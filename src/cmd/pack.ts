@@ -37,6 +37,8 @@ const PORTABLE_MANAGERS: Array<string> = [
   'bun',
   'pnpm',
   'uv',
+  // last: a go tool builds from source, so a manager with it prebuilt is preferred
+  'go',
 ]
 
 const NATIVE_MANAGERS: Array<string> = [

@@ -2,15 +2,38 @@
 # beside it, a hard link on windows — so the real cargo lives in a toolchain only `rustup update` moves. the
 # toolchains update before the crates rebuild against them. a distro cargo has no rustup beside it, and is its package
 # manager's to update
-def --env packRustupUpdate [] {
+def packRustupPath [] {
   let cargo = (which cargo | get -o 0.path)
   if $cargo == null {
-    return
+    return null
   }
   let ext = if $nu.os-info.name == 'windows' { '.exe' } else { '' }
   let rustup = ($cargo | path expand | path dirname | path join $"rustup($ext)")
-  if ($rustup | path exists) {
+  if ($rustup | path exists) { $rustup } else { null }
+}
+
+def --env packRustupUpdate [] {
+  let rustup = (packRustupPath)
+  if $rustup != null {
     packSelfUpdate 'rustup' $rustup [update]
+  }
+}
+
+# rustup keeps every toolchain it installs. one pinned to a version is one a project's rust-toolchain.toml asked for,
+# and rustup installs it again when that project next builds (1.28.1+), so tidy lets those go. the channels stay, and
+# so does any toolchain rustup marks as the default or the active one
+def --env packRustupTidy [] {
+  let rustup = (packRustupPath)
+  if $rustup == null {
+    return
+  }
+  let pinned = (
+    ^$rustup toolchain list | complete | get stdout | lines
+      | where { |l| ($l =~ '^\d+\.\d+') and not ($l =~ '\(') }
+      | each { |l| $l | str trim }
+  )
+  for toolchain in $pinned {
+    packOp [$rustup toolchain uninstall $toolchain]
   }
 }
 
@@ -44,6 +67,7 @@ def --env packCargo [] {
       packOpSync [$cmd install-update --all] [$cmd install-update]
     }
     tidy => {
+      packRustupTidy
       packOp [$cmd cache --autoclean]
     }
   }

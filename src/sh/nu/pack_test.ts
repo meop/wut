@@ -915,6 +915,76 @@ Deno.test('nu / pack / cargo updates the toolchains first only when rustup is be
   assertEquals((await run({ cargo: LISTINGS.cargo, rustup: '' }, ['cargo-update']))!.includes('rustup update'), false)
 })
 
+// rustup keeps every toolchain; tidy uninstalls the ones pinned to a version, which a project's rust-toolchain.toml
+// brings back when it builds, and keeps the channels and whatever is the default or active
+Deno.test('nu / pack / cargo tidy lets the version pinned rustup toolchains go', async () => {
+  const rustup = `case "$*" in
+  "toolchain list") printf 'stable-x86_64-unknown-linux-gnu (active, default)\\nnightly-x86_64-unknown-linux-gnu\\n1.96.0-x86_64-unknown-linux-gnu\\n1.97.0-x86_64-unknown-linux-gnu\\n1.98.0-x86_64-unknown-linux-gnu (active)\\n' ;;
+  *) exit 0 ;;
+esac`
+  const run = (stubs: Record<string, string>) =>
+    withStubs(
+      stubs,
+      [`$env.PACK_OP = 'tidy'`, `$env.NOOP = '1'`, `$env.PACK_MANAGER = 'cargo'`, 'packCargo'].join('\n'),
+      ['cargo'],
+      ['cargo'],
+    )
+  const out = await run({ cargo: LISTINGS.cargo, rustup })
+  if (out == null) {
+    return
+  }
+  const removed = out.split('\n').filter((l) => l.includes('toolchain uninstall')).map((l) =>
+    l.trim().split(' ').at(-2)
+  )
+  assertEquals(removed, ['1.96.0-x86_64-unknown-linux-gnu', '1.97.0-x86_64-unknown-linux-gnu'])
+  assertEquals(out.includes('cargo cache --autoclean'), true)
+  assertEquals((await run({ cargo: LISTINGS.cargo }))!.includes('toolchain uninstall'), false)
+})
+
+// go has no listing or uninstall of its own: a tool is a binary in its bin dir that names the package it was built
+// from, so sync reinstalls that package at latest, and a tool answers to its package path or its binary's name
+Deno.test('nu / pack / go reads its tools from the binaries it built', async () => {
+  const go = `case "$*" in
+  "env GOBIN") printf '\\n' ;;
+  "env GOPATH") printf '%s/go\\n' "$HOME" ;;
+  "version -m "*/gopls) printf '%s: go1.27.0\\n\\tpath\\tgolang.org/x/tools/gopls\\n\\tmod\\tgolang.org/x/tools/gopls\\tv0.23.0\\th1:x=\\n' "$3" ;;
+  "version -m "*/golangci-lint) printf '%s: go1.27.0\\n\\tpath\\tgithub.com/golangci/golangci-lint/v2/cmd/golangci-lint\\n\\tmod\\tgithub.com/golangci/golangci-lint/v2\\tv2.13.2\\th1:x=\\n' "$3" ;;
+  *) exit 0 ;;
+esac`
+  const run = (op: string, names: Array<string>) =>
+    withStubs(
+      { go },
+      [
+        `mkdir ($env.HOME | path join go bin)`,
+        `touch ($env.HOME | path join go bin gopls) ($env.HOME | path join go bin golangci-lint)`,
+        `$env.PACK_OP = '${op}'`,
+        `$env.NOOP = '1'`,
+        `$env.PACK_MANAGER = 'go'`,
+        `$env.PACK_${op.toUpperCase()}_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
+        'packGo',
+      ].join('\n'),
+      ['go'],
+      ['go'],
+    )
+  const installs = (out: string) =>
+    out.split('\n').filter((l) => l.includes('go install')).map((l) => l.split(' ').find((t) => t.endsWith('@latest')))
+  const bare = await run('sync', [])
+  if (bare == null) {
+    return
+  }
+  assertEquals(installs(bare).sort(), [
+    'github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest',
+    'golang.org/x/tools/gopls@latest',
+  ])
+  assertEquals(installs((await run('sync', ['gopls']))!), ['golang.org/x/tools/gopls@latest'])
+  assertEquals(installs((await run('add', ['golang.org/x/tools/gopls']))!), ['golang.org/x/tools/gopls@latest'])
+  const removed = (await run('remove', ['golang.org/x/tools/gopls']))!
+  assertEquals(removed.split('\n').filter((l) => l.includes('rm ')).length, 1)
+  assertEquals(removed.includes('/go/bin/gopls'), true)
+  const listed = (await run('list', []))!
+  assertEquals(listed.includes('golang.org/x/tools/gopls v0.23.0'), true)
+})
+
 // pnpm records a runtime as the exact version it installed, so `update` cannot move it: a runtime is set again at its
 // latest release, and packages update to latest. a named sync touches only what it names
 Deno.test('nu / pack / pnpm sets its runtimes to latest and updates its packages', async () => {

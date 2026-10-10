@@ -109,8 +109,11 @@ Each manager answers the installed question the exact way it can: a query that s
 exists (`pacman --query`, `brew list --versions`, `dpkg-query`, `rpm --query`), and its own listing parsed to entry
 names where none does (`uv tool list`, `cargo install --list`, `ghpm list --long-names`). Parsing matters more than it
 looks: these listings hang detail off their entries — uv restates each tool as `- name` beneath it, cargo indents the
-binaries a crate installs — and reading that detail as an entry is how a check starts agreeing with everything.
-`src/sh/nu/pack_test.ts` pins those formats against stub managers.
+binaries a crate installs — and reading that detail as an entry is how a check starts agreeing with everything. deno and
+go have no listing command at all. deno keeps a shim per install in its bin dir, and go keeps the one binary it built,
+which names the package and module it came from (`go version -m`) — so both answer by reading their bin dir. go is last
+among the user managers: it builds every tool from source, so another manager holding the same tool prebuilt is the
+better pick. `src/sh/nu/pack_test.ts` pins those formats against stub managers.
 
 ## One decision
 
@@ -305,7 +308,10 @@ A named sync is about the packages it names and leaves the toolchains alone.
   whose own binary another manager delivers, so rustup has no row of its own: a bare cargo sync looks for a `rustup`
   beside wherever `cargo` resolves and runs `rustup update` first, best effort like a self update. That holds however
   rustup arrived — its own installer, winget, pacman, apt or brew — since each puts the proxies beside it. A distro
-  cargo has no rustup beside it and is left to its package manager.
+  cargo has no rustup beside it and is left to its package manager. rustup also keeps every toolchain it installs, so a
+  cargo tidy uninstalls the ones pinned to a version — the ones a project's `rust-toolchain.toml` asked for, which
+  rustup installs again when that project next builds (1.28.1+). The channels stay, and so does any toolchain rustup
+  marks as default or active.
 - **uv** is its own top layer — it installs pythons and tools and updates itself — so a bare uv sync runs
   `uv python
   upgrade`, which moves each installed python to the newest patch of its minor, before
