@@ -64,7 +64,7 @@ function wut {
   $segments = $args | ForEach-Object { "$_".Replace('%', '%25').Replace('/', '%2F').Replace('?', '%3F').Replace('#', '%23') }
   $url = "${url}/$($segments -join '/')".TrimEnd('/')
 
-  pwsh -noprofile -c "$( irm -ErrorAction Stop -ProgressAction SilentlyContinue -Uri $url )"
+  pwsh -noprofile -c "$( Invoke-RestMethod -ErrorAction Stop -ProgressAction SilentlyContinue -Uri $url )"
 }
 ```
 
