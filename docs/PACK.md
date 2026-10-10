@@ -165,9 +165,12 @@ they fall through to the manager-only plan, since there is nothing cheaper than 
 
 jsr names always carry a scope (`@std/path`), npm's may (`@scope/pkg`), a brew tap or a scoop bucket can qualify a name
 (`user/tap/formula`, `extras/vscode`), and a go tool is named by its package path (`golang.org/x/tools/gopls`). The
-client sends each argument as one path segment, so the `wut` function percent encodes the characters that would end or
-split one (`%`, `/`, `?`, `#`) and the server decodes each segment after splitting the path. A group yaml spells such
-names as they are, since they never travel in the url.
+client sends each argument as one path segment, so the `wut` function percent encodes each argument whole — nu's
+`url encode --all`, pwsh's `[uri]::EscapeDataString`, and in zsh curl's own `--variable` `:url` function (curl 8.3+),
+since zsh has none — and the server decodes each segment after splitting the path. Encoding only the characters that
+split a segment is not enough: a url treats `\` as `/`, curl and nu refuse a raw space, and curl expands `[]` and `{}`
+as patterns, so `pkg[extra]` would never be sent. A group yaml spells such names as they are, since they never travel in
+the url.
 
 ## Group first, then the name as typed
 

@@ -34,7 +34,8 @@ The server runs on port 9000 by default. Set `PORT` to override.
 
 ## shell client
 
-Set `WUT_URL` to your server address, then paste the corresponding `wut` function into your shell config.
+Set `WUT_URL` to your server address, then paste the corresponding `wut` function into your shell config. The zsh client
+needs curl 8.3 or newer, for `--variable`.
 
 ### nu
 
@@ -44,9 +45,7 @@ $env.WUT_URL = 'http://my-server:9000'
 def wut --wrapped [...args] {
   mut url = $"($env.WUT_URL)" | str trim --right --char '/'
   mut url = $"($url)/sh/nu"
-  # one path segment per argument: a name with a slash of its own (@std/path) is encoded so it stays one
-  let segments = ($args | each { |a| $a | str replace --all '%' '%25' | str replace --all '/' '%2F' | str replace --all '?' '%3F' | str replace --all '#' '%23' })
-  mut url = $"($url)/($segments | str join '/')" | str trim --right --char '/'
+  mut url = $"($url)/($args | each { url encode --all } | str join '/')" | str trim --right --char '/'
 
   nu --no-config-file -c $"( http get --raw --redirect-mode follow $url )"
 }
@@ -60,9 +59,7 @@ $env:WUT_URL = 'http://my-server:9000'
 function wut {
   $url = "${env:WUT_URL}".TrimEnd('/')
   $url = "${url}/sh/pwsh"
-  # one path segment per argument: a name with a slash of its own (@std/path) is encoded so it stays one
-  $segments = $args | ForEach-Object { "$_".Replace('%', '%25').Replace('/', '%2F').Replace('?', '%3F').Replace('#', '%23') }
-  $url = "${url}/$($segments -join '/')".TrimEnd('/')
+  $url = "${url}/$(($args | ForEach-Object { [uri]::EscapeDataString("$_") }) -join '/')".TrimEnd('/')
 
   pwsh -noprofile -c "$( Invoke-RestMethod -ErrorAction Stop -ProgressAction SilentlyContinue -Uri $url )"
 }
@@ -76,19 +73,10 @@ export WUT_URL='http://my-server:9000'
 function wut {
   local url=$(echo "${WUT_URL}" | sed 's:/*$::')
   local url=$(echo "${url}/sh/zsh")
-  # one path segment per argument: a name with a slash of its own (@std/path) is encoded so it stays one
-  local arg
-  local -a segments
-  for arg in "$@"; do
-    arg=${arg//\%/%25}
-    arg=${arg//\//%2F}
-    arg=${arg//\?/%3F}
-    arg=${arg//\#/%23}
-    segments+=("${arg}")
-  done
-  local url=$(echo "${url}/${(j:/:)segments}" | sed 's:/*$::')
+  local arg vars=() i=0
+  for arg; do vars+=(--variable "a$((++i))=${arg}"); url+="/{{a${i}:url}}"; done
 
-  zsh --no-rcs -c "$( curl --fail-with-body --location --no-progress-meter --url $url )"
+  zsh --no-rcs -c "$( curl --fail-with-body --location --no-progress-meter "${vars[@]}" --expand-url $url )"
 }
 ```
 
