@@ -2090,6 +2090,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$"(\$question) [y,[n]]: " | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -2480,6 +2489,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -4679,6 +4697,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -6925,6 +6952,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -9167,6 +9203,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -11443,6 +11488,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -13687,6 +13741,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -15928,6 +15991,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -18093,6 +18165,16 @@ function opRunSilentCmd {
   eval \\"\$*\\" &> /dev/null
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+function opAsk {
+  if [[ \$YES ]]; then
+    return 0
+  fi
+  local yn=''
+  read \\"yn?\${1} [y,[n]]: \\"
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+}
+
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
     opRunCmd \\"\$@\\"
@@ -18250,6 +18332,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -20472,6 +20563,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -22690,6 +22790,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -24912,6 +25021,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -27095,6 +27213,16 @@ function opRunSilentCmd {
   eval \\"\$*\\" &> /dev/null
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+function opAsk {
+  if [[ \$YES ]]; then
+    return 0
+  fi
+  local yn=''
+  read \\"yn?\${1} [y,[n]]: \\"
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+}
+
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
     opRunCmd \\"\$@\\"
@@ -27233,6 +27361,16 @@ function opRunCmd {
 
 function opRunSilentCmd {
   eval \\"\$*\\" &> /dev/null
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+function opAsk {
+  if [[ \$YES ]]; then
+    return 0
+  fi
+  local yn=''
+  read \\"yn?\${1} [y,[n]]: \\"
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
 function opMaybeRunCmd {
@@ -27407,6 +27545,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -29592,6 +29739,16 @@ function opRunSilentCmd {
   eval \\"\$*\\" &> /dev/null
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+function opAsk {
+  if [[ \$YES ]]; then
+    return 0
+  fi
+  local yn=''
+  read \\"yn?\${1} [y,[n]]: \\"
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+}
+
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
     opRunCmd \\"\$@\\"
@@ -29771,6 +29928,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -31962,6 +32128,16 @@ function opRunSilentCmd {
   Invoke-Expression \\"\$((\$args | ForEach-Object { \$_ }) -join ' ') 6>&1 5>&1 4>&1 3>&1 2>&1 | Out-Null\\"
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+function opAsk {
+  param([string] \$question)
+  if (\$YES) {
+    return \$true
+  }
+  \$yn = Read-Host \\"\${question} [y,[n]]\\"
+  return (\$yn -eq '') -or (\$yn.ToLower() -eq 'y') -or (\$yn.ToLower() -eq 'yes')
+}
+
 function opMaybeRunCmd {
   if (-not \$NOOP) {
     opRunCmd @args
@@ -32105,6 +32281,16 @@ function opRunCmd {
 
 function opRunSilentCmd {
   Invoke-Expression \\"\$((\$args | ForEach-Object { \$_ }) -join ' ') 6>&1 5>&1 4>&1 3>&1 2>&1 | Out-Null\\"
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+function opAsk {
+  param([string] \$question)
+  if (\$YES) {
+    return \$true
+  }
+  \$yn = Read-Host \\"\${question} [y,[n]]\\"
+  return (\$yn -eq '') -or (\$yn.ToLower() -eq 'y') -or (\$yn.ToLower() -eq 'yes')
 }
 
 function opMaybeRunCmd {
@@ -32279,6 +32465,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -34464,6 +34659,16 @@ function opRunSilentCmd {
   eval \\"\$*\\" &> /dev/null
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+function opAsk {
+  if [[ \$YES ]]; then
+    return 0
+  fi
+  local yn=''
+  read \\"yn?\${1} [y,[n]]: \\"
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+}
+
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
     opRunCmd \\"\$@\\"
@@ -34636,6 +34841,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -36834,6 +37048,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -39028,6 +39251,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -41245,6 +41477,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -43441,6 +43682,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -45687,6 +45937,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -47895,6 +48154,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -50089,6 +50357,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -52289,6 +52566,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -54487,6 +54773,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -56693,6 +56988,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -58893,6 +59197,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -61096,6 +61409,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -63295,6 +63617,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -65541,6 +65872,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -67785,6 +68125,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -69986,6 +70335,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -72183,6 +72541,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -74384,6 +74751,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -76630,6 +77006,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -78872,6 +79257,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -81146,6 +81540,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$\\"(\$question) [y,[n]]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {

@@ -18,10 +18,34 @@ def scriptTable [headers: list<string>, rows: list<list<string>>] {
   for r in $rows { opPrint (do $line $r) }
 }
 
+# a service is how a windows feature shows it is installed: sc.exe knows one by name (1060 is no such service), and on
+# linux a systemd unit file names one. a check per name, no shell to start
+def scriptHasSvc [...svcs: string] {
+  $svcs | any { |s|
+    match $nu.os-info.name {
+      'windows' => ((^sc.exe query $s | complete | get exit_code) == 0)
+      'linux' => (['/etc/systemd/system' '/usr/lib/systemd/system' '/lib/systemd/system'] | any { |d| [$d $"($s).service"] | path join | path exists })
+      _ => false
+    }
+  }
+}
+
+# what this machine is offered, from the cheap gates alone: a has_ gate needs one of its commands or services here, a
+# no_ gate needs none of them, so an install leaves the listing once its tool is in. whether a script has more to do
+# beyond that is its own to say once it runs
+def scriptPlanHere [] {
+  $env.SCRIPT_PLAN? | default '[]' | from json | where { |u|
+    (
+      (($u.cmds | is-empty) or (scriptHasCmd ...$u.cmds))
+      and (($u.noCmds | is-empty) or not (scriptHasCmd ...$u.noCmds))
+      and (($u.svcs | is-empty) or (scriptHasSvc ...$u.svcs))
+      and (($u.noSvcs | is-empty) or not (scriptHasSvc ...$u.noSvcs))
+    )
+  }
+}
+
 def --env scriptPlanRun [] {
-  let units = ($env.SCRIPT_PLAN? | default '[]' | from json)
-  # a has_cmd gate is the client's: a script whose tool is missing is not offered, and an action alone is all wut has
-  let here = ($units | where { |u| ($u.cmds | is-empty) or (scriptHasCmd ...$u.cmds) })
+  let here = (scriptPlanHere)
   if ($here | is-empty) {
     opPrintWarn 'nothing to do'
     return
@@ -39,28 +63,24 @@ def --env scriptPlanRun [] {
   }
 }
 
-# find accumulates the same way the plan does, so all three shells share one idiom
-def --env scriptFindAdd [action: string, ...entries: string] {
-  let tools = (
-    $entries | each { |e| $e | split row '=' }
-      | where { |p|
-        let cmds = ($p | get -o 1 | default '')
-        ($cmds | is-empty) or (scriptHasCmd ...($cmds | split row ','))
-      }
-      | each { |p| $p | get 0 }
+# the listing: each action with the tools that apply here, as virt find lists only the managers installed, and one
+# warning when none apply at all
+def scriptFindRun [] {
+  let here = (scriptPlanHere)
+  if ($here | is-empty) {
+    let all = ($env.SCRIPT_PLAN? | default '[]' | from json | get tool | uniq | sort)
+    if ($all | is-not-empty) {
+      opPrintWarn $"not applicable: ($all | str join ', ')"
+    }
+    return
+  }
+  let rows = (
+    $here
+      | group-by action
+      | transpose action units
+      | sort-by action
+      | each { |g| [$g.action, ($g.units | get tool | uniq | sort | str join ', ')] }
   )
-  if ($tools | is-empty) {
-    return
-  }
-  load-env {SCRIPT_FIND_ROWS: (($env.SCRIPT_FIND_ROWS? | default []) | append $"($action)|($tools | str join ', ')")}
-}
-
-# one table, one question, then the listing
-def scriptFindShow [] {
-  let rows = (($env.SCRIPT_FIND_ROWS? | default []) | each { |r| $r | split row '|' })
-  if ($rows | is-empty) {
-    return
-  }
   for r in $rows {
     opPrint ($r | get 0)
     opPrint $"  ($r | get 1)"

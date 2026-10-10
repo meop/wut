@@ -141,13 +141,15 @@ Deno.test('zsh / linux / exec (redirects to nu)', async (t) => {
   assertEquals(body.includes('/sh/nu/script/exec/setup?sysOsPlat=linux&wutNuPinned=1'), true)
 })
 
-// has_cmd is a client side gate: find hands the listing over so the client drops tools it does not have
-Deno.test('nu / linux / find (client side has_cmd listing)', async (t) => {
+// has_cmd and no_cmd are the client's: find hands over the plan as data, so the client lists only the tools it has and
+// the installs it still lacks
+Deno.test('nu / linux / find (client side listing)', async (t) => {
   const body = await (await runSrv(req('/sh/nu/script/find?sysOsPlat=linux&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes("scriptFindAdd r#'setup'# r#'cargo=cargo'# r#'docker=docker'#"), true)
-  assertEquals(body.includes('scriptFindShow'), true)
+  assertEquals(body.includes('"tool":"cargo","shell":"zsh","cmds":["cargo"],"noCmds":[]'), true)
+  assertEquals(body.includes('def --env scriptRunUnit'), false)
+  assertEquals(body.includes('scriptFindRun'), true)
 })
 // an action alone carries each tool's has_cmd into the plan, so the client drops what it cannot run
 Deno.test('nu / linux / exec (action only, carries has_cmd into the plan)', async (t) => {
@@ -159,7 +161,7 @@ Deno.test('nu / linux / exec (action only, carries has_cmd into the plan)', asyn
 // a named tool is never gated, so its own 'not installed' warning still explains the no op
 Deno.test('nu / linux / exec (named tool is not gated)', async () => {
   const body = await (await runSrv(req('/sh/nu/script/exec/setup/cargo?sysOsPlat=linux&wutNuPinned=1'))).text()
-  assertEquals(body.includes('"cmds":[]'), true)
+  assertEquals(body.includes('"cmds":[],"noCmds":[]'), true)
   assertEquals(body.includes("opPrintWarn 'cargo is not installed'"), true)
   await checkSyntax('nu', body)
 })

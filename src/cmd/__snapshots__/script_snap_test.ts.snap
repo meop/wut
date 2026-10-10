@@ -290,6 +290,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$"(\$question) [y,[n]]: " | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -636,6 +645,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$"(\$question) [y,[n]]: " | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -1076,6 +1094,15 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$"(\$question) [y,[n]]: " | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
 def opMaybeRunCmd --wrapped [...args] {
   if NOOP not-in \$env {
     opRunCmd ...\$args
@@ -1363,10 +1390,34 @@ def scriptTable [headers: list<string>, rows: list<list<string>>] {
   for r in \$rows { opPrint (do \$line \$r) }
 }
 
+# a service is how a windows feature shows it is installed: sc.exe knows one by name (1060 is no such service), and on
+# linux a systemd unit file names one. a check per name, no shell to start
+def scriptHasSvc [...svcs: string] {
+  \$svcs | any { |s|
+    match \$nu.os-info.name {
+      'windows' => ((^sc.exe query \$s | complete | get exit_code) == 0)
+      'linux' => (['/etc/systemd/system' '/usr/lib/systemd/system' '/lib/systemd/system'] | any { |d| [\$d \$"(\$s).service"] | path join | path exists })
+      _ => false
+    }
+  }
+}
+
+# what this machine is offered, from the cheap gates alone: a has_ gate needs one of its commands or services here, a
+# no_ gate needs none of them, so an install leaves the listing once its tool is in. whether a script has more to do
+# beyond that is its own to say once it runs
+def scriptPlanHere [] {
+  \$env.SCRIPT_PLAN? | default '[]' | from json | where { |u|
+    (
+      ((\$u.cmds | is-empty) or (scriptHasCmd ...\$u.cmds))
+      and ((\$u.noCmds | is-empty) or not (scriptHasCmd ...\$u.noCmds))
+      and ((\$u.svcs | is-empty) or (scriptHasSvc ...\$u.svcs))
+      and ((\$u.noSvcs | is-empty) or not (scriptHasSvc ...\$u.noSvcs))
+    )
+  }
+}
+
 def --env scriptPlanRun [] {
-  let units = (\$env.SCRIPT_PLAN? | default '[]' | from json)
-  # a has_cmd gate is the client's: a script whose tool is missing is not offered, and an action alone is all wut has
-  let here = (\$units | where { |u| (\$u.cmds | is-empty) or (scriptHasCmd ...\$u.cmds) })
+  let here = (scriptPlanHere)
   if (\$here | is-empty) {
     opPrintWarn 'nothing to do'
     return
@@ -1384,28 +1435,24 @@ def --env scriptPlanRun [] {
   }
 }
 
-# find accumulates the same way the plan does, so all three shells share one idiom
-def --env scriptFindAdd [action: string, ...entries: string] {
-  let tools = (
-    \$entries | each { |e| \$e | split row '=' }
-      | where { |p|
-        let cmds = (\$p | get -o 1 | default '')
-        (\$cmds | is-empty) or (scriptHasCmd ...(\$cmds | split row ','))
-      }
-      | each { |p| \$p | get 0 }
+# the listing: each action with the tools that apply here, as virt find lists only the managers installed, and one
+# warning when none apply at all
+def scriptFindRun [] {
+  let here = (scriptPlanHere)
+  if (\$here | is-empty) {
+    let all = (\$env.SCRIPT_PLAN? | default '[]' | from json | get tool | uniq | sort)
+    if (\$all | is-not-empty) {
+      opPrintWarn \$"not applicable: (\$all | str join ', ')"
+    }
+    return
+  }
+  let rows = (
+    \$here
+      | group-by action
+      | transpose action units
+      | sort-by action
+      | each { |g| [\$g.action, (\$g.units | get tool | uniq | sort | str join ', ')] }
   )
-  if (\$tools | is-empty) {
-    return
-  }
-  load-env {SCRIPT_FIND_ROWS: ((\$env.SCRIPT_FIND_ROWS? | default []) | append \$"(\$action)|(\$tools | str join ', ')")}
-}
-
-# one table, one question, then the listing
-def scriptFindShow [] {
-  let rows = ((\$env.SCRIPT_FIND_ROWS? | default []) | each { |r| \$r | split row '|' })
-  if (\$rows | is-empty) {
-    return
-  }
   for r in \$rows {
     opPrint (\$r | get 0)
     opPrint \$"  (\$r | get 1)"
@@ -1511,6 +1558,16 @@ function opRunSilentCmd {
   eval "\$*" &> /dev/null
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+function opAsk {
+  if [[ \$YES ]]; then
+    return 0
+  fi
+  local yn=''
+  read "yn?\${1} [y,[n]]: "
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+}
+
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
     opRunCmd "\$@"
@@ -1561,7 +1618,7 @@ function () {
   }
 }
 
-\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":[]}]'#
+\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[]}]'#
 
 scriptPlanRun
 
@@ -1777,6 +1834,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$"(\$question) [y,[n]]: " | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -2064,10 +2130,34 @@ def scriptTable [headers: list<string>, rows: list<list<string>>] {
   for r in \$rows { opPrint (do \$line \$r) }
 }
 
+# a service is how a windows feature shows it is installed: sc.exe knows one by name (1060 is no such service), and on
+# linux a systemd unit file names one. a check per name, no shell to start
+def scriptHasSvc [...svcs: string] {
+  \$svcs | any { |s|
+    match \$nu.os-info.name {
+      'windows' => ((^sc.exe query \$s | complete | get exit_code) == 0)
+      'linux' => (['/etc/systemd/system' '/usr/lib/systemd/system' '/lib/systemd/system'] | any { |d| [\$d \$"(\$s).service"] | path join | path exists })
+      _ => false
+    }
+  }
+}
+
+# what this machine is offered, from the cheap gates alone: a has_ gate needs one of its commands or services here, a
+# no_ gate needs none of them, so an install leaves the listing once its tool is in. whether a script has more to do
+# beyond that is its own to say once it runs
+def scriptPlanHere [] {
+  \$env.SCRIPT_PLAN? | default '[]' | from json | where { |u|
+    (
+      ((\$u.cmds | is-empty) or (scriptHasCmd ...\$u.cmds))
+      and ((\$u.noCmds | is-empty) or not (scriptHasCmd ...\$u.noCmds))
+      and ((\$u.svcs | is-empty) or (scriptHasSvc ...\$u.svcs))
+      and ((\$u.noSvcs | is-empty) or not (scriptHasSvc ...\$u.noSvcs))
+    )
+  }
+}
+
 def --env scriptPlanRun [] {
-  let units = (\$env.SCRIPT_PLAN? | default '[]' | from json)
-  # a has_cmd gate is the client's: a script whose tool is missing is not offered, and an action alone is all wut has
-  let here = (\$units | where { |u| (\$u.cmds | is-empty) or (scriptHasCmd ...\$u.cmds) })
+  let here = (scriptPlanHere)
   if (\$here | is-empty) {
     opPrintWarn 'nothing to do'
     return
@@ -2085,28 +2175,24 @@ def --env scriptPlanRun [] {
   }
 }
 
-# find accumulates the same way the plan does, so all three shells share one idiom
-def --env scriptFindAdd [action: string, ...entries: string] {
-  let tools = (
-    \$entries | each { |e| \$e | split row '=' }
-      | where { |p|
-        let cmds = (\$p | get -o 1 | default '')
-        (\$cmds | is-empty) or (scriptHasCmd ...(\$cmds | split row ','))
-      }
-      | each { |p| \$p | get 0 }
+# the listing: each action with the tools that apply here, as virt find lists only the managers installed, and one
+# warning when none apply at all
+def scriptFindRun [] {
+  let here = (scriptPlanHere)
+  if (\$here | is-empty) {
+    let all = (\$env.SCRIPT_PLAN? | default '[]' | from json | get tool | uniq | sort)
+    if (\$all | is-not-empty) {
+      opPrintWarn \$"not applicable: (\$all | str join ', ')"
+    }
+    return
+  }
+  let rows = (
+    \$here
+      | group-by action
+      | transpose action units
+      | sort-by action
+      | each { |g| [\$g.action, (\$g.units | get tool | uniq | sort | str join ', ')] }
   )
-  if (\$tools | is-empty) {
-    return
-  }
-  load-env {SCRIPT_FIND_ROWS: ((\$env.SCRIPT_FIND_ROWS? | default []) | append \$"(\$action)|(\$tools | str join ', ')")}
-}
-
-# one table, one question, then the listing
-def scriptFindShow [] {
-  let rows = ((\$env.SCRIPT_FIND_ROWS? | default []) | each { |r| \$r | split row '|' })
-  if (\$rows | is-empty) {
-    return
-  }
   for r in \$rows {
     opPrint (\$r | get 0)
     opPrint \$"  (\$r | get 1)"
@@ -2210,6 +2296,16 @@ function opRunCmd {
 
 function opRunSilentCmd {
   eval "\$*" &> /dev/null
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+function opAsk {
+  if [[ \$YES ]]; then
+    return 0
+  fi
+  local yn=''
+  read "yn?\${1} [y,[n]]: "
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
 function opMaybeRunCmd {
@@ -2350,6 +2446,16 @@ function opRunSilentCmd {
   eval "\$*" &> /dev/null
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+function opAsk {
+  if [[ \$YES ]]; then
+    return 0
+  fi
+  local yn=''
+  read "yn?\${1} [y,[n]]: "
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+}
+
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
     opRunCmd "\$@"
@@ -2393,7 +2499,7 @@ function () {
   }
 }
 
-\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"]},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"]}]'#
+\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"],"noCmds":[],"svcs":[],"noSvcs":[]},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"],"noCmds":[],"svcs":[],"noSvcs":[]}]'#
 
 scriptPlanRun
 
@@ -2441,7 +2547,7 @@ if \$cut != null { \$cut.raw }
 }'\`
 `;
 
-snapshot[`nu / linux / find (client side has_cmd listing) 1`] = `
+snapshot[`nu / linux / find (client side listing) 1`] = `
 \`try {
 try {
 \$env.REQ_URL_CFG = r#'http://x/cfg'#
@@ -2549,6 +2655,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$"(\$question) [y,[n]]: " | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -2791,10 +2906,34 @@ def scriptTable [headers: list<string>, rows: list<list<string>>] {
   for r in \$rows { opPrint (do \$line \$r) }
 }
 
+# a service is how a windows feature shows it is installed: sc.exe knows one by name (1060 is no such service), and on
+# linux a systemd unit file names one. a check per name, no shell to start
+def scriptHasSvc [...svcs: string] {
+  \$svcs | any { |s|
+    match \$nu.os-info.name {
+      'windows' => ((^sc.exe query \$s | complete | get exit_code) == 0)
+      'linux' => (['/etc/systemd/system' '/usr/lib/systemd/system' '/lib/systemd/system'] | any { |d| [\$d \$"(\$s).service"] | path join | path exists })
+      _ => false
+    }
+  }
+}
+
+# what this machine is offered, from the cheap gates alone: a has_ gate needs one of its commands or services here, a
+# no_ gate needs none of them, so an install leaves the listing once its tool is in. whether a script has more to do
+# beyond that is its own to say once it runs
+def scriptPlanHere [] {
+  \$env.SCRIPT_PLAN? | default '[]' | from json | where { |u|
+    (
+      ((\$u.cmds | is-empty) or (scriptHasCmd ...\$u.cmds))
+      and ((\$u.noCmds | is-empty) or not (scriptHasCmd ...\$u.noCmds))
+      and ((\$u.svcs | is-empty) or (scriptHasSvc ...\$u.svcs))
+      and ((\$u.noSvcs | is-empty) or not (scriptHasSvc ...\$u.noSvcs))
+    )
+  }
+}
+
 def --env scriptPlanRun [] {
-  let units = (\$env.SCRIPT_PLAN? | default '[]' | from json)
-  # a has_cmd gate is the client's: a script whose tool is missing is not offered, and an action alone is all wut has
-  let here = (\$units | where { |u| (\$u.cmds | is-empty) or (scriptHasCmd ...\$u.cmds) })
+  let here = (scriptPlanHere)
   if (\$here | is-empty) {
     opPrintWarn 'nothing to do'
     return
@@ -2812,28 +2951,24 @@ def --env scriptPlanRun [] {
   }
 }
 
-# find accumulates the same way the plan does, so all three shells share one idiom
-def --env scriptFindAdd [action: string, ...entries: string] {
-  let tools = (
-    \$entries | each { |e| \$e | split row '=' }
-      | where { |p|
-        let cmds = (\$p | get -o 1 | default '')
-        (\$cmds | is-empty) or (scriptHasCmd ...(\$cmds | split row ','))
-      }
-      | each { |p| \$p | get 0 }
+# the listing: each action with the tools that apply here, as virt find lists only the managers installed, and one
+# warning when none apply at all
+def scriptFindRun [] {
+  let here = (scriptPlanHere)
+  if (\$here | is-empty) {
+    let all = (\$env.SCRIPT_PLAN? | default '[]' | from json | get tool | uniq | sort)
+    if (\$all | is-not-empty) {
+      opPrintWarn \$"not applicable: (\$all | str join ', ')"
+    }
+    return
+  }
+  let rows = (
+    \$here
+      | group-by action
+      | transpose action units
+      | sort-by action
+      | each { |g| [\$g.action, (\$g.units | get tool | uniq | sort | str join ', ')] }
   )
-  if (\$tools | is-empty) {
-    return
-  }
-  load-env {SCRIPT_FIND_ROWS: ((\$env.SCRIPT_FIND_ROWS? | default []) | append \$"(\$action)|(\$tools | str join ', ')")}
-}
-
-# one table, one question, then the listing
-def scriptFindShow [] {
-  let rows = ((\$env.SCRIPT_FIND_ROWS? | default []) | each { |r| \$r | split row '|' })
-  if (\$rows | is-empty) {
-    return
-  }
   for r in \$rows {
     opPrint (\$r | get 0)
     opPrint \$"  (\$r | get 1)"
@@ -2845,9 +2980,9 @@ def scriptFindShow [] {
 }
 
 
-scriptFindAdd r#'setup'# r#'cargo=cargo'# r#'docker=docker'#
-scriptFindAdd r#'teardown'# r#'docker=docker'#
-scriptFindShow
+\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"],"noCmds":[],"svcs":[],"noSvcs":[]},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"],"noCmds":[],"svcs":[],"noSvcs":[]},{"id":"docker/teardown","action":"teardown","tool":"docker","shell":"zsh","cmds":["docker"],"noCmds":[],"svcs":[],"noSvcs":[]}]'#
+
+scriptFindRun
 
 } catch { |e|
   if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
@@ -2971,6 +3106,15 @@ def opRunCmd --wrapped [...args] {
 
 def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  let yn = (input \$"(\$question) [y,[n]]: " | str lowercase)
+  \$yn in ['' 'y' 'yes']
 }
 
 def opMaybeRunCmd --wrapped [...args] {
@@ -3258,10 +3402,34 @@ def scriptTable [headers: list<string>, rows: list<list<string>>] {
   for r in \$rows { opPrint (do \$line \$r) }
 }
 
+# a service is how a windows feature shows it is installed: sc.exe knows one by name (1060 is no such service), and on
+# linux a systemd unit file names one. a check per name, no shell to start
+def scriptHasSvc [...svcs: string] {
+  \$svcs | any { |s|
+    match \$nu.os-info.name {
+      'windows' => ((^sc.exe query \$s | complete | get exit_code) == 0)
+      'linux' => (['/etc/systemd/system' '/usr/lib/systemd/system' '/lib/systemd/system'] | any { |d| [\$d \$"(\$s).service"] | path join | path exists })
+      _ => false
+    }
+  }
+}
+
+# what this machine is offered, from the cheap gates alone: a has_ gate needs one of its commands or services here, a
+# no_ gate needs none of them, so an install leaves the listing once its tool is in. whether a script has more to do
+# beyond that is its own to say once it runs
+def scriptPlanHere [] {
+  \$env.SCRIPT_PLAN? | default '[]' | from json | where { |u|
+    (
+      ((\$u.cmds | is-empty) or (scriptHasCmd ...\$u.cmds))
+      and ((\$u.noCmds | is-empty) or not (scriptHasCmd ...\$u.noCmds))
+      and ((\$u.svcs | is-empty) or (scriptHasSvc ...\$u.svcs))
+      and ((\$u.noSvcs | is-empty) or not (scriptHasSvc ...\$u.noSvcs))
+    )
+  }
+}
+
 def --env scriptPlanRun [] {
-  let units = (\$env.SCRIPT_PLAN? | default '[]' | from json)
-  # a has_cmd gate is the client's: a script whose tool is missing is not offered, and an action alone is all wut has
-  let here = (\$units | where { |u| (\$u.cmds | is-empty) or (scriptHasCmd ...\$u.cmds) })
+  let here = (scriptPlanHere)
   if (\$here | is-empty) {
     opPrintWarn 'nothing to do'
     return
@@ -3279,28 +3447,24 @@ def --env scriptPlanRun [] {
   }
 }
 
-# find accumulates the same way the plan does, so all three shells share one idiom
-def --env scriptFindAdd [action: string, ...entries: string] {
-  let tools = (
-    \$entries | each { |e| \$e | split row '=' }
-      | where { |p|
-        let cmds = (\$p | get -o 1 | default '')
-        (\$cmds | is-empty) or (scriptHasCmd ...(\$cmds | split row ','))
-      }
-      | each { |p| \$p | get 0 }
+# the listing: each action with the tools that apply here, as virt find lists only the managers installed, and one
+# warning when none apply at all
+def scriptFindRun [] {
+  let here = (scriptPlanHere)
+  if (\$here | is-empty) {
+    let all = (\$env.SCRIPT_PLAN? | default '[]' | from json | get tool | uniq | sort)
+    if (\$all | is-not-empty) {
+      opPrintWarn \$"not applicable: (\$all | str join ', ')"
+    }
+    return
+  }
+  let rows = (
+    \$here
+      | group-by action
+      | transpose action units
+      | sort-by action
+      | each { |g| [\$g.action, (\$g.units | get tool | uniq | sort | str join ', ')] }
   )
-  if (\$tools | is-empty) {
-    return
-  }
-  load-env {SCRIPT_FIND_ROWS: ((\$env.SCRIPT_FIND_ROWS? | default []) | append \$"(\$action)|(\$tools | str join ', ')")}
-}
-
-# one table, one question, then the listing
-def scriptFindShow [] {
-  let rows = ((\$env.SCRIPT_FIND_ROWS? | default []) | each { |r| \$r | split row '|' })
-  if (\$rows | is-empty) {
-    return
-  }
   for r in \$rows {
     opPrint (\$r | get 0)
     opPrint \$"  (\$r | get 1)"
@@ -3404,6 +3568,16 @@ function opRunCmd {
 
 function opRunSilentCmd {
   eval "\$*" &> /dev/null
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+function opAsk {
+  if [[ \$YES ]]; then
+    return 0
+  fi
+  local yn=''
+  read "yn?\${1} [y,[n]]: "
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
 function opMaybeRunCmd {
@@ -3544,6 +3718,16 @@ function opRunSilentCmd {
   eval "\$*" &> /dev/null
 }
 
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+function opAsk {
+  if [[ \$YES ]]; then
+    return 0
+  fi
+  local yn=''
+  read "yn?\${1} [y,[n]]: "
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+}
+
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
     opRunCmd "\$@"
@@ -3587,7 +3771,7 @@ function () {
   }
 }
 
-\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"]},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"]}]'#
+\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"],"noCmds":[],"svcs":[],"noSvcs":[]},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"],"noCmds":[],"svcs":[],"noSvcs":[]}]'#
 
 scriptPlanRun
 

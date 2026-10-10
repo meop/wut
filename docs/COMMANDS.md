@@ -31,7 +31,7 @@ names with OR semantics — each name is resolved independently.
 while `wut s e setup ptyxis` names a tool and pinpoints to one. The cli reads action first; the config tree is tool
 first (`ptyxis/setup.zsh`), so `script` reverses its filters before globbing. The `has_cmd` gate is client-side, so a
 fanned out run skips tools that are not on the client's PATH, and `find` leaves them out of the listing — see
-[SCRIPT.md](SCRIPT.md#has_cmd-is-the-clients).
+[SCRIPT.md](SCRIPT.md#the-clients-gates).
 
 `script exec`, `virt rem`, `virt run` and `pack remove` apply pinpoint at their own layer — script over the union of all
 three shells' matches, so a tool present in more than one shell still resolves to a single script, and podman-instance

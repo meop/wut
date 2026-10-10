@@ -310,6 +310,10 @@ two levels for consistency.
 **Gate Types:**
 
 - `has_cmd` - Command(s) the script needs on the client's PATH — any one is enough. Client-side (see below)
+- `no_cmd` - Command(s) that must all be absent from the client's PATH — an install's own tool, so it leaves the listing
+  once installed. Client-side (see below)
+- `has_svc` / `no_svc` - The same for services (`sc.exe query` on windows, a systemd unit file on linux) — how a windows
+  feature shows it is installed. Client-side (see below)
 - `sys_os_plat` - OS platform (darwin, linux, windows)
 - `sys_os` - Specific OS distribution (debian, ubuntu, arch, etc.) — exact match
 - `sys_os_like` - OS family substring match (e.g. `debian` matches ubuntu, kali, etc.; `arch` matches manjaro, etc.)
@@ -338,13 +342,15 @@ two levels for consistency.
 Gates must match in both places — scripts are both discovered only on appropriate systems (YAML) and protected against
 accidental execution on incompatible ones (script body).
 
-`sys_*` gates are resolved on the server. `has_cmd` cannot be, and compiles into the emitted script instead — see
-[SCRIPT.md](SCRIPT.md#has_cmd-is-the-clients).
+`sys_*` gates are resolved on the server. `has_cmd`, `no_cmd`, `has_svc` and `no_svc` cannot be, and are answered by the
+client instead — see [SCRIPT.md](SCRIPT.md#the-clients-gates).
 
 **Examples:**
 
 - `brew/install.zsh` has `sys_os_plat: [darwin]` in YAML and checks `[[ $SYS_OS_PLAT != darwin ]]`
-- `brew/repair.zsh` adds `has_cmd: [brew]` in YAML and checks `type brew > /dev/null`
+- `brew/setup.zsh` adds `has_cmd: [brew]` in YAML and checks `type brew > /dev/null`
+- `deno/install.nu` adds `no_cmd: [deno]` in YAML and checks `which deno | is-not-empty` before it asks
+- `hyperv/install.ps1` adds `no_svc: [vmms]` in YAML and checks `Get-Service vmms` before it asks
 - `gnome-terminal/setup.zsh` has `sys_os_de: [gnome]` + `sys_os_plat: [linux]` in YAML and checks both
 - `node/install.zsh` has `sys_os_like: [debian]` in YAML and checks `[[ $SYS_OS_LIKE != *debian* ]]`
 - `docker/install.zsh` has `sys_os: [debian, ubuntu]` in YAML and checks exact `$SYS_OS` (because `$SYS_OS` is also used

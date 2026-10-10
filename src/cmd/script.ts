@@ -29,8 +29,16 @@ const WUT_ARGS_KEY = ['wut', 'args']
 const SCRIPT_DIR_PARTS = [SCRIPT_KEY]
 // the units the client picks from, as data; their bodies live in scriptRunUnit
 const SCRIPT_PLAN_KEY = [SCRIPT_KEY, 'plan']
-// a client side gate: the server cannot know what is on the client's path, so it compiles into the emitted script
-const HAS_CMD_KEY = 'has_cmd'
+// client side gates: the server cannot know what the client has, so they travel with the plan for it to answer.
+// has_ needs one of its commands (or services) there, no_ needs none of them, which is how an install leaves the
+// listing once its tool is in. a service is how a windows feature shows it is installed
+const CLIENT_GATES = {
+  cmds: 'has_cmd',
+  noCmds: 'no_cmd',
+  svcs: 'has_svc',
+  noSvcs: 'no_svc',
+} as const
+type ClientGates = { -readonly [K in keyof typeof CLIENT_GATES]: Array<string> }
 
 // ties go to the most native shell, so a hop lands somewhere as close to the machine as the script allows
 const SHELL_PRIORITY: Array<{ name: string; extension: string }> = [
@@ -43,17 +51,16 @@ type ScriptMatch = {
   parts: Array<string>
   extension: string
   shell: string
-  cmds: Array<string>
-}
+} & ClientGates
 
 // slices tool -> action -> shell -> gate down to tool -> action -> gate for one shell,
-// splitting the client side has_cmd gate out of the server side sys_ gates
+// splitting the client side gates out of the server side sys_ gates
 function shellGates(
   content: CtxFilter | null,
   shell: string,
-): { filter: CtxFilter; cmds: Map<string, Array<string>> } {
+): { filter: CtxFilter; client: Map<string, ClientGates> } {
   const filter: CtxFilter = {}
-  const cmds = new Map<string, Array<string>>()
+  const client = new Map<string, ClientGates>()
   for (const [tool, actions] of Object.entries(content ?? {})) {
     const toolActions: CtxFilter = {}
     for (const [action, shells] of Object.entries(actions as CtxFilter)) {
@@ -61,17 +68,21 @@ function shellGates(
       if (!gate) {
         continue
       }
-      const { [HAS_CMD_KEY]: hasCmd, ...sysGates } = gate
-      toolActions[action] = sysGates
-      if (Array.isArray(hasCmd) && hasCmd.length > 0) {
-        cmds.set([tool, action].join('/'), hasCmd)
+      const sysGates: CtxFilter = { ...gate }
+      const gates = {} as ClientGates
+      for (const [field, key] of Object.entries(CLIENT_GATES) as Array<[keyof ClientGates, string]>) {
+        const names = sysGates[key]
+        delete sysGates[key]
+        gates[field] = Array.isArray(names) ? names as Array<string> : []
       }
+      toolActions[action] = sysGates
+      client.set([tool, action].join('/'), gates)
     }
     if (Object.keys(toolActions).length > 0) {
       filter[tool] = toolActions
     }
   }
-  return { filter, cmds }
+  return { filter, client }
 }
 
 // the cli reads action first (setup ptyxis), the config tree is tool first (ptyxis/setup)
@@ -87,7 +98,7 @@ async function resolveMatches(
 ): Promise<Array<ScriptMatch>> {
   const owned = new Map<string, ScriptMatch>()
   for (const { name, extension } of SHELL_PRIORITY) {
-    const { filter: contextFilter, cmds } = shellGates(content, name)
+    const { filter: contextFilter, client } = shellGates(content, name)
     const results = await getCfgDirDump(SCRIPT_DIR_PARTS, {
       context,
       contextFilter,
@@ -98,7 +109,8 @@ async function resolveMatches(
     for (const parts of results) {
       const key = parts.join('/')
       if (!owned.has(key)) {
-        owned.set(key, { parts, extension, shell: name, cmds: cmds.get(key) ?? [] })
+        const gates = client.get(key) ?? { cmds: [], noCmds: [], svcs: [], noSvcs: [] }
+        owned.set(key, { parts, extension, shell: name, ...gates })
       }
     }
   }
@@ -156,6 +168,28 @@ function buildAndLog(shell: Sh, environment: Env) {
   return body
 }
 
+type ScriptUnit = {
+  id: string
+  action: string
+  tool: string
+  shell: string
+} & ClientGates
+
+// a matched script as the client reads it. a named tool runs as asked, so it carries no gates: its own
+// 'not installed' or 'already installed' explains a no op
+function toUnit(match: ScriptMatch, named: boolean): ScriptUnit {
+  return {
+    id: match.parts.join('/'),
+    action: match.parts[match.parts.length - 1],
+    tool: match.parts.slice(0, -1).join('/'),
+    shell: match.shell,
+    cmds: named ? [] : match.cmds,
+    noCmds: named ? [] : match.noCmds,
+    svcs: named ? [] : match.svcs,
+    noSvcs: named ? [] : match.noSvcs,
+  }
+}
+
 async function findOp(shell: Sh, context: Ctx, environment: Env) {
   const redirect = await redirectCommonShell(shell, context)
   if (redirect) {
@@ -167,39 +201,13 @@ async function findOp(shell: Sh, context: Ctx, environment: Env) {
   const content = await getCfgFileLoad([SCRIPT_KEY], { extension: Fmt.yaml })
   const matches = await resolveMatches(context, content, toDirFilters(action, parts))
 
-  const grouped = new Map<string, Set<string>>()
-  for (const match of matches) {
-    const key = match.parts[match.parts.length - 1]
-    const tool = match.parts.slice(0, -1).join('/')
-    if (!grouped.has(key)) {
-      grouped.set(key, new Set())
-    }
-    if (tool) {
-      grouped.get(key)!.add(match.cmds.length ? `${tool}=${match.cmds.join(',')}` : tool)
-    }
+  // data, not printed lines: whether a tool's gates are met is the client's to answer
+  const units = matches.map((m) => toUnit(m, false)).filter((u) => u.tool)
+  shell.with(await shell.fileLoad([SCRIPT_KEY], import.meta.resolve, ['..']))
+  if (units.length) {
+    shell.with(shell.varSetStr(SCRIPT_PLAN_KEY, JSON.stringify(units))).with(['scriptFindRun'])
   }
-
-  // data, not printed lines: whether a tool's has_cmd gate is satisfied is the client's to answer
-  const shellLines: string[] = []
-  for (
-    const [key, entries] of [...grouped.entries()].toSorted(([a], [b]) => a.localeCompare(b))
-  ) {
-    shellLines.push(
-      ['scriptFindAdd', key, ...[...entries].toSorted()]
-        .map((part, i) => i === 0 ? part : shell.toLiteral(part))
-        .join(' '),
-    )
-  }
-  if (shellLines.length) {
-    shellLines.push('scriptFindShow')
-  }
-
-  return buildAndLog(
-    shell
-      .with(await shell.fileLoad([SCRIPT_KEY], import.meta.resolve, ['..']))
-      .with(shellLines),
-    environment,
-  )
+  return buildAndLog(shell, environment)
 }
 
 async function execOp(shell: Sh, context: Ctx, environment: Env) {
@@ -213,7 +221,6 @@ async function execOp(shell: Sh, context: Ctx, environment: Env) {
   const args = environment.getSplit(SCRIPT_OP_ARGS_KEY('exec'))
   const filters = toDirFilters(action, parts)
   const content = await getCfgFileLoad([SCRIPT_KEY], { extension: Fmt.yaml })
-  const plat = context.sys_os_plat ?? ''
 
   let matches = await resolveMatches(context, content, filters)
 
@@ -223,32 +230,17 @@ async function execOp(shell: Sh, context: Ctx, environment: Env) {
     matches = pinned ? matches.filter((m) => m.parts === pinned) : []
   }
 
-  if (!matches.length) {
-    return buildAndLog(
-      shell.with(shell.printWarn(`no script matched: ${[action, ...parts].join(' ')}`)),
-      environment,
-    )
-  }
-
-  const units: Array<{ id: string; action: string; tool: string; shell: string; cmds: Array<string> }> = []
+  const units: Array<ScriptUnit> = []
   const arms: Array<string> = []
   for (const match of matches) {
-    const run = await buildScriptRun(shell, plat, match, args)
+    const run = await buildScriptRun(shell, context.sys_os_plat ?? '', match, args)
     if (run == null) {
       continue
     }
-    const id = match.parts.join('/')
-    units.push({
-      id,
-      action: match.parts[match.parts.length - 1],
-      tool: match.parts.slice(0, -1).join('/'),
-      shell: match.shell,
-      // a named tool runs as asked, so its own 'not installed' warning still explains a no op
-      cmds: parts.length ? [] : match.cmds,
-    })
-    arms.push(`    ${shell.toLiteral(id)} => { ${run} }`)
+    const unit = toUnit(match, parts.length > 0)
+    units.push(unit)
+    arms.push(`    ${shell.toLiteral(unit.id)} => { ${run} }`)
   }
-
   if (!units.length) {
     return buildAndLog(
       shell.with(shell.printWarn(`no script matched: ${[action, ...parts].join(' ')}`)),

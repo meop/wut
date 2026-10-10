@@ -18,12 +18,12 @@ listed lxc, podman and qemu on machines that had none of them.
 
 Each command has one client-side predicate for its half:
 
-| Command  | Predicate         | Answers                                         |
-| -------- | ----------------- | ----------------------------------------------- |
-| `pack`   | `packManagerHere` | is this manager on PATH                         |
-| `virt`   | `virtManagerHere` | is this manager on PATH                         |
-| `file`   | `fileBinHere`     | is this tool installed                          |
-| `script` | `scriptHasCmd`    | is the command a `has_cmd` gate names installed |
+| Command  | Predicate         | Answers                                               |
+| -------- | ----------------- | ----------------------------------------------------- |
+| `pack`   | `packManagerHere` | is this manager on PATH                               |
+| `virt`   | `virtManagerHere` | is this manager on PATH                               |
+| `file`   | `fileBinHere`     | is this tool installed                                |
+| `script` | `scriptPlanHere`  | is a `has_` command or service there, a `no_` one not |
 
 ## The PATH wut checks is the one a new shell would have
 
