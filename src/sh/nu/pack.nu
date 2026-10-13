@@ -221,7 +221,8 @@ def --env packPnpmInstalled [] {
 }
 
 # go keeps each tool as one binary in its bin dir, and the binary carries the package and module it was built from:
-# `go version -m` reads them back, so the listing is a directory read like deno's
+# `go version -m` reads them back, so the listing is a directory read like deno's. its first line is the toolchain
+# that built the binary
 def --env packGoTools [] {
   let gobin = (^go env GOBIN | str trim)
   let dirPath = if ($gobin | is-not-empty) {
@@ -235,13 +236,17 @@ def --env packGoTools [] {
     return []
   }
   ls $dirPath | where type == file | each { |f|
-    let fields = (^go version -m $f.name | complete | get stdout | lines | each { |l| $l | str trim | split row (char tab) })
+    let lines = (^go version -m $f.name | complete | get stdout | lines)
+    let fields = ($lines | each { |l| $l | str trim | split row (char tab) })
     let path = ($fields | where { |r| ($r | first) == 'path' } | get -o 0.1)
     let mod = ($fields | where { |r| ($r | first) == 'mod' } | get -o 0 | default [])
     if $path == null {
       null
     } else {
-      {bin: $f.name, path: $path, module: ($mod | get -o 1 | default $path), version: ($mod | get -o 2 | default '')}
+      {
+        bin: $f.name, path: $path, module: ($mod | get -o 1 | default $path), version: ($mod | get -o 2 | default ''),
+        go: ($lines | get -o 0 | default '' | split row ': ' | last | str trim),
+      }
     }
   } | compact
 }

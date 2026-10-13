@@ -1011,18 +1011,23 @@ esac`
 })
 
 // go has no listing or uninstall of its own: a tool is a binary in its bin dir that names the package it was built
-// from, so sync reinstalls that package at latest, and a tool answers to its package path or its binary's name
+// from, and a tool answers to its package path or its binary's name. an install always builds, so sync installs only
+// what a newer release or a newer toolchain has left behind, and outdated lists the same tools
 Deno.test('nu / pack / go reads its tools from the binaries it built', async () => {
-  const go = `case "$*" in
+  const stub = (toolchain: string) =>
+    `case "$*" in
   "env GOBIN") printf '\\n' ;;
+  "env GOVERSION") printf '${toolchain}\\n' ;;
+  "list -m -f "*/gopls@latest) printf 'v0.23.0\\n' ;;
+  "list -m -f "*/golangci-lint/v2@latest) printf 'v2.14.0\\n' ;;
   "env GOPATH") printf '%s/go\\n' "$HOME" ;;
   "version -m "*/gopls) printf '%s: go1.27.0\\n\\tpath\\tgolang.org/x/tools/gopls\\n\\tmod\\tgolang.org/x/tools/gopls\\tv0.23.0\\th1:x=\\n' "$3" ;;
   "version -m "*/golangci-lint) printf '%s: go1.27.0\\n\\tpath\\tgithub.com/golangci/golangci-lint/v2/cmd/golangci-lint\\n\\tmod\\tgithub.com/golangci/golangci-lint/v2\\tv2.13.2\\th1:x=\\n' "$3" ;;
   *) exit 0 ;;
 esac`
-  const run = (op: string, names: Array<string>) =>
+  const run = (op: string, names: Array<string>, toolchain = 'go1.27.0') =>
     withStubs(
-      { go },
+      { go: stub(toolchain) },
       [
         `mkdir ($env.HOME | path join go bin)`,
         `touch ($env.HOME | path join go bin gopls) ($env.HOME | path join go bin golangci-lint)`,
@@ -1041,17 +1046,75 @@ esac`
   if (bare == null) {
     return
   }
-  assertEquals(installs(bare).sort(), [
+  const both = [
     'github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest',
     'golang.org/x/tools/gopls@latest',
+  ]
+  // gopls is at its latest release and built by this toolchain: only the tool with a newer release installs
+  assertEquals(installs(bare), [both[0]])
+  assertEquals(installs((await run('sync', ['gopls']))!), [])
+  // a newer toolchain rebuilds a tool whose release has not moved, and no version has to be looked up to know it
+  assertEquals(installs((await run('sync', [], 'go1.27.1'))!).sort(), both)
+  assertEquals(installs((await run('sync', ['gopls'], 'go1.27.1'))!), ['golang.org/x/tools/gopls@latest'])
+  // older, not different: a tool a downloaded toolchain built is ahead of this one, and an experiment or a release
+  // candidate of the same release is not a move
+  assertEquals(installs((await run('sync', ['gopls'], 'go1.26.9'))!), [])
+  assertEquals(installs((await run('sync', ['gopls'], 'go1.27.0-X:nodwarf5'))!), [])
+  assertEquals(installs((await run('sync', ['gopls'], 'go1.27rc1'))!), [])
+  assertEquals(installs((await run('sync', ['gopls'], 'go1.100.0'))!), ['golang.org/x/tools/gopls@latest'])
+  const outdated = (l: string) => l.includes(' -> ')
+  assertEquals((await run('outdated', []))!.split('\n').filter(outdated), [
+    'github.com/golangci/golangci-lint/v2/cmd/golangci-lint v2.13.2 -> v2.14.0',
   ])
-  assertEquals(installs((await run('sync', ['gopls']))!), ['golang.org/x/tools/gopls@latest'])
+  assertEquals((await run('outdated', [], 'go1.27.1'))!.split('\n').filter(outdated), [
+    'github.com/golangci/golangci-lint/v2/cmd/golangci-lint v2.13.2 -> v2.14.0',
+    'golang.org/x/tools/gopls v0.23.0 go1.27.0 -> go1.27.1',
+  ])
   assertEquals(installs((await run('add', ['golang.org/x/tools/gopls']))!), ['golang.org/x/tools/gopls@latest'])
   const removed = (await run('remove', ['golang.org/x/tools/gopls']))!
   assertEquals(removed.split('\n').filter((l) => l.includes('rm ')).length, 1)
   assertEquals(removed.includes('/go/bin/gopls'), true)
   const listed = (await run('list', []))!
   assertEquals(listed.includes('golang.org/x/tools/gopls v0.23.0'), true)
+})
+
+// gotm is to go what rustup is to cargo: where it is on PATH, a bare go sync has it move the toolchains before the
+// tools rebuild against them. a go with no gotm is another manager's, and a named sync is about the tools it names
+Deno.test('nu / pack / go has gotm move the toolchains first, only where gotm is', async () => {
+  const go = `case "$*" in
+  "env GOBIN") printf '\\n' ;;
+  "env GOVERSION") printf 'go1.27.0\\n' ;;
+  "env GOPATH") printf '%s/go\\n' "$HOME" ;;
+  "version -m "*/gopls) printf '%s: go1.26.0\\n\\tpath\\tgolang.org/x/tools/gopls\\n\\tmod\\tgolang.org/x/tools/gopls\\tv0.23.0\\th1:x=\\n' "$3" ;;
+  *) exit 0 ;;
+esac`
+  const run = (stubs: Record<string, string>, names: Array<string>) =>
+    withStubs(
+      stubs,
+      [
+        `mkdir ($env.HOME | path join go bin)`,
+        `touch ($env.HOME | path join go bin gopls)`,
+        `$env.PACK_OP = 'sync'`,
+        `$env.NOOP = '1'`,
+        `$env.PACK_MANAGER = 'go'`,
+        `$env.PACK_SYNC_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
+        'packGo',
+      ].join('\n'),
+      ['go'],
+      ['go'],
+    )
+  const managed = await run({ go, gotm: '' }, [])
+  if (managed == null) {
+    return
+  }
+  const lines = managed.split('\n')
+  const gotm = lines.findIndex((l) => l.endsWith('gotm sync --yes'))
+  const tools = lines.findIndex((l) => l.includes('go install golang.org/x/tools/gopls@latest'))
+  assertEquals(gotm > -1, true)
+  assertEquals(tools > -1, true)
+  assertEquals(gotm < tools, true)
+  assertEquals((await run({ go }, []))!.includes('gotm sync'), false)
+  assertEquals((await run({ go, gotm: '' }, ['gopls']))!.includes('gotm sync'), false)
 })
 
 // pnpm records a runtime as the exact version it installed, so `update` cannot move it: a runtime is set again at its

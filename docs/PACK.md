@@ -323,10 +323,11 @@ does not exit non-zero for it.
 
 ## Toolchain managers
 
-Three managers manage toolchains as well as packages: rustup (cargo and rustc), uv (pythons) and pnpm (the node, bun and
-deno runtimes). A bare sync moves the toolchains before the packages, so the packages update against current ones, each
-the way its manager moves them — rustup along its channels, uv within each installed minor, pnpm to the latest release.
-A named sync is about the packages it names and leaves the toolchains alone.
+Four managers manage toolchains as well as packages: rustup (cargo and rustc), uv (pythons), pnpm (the node, bun and
+deno runtimes) and gotm (go). A bare sync moves the toolchains before the packages, so the packages update against
+current ones, each the way its manager moves them — rustup along its channels, uv within each installed minor, pnpm to
+the latest release, gotm to the newest release each pin allows. A named sync is about the packages it names and leaves
+the toolchains alone.
 
 - **rustup** is not a package manager at all: the `cargo` on PATH is usually its proxy, a link to the rustup beside it
   (a hard link on windows) dispatching to the real cargo inside the active toolchain. That makes cargo the one manager
@@ -343,6 +344,17 @@ A named sync is about the packages it names and leaves the toolchains alone.
   `uv tool upgrade --all`.
 - **pnpm** records a runtime as the exact version it installed, so `update` cannot move one: a runtime is set again at
   `latest` — `pnpm runtime set node latest --global` — before the packages update to theirs.
+- **gotm** is to go what rustup is to cargo — its own tool, managing toolchains rather than packages, with no row of its
+  own: a bare go sync looks for `gotm` on PATH and runs `gotm sync --yes` first, best effort like a self update, so each
+  go it was asked to keep moves to the newest release its pin allows before the tools rebuild. A go another manager
+  delivered has no gotm behind it and is left to that manager.
+
+go's tools are what a toolchain move leaves behind. `go install` is go's only update and always builds — free while go's
+caches hold the last build, a full compile once they are cleared — so a go sync installs only the tools that need it, as
+`cargo install-update` does: one whose module has a newer release, or one built by a toolchain older than the current
+one (`go version -m` against `go env GOVERSION`), since a go binary carries the standard library it was built with.
+Older rather than different: a module that asks for a newer go than the one installed is built by a toolchain go
+downloads for it (`GOTOOLCHAIN=auto`), and that tool is ahead, not behind. `outdated` lists both kinds.
 
 ## Failing
 

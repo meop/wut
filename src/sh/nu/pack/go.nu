@@ -4,6 +4,46 @@ def packGoVersioned [name: string] {
   if ($name | str contains '@') { $name } else { $"($name)@latest" }
 }
 
+# the newest release of a tool's module, asked of the module proxy. empty when it cannot say
+def packGoLatest [tool: record] {
+  ^go list -m -f '{{.Version}}' $"($tool.module)@latest" | complete | get stdout | str trim
+}
+
+# the toolchain a build would use now, spelled as a binary records the one that built it. asked from the home dir:
+# go answers for the toolchain a go.mod above the cwd asks for, and `go install path@latest` does not read that file
+def packGoToolchain [] {
+  do { cd ($env.HOME? | default $nu.home-dir); ^go env GOVERSION | complete | get stdout | str trim }
+}
+
+# a toolchain's release as one number, so two can be put in order. an experiment hangs off the release
+# (go1.27.2-X:nodwarf5) and is not part of it, a release candidate comes before its release, and a toolchain that is
+# not a release at all (a devel build) is 0
+def packGoRelease [toolchain: string] {
+  let m = ($toolchain | parse --regex '^go(?<major>\d+)\.(?<minor>\d+)(?:\.(?<patch>\d+))?(?<pre>rc|beta)?' | get -o 0)
+  if $m == null {
+    return 0
+  }
+  let release = (($m.major | into int) * 1000000 + ($m.minor | into int) * 1000 + ($m.patch | default '0' | into int))
+  $release * 2 + (if $m.pre == null { 1 } else { 0 })
+}
+
+# older, not different: with GOTOOLCHAIN=auto a module that asks for a newer go than the one installed is built by a
+# toolchain go downloads for it, and that tool is ahead of this one rather than behind it
+def packGoOlder [built: string, toolchain: string] {
+  let release = (packGoRelease $built)
+  $release > 0 and $release < (packGoRelease $toolchain)
+}
+
+# gotm manages go's toolchains the way rustup manages rust's, and is its own tool rather than a package. where it is
+# on PATH, the toolchains it was asked to keep move before the tools rebuild against them. a go another manager
+# delivered has no gotm behind it, and is that manager's to update
+def --env packGotmUpdate [] {
+  let gotm = (which gotm | get -o 0.path)
+  if $gotm != null {
+    packSelfUpdate 'gotm' $gotm [sync --yes]
+  }
+}
+
 def --env packGo [] {
   let cmd = 'go'
   if (packSkip $cmd) {
@@ -40,13 +80,17 @@ def --env packGo [] {
     }
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      let toolchain = (packGoToolchain)
       for t in (packGoTools) {
         if ($terms | is-not-empty) and not ($terms | any { |term| wutWordMatch $t.path $term }) {
           continue
         }
-        let latest = (^$cmd list -m -f '{{.Version}}' $"($t.module)@latest" | complete | get stdout | str trim)
+        let latest = (packGoLatest $t)
         if ($latest | is-not-empty) and $latest != $t.version {
           opPrint $"($t.path) ($t.version) -> ($latest)"
+        } else if (packGoOlder $t.go $toolchain) {
+          # the same release is still out of date when an older toolchain built it: sync rebuilds it
+          opPrint $"($t.path) ($t.version) ($t.go) -> ($toolchain)"
         }
       }
     }
@@ -64,8 +108,19 @@ def --env packGo [] {
       # go's install is its update, so a name it does not already have would be installed rather than updated: the
       # tools are whatever it holds, narrowed by what was asked for
       let asked = (packNameList 'PACK_SYNC_NAMES')
+      if ($asked | is-empty) {
+        packGotmUpdate
+      }
       let tools = (packGoTools | where { |t| ($asked | is-empty) or ($asked | any { |n| packGoNamed $t $n }) })
+      # an install always builds, and a build is only free while go's caches still hold the last one, so a tool
+      # already at the latest release is left alone, as `cargo install-update` leaves a crate. one an older toolchain
+      # built is not: a go binary carries the standard library it was built with, so only a rebuild gets go's fixes.
+      # a release the proxy cannot name is not a match, and the install is left to say why
+      let toolchain = (packGoToolchain)
       for t in $tools {
+        if not (packGoOlder $t.go $toolchain) and (packGoLatest $t) == $t.version {
+          continue
+        }
         packOp [$cmd install $"($t.path)@latest"]
       }
     }
