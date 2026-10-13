@@ -426,12 +426,13 @@ Deno.test('nu / arch / add (pinned, shell matches both groups)', async (t) => {
   assertEquals(body.includes('"group":"shell-nu"'), true)
   assertEquals(body.includes('"group":"shell-zsh"'), true)
 })
-Deno.test('nu / arch / rem (pinned, shell takes the first group only)', async (t) => {
+// rem resolves a name exactly as add does: a folder is every group in it, and the numbered pick narrows
+Deno.test('nu / arch / rem (pinned, shell matches both groups, as add does)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/rem/shell?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(body.includes('"group":"shell-nu"'), true)
-  assertEquals(body.includes('"group":"shell-zsh"'), false)
+  assertEquals(body.includes('"group":"shell-zsh"'), true)
 })
 // every manager the group declares gets a block; a gated entry still does not
 Deno.test('nu / ubuntu / add (pinned, rustup)', async (t) => {
@@ -689,7 +690,74 @@ Deno.test('nu / arch / rem (pinned, by alias)', async (t) => {
   assertEquals(body.includes('"group":"shell-nu"'), true)
   assertEquals(body.includes('"group":"shell-zsh"'), false)
 })
-// an alias that matches nothing still falls through to the managers' own search
+
+// the acting ops take a name whole. a group goes by its own name or an alias, so part of either is no group's name,
+// and neither is a package the group holds: both stay loose, for the managers to answer as typed
+const planOf = async (path: string) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/${path}?${PIN_ARCH}`))).text()
+  return body.split('\n').filter((l) => l.startsWith('$env.PACK_')).join('\n')
+}
+Deno.test('nu / arch / add, rem, sync (pinned, part of a name or an alias is not a name)', async () => {
+  for (const op of ['add', 'rem', 'sync']) {
+    for (const typed of ['nush', 'n', 'she', 'shell-n']) {
+      const plan = await planOf(`${op}/${typed}`)
+      assertEquals(plan.includes('"group":'), false, `${op} ${typed}`)
+      assertEquals(plan.includes(`r#'${typed}'#`), true, `${op} ${typed}`)
+    }
+  }
+})
+Deno.test('nu / arch / add, rem (pinned, a package inside a group is not a name for the group)', async () => {
+  for (const op of ['add', 'rem']) {
+    const plan = await planOf(`${op}/zsh-completions`)
+    assertEquals(plan.includes('"group":'), false, op)
+    assertEquals(plan.includes("r#'zsh-completions'#"), true, op)
+  }
+})
+Deno.test('nu / arch / add (pinned, a group by its own name, a run of its path, or a folder above it)', async () => {
+  for (const typed of ['nu', 'shell-nu', 'NU']) {
+    const plan = await planOf(`add/${typed}`)
+    assertEquals(plan.includes('"group":"shell-nu"'), true, typed)
+    assertEquals(plan.includes('"group":"shell-zsh"'), false, typed)
+  }
+})
+
+// find is the wide one: what was typed starts a word of a group's name, an alias, a package it holds, or its
+// description, and a name every group misses is left for the managers
+const foundBy = async (typed: string) => {
+  const body = await (await runSrv(req(`/sh/nu/pack/find/${typed}?${PIN_ARCH}`))).text()
+  const line = body.split('\n').find((l) => l.startsWith("$env.PACK_FIND = r#'"))
+  return line ? JSON.parse(line.slice("$env.PACK_FIND = r#'".length, -"'#".length)) : { groups: {}, remaining: [] }
+}
+Deno.test('nu / arch / find (pinned, the start of a word of a name or an alias)', async () => {
+  for (const typed of ['nu', 'n', 'nush', 'she', 'shell-n']) {
+    assertEquals(Object.keys((await foundBy(typed)).groups).includes('shell-nu'), true, typed)
+  }
+})
+Deno.test('nu / arch / find (pinned, a package behind its vendor, scope or tap)', async () => {
+  for (const typed of ['gopls', 'gop', 'pkg', 'vscode', 'scope', 'tools']) {
+    assertEquals(Object.keys((await foundBy(typed)).groups), ['test-slashed'], typed)
+  }
+  assertEquals(Object.keys((await foundBy('completions')).groups), ['shell-zsh'])
+})
+Deno.test('nu / arch / find (pinned, a word of the description)', async () => {
+  const found = await foundBy('structured')
+  assertEquals(Object.keys(found.groups), ['shell-nu'])
+  assertEquals(found.remaining, [])
+})
+Deno.test('nu / arch / find (pinned, the middle or the end of a word is not found)', async () => {
+  for (const typed of ['hell', 'ools', 'ush', 'ctured']) {
+    const found = await foundBy(typed)
+    assertEquals(found.groups, {}, typed)
+    assertEquals(found.remaining, [typed], typed)
+  }
+})
+Deno.test('nu / arch / find (pinned, each name is its own search)', async () => {
+  const found = await foundBy('nu/zsh/nosuchpackage')
+  assertEquals(Object.keys(found.groups).filter((g) => g.startsWith('shell-')), ['shell-nu', 'shell-zsh'])
+  assertEquals(found.remaining, ['nosuchpackage'])
+})
+
+// a name no group answers to still falls through to the managers' own search
 Deno.test('nu / arch / find (pinned, unknown name)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/find/nosuchpackage?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)

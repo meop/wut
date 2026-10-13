@@ -136,7 +136,7 @@ def virtLxc [] {
       # bare lxc-ls wraps names across lines at terminal width, not just spaces within one
       let allInstances = ^sudo $"($cmd)-ls" | complete | get stdout | split words
       let instances = if ($filters | is-not-empty) {
-        $allInstances | where { |i| $filters | all { |f| $i | str contains --ignore-case $f } }
+        $allInstances | where { |i| $filters | all { |f| wutWordMatch $i $f } }
       } else {
         $allInstances
       }
@@ -161,7 +161,7 @@ def virtLxc [] {
     }
     sync => {
       for instance in $env.VIRT_INSTANCES {
-        if not ($"/var/lib/lxc/($instance)/config" | path exists) {
+        if not (virtInstanceHere $cmd $instance) {
           continue
         }
 

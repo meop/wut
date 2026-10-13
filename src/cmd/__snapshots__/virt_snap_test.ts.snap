@@ -3124,7 +3124,7 @@ if \$cut != null { \$cut.raw }
 }'##"
 `;
 
-snapshot[`nu / linux / add (host qemu) — wide 1`] = `
+snapshot[`nu / linux / add (host qemu) 1`] = `
 "^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
 try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/add/qemu?sysOsPlat=linux&sysHost=host&wutNuPinned=1'#
@@ -3154,7 +3154,7 @@ if \$cut != null { \$cut.raw }
 }'##"
 `;
 
-snapshot[`nu / linux / rem (host qemu) — pinpoint 1`] = `
+snapshot[`nu / linux / rem (host qemu) 1`] = `
 "^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
 try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/virt/rem/qemu?sysOsPlat=linux&sysHost=host&wutNuPinned=1'#
@@ -3693,6 +3693,27 @@ def virtManagerHere [manager: string] {
   which \$bin | is-not-empty
 }
 
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = (\$instance | split row '/' | first)
+  match \$manager {
+    docker => (\$name in (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([\$root 'var/lib/lxc' \$name 'config'] | path join | path exists),
+    podman => ([\$root 'etc/containers/systemd' \$"(\$name).kube"] | path join | path exists),
+    qemu => ([\$root 'etc/systemd/system' \$"qemu-(\$name).service"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  \$entries
+    | each { |e| \$e | update instances (\$e.instances | where { |i| virtInstanceHere \$e.manager \$i \$root }) }
+    | where { |e| \$e.instances | is-not-empty }
+}
+
 def --env virtCallManager [manager: string] {
   match \$manager {
     docker => { virtDocker },
@@ -3720,13 +3741,19 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
 
 def --env virtPlanRun [] {
   let plan = (\$env.VIRT_PLAN? | default '{}' | from json)
-  let here = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
+  let managed = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
 
-  if (\$here | is-empty) {
+  if (\$managed | is-empty) {
     let missing = (\$plan | transpose manager instances | each { |e| \$e.manager })
     if (\$missing | is-not-empty) {
       opPrintWarn \$"manager not installed: (\$missing | str join ', ')"
     }
+    return
+  }
+
+  let here = if \$env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded \$managed } else { \$managed }
+  if (\$here | is-empty) {
+    opPrintWarn \$"instance not added: (\$managed | each { |e| \$e.instances } | flatten | str join ', ')"
     return
   }
 
@@ -4231,6 +4258,27 @@ def virtManagerHere [manager: string] {
   which \$bin | is-not-empty
 }
 
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = (\$instance | split row '/' | first)
+  match \$manager {
+    docker => (\$name in (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([\$root 'var/lib/lxc' \$name 'config'] | path join | path exists),
+    podman => ([\$root 'etc/containers/systemd' \$"(\$name).kube"] | path join | path exists),
+    qemu => ([\$root 'etc/systemd/system' \$"qemu-(\$name).service"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  \$entries
+    | each { |e| \$e | update instances (\$e.instances | where { |i| virtInstanceHere \$e.manager \$i \$root }) }
+    | where { |e| \$e.instances | is-not-empty }
+}
+
 def --env virtCallManager [manager: string] {
   match \$manager {
     docker => { virtDocker },
@@ -4258,13 +4306,19 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
 
 def --env virtPlanRun [] {
   let plan = (\$env.VIRT_PLAN? | default '{}' | from json)
-  let here = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
+  let managed = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
 
-  if (\$here | is-empty) {
+  if (\$managed | is-empty) {
     let missing = (\$plan | transpose manager instances | each { |e| \$e.manager })
     if (\$missing | is-not-empty) {
       opPrintWarn \$"manager not installed: (\$missing | str join ', ')"
     }
+    return
+  }
+
+  let here = if \$env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded \$managed } else { \$managed }
+  if (\$here | is-empty) {
+    opPrintWarn \$"instance not added: (\$managed | each { |e| \$e.instances } | flatten | str join ', ')"
     return
   }
 
@@ -4736,6 +4790,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
@@ -4769,6 +4834,27 @@ def virtManagerHere [manager: string] {
   which \$bin | is-not-empty
 }
 
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = (\$instance | split row '/' | first)
+  match \$manager {
+    docker => (\$name in (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([\$root 'var/lib/lxc' \$name 'config'] | path join | path exists),
+    podman => ([\$root 'etc/containers/systemd' \$\\"(\$name).kube\\"] | path join | path exists),
+    qemu => ([\$root 'etc/systemd/system' \$\\"qemu-(\$name).service\\"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  \$entries
+    | each { |e| \$e | update instances (\$e.instances | where { |i| virtInstanceHere \$e.manager \$i \$root }) }
+    | where { |e| \$e.instances | is-not-empty }
+}
+
 def --env virtCallManager [manager: string] {
   match \$manager {
     docker => { virtDocker },
@@ -4796,13 +4882,19 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
 
 def --env virtPlanRun [] {
   let plan = (\$env.VIRT_PLAN? | default '{}' | from json)
-  let here = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
+  let managed = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
 
-  if (\$here | is-empty) {
+  if (\$managed | is-empty) {
     let missing = (\$plan | transpose manager instances | each { |e| \$e.manager })
     if (\$missing | is-not-empty) {
       opPrintWarn \$\\"manager not installed: (\$missing | str join ', ')\\"
     }
+    return
+  }
+
+  let here = if \$env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded \$managed } else { \$managed }
+  if (\$here | is-empty) {
+    opPrintWarn \$\\"instance not added: (\$managed | each { |e| \$e.instances } | flatten | str join ', ')\\"
     return
   }
 
@@ -4915,7 +5007,7 @@ def virtDocker [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -4934,6 +5026,10 @@ def virtDocker [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
+        if not (virtInstanceHere \$cmd \$instance) {
+          continue
+        }
+
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
@@ -5082,7 +5178,7 @@ def virtLxc [] {
       # bare lxc-ls wraps names across lines at terminal width, not just spaces within one
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split words
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -5107,7 +5203,7 @@ def virtLxc [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
-        if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -5328,7 +5424,7 @@ def virtPodman [] {
           | where name =~ '\\\\.kube\$'
           | get name
           | each { |f| \$f | path basename | str replace '.kube' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$p \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" } catch { |e| opRethrowInterrupt \$e }
         opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
@@ -5362,9 +5458,8 @@ def virtPodman [] {
       }
     }
     sync => {
-      let kubeDirPath = '/etc/containers/systemd'
       for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
-        if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$pod) {
           continue
         }
 
@@ -5900,7 +5995,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$i \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" } catch { |e| opRethrowInterrupt \$e }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" } catch { |e| opRethrowInterrupt \$e }
@@ -5933,7 +6028,7 @@ def virtQemu [] {
     sync => {
       for requested in \$env.VIRT_INSTANCES {
         let instance = (\$requested | split row '/' | first)
-        if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -6354,6 +6449,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
@@ -6387,6 +6493,27 @@ def virtManagerHere [manager: string] {
   which \$bin | is-not-empty
 }
 
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = (\$instance | split row '/' | first)
+  match \$manager {
+    docker => (\$name in (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([\$root 'var/lib/lxc' \$name 'config'] | path join | path exists),
+    podman => ([\$root 'etc/containers/systemd' \$\\"(\$name).kube\\"] | path join | path exists),
+    qemu => ([\$root 'etc/systemd/system' \$\\"qemu-(\$name).service\\"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  \$entries
+    | each { |e| \$e | update instances (\$e.instances | where { |i| virtInstanceHere \$e.manager \$i \$root }) }
+    | where { |e| \$e.instances | is-not-empty }
+}
+
 def --env virtCallManager [manager: string] {
   match \$manager {
     docker => { virtDocker },
@@ -6414,13 +6541,19 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
 
 def --env virtPlanRun [] {
   let plan = (\$env.VIRT_PLAN? | default '{}' | from json)
-  let here = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
+  let managed = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
 
-  if (\$here | is-empty) {
+  if (\$managed | is-empty) {
     let missing = (\$plan | transpose manager instances | each { |e| \$e.manager })
     if (\$missing | is-not-empty) {
       opPrintWarn \$\\"manager not installed: (\$missing | str join ', ')\\"
     }
+    return
+  }
+
+  let here = if \$env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded \$managed } else { \$managed }
+  if (\$here | is-empty) {
+    opPrintWarn \$\\"instance not added: (\$managed | each { |e| \$e.instances } | flatten | str join ', ')\\"
     return
   }
 
@@ -6533,7 +6666,7 @@ def virtDocker [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -6552,6 +6685,10 @@ def virtDocker [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
+        if not (virtInstanceHere \$cmd \$instance) {
+          continue
+        }
+
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
@@ -6700,7 +6837,7 @@ def virtLxc [] {
       # bare lxc-ls wraps names across lines at terminal width, not just spaces within one
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split words
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -6725,7 +6862,7 @@ def virtLxc [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
-        if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -6946,7 +7083,7 @@ def virtPodman [] {
           | where name =~ '\\\\.kube\$'
           | get name
           | each { |f| \$f | path basename | str replace '.kube' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$p \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" } catch { |e| opRethrowInterrupt \$e }
         opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
@@ -6980,9 +7117,8 @@ def virtPodman [] {
       }
     }
     sync => {
-      let kubeDirPath = '/etc/containers/systemd'
       for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
-        if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$pod) {
           continue
         }
 
@@ -7518,7 +7654,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$i \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" } catch { |e| opRethrowInterrupt \$e }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" } catch { |e| opRethrowInterrupt \$e }
@@ -7551,7 +7687,7 @@ def virtQemu [] {
     sync => {
       for requested in \$env.VIRT_INSTANCES {
         let instance = (\$requested | split row '/' | first)
-        if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -7972,6 +8108,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
@@ -8005,6 +8152,27 @@ def virtManagerHere [manager: string] {
   which \$bin | is-not-empty
 }
 
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = (\$instance | split row '/' | first)
+  match \$manager {
+    docker => (\$name in (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([\$root 'var/lib/lxc' \$name 'config'] | path join | path exists),
+    podman => ([\$root 'etc/containers/systemd' \$\\"(\$name).kube\\"] | path join | path exists),
+    qemu => ([\$root 'etc/systemd/system' \$\\"qemu-(\$name).service\\"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  \$entries
+    | each { |e| \$e | update instances (\$e.instances | where { |i| virtInstanceHere \$e.manager \$i \$root }) }
+    | where { |e| \$e.instances | is-not-empty }
+}
+
 def --env virtCallManager [manager: string] {
   match \$manager {
     docker => { virtDocker },
@@ -8032,13 +8200,19 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
 
 def --env virtPlanRun [] {
   let plan = (\$env.VIRT_PLAN? | default '{}' | from json)
-  let here = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
+  let managed = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
 
-  if (\$here | is-empty) {
+  if (\$managed | is-empty) {
     let missing = (\$plan | transpose manager instances | each { |e| \$e.manager })
     if (\$missing | is-not-empty) {
       opPrintWarn \$\\"manager not installed: (\$missing | str join ', ')\\"
     }
+    return
+  }
+
+  let here = if \$env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded \$managed } else { \$managed }
+  if (\$here | is-empty) {
+    opPrintWarn \$\\"instance not added: (\$managed | each { |e| \$e.instances } | flatten | str join ', ')\\"
     return
   }
 
@@ -8151,7 +8325,7 @@ def virtDocker [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -8170,6 +8344,10 @@ def virtDocker [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
+        if not (virtInstanceHere \$cmd \$instance) {
+          continue
+        }
+
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
@@ -8318,7 +8496,7 @@ def virtLxc [] {
       # bare lxc-ls wraps names across lines at terminal width, not just spaces within one
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split words
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -8343,7 +8521,7 @@ def virtLxc [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
-        if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -8564,7 +8742,7 @@ def virtPodman [] {
           | where name =~ '\\\\.kube\$'
           | get name
           | each { |f| \$f | path basename | str replace '.kube' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$p \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" } catch { |e| opRethrowInterrupt \$e }
         opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
@@ -8598,9 +8776,8 @@ def virtPodman [] {
       }
     }
     sync => {
-      let kubeDirPath = '/etc/containers/systemd'
       for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
-        if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$pod) {
           continue
         }
 
@@ -9136,7 +9313,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$i \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" } catch { |e| opRethrowInterrupt \$e }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" } catch { |e| opRethrowInterrupt \$e }
@@ -9169,7 +9346,7 @@ def virtQemu [] {
     sync => {
       for requested in \$env.VIRT_INSTANCES {
         let instance = (\$requested | split row '/' | first)
-        if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -9590,6 +9767,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
@@ -9623,6 +9811,27 @@ def virtManagerHere [manager: string] {
   which \$bin | is-not-empty
 }
 
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = (\$instance | split row '/' | first)
+  match \$manager {
+    docker => (\$name in (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([\$root 'var/lib/lxc' \$name 'config'] | path join | path exists),
+    podman => ([\$root 'etc/containers/systemd' \$\\"(\$name).kube\\"] | path join | path exists),
+    qemu => ([\$root 'etc/systemd/system' \$\\"qemu-(\$name).service\\"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  \$entries
+    | each { |e| \$e | update instances (\$e.instances | where { |i| virtInstanceHere \$e.manager \$i \$root }) }
+    | where { |e| \$e.instances | is-not-empty }
+}
+
 def --env virtCallManager [manager: string] {
   match \$manager {
     docker => { virtDocker },
@@ -9650,13 +9859,19 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
 
 def --env virtPlanRun [] {
   let plan = (\$env.VIRT_PLAN? | default '{}' | from json)
-  let here = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
+  let managed = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
 
-  if (\$here | is-empty) {
+  if (\$managed | is-empty) {
     let missing = (\$plan | transpose manager instances | each { |e| \$e.manager })
     if (\$missing | is-not-empty) {
       opPrintWarn \$\\"manager not installed: (\$missing | str join ', ')\\"
     }
+    return
+  }
+
+  let here = if \$env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded \$managed } else { \$managed }
+  if (\$here | is-empty) {
+    opPrintWarn \$\\"instance not added: (\$managed | each { |e| \$e.instances } | flatten | str join ', ')\\"
     return
   }
 
@@ -10239,7 +10454,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$i \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" } catch { |e| opRethrowInterrupt \$e }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" } catch { |e| opRethrowInterrupt \$e }
@@ -10272,7 +10487,7 @@ def virtQemu [] {
     sync => {
       for requested in \$env.VIRT_INSTANCES {
         let instance = (\$requested | split row '/' | first)
-        if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -10691,6 +10906,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
@@ -10724,6 +10950,27 @@ def virtManagerHere [manager: string] {
   which \$bin | is-not-empty
 }
 
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = (\$instance | split row '/' | first)
+  match \$manager {
+    docker => (\$name in (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([\$root 'var/lib/lxc' \$name 'config'] | path join | path exists),
+    podman => ([\$root 'etc/containers/systemd' \$\\"(\$name).kube\\"] | path join | path exists),
+    qemu => ([\$root 'etc/systemd/system' \$\\"qemu-(\$name).service\\"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  \$entries
+    | each { |e| \$e | update instances (\$e.instances | where { |i| virtInstanceHere \$e.manager \$i \$root }) }
+    | where { |e| \$e.instances | is-not-empty }
+}
+
 def --env virtCallManager [manager: string] {
   match \$manager {
     docker => { virtDocker },
@@ -10751,13 +10998,19 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
 
 def --env virtPlanRun [] {
   let plan = (\$env.VIRT_PLAN? | default '{}' | from json)
-  let here = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
+  let managed = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
 
-  if (\$here | is-empty) {
+  if (\$managed | is-empty) {
     let missing = (\$plan | transpose manager instances | each { |e| \$e.manager })
     if (\$missing | is-not-empty) {
       opPrintWarn \$\\"manager not installed: (\$missing | str join ', ')\\"
     }
+    return
+  }
+
+  let here = if \$env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded \$managed } else { \$managed }
+  if (\$here | is-empty) {
+    opPrintWarn \$\\"instance not added: (\$managed | each { |e| \$e.instances } | flatten | str join ', ')\\"
     return
   }
 
@@ -10870,7 +11123,7 @@ def virtDocker [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -10889,6 +11142,10 @@ def virtDocker [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
+        if not (virtInstanceHere \$cmd \$instance) {
+          continue
+        }
+
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
@@ -11037,7 +11294,7 @@ def virtLxc [] {
       # bare lxc-ls wraps names across lines at terminal width, not just spaces within one
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split words
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -11062,7 +11319,7 @@ def virtLxc [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
-        if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -11283,7 +11540,7 @@ def virtPodman [] {
           | where name =~ '\\\\.kube\$'
           | get name
           | each { |f| \$f | path basename | str replace '.kube' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$p \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" } catch { |e| opRethrowInterrupt \$e }
         opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
@@ -11317,9 +11574,8 @@ def virtPodman [] {
       }
     }
     sync => {
-      let kubeDirPath = '/etc/containers/systemd'
       for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
-        if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$pod) {
           continue
         }
 
@@ -11855,7 +12111,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$i \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" } catch { |e| opRethrowInterrupt \$e }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" } catch { |e| opRethrowInterrupt \$e }
@@ -11888,7 +12144,7 @@ def virtQemu [] {
     sync => {
       for requested in \$env.VIRT_INSTANCES {
         let instance = (\$requested | split row '/' | first)
-        if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -12309,6 +12565,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
@@ -12342,6 +12609,27 @@ def virtManagerHere [manager: string] {
   which \$bin | is-not-empty
 }
 
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = (\$instance | split row '/' | first)
+  match \$manager {
+    docker => (\$name in (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([\$root 'var/lib/lxc' \$name 'config'] | path join | path exists),
+    podman => ([\$root 'etc/containers/systemd' \$\\"(\$name).kube\\"] | path join | path exists),
+    qemu => ([\$root 'etc/systemd/system' \$\\"qemu-(\$name).service\\"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  \$entries
+    | each { |e| \$e | update instances (\$e.instances | where { |i| virtInstanceHere \$e.manager \$i \$root }) }
+    | where { |e| \$e.instances | is-not-empty }
+}
+
 def --env virtCallManager [manager: string] {
   match \$manager {
     docker => { virtDocker },
@@ -12369,13 +12657,19 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
 
 def --env virtPlanRun [] {
   let plan = (\$env.VIRT_PLAN? | default '{}' | from json)
-  let here = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
+  let managed = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
 
-  if (\$here | is-empty) {
+  if (\$managed | is-empty) {
     let missing = (\$plan | transpose manager instances | each { |e| \$e.manager })
     if (\$missing | is-not-empty) {
       opPrintWarn \$\\"manager not installed: (\$missing | str join ', ')\\"
     }
+    return
+  }
+
+  let here = if \$env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded \$managed } else { \$managed }
+  if (\$here | is-empty) {
+    opPrintWarn \$\\"instance not added: (\$managed | each { |e| \$e.instances } | flatten | str join ', ')\\"
     return
   }
 
@@ -12488,7 +12782,7 @@ def virtDocker [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -12507,6 +12801,10 @@ def virtDocker [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
+        if not (virtInstanceHere \$cmd \$instance) {
+          continue
+        }
+
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
@@ -12655,7 +12953,7 @@ def virtLxc [] {
       # bare lxc-ls wraps names across lines at terminal width, not just spaces within one
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split words
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -12680,7 +12978,7 @@ def virtLxc [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
-        if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -12901,7 +13199,7 @@ def virtPodman [] {
           | where name =~ '\\\\.kube\$'
           | get name
           | each { |f| \$f | path basename | str replace '.kube' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$p \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" } catch { |e| opRethrowInterrupt \$e }
         opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
@@ -12935,9 +13233,8 @@ def virtPodman [] {
       }
     }
     sync => {
-      let kubeDirPath = '/etc/containers/systemd'
       for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
-        if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$pod) {
           continue
         }
 
@@ -13473,7 +13770,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$i \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" } catch { |e| opRethrowInterrupt \$e }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" } catch { |e| opRethrowInterrupt \$e }
@@ -13506,7 +13803,7 @@ def virtQemu [] {
     sync => {
       for requested in \$env.VIRT_INSTANCES {
         let instance = (\$requested | split row '/' | first)
-        if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -13925,6 +14222,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
@@ -13958,6 +14266,27 @@ def virtManagerHere [manager: string] {
   which \$bin | is-not-empty
 }
 
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = (\$instance | split row '/' | first)
+  match \$manager {
+    docker => (\$name in (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([\$root 'var/lib/lxc' \$name 'config'] | path join | path exists),
+    podman => ([\$root 'etc/containers/systemd' \$\\"(\$name).kube\\"] | path join | path exists),
+    qemu => ([\$root 'etc/systemd/system' \$\\"qemu-(\$name).service\\"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  \$entries
+    | each { |e| \$e | update instances (\$e.instances | where { |i| virtInstanceHere \$e.manager \$i \$root }) }
+    | where { |e| \$e.instances | is-not-empty }
+}
+
 def --env virtCallManager [manager: string] {
   match \$manager {
     docker => { virtDocker },
@@ -13985,13 +14314,19 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
 
 def --env virtPlanRun [] {
   let plan = (\$env.VIRT_PLAN? | default '{}' | from json)
-  let here = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
+  let managed = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
 
-  if (\$here | is-empty) {
+  if (\$managed | is-empty) {
     let missing = (\$plan | transpose manager instances | each { |e| \$e.manager })
     if (\$missing | is-not-empty) {
       opPrintWarn \$\\"manager not installed: (\$missing | str join ', ')\\"
     }
+    return
+  }
+
+  let here = if \$env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded \$managed } else { \$managed }
+  if (\$here | is-empty) {
+    opPrintWarn \$\\"instance not added: (\$managed | each { |e| \$e.instances } | flatten | str join ', ')\\"
     return
   }
 
@@ -14104,7 +14439,7 @@ def virtDocker [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -14123,6 +14458,10 @@ def virtDocker [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
+        if not (virtInstanceHere \$cmd \$instance) {
+          continue
+        }
+
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
@@ -14271,7 +14610,7 @@ def virtLxc [] {
       # bare lxc-ls wraps names across lines at terminal width, not just spaces within one
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split words
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -14296,7 +14635,7 @@ def virtLxc [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
-        if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -14517,7 +14856,7 @@ def virtPodman [] {
           | where name =~ '\\\\.kube\$'
           | get name
           | each { |f| \$f | path basename | str replace '.kube' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$p \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" } catch { |e| opRethrowInterrupt \$e }
         opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
@@ -14551,9 +14890,8 @@ def virtPodman [] {
       }
     }
     sync => {
-      let kubeDirPath = '/etc/containers/systemd'
       for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
-        if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$pod) {
           continue
         }
 
@@ -15089,7 +15427,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$i \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" } catch { |e| opRethrowInterrupt \$e }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" } catch { |e| opRethrowInterrupt \$e }
@@ -15122,7 +15460,7 @@ def virtQemu [] {
     sync => {
       for requested in \$env.VIRT_INSTANCES {
         let instance = (\$requested | split row '/' | first)
-        if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -15137,7 +15475,7 @@ def virtQemu [] {
 
 \$env.VIRT_PODMAN_NETWORKS = r#'{\\"net0\\":{\\"driver\\":\\"bridge\\",\\"interface\\":\\"br0\\",\\"ipam\\":\\"dhcp\\",\\"options\\":{\\"mode\\":\\"unmanaged\\"}}}'#
 
-\$env.VIRT_PLAN = r#'{\\"qemu\\":[\\"test\\",\\"test2\\"]}'#
+\$env.VIRT_PLAN = r#'{\\"qemu\\":[\\"test\\"]}'#
 
 virtPlanRun
 
@@ -15543,6 +15881,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
@@ -15576,6 +15925,27 @@ def virtManagerHere [manager: string] {
   which \$bin | is-not-empty
 }
 
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = (\$instance | split row '/' | first)
+  match \$manager {
+    docker => (\$name in (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([\$root 'var/lib/lxc' \$name 'config'] | path join | path exists),
+    podman => ([\$root 'etc/containers/systemd' \$\\"(\$name).kube\\"] | path join | path exists),
+    qemu => ([\$root 'etc/systemd/system' \$\\"qemu-(\$name).service\\"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  \$entries
+    | each { |e| \$e | update instances (\$e.instances | where { |i| virtInstanceHere \$e.manager \$i \$root }) }
+    | where { |e| \$e.instances | is-not-empty }
+}
+
 def --env virtCallManager [manager: string] {
   match \$manager {
     docker => { virtDocker },
@@ -15603,13 +15973,19 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
 
 def --env virtPlanRun [] {
   let plan = (\$env.VIRT_PLAN? | default '{}' | from json)
-  let here = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
+  let managed = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
 
-  if (\$here | is-empty) {
+  if (\$managed | is-empty) {
     let missing = (\$plan | transpose manager instances | each { |e| \$e.manager })
     if (\$missing | is-not-empty) {
       opPrintWarn \$\\"manager not installed: (\$missing | str join ', ')\\"
     }
+    return
+  }
+
+  let here = if \$env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded \$managed } else { \$managed }
+  if (\$here | is-empty) {
+    opPrintWarn \$\\"instance not added: (\$managed | each { |e| \$e.instances } | flatten | str join ', ')\\"
     return
   }
 
@@ -15722,7 +16098,7 @@ def virtDocker [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -15741,6 +16117,10 @@ def virtDocker [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
+        if not (virtInstanceHere \$cmd \$instance) {
+          continue
+        }
+
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
@@ -15889,7 +16269,7 @@ def virtLxc [] {
       # bare lxc-ls wraps names across lines at terminal width, not just spaces within one
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split words
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -15914,7 +16294,7 @@ def virtLxc [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
-        if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -16135,7 +16515,7 @@ def virtPodman [] {
           | where name =~ '\\\\.kube\$'
           | get name
           | each { |f| \$f | path basename | str replace '.kube' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$p \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" } catch { |e| opRethrowInterrupt \$e }
         opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
@@ -16169,9 +16549,8 @@ def virtPodman [] {
       }
     }
     sync => {
-      let kubeDirPath = '/etc/containers/systemd'
       for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
-        if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$pod) {
           continue
         }
 
@@ -16707,7 +17086,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$i \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" } catch { |e| opRethrowInterrupt \$e }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" } catch { |e| opRethrowInterrupt \$e }
@@ -16740,7 +17119,7 @@ def virtQemu [] {
     sync => {
       for requested in \$env.VIRT_INSTANCES {
         let instance = (\$requested | split row '/' | first)
-        if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -17159,6 +17538,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
@@ -17192,6 +17582,27 @@ def virtManagerHere [manager: string] {
   which \$bin | is-not-empty
 }
 
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = (\$instance | split row '/' | first)
+  match \$manager {
+    docker => (\$name in (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([\$root 'var/lib/lxc' \$name 'config'] | path join | path exists),
+    podman => ([\$root 'etc/containers/systemd' \$\\"(\$name).kube\\"] | path join | path exists),
+    qemu => ([\$root 'etc/systemd/system' \$\\"qemu-(\$name).service\\"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  \$entries
+    | each { |e| \$e | update instances (\$e.instances | where { |i| virtInstanceHere \$e.manager \$i \$root }) }
+    | where { |e| \$e.instances | is-not-empty }
+}
+
 def --env virtCallManager [manager: string] {
   match \$manager {
     docker => { virtDocker },
@@ -17219,13 +17630,19 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
 
 def --env virtPlanRun [] {
   let plan = (\$env.VIRT_PLAN? | default '{}' | from json)
-  let here = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
+  let managed = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
 
-  if (\$here | is-empty) {
+  if (\$managed | is-empty) {
     let missing = (\$plan | transpose manager instances | each { |e| \$e.manager })
     if (\$missing | is-not-empty) {
       opPrintWarn \$\\"manager not installed: (\$missing | str join ', ')\\"
     }
+    return
+  }
+
+  let here = if \$env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded \$managed } else { \$managed }
+  if (\$here | is-empty) {
+    opPrintWarn \$\\"instance not added: (\$managed | each { |e| \$e.instances } | flatten | str join ', ')\\"
     return
   }
 
@@ -17808,7 +18225,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$i \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" } catch { |e| opRethrowInterrupt \$e }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" } catch { |e| opRethrowInterrupt \$e }
@@ -17841,7 +18258,7 @@ def virtQemu [] {
     sync => {
       for requested in \$env.VIRT_INSTANCES {
         let instance = (\$requested | split row '/' | first)
-        if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -18256,6 +18673,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
@@ -18289,6 +18717,27 @@ def virtManagerHere [manager: string] {
   which \$bin | is-not-empty
 }
 
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = (\$instance | split row '/' | first)
+  match \$manager {
+    docker => (\$name in (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([\$root 'var/lib/lxc' \$name 'config'] | path join | path exists),
+    podman => ([\$root 'etc/containers/systemd' \$\\"(\$name).kube\\"] | path join | path exists),
+    qemu => ([\$root 'etc/systemd/system' \$\\"qemu-(\$name).service\\"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  \$entries
+    | each { |e| \$e | update instances (\$e.instances | where { |i| virtInstanceHere \$e.manager \$i \$root }) }
+    | where { |e| \$e.instances | is-not-empty }
+}
+
 def --env virtCallManager [manager: string] {
   match \$manager {
     docker => { virtDocker },
@@ -18316,13 +18765,19 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
 
 def --env virtPlanRun [] {
   let plan = (\$env.VIRT_PLAN? | default '{}' | from json)
-  let here = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
+  let managed = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
 
-  if (\$here | is-empty) {
+  if (\$managed | is-empty) {
     let missing = (\$plan | transpose manager instances | each { |e| \$e.manager })
     if (\$missing | is-not-empty) {
       opPrintWarn \$\\"manager not installed: (\$missing | str join ', ')\\"
     }
+    return
+  }
+
+  let here = if \$env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded \$managed } else { \$managed }
+  if (\$here | is-empty) {
+    opPrintWarn \$\\"instance not added: (\$managed | each { |e| \$e.instances } | flatten | str join ', ')\\"
     return
   }
 
@@ -18435,7 +18890,7 @@ def virtDocker [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -18454,6 +18909,10 @@ def virtDocker [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
+        if not (virtInstanceHere \$cmd \$instance) {
+          continue
+        }
+
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
@@ -18602,7 +19061,7 @@ def virtLxc [] {
       # bare lxc-ls wraps names across lines at terminal width, not just spaces within one
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split words
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -18627,7 +19086,7 @@ def virtLxc [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
-        if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -18848,7 +19307,7 @@ def virtPodman [] {
           | where name =~ '\\\\.kube\$'
           | get name
           | each { |f| \$f | path basename | str replace '.kube' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$p \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" } catch { |e| opRethrowInterrupt \$e }
         opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
@@ -18882,9 +19341,8 @@ def virtPodman [] {
       }
     }
     sync => {
-      let kubeDirPath = '/etc/containers/systemd'
       for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
-        if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$pod) {
           continue
         }
 
@@ -19420,7 +19878,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$i \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" } catch { |e| opRethrowInterrupt \$e }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" } catch { |e| opRethrowInterrupt \$e }
@@ -19453,7 +19911,7 @@ def virtQemu [] {
     sync => {
       for requested in \$env.VIRT_INSTANCES {
         let instance = (\$requested | split row '/' | first)
-        if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -19874,6 +20332,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
@@ -19907,6 +20376,27 @@ def virtManagerHere [manager: string] {
   which \$bin | is-not-empty
 }
 
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = (\$instance | split row '/' | first)
+  match \$manager {
+    docker => (\$name in (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([\$root 'var/lib/lxc' \$name 'config'] | path join | path exists),
+    podman => ([\$root 'etc/containers/systemd' \$\\"(\$name).kube\\"] | path join | path exists),
+    qemu => ([\$root 'etc/systemd/system' \$\\"qemu-(\$name).service\\"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  \$entries
+    | each { |e| \$e | update instances (\$e.instances | where { |i| virtInstanceHere \$e.manager \$i \$root }) }
+    | where { |e| \$e.instances | is-not-empty }
+}
+
 def --env virtCallManager [manager: string] {
   match \$manager {
     docker => { virtDocker },
@@ -19934,13 +20424,19 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
 
 def --env virtPlanRun [] {
   let plan = (\$env.VIRT_PLAN? | default '{}' | from json)
-  let here = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
+  let managed = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
 
-  if (\$here | is-empty) {
+  if (\$managed | is-empty) {
     let missing = (\$plan | transpose manager instances | each { |e| \$e.manager })
     if (\$missing | is-not-empty) {
       opPrintWarn \$\\"manager not installed: (\$missing | str join ', ')\\"
     }
+    return
+  }
+
+  let here = if \$env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded \$managed } else { \$managed }
+  if (\$here | is-empty) {
+    opPrintWarn \$\\"instance not added: (\$managed | each { |e| \$e.instances } | flatten | str join ', ')\\"
     return
   }
 
@@ -20053,7 +20549,7 @@ def virtDocker [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -20072,6 +20568,10 @@ def virtDocker [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
+        if not (virtInstanceHere \$cmd \$instance) {
+          continue
+        }
+
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
@@ -20220,7 +20720,7 @@ def virtLxc [] {
       # bare lxc-ls wraps names across lines at terminal width, not just spaces within one
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split words
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -20245,7 +20745,7 @@ def virtLxc [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
-        if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -20466,7 +20966,7 @@ def virtPodman [] {
           | where name =~ '\\\\.kube\$'
           | get name
           | each { |f| \$f | path basename | str replace '.kube' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$p \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" } catch { |e| opRethrowInterrupt \$e }
         opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
@@ -20500,9 +21000,8 @@ def virtPodman [] {
       }
     }
     sync => {
-      let kubeDirPath = '/etc/containers/systemd'
       for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
-        if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$pod) {
           continue
         }
 
@@ -21038,7 +21537,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$i \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" } catch { |e| opRethrowInterrupt \$e }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" } catch { |e| opRethrowInterrupt \$e }
@@ -21071,7 +21570,7 @@ def virtQemu [] {
     sync => {
       for requested in \$env.VIRT_INSTANCES {
         let instance = (\$requested | split row '/' | first)
-        if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -21492,6 +21991,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
@@ -21525,6 +22035,27 @@ def virtManagerHere [manager: string] {
   which \$bin | is-not-empty
 }
 
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = (\$instance | split row '/' | first)
+  match \$manager {
+    docker => (\$name in (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([\$root 'var/lib/lxc' \$name 'config'] | path join | path exists),
+    podman => ([\$root 'etc/containers/systemd' \$\\"(\$name).kube\\"] | path join | path exists),
+    qemu => ([\$root 'etc/systemd/system' \$\\"qemu-(\$name).service\\"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  \$entries
+    | each { |e| \$e | update instances (\$e.instances | where { |i| virtInstanceHere \$e.manager \$i \$root }) }
+    | where { |e| \$e.instances | is-not-empty }
+}
+
 def --env virtCallManager [manager: string] {
   match \$manager {
     docker => { virtDocker },
@@ -21552,13 +22083,19 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
 
 def --env virtPlanRun [] {
   let plan = (\$env.VIRT_PLAN? | default '{}' | from json)
-  let here = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
+  let managed = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
 
-  if (\$here | is-empty) {
+  if (\$managed | is-empty) {
     let missing = (\$plan | transpose manager instances | each { |e| \$e.manager })
     if (\$missing | is-not-empty) {
       opPrintWarn \$\\"manager not installed: (\$missing | str join ', ')\\"
     }
+    return
+  }
+
+  let here = if \$env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded \$managed } else { \$managed }
+  if (\$here | is-empty) {
+    opPrintWarn \$\\"instance not added: (\$managed | each { |e| \$e.instances } | flatten | str join ', ')\\"
     return
   }
 
@@ -21671,7 +22208,7 @@ def virtDocker [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -21690,6 +22227,10 @@ def virtDocker [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
+        if not (virtInstanceHere \$cmd \$instance) {
+          continue
+        }
+
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
@@ -21838,7 +22379,7 @@ def virtLxc [] {
       # bare lxc-ls wraps names across lines at terminal width, not just spaces within one
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split words
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -21863,7 +22404,7 @@ def virtLxc [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
-        if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -22084,7 +22625,7 @@ def virtPodman [] {
           | where name =~ '\\\\.kube\$'
           | get name
           | each { |f| \$f | path basename | str replace '.kube' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$p \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" } catch { |e| opRethrowInterrupt \$e }
         opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
@@ -22118,9 +22659,8 @@ def virtPodman [] {
       }
     }
     sync => {
-      let kubeDirPath = '/etc/containers/systemd'
       for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
-        if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$pod) {
           continue
         }
 
@@ -22656,7 +23196,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$i \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" } catch { |e| opRethrowInterrupt \$e }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" } catch { |e| opRethrowInterrupt \$e }
@@ -22689,7 +23229,7 @@ def virtQemu [] {
     sync => {
       for requested in \$env.VIRT_INSTANCES {
         let instance = (\$requested | split row '/' | first)
-        if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -23139,6 +23679,27 @@ def virtManagerHere [manager: string] {
   which \$bin | is-not-empty
 }
 
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = (\$instance | split row '/' | first)
+  match \$manager {
+    docker => (\$name in (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([\$root 'var/lib/lxc' \$name 'config'] | path join | path exists),
+    podman => ([\$root 'etc/containers/systemd' \$"(\$name).kube"] | path join | path exists),
+    qemu => ([\$root 'etc/systemd/system' \$"qemu-(\$name).service"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  \$entries
+    | each { |e| \$e | update instances (\$e.instances | where { |i| virtInstanceHere \$e.manager \$i \$root }) }
+    | where { |e| \$e.instances | is-not-empty }
+}
+
 def --env virtCallManager [manager: string] {
   match \$manager {
     docker => { virtDocker },
@@ -23166,13 +23727,19 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
 
 def --env virtPlanRun [] {
   let plan = (\$env.VIRT_PLAN? | default '{}' | from json)
-  let here = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
+  let managed = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
 
-  if (\$here | is-empty) {
+  if (\$managed | is-empty) {
     let missing = (\$plan | transpose manager instances | each { |e| \$e.manager })
     if (\$missing | is-not-empty) {
       opPrintWarn \$"manager not installed: (\$missing | str join ', ')"
     }
+    return
+  }
+
+  let here = if \$env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded \$managed } else { \$managed }
+  if (\$here | is-empty) {
+    opPrintWarn \$"instance not added: (\$managed | each { |e| \$e.instances } | flatten | str join ', ')"
     return
   }
 
@@ -23640,6 +24207,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
@@ -23673,6 +24251,27 @@ def virtManagerHere [manager: string] {
   which \$bin | is-not-empty
 }
 
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = (\$instance | split row '/' | first)
+  match \$manager {
+    docker => (\$name in (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([\$root 'var/lib/lxc' \$name 'config'] | path join | path exists),
+    podman => ([\$root 'etc/containers/systemd' \$\\"(\$name).kube\\"] | path join | path exists),
+    qemu => ([\$root 'etc/systemd/system' \$\\"qemu-(\$name).service\\"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  \$entries
+    | each { |e| \$e | update instances (\$e.instances | where { |i| virtInstanceHere \$e.manager \$i \$root }) }
+    | where { |e| \$e.instances | is-not-empty }
+}
+
 def --env virtCallManager [manager: string] {
   match \$manager {
     docker => { virtDocker },
@@ -23700,13 +24299,19 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
 
 def --env virtPlanRun [] {
   let plan = (\$env.VIRT_PLAN? | default '{}' | from json)
-  let here = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
+  let managed = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
 
-  if (\$here | is-empty) {
+  if (\$managed | is-empty) {
     let missing = (\$plan | transpose manager instances | each { |e| \$e.manager })
     if (\$missing | is-not-empty) {
       opPrintWarn \$\\"manager not installed: (\$missing | str join ', ')\\"
     }
+    return
+  }
+
+  let here = if \$env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded \$managed } else { \$managed }
+  if (\$here | is-empty) {
+    opPrintWarn \$\\"instance not added: (\$managed | each { |e| \$e.instances } | flatten | str join ', ')\\"
     return
   }
 
@@ -23819,7 +24424,7 @@ def virtDocker [] {
       let filters = if (\$env.VIRT_INSTANCES | is-not-empty) { \$env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo \$cmd compose ls --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -23838,6 +24443,10 @@ def virtDocker [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
+        if not (virtInstanceHere \$cmd \$instance) {
+          continue
+        }
+
         opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --file - up --detach --pull always
       }
     }
@@ -23986,7 +24595,7 @@ def virtLxc [] {
       # bare lxc-ls wraps names across lines at terminal width, not just spaces within one
       let allInstances = ^sudo \$\\"(\$cmd)-ls\\" | complete | get stdout | split words
       let instances = if (\$filters | is-not-empty) {
-        \$allInstances | where { |i| \$filters | all { |f| \$i | str contains --ignore-case \$f } }
+        \$allInstances | where { |i| \$filters | all { |f| wutWordMatch \$i \$f } }
       } else {
         \$allInstances
       }
@@ -24011,7 +24620,7 @@ def virtLxc [] {
     }
     sync => {
       for instance in \$env.VIRT_INSTANCES {
-        if not (\$\\"/var/lib/lxc/(\$instance)/config\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 
@@ -24232,7 +24841,7 @@ def virtPodman [] {
           | where name =~ '\\\\.kube\$'
           | get name
           | each { |f| \$f | path basename | str replace '.kube' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| \$p | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |p| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$p \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" } catch { |e| opRethrowInterrupt \$e }
         opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=(\$pod)\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
@@ -24266,9 +24875,8 @@ def virtPodman [] {
       }
     }
     sync => {
-      let kubeDirPath = '/etc/containers/systemd'
       for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
-        if not (\$\\"(\$kubeDirPath)/(\$pod).kube\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$pod) {
           continue
         }
 
@@ -24804,7 +25412,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\\\\.service\$'
           | get name
           | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| \$i | str contains --ignore-case \$f } } } else { \$in }
+          | if (\$env.VIRT_INSTANCES | is-not-empty) { where { |i| \$env.VIRT_INSTANCES | all { |f| wutWordMatch \$i \$f } } } else { \$in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" } catch { |e| opRethrowInterrupt \$e }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"^swtpm.*(\$instance)\\" } catch { |e| opRethrowInterrupt \$e }
@@ -24837,7 +25445,7 @@ def virtQemu [] {
     sync => {
       for requested in \$env.VIRT_INSTANCES {
         let instance = (\$requested | split row '/' | first)
-        if not (\$\\"/etc/systemd/system/qemu-(\$instance).service\\" | path exists) {
+        if not (virtInstanceHere \$cmd \$instance) {
           continue
         }
 

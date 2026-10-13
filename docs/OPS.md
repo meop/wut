@@ -115,6 +115,7 @@ question by reading the machine, it should have done so by the time it asks:
 | `pack remove`       | who already has this name       | local listings | before     |
 | `pack list <term>`  | who has anything matching       | local listings | before     |
 | `file sync`, `diff` | which tools are on this PATH    | `which`        | before     |
+| `virt rem`, `sync`  | which instances were added      | local files    | before     |
 
 Deferring a cheap answer buys nothing and hides the one thing worth reading. That is what `pack list <term>` used to do:
 it offered every manager on the box and filtered afterwards, while `pack remove` of the same name resolved it outright —
@@ -156,10 +157,12 @@ How the shells around nu treat a ctrl-c, which the hop from the calling shell to
 
 ## Nothing matched, nothing installed
 
-Two different absences, two different messages:
+Different absences, different messages:
 
 - a filter that matched nothing → `no instance matched: ...` / `no file matched: ...` / `no script matched: ...`, per
   [COMMANDS.md](COMMANDS.md#nothing-matched). `find` is exempt: an empty search result is an answer.
 - everything matched but nothing is installed → `manager not installed: ...`, from the client's filter.
+- a `virt rem` or `sync` whose manager is here but whose instances were never added → `instance not added: ...`
+  ([VIRT.md](VIRT.md#rem-and-sync-act-on-what-was-added)).
 
-Neither is an error. Both are said out loud rather than emitting a body that quietly does nothing.
+None is an error. Each is said out loud rather than emitting a body that quietly does nothing.

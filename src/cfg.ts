@@ -3,6 +3,7 @@ import { Fmt, parse } from '@meop/shire/serde'
 import { join } from '@std/path'
 
 import { getFileBinaryContent, getFileContent, getFilePaths, isDirPath, isPath } from './fs.ts'
+import { type Match, partsMatch } from './match.ts'
 import { toRelParts } from './path.ts'
 import { SETTINGS } from './stng.ts'
 
@@ -26,35 +27,15 @@ export async function localCfgPaths(parts: Array<string>, extension?: string) {
   return []
 }
 
-export function preferExactMatches(
-  allParts: Array<Array<string>>,
-  filters: Array<string>,
-): Array<Array<string>> {
-  let result = allParts
-  for (const filter of filters) {
-    const exact = result.filter((parts) => parts.includes(filter))
-    if (exact.length > 0) {
-      result = exact
-    }
-  }
-  return result
-}
-
-export function pinpointMatch(
-  allParts: Array<Array<string>>,
-  filters: Array<string>,
-): Array<Array<string>> {
-  return preferExactMatches(allParts, filters).slice(0, 1)
-}
-
 export async function getCfgDirDump(
   parts: Array<string>,
   options?: {
     context?: Ctx
     contextFilter?: CtxFilter
     extension?: string
+    // terms each of which has to match a level of the path, and the question they put to it
     filters?: Array<string>
-    flexible?: boolean
+    match?: Match
   },
 ) {
   const dirPath = cfgPath(parts)
@@ -62,13 +43,11 @@ export async function getCfgDirDump(
     return []
   }
 
+  const filters = options?.filters ?? []
   const dirFileParts = (
-    await getFilePaths(dirPath, {
-      extension: options?.extension,
-      filters: options?.filters ?? undefined,
-      flexible: options?.flexible,
-    })
+    await getFilePaths(dirPath, { extension: options?.extension })
   ).map((p) => toRelParts(dirPath, p))
+    .filter((p) => !filters.length || partsMatch(p, filters, options?.match ?? 'exact'))
 
   let result = dirFileParts
   if (options?.context && options.contextFilter) {

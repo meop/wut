@@ -15,9 +15,10 @@ own.
 
 ## Four ops, one that writes
 
-`find`, `diff` and `sync` all filter by `fileBinHere`. `find` prints what it matched and stops — it has nothing left to
-do once you answer. `list` takes an explicit filter and prints one line per pair out of what the server already sent, so
-there is no set to summarise. `sync` is the one that writes:
+A term names a tool by its key or an alias: `diff` and `sync` take one whole, `find` and `list` the start of a word of
+one, or of a source path ([COMMANDS.md](COMMANDS.md)). `find`, `diff` and `sync` all filter by `fileBinHere`. `find`
+prints what it matched and stops — it has nothing left to do once you answer. `list` takes an explicit filter and prints
+one line per pair out of what the server already sent, so there is no set to summarise. `sync` is the one that writes:
 
 - `filePlanShow` shows a numbered row per tool with how many files and how many destination directories it accounts for,
   and the tools picked are the only ones written

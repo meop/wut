@@ -21,9 +21,10 @@ a pwsh script onto linux.
 
 ## Tool-first config, action-first cli
 
-The cli reads action first (`wut s e setup ptyxis`); the config tree is tool first (`ptyxis/setup.zsh`). `script`
-reverses its filters before globbing. Cardinality splits on the same argument: `wut s e setup` runs every setup script
-gated for this machine, while naming a tool pinpoints to one — see [COMMANDS.md](COMMANDS.md).
+The cli reads action first (`wut s e setup ptyxis`); the config tree is tool first (`ptyxis/setup.zsh`). `script` puts
+the action last so both read the same way round, though a term matches whichever level it names. `exec` takes an action
+and a tool whole, `find` the start of a word of either. Cardinality splits on the same argument: `wut s e setup` runs
+every setup script gated for this machine, while naming a tool runs its one script — see [COMMANDS.md](COMMANDS.md).
 
 A script file that no `script.yaml` entry names is unreachable and must not surface. `cfg/script/orphan/setup.nu` is the
 fixture that holds that.
@@ -48,11 +49,13 @@ each script's own checks, which is the script's work, so it happens once the scr
 `already set` or `already installed` itself. That keeps every setup and teardown listed wherever its tool is, ready to
 run again after a change to wut-config.
 
-`script find` lists each action with the tools that apply, then the ones the gates rule out as a `not applicable` group
-of the same shape, nested one level as `virt find` nests a manager's pods; its table counts only what applies.
-`script exec` with an action alone tables only what applies, or says `nothing to do`. `script exec` with a tool named is
-not gated: the run was asked for by name, so the script's own `'<tool> is not installed'` or `'already installed'`
-explains a no op.
+`script find` lists each action with the tools needed here, then the ones these gates leave out, a group per reason in
+the same shape, nested one level as `virt find` nests a manager's pods; its table counts only what is needed. A failed
+`no_` gate lists a script under `already installed`, and a failed `has_` gate under `missing tool`. Neither is called
+not applicable: a script that does not apply to the platform was dropped by its `sys_*` gates on the server and is never
+listed. `script exec` with an action alone tables only what is needed, or says `nothing to do`. `script exec` with a
+tool named is not gated: the run was asked for by name, so the script's own `'<tool> is not installed'` or
+`'already installed'` explains a no op.
 
 Declare `has_` only where the tool must already exist, and `no_` only on an install — never `has_` there, or it would
 skip exactly when it is needed. A script that gates on something neither a command nor a service names (an app bundle, a
@@ -69,6 +72,7 @@ never its own `read`, `Read-Host` or `input`. What it checks before asking is th
 - **teardown** — something it would undo is still there
 - **repair** — setup without the "already done" shortcut: asked whenever there is something to repair at all (the tool,
   its files, a guest), and done again each time
+- **restart** — the service is running; asked each time
 
 A script with several steps asks once per step.
 

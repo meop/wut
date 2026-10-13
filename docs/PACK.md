@@ -16,9 +16,16 @@ name falls through to the managers on its own.
 
 ## Finding
 
-`pack find` resolves a typed name exactly like `add` does — the same path match, alias, or declared package name (see
-Resolving, below) — so a name either command would recognize, the other does too. A name no group claims is not dropped;
-it becomes a **remaining** name, checked against real managers after the gate, the same way add checks a loose one.
+`pack find` is how something half remembered becomes a name to type, so it asks the wider of the two questions in
+[COMMANDS.md](COMMANDS.md): the term starts a word of a group's name, of an alias, of a package any manager declares for
+it, or of its `descr`. `wut p f tightvnc` finds the group that holds `glavsoft.tightvnc`, `wut p f remmina` the group
+remmina is part of, and `wut p f shell` everything whose description mentions one. What it prints is the group and its
+packages, which are the names `add` takes.
+
+`add`, `remove`, `sync` and `info` ask the narrower one (Resolving, below), so find matching a group does not mean the
+same term adds it — that is the point of looking first. A name no group is found by is not dropped; it becomes a
+**remaining** name, searched for in real managers after the gate, the same way add checks a loose one. The managers are
+only ever asked about what the config had no answer for.
 
 Matching and applicability are separate questions: the first is about the name you typed, the second about the machine
 you are on. Applicability is answered in two places, because neither side knows both halves:
@@ -35,10 +42,13 @@ would ask, and searches only the ones picked. Nothing to search for means no tab
 
 ## Resolving
 
-1. Each cli name resolves to groups via `resolveGroupName`: the group's own path (prefix, suffix, or last segment), or a
-   `startsWith` hit on an alias or a declared package name (`windirstat` reaches a group named `desktop-tool-extra`
-   because some manager under it declares that exact package). `find` matches the same way, via `matchesGroupQuery`. A
-   name matching no group is a **loose name**.
+1. Each cli name resolves to groups via `resolveGroupName`, and has to be a name the group goes by, whole: a run of
+   levels of its own path (`node`, `js-node` and `lang-js-node` are all `lang/js/node.yaml`), a folder above it (`lang`
+   is every group under `lang/`), or one of its aliases. Part of a name is not a name, and neither is a package the
+   group holds — `windirstat` does not reach `desktop-tool-extra`, since adding the group would install everything else
+   in it. A shorter or a second spelling a group should answer to is an alias, stated in its yaml. A name matching no
+   group is a **loose name**, handed to the managers as typed. `remove` resolves exactly as `add` does and takes every
+   group that matches, each a row to pick from.
 2. A group's `group` tier lists other groups (or loose names). The walk is iterative over a stack with a visited set of
    resolved group names, so a cycle stops and a diamond resolves once.
 3. Preference is fixed at **user managers > script > system managers**. The yaml carries one flat `manager` map and says
@@ -227,9 +237,9 @@ are `for` loops rather than `where`/`any` — see [NUSHELL.md](NUSHELL.md).
 `list` is the one that splits on its argument. Bare, it joins them: the dump is the answer, so there is nothing to
 resolve first. Given a term, it has the same local answer `remove` does — which managers hold something matching — and
 `packListPlanRun` runs each manager's listing before the table, so the rows name them. Every manager that matches gets a
-row, as with `remove`, but the match is a substring of the manager's own output rather than an exact name
-([COMMANDS.md](COMMANDS.md)). The listing the check reads is `packListCmd`, the same one the dump prints, so the answer
-before the gate and the output after it cannot drift.
+row, as with `remove`, but `list` reads, so the term only has to start a word of a line of the manager's own output
+rather than be a whole name ([COMMANDS.md](COMMANDS.md)). The listing the check reads is `packListCmd`, the same one the
+dump prints, so the answer before the gate and the output after it cannot drift.
 
 ## The pacman family is one manager
 

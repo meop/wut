@@ -4,7 +4,8 @@ import { type Env } from '@meop/shire/env'
 import { Fmt } from '@meop/shire/serde'
 import type { Sh } from '@meop/shire/sh'
 
-import { type CtxFilter, getCfgDirDump, getCfgFileContent, getCfgFileLoad, pinpointMatch } from '../cfg.ts'
+import { type CtxFilter, getCfgDirDump, getCfgFileContent, getCfgFileLoad } from '../cfg.ts'
+import type { Match } from '../match.ts'
 import { execScriptShell, getScriptFlavorOpPreamble, getScriptFlavorShell, redirectCommonShell } from '../sh.ts'
 
 export class ScriptCmd extends CmdBase implements Cmd {
@@ -95,6 +96,7 @@ async function resolveMatches(
   context: Ctx,
   content: CtxFilter | null,
   filters: Array<string>,
+  match: Match,
 ): Promise<Array<ScriptMatch>> {
   const owned = new Map<string, ScriptMatch>()
   for (const { name, extension } of SHELL_PRIORITY) {
@@ -104,7 +106,7 @@ async function resolveMatches(
       contextFilter,
       extension,
       filters,
-      flexible: true,
+      match,
     })
     for (const parts of results) {
       const key = parts.join('/')
@@ -150,9 +152,7 @@ export async function resolveToolScript(
 ): Promise<{ shell: string; cmds: Array<string>; run: string } | null> {
   const content = await getCfgFileLoad([SCRIPT_KEY], { extension: Fmt.yaml })
   const filters = toDirFilters(action, [tool])
-  const matches = await resolveMatches(context, content, filters)
-  const [pinned] = pinpointMatch(matches.map((m) => m.parts), filters)
-  const match = matches.find((m) => m.parts === pinned)
+  const [match] = await resolveMatches(context, content, filters, 'exact')
   if (!match) {
     return null
   }
@@ -199,7 +199,7 @@ async function findOp(shell: Sh, context: Ctx, environment: Env) {
   const action = environment.get(SCRIPT_OP_ACTION_KEY('find')) ?? ''
   const parts = environment.getSplit(SCRIPT_OP_PARTS_KEY('find'))
   const content = await getCfgFileLoad([SCRIPT_KEY], { extension: Fmt.yaml })
-  const matches = await resolveMatches(context, content, toDirFilters(action, parts))
+  const matches = await resolveMatches(context, content, toDirFilters(action, parts), 'words')
 
   // data, not printed lines: whether a tool's gates are met is the client's to answer
   const units = matches.map((m) => toUnit(m, false)).filter((u) => u.tool)
@@ -222,12 +222,11 @@ async function execOp(shell: Sh, context: Ctx, environment: Env) {
   const filters = toDirFilters(action, parts)
   const content = await getCfgFileLoad([SCRIPT_KEY], { extension: Fmt.yaml })
 
-  let matches = await resolveMatches(context, content, filters)
+  let matches = await resolveMatches(context, content, filters, 'exact')
 
-  // a tool narrows to the one script to run, an action alone runs every script gated for this machine
+  // a tool names the one script to run, an action alone runs every script gated for this machine
   if (parts.length) {
-    const [pinned] = pinpointMatch(matches.map((m) => m.parts), filters)
-    matches = pinned ? matches.filter((m) => m.parts === pinned) : []
+    matches = matches.slice(0, 1)
   }
 
   const units: Array<ScriptUnit> = []

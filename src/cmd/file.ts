@@ -7,6 +7,7 @@ import type { Sh } from '@meop/shire/sh'
 
 import { getCfgFileLoad, localCfgPaths } from '../cfg.ts'
 import { getFilePaths, isDirPath } from '../fs.ts'
+import { sameName, wordStartsWith } from '../match.ts'
 import { type AclPerm, getPlatAclPermCmds, toRelParts } from '../path.ts'
 import { execNativeShell, redirectCommonShell } from '../sh.ts'
 
@@ -76,12 +77,12 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     const key of Object.keys(content).filter((k) =>
       !filters.length ||
       filters.every((f) => {
-        const inValues = content[k]?.maps?.map((m) => m.in) ?? []
-        return op === 'find'
-          ? k.includes(f) ||
-            content[k]?.aliases?.find((a) => a.includes(f)) ||
-            inValues.find((i) => i.includes(f))
-          : k.startsWith(f) || content[k]?.aliases?.find((a) => a.startsWith(f))
+        // a key and its aliases are the names a tool goes by. diff and sync take one whole; find and list read, so
+        // they take the start of a word, and look further, into the paths the tool's files come from
+        const names = [k, ...(content[k]?.aliases ?? [])]
+        return op === 'find' || op === 'list'
+          ? names.some((n) => wordStartsWith(n, f)) || content[k]?.maps?.some((m) => wordStartsWith(m.in, f))
+          : names.some((n) => sameName(n, f))
       })
     )
   ) {

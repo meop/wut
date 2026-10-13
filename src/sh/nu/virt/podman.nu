@@ -204,7 +204,7 @@ def virtPodman [] {
           | where name =~ '\.kube$'
           | get name
           | each { |f| $f | path basename | str replace '.kube' '' }
-          | if ($env.VIRT_INSTANCES | is-not-empty) { where { |p| $env.VIRT_INSTANCES | all { |f| $p | str contains --ignore-case $f } } } else { $in }
+          | if ($env.VIRT_INSTANCES | is-not-empty) { where { |p| $env.VIRT_INSTANCES | all { |f| wutWordMatch $p $f } } } else { $in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 $"($pod).service" } catch { |e| opRethrowInterrupt $e }
         opPrintRunCmd sudo $cmd pod list --filter $"name=($pod)" --format '"table {{.Name}}\t{{.Status}}\t{{.Created}}\t{{.NumberOfContainers}}"'
@@ -238,9 +238,8 @@ def virtPodman [] {
       }
     }
     sync => {
-      let kubeDirPath = '/etc/containers/systemd'
       for pod in ($env.VIRT_INSTANCES | each { |p| ($p | split row '/') | first } | uniq) {
-        if not ($"($kubeDirPath)/($pod).kube" | path exists) {
+        if not (virtInstanceHere $cmd $pod) {
           continue
         }
 

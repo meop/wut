@@ -29,10 +29,12 @@ instance, not another instance — `glass/vga.yaml` and `glass/vfio.yaml` are th
 of `glass`. `virtDeepMerge` appends lists, so a variant adds to its base's `qemu.arguments` rather than replacing them:
 whatever a variant may set, the base must leave out. `-display` belongs in the variants for that reason.
 
-`run` and `add` both reach a variant, but only when a filter names it — `wut v run glass vfio`, `wut v add glass vfio`.
-`wut v add glass` is glass itself and never fans out over its variants, and `add` resolves the variant back to the base
-for the service name, so the unit stays `qemu-glass.service` either way. `rem`, `sync` and `tidy` act on that installed
-unit and so stop at the instance, and `find` lists the instance once however many variants it has.
+`run` and `add` both reach a variant, but only when a term names it — `wut v run glass vfio`, `wut v add glass vfio` —
+and every acting op takes its terms whole and in any order, where `find` and `list` take the start of a word
+([COMMANDS.md](COMMANDS.md)). `wut v add glass` is glass itself and never fans out over its variants, and `add` resolves
+the variant back to the base for the service name, so the unit stays `qemu-glass.service` either way. `rem`, `sync` and
+`tidy` act on that installed unit and so stop at the instance, and `find` lists the instance once however many variants
+it has.
 
 `docker` instances are plain compose files, served whole to `docker compose --file -`. `docker.nu` reads
 `services.*.volumes` to pre-create bind sources, in both the `source: … target: …` and `host:container` spellings, so
@@ -80,6 +82,26 @@ still points at. It also strips `-pidfile` and `-daemonize` from the merged args
 The generated `ExecStop` sends `system_powerdown` over QMP with `socat`, then waits for the pid to go. It exits
 immediately if there is no QMP socket or no `socat`, rather than sitting out the whole timeout on a shutdown that was
 never sent — so the qemu package must include `socat`.
+
+## Rem and sync act on what was added
+
+`rem` undoes an add, and `sync` stops an instance and adds it again from the config as it is now, so both only have work
+where an add already happened. The host's config names every instance the host could run, and the server cannot know
+which of them were added, so `virtPlanRun` narrows a rem or sync plan with `virtPlanAdded` before the table, the way
+`pack remove` and a named `pack sync` ask who already holds a package
+([PACK.md](PACK.md#add-and-remove-ask-different-questions)). `virtInstanceHere` states it once, per manager:
+
+| Manager  | Added means                                          |
+| -------- | ---------------------------------------------------- |
+| `docker` | the daemon holds its compose project, running or not |
+| `lxc`    | `/var/lib/lxc/<instance>/config`                     |
+| `podman` | `/etc/containers/systemd/<pod>.kube`                 |
+| `qemu`   | `/etc/systemd/system/qemu-<instance>.service`        |
+
+Three of those are a path check; docker leaves no file, so it asks `docker compose ls --all`, through `sudo` as its
+other arms do. An instance that was never added is not offered, a manager left with none loses its rows, and a run with
+nothing left says `instance not added: ...` instead of showing a table. Each manager's own `sync` arm asks the same
+question again, so a direct call cannot install either. Wanting an instance that is not here is `add`.
 
 ## Find
 

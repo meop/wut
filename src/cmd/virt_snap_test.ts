@@ -131,13 +131,13 @@ Deno.test('nu / linux / rem (host podman) — pinpoint', async (t) => {
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-// qemu has two instances (test, test2): add is WIDE (both), rem is PINPOINT (first only)
-Deno.test('nu / linux / add (host qemu) — wide', async (t) => {
+// qemu has two instances (test, test2): naming the manager is naming both, for add and rem alike
+Deno.test('nu / linux / add (host qemu)', async (t) => {
   const body = await (await runSrv(req('/sh/nu/virt/add/qemu?sysOsPlat=linux&sysHost=host'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-Deno.test('nu / linux / rem (host qemu) — pinpoint', async (t) => {
+Deno.test('nu / linux / rem (host qemu)', async (t) => {
   const body = await (await runSrv(req('/sh/nu/virt/rem/qemu?sysOsPlat=linux&sysHost=host'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
@@ -148,7 +148,7 @@ Deno.test('nu / linux / sync (host)', async (t) => {
   await checkSyntax('nu', body)
 })
 
-// nu × linux × host × find with filter (exercises substring filter direction)
+// nu × linux × host × find with filter (the start of a word, so test finds test2 as well)
 Deno.test('nu / linux / find (host test)', async (t) => {
   const body = await (await runSrv(req('/sh/nu/virt/find/test?sysOsPlat=linux&sysHost=host'))).text()
   await assertSnapshot(t, body)
@@ -226,12 +226,32 @@ Deno.test('nu / linux / add (pinned, variant alone reaches no instance)', async 
   await checkSyntax('nu', body)
   assertEquals(body.includes('no instance matched: vga'), true)
 })
-// and never fans out over them otherwise
+// and never fans out over them otherwise, nor over an instance whose name it only starts
 Deno.test('nu / linux / add (pinned, instance does not fan out over variants)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/virt/add/test?${PIN}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('"qemu":["test","test2"]'), true)
+  assertEquals(body.includes('"qemu":["test"]'), true)
+})
+// the acting ops take a name whole, in any order, and find takes the start of one
+Deno.test('nu / linux / add, rem, sync (pinned, part of a name is not a name)', async () => {
+  for (const op of ['add', 'rem', 'sync']) {
+    const body = await (await runSrv(req(`/sh/nu/virt/${op}/tes?${PIN}`))).text()
+    assertEquals(body.includes('$env.VIRT_PLAN = '), false, op)
+    assertEquals(body.includes('no instance matched: tes'), true, op)
+  }
+})
+Deno.test('nu / linux / add (pinned, terms in any order)', async () => {
+  for (const typed of ['qemu/test2', 'test2/qemu']) {
+    const body = await (await runSrv(req(`/sh/nu/virt/add/${typed}?${PIN}`))).text()
+    assertEquals(body.includes('"qemu":["test2"]'), true, typed)
+  }
+})
+Deno.test('nu / linux / find (pinned, the start of a word and never its middle)', async () => {
+  const found = async (typed: string) => (await (await runSrv(req(`/sh/nu/virt/find/${typed}?${PIN}`))).text())
+  assertEquals((await found('te')).includes('{"qemu":["=test,test2"]}'), true)
+  assertEquals((await found('vg')).includes('{"qemu":["=test"]}'), true)
+  assertEquals((await found('est')).includes('$env.VIRT_FIND = '), false)
 })
 // rem and sync act on the installed unit, which only carries the base name
 Deno.test('nu / linux / rem (pinned, qemu variant is out of reach)', async (t) => {

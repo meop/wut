@@ -22,7 +22,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in $names {
-        if ($terms | is-empty) or ($terms | any { |t| $n | str contains --ignore-case $t }) {
+        if ($terms | is-empty) or ($terms | any { |t| wutWordMatch $n $t }) {
           opPrint $n
         }
       }

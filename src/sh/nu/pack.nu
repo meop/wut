@@ -19,7 +19,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in $names {
-    packDo ($cmds ++ ['|' find --ignore-case $term])
+    packDo ($cmds ++ ['|' find --regex $"r#'(wutWordPattern $term)'#"])
   }
 }
 
@@ -297,8 +297,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# `list`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# `list`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if $manager == 'deno' {
     return (packDenoInstalled)
@@ -319,7 +320,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  $lines | any { |l| $l | str contains --ignore-case $term }
+  $lines | any { |l| wutWordMatch $l $term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the

@@ -66,36 +66,13 @@ export async function getFilePaths(
   path: string,
   options?: {
     extension?: string
-    filters?: Array<string>
-    flexible?: boolean
   },
 ): Promise<Array<string>> {
   if (!(await isDirPath(path))) {
     return []
   }
 
-  const patterns: Array<string> = []
-
-  if (options?.filters?.length) {
-    const prefix = options.flexible ? '**/' : ''
-    const filterPattern = options.filters.map((f) => `${f}*`).join('/')
-    if (options?.extension) {
-      patterns.push(`${prefix}${filterPattern}/**/*.${options.extension}`)
-      patterns.push(`${prefix}${filterPattern}/*.${options.extension}`)
-      patterns.push(`${prefix}${filterPattern}.${options.extension}`)
-    } else {
-      patterns.push(`${prefix}${filterPattern}/**`)
-      patterns.push(`${prefix}${filterPattern}`)
-    }
-  } else {
-    if (options?.extension) {
-      patterns.push(`**/*.${options.extension}`)
-      patterns.push(`*.${options.extension}`)
-    } else {
-      patterns.push('**')
-      patterns.push('*')
-    }
-  }
+  const patterns = options?.extension ? [`**/*.${options.extension}`, `*.${options.extension}`] : ['**', '*']
 
   const filePaths: Set<string> = new Set()
   for (const pattern of patterns) {

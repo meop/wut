@@ -71,7 +71,7 @@ def --env packBun [] {
         print $out
       } else {
         for term in $names {
-          $out | lines | where { |l| $l | str contains --ignore-case $term } | each { |l| print $l }
+          $out | lines | where { |l| wutWordMatch $l $term } | each { |l| print $l }
         }
       }
     }

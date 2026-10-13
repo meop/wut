@@ -1,3 +1,5 @@
+import { stripVTControlCharacters } from 'node:util'
+
 import { assertEquals } from '@std/assert'
 
 import { runNu } from '../../_test.ts'
@@ -6,6 +8,7 @@ import { getScriptFlavorOpPreamble } from '../../sh.ts'
 const PACK_NU = new URL('./pack.nu', import.meta.url).pathname
 const SEL_NU = new URL('./sel.nu', import.meta.url).pathname
 const PATH_NU = new URL('./path.nu', import.meta.url).pathname
+const MATCH_NU = new URL('./match.nu', import.meta.url).pathname
 
 // `which` is the only thing these decisions read, so a PATH of stub binaries is the whole fixture
 async function withManagers(present: Array<string>, probe: string): Promise<string | null> {
@@ -36,6 +39,7 @@ async function withStubs(
       // the same op helpers the client is sent, so the checks print and run exactly as they do in a real script
       await getScriptFlavorOpPreamble('nu'),
       await Deno.readTextFile(PATH_NU),
+      await Deno.readTextFile(MATCH_NU),
       pick == null ? await Deno.readTextFile(SEL_NU) : (await Deno.readTextFile(SEL_NU)).replace(
         /^def wutSelectRead [\s\S]*?^}$/m,
         `def wutSelectRead [max: int] { ${
@@ -257,11 +261,13 @@ Deno.test('nu / pack / list and remove agree on which manager holds a name', asy
 
 // list is WIDE (substring, act on all) where remove is PINPOINT and exact — see docs/COMMANDS.md. the substring
 // half is what a `p l git` has always meant, so the up-front check has to keep it
-Deno.test('nu / pack / list matches on substring while remove matches exactly', async () => {
+Deno.test('nu / pack / list matches the start of a word while remove matches exactly', async () => {
   const stubs = { uv: LISTINGS.uv }
   const like = (term: string) => `print (packLinesLike (packListedRaw 'uv') '${term}')`
   assertEquals(await withStubs(stubs, like('filter'), ['uv']), 'true')
   assertEquals(await withStubs(stubs, like('GIT-FILTER'), ['uv']), 'true')
+  // the middle of a word is not its start
+  assertEquals(await withStubs(stubs, like('ilter'), ['uv']), 'false')
   const exact = await withStubs(stubs, `print (packInstalled 'uv' 'filter')`, ['uv'])
   if (exact == null) {
     return
@@ -294,6 +300,10 @@ Deno.test('nu / pack / list runs a listing before the gate only when it has a te
   // twice: once to answer before the gate, once to dump after
   assertEquals(termed!.split('uv tool list').length - 1, 2)
   assertEquals(termed!.includes('1) uv'), true)
+
+  // the dump is filtered by the same rule that answered: a term that starts a word of a line keeps the line
+  const started = await run([`$env.PACK_LIST_NAMES = ['filter']`, `packTermPlanRun 'PACK_LIST_NAMES'`].join('\n'))
+  assertEquals(stripVTControlCharacters(started!).includes('git-filter-repo v2.47.0'), true)
 })
 
 // the bug this covers: `wut p l vivaldi` found it under brew and `wut p r vivaldi` said no manager had it, moments

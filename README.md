@@ -82,9 +82,15 @@ function wut {
 
 ## commands
 
-| Command  | Aliases | Description                                                   |
-| -------- | ------- | ------------------------------------------------------------- |
-| `pack`   | `p`     | Package manager operations (add, find, list, rem, sync, tidy) |
-| `file`   | `f`     | Dotfile sync from server to local paths                       |
-| `script` | `s`     | Run shell scripts stored in config                            |
-| `virt`   | `v`     | Container / VM management (docker, podman, lxc, qemu)         |
+| Command  | Aliases | Description                                           | Ops                                                                 |
+| -------- | ------- | ----------------------------------------------------- | ------------------------------------------------------------------- |
+| `pack`   | `p`     | Package manager operations                            | `add`, `find`, `info`, `list`, `outdated`, `remove`, `sync`, `tidy` |
+| `file`   | `f`     | Dotfile sync from server to local paths               | `diff`, `find`, `list`, `sync`                                      |
+| `script` | `s`     | Run shell scripts stored in config                    | `exec`, `find`                                                      |
+| `virt`   | `v`     | Container / VM management (docker, podman, lxc, qemu) | `add`, `find`, `list`, `rem`, `run`, `sync`, `tidy`                 |
+
+Names are matched the same way in every command. An op that acts (`add`, `remove`, `sync`, `run`, `exec`, `diff`,
+`info`) takes a name whole — a group, a folder above it, an instance, or an alias — so `wut p a nush` is not `nushell`.
+An op that reads (`find`, `list`, `outdated`) takes the start of a word, so `wut p f tight` finds the group holding
+`glavsoft.tightvnc`, and never the middle of one. Look with `find`, then act with the name it shows. See
+[docs/COMMANDS.md](docs/COMMANDS.md).

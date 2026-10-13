@@ -33,7 +33,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh `nu -c` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if ($terms | is-empty) or ($terms | any { |term| $t.path | str contains --ignore-case $term }) {
+        if ($terms | is-empty) or ($terms | any { |term| wutWordMatch $t.path $term }) {
           opPrint $"($t.path) ($t.version)"
         }
       }
@@ -41,7 +41,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if ($terms | is-not-empty) and not ($terms | any { |term| $t.path | str contains --ignore-case $term }) {
+        if ($terms | is-not-empty) and not ($terms | any { |term| wutWordMatch $t.path $term }) {
           continue
         }
         let latest = (^$cmd list -m -f '{{.Version}}' $"($t.module)@latest" | complete | get stdout | str trim)

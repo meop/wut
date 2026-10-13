@@ -6,6 +6,7 @@ import { Fmt } from '@meop/shire/serde'
 import type { Sh } from '@meop/shire/sh'
 
 import { getCfgDirDump, getCfgFileContent, getCfgFileLoad } from '../cfg.ts'
+import { sameName, wordStartsWith } from '../match.ts'
 import { execScriptShell, getScriptFlavorOpPreamble, redirectCommonShell } from '../sh.ts'
 import { resolveToolScript } from './script.ts'
 
@@ -187,6 +188,7 @@ async function loadManagerFiles(
 ) {
   let _shell = shell
     .with(await shell.fileLoad(['sel'], import.meta.resolve, ['..']))
+    .with(await shell.fileLoad(['match'], import.meta.resolve, ['..']))
     .with(await shell.fileLoad([PACK_KEY], import.meta.resolve, ['..']))
   const loadedOps = new Map<string, Array<string>>()
   for (const manager of managers) {
@@ -265,25 +267,44 @@ function groupPackageNames(content: any): Array<string> {
   return names
 }
 
-function matchesNameParts(groupParts: Array<string>, queryParts: Array<string>, query: string): boolean {
-  if (queryParts.length > groupParts.length) {
-    return false
-  }
-  const isPrefix = groupParts.slice(0, queryParts.length).every((p, i) => p === queryParts[i])
-  const isSuffix = groupParts.slice(groupParts.length - queryParts.length).every((p, i) => p === queryParts[i])
-  const isLastPart = groupParts[groupParts.length - 1] === query
-  return isPrefix || isSuffix || isLastPart
+// what find reads besides names: a sentence about the group, for when the name is the thing forgotten
+function groupDescr(content: unknown): string {
+  const descr = (content as { descr?: unknown } | null)?.descr
+  return typeof descr === 'string' ? descr : ''
 }
 
-// add and find both resolve a typed name the same way: the group's own path segments (prefix/suffix/last-part),
-// or a startsWith hit on an alias or a declared package name
-function matchesGroupQuery(groupParts: Array<string>, content: unknown, query: string): boolean {
-  if (matchesNameParts(groupParts, query.split('-'), query)) {
-    return true
+// a group's name is its path, a word per level, and a term names a run of whole levels: the group itself, or a folder
+// above it, which stands for everything it holds. `go` is lang-go, `lang` is every group under lang/, `lang-js` every
+// one under lang/js/, and `g` is nothing
+function matchesNameParts(groupParts: Array<string>, query: string): boolean {
+  const queryParts = query.toLowerCase().split('-')
+  for (let at = 0; at + queryParts.length <= groupParts.length; at++) {
+    if (queryParts.every((q, i) => groupParts[at + i].toLowerCase() === q)) {
+      return true
+    }
   }
-  const q = query.toLowerCase()
-  return groupAliases(content).some((a) => a.toLowerCase().startsWith(q)) ||
-    groupPackageNames(content).some((n) => n.toLowerCase().startsWith(q))
+  return false
+}
+
+// the acting ops' question: is this a name the group goes by. its own name or an alias, whole, and never what is
+// inside it — a package a group happens to hold is not a name for the group, and reaching the group through one would
+// install everything else in it
+function isGroupNamed(groupParts: Array<string>, content: unknown, query: string): boolean {
+  return matchesNameParts(groupParts, query) || groupAliases(content).some((a) => sameName(a, query))
+}
+
+// a manager's name for a package can carry its flags (`--cask keka`), which are not part of the name
+function withoutFlags(name: string): string {
+  return name.split(' ').filter((w) => !w.startsWith('-')).join(' ')
+}
+
+// find's question is the wider one, since its job is to turn something half remembered into a name to type: the
+// term starts a word of the group's name, an alias, a package any manager declares for it, or its description
+function isGroupFound(groupParts: Array<string>, content: unknown, query: string): boolean {
+  return wordStartsWith(groupParts.join('-'), query) ||
+    groupAliases(content).some((a) => wordStartsWith(a, query)) ||
+    groupPackageNames(content).some((n) => wordStartsWith(withoutFlags(n), query)) ||
+    wordStartsWith(groupDescr(content), query)
 }
 
 type FindCandidate = { manager: string; pkg: string }
@@ -326,10 +347,7 @@ async function findGroups(
   allManagers: Array<string> | null,
   context: Ctx | null,
 ): Promise<{ entries: Array<FindEntry>; found: Array<string> }> {
-  const results = await getCfgDirDump([PACK_KEY], {
-    extension: Fmt.yaml,
-    flexible: true,
-  })
+  const results = await getCfgDirDump([PACK_KEY], { extension: Fmt.yaml })
   const entries: Array<FindEntry> = []
   const found: Array<string> = []
   for (const r of results) {
@@ -343,8 +361,9 @@ async function findGroups(
       continue
     }
     if (filters?.length) {
-      const matched = filters.filter((f) => matchesGroupQuery(r, content, f))
-      if (matched.length !== filters.length) {
+      // each name is its own search, so a group is listed when any of them finds it
+      const matched = filters.filter((f) => isGroupFound(r, content, f))
+      if (!matched.length) {
         continue
       }
       for (const f of matched) {
@@ -447,7 +466,7 @@ function groupSelfUpdate(content: unknown, group: string, plat: string): SelfUpd
 
 async function findSelfUpdates(plat: string): Promise<Array<SelfUpdate>> {
   const found: Array<SelfUpdate> = []
-  for (const parts of await getCfgDirDump([PACK_KEY], { extension: Fmt.yaml, flexible: true })) {
+  for (const parts of await getCfgDirDump([PACK_KEY], { extension: Fmt.yaml })) {
     const self = groupSelfUpdate(await loadGroupConfig(parts), parts.join('-'), plat)
     if (self) {
       found.push(self)
@@ -584,11 +603,7 @@ async function buildGroupUnit(
 }
 
 async function resolveGroupName(name: string): Promise<Array<string>> {
-  const nameParts = name.split('-')
-  const results = await getCfgDirDump([PACK_KEY], {
-    extension: Fmt.yaml,
-    flexible: true,
-  })
+  const results = await getCfgDirDump([PACK_KEY], { extension: Fmt.yaml })
   const matched: Array<string> = []
   const aliasMatched: Array<string> = []
   for (const parts of results) {
@@ -596,16 +611,11 @@ async function resolveGroupName(name: string): Promise<Array<string>> {
     if (matched.includes(resolvedName) || aliasMatched.includes(resolvedName)) {
       continue
     }
-    if (matchesNameParts(parts, nameParts, name)) {
+    if (matchesNameParts(parts, name)) {
       matched.push(resolvedName)
       continue
     }
-    const content = await loadGroupConfig(parts)
-    const q = name.toLowerCase()
-    if (
-      groupAliases(content).some((a) => a.toLowerCase().startsWith(q)) ||
-      groupPackageNames(content).some((n) => n.toLowerCase().startsWith(q))
-    ) {
+    if (isGroupNamed(parts, await loadGroupConfig(parts), name)) {
       aliasMatched.push(resolvedName)
     }
   }
@@ -639,11 +649,7 @@ async function buildPlan(
   const scriptArms = new Map<string, Array<string>>()
 
   for (const name of names) {
-    let resolved = await resolveGroupName(name)
-    if (op === 'remove' && resolved.length > 1) {
-      resolved = [resolved.find((r) => r === name) ?? resolved[0]]
-    }
-    for (const resolvedName of resolved) {
+    for (const resolvedName of await resolveGroupName(name)) {
       // a name and a folder of that name are one group, and a group reached twice is still installed once
       if (seen.has(resolvedName)) {
         continue

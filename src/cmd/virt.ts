@@ -4,7 +4,8 @@ import { type Env } from '@meop/shire/env'
 import { Fmt } from '@meop/shire/serde'
 import type { Sh } from '@meop/shire/sh'
 
-import { getCfgDirDump, getCfgFileLoad, preferExactMatches } from '../cfg.ts'
+import { getCfgDirDump, getCfgFileLoad } from '../cfg.ts'
+import { partsMatch, sameName, wordStartsWith } from '../match.ts'
 import { redirectCommonShell } from '../sh.ts'
 
 export class VirtCmd extends CmdBase implements Cmd {
@@ -86,10 +87,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       .with(await _shell.fileLoad(['sel'], import.meta.resolve, ['..']))
       .with(await _shell.fileLoad([VIRT_KEY], import.meta.resolve, ['..']))
 
-    const allResults = await getCfgDirDump(dirParts, {
-      extension: Fmt.yaml,
-      flexible: true,
-    })
+    const allResults = await getCfgDirDump(dirParts, { extension: Fmt.yaml })
 
     const grouped = new Map<string, Map<string, string[]>>()
     for (const r of allResults) {
@@ -97,10 +95,9 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
         continue
       }
       // the manager is part of the path everywhere else (add, rem, list), so it filters here too
-      if (filters.length > 0) {
-        if (!filters.every((f) => r.some((p) => p.includes(f)))) {
-          continue
-        }
+      // against the whole path, so a variant's name finds its instance
+      if (filters.length > 0 && !partsMatch(r, filters, 'words')) {
+        continue
       }
       const manager = r[0]
       const pod = r[1]
@@ -150,6 +147,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   } else {
     _shell = _shell
       .with(await _shell.fileLoad(['sel'], import.meta.resolve, ['..']))
+      .with(await _shell.fileLoad(['match'], import.meta.resolve, ['..']))
       .with(
         await _shell.fileLoad(
           [VIRT_KEY],
@@ -201,10 +199,12 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     }
 
     if (op === 'list') {
-      const managerFilters = filters.filter((f) => supportedManagers.some((m) => m.includes(f)))
+      // list reads, so it matches the way find does: a term that starts a manager's name picks the manager, and the
+      // rest are left for the client to put to what is installed
+      const managerFilters = filters.filter((f) => supportedManagers.some((m) => wordStartsWith(m, f)))
       const instanceFilters = filters.filter((f) => !managerFilters.includes(f))
       const managersToOp = managerFilters.length > 0
-        ? supportedManagers.filter((m) => managerFilters.some((f) => m.includes(f)))
+        ? supportedManagers.filter((m) => managerFilters.some((f) => wordStartsWith(m, f)))
         : supportedManagers
       // same plan-then-ask-once path as add/rem/sync/tidy, so listing across managers asks once too
       const virtMap: Record<string, Array<string>> = Object.fromEntries(
@@ -216,19 +216,17 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
           .with(['virtPlanRun'])
       }
     } else {
-      let results = await getCfgDirDump(dirParts, {
-        extension: Fmt.yaml,
-        filters: filters.length ? filters : undefined,
-        flexible: true,
-      })
+      // the acting ops take names whole: a manager, a pod or an instance as it is spelled, in any order
+      let results = await getCfgDirDump(dirParts, { extension: Fmt.yaml, filters, match: 'exact' })
       if (op !== 'run') {
+        const named = (part: string) => filters.some((f) => sameName(part, f))
         results = results.filter((parts) =>
-          parts[0] === 'podman' || parts.length <= 2 ||
-          (op === 'add' && filters.includes(parts[2]) && filters.some((f) => parts[1].includes(f)))
+          parts[0] === 'podman' || parts.length <= 2 || (op === 'add' && named(parts[2]) && named(parts[1]))
         )
       }
+      // one foreground run, so the first of what was named: the instance itself sorts ahead of its variants
       if (op === 'run' && filters.length) {
-        results = preferExactMatches(results, filters)
+        results = results
           .filter((parts) => parts[1] && !(parts[0] === 'podman' && !parts[2]))
           .slice(0, 1)
       }

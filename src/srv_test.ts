@@ -66,7 +66,7 @@ Deno.test('error / command not found (zsh)', async (t) => {
 })
 
 // an argument is one path segment, so a name with a slash of its own travels percent encoded and is decoded after the
-// split. a pack yaml spells such names as they are, and a typed one reaches a group through them
+// split. a pack yaml spells such names as they are, and a typed one is handed to the managers whole
 Deno.test('pack / a name with a slash stays one name, typed or in a group', async () => {
   const plan = async (path: string) => {
     const body = await (await runSrv(req(`/sh/nu/pack/add/${path}?sysOsPlat=linux&sysOs=arch&wutNuPinned=1`))).text()
@@ -75,7 +75,10 @@ Deno.test('pack / a name with a slash stays one name, typed or in a group', asyn
   const grouped = await plan('slashed')
   assertEquals(grouped.includes('"@scope/pkg"'), true)
   assertEquals(grouped.includes('"golang.org/x/tools/gopls"'), true)
-  assertEquals((await plan('golang.org%2Fx%2Ftools%2Fgopls')).includes('test-slashed'), true)
+  // a package a group holds is not a name for the group, so typing one is a loose name like any other
+  const held = await plan('golang.org%2Fx%2Ftools%2Fgopls')
+  assertEquals(held.includes('test-slashed'), false)
+  assertEquals(held.includes("r#'golang.org/x/tools/gopls'#"), true)
   const loose = await plan('github.com%2Fowner%2Ftool')
   assertEquals(loose.includes('github.com/owner/tool'), true)
   assertEquals(loose.includes("'github.com'"), false)

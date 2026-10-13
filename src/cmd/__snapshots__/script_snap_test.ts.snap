@@ -1402,21 +1402,36 @@ def scriptHasSvc [...svcs: string] {
   }
 }
 
-# whether one unit passes the cheap gates: a has_ gate needs one of its commands or services here, a no_ gate needs none
-# of them, so an install is not applicable once its tool is in. whether a script has more to do beyond that is its own to
-# say once it runs
-def scriptApplies [u: record] {
-  (
-    ((\$u.cmds | is-empty) or (scriptHasCmd ...\$u.cmds))
-    and ((\$u.noCmds | is-empty) or not (scriptHasCmd ...\$u.noCmds))
-    and ((\$u.svcs | is-empty) or (scriptHasSvc ...\$u.svcs))
-    and ((\$u.noSvcs | is-empty) or not (scriptHasSvc ...\$u.noSvcs))
-  )
+# the listing's groups for what is left out, in the order shown
+const SCRIPT_SKIP_DONE = 'already installed'
+const SCRIPT_SKIP_MISSING = 'missing tool'
+const SCRIPT_SKIPS = [\$SCRIPT_SKIP_DONE \$SCRIPT_SKIP_MISSING]
+
+# why the cheap gates leave one unit out here, or '' when it is needed: a no_ gate needs none of its commands or
+# services here, and a has_ gate needs one of them. whether a script has more to do beyond that is its own to say
+def scriptSkip [u: record] {
+  if (
+    ((\$u.noCmds | is-not-empty) and (scriptHasCmd ...\$u.noCmds))
+    or ((\$u.noSvcs | is-not-empty) and (scriptHasSvc ...\$u.noSvcs))
+  ) {
+    \$SCRIPT_SKIP_DONE
+  } else if (
+    ((\$u.cmds | is-not-empty) and not (scriptHasCmd ...\$u.cmds))
+    or ((\$u.svcs | is-not-empty) and not (scriptHasSvc ...\$u.svcs))
+  ) {
+    \$SCRIPT_SKIP_MISSING
+  } else {
+    ''
+  }
+}
+
+def scriptNeeded [u: record] {
+  (scriptSkip \$u) == ''
 }
 
 # what this machine is offered
 def scriptPlanHere [] {
-  \$env.SCRIPT_PLAN? | default '[]' | from json | where { |u| scriptApplies \$u }
+  \$env.SCRIPT_PLAN? | default '[]' | from json | where { |u| scriptNeeded \$u }
 }
 
 def --env scriptPlanRun [] {
@@ -1447,25 +1462,29 @@ def scriptFindRows [units: list] {
     | each { |g| [\$g.action, (\$g.units | get tool | uniq | sort | str join ', ')] }
 }
 
-# the listing: each action with the tools that apply here, then, as their own group in the same shape, the ones whose
-# gates rule them out, nested one level as virt find nests a manager's pods
+# the listing: each action with the tools needed here, then a group per reason for the ones the gates leave out
 def scriptFindRun [] {
-  let units = (\$env.SCRIPT_PLAN? | default '[]' | from json | each { |u| \$u | insert applies (scriptApplies \$u) })
-  let rows = (scriptFindRows (\$units | where applies))
-  let ruledOut = (scriptFindRows (\$units | where not applies))
+  let units = (\$env.SCRIPT_PLAN? | default '[]' | from json | each { |u| \$u | insert skipped (scriptSkip \$u) })
+  let rows = (scriptFindRows (\$units | where skipped == ''))
   for r in \$rows {
     opPrint (\$r | get 0)
     opPrint \$"  (\$r | get 1)"
   }
-  if (\$ruledOut | is-not-empty) {
-    if (\$rows | is-not-empty) {
+  mut shown = (\$rows | is-not-empty)
+  for group in \$SCRIPT_SKIPS {
+    let groupRows = (scriptFindRows (\$units | where skipped == \$group))
+    if (\$groupRows | is-empty) {
+      continue
+    }
+    if \$shown {
       opPrint ''
     }
-    opPrint 'not applicable'
-    for r in \$ruledOut {
+    opPrint \$group
+    for r in \$groupRows {
       opPrint \$"  (\$r | get 0)"
       opPrint \$"    (\$r | get 1)"
     }
+    \$shown = true
   }
   if (\$rows | is-empty) {
     return
@@ -2155,21 +2174,36 @@ def scriptHasSvc [...svcs: string] {
   }
 }
 
-# whether one unit passes the cheap gates: a has_ gate needs one of its commands or services here, a no_ gate needs none
-# of them, so an install is not applicable once its tool is in. whether a script has more to do beyond that is its own to
-# say once it runs
-def scriptApplies [u: record] {
-  (
-    ((\$u.cmds | is-empty) or (scriptHasCmd ...\$u.cmds))
-    and ((\$u.noCmds | is-empty) or not (scriptHasCmd ...\$u.noCmds))
-    and ((\$u.svcs | is-empty) or (scriptHasSvc ...\$u.svcs))
-    and ((\$u.noSvcs | is-empty) or not (scriptHasSvc ...\$u.noSvcs))
-  )
+# the listing's groups for what is left out, in the order shown
+const SCRIPT_SKIP_DONE = 'already installed'
+const SCRIPT_SKIP_MISSING = 'missing tool'
+const SCRIPT_SKIPS = [\$SCRIPT_SKIP_DONE \$SCRIPT_SKIP_MISSING]
+
+# why the cheap gates leave one unit out here, or '' when it is needed: a no_ gate needs none of its commands or
+# services here, and a has_ gate needs one of them. whether a script has more to do beyond that is its own to say
+def scriptSkip [u: record] {
+  if (
+    ((\$u.noCmds | is-not-empty) and (scriptHasCmd ...\$u.noCmds))
+    or ((\$u.noSvcs | is-not-empty) and (scriptHasSvc ...\$u.noSvcs))
+  ) {
+    \$SCRIPT_SKIP_DONE
+  } else if (
+    ((\$u.cmds | is-not-empty) and not (scriptHasCmd ...\$u.cmds))
+    or ((\$u.svcs | is-not-empty) and not (scriptHasSvc ...\$u.svcs))
+  ) {
+    \$SCRIPT_SKIP_MISSING
+  } else {
+    ''
+  }
+}
+
+def scriptNeeded [u: record] {
+  (scriptSkip \$u) == ''
 }
 
 # what this machine is offered
 def scriptPlanHere [] {
-  \$env.SCRIPT_PLAN? | default '[]' | from json | where { |u| scriptApplies \$u }
+  \$env.SCRIPT_PLAN? | default '[]' | from json | where { |u| scriptNeeded \$u }
 }
 
 def --env scriptPlanRun [] {
@@ -2200,25 +2234,29 @@ def scriptFindRows [units: list] {
     | each { |g| [\$g.action, (\$g.units | get tool | uniq | sort | str join ', ')] }
 }
 
-# the listing: each action with the tools that apply here, then, as their own group in the same shape, the ones whose
-# gates rule them out, nested one level as virt find nests a manager's pods
+# the listing: each action with the tools needed here, then a group per reason for the ones the gates leave out
 def scriptFindRun [] {
-  let units = (\$env.SCRIPT_PLAN? | default '[]' | from json | each { |u| \$u | insert applies (scriptApplies \$u) })
-  let rows = (scriptFindRows (\$units | where applies))
-  let ruledOut = (scriptFindRows (\$units | where not applies))
+  let units = (\$env.SCRIPT_PLAN? | default '[]' | from json | each { |u| \$u | insert skipped (scriptSkip \$u) })
+  let rows = (scriptFindRows (\$units | where skipped == ''))
   for r in \$rows {
     opPrint (\$r | get 0)
     opPrint \$"  (\$r | get 1)"
   }
-  if (\$ruledOut | is-not-empty) {
-    if (\$rows | is-not-empty) {
+  mut shown = (\$rows | is-not-empty)
+  for group in \$SCRIPT_SKIPS {
+    let groupRows = (scriptFindRows (\$units | where skipped == \$group))
+    if (\$groupRows | is-empty) {
+      continue
+    }
+    if \$shown {
       opPrint ''
     }
-    opPrint 'not applicable'
-    for r in \$ruledOut {
+    opPrint \$group
+    for r in \$groupRows {
       opPrint \$"  (\$r | get 0)"
       opPrint \$"    (\$r | get 1)"
     }
+    \$shown = true
   }
   if (\$rows | is-empty) {
     return
@@ -2944,21 +2982,36 @@ def scriptHasSvc [...svcs: string] {
   }
 }
 
-# whether one unit passes the cheap gates: a has_ gate needs one of its commands or services here, a no_ gate needs none
-# of them, so an install is not applicable once its tool is in. whether a script has more to do beyond that is its own to
-# say once it runs
-def scriptApplies [u: record] {
-  (
-    ((\$u.cmds | is-empty) or (scriptHasCmd ...\$u.cmds))
-    and ((\$u.noCmds | is-empty) or not (scriptHasCmd ...\$u.noCmds))
-    and ((\$u.svcs | is-empty) or (scriptHasSvc ...\$u.svcs))
-    and ((\$u.noSvcs | is-empty) or not (scriptHasSvc ...\$u.noSvcs))
-  )
+# the listing's groups for what is left out, in the order shown
+const SCRIPT_SKIP_DONE = 'already installed'
+const SCRIPT_SKIP_MISSING = 'missing tool'
+const SCRIPT_SKIPS = [\$SCRIPT_SKIP_DONE \$SCRIPT_SKIP_MISSING]
+
+# why the cheap gates leave one unit out here, or '' when it is needed: a no_ gate needs none of its commands or
+# services here, and a has_ gate needs one of them. whether a script has more to do beyond that is its own to say
+def scriptSkip [u: record] {
+  if (
+    ((\$u.noCmds | is-not-empty) and (scriptHasCmd ...\$u.noCmds))
+    or ((\$u.noSvcs | is-not-empty) and (scriptHasSvc ...\$u.noSvcs))
+  ) {
+    \$SCRIPT_SKIP_DONE
+  } else if (
+    ((\$u.cmds | is-not-empty) and not (scriptHasCmd ...\$u.cmds))
+    or ((\$u.svcs | is-not-empty) and not (scriptHasSvc ...\$u.svcs))
+  ) {
+    \$SCRIPT_SKIP_MISSING
+  } else {
+    ''
+  }
+}
+
+def scriptNeeded [u: record] {
+  (scriptSkip \$u) == ''
 }
 
 # what this machine is offered
 def scriptPlanHere [] {
-  \$env.SCRIPT_PLAN? | default '[]' | from json | where { |u| scriptApplies \$u }
+  \$env.SCRIPT_PLAN? | default '[]' | from json | where { |u| scriptNeeded \$u }
 }
 
 def --env scriptPlanRun [] {
@@ -2989,25 +3042,29 @@ def scriptFindRows [units: list] {
     | each { |g| [\$g.action, (\$g.units | get tool | uniq | sort | str join ', ')] }
 }
 
-# the listing: each action with the tools that apply here, then, as their own group in the same shape, the ones whose
-# gates rule them out, nested one level as virt find nests a manager's pods
+# the listing: each action with the tools needed here, then a group per reason for the ones the gates leave out
 def scriptFindRun [] {
-  let units = (\$env.SCRIPT_PLAN? | default '[]' | from json | each { |u| \$u | insert applies (scriptApplies \$u) })
-  let rows = (scriptFindRows (\$units | where applies))
-  let ruledOut = (scriptFindRows (\$units | where not applies))
+  let units = (\$env.SCRIPT_PLAN? | default '[]' | from json | each { |u| \$u | insert skipped (scriptSkip \$u) })
+  let rows = (scriptFindRows (\$units | where skipped == ''))
   for r in \$rows {
     opPrint (\$r | get 0)
     opPrint \$"  (\$r | get 1)"
   }
-  if (\$ruledOut | is-not-empty) {
-    if (\$rows | is-not-empty) {
+  mut shown = (\$rows | is-not-empty)
+  for group in \$SCRIPT_SKIPS {
+    let groupRows = (scriptFindRows (\$units | where skipped == \$group))
+    if (\$groupRows | is-empty) {
+      continue
+    }
+    if \$shown {
       opPrint ''
     }
-    opPrint 'not applicable'
-    for r in \$ruledOut {
+    opPrint \$group
+    for r in \$groupRows {
       opPrint \$"  (\$r | get 0)"
       opPrint \$"    (\$r | get 1)"
     }
+    \$shown = true
   }
   if (\$rows | is-empty) {
     return
@@ -3453,21 +3510,36 @@ def scriptHasSvc [...svcs: string] {
   }
 }
 
-# whether one unit passes the cheap gates: a has_ gate needs one of its commands or services here, a no_ gate needs none
-# of them, so an install is not applicable once its tool is in. whether a script has more to do beyond that is its own to
-# say once it runs
-def scriptApplies [u: record] {
-  (
-    ((\$u.cmds | is-empty) or (scriptHasCmd ...\$u.cmds))
-    and ((\$u.noCmds | is-empty) or not (scriptHasCmd ...\$u.noCmds))
-    and ((\$u.svcs | is-empty) or (scriptHasSvc ...\$u.svcs))
-    and ((\$u.noSvcs | is-empty) or not (scriptHasSvc ...\$u.noSvcs))
-  )
+# the listing's groups for what is left out, in the order shown
+const SCRIPT_SKIP_DONE = 'already installed'
+const SCRIPT_SKIP_MISSING = 'missing tool'
+const SCRIPT_SKIPS = [\$SCRIPT_SKIP_DONE \$SCRIPT_SKIP_MISSING]
+
+# why the cheap gates leave one unit out here, or '' when it is needed: a no_ gate needs none of its commands or
+# services here, and a has_ gate needs one of them. whether a script has more to do beyond that is its own to say
+def scriptSkip [u: record] {
+  if (
+    ((\$u.noCmds | is-not-empty) and (scriptHasCmd ...\$u.noCmds))
+    or ((\$u.noSvcs | is-not-empty) and (scriptHasSvc ...\$u.noSvcs))
+  ) {
+    \$SCRIPT_SKIP_DONE
+  } else if (
+    ((\$u.cmds | is-not-empty) and not (scriptHasCmd ...\$u.cmds))
+    or ((\$u.svcs | is-not-empty) and not (scriptHasSvc ...\$u.svcs))
+  ) {
+    \$SCRIPT_SKIP_MISSING
+  } else {
+    ''
+  }
+}
+
+def scriptNeeded [u: record] {
+  (scriptSkip \$u) == ''
 }
 
 # what this machine is offered
 def scriptPlanHere [] {
-  \$env.SCRIPT_PLAN? | default '[]' | from json | where { |u| scriptApplies \$u }
+  \$env.SCRIPT_PLAN? | default '[]' | from json | where { |u| scriptNeeded \$u }
 }
 
 def --env scriptPlanRun [] {
@@ -3498,25 +3570,29 @@ def scriptFindRows [units: list] {
     | each { |g| [\$g.action, (\$g.units | get tool | uniq | sort | str join ', ')] }
 }
 
-# the listing: each action with the tools that apply here, then, as their own group in the same shape, the ones whose
-# gates rule them out, nested one level as virt find nests a manager's pods
+# the listing: each action with the tools needed here, then a group per reason for the ones the gates leave out
 def scriptFindRun [] {
-  let units = (\$env.SCRIPT_PLAN? | default '[]' | from json | each { |u| \$u | insert applies (scriptApplies \$u) })
-  let rows = (scriptFindRows (\$units | where applies))
-  let ruledOut = (scriptFindRows (\$units | where not applies))
+  let units = (\$env.SCRIPT_PLAN? | default '[]' | from json | each { |u| \$u | insert skipped (scriptSkip \$u) })
+  let rows = (scriptFindRows (\$units | where skipped == ''))
   for r in \$rows {
     opPrint (\$r | get 0)
     opPrint \$"  (\$r | get 1)"
   }
-  if (\$ruledOut | is-not-empty) {
-    if (\$rows | is-not-empty) {
+  mut shown = (\$rows | is-not-empty)
+  for group in \$SCRIPT_SKIPS {
+    let groupRows = (scriptFindRows (\$units | where skipped == \$group))
+    if (\$groupRows | is-empty) {
+      continue
+    }
+    if \$shown {
       opPrint ''
     }
-    opPrint 'not applicable'
-    for r in \$ruledOut {
+    opPrint \$group
+    for r in \$groupRows {
       opPrint \$"  (\$r | get 0)"
       opPrint \$"    (\$r | get 1)"
     }
+    \$shown = true
   }
   if (\$rows | is-empty) {
     return

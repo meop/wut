@@ -1,4 +1,5 @@
 ---
+descr: A shell that treats everything as structured data.
 aliases:
   - nushell
 operation:

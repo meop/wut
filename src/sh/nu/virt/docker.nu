@@ -45,7 +45,7 @@ def virtDocker [] {
       let filters = if ($env.VIRT_INSTANCES | is-not-empty) { $env.VIRT_INSTANCES } else { [] }
       let allInstances = ^sudo $cmd compose ls --format json | complete | get stdout | if ($in | is-not-empty) { from json | get Name } else { [] }
       let instances = if ($filters | is-not-empty) {
-        $allInstances | where { |i| $filters | all { |f| $i | str contains --ignore-case $f } }
+        $allInstances | where { |i| $filters | all { |f| wutWordMatch $i $f } }
       } else {
         $allInstances
       }
@@ -64,6 +64,10 @@ def virtDocker [] {
     }
     sync => {
       for instance in $env.VIRT_INSTANCES {
+        if not (virtInstanceHere $cmd $instance) {
+          continue
+        }
+
         opPrintMaybeRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml'#" '|' sudo $cmd compose --file - up --detach --pull always
       }
     }

@@ -2767,6 +2767,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -2788,7 +2799,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -3066,8 +3077,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -3088,7 +3100,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -4065,7 +4077,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -4165,7 +4177,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -4321,7 +4333,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -4329,7 +4341,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -5160,6 +5172,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -5181,7 +5204,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -5459,8 +5482,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -5481,7 +5505,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -6458,7 +6482,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -6558,7 +6582,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -6714,7 +6738,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -6722,7 +6746,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -7596,6 +7620,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -7617,7 +7652,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -7895,8 +7930,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -7917,7 +7953,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -8894,7 +8930,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -8994,7 +9030,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -9150,7 +9186,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -9158,7 +9194,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -10032,6 +10068,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -10053,7 +10100,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -10331,8 +10378,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -10353,7 +10401,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -11330,7 +11378,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -11430,7 +11478,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -11586,7 +11634,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -11594,7 +11642,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -12110,7 +12158,7 @@ packPlanRun
 }"
 `;
 
-snapshot[`nu / arch / rem (pinned, shell takes the first group only) 1`] = `
+snapshot[`nu / arch / rem (pinned, shell matches both groups, as add does) 1`] = `
 "try {
 try {
 \$env.REQ_URL_CFG = r#'http://x/cfg'#
@@ -12498,6 +12546,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -12519,7 +12578,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -12797,8 +12856,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -12819,7 +12879,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -13796,7 +13856,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -13896,7 +13956,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -14052,7 +14112,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -14060,7 +14120,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -14522,11 +14582,41 @@ hide-env PACK_MANAGER
 packWinget
 hide-env PACK_MANAGER
     }
+    r#'shell-zsh|brew'# => {
+\$env.PACK_MANAGER = r#'brew'#
+\$env.PACK_REMOVE_NAMES = [ r#'zsh'#, r#'zsh-completions'# ]
+packBrew
+hide-env PACK_MANAGER
+    }
+    r#'shell-zsh|pacman'# => {
+\$env.PACK_MANAGER = r#'pacman'#
+\$env.PACK_REMOVE_NAMES = [ r#'zsh'#, r#'zsh-completions'# ]
+packPacman
+hide-env PACK_MANAGER
+    }
+    r#'shell-zsh|apt'# => {
+\$env.PACK_MANAGER = r#'apt'#
+\$env.PACK_REMOVE_NAMES = [ r#'zsh'# ]
+packApt
+hide-env PACK_MANAGER
+    }
+    r#'shell-zsh|dnf'# => {
+\$env.PACK_MANAGER = r#'dnf'#
+\$env.PACK_REMOVE_NAMES = [ r#'zsh'# ]
+packDnf
+hide-env PACK_MANAGER
+    }
+    r#'shell-zsh|xbps'# => {
+\$env.PACK_MANAGER = r#'xbps'#
+\$env.PACK_REMOVE_NAMES = [ r#'zsh'# ]
+packXbps
+hide-env PACK_MANAGER
+    }
     _ => {}
   }
 }
 
-\$env.PACK_PLAN = r#'[{\\"group\\":\\"shell-nu\\",\\"name\\":\\"shell\\",\\"paths\\":[{\\"id\\":\\"shell-nu|ghpm\\",\\"manager\\":\\"ghpm\\",\\"names\\":[\\"nu\\"]},{\\"id\\":\\"shell-nu|cargo\\",\\"manager\\":\\"cargo\\",\\"names\\":[\\"nu\\"]},{\\"id\\":\\"shell-nu|brew\\",\\"manager\\":\\"brew\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|pacman\\",\\"manager\\":\\"pacman\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|xbps\\",\\"manager\\":\\"xbps\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|winget\\",\\"manager\\":\\"winget\\",\\"names\\":[\\"nushell.nushell\\"]}]}]'#
+\$env.PACK_PLAN = r#'[{\\"group\\":\\"shell-nu\\",\\"name\\":\\"shell\\",\\"paths\\":[{\\"id\\":\\"shell-nu|ghpm\\",\\"manager\\":\\"ghpm\\",\\"names\\":[\\"nu\\"]},{\\"id\\":\\"shell-nu|cargo\\",\\"manager\\":\\"cargo\\",\\"names\\":[\\"nu\\"]},{\\"id\\":\\"shell-nu|brew\\",\\"manager\\":\\"brew\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|pacman\\",\\"manager\\":\\"pacman\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|xbps\\",\\"manager\\":\\"xbps\\",\\"names\\":[\\"nushell\\"]},{\\"id\\":\\"shell-nu|winget\\",\\"manager\\":\\"winget\\",\\"names\\":[\\"nushell.nushell\\"]}]},{\\"group\\":\\"shell-zsh\\",\\"name\\":\\"shell\\",\\"paths\\":[{\\"id\\":\\"shell-zsh|brew\\",\\"manager\\":\\"brew\\",\\"names\\":[\\"zsh\\",\\"zsh-completions\\"]},{\\"id\\":\\"shell-zsh|pacman\\",\\"manager\\":\\"pacman\\",\\"names\\":[\\"zsh\\",\\"zsh-completions\\"]},{\\"id\\":\\"shell-zsh|apt\\",\\"manager\\":\\"apt\\",\\"names\\":[\\"zsh\\"]},{\\"id\\":\\"shell-zsh|dnf\\",\\"manager\\":\\"dnf\\",\\"names\\":[\\"zsh\\"]},{\\"id\\":\\"shell-zsh|xbps\\",\\"manager\\":\\"xbps\\",\\"names\\":[\\"zsh\\"]}]}]'#
 
 \$env.PACK_REMOVE_NAMES = [  ]
 
@@ -14934,6 +15024,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -14955,7 +15056,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -15233,8 +15334,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -15255,7 +15357,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -16232,7 +16334,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -16332,7 +16434,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -16488,7 +16590,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -16496,7 +16598,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -17365,6 +17467,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -17386,7 +17499,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -17664,8 +17777,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -17686,7 +17800,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -18663,7 +18777,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -18763,7 +18877,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -18919,7 +19033,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -18927,7 +19041,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -19891,6 +20005,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -19912,7 +20037,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -20190,8 +20315,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -20212,7 +20338,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -21189,7 +21315,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -21289,7 +21415,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -21445,7 +21571,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -21453,7 +21579,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -22303,6 +22429,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -22324,7 +22461,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -22602,8 +22739,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -22624,7 +22762,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -23601,7 +23739,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -23701,7 +23839,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -23857,7 +23995,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -23865,7 +24003,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -24715,6 +24853,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -24736,7 +24885,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -25014,8 +25163,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -25036,7 +25186,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -26013,7 +26163,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -26113,7 +26263,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -26269,7 +26419,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -26277,7 +26427,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -27127,6 +27277,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -27148,7 +27309,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -27426,8 +27587,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -27448,7 +27610,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -28425,7 +28587,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -28525,7 +28687,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -28681,7 +28843,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -28689,7 +28851,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -29836,6 +29998,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -29857,7 +30030,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -30135,8 +30308,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -30157,7 +30331,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -31134,7 +31308,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -31234,7 +31408,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -31390,7 +31564,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -31398,7 +31572,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -32402,6 +32576,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -32423,7 +32608,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -32701,8 +32886,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -32723,7 +32909,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -33700,7 +33886,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -33800,7 +33986,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -33956,7 +34142,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -33964,7 +34150,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -35122,6 +35308,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -35143,7 +35340,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -35421,8 +35618,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -35443,7 +35641,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -36420,7 +36618,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -36520,7 +36718,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -36676,7 +36874,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -36684,7 +36882,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -37679,6 +37877,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -37700,7 +37909,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -37978,8 +38187,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -38000,7 +38210,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -38977,7 +39187,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -39077,7 +39287,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -39233,7 +39443,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -39241,7 +39451,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -40067,6 +40277,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -40088,7 +40309,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -40366,8 +40587,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -40388,7 +40610,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -41365,7 +41587,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -41465,7 +41687,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -41621,7 +41843,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -41629,7 +41851,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -42457,6 +42679,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -42478,7 +42711,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -42756,8 +42989,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -42778,7 +43012,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -43755,7 +43989,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -43855,7 +44089,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -44011,7 +44245,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -44019,7 +44253,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -44864,6 +45098,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -44885,7 +45130,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -45163,8 +45408,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -45185,7 +45431,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -46162,7 +46408,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -46262,7 +46508,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -46418,7 +46664,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -46426,7 +46672,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -47256,6 +47502,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -47277,7 +47534,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -47555,8 +47812,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -47577,7 +47835,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -48554,7 +48812,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -48654,7 +48912,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -48810,7 +49068,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -48818,7 +49076,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -49692,6 +49950,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -49713,7 +49982,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -49991,8 +50260,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -50013,7 +50283,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -50990,7 +51260,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -51090,7 +51360,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -51246,7 +51516,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -51254,7 +51524,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -52090,6 +52360,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -52111,7 +52392,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -52389,8 +52670,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -52411,7 +52693,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -53388,7 +53670,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -53488,7 +53770,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -53644,7 +53926,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -53652,7 +53934,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -54478,6 +54760,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -54499,7 +54792,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -54777,8 +55070,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -54799,7 +55093,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -55776,7 +56070,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -55876,7 +56170,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -56032,7 +56326,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -56040,7 +56334,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -56870,6 +57164,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -56891,7 +57196,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -57169,8 +57474,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -57191,7 +57497,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -58168,7 +58474,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -58268,7 +58574,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -58424,7 +58730,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -58432,7 +58738,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -59262,6 +59568,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -59283,7 +59600,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -59561,8 +59878,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -59583,7 +59901,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -60560,7 +60878,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -60660,7 +60978,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -60816,7 +61134,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -60824,7 +61142,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -61658,6 +61976,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -61679,7 +62008,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -61957,8 +62286,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -61979,7 +62309,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -62956,7 +63286,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -63056,7 +63386,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -63212,7 +63542,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -63220,7 +63550,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -64052,6 +64382,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -64073,7 +64414,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -64351,8 +64692,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -64373,7 +64715,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -65350,7 +65692,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -65450,7 +65792,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -65606,7 +65948,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -65614,7 +65956,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -66445,6 +66787,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -66466,7 +66819,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -66744,8 +67097,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -66766,7 +67120,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -67743,7 +68097,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -67843,7 +68197,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -67999,7 +68353,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -68007,7 +68361,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -68838,6 +69192,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -68859,7 +69224,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -69137,8 +69502,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -69159,7 +69525,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -70136,7 +70502,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -70236,7 +70602,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -70392,7 +70758,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -70400,7 +70766,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -71274,6 +71640,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -71295,7 +71672,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -71573,8 +71950,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -71595,7 +71973,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -72572,7 +72950,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -72672,7 +73050,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -72828,7 +73206,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -72836,7 +73214,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -73710,6 +74088,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -73731,7 +74120,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -74009,8 +74398,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -74031,7 +74421,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -75008,7 +75398,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -75108,7 +75498,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -75264,7 +75654,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -75272,7 +75662,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -76101,6 +76491,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -76122,7 +76523,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -76400,8 +76801,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -76422,7 +76824,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -77399,7 +77801,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -77499,7 +77901,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -77655,7 +78057,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -77663,7 +78065,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -78494,6 +78896,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -78515,7 +78928,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -78793,8 +79206,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -78815,7 +79229,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -79792,7 +80206,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -79892,7 +80306,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -80048,7 +80462,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -80056,7 +80470,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -80887,6 +81301,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -80908,7 +81333,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -81186,8 +81611,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -81208,7 +81634,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -82185,7 +82611,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -82285,7 +82711,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -82441,7 +82867,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -82449,7 +82875,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -83323,6 +83749,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -83344,7 +83781,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -83622,8 +84059,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -83644,7 +84082,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -84621,7 +85059,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -84721,7 +85159,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -84877,7 +85315,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -84885,7 +85323,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -85759,6 +86197,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -85780,7 +86229,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -86058,8 +86507,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -86080,7 +86530,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -87057,7 +87507,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -87157,7 +87607,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -87313,7 +87763,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -87321,7 +87771,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)
@@ -88225,6 +88675,17 @@ def wutSelectRead [max: int] {
 }
 
 
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
 # paru and yay are aur helpers wrapping pacman: one manager wearing three names
 const PACK_PACMAN_FAMILY = ['paru', 'yay', 'pacman']
 
@@ -88246,7 +88707,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --ignore-case \$term])
+    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -88524,8 +88985,9 @@ def packListCmd [manager: string] {
   }
 }
 
-# \`list\`'s filter is a substring over the manager's own output — WIDE, as COMMANDS.md has it — so the check that
-# answers before the gate is that same command and that same rule, and cannot drift from what gets dumped after
+# \`list\`'s filter is find's rule over the manager's own output — a term starts a word of a line, as COMMANDS.md has
+# it — so the check that answers before the gate is that same command and that same rule, and cannot drift from what
+# gets dumped after
 def --env packListedRaw [manager: string] {
   if \$manager == 'deno' {
     return (packDenoInstalled)
@@ -88546,7 +89008,7 @@ def --env packListedRaw [manager: string] {
 }
 
 def packLinesLike [lines: list<string>, term: string] {
-  \$lines | any { |l| \$l | str contains --ignore-case \$term }
+  \$lines | any { |l| wutWordMatch \$l \$term }
 }
 
 # removing asks the opposite question of adding: not whether a manager could serve the name, but whether it is the
@@ -89523,7 +89985,7 @@ def --env packDeno [] {
       let names = (packDenoInstalled)
       let terms = (packNameList 'PACK_LIST_NAMES')
       for n in \$names {
-        if (\$terms | is-empty) or (\$terms | any { |t| \$n | str contains --ignore-case \$t }) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$n \$t }) {
           opPrint \$n
         }
       }
@@ -89623,7 +90085,7 @@ def --env packBun [] {
         print \$out
       } else {
         for term in \$names {
-          \$out | lines | where { |l| \$l | str contains --ignore-case \$term } | each { |l| print \$l }
+          \$out | lines | where { |l| wutWordMatch \$l \$term } | each { |l| print \$l }
         }
       }
     }
@@ -89779,7 +90241,7 @@ def --env packGo [] {
       # nu code, like deno's listing: a wut function does not exist in the fresh \`nu -c\` packOpList runs
       let terms = (packNameList 'PACK_LIST_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-empty) or (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-empty) or (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           opPrint \$\\"(\$t.path) (\$t.version)\\"
         }
       }
@@ -89787,7 +90249,7 @@ def --env packGo [] {
     outdated => {
       let terms = (packNameList 'PACK_OUTDATED_NAMES')
       for t in (packGoTools) {
-        if (\$terms | is-not-empty) and not (\$terms | any { |term| \$t.path | str contains --ignore-case \$term }) {
+        if (\$terms | is-not-empty) and not (\$terms | any { |term| wutWordMatch \$t.path \$term }) {
           continue
         }
         let latest = (^\$cmd list -m -f '{{.Version}}' \$\\"(\$t.module)@latest\\" | complete | get stdout | str trim)

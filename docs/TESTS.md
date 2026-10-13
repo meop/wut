@@ -12,7 +12,7 @@ errors. If a shell binary is not installed, its checks are silently skipped — 
 
 **Tier 3 — Client decisions**: Run a nu snippet for real, against a PATH built for the test, and assert what it answers.
 Only for the decisions the server cannot make, since they read the machine (`src/sh/nu/pack_test.ts`,
-`src/sh/nu/virt/qemu_test.ts`). Skipped the same way when `nu` is missing.
+`src/sh/nu/virt_test.ts`, `src/sh/nu/virt/qemu_test.ts`). Skipped the same way when `nu` is missing.
 
 Snapshot files are committed to the repo under `src/cmd/__snapshots__/`, so script diffs are visible in PRs.
 
@@ -99,6 +99,20 @@ A decision this tier does not reach is the one a snapshot cannot see either: a s
 check that is emitted, looks right, and answers the wrong question still snapshots clean. That is what let `remove`
 resolve a name by asking who _could_ install it. Anything the client decides for itself belongs here, not only in a
 snapshot.
+
+### `src/match_test.ts`
+
+The two matching primitives every command shares ([COMMANDS.md](COMMANDS.md)): `wordStartsWith` finds the start of a
+word behind any separator and never its middle or end, `sameName` takes a name whole, and `partsMatch` puts either to a
+path in any term order. The per-command cases — an acting op refusing part of a name, `find` reading a group's packages
+and `descr` — sit beside the snapshots in `src/cmd/*_snap_test.ts`, as plain assertions on the emitted plan.
+
+### `src/sh/nu/virt_test.ts`
+
+Tier 3 — which instances a rem or sync plan keeps (`virtPlanAdded`), run against a fake root holding only the file each
+manager's add leaves behind: an instance never added drops out, a manager left with none drops out with it, and a qemu
+variant counts as its instance. Docker leaves no file, so its case stubs `sudo` and `docker` on a PATH of their own and
+answers with compose's project listing.
 
 ### `src/sh/nu/virt/qemu_test.ts`
 

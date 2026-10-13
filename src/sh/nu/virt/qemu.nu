@@ -515,7 +515,7 @@ def virtQemu [] {
           | where name =~ '/qemu-[^/]+\.service$'
           | get name
           | each { |f| $f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if ($env.VIRT_INSTANCES | is-not-empty) { where { |i| $env.VIRT_INSTANCES | all { |f| $i | str contains --ignore-case $f } } } else { $in }
+          | if ($env.VIRT_INSTANCES | is-not-empty) { where { |i| $env.VIRT_INSTANCES | all { |f| wutWordMatch $i $f } } } else { $in }
       } else { [] }) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 $"qemu-($instance).service" } catch { |e| opRethrowInterrupt $e }
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full $"^swtpm.*($instance)" } catch { |e| opRethrowInterrupt $e }
@@ -548,7 +548,7 @@ def virtQemu [] {
     sync => {
       for requested in $env.VIRT_INSTANCES {
         let instance = ($requested | split row '/' | first)
-        if not ($"/etc/systemd/system/qemu-($instance).service" | path exists) {
+        if not (virtInstanceHere $cmd $instance) {
           continue
         }
 

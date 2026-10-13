@@ -7,7 +7,7 @@
 **Entry Fields:**
 
 - `maps` - Array of file/directory mappings from config to local filesystem
-- `aliases` - Array of alternative names for find operations (e.g., zed: [zeditor, zed-cli])
+- `aliases` - Array of other names the entry goes by (e.g., zed: [zeditor, zed-cli])
 
 **Map Properties:**
 
@@ -83,15 +83,18 @@ ssh:
 - `out` paths must have appropriate platform keys for target OS
 - Directory entries can contain any number of files (no need to list each)
 - Template paths (with `{...}`) are resolved at runtime from context
-- Aliases only affect `find` operation filtering
+- A key and its aliases are the entry's names: `diff` and `sync` take one whole, `find` and `list` the start of a word
+  of one, or of an `in` path ([COMMANDS.md](COMMANDS.md))
 
 ## pack group structure
 
-A group file has two top level keys: `aliases`, other names it answers to, and `operation`, holding `add` and `remove`.
-A group states what a manager installs, never which kind of manager it is:
+A group file has three top level keys: `descr`, a sentence about it that `find` searches, `aliases`, other names it
+answers to, and `operation`, holding `add` and `remove`. `descr` and `aliases` are optional. A group states what a
+manager installs, never which kind of manager it is:
 
 ```yaml
 ---
+descr: A shell that treats everything as structured data.
 aliases:
   - nushell
 operation:
@@ -298,9 +301,16 @@ A companion package is not an alias. `npm` ships inside node on brew and winget 
 it belongs in those managers' `names` — same for `docker-compose` alongside `docker`. An alias is another name for the
 same thing; a companion is a second thing the group installs.
 
-`find` matches aliases by substring, like it matches group and package names. Resolution for `add`/`remove` matches an
-alias exactly, the way a full group name matches, and structural path matches are preferred over alias matches when both
-hit.
+An alias is a whole name, matched the way the group's own name is ([COMMANDS.md](COMMANDS.md)): `add`, `remove`, `sync`
+and `info` take it exactly, so `nush` is not `nushell`, and a shorter spelling worth having is another alias. Two
+spellings of one name are two aliases too (`lm-studio` beside a group named `lmstudio`) — nothing is normalised, and an
+alias is there because the tool is commonly called that, not to help a search along. `find` reads further: the start of
+any word of the name, an alias, a declared package, or `descr`.
+
+## pack group descr
+
+`descr` is one sentence about the group. Nothing acts on it; `find` searches it, for the case where what is remembered
+is what the thing does rather than what it is called.
 
 ## script.yaml Gate Enforcement
 

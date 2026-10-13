@@ -63,7 +63,7 @@ Deno.test({
   },
 })
 
-Deno.test('script.nu - the listing shows what applies, then what the gates rule out, grouped the same way', async () => {
+Deno.test('script.nu - the listing shows what is needed, then a group per reason for the rest', async () => {
   const out = await withPlan(
     [
       unit('b', 'setup'),
@@ -74,27 +74,29 @@ Deno.test('script.nu - the listing shows what applies, then what the gates rule 
     'scriptFindRun',
   )
   if (out != null) {
-    assertEquals(out.split('\n').slice(0, 10), [
+    assertEquals(out.split('\n').slice(0, 12), [
       'install',
       '  c',
       'setup',
       '  b',
       '',
-      'not applicable',
+      'already installed',
       '  install',
       '    d',
+      '',
+      'missing tool',
       '  setup',
       '    a',
     ])
   }
 })
 
-Deno.test('script.nu - with nothing applicable the listing is only that group, and no table', async () => {
+Deno.test('script.nu - with nothing needed the listing is only those groups, and no table', async () => {
   const out = await withPlan(
     [unit('b', 'install', [], ['sh']), unit('a', 'setup', ['wut-no-such-cmd'])],
     'scriptFindRun',
   )
   if (out != null) {
-    assertEquals(out.split('\n'), ['not applicable', '  install', '    b', '  setup', '    a'])
+    assertEquals(out.split('\n'), ['already installed', '  install', '    b', '', 'missing tool', '  setup', '    a'])
   }
 })

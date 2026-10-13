@@ -31,6 +31,27 @@ def virtManagerHere [manager: string] {
   which $bin | is-not-empty
 }
 
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = ($instance | split row '/' | first)
+  match $manager {
+    docker => ($name in (^sudo docker compose ls --all --format json | complete | get stdout | if ($in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([$root 'var/lib/lxc' $name 'config'] | path join | path exists),
+    podman => ([$root 'etc/containers/systemd' $"($name).kube"] | path join | path exists),
+    qemu => ([$root 'etc/systemd/system' $"qemu-($name).service"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  $entries
+    | each { |e| $e | update instances ($e.instances | where { |i| virtInstanceHere $e.manager $i $root }) }
+    | where { |e| $e.instances | is-not-empty }
+}
+
 def --env virtCallManager [manager: string] {
   match $manager {
     docker => { virtDocker },
@@ -58,13 +79,19 @@ def virtTable [headers: list<string>, rows: list<list<string>>] {
 
 def --env virtPlanRun [] {
   let plan = ($env.VIRT_PLAN? | default '{}' | from json)
-  let here = ($plan | transpose manager instances | where { |e| virtManagerHere $e.manager })
+  let managed = ($plan | transpose manager instances | where { |e| virtManagerHere $e.manager })
 
-  if ($here | is-empty) {
+  if ($managed | is-empty) {
     let missing = ($plan | transpose manager instances | each { |e| $e.manager })
     if ($missing | is-not-empty) {
       opPrintWarn $"manager not installed: ($missing | str join ', ')"
     }
+    return
+  }
+
+  let here = if $env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded $managed } else { $managed }
+  if ($here | is-empty) {
+    opPrintWarn $"instance not added: ($managed | each { |e| $e.instances } | flatten | str join ', ')"
     return
   }
 

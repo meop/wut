@@ -82,9 +82,12 @@ Two distinct loading functions:
 
 ## Command Matching
 
-All ops use **AND semantics** (every filter term must match; more terms = narrower). Each op resolves filters via one of
-two philosophies — **WIDE** (substring, act on all) or **PINPOINT** (exact-wins then first, act on one). See
-[docs/COMMANDS.md](docs/COMMANDS.md) for the per-op table and implementation.
+A typed term is put to a name one of two ways, and which depends on the op, never the command: an **acting** op (`add`,
+`rem`, `sync`, `run`, `exec`, `diff`, `info`) takes a name **whole** — its own, a folder above it, or an alias — and a
+**reading** op (`find`, `list`, `outdated`) takes the **start of a word** of one, and reads further (a pack group's
+packages and `descr`). Never a substring, never ranked, and `rem` resolves exactly as `add` does. `src/match.ts` and
+`src/sh/nu/match.nu` hold the two primitives; a new filter uses them rather than its own comparison. See
+[docs/COMMANDS.md](docs/COMMANDS.md) for the per-op table.
 
 ## One Decision
 
@@ -98,7 +101,8 @@ filter. See [docs/OPS.md](docs/OPS.md).
 Cross-cutting:
 
 - [docs/OPS.md](docs/OPS.md) — the shape every command shares: server resolves, client filters, one prompt
-- [docs/COMMANDS.md](docs/COMMANDS.md) — how filters resolve to targets (WIDE vs PINPOINT), per-op table
+- [docs/COMMANDS.md](docs/COMMANDS.md) — how a typed term resolves to targets (a name whole vs the start of a word),
+  per-op table
 - [docs/RULES.md](docs/RULES.md) — config file shapes: `file.yaml`, pack group yaml, `script.yaml` gates
 - [docs/NUSHELL.md](docs/NUSHELL.md) — nu parsing quirks that have caused bugs
 - [docs/TESTS.md](docs/TESTS.md) — test architecture, snapshots, adding cases

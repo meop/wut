@@ -1,58 +1,85 @@
 # Command Ops & Matching
 
-How a filter argument resolves to targets. Every op is one of two behaviours, so a filter matching more than one thing
-has one answer per op rather than a different one each time.
+How a typed term resolves to targets. There are two questions a term can put to a name, and which one is asked depends
+only on what the op does, never on which command it belongs to:
 
-- **WIDE** — substring match, act on **all** results. No filter args = everything. Read, explore and bulk-idempotent ops
-  (`find`, `list`, `add`, `sync`, `tidy`) use it, and the read ops double as the dry run.
-- **PINPOINT** — the same substring match, then reduced to **one**: prefer a candidate with an exact segment match, else
-  take the first by stable sort. Destructive or single-effect ops (`remove`, `rem`, a named `exec`) use it, since acting
-  on a set by accident is the failure mode there.
+- **Acting ops take a name whole.** `add`, `rem`/`remove`, `sync`, `run`, `exec`, `diff` and `info` change or address
+  one thing, so the term has to _be_ a name it goes by — its own name, a folder above it, or an alias. Part of a name is
+  not a name: `nush` is not `nushell`, and `gl` is not `glass`. Case aside, nothing is normalised, so `lm-studio` and
+  `lmstudio` are two names and a config that wants both states both.
+- **Reading ops take the start of a word.** `find`, `list` and `outdated` exist to turn something half remembered into a
+  name to type, so the term only has to start a word of one. A word is what sits between anything that is not a letter
+  or a digit, so `go` finds `golang`, `golang.go` and `foo/golang`, and `tightvnc` finds `glavsoft.tightvnc`. The middle
+  or the end of a word is never matched — `go` does not find `cargo` — and the term is taken as typed, its own
+  separators included, so `studio` finds `lm-studio` and not `lmstudio`.
 
-Exact-match is the tie-breaker inside PINPOINT, not a third mode: it is what lets an abbreviation still work when it is
-also a prefix of something else (`gpu` beats `gpu-lite`). When PINPOINT picks the wrong one, the matching WIDE op shows
-the candidates — explore wide, add a filter term, act pinpoint.
+`sameName` and `wordStartsWith` in `src/match.ts` are the two primitives, `partsMatch` puts either to a path, and
+`wutWordMatch` in `src/sh/nu/match.nu` is the second one again for the filters the client runs.
 
-`preferExactMatches(parts, filters)` and `pinpointMatch(parts, filters)` in `src/cfg.ts` are the two primitives.
+What a reading op reads is wider than a name, too. It looks at whatever could jog the name loose — a pack group's
+aliases, the packages it holds and its `descr`, a file key's source paths — where an acting op never looks inside the
+thing it is naming: a package a group holds is not a name for the group, and reaching the group through one would act on
+everything else in it.
 
-## This project (wut)
+Nothing is ranked and nothing is reduced. Every match is a row of the table, and the numbered pick is where a run is
+narrowed ([OPS.md](OPS.md#filter-summarise-ask-once)) — for `rem` exactly as for `add`. The two ops that can only do one
+thing, `virt run` and a `script exec` naming a tool, take the first match in sorted order.
 
-All ops use **AND semantics**: every filter term must match; more terms = narrower. Exception: `pack` takes a list of
-names with OR semantics — each name is resolved independently.
+## A path is a name per level
 
-| Command  | WIDE (substring, all)                     | PINPOINT (exact-wins → first, one) |
-| -------- | ----------------------------------------- | ---------------------------------- |
-| `script` | `find`, `exec` (action alone)             | `exec` (action + tool)             |
-| `file`   | `find`, `diff`, `list`, `sync`            | —                                  |
-| `pack`   | `find`, `add`, `sync`, `list`, `outdated` | `remove`                           |
-| `virt`   | `find`, `list`, `add`, `sync`, `tidy`     | `rem`, `run`                       |
+Every command's targets live in a tree, and each level of it is a name: `cfg/pack/lang/go.yaml`,
+`cfg/virt/<host>/qemu/glass.yaml`, `cfg/script/docker/setup.zsh`. A folder is a group of what it holds, so naming one
+reaches all of it — `wut p a lang` is every group under `lang/`, `wut v a qemu` every qemu instance — and a term never
+has to say where in the tree its level sits.
+
+| Command  | Tree                           | Several terms                                                         |
+| -------- | ------------------------------ | --------------------------------------------------------------------- |
+| `pack`   | `<folder>/…/<group>`           | each is its own name: `wut p a nu zsh` is two groups                  |
+| `virt`   | `<manager>/[<pod>/]<instance>` | all must match, in any order: `qemu glass` and `glass qemu` are one   |
+| `script` | `<tool>/<action>`              | all must match; the cli reads action first, the tree is tool first    |
+| `file`   | a key in `file.yaml`           | all must match the one key, through its own name, an alias, or a path |
+
+A pack group's full name is its path joined with `-` (`lang-js-node`), and a term may name any run of whole levels of
+it: `node`, `js`, `lang-js`, `js-node`.
+
+## What each op asks
+
+| Command  | A name, whole                   | The start of a word        |
+| -------- | ------------------------------- | -------------------------- |
+| `pack`   | `add`, `remove`, `sync`, `info` | `find`, `list`, `outdated` |
+| `virt`   | `add`, `rem`, `sync`, `run`     | `find`, `list`             |
+| `script` | `exec`                          | `find`                     |
+| `file`   | `diff`, `sync`                  | `find`, `list`             |
 
 `script exec` is the one op that splits on cardinality: `wut s e setup` runs every setup script gated for this machine,
-while `wut s e setup ptyxis` names a tool and pinpoints to one. The cli reads action first; the config tree is tool
-first (`ptyxis/setup.zsh`), so `script` reverses its filters before globbing. The `has_cmd` gate is client-side, so a
-fanned out run skips tools that are not on the client's PATH, and `find` leaves them out of the listing — see
+while `wut s e setup ptyxis` names a tool and runs its one script. The `has_cmd` gate is client-side, so a fanned out
+run skips tools that are not on the client's PATH, and `find` leaves them out of the listing — see
 [SCRIPT.md](SCRIPT.md#the-clients-gates).
 
-`script exec`, `virt rem`, `virt run` and `pack remove` apply pinpoint at their own layer — script over the union of all
-three shells' matches, so a tool present in more than one shell still resolves to a single script, and podman-instance
-eligibility and group-name resolution differ from a plain path glob. `pack list` and `pack outdated` match a term as a
-substring of what each manager reports installed, then hand the term to the manager as well. `pack sync` given names
-matches them exactly, the way `remove` does. Below the group, at the manager, `add`, `remove` and `sync` all offer every
-manager that answers rather than the first, and the numbered pick decides
-([PACK.md](PACK.md#add-and-remove-ask-different-questions)).
+`pack list` and `pack outdated` put their term to what each manager reports installed, a line at a time, then hand the
+term to the manager as well; `virt list` puts it to the instances that are installed. Both are the client's to answer,
+so both go through `wutWordMatch`.
+
+## The deeper search is a fallback
+
+A pack name no group answers to is not dropped. It is handed to the managers as typed — `add`, `remove`, `sync` and
+`info` ask each one whether it has it, and `find` offers to search them for it — and only for the names nothing in the
+config matched ([PACK.md](PACK.md#finding)). The config is the first answer and the managers are the second, never both
+at once.
 
 ## Nothing matched
 
-A filter that matches nothing is a no op, and every op says so rather than emitting a body that quietly does nothing:
+A term that matches nothing is a no op, and every op says so rather than emitting a body that quietly does nothing:
 
-| Command  | Message                          | When                                                  |
-| -------- | -------------------------------- | ----------------------------------------------------- |
-| `virt`   | `no instance matched: <filters>` | an add/rem/sync filter resolved to no instance        |
-| `file`   | `no file matched: <filters>`     | a filter resolved to no config key                    |
-| `script` | `no script matched: <filters>`   | an action, or action plus tool, resolved to no script |
+| Command  | Message                          | When                                            |
+| -------- | -------------------------------- | ----------------------------------------------- |
+| `virt`   | `no instance matched: <filters>` | an add/rem/sync/run term named no instance      |
+| `file`   | `no file matched: <filters>`     | a term named no config key                      |
+| `script` | `no script matched: <filters>`   | an action, or action plus tool, named no script |
 
 `find` ops are exempt: an empty result is the answer to a search, not a failure. `pack` and `virt` have no manager
 filter to mismatch: the numbered prompt narrows the run instead, and it can only offer what the client actually has.
 
-Example fixtures exercise the split: `virt add qemu` → `[test, test2]` (WIDE) vs `virt rem qemu` → `[test]` (PINPOINT);
-`pack add shell` → both shell groups vs `pack rem shell` → the first.
+Example fixtures exercise the split: `virt add test` → `[test]` while `virt find test` → `[test, test2]`;
+`pack add nush` is a loose name while `pack find nush` → `shell-nu`; `pack add shell` and `pack rem shell` → both shell
+groups.
