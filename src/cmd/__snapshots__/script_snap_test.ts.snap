@@ -1403,23 +1403,31 @@ def scriptHasSvc [...svcs: string] {
 }
 
 # the listing's groups for what is left out, in the order shown
-const SCRIPT_SKIP_DONE = 'already installed'
-const SCRIPT_SKIP_MISSING = 'missing tool'
-const SCRIPT_SKIPS = [\$SCRIPT_SKIP_DONE \$SCRIPT_SKIP_MISSING]
+const SCRIPT_SKIP_DONE = 'run already'
+const SCRIPT_SKIP_MISSING = 'unmet tool dependency'
+const SCRIPT_SKIP_DESKTOP = 'no desktop session'
+const SCRIPT_SKIP_DESKTOP_WRONG = 'wrong desktop session'
+const SCRIPT_SKIPS = [\$SCRIPT_SKIP_DONE \$SCRIPT_SKIP_MISSING \$SCRIPT_SKIP_DESKTOP \$SCRIPT_SKIP_DESKTOP_WRONG]
 
 # why the cheap gates leave one unit out here, or '' when it is needed: a no_ gate needs none of its commands or
-# services here, and a has_ gate needs one of them. whether a script has more to do beyond that is its own to say
+# services here, and a has_ gate needs one of them. no desktop session, which ssh is to a no_ssh script, is said before
+# a missing tool, and a wrong desktop only once the tool is there. whether a script has more to do beyond that is its
+# own to say
 def scriptSkip [u: record] {
   if (
     ((\$u.noCmds | is-not-empty) and (scriptHasCmd ...\$u.noCmds))
     or ((\$u.noSvcs | is-not-empty) and (scriptHasSvc ...\$u.noSvcs))
   ) {
     \$SCRIPT_SKIP_DONE
+  } else if \$u.desktop == 'none' or (\$u.noSsh and ('SSH_CONNECTION' in \$env)) {
+    \$SCRIPT_SKIP_DESKTOP
   } else if (
     ((\$u.cmds | is-not-empty) and not (scriptHasCmd ...\$u.cmds))
     or ((\$u.svcs | is-not-empty) and not (scriptHasSvc ...\$u.svcs))
   ) {
     \$SCRIPT_SKIP_MISSING
+  } else if \$u.desktop == 'other' {
+    \$SCRIPT_SKIP_DESKTOP_WRONG
   } else {
     ''
   }
@@ -1650,7 +1658,7 @@ function () {
   }
 }
 
-\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[]}]'#
+\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"desktop":"","noSsh":false}]'#
 
 scriptPlanRun
 
@@ -2175,23 +2183,31 @@ def scriptHasSvc [...svcs: string] {
 }
 
 # the listing's groups for what is left out, in the order shown
-const SCRIPT_SKIP_DONE = 'already installed'
-const SCRIPT_SKIP_MISSING = 'missing tool'
-const SCRIPT_SKIPS = [\$SCRIPT_SKIP_DONE \$SCRIPT_SKIP_MISSING]
+const SCRIPT_SKIP_DONE = 'run already'
+const SCRIPT_SKIP_MISSING = 'unmet tool dependency'
+const SCRIPT_SKIP_DESKTOP = 'no desktop session'
+const SCRIPT_SKIP_DESKTOP_WRONG = 'wrong desktop session'
+const SCRIPT_SKIPS = [\$SCRIPT_SKIP_DONE \$SCRIPT_SKIP_MISSING \$SCRIPT_SKIP_DESKTOP \$SCRIPT_SKIP_DESKTOP_WRONG]
 
 # why the cheap gates leave one unit out here, or '' when it is needed: a no_ gate needs none of its commands or
-# services here, and a has_ gate needs one of them. whether a script has more to do beyond that is its own to say
+# services here, and a has_ gate needs one of them. no desktop session, which ssh is to a no_ssh script, is said before
+# a missing tool, and a wrong desktop only once the tool is there. whether a script has more to do beyond that is its
+# own to say
 def scriptSkip [u: record] {
   if (
     ((\$u.noCmds | is-not-empty) and (scriptHasCmd ...\$u.noCmds))
     or ((\$u.noSvcs | is-not-empty) and (scriptHasSvc ...\$u.noSvcs))
   ) {
     \$SCRIPT_SKIP_DONE
+  } else if \$u.desktop == 'none' or (\$u.noSsh and ('SSH_CONNECTION' in \$env)) {
+    \$SCRIPT_SKIP_DESKTOP
   } else if (
     ((\$u.cmds | is-not-empty) and not (scriptHasCmd ...\$u.cmds))
     or ((\$u.svcs | is-not-empty) and not (scriptHasSvc ...\$u.svcs))
   ) {
     \$SCRIPT_SKIP_MISSING
+  } else if \$u.desktop == 'other' {
+    \$SCRIPT_SKIP_DESKTOP_WRONG
   } else {
     ''
   }
@@ -2418,6 +2434,138 @@ function () {
   opPrintMaybeRunCmd cargo binstall cargo-update
 }
 '# }
+    r#'desktop/setup'# => { zsh --no-rcs -c r#'function opPrint {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  print -r -- "\$*"
+}
+
+function opPrintErr {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*" >&2
+    return
+  fi
+  print -n "\\\\033[0;31m" >&2
+  print -n -r -- "\$*" >&2
+  print "\\\\033[0m" >&2
+}
+
+function opPrintSucc {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;32m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintWarn {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;33m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintInfo {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;34m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintCmd {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;35m"
+  print -n -r "\$1"
+  print -n "\\\\033[0m"
+  shift 1
+  if [[ \$* ]]; then
+    print -n " \\\\033[0;36m"
+    print -n -r -- "\$*"
+    print "\\\\033[0m"
+  fi
+}
+
+function opMaybePrintCmd {
+  if [[ -z \$NOOP ]]; then
+    opPrintCmd "\$@"
+  fi
+}
+
+function opRunCmd {
+  eval "\$*"
+}
+
+function opRunSilentCmd {
+  eval "\$*" &> /dev/null
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+function opAsk {
+  if [[ \$YES ]]; then
+    return 0
+  fi
+  local yn=''
+  read "yn?\${1} [y,[n]]: "
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+}
+
+function opMaybeRunCmd {
+  if [[ -z \$NOOP ]]; then
+    opRunCmd "\$@"
+  fi
+}
+
+function opMaybeRunSilentCmd {
+  if [[ -z \$NOOP ]]; then
+    opRunSilentCmd "\$@"
+  fi
+}
+
+function opPrintRunCmd {
+  opPrintCmd "\$@"
+  opRunCmd "\$@"
+}
+
+function opPrintMaybeRunCmd {
+  opPrintCmd "\$@"
+  opMaybeRunCmd "\$@"
+}
+
+function () {
+  if [[ \$SYS_OS_DE != gnome ]]; then
+    opPrintWarn 'script is for gnome desktop environment'
+    return
+  fi
+  opPrintMaybeRunCmd gsettings list-schemas
+}
+'# }
     r#'docker/setup'# => { zsh --no-rcs -c r#'function opPrint {
   if [[ \$SUCCINCT ]]; then
     return
@@ -2563,7 +2711,7 @@ function () {
   }
 }
 
-\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"],"noCmds":[],"svcs":[],"noSvcs":[]},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"],"noCmds":[],"svcs":[],"noSvcs":[]}]'#
+\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"],"noCmds":[],"svcs":[],"noSvcs":[],"desktop":"","noSsh":false},{"id":"desktop/setup","action":"setup","tool":"desktop","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"desktop":"none","noSsh":false},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"],"noCmds":[],"svcs":[],"noSvcs":[],"desktop":"","noSsh":false}]'#
 
 scriptPlanRun
 
@@ -2983,23 +3131,31 @@ def scriptHasSvc [...svcs: string] {
 }
 
 # the listing's groups for what is left out, in the order shown
-const SCRIPT_SKIP_DONE = 'already installed'
-const SCRIPT_SKIP_MISSING = 'missing tool'
-const SCRIPT_SKIPS = [\$SCRIPT_SKIP_DONE \$SCRIPT_SKIP_MISSING]
+const SCRIPT_SKIP_DONE = 'run already'
+const SCRIPT_SKIP_MISSING = 'unmet tool dependency'
+const SCRIPT_SKIP_DESKTOP = 'no desktop session'
+const SCRIPT_SKIP_DESKTOP_WRONG = 'wrong desktop session'
+const SCRIPT_SKIPS = [\$SCRIPT_SKIP_DONE \$SCRIPT_SKIP_MISSING \$SCRIPT_SKIP_DESKTOP \$SCRIPT_SKIP_DESKTOP_WRONG]
 
 # why the cheap gates leave one unit out here, or '' when it is needed: a no_ gate needs none of its commands or
-# services here, and a has_ gate needs one of them. whether a script has more to do beyond that is its own to say
+# services here, and a has_ gate needs one of them. no desktop session, which ssh is to a no_ssh script, is said before
+# a missing tool, and a wrong desktop only once the tool is there. whether a script has more to do beyond that is its
+# own to say
 def scriptSkip [u: record] {
   if (
     ((\$u.noCmds | is-not-empty) and (scriptHasCmd ...\$u.noCmds))
     or ((\$u.noSvcs | is-not-empty) and (scriptHasSvc ...\$u.noSvcs))
   ) {
     \$SCRIPT_SKIP_DONE
+  } else if \$u.desktop == 'none' or (\$u.noSsh and ('SSH_CONNECTION' in \$env)) {
+    \$SCRIPT_SKIP_DESKTOP
   } else if (
     ((\$u.cmds | is-not-empty) and not (scriptHasCmd ...\$u.cmds))
     or ((\$u.svcs | is-not-empty) and not (scriptHasSvc ...\$u.svcs))
   ) {
     \$SCRIPT_SKIP_MISSING
+  } else if \$u.desktop == 'other' {
+    \$SCRIPT_SKIP_DESKTOP_WRONG
   } else {
     ''
   }
@@ -3076,7 +3232,7 @@ def scriptFindRun [] {
 }
 
 
-\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"],"noCmds":[],"svcs":[],"noSvcs":[]},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"],"noCmds":[],"svcs":[],"noSvcs":[]},{"id":"docker/teardown","action":"teardown","tool":"docker","shell":"zsh","cmds":["docker"],"noCmds":[],"svcs":[],"noSvcs":[]}]'#
+\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"],"noCmds":[],"svcs":[],"noSvcs":[],"desktop":"","noSsh":false},{"id":"desktop/setup","action":"setup","tool":"desktop","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"desktop":"none","noSsh":false},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"],"noCmds":[],"svcs":[],"noSvcs":[],"desktop":"","noSsh":false},{"id":"docker/teardown","action":"teardown","tool":"docker","shell":"zsh","cmds":["docker"],"noCmds":[],"svcs":[],"noSvcs":[],"desktop":"","noSsh":false},{"id":"local/repair","action":"repair","tool":"local","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"desktop":"","noSsh":true}]'#
 
 scriptFindRun
 
@@ -3511,23 +3667,31 @@ def scriptHasSvc [...svcs: string] {
 }
 
 # the listing's groups for what is left out, in the order shown
-const SCRIPT_SKIP_DONE = 'already installed'
-const SCRIPT_SKIP_MISSING = 'missing tool'
-const SCRIPT_SKIPS = [\$SCRIPT_SKIP_DONE \$SCRIPT_SKIP_MISSING]
+const SCRIPT_SKIP_DONE = 'run already'
+const SCRIPT_SKIP_MISSING = 'unmet tool dependency'
+const SCRIPT_SKIP_DESKTOP = 'no desktop session'
+const SCRIPT_SKIP_DESKTOP_WRONG = 'wrong desktop session'
+const SCRIPT_SKIPS = [\$SCRIPT_SKIP_DONE \$SCRIPT_SKIP_MISSING \$SCRIPT_SKIP_DESKTOP \$SCRIPT_SKIP_DESKTOP_WRONG]
 
 # why the cheap gates leave one unit out here, or '' when it is needed: a no_ gate needs none of its commands or
-# services here, and a has_ gate needs one of them. whether a script has more to do beyond that is its own to say
+# services here, and a has_ gate needs one of them. no desktop session, which ssh is to a no_ssh script, is said before
+# a missing tool, and a wrong desktop only once the tool is there. whether a script has more to do beyond that is its
+# own to say
 def scriptSkip [u: record] {
   if (
     ((\$u.noCmds | is-not-empty) and (scriptHasCmd ...\$u.noCmds))
     or ((\$u.noSvcs | is-not-empty) and (scriptHasSvc ...\$u.noSvcs))
   ) {
     \$SCRIPT_SKIP_DONE
+  } else if \$u.desktop == 'none' or (\$u.noSsh and ('SSH_CONNECTION' in \$env)) {
+    \$SCRIPT_SKIP_DESKTOP
   } else if (
     ((\$u.cmds | is-not-empty) and not (scriptHasCmd ...\$u.cmds))
     or ((\$u.svcs | is-not-empty) and not (scriptHasSvc ...\$u.svcs))
   ) {
     \$SCRIPT_SKIP_MISSING
+  } else if \$u.desktop == 'other' {
+    \$SCRIPT_SKIP_DESKTOP_WRONG
   } else {
     ''
   }
@@ -3754,6 +3918,138 @@ function () {
   opPrintMaybeRunCmd cargo binstall cargo-update
 }
 '# }
+    r#'desktop/setup'# => { zsh --no-rcs -c r#'function opPrint {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  print -r -- "\$*"
+}
+
+function opPrintErr {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*" >&2
+    return
+  fi
+  print -n "\\\\033[0;31m" >&2
+  print -n -r -- "\$*" >&2
+  print "\\\\033[0m" >&2
+}
+
+function opPrintSucc {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;32m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintWarn {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;33m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintInfo {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;34m"
+  print -n -r -- "\$*"
+  print "\\\\033[0m"
+}
+
+function opPrintCmd {
+  if [[ \$SUCCINCT ]]; then
+    return
+  fi
+  if [[ \$GRAYSCALE ]]; then
+    print -r -- "\$*"
+    return
+  fi
+  print -n "\\\\033[0;35m"
+  print -n -r "\$1"
+  print -n "\\\\033[0m"
+  shift 1
+  if [[ \$* ]]; then
+    print -n " \\\\033[0;36m"
+    print -n -r -- "\$*"
+    print "\\\\033[0m"
+  fi
+}
+
+function opMaybePrintCmd {
+  if [[ -z \$NOOP ]]; then
+    opPrintCmd "\$@"
+  fi
+}
+
+function opRunCmd {
+  eval "\$*"
+}
+
+function opRunSilentCmd {
+  eval "\$*" &> /dev/null
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+function opAsk {
+  if [[ \$YES ]]; then
+    return 0
+  fi
+  local yn=''
+  read "yn?\${1} [y,[n]]: "
+  [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
+}
+
+function opMaybeRunCmd {
+  if [[ -z \$NOOP ]]; then
+    opRunCmd "\$@"
+  fi
+}
+
+function opMaybeRunSilentCmd {
+  if [[ -z \$NOOP ]]; then
+    opRunSilentCmd "\$@"
+  fi
+}
+
+function opPrintRunCmd {
+  opPrintCmd "\$@"
+  opRunCmd "\$@"
+}
+
+function opPrintMaybeRunCmd {
+  opPrintCmd "\$@"
+  opMaybeRunCmd "\$@"
+}
+
+function () {
+  if [[ \$SYS_OS_DE != gnome ]]; then
+    opPrintWarn 'script is for gnome desktop environment'
+    return
+  fi
+  opPrintMaybeRunCmd gsettings list-schemas
+}
+'# }
     r#'docker/setup'# => { zsh --no-rcs -c r#'function opPrint {
   if [[ \$SUCCINCT ]]; then
     return
@@ -3899,7 +4195,7 @@ function () {
   }
 }
 
-\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"],"noCmds":[],"svcs":[],"noSvcs":[]},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"],"noCmds":[],"svcs":[],"noSvcs":[]}]'#
+\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"],"noCmds":[],"svcs":[],"noSvcs":[],"desktop":"","noSsh":false},{"id":"desktop/setup","action":"setup","tool":"desktop","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"desktop":"none","noSsh":false},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"],"noCmds":[],"svcs":[],"noSvcs":[],"desktop":"","noSsh":false}]'#
 
 scriptPlanRun
 

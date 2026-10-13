@@ -165,3 +165,29 @@ Deno.test('nu / linux / exec (named tool is not gated)', async () => {
   assertEquals(body.includes("opPrintWarn 'cargo is not installed'"), true)
   await checkSyntax('nu', body)
 })
+
+// sys_os_de never drops a script the machine is right for: with no desktop reported, or another one, the script is
+// kept and marked for the listing to say why
+Deno.test('nu / linux / find (a desktop script is marked by the desktop reported)', async () => {
+  const find = async (query: string) =>
+    await (await runSrv(req(`/sh/nu/script/find?sysOsPlat=linux${query}&wutNuPinned=1`))).text()
+  const desktop = '"tool":"desktop","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"desktop":'
+  assertEquals((await find('')).includes(`${desktop}"none"`), true)
+  assertEquals((await find('&sysOsDe=gnome')).includes(`${desktop}""`), true)
+  assertEquals((await find('&sysOsDe=plasma')).includes(`${desktop}"other"`), true)
+})
+// no_ssh is the client's to answer, so it travels with the plan
+Deno.test('nu / linux / find (no_ssh travels with the plan)', async () => {
+  const body = await (await runSrv(req('/sh/nu/script/find?sysOsPlat=linux&wutNuPinned=1'))).text()
+  assertEquals(
+    body.includes('"tool":"local","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"desktop":"","noSsh":true'),
+    true,
+  )
+})
+// asked for by name with no desktop reported, the script runs and its own check explains the no op
+Deno.test('nu / linux / exec (named desktop script is not gated)', async () => {
+  const body = await (await runSrv(req('/sh/nu/script/exec/setup/desktop?sysOsPlat=linux&wutNuPinned=1'))).text()
+  assertEquals(body.includes('"desktop":"","noSsh":false'), true)
+  assertEquals(body.includes("opPrintWarn 'script is for gnome desktop environment'"), true)
+  await checkSyntax('nu', body)
+})

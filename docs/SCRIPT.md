@@ -41,8 +41,10 @@ what the client has — so `script find` and `script exec` with an action alone 
 - **has_svc** / **no_svc** — the same for services (`scriptHasSvc`), which is how a windows feature shows it is
   installed: `sc.exe query` on windows, a systemd unit file on linux. A windows feature's install gates on `no_svc`, and
   a setup of it on `has_svc`
+- **no_ssh** — the session is not ssh (`SSH_CONNECTION` is unset). Some tools (`utmctl`) only answer the desktop session
+  logged in at the machine, which an ssh session is not
 
-Both are cheap, so they run before anything is shown, as
+All are cheap, so they run before anything is shown, as
 [OPS.md](OPS.md#cost-decides-which-side-of-the-gate-work-sits-on) has every op's cheap reads do. Whether a script has
 more to do beyond that — whether a setup's state already matches — is not asked up front: answering it means running
 each script's own checks, which is the script's work, so it happens once the script runs, and the script says
@@ -51,15 +53,20 @@ run again after a change to wut-config.
 
 `script find` lists each action with the tools needed here, then the ones these gates leave out, a group per reason in
 the same shape, nested one level as `virt find` nests a manager's pods; its table counts only what is needed. A failed
-`no_` gate lists a script under `already installed`, and a failed `has_` gate under `missing tool`. Neither is called
-not applicable: a script that does not apply to the platform was dropped by its `sys_*` gates on the server and is never
-listed. `script exec` with an action alone tables only what is needed, or says `nothing to do`. `script exec` with a
-tool named is not gated: the run was asked for by name, so the script's own `'<tool> is not installed'` or
-`'already installed'` explains a no op.
+`no_` gate lists a script under `run already`, and a failed `has_` gate under `unmet tool dependency`. The session gates
+say the machine is right and the session is what is short: a `sys_os_de` gate with no desktop reported, as over ssh, and
+a failed `no_ssh` both list a script under `no desktop session`, ahead of a missing tool. A `sys_os_de` gate that meets
+another desktop lists a script under `wrong desktop session` once its tool is there, and under `unmet tool dependency`
+until then. None is called not applicable: a script that can never run on this machine (another platform, os or cpu) was
+dropped by its other `sys_*` gates on the server and is never listed. A script that does apply is always listed, or
+nobody would know it is there. `script exec` with an action alone tables only what is needed, or says `nothing to do`.
+`script exec` with a tool named is not gated: the run was asked for by name, so the script's own
+`'<tool> is not installed'` or `'already installed'` explains a no op.
 
-Declare `has_` only where the tool must already exist, and `no_` only on an install — never `has_` there, or it would
-skip exactly when it is needed. A script that gates on something neither a command nor a service names (an app bundle, a
-config file, a registry value) keeps that check in its body only.
+Declare `has_` only where the tool must already exist, and `no_` where a command or a service being there means the
+script has run: every install today, and any other script that leaves one behind — never `has_` on an install, or it
+would skip exactly when it is needed. A script that gates on something neither a command nor a service names (an app
+bundle, a config file, a registry value) keeps that check in its body only.
 
 ## Writing a script
 

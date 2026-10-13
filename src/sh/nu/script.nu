@@ -31,23 +31,31 @@ def scriptHasSvc [...svcs: string] {
 }
 
 # the listing's groups for what is left out, in the order shown
-const SCRIPT_SKIP_DONE = 'already installed'
-const SCRIPT_SKIP_MISSING = 'missing tool'
-const SCRIPT_SKIPS = [$SCRIPT_SKIP_DONE $SCRIPT_SKIP_MISSING]
+const SCRIPT_SKIP_DONE = 'run already'
+const SCRIPT_SKIP_MISSING = 'unmet tool dependency'
+const SCRIPT_SKIP_DESKTOP = 'no desktop session'
+const SCRIPT_SKIP_DESKTOP_WRONG = 'wrong desktop session'
+const SCRIPT_SKIPS = [$SCRIPT_SKIP_DONE $SCRIPT_SKIP_MISSING $SCRIPT_SKIP_DESKTOP $SCRIPT_SKIP_DESKTOP_WRONG]
 
 # why the cheap gates leave one unit out here, or '' when it is needed: a no_ gate needs none of its commands or
-# services here, and a has_ gate needs one of them. whether a script has more to do beyond that is its own to say
+# services here, and a has_ gate needs one of them. no desktop session, which ssh is to a no_ssh script, is said before
+# a missing tool, and a wrong desktop only once the tool is there. whether a script has more to do beyond that is its
+# own to say
 def scriptSkip [u: record] {
   if (
     (($u.noCmds | is-not-empty) and (scriptHasCmd ...$u.noCmds))
     or (($u.noSvcs | is-not-empty) and (scriptHasSvc ...$u.noSvcs))
   ) {
     $SCRIPT_SKIP_DONE
+  } else if $u.desktop == 'none' or ($u.noSsh and ('SSH_CONNECTION' in $env)) {
+    $SCRIPT_SKIP_DESKTOP
   } else if (
     (($u.cmds | is-not-empty) and not (scriptHasCmd ...$u.cmds))
     or (($u.svcs | is-not-empty) and not (scriptHasSvc ...$u.svcs))
   ) {
     $SCRIPT_SKIP_MISSING
+  } else if $u.desktop == 'other' {
+    $SCRIPT_SKIP_DESKTOP_WRONG
   } else {
     ''
   }

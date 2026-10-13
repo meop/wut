@@ -22,7 +22,20 @@ const unit = (
   noCmds: Array<string> = [],
   svcs: Array<string> = [],
   noSvcs: Array<string> = [],
-) => ({ id: `${tool}/${action}`, action, tool, shell: 'zsh', cmds, noCmds, svcs, noSvcs })
+  session: { desktop?: string; noSsh?: boolean } = {},
+) => ({
+  id: `${tool}/${action}`,
+  action,
+  tool,
+  shell: 'zsh',
+  cmds,
+  noCmds,
+  svcs,
+  noSvcs,
+  desktop: '',
+  noSsh: false,
+  ...session,
+})
 
 Deno.test('script.nu - has_cmd needs one of its commands, no_cmd needs none of them', async () => {
   const out = await withPlan(
@@ -80,11 +93,11 @@ Deno.test('script.nu - the listing shows what is needed, then a group per reason
       'setup',
       '  b',
       '',
-      'already installed',
+      'run already',
       '  install',
       '    d',
       '',
-      'missing tool',
+      'unmet tool dependency',
       '  setup',
       '    a',
     ])
@@ -97,6 +110,53 @@ Deno.test('script.nu - with nothing needed the listing is only those groups, and
     'scriptFindRun',
   )
   if (out != null) {
-    assertEquals(out.split('\n'), ['already installed', '  install', '    b', '', 'missing tool', '  setup', '    a'])
+    assertEquals(out.split('\n'), [
+      'run already',
+      '  install',
+      '    b',
+      '',
+      'unmet tool dependency',
+      '  setup',
+      '    a',
+    ])
+  }
+})
+
+// no desktop, which ssh is to a no_ssh script, comes before a missing tool, and a wrong desktop once the tool is there
+Deno.test('script.nu - a session gate lists its script under what the session is short of', async () => {
+  const units = [
+    unit('a', 'setup'),
+    unit('b', 'setup', ['wut-no-such-cmd'], [], [], [], { desktop: 'none' }),
+    unit('c', 'repair', ['wut-no-such-cmd'], [], [], [], { noSsh: true }),
+    unit('d', 'setup', ['wut-no-such-cmd'], [], [], [], { desktop: 'other' }),
+    unit('e', 'setup', ['sh'], [], [], [], { desktop: 'other' }),
+  ]
+  const overSsh = await withPlan(units, `$env.SSH_CONNECTION = '10.0.0.1 1 10.0.0.2 22'\nscriptFindRun`)
+  if (overSsh != null) {
+    assertEquals(overSsh.split('\n').slice(0, 16), [
+      'setup',
+      '  a',
+      '',
+      'unmet tool dependency',
+      '  setup',
+      '    d',
+      '',
+      'no desktop session',
+      '  repair',
+      '    c',
+      '  setup',
+      '    b',
+      '',
+      'wrong desktop session',
+      '  setup',
+      '    e',
+    ])
+  }
+  const local = await withPlan(
+    units,
+    `hide-env --ignore-errors SSH_CONNECTION\nprint (scriptPlanHere | get tool | str join ',')`,
+  )
+  if (local != null) {
+    assertEquals(local, 'a')
   }
 })

@@ -318,7 +318,9 @@ two levels for consistency.
 - `sys_os_plat` - OS platform (darwin, linux, windows)
 - `sys_os` - Specific OS distribution (debian, ubuntu, arch, etc.) — exact match
 - `sys_os_like` - OS family substring match (e.g. `debian` matches ubuntu, kali, etc.; `arch` matches manjaro, etc.)
-- `sys_os_de` - Desktop environment (gnome, lxde, plasma, etc.)
+- `sys_os_de` - Desktop environment (gnome, lxde, plasma, etc.). It never hides a script, since another desktop can be
+  installed and a session can be without one: the listing says which it is (see below)
+- `no_ssh` - `true` for a script whose tool refuses an ssh session (`utmctl`). Client-side (see below)
 - `sys_cpu_arch` - CPU architecture (x86_64, aarch64, etc.)
 
 **Enforcement Requirements:**
@@ -343,8 +345,8 @@ two levels for consistency.
 Gates must match in both places — scripts are both discovered only on appropriate systems (YAML) and protected against
 accidental execution on incompatible ones (script body).
 
-`sys_*` gates are resolved on the server. `has_cmd`, `no_cmd`, `has_svc` and `no_svc` cannot be, and are answered by the
-client instead — see [SCRIPT.md](SCRIPT.md#the-clients-gates).
+`sys_*` gates are resolved on the server. `has_cmd`, `no_cmd`, `has_svc`, `no_svc` and `no_ssh` cannot be, and are
+answered by the client instead — see [SCRIPT.md](SCRIPT.md#the-clients-gates).
 
 **Examples:**
 
@@ -353,6 +355,7 @@ client instead — see [SCRIPT.md](SCRIPT.md#the-clients-gates).
 - `deno/install.nu` adds `no_cmd: [deno]` in YAML and checks `which deno | is-not-empty` before it asks
 - `hyperv/install.ps1` adds `no_svc: [vmms]` in YAML and checks `Get-Service vmms` before it asks
 - `gnome-terminal/setup.zsh` has `sys_os_de: [gnome]` + `sys_os_plat: [linux]` in YAML and checks both
+- `utm/repair.zsh` adds `no_ssh: true` in YAML and checks `[[ $SSH_CONNECTION ]]`
 - `node/install.zsh` has `sys_os_like: [debian]` in YAML and checks `[[ $SYS_OS_LIKE != *debian* ]]`
 - `docker/install.zsh` has `sys_os: [debian, ubuntu]` in YAML and checks exact `$SYS_OS` (because `$SYS_OS` is also used
   in URL construction)

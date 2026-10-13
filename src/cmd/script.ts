@@ -40,6 +40,12 @@ const CLIENT_GATES = {
   noSvcs: 'no_svc',
 } as const
 type ClientGates = { -readonly [K in keyof typeof CLIENT_GATES]: Array<string> }
+// session gates: the machine is right and the session is what is short, so they mark a script and never drop it.
+// desktop is what a failed sys_os_de saw, none reported or another one; whether the session is ssh is the client's
+// to answer
+type SessionGates = { desktop: '' | 'none' | 'other'; noSsh: boolean }
+type Gates = ClientGates & SessionGates
+const NO_GATES: Gates = { cmds: [], noCmds: [], svcs: [], noSvcs: [], desktop: '', noSsh: false }
 
 // ties go to the most native shell, so a hop lands somewhere as close to the machine as the script allows
 const SHELL_PRIORITY: Array<{ name: string; extension: string }> = [
@@ -52,16 +58,17 @@ type ScriptMatch = {
   parts: Array<string>
   extension: string
   shell: string
-} & ClientGates
+} & Gates
 
 // slices tool -> action -> shell -> gate down to tool -> action -> gate for one shell,
-// splitting the client side gates out of the server side sys_ gates
+// splitting the client side and session gates out of the server side sys_ gates
 function shellGates(
+  context: Ctx,
   content: CtxFilter | null,
   shell: string,
-): { filter: CtxFilter; client: Map<string, ClientGates> } {
+): { filter: CtxFilter; client: Map<string, Gates> } {
   const filter: CtxFilter = {}
-  const client = new Map<string, ClientGates>()
+  const client = new Map<string, Gates>()
   for (const [tool, actions] of Object.entries(content ?? {})) {
     const toolActions: CtxFilter = {}
     for (const [action, shells] of Object.entries(actions as CtxFilter)) {
@@ -70,11 +77,18 @@ function shellGates(
         continue
       }
       const sysGates: CtxFilter = { ...gate }
-      const gates = {} as ClientGates
+      const gates = { ...NO_GATES }
       for (const [field, key] of Object.entries(CLIENT_GATES) as Array<[keyof ClientGates, string]>) {
         const names = sysGates[key]
         delete sysGates[key]
         gates[field] = Array.isArray(names) ? names as Array<string> : []
+      }
+      gates.noSsh = (sysGates.no_ssh as unknown) === true
+      delete sysGates.no_ssh
+      const desktops = sysGates.sys_os_de
+      delete sysGates.sys_os_de
+      if (Array.isArray(desktops) && !desktops.includes(context.sys_os_de ?? '')) {
+        gates.desktop = context.sys_os_de ? 'other' : 'none'
       }
       toolActions[action] = sysGates
       client.set([tool, action].join('/'), gates)
@@ -100,7 +114,7 @@ async function resolveMatches(
 ): Promise<Array<ScriptMatch>> {
   const owned = new Map<string, ScriptMatch>()
   for (const { name, extension } of SHELL_PRIORITY) {
-    const { filter: contextFilter, client } = shellGates(content, name)
+    const { filter: contextFilter, client } = shellGates(context, content, name)
     const results = await getCfgDirDump(SCRIPT_DIR_PARTS, {
       context,
       contextFilter,
@@ -111,7 +125,7 @@ async function resolveMatches(
     for (const parts of results) {
       const key = parts.join('/')
       if (!owned.has(key)) {
-        const gates = client.get(key) ?? { cmds: [], noCmds: [], svcs: [], noSvcs: [] }
+        const gates = client.get(key) ?? NO_GATES
         owned.set(key, { parts, extension, shell: name, ...gates })
       }
     }
@@ -143,7 +157,7 @@ async function buildScriptRun(
 }
 
 // one tool's script for an action, resolved exactly as `script exec <action> <tool>` resolves it: owned by one
-// shell, gated here by its sys_ keys, its has_cmd left for the client to ask when it runs
+// shell, gated here by its sys_ keys and its desktop, its has_cmd left for the client to ask when it runs
 export async function resolveToolScript(
   shell: Sh,
   context: Ctx,
@@ -153,7 +167,7 @@ export async function resolveToolScript(
   const content = await getCfgFileLoad([SCRIPT_KEY], { extension: Fmt.yaml })
   const filters = toDirFilters(action, [tool])
   const [match] = await resolveMatches(context, content, filters, 'exact')
-  if (!match) {
+  if (!match || match.desktop) {
     return null
   }
   const run = await buildScriptRun(shell, context.sys_os_plat ?? '', match, [])
@@ -173,7 +187,7 @@ type ScriptUnit = {
   action: string
   tool: string
   shell: string
-} & ClientGates
+} & Gates
 
 // a matched script as the client reads it. a named tool runs as asked, so it carries no gates: its own
 // 'not installed' or 'already installed' explains a no op
@@ -187,6 +201,8 @@ function toUnit(match: ScriptMatch, named: boolean): ScriptUnit {
     noCmds: named ? [] : match.noCmds,
     svcs: named ? [] : match.svcs,
     noSvcs: named ? [] : match.noSvcs,
+    desktop: named ? '' : match.desktop,
+    noSsh: !named && match.noSsh,
   }
 }
 
