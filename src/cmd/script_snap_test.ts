@@ -171,7 +171,7 @@ Deno.test('nu / linux / exec (named tool is not gated)', async () => {
 Deno.test('nu / linux / find (a desktop script is marked by the desktop reported)', async () => {
   const find = async (query: string) =>
     await (await runSrv(req(`/sh/nu/script/find?sysOsPlat=linux${query}&wutNuPinned=1`))).text()
-  const desktop = '"tool":"desktop","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"desktop":'
+  const desktop = '"tool":"desktop","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"paths":[],"desktop":'
   assertEquals((await find('')).includes(`${desktop}"none"`), true)
   assertEquals((await find('&sysOsDe=gnome')).includes(`${desktop}""`), true)
   assertEquals((await find('&sysOsDe=plasma')).includes(`${desktop}"other"`), true)
@@ -179,8 +179,16 @@ Deno.test('nu / linux / find (a desktop script is marked by the desktop reported
 // no_ssh is the client's to answer, so it travels with the plan
 Deno.test('nu / linux / find (no_ssh travels with the plan)', async () => {
   const body = await (await runSrv(req('/sh/nu/script/find?sysOsPlat=linux&wutNuPinned=1'))).text()
+  assertEquals(body.includes('"tool":"local","shell":"zsh"'), true)
+  assertEquals(body.includes('"paths":[],"desktop":"","noSsh":true'), true)
+})
+// has_path is the client's to answer, so it travels with the plan
+Deno.test('nu / linux / find (has_path travels with the plan)', async () => {
+  const body = await (await runSrv(req('/sh/nu/script/find?sysOsPlat=linux&wutNuPinned=1'))).text()
   assertEquals(
-    body.includes('"tool":"local","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"desktop":"","noSsh":true'),
+    body.includes(
+      '"tool":"distro","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"paths":["/etc/wsl.conf"]',
+    ),
     true,
   )
 })

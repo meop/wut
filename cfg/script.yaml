@@ -26,6 +26,13 @@ desktop:
         - gnome
       sys_os_plat:
         - linux
+distro:
+  setup:
+    zsh:
+      has_path:
+        - /etc/wsl.conf
+      sys_os_plat:
+        - linux
 docker:
   setup:
     pwsh:

@@ -315,6 +315,8 @@ two levels for consistency.
   once installed. Client-side (see below)
 - `has_svc` / `no_svc` - The same for services (`sc.exe query` on windows, a systemd unit file on linux) — how a windows
   feature shows it is installed. Client-side (see below)
+- `has_path` - Path(s) the script needs on the client — any one is enough, and `~` is the home dir. How a macos app
+  shows it is installed, or a tool that leaves a directory and no command. Client-side (see below)
 - `sys_os_plat` - OS platform (darwin, linux, windows)
 - `sys_os` - Specific OS distribution (debian, ubuntu, arch, etc.) — exact match
 - `sys_os_like` - OS family substring match (e.g. `debian` matches ubuntu, kali, etc.; `arch` matches manjaro, etc.)
@@ -345,8 +347,8 @@ two levels for consistency.
 Gates must match in both places — scripts are both discovered only on appropriate systems (YAML) and protected against
 accidental execution on incompatible ones (script body).
 
-`sys_*` gates are resolved on the server. `has_cmd`, `no_cmd`, `has_svc`, `no_svc` and `no_ssh` cannot be, and are
-answered by the client instead — see [SCRIPT.md](SCRIPT.md#the-clients-gates).
+`sys_*` gates are resolved on the server. `has_cmd`, `no_cmd`, `has_svc`, `no_svc`, `has_path` and `no_ssh` cannot be,
+and are answered by the client instead — see [SCRIPT.md](SCRIPT.md#the-clients-gates).
 
 **Examples:**
 
@@ -354,6 +356,7 @@ answered by the client instead — see [SCRIPT.md](SCRIPT.md#the-clients-gates).
 - `brew/setup.zsh` adds `has_cmd: [brew]` in YAML and checks `type brew > /dev/null`
 - `deno/install.nu` adds `no_cmd: [deno]` in YAML and checks `which deno | is-not-empty` before it asks
 - `hyperv/install.ps1` adds `no_svc: [vmms]` in YAML and checks `Get-Service vmms` before it asks
+- `rectangle/setup.zsh` adds `has_path: [/Applications/Rectangle.app]` in YAML and checks `[[ ! -d ... ]]`
 - `gnome-terminal/setup.zsh` has `sys_os_de: [gnome]` + `sys_os_plat: [linux]` in YAML and checks both
 - `utm/repair.zsh` adds `no_ssh: true` in YAML and checks `[[ $SSH_CONNECTION ]]`
 - `node/install.zsh` has `sys_os_like: [debian]` in YAML and checks `[[ $SYS_OS_LIKE != *debian* ]]`

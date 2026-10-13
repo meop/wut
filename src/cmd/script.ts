@@ -31,13 +31,15 @@ const SCRIPT_DIR_PARTS = [SCRIPT_KEY]
 // the units the client picks from, as data; their bodies live in scriptRunUnit
 const SCRIPT_PLAN_KEY = [SCRIPT_KEY, 'plan']
 // client side gates: the server cannot know what the client has, so they travel with the plan for it to answer.
-// has_ needs one of its commands (or services) there, no_ needs none of them, which is how an install leaves the
-// listing once its tool is in. a service is how a windows feature shows it is installed
+// has_ needs one of its commands (or services, or paths) there, no_ needs none of them, which is how an install
+// leaves the listing once its tool is in. a service is how a windows feature shows it is installed, and a path how a
+// macos app does
 const CLIENT_GATES = {
   cmds: 'has_cmd',
   noCmds: 'no_cmd',
   svcs: 'has_svc',
   noSvcs: 'no_svc',
+  paths: 'has_path',
 } as const
 type ClientGates = { -readonly [K in keyof typeof CLIENT_GATES]: Array<string> }
 // session gates: the machine is right and the session is what is short, so they mark a script and never drop it.
@@ -45,7 +47,15 @@ type ClientGates = { -readonly [K in keyof typeof CLIENT_GATES]: Array<string> }
 // to answer
 type SessionGates = { desktop: '' | 'none' | 'other'; noSsh: boolean }
 type Gates = ClientGates & SessionGates
-const NO_GATES: Gates = { cmds: [], noCmds: [], svcs: [], noSvcs: [], desktop: '', noSsh: false }
+const NO_GATES: Gates = {
+  cmds: [],
+  noCmds: [],
+  svcs: [],
+  noSvcs: [],
+  paths: [],
+  desktop: '',
+  noSsh: false,
+}
 
 // ties go to the most native shell, so a hop lands somewhere as close to the machine as the script allows
 const SHELL_PRIORITY: Array<{ name: string; extension: string }> = [
@@ -201,6 +211,7 @@ function toUnit(match: ScriptMatch, named: boolean): ScriptUnit {
     noCmds: named ? [] : match.noCmds,
     svcs: named ? [] : match.svcs,
     noSvcs: named ? [] : match.noSvcs,
+    paths: named ? [] : match.paths,
     desktop: named ? '' : match.desktop,
     noSsh: !named && match.noSsh,
   }
