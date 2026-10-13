@@ -7,8 +7,6 @@ git:
         linux: '{HOME}/.gitconfig'
         windows: '{HOME}/.gitconfig'
 nu:
-  aliases:
-    - nushell
   maps:
     - in: nu
       out:

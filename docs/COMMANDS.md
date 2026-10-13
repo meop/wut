@@ -32,12 +32,12 @@ Every command's targets live in a tree, and each level of it is a name: `cfg/pac
 reaches all of it — `wut p a lang` is every group under `lang/`, `wut v a qemu` every qemu instance — and a term never
 has to say where in the tree its level sits.
 
-| Command  | Tree                           | Several terms                                                         |
-| -------- | ------------------------------ | --------------------------------------------------------------------- |
-| `pack`   | `<folder>/…/<group>`           | each is its own name: `wut p a nu zsh` is two groups                  |
-| `virt`   | `<manager>/[<pod>/]<instance>` | all must match, in any order: `qemu glass` and `glass qemu` are one   |
-| `script` | `<tool>/<action>`              | all must match; the cli reads action first, the tree is tool first    |
-| `file`   | a key in `file.yaml`           | all must match the one key, through its own name, an alias, or a path |
+| Command  | Tree                           | Several terms                                                       |
+| -------- | ------------------------------ | ------------------------------------------------------------------- |
+| `pack`   | `<folder>/…/<group>`           | each is its own name: `wut p a nu zsh` is two groups                |
+| `virt`   | `<manager>/[<pod>/]<instance>` | all must match, in any order: `qemu glass` and `glass qemu` are one |
+| `script` | `<tool>/<action>`              | all must match; the cli reads action first, the tree is tool first  |
+| `file`   | a key in `file.yaml`           | all must match the one key, through its own name or a path          |
 
 A pack group's full name is its path joined with `-` (`lang-js-node`), and a term may name any run of whole levels of
 it: `node`, `js`, `lang-js`, `js-node`.

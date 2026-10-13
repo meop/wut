@@ -7,7 +7,8 @@
 **Entry Fields:**
 
 - `maps` - Array of file/directory mappings from config to local filesystem
-- `aliases` - Array of other names the entry goes by (e.g., zed: [zeditor, zed-cli])
+
+The key is the entry's only name, and the binary looked for on the client before anything is written.
 
 **Map Properties:**
 
@@ -54,16 +55,6 @@ llama-swap:
         darwin: '{HOME}/.llama/config.yaml'
         linux: '{HOME}/.llama/config.yaml'
 
-# Aliases for find operations
-zed:
-  aliases:
-    - zeditor
-    - zed-cli
-  maps:
-    - in: settings.json
-      out:
-        darwin: '{HOME}/.config/zed/settings.json'
-
 # Permission management
 ssh:
   maps:
@@ -83,8 +74,8 @@ ssh:
 - `out` paths must have appropriate platform keys for target OS
 - Directory entries can contain any number of files (no need to list each)
 - Template paths (with `{...}`) are resolved at runtime from context
-- A key and its aliases are the entry's names: `diff` and `sync` take one whole, `find` and `list` the start of a word
-  of one, or of an `in` path ([COMMANDS.md](COMMANDS.md))
+- A key is the entry's name: `diff` and `sync` take it whole, `find` and `list` the start of a word of it, or of an `in`
+  path ([COMMANDS.md](COMMANDS.md))
 
 ## pack group structure
 

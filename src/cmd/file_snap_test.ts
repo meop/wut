@@ -153,15 +153,15 @@ Deno.test('nu / linux / sync (pinned, no match)', async (t) => {
   assertEquals(body.includes('no file matched: nosuchfile'), true)
   assertEquals(body.includes('FILE_SYNC_PATH_PAIRS'), false)
 })
-// an alias is a lookup key only, never an in or out path of its own
-Deno.test('nu / linux / find (pinned, matches an alias)', async (t) => {
-  const body = await (await runSrv(req(`/sh/nu/file/find/nushell?${PIN}`))).text()
+// a key is the one name a tool goes by: find takes the start of a word of it
+Deno.test('nu / linux / find (pinned, matches a key)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/file/find/nu?${PIN}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes("r#'nu,nushell|nu, env.nu, config.nu'#"), true)
+  assertEquals(body.includes("r#'nu|nu, env.nu, config.nu'#"), true)
   assertEquals(body.includes('gitconfig'), false)
 })
-// find matches on in path too, not just the key and its aliases
+// find matches on in path too, not just the key
 Deno.test('nu / linux / find (pinned, matches an in path)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/file/find/gitconfig?${PIN}`))).text()
   await assertSnapshot(t, body)

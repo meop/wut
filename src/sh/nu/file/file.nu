@@ -25,9 +25,9 @@ def fileTable [headers: list<string>, rows: list<list<string>>] {
 }
 
 
-# a tool's compound key doubles as its candidate bin names, same as the per-pair check the sync loop already does
+# a tool's key is the bin to look for: a config for something not installed is skipped rather than written
 def fileBinHere [tool: string] {
-  $tool | split row ',' | any { |alias| which $alias | is-not-empty }
+  which $tool | is-not-empty
 }
 
 # the plan for the two ops that go to the network: which tools are here, and how many files and destination dirs
@@ -68,14 +68,7 @@ def file [] {
       for pair in $env.FILE_DIFF_PATH_PAIRS {
         let pairParts = $pair | split row '|'
 
-        mut bin = ''
-        for alias in ($pairParts.0 | split row ',') {
-          if (which $alias | is-not-empty) {
-            $bin = $alias
-            break
-          }
-        }
-        if ($bin | is-empty) or (not (fileToolChosen 'FILE_DIFF_TOOLS' $pairParts.0)) {
+        if (not (fileBinHere $pairParts.0)) or (not (fileToolChosen 'FILE_DIFF_TOOLS' $pairParts.0)) {
           continue
         }
 
@@ -103,7 +96,7 @@ def file [] {
         ($env.FILE_FIND_KEYS? | default []) | each { |entry| $entry | split row '|' }
           | where { |parts| fileBinHere ($parts | get 0) }
           | each { |parts| {
-            bin: (($parts | get 0 | split row ',') | where { |a| which $a | is-not-empty } | first),
+            bin: ($parts | get 0),
             ins: ($parts | get -o 1 | default ''),
           } }
       )
@@ -124,14 +117,7 @@ def file [] {
       for pair in $env.FILE_LIST_PATH_PAIRS {
         let pairParts = $pair | split row '|'
 
-        mut bin = ''
-        for alias in ($pairParts.0 | split row ',') {
-          if (which $alias | is-not-empty) {
-            $bin = $alias
-            break
-          }
-        }
-        if ($bin | is-empty) {
+        if (not (fileBinHere $pairParts.0)) {
           continue
         }
 
@@ -145,14 +131,7 @@ def file [] {
       for dir in ($env.FILE_SYNC_CLEAR_DIRS? | default []) {
         let dirParts = $dir | split row '|'
 
-        mut bin = ''
-        for alias in ($dirParts.0 | split row ',') {
-          if (which $alias | is-not-empty) {
-            $bin = $alias
-            break
-          }
-        }
-        if ($bin | is-empty) or (not (fileToolChosen 'FILE_SYNC_TOOLS' $dirParts.0)) {
+        if (not (fileBinHere $dirParts.0)) or (not (fileToolChosen 'FILE_SYNC_TOOLS' $dirParts.0)) {
           continue
         }
 
@@ -164,14 +143,7 @@ def file [] {
       for pair in $env.FILE_SYNC_PATH_PAIRS {
         let pairParts = $pair | split row '|'
 
-        mut bin = ''
-        for alias in ($pairParts.0 | split row ',') {
-          if (which $alias | is-not-empty) {
-            $bin = $alias
-            break
-          }
-        }
-        if ($bin | is-empty) or (not (fileToolChosen 'FILE_SYNC_TOOLS' $pairParts.0)) {
+        if (not (fileBinHere $pairParts.0)) or (not (fileToolChosen 'FILE_SYNC_TOOLS' $pairParts.0)) {
           continue
         }
 
@@ -191,14 +163,7 @@ def file [] {
       for perm in ($env.FILE_SYNC_PATH_PERMS? | default []) {
         let permParts = $perm | split row '|'
 
-        mut bin = ''
-        for alias in ($permParts.0 | split row ',') {
-          if (which $alias | is-not-empty) {
-            $bin = $alias
-            break
-          }
-        }
-        if ($bin | is-empty) {
+        if (not (fileBinHere $permParts.0)) {
           continue
         }
 

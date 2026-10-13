@@ -27,15 +27,12 @@ export class FileCmd extends CmdBase implements Cmd {
 }
 
 type Sync = Record<string, {
-  aliases?: Array<string>
   maps?: Array<{
     in: string
     out: Record<string, string>
     permission?: AclPerm
   }>
 }>
-
-const KEY_SPLIT = ','
 
 const FILE_KEY = 'file'
 
@@ -49,10 +46,6 @@ const FILE_OP_TOOLS_KEY = (op: string) => [FILE_KEY, op, 'tools']
 
 // the nu name for a key, matching how varSet* renders it
 const shellEnvKey = (parts: Array<string>) => parts.join('_').toUpperCase()
-
-function joinKey(key: string, aliases?: Array<string>): string {
-  return [key, ...aliases ?? []].join(KEY_SPLIT)
-}
 
 async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   const redirect = await redirectCommonShell(shell, context)
@@ -77,12 +70,11 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     const key of Object.keys(content).filter((k) =>
       !filters.length ||
       filters.every((f) => {
-        // a key and its aliases are the names a tool goes by. diff and sync take one whole; find and list read, so
-        // they take the start of a word, and look further, into the paths the tool's files come from
-        const names = [k, ...(content[k]?.aliases ?? [])]
+        // a key is the one name a tool goes by. diff and sync take it whole; find and list read, so they take the
+        // start of a word, and look further, into the paths the tool's files come from
         return op === 'find' || op === 'list'
-          ? names.some((n) => wordStartsWith(n, f)) || content[k]?.maps?.some((m) => wordStartsWith(m.in, f))
-          : names.some((n) => sameName(n, f))
+          ? wordStartsWith(k, f) || content[k]?.maps?.some((m) => wordStartsWith(m.in, f))
+          : sameName(k, f)
       })
     )
   ) {
@@ -114,9 +106,8 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       _shell.varSetArr(
         FILE_OP_KEYS_KEY(op),
         validKeys.map((x) => {
-          const keyPart = joinKey(x, content[x].aliases)
           const inPart = (content[x].maps ?? []).map((m) => withCtx(m.in, context)).join(', ')
-          return inPart ? `${keyPart}|${inPart}` : keyPart
+          return inPart ? `${x}|${inPart}` : x
         }).toSorted(),
       ),
     )
@@ -126,8 +117,6 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     const validPerms: Array<string> = []
     for (const key of validKeys) {
       const entry = content[key]
-      const aliases = entry.aliases
-      const compoundKey = joinKey(key, aliases)
       for (const map of entry.maps ?? []) {
         const map_in = withCtx(map.in, context)
         const map_out = map.out
@@ -141,12 +130,12 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
         }
         if (await isDirPath(localEntryPaths[0])) {
           for (const localEntryPath of localEntryPaths) {
-            validDirs.add(joinVal(compoundKey, map_out[sysOsPlat]))
+            validDirs.add(joinVal(key, map_out[sysOsPlat]))
             for (const filePath of await getFilePaths(localEntryPath)) {
               const filePathParts = toRelParts(localEntryPath, filePath, false)
               validPairs.push(
                 joinVal(
-                  compoundKey,
+                  key,
                   [key, map_in, ...filePathParts].join('/'),
                   [map_out[sysOsPlat], ...filePathParts].join('/'),
                 ),
@@ -154,7 +143,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
             }
           }
         } else {
-          validPairs.push(joinVal(compoundKey, [key, map_in].join('/'), map_out[sysOsPlat]))
+          validPairs.push(joinVal(key, [key, map_in].join('/'), map_out[sysOsPlat]))
         }
         if (map_permission) {
           for (
@@ -166,7 +155,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
             )
           ) {
             validPerms.push(
-              joinVal(compoundKey, execNativeShell(_shell, sysOsPlat, permCmd)),
+              joinVal(key, execNativeShell(_shell, sysOsPlat, permCmd)),
             )
           }
         }

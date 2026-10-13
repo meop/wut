@@ -1,24 +1,23 @@
 # File: keys, directories, and the one op that writes
 
-How `file` maps config into place. The `file.yaml` shape — `maps`, `aliases`, `permission`, template substitution — is
-in [RULES.md](RULES.md#fileyaml-structure); the shape shared with every other command is in [OPS.md](OPS.md).
+How `file` maps config into place. The `file.yaml` shape — `maps`, `permission`, template substitution — is in
+[RULES.md](RULES.md#fileyaml-structure); the shape shared with every other command is in [OPS.md](OPS.md).
 
 ## A key is its own bin check
 
-A `file.yaml` key is the tool's name, and `fileBinHere` treats the key and its aliases as the candidate binaries to look
-for. `zed` with aliases `zeditor, zed-cli` is present if any of the three is on PATH, so a config for something not
-installed is skipped rather than written.
+A `file.yaml` key is the tool's name and the binary `fileBinHere` looks for: `zed` is present if `zed` is on PATH, so a
+config for something not installed is skipped rather than written. A key has no other names — one that needs to answer
+to a second binary is a second key.
 
-That compound key travels to the client as `zed,zeditor,zed-cli|settings.json` — the names to check on the left, the
-`in` paths on the right — and is what `find` prints as a heading. An alias is a lookup key only, never a path of its
-own.
+The key travels to the client as `zed|settings.json` — the name to check on the left, the `in` paths on the right — and
+is what `find` prints as a heading.
 
 ## Four ops, one that writes
 
-A term names a tool by its key or an alias: `diff` and `sync` take one whole, `find` and `list` the start of a word of
-one, or of a source path ([COMMANDS.md](COMMANDS.md)). `find`, `diff` and `sync` all filter by `fileBinHere`. `find`
-prints what it matched and stops — it has nothing left to do once you answer. `list` takes an explicit filter and prints
-one line per pair out of what the server already sent, so there is no set to summarise. `sync` is the one that writes:
+A term names a tool by its key: `diff` and `sync` take it whole, `find` and `list` the start of a word of it, or of a
+source path ([COMMANDS.md](COMMANDS.md)). `find`, `diff` and `sync` all filter by `fileBinHere`. `find` prints what it
+matched and stops — it has nothing left to do once you answer. `list` takes an explicit filter and prints one line per
+pair out of what the server already sent, so there is no set to summarise. `sync` is the one that writes:
 
 - `filePlanShow` shows a numbered row per tool with how many files and how many destination directories it accounts for,
   and the tools picked are the only ones written
