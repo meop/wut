@@ -241,6 +241,10 @@ row, as with `remove`, but `list` reads, so the term only has to start a word of
 rather than be a whole name ([COMMANDS.md](COMMANDS.md)). The listing the check reads is `packListCmd`, the same one the
 dump prints, so the answer before the gate and the output after it cannot drift.
 
+What the summary shows under each manager is the lines of its listing that matched, and the table counts them. It is
+never the term: a term that starts a word is not a name, so `wut p l go` finds `gotm` under ghpm, `gopls` under go and
+`Goose Game` under winget, and showing `go` under all three said each had a package called go.
+
 ## The pacman family is one manager
 
 `paru` and `yay` are AUR helpers wrapping `pacman`, so a machine carrying all three has one manager wearing three names,

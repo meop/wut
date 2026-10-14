@@ -304,6 +304,14 @@ Deno.test('nu / pack / list runs a listing before the gate only when it has a te
   // the dump is filtered by the same rule that answered: a term that starts a word of a line keeps the line
   const started = await run([`$env.PACK_LIST_NAMES = ['filter']`, `packTermPlanRun 'PACK_LIST_NAMES'`].join('\n'))
   assertEquals(stripVTControlCharacters(started!).includes('git-filter-repo v2.47.0'), true)
+
+  // the summary before the gate names what matched, never the term: `wut p l go` showed `go` under ghpm, go and
+  // winget, which read as each having a package called go when they had gotm, gopls and goose game. hf is not
+  // shown, since filter starts no word of it
+  const summary = stripVTControlCharacters(started!).split('1) uv')[0].split('uv tool list').slice(1).join('')
+  assertEquals(summary.includes('  git-filter-repo v2.47.0'), true)
+  assertEquals(summary.includes('  filter'), false)
+  assertEquals(summary.includes('hf'), false)
 })
 
 // the bug this covers: `wut p l vivaldi` found it under brew and `wut p r vivaldi` said no manager had it, moments

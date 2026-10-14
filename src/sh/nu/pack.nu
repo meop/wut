@@ -864,15 +864,24 @@ def --env packTermPlanRun [names_key: string] {
     return
   }
 
+  # what a manager matched is kept twice: the terms, which its op is handed after the gate, and the lines of its
+  # listing they matched, which are what the summary shows. a term starts a word rather than being a name, so the
+  # term itself is not something the manager has: `go` under ghpm is gotm, and under winget it is goose game
   mut hits = {}
+  mut entries = {}
   for m in $here {
     let lines = (packListedRaw $m)
     let matched = ($names | where { |n| packLinesLike $lines $n })
     if ($matched | is-not-empty) {
       $hits = ($hits | upsert $m $matched)
+      let shown = ($lines | where { |l| $matched | any { |n| wutWordMatch $l $n } } | each { |l|
+        $l | str trim | str replace --all --regex '\s+' ' '
+      })
+      $entries = ($entries | upsert $m $shown)
     }
   }
   let found = $hits
+  let shown = $entries
   let managers = ($found | columns)
   let missing = ($names | where { |n| not ($managers | any { |m| $n in ($found | get $m) }) })
 
@@ -886,15 +895,17 @@ def --env packTermPlanRun [names_key: string] {
   }
   for m in $managers {
     opPrint $m
-    opPrint $"  (($found | get $m) | str join ', ')"
+    for e in ($shown | get $m) {
+      opPrint $"  ($e)"
+    }
   }
   if ($missing | is-not-empty) {
     opPrintWarn $"no manager has installed: ($missing | str join ', ')"
   }
 
   opPrint ''
-  packTable ['manager' 'packages'] ($managers | enumerate | each { |m|
-    [$"($m.index + 1)\) ($m.item)", (($found | get $m.item) | length | into string)]
+  packTable ['manager' 'matches'] ($managers | enumerate | each { |m|
+    [$"($m.index + 1)\) ($m.item)", (($shown | get $m.item) | length | into string)]
   })
   let picked = (wutSelectRead ($managers | length))
   if $picked == null {
