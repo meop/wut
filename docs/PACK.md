@@ -347,7 +347,8 @@ the toolchains alone.
 - **gotm** is to go what rustup is to cargo — its own tool, managing toolchains rather than packages, with no row of its
   own: a bare go sync looks for `gotm` on PATH and runs `gotm sync --yes` first, best effort like a self update, so each
   go it was asked to keep moves to the newest release its pin allows before the tools rebuild. A go another manager
-  delivered has no gotm behind it and is left to that manager.
+  delivered has no gotm behind it and is left to that manager. gotm keeps every archive it downloaded until its own
+  tidy, as ghpm does, so a go tidy runs `gotm tidy` before it cleans the module cache.
 
 go's tools are what a toolchain move leaves behind. `go install` is go's only update and always builds — free while go's
 caches hold the last build, a full compile once they are cleared — so a go sync installs only the tools that need it, as

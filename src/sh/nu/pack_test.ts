@@ -1117,6 +1117,30 @@ esac`
   assertEquals((await run({ go, gotm: '' }, ['gopls']))!.includes('gotm sync'), false)
 })
 
+// gotm keeps its downloaded archives until its own tidy runs, so a go tidy asks it first, only where gotm is
+Deno.test('nu / pack / go tidy has gotm tidy its toolchains, only where gotm is', async () => {
+  const run = (stubs: Record<string, string>) =>
+    withStubs(
+      stubs,
+      [`$env.PACK_OP = 'tidy'`, `$env.NOOP = '1'`, `$env.PACK_MANAGER = 'go'`, 'packGo'].join('\n'),
+      ['go'],
+      ['go'],
+    )
+  const managed = await run({ go: '', gotm: '' })
+  if (managed == null) {
+    return
+  }
+  const lines = managed.split('\n')
+  const gotm = lines.findIndex((l) => l.includes('gotm tidy'))
+  const cache = lines.findIndex((l) => l.includes('go clean -modcache'))
+  assertEquals(gotm > -1, true)
+  assertEquals(cache > -1, true)
+  assertEquals(gotm < cache, true)
+  const unmanaged = (await run({ go: '' }))!
+  assertEquals(unmanaged.includes('gotm tidy'), false)
+  assertEquals(unmanaged.includes('go clean -modcache'), true)
+})
+
 // pnpm records a runtime as the exact version it installed, so `update` cannot move it: a runtime is set again at its
 // latest release, and packages update to latest. a named sync touches only what it names
 Deno.test('nu / pack / pnpm sets its runtimes to latest and updates its packages', async () => {

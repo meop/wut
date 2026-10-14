@@ -44,6 +44,14 @@ def --env packGotmUpdate [] {
   }
 }
 
+# gotm keeps every archive it downloaded, and whatever a failed install left behind, until asked: its own tidy is the
+# only thing that lets them go, as ghpm's is
+def --env packGotmTidy [] {
+  if (which gotm | is-not-empty) {
+    packOp [gotm tidy]
+  }
+}
+
 def --env packGo [] {
   let cmd = 'go'
   if (packSkip $cmd) {
@@ -125,6 +133,7 @@ def --env packGo [] {
       }
     }
     tidy => {
+      packGotmTidy
       # the build cache trims itself; the module cache keeps every download until it is cleaned
       packOp [$cmd clean -modcache]
     }
