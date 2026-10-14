@@ -97,7 +97,8 @@ function shellGates(
       for (const [field, key] of Object.entries(CLIENT_GATES) as Array<[keyof ClientGates, string]>) {
         const names = sysGates[key]
         delete sysGates[key]
-        gates[field] = Array.isArray(names) ? names as Array<string> : []
+        // one name is a list of one: `has_cmd: winget` was dropped as though the gate were not there
+        gates[field] = Array.isArray(names) ? names as Array<string> : typeof names === 'string' ? [names] : []
       }
       gates.noSsh = (sysGates.no_ssh as unknown) === true
       delete sysGates.no_ssh
