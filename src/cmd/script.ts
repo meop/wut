@@ -6,7 +6,13 @@ import type { Sh } from '@meop/shire/sh'
 
 import { type CtxFilter, getCfgDirDump, getCfgFileContent, getCfgFileLoad } from '../cfg.ts'
 import type { Match } from '../match.ts'
-import { execScriptShell, getScriptFlavorOpPreamble, getScriptFlavorShell, redirectCommonShell } from '../sh.ts'
+import {
+  execScriptShell,
+  getScriptFlavorOpPreamble,
+  getScriptFlavorShell,
+  lockRun,
+  redirectCommonShell,
+} from '../sh.ts'
 
 export class ScriptCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -287,7 +293,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env) {
         '}',
       ])
       .with(shell.varSetStr(SCRIPT_PLAN_KEY, JSON.stringify(units)))
-      .with(['scriptPlanRun']),
+      .with(await lockRun(shell, SCRIPT_KEY, ['scriptPlanRun'])),
     environment,
   )
 }

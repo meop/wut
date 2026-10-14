@@ -120,6 +120,15 @@ Tier 3 — the host cpu topology `virtQemuHostCpus` reads from sysfs, run agains
 smt off, intel hybrid (the `cpu_core` list), amd dense cores (`cpu_capacity`), multiple sockets, and a kernel without
 `cpu_capacity`. It asserts the sockets, cores and threads the guest gets and the host cpu each vcpu is pinned to.
 
+### `src/sh/nu/lock_test.ts`
+
+Tier 3 — the per-command lock ([OPS.md](OPS.md#one-run-of-a-command-at-a-time)), with each run its own nu process
+sharing one temp `WUT_HOME`: a run holds the lock and gives it back, commands lock apart, a run its holder started runs
+inside, a second run stops naming the first's pid while a ctrl-c to the first gives the lock back (skipped on windows,
+which has no SIGINT to send), a dead or reused pid and an old unstamped lock are taken over, and an error releases
+before it is raised again. `src/cmd/lock_test.ts` asserts the server side: which ops emit `wutLockRun`, and for which
+command.
+
 ## Following the redirect: `wutNuPinned=1`
 
 Every command calls `redirectCommonShell` first, so **any** request without `wutNuPinned=1` in its query string renders

@@ -190,7 +190,7 @@ Deno.test('nu / linux / add (pinned, qemu)', async (t) => {
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(body.includes('"qemu":["test","test2"]'), true)
-  assertEquals(/^virtPlanRun$/m.test(body), true)
+  assertEquals(/^\s*virtPlanRun$/m.test(body), true)
 })
 // rem fans out like add, and like `pack` and `file` do; only run pinpoints, since it runs one in the foreground
 Deno.test('nu / linux / rem (pinned, qemu)', async (t) => {
@@ -291,7 +291,7 @@ Deno.test('nu / linux / add (pinned, no match)', async (t) => {
   await checkSyntax('nu', body)
   assertEquals(body.includes('no instance matched: nosuchthing'), true)
   // the driver is always defined; nothing calls it
-  assertEquals(/^virtPlanRun$/m.test(body), false)
+  assertEquals(/^\s*virtPlanRun$/m.test(body), false)
 })
 // darwin supports no virt manager at all
 Deno.test('nu / darwin / find (pinned, no managers)', async (t) => {
@@ -309,7 +309,7 @@ Deno.test('nu / linux / add (pinned, emits a plan for the client to run)', async
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(body.includes('$env.VIRT_PLAN'), true)
-  assertEquals(/^virtPlanRun$/m.test(body), true)
+  assertEquals(/^\s*virtPlanRun$/m.test(body), true)
   // no per manager prompting left in the emission
   assertEquals(body.includes("input r#'use podman"), false)
 })

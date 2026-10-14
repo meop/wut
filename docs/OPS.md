@@ -155,6 +155,55 @@ How the shells around nu treat a ctrl-c, which the hop from the calling shell to
   (`NativeCommandProcessor.StopProcessing`), which would cut nu off mid-cleanup. The hop must stay standalone.
 - A pwsh script stopped by a ctrl-c exits 0 itself; at an interactive prompt, `$LASTEXITCODE` is nu's 130.
 
+## One run of a command at a time
+
+Two runs of one command on one machine act on the same state at once: two `virt sync`s stop and re-add the same instance
+together, two `pack add`s race for the package database. So an op that changes the machine holds a lock named for its
+command for its whole run, prompt included, and a second run of that command stops at once, naming the holder —
+`wut virt is already running here as pid 4242: wait for it to end, or stop it` — and exits 1. It does not wait: the
+first run may sit at its prompt for as long as nobody answers, and waiting without a word looks like a hang.
+
+Commands lock apart, so `wut virt sync` and `wut pack sync` run side by side. Ops that only read take no lock:
+
+| Command  | Locks                           | Takes no lock                      |
+| -------- | ------------------------------- | ---------------------------------- |
+| `pack`   | `add`, `remove`, `sync`, `tidy` | `find`, `info`, `list`, `outdated` |
+| `virt`   | `add`, `rem`, `sync`, `tidy`    | `find`, `list`, `run`              |
+| `file`   | `sync`                          | `diff`, `find`, `list`             |
+| `script` | `exec`                          | `find`                             |
+
+`virt run` acts but takes no lock: it is a foreground session that can last hours and touches nothing `add` owns
+([VIRT.md](VIRT.md#qemu-add-installs-run-does-not)), so holding the lock through it would only block every other virt op
+until the guest shuts down.
+
+`src/cmd/lock_test.ts` holds this table.
+
+How it holds:
+
+- **One place.** Every command's client side runs in the pinned nu, whichever shell called wut, so the lock is written
+  once, in `src/sh/nu/lock.nu`, and holds the same from zsh, pwsh and nu, on linux, macos and windows. The server wraps
+  an op's plan runner in it (`lockRun` in `src/sh.ts`): `wutLockRun 'virt' { virtPlanRun }`.
+- **Atomic take.** The lock is the directory `$WUT_HOME/lock/<command>`, made by the os's own `mkdir` (`cmd /c mkdir` on
+  windows), which fails when the directory is already there; nu's `mkdir` is `mkdir -p` and cannot tell. No `flock`,
+  which macos lacks. Inside, `pid` holds the holder's pid and the time it started.
+- **Stale is free.** A holder whose pid is gone, or whose pid now belongs to a process that started at another time, is
+  not holding anything: its directory is removed and taken, without a word. A directory with no `pid` yet is a run
+  between its `mkdir` and its write, and is waited on for up to 5s before it counts as stale.
+- **Released however it ends.** A run that ends, fails or is stopped by a ctrl-c gives the lock back first: the catch
+  around the runner releases, then hands the error on through `opRethrowInterrupt`, so a ctrl-c still stops the run
+  (above). nu cannot catch an `exit`, and a run that recorded failures ends on `exit 1`; that leaves the directory with
+  a holder that is gone, which the next run takes as stale. A kill, a crash, or a second ctrl-c landing during the
+  release leave the same.
+- **A run inside a run.** The holder exports `WUT_LOCK_<COMMAND>` with its stamp, so a run it starts itself — a script
+  under `script exec` that calls `wut script exec` — finds its own ancestor holding the lock and runs inside it rather
+  than refusing.
+- **Per machine, per user.** The lock lives under `WUT_HOME`, which is per user. wut runs as the user and reaches root
+  through `sudo`, so in practice that is per machine.
+
+Two runs that find the same stale lock at the same moment both try to take it; the `mkdir` lets one through, and each
+checks the holder again just before removing, so neither removes the other's fresh lock outside a window of
+microseconds.
+
 ## Nothing matched, nothing installed
 
 Different absences, different messages:

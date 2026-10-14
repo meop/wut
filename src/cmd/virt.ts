@@ -6,7 +6,7 @@ import type { Sh } from '@meop/shire/sh'
 
 import { getCfgDirDump, getCfgFileLoad } from '../cfg.ts'
 import { partsMatch, sameName, wordStartsWith } from '../match.ts'
-import { redirectCommonShell } from '../sh.ts'
+import { lockRun, redirectCommonShell } from '../sh.ts'
 
 export class VirtCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -178,6 +178,8 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
 
     // the plan is data: which manager takes which instances. whether that manager is on this machine, and the one
     // decision about all of it, are the client's
+    // run is a foreground session that claims nothing, so it takes no lock
+    const planRun = op === 'run' ? ['virtPlanRun'] : await lockRun(_shell, VIRT_KEY, ['virtPlanRun'])
     const applyResults = (results: Array<Array<string>>) => {
       const virtMap: Record<string, Array<string>> = {}
       for (const parts of results) {
@@ -193,7 +195,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       if (applied) {
         _shell = _shell
           .with(_shell.varSetStr(VIRT_PLAN_KEY, JSON.stringify(virtMap)))
-          .with(['virtPlanRun'])
+          .with(planRun)
       }
       return applied
     }

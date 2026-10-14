@@ -7,7 +7,7 @@ import type { Sh } from '@meop/shire/sh'
 
 import { getCfgDirDump, getCfgFileContent, getCfgFileLoad } from '../cfg.ts'
 import { sameName, wordStartsWith } from '../match.ts'
-import { execScriptShell, getScriptFlavorOpPreamble, redirectCommonShell } from '../sh.ts'
+import { execScriptShell, getScriptFlavorOpPreamble, lockRun, redirectCommonShell } from '../sh.ts'
 import { resolveToolScript } from './script.ts'
 
 export class PackCmd extends CmdBase implements Cmd {
@@ -698,7 +698,7 @@ async function execOp(
   }
 
   if (op === 'tidy') {
-    return buildAndLog(result.with(['packManagerPlanRun']), environment)
+    return buildAndLog(result.with(await lockRun(result, PACK_KEY, ['packManagerPlanRun'])), environment)
   }
 
   const names = environment.getSplit(PACK_OP_NAMES_KEY(op))
@@ -740,13 +740,13 @@ async function execOp(
       .with(result.varSetStr(PACK_PLAN_KEY, JSON.stringify(units)))
     // always stated, since the env dump has already set this key to the raw cli names
     result = result.with(result.varSetArr(PACK_OP_NAMES_KEY(op), loose))
-    result = result.with(['packPlanRun'])
+    result = result.with(await lockRun(result, PACK_KEY, ['packPlanRun']))
 
     return buildAndLog(result, environment)
   } else if (op === 'sync') {
     result = result
       .with(result.varSetStr(PACK_SELF_KEY, JSON.stringify(await findSelfUpdates(context.sys_os_plat ?? ''))))
-      .with(['packManagerPlanRun'])
+      .with(await lockRun(result, PACK_KEY, ['packManagerPlanRun']))
 
     return buildAndLog(result, environment)
   }

@@ -106,6 +106,16 @@ export function execScriptShell(shell: Sh, plat: string, shellFlavor: string, cm
   return `${bin} ${targetShell.execArgs(shell.toLiteral(targetShell.quietInterrupt(cmd)))}`
 }
 
+// a mutating op's run, held under its command's lock until it ends; see docs/OPS.md (One run of a command at a time)
+export async function lockRun(shell: Sh, name: string, lines: Array<string>): Promise<Array<string>> {
+  return [
+    await shell.fileLoad(['lock'], import.meta.resolve, ['.']),
+    `wutLockRun ${shell.toLiteral(name)} {`,
+    ...lines.map((line) => `  ${line}`),
+    '}',
+  ]
+}
+
 // a script is read by the shell it is written for, which is not always the platform's native one: script.yaml can
 // gate a pwsh script onto linux
 export function getScriptFlavorShell(shellFlavor: string): Sh {

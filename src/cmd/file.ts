@@ -9,7 +9,7 @@ import { getCfgFileLoad, localCfgPaths } from '../cfg.ts'
 import { getFilePaths, isDirPath } from '../fs.ts'
 import { sameName, wordStartsWith } from '../match.ts'
 import { type AclPerm, getPlatAclPermCmds, toRelParts } from '../path.ts'
-import { execNativeShell, redirectCommonShell } from '../sh.ts'
+import { execNativeShell, lockRun, redirectCommonShell } from '../sh.ts'
 
 export class FileCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -185,18 +185,17 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   // sync writes and diff fetches: both do a GET per pair, so both state the plan and ask before any of it runs.
   // find and list only read what the server already sent, so there is nothing to gate
   const gated = op === 'sync' || op === 'diff'
-  _shell = _shell.with(
-    gated
-      ? [
-        `if not (filePlanShow '${shellEnvKey(FILE_OP_PATH_PAIRS_KEY(op))}' '${
-          shellEnvKey(FILE_OP_CLEAR_DIRS_KEY(op))
-        }' '${shellEnvKey(FILE_OP_TOOLS_KEY(op))}') {`,
-        '  return',
-        '}',
-        FILE_KEY,
-      ]
-      : [FILE_KEY],
-  )
+  const run = gated
+    ? [
+      `if not (filePlanShow '${shellEnvKey(FILE_OP_PATH_PAIRS_KEY(op))}' '${
+        shellEnvKey(FILE_OP_CLEAR_DIRS_KEY(op))
+      }' '${shellEnvKey(FILE_OP_TOOLS_KEY(op))}') {`,
+      '  return',
+      '}',
+      FILE_KEY,
+    ]
+    : [FILE_KEY]
+  _shell = _shell.with(op === 'sync' ? await lockRun(_shell, FILE_KEY, run) : run)
 
   const body = _shell.build()
 
