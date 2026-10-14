@@ -52,6 +52,30 @@ def virtPlanAdded [entries: list, root: string = '/'] {
     | where { |e| $e.instances | is-not-empty }
 }
 
+# the names a manager's list shows, narrowed by its terms: each term starts a word of the name, and a name has to
+# match every one. list's summary asks this before the gate and each manager's list after it, so what the summary
+# says a manager has and what its dump then shows cannot drift
+def virtListed [manager: string, terms: list<string> = []] {
+  let names = match $manager {
+    # --all, as virtInstanceHere has it: a stopped project is still added, and rem and sync still act on it
+    docker => (^sudo docker compose ls --all --format json | complete | get stdout | if ($in | is-not-empty) { from json | get Name } else { [] }),
+    # bare lxc-ls wraps names across lines at terminal width, not just spaces within one. split on whitespace alone:
+    # split words also breaks at a hyphen, which made web-proxy two instances, web and proxy
+    lxc => (^sudo lxc-ls | complete | get stdout | split row --regex '\s+' | where { is-not-empty }),
+    podman => (virtListedFiles '/etc/containers/systemd' '\.kube$' { |b| $b | str replace '.kube' '' }),
+    qemu => (virtListedFiles '/etc/systemd/system' '^qemu-[^/]+\.service$' { |b| $b | str replace 'qemu-' '' | str replace '.service' '' }),
+    _ => [],
+  }
+  $names | where { |n| $terms | all { |t| wutWordMatch $n $t } }
+}
+
+def virtListedFiles [dir: string, pattern: string, name: closure] {
+  if not ($dir | path exists) {
+    return []
+  }
+  ls $dir | get name | each { |f| $f | path basename } | where { |b| $b =~ $pattern } | each { |b| do $name $b }
+}
+
 def --env virtCallManager [manager: string] {
   match $manager {
     docker => { virtDocker },
@@ -89,6 +113,12 @@ def --env virtPlanRun [] {
     return
   }
 
+  # list's instances are its terms, not names: they go to virtListPlanRun, which finds what they match first
+  if $env.VIRT_OP? == 'list' and ($managed | any { |e| $e.instances | is-not-empty }) {
+    virtListPlanRun $managed
+    return
+  }
+
   let here = if $env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded $managed } else { $managed }
   if ($here | is-empty) {
     opPrintWarn $"instance not added: ($managed | each { |e| $e.instances } | flatten | str join ', ')"
@@ -122,6 +152,44 @@ def --env virtPlanRun [] {
       VIRT_MANAGER: $manager,
       VIRT_INSTANCES: (if ($own | any { |r| $r.every }) { [] } else { $own | each { |r| $r.instance } }),
     }
+    virtCallManager $manager
+    hide-env VIRT_MANAGER
+  }
+}
+
+# list with a term reads before it asks, as pack's does: which instances a manager has that match is a local question,
+# so the summary names them under it and the table counts them. offering the terms as rows read as every manager
+# holding an instance by that name, and picking one of two terms quietly dropped the other from the match. a picked
+# manager is handed the terms unchanged, so its dump narrows by the same rule the summary answered by
+def --env virtListPlanRun [managed: list] {
+  let terms = ($managed | first | get instances)
+  let found = ($managed
+    | each { |e| {manager: $e.manager, instances: (virtListed $e.manager $terms)} }
+    | where { |e| $e.instances | is-not-empty })
+  if ($found | is-empty) {
+    opPrintWarn $"no instance matches: ($terms | str join ' ')"
+    return
+  }
+
+  for e in $found {
+    opPrint $e.manager
+    for i in $e.instances {
+      opPrint $"  ($i)"
+    }
+  }
+  opPrint ''
+  virtTable ['manager' 'matches'] ($found | enumerate | each { |r|
+    [$"($r.index + 1)\) ($r.item.manager)", ($r.item.instances | length | into string)]
+  })
+  let picked = (wutSelectRead ($found | length))
+  if $picked == null {
+    return
+  }
+
+  $env.VIRT_AGREED = '1'
+  for i in $picked {
+    let manager = ($found | get ($i - 1) | get manager)
+    load-env {VIRT_MANAGER: $manager, VIRT_INSTANCES: $terms}
     virtCallManager $manager
     hide-env VIRT_MANAGER
   }

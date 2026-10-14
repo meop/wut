@@ -105,7 +105,7 @@ def virtLxc [] {
   }
 
   def doRem [cmd, instance] {
-    let wasRunning = ^sudo $"($cmd)-ls" --running | complete | get stdout | split words | any { |l| $l == $instance }
+    let wasRunning = ^sudo $"($cmd)-ls" --running | complete | get stdout | split row --regex '\s+' | any { |l| $l == $instance }
     if $wasRunning {
       opPrintMaybeRunCmd sudo $"($cmd)-stop" --name $instance
     }
@@ -123,7 +123,7 @@ def virtLxc [] {
   match $env.VIRT_OP {
     add => {
       for instance in $env.VIRT_INSTANCES {
-        if (^sudo $"($cmd)-ls" --running | complete | get stdout | split words | any { |l| $l == $instance }) {
+        if (^sudo $"($cmd)-ls" --running | complete | get stdout | split row --regex '\s+' | any { |l| $l == $instance }) {
           opPrintWarn $"`($cmd)` instance `($instance)` is already added"
           continue
         }
@@ -132,15 +132,7 @@ def virtLxc [] {
       }
     }
     list => {
-      let filters = if ($env.VIRT_INSTANCES | is-not-empty) { $env.VIRT_INSTANCES } else { [] }
-      # bare lxc-ls wraps names across lines at terminal width, not just spaces within one
-      let allInstances = ^sudo $"($cmd)-ls" | complete | get stdout | split words
-      let instances = if ($filters | is-not-empty) {
-        $allInstances | where { |i| $filters | all { |f| wutWordMatch $i $f } }
-      } else {
-        $allInstances
-      }
-      for instance in $instances {
+      for instance in (virtListed $cmd $env.VIRT_INSTANCES) {
         opPrintRunCmd sudo $"($cmd)-ls" --fancy --fancy-format '"NAME,IPV4,IPV6,STATE,AUTOSTART"' -- $instance
       }
     }
@@ -165,7 +157,7 @@ def virtLxc [] {
           continue
         }
 
-        if (^sudo $"($cmd)-ls" --running | complete | get stdout | split words | any { |l| $l == $instance }) {
+        if (^sudo $"($cmd)-ls" --running | complete | get stdout | split row --regex '\s+' | any { |l| $l == $instance }) {
           opPrintMaybeRunCmd sudo $"($cmd)-stop" --name $instance
         }
 

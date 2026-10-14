@@ -1,8 +1,13 @@
+import { stripVTControlCharacters } from 'node:util'
+
 import { assertEquals } from '@std/assert'
 
 import { runNu } from '../../_test.ts'
+import { getScriptFlavorOpPreamble } from '../../sh.ts'
 
 const VIRT_NU = new URL('./virt.nu', import.meta.url).pathname
+const SEL_NU = new URL('./sel.nu', import.meta.url).pathname
+const MATCH_NU = new URL('./match.nu', import.meta.url).pathname
 
 // a root holding only the file each manager's add leaves behind, which is all the added check reads
 async function withAdded(files: Array<string>, probe: (root: string) => string): Promise<string | null> {
@@ -75,5 +80,78 @@ esac
     }
   } finally {
     await Deno.remove(dir, { recursive: true })
+  }
+})
+
+// list with a term: lxc-ls and docker's compose listing are stubs, verbatim, behind a sudo that only passes through.
+// the manager call is a stub too, since what it is handed is the thing under test
+async function withListed(plan: Record<string, Array<string>>, pick: Array<number>): Promise<string | null> {
+  const dir = await Deno.makeTempDir()
+  try {
+    const stubs: Record<string, string> = {
+      sudo: 'exec "$@"',
+      'lxc-ls': `printf '%s\\n' 'alma        kali        web-proxy'`,
+      docker: `case "$*" in
+  "compose ls --all --format json") printf '%s' '[{"Name":"web-app","Status":"running(2)","ConfigFiles":"-"},{"Name":"db","Status":"running(1)","ConfigFiles":"-"}]' ;;
+  *) exit 1 ;;
+esac`,
+    }
+    for (const [name, body] of Object.entries(stubs)) {
+      await Deno.writeTextFile(`${dir}/${name}`, `#!/bin/sh\n${body}\n`)
+      await Deno.chmod(`${dir}/${name}`, 0o755)
+    }
+    const out = await runNu([
+      await getScriptFlavorOpPreamble('nu'),
+      await Deno.readTextFile(MATCH_NU),
+      (await Deno.readTextFile(SEL_NU)).replace(
+        /^def wutSelectRead [\s\S]*?^}$/m,
+        `def wutSelectRead [max: int] { ${JSON.stringify(pick).replaceAll(',', ' ')} }`,
+      ),
+      (await Deno.readTextFile(VIRT_NU)).replace(
+        /^def --env virtCallManager [\s\S]*?^}$/m,
+        `def --env virtCallManager [manager: string] { print $"-> ($manager) ($env.VIRT_INSTANCES | str join ' ')" }`,
+      ),
+      `$env.GRAYSCALE = '1'`,
+      `$env.PATH = ['${dir}']`,
+      `$env.VIRT_OP = 'list'`,
+      `$env.VIRT_PLAN = '${JSON.stringify(plan)}'`,
+      'virtPlanRun',
+    ].join('\n'))
+    return out == null ? null : stripVTControlCharacters(out)
+  } finally {
+    await Deno.remove(dir, { recursive: true })
+  }
+}
+
+// the bug this covers: `wut v l web` made a row of web under every manager, before asking any of them, which read as
+// each holding an instance called web. qemu is not on this PATH, so it is not asked at all
+Deno.test('virt.nu - list with a term shows what each manager has that matches, and counts it', async () => {
+  const out = await withListed({ docker: ['web'], lxc: ['web'], qemu: ['web'] }, [2])
+  if (out != null) {
+    const [summary, after] = out.split('2) lxc')
+    assertEquals(summary.includes('docker\n  web-app\nlxc\n  web-proxy\n'), true)
+    assertEquals(summary.includes('  web\n'), false)
+    assertEquals(summary.includes('qemu'), false)
+    assertEquals(summary.includes('manager   matches'), true)
+    assertEquals(after.trim().endsWith('-> lxc web'), true)
+  }
+})
+
+// picking a row used to hand a manager one term of several, so `wut v l web proxy` picked on its web row listed every
+// web instance. a manager is a row now, and is handed every term
+Deno.test('virt.nu - list with several terms matches a name against all of them, and hands them all on', async () => {
+  const out = await withListed({ docker: ['web', 'proxy'], lxc: ['web', 'proxy'] }, [1])
+  if (out != null) {
+    assertEquals(out.includes('docker'), false)
+    assertEquals(out.includes('lxc\n  web-proxy\n'), true)
+    assertEquals(out.trim().endsWith('-> lxc web proxy'), true)
+  }
+})
+
+Deno.test('virt.nu - list with a term nothing matches says so and asks nothing', async () => {
+  const out = await withListed({ docker: ['zzz'], lxc: ['zzz'] }, [1])
+  if (out != null) {
+    assertEquals(out.includes('no instance matches: zzz'), true)
+    assertEquals(out.includes('->'), false)
   }
 })

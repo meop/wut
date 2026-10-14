@@ -36,6 +36,12 @@ the variant back to the base for the service name, so the unit stays `qemu-glass
 `tidy` act on that installed unit and so stop at the instance, and `find` lists the instance once however many variants
 it has.
 
+`list` with a term reads before it asks, as pack's does ([PACK.md](PACK.md)). `virtListed` is each manager's names
+narrowed by the terms, every one starting a word of the name. The summary shows those names under each manager that has
+any, the table counts them, and a picked manager's list is handed the terms and narrows by the same `virtListed`, so the
+summary and the dump cannot drift. The terms are never rows: one row a term under every manager read as each holding an
+instance by that name, and picking one of two terms dropped the other from the match.
+
 `docker` instances are plain compose files, served whole to `docker compose --file -`. `docker.nu` reads
 `services.*.volumes` to pre-create bind sources, in both the `source: … target: …` and `host:container` spellings, so
 those paths are written out in full — nothing substitutes `{host}` in a compose file.
@@ -69,6 +75,11 @@ may share one.
 `add` writes a systemd unit and the scripts it references into `/var/lib/qemu/<instance>` — `qemu.sh`, the QMP shutdown
 script, and the vfio-rebind and cpu-pin scripts where the config asks for them. It appends `-pidfile` and `-daemonize`
 itself, so a config must not state either.
+
+A config must state `-name {instance}`, though, and keep swtpm's socket and state under
+`{tmp_qemu_dir_path}/{instance}`: that is how an instance's processes are found (`virtQemuMatch`, `virtSwtpmMatch`) for
+the running check, the swtpm restart and `list`. Matching the instance name anywhere in a command line took any process
+that held it, so starting `glass` killed `glass2`'s tpm.
 
 The guest's `-smp` topology mirrors the host's performance cores (`virtQemuHostCpus`): efficiency cores are left out —
 the `cpu_core` list on intel hybrid, `cpu_capacity` elsewhere — and the cpu-pin script puts each vcpu on the host cpu

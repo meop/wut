@@ -137,3 +137,35 @@ Deno.test('nu / qemu / host cpus: a kernel without cpu_capacity counts every cpu
   }
   assertEquals(out, { sockets: 1, cores: 4, threads: 2, pin: [0, 4, 1, 5, 2, 6, 3, 7] })
 })
+
+// the bug this covers: `^swtpm.*glass` and `^qemu-system.*glass` took any process whose command line held glass, so
+// starting glass killed glass2's tpm, and glass read as running while only glass2 was. the patterns are put to grep -E,
+// the extended regex pgrep and pkill compile them as
+Deno.test('nu / qemu / match: an instance finds its own qemu and swtpm, never another whose name it starts', async () => {
+  const out = await runNu([
+    await Deno.readTextFile(QEMU_NU),
+    'print (virtQemuMatch glass)',
+    'print (virtSwtpmMatch glass)',
+  ].join('\n'))
+  if (out == null) {
+    return
+  }
+  const [qemu, swtpm] = out.trim().split('\n')
+  const lines = [
+    'qemu-system-x86_64 -name glass,debug-threads=on -drive file=/var/lib/qemu/glass/os.img',
+    'qemu-system-x86_64 -name glass2,debug-threads=on -drive file=/var/lib/qemu/glass2/os.img',
+    'qemu-system-x86_64 -name shard,debug-threads=on -drive file=/mnt/glass/backup.img',
+    'qemu-system-x86_64 -machine q35 -name guest=glass',
+    'swtpm socket --ctrl type=unixio,path=/tmp/qemu/glass/tpm.socket --tpmstate dir=/tmp/qemu/glass',
+    'swtpm socket --ctrl type=unixio,path=/tmp/qemu/glass2/tpm.socket --tpmstate dir=/tmp/qemu/glass2',
+  ]
+  const grep = async (pattern: string) => {
+    const child = new Deno.Command('grep', { args: ['-E', pattern], stdin: 'piped', stdout: 'piped' }).spawn()
+    const writer = child.stdin.getWriter()
+    await writer.write(new TextEncoder().encode(lines.join('\n') + '\n'))
+    await writer.close()
+    return new TextDecoder().decode((await child.output()).stdout).trim().split('\n')
+  }
+  assertEquals(await grep(qemu), [lines[0], lines[3]])
+  assertEquals(await grep(swtpm), [lines[4]])
+})

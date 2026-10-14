@@ -42,15 +42,12 @@ def virtDocker [] {
       }
     }
     list => {
-      let filters = if ($env.VIRT_INSTANCES | is-not-empty) { $env.VIRT_INSTANCES } else { [] }
-      let allInstances = ^sudo $cmd compose ls --format json | complete | get stdout | if ($in | is-not-empty) { from json | get Name } else { [] }
-      let instances = if ($filters | is-not-empty) {
-        $allInstances | where { |i| $filters | all { |f| wutWordMatch $i $f } }
-      } else {
-        $allInstances
+      # an instance is a compose project, so its containers are the ones compose labelled with it. a name filter
+      # matched part of a container's name, which put mydb's containers under db, and with no instance at all there
+      # was no filter, so every container on the machine was listed
+      for instance in (virtListed $cmd $env.VIRT_INSTANCES) {
+        opPrintRunCmd sudo $cmd container ls --all --filter $"label=com.docker.compose.project=($instance)" --format '"table {{.Names}}\\t{{.Image}}\\t{{.Ports}}\\t{{.State}}\\t{{.Status}}"' --no-trunc
       }
-      let nameFilters = $instances | each { |i| ['--filter', $"name=($i)"] } | flatten
-      opPrintRunCmd sudo $cmd container ls --all --format '"table {{.Names}}\\t{{.Image}}\\t{{.Ports}}\\t{{.State}}\\t{{.Status}}"' --no-trunc ...$nameFilters
     }
     rem => {
       let instances = if ($env.VIRT_INSTANCES | is-not-empty) {

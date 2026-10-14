@@ -44,6 +44,18 @@ def virtQemuHostCpus [sysRoot: string] {
   }
 }
 
+# the processes an instance runs, found by what names that instance alone: qemu by its -name, which every instance's
+# config gives it, and swtpm by the instance's own dir in its socket and state paths, which wut puts under
+# tmp_qemu_dir_path/<instance>. a bare .*glass took any process whose command line held glass anywhere, so starting
+# glass killed glass2's tpm. both are extended regexes, for pgrep and pkill
+def virtQemuMatch [instance: string] {
+  $"^qemu-system.* -name \(guest=\)?($instance)\(,| |$\)"
+}
+
+def virtSwtpmMatch [instance: string] {
+  $"^swtpm.*/($instance)/"
+}
+
 def virtQemu [] {
   let cmd = 'qemu'
   if ('VIRT_MANAGER' in $env and $env.VIRT_MANAGER != $cmd) or (which $"($cmd)-img" | is-empty) {
@@ -112,7 +124,7 @@ def virtQemu [] {
   }
 
   def qemuInstanceRunning [instance] {
-    (^pgrep --ignore-ancestors --full --list-full $"^qemu-system.*($instance)" | complete | get stdout | is-not-empty)
+    (^pgrep --ignore-ancestors --full --list-full (virtQemuMatch $instance) | complete | get stdout | is-not-empty)
   }
 
   def buildQemuSetup [cmd, instance] {
@@ -314,7 +326,7 @@ def virtQemu [] {
         opPrintMaybeRunCmd $"r##'(($swtpmLines | str join "\n") + "\n")'##" '|' sudo tee $swtpmScriptFilePath '|' ignore
         opPrintMaybeRunCmd sudo chmod +x $swtpmScriptFilePath
         $serviceLines = $serviceLines | append [
-          $"ExecStartPre=-/usr/bin/pkill --full \"^swtpm.*($instance)\"",
+          $"ExecStartPre=-/usr/bin/pkill --full \"(virtSwtpmMatch $instance)\"",
           $"ExecStartPre=-/usr/bin/rm -f ($tmpDirPath)/tpm.socket",
           $"ExecStartPre=($swtpmScriptFilePath)",
         ]
@@ -447,7 +459,7 @@ def virtQemu [] {
       # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
       opPrintMaybeRunCmd $"r##'((['#!/usr/bin/bash', ('exec ' + $swtpmCmd)] | str join "\n") + "\n")'##" '|' sudo tee $swtpmScriptFilePath '|' ignore
       opPrintMaybeRunCmd sudo chmod +x $swtpmScriptFilePath
-      try { opPrintMaybeRunCmd sudo pkill --full --ignore-ancestors $"^swtpm.*($instance)" } catch { |e| opRethrowInterrupt $e }
+      try { opPrintMaybeRunCmd sudo pkill --full --ignore-ancestors (virtSwtpmMatch $instance) } catch { |e| opRethrowInterrupt $e }
       opPrintMaybeRunCmd sudo rm -f $"($tmpDirPath)/tpm.socket"
       opPrintMaybeRunCmd sudo $swtpmScriptFilePath
     }
@@ -475,7 +487,7 @@ def virtQemu [] {
   }
 
   def doRunCleanup [instance, runDirPath] {
-    try { opPrintMaybeRunCmd sudo pkill --full --ignore-ancestors $"^swtpm.*($instance)" } catch { |e| opRethrowInterrupt $e }
+    try { opPrintMaybeRunCmd sudo pkill --full --ignore-ancestors (virtSwtpmMatch $instance) } catch { |e| opRethrowInterrupt $e }
     opPrintMaybeRunCmd sudo rm -rf $runDirPath
   }
 
@@ -509,17 +521,10 @@ def virtQemu [] {
       }
     }
     list => {
-      let serviceDirPath = '/etc/systemd/system'
-      for instance in (if ($serviceDirPath | path exists) {
-        ls $serviceDirPath
-          | where name =~ '/qemu-[^/]+\.service$'
-          | get name
-          | each { |f| $f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
-          | if ($env.VIRT_INSTANCES | is-not-empty) { where { |i| $env.VIRT_INSTANCES | all { |f| wutWordMatch $i $f } } } else { $in }
-      } else { [] }) {
+      for instance in (virtListed $cmd $env.VIRT_INSTANCES) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 $"qemu-($instance).service" } catch { |e| opRethrowInterrupt $e }
-        try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full $"^swtpm.*($instance)" } catch { |e| opRethrowInterrupt $e }
-        try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full $"^qemu-system.*($instance)" } catch { |e| opRethrowInterrupt $e }
+        try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full $"\"(virtSwtpmMatch $instance)\"" } catch { |e| opRethrowInterrupt $e }
+        try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full $"\"(virtQemuMatch $instance)\"" } catch { |e| opRethrowInterrupt $e }
       }
     }
     rem => {

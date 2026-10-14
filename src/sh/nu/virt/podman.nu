@@ -198,16 +198,10 @@ def virtPodman [] {
       }
     }
     list => {
-      let kubeDirPath = '/etc/containers/systemd'
-      for pod in (if ($kubeDirPath | path exists) {
-        ls $kubeDirPath
-          | where name =~ '\.kube$'
-          | get name
-          | each { |f| $f | path basename | str replace '.kube' '' }
-          | if ($env.VIRT_INSTANCES | is-not-empty) { where { |p| $env.VIRT_INSTANCES | all { |f| wutWordMatch $p $f } } } else { $in }
-      } else { [] }) {
+      for pod in (virtListed $cmd $env.VIRT_INSTANCES) {
         try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 $"($pod).service" } catch { |e| opRethrowInterrupt $e }
-        opPrintRunCmd sudo $cmd pod list --filter $"name=($pod)" --format '"table {{.Name}}\t{{.Status}}\t{{.Created}}\t{{.NumberOfContainers}}"'
+        # podman takes a pod name filter as a regex, so a bare name also listed every pod it was part of: cave and caveman
+        opPrintRunCmd sudo $cmd pod list --filter $"name=^($pod)$" --format '"table {{.Name}}\t{{.Status}}\t{{.Created}}\t{{.NumberOfContainers}}"'
         opPrintRunCmd sudo $cmd container list --filter $"pod=($pod)" --format '"table {{.PodName}}\t{{.Names}}\t{{.Image}}\t{{.Ports}}\t{{.State}}\t{{.Status}}"'
       }
     }
