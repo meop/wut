@@ -36,7 +36,7 @@ function () {
         ;;
     esac
 
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+    # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
     local work_dir="${wut_home}/vendor/.nu"
     mkdir -p "${work_dir}"
 

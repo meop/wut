@@ -291,7 +291,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -378,7 +378,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
@@ -699,7 +701,7 @@ if (\$IsWindows) {
       exit 1
     }
 
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nuBin path
+    # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nuBin path
     \$workDir = Join-Path \$wutHome 'vendor' '.nu'
     New-Item -ItemType Directory -Force -Path \$workDir | Out-Null
 
@@ -788,7 +790,8 @@ if (\$IsWindows) {
     return
   }
 
-  \$env:WUT_HOME = \$env:WUT_HOME ?? "\${env:HOME}/.wut"
+  # windows has no HOME, which made this /.wut at the root of the drive; pwsh's own \$HOME is set everywhere
+  \$env:WUT_HOME = \$env:WUT_HOME ?? (Join-Path \$HOME '.wut')
   \$wutHome = \$env:WUT_HOME
   \$ext = if (\$SYS_OS_PLAT -eq 'windows') { '.exe' } else { '' }
   \$nuBin = Join-Path \$wutHome 'vendor' "nu\${ext}"
@@ -1067,7 +1070,7 @@ function () {
         ;;
     esac
 
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+    # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
     local work_dir="\${wut_home}/vendor/.nu"
     mkdir -p "\${work_dir}"
 

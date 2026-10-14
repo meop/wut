@@ -38,7 +38,7 @@
       exit 1
     }
 
-    # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nuBin path
+    # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nuBin path
     $workDir = Join-Path $wutHome 'vendor' '.nu'
     New-Item -ItemType Directory -Force -Path $workDir | Out-Null
 
@@ -127,7 +127,8 @@
     return
   }
 
-  $env:WUT_HOME = $env:WUT_HOME ?? "${env:HOME}/.wut"
+  # windows has no HOME, which made this /.wut at the root of the drive; pwsh's own $HOME is set everywhere
+  $env:WUT_HOME = $env:WUT_HOME ?? (Join-Path $HOME '.wut')
   $wutHome = $env:WUT_HOME
   $ext = if ($SYS_OS_PLAT -eq 'windows') { '.exe' } else { '' }
   $nuBin = Join-Path $wutHome 'vendor' "nu${ext}"

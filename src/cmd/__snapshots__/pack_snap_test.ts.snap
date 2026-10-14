@@ -2252,7 +2252,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -2339,7 +2339,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
@@ -2590,7 +2592,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -2677,7 +2679,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -5073,7 +5077,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -5160,7 +5164,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -7704,7 +7710,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -7791,7 +7797,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -10335,7 +10343,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -10422,7 +10430,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -12996,7 +13006,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -13083,7 +13093,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -15657,7 +15669,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -15744,7 +15756,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -18283,7 +18297,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -18370,7 +18384,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -21004,7 +21020,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -21091,7 +21107,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -23611,7 +23629,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -23698,7 +23716,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -26218,7 +26238,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -26305,7 +26325,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -28825,7 +28847,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -28912,7 +28934,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -31729,7 +31753,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -31816,7 +31840,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -34490,7 +34516,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -34577,7 +34603,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -37405,7 +37433,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -37492,7 +37520,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -40159,7 +40189,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -40246,7 +40276,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -42742,7 +42774,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -42829,7 +42861,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -45325,7 +45359,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -45412,7 +45446,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -47929,7 +47965,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -48016,7 +48052,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -50514,7 +50552,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -50601,7 +50639,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -53145,7 +53185,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -53232,7 +53272,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -55740,7 +55782,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -55827,7 +55869,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -58323,7 +58367,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -58410,7 +58454,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -60805,7 +60851,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -60892,7 +60938,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -63289,7 +63337,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -63376,7 +63424,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -65777,7 +65827,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -65864,7 +65914,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -68263,7 +68315,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -68350,7 +68402,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -70748,7 +70802,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -70835,7 +70889,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -73233,7 +73289,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -73320,7 +73376,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -75864,7 +75922,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -75951,7 +76009,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -78495,7 +78555,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -78582,7 +78642,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -80980,7 +81042,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -81067,7 +81129,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -83463,7 +83527,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -83550,7 +83614,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -85948,7 +86014,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -86035,7 +86101,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -88579,7 +88647,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -88666,7 +88734,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -91210,7 +91280,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -91297,7 +91367,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
@@ -93871,7 +93943,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
-  # a hidden dir nested inside bin (not bin itself) so a fresh download can never collide with the pinned nu_bin path
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
   let work_dir = (\$wut_home | path join 'vendor' '.nu')
   mkdir \$work_dir
 
@@ -93958,7 +94030,9 @@ def --env wutNuSync [] {
     return
   }
 
-  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$env.HOME | path join '.wut'))
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
   let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
