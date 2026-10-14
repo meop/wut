@@ -163,7 +163,8 @@ def file [] {
       for perm in ($env.FILE_SYNC_PATH_PERMS? | default []) {
         let permParts = $perm | split row '|'
 
-        if (not (fileBinHere $permParts.0)) {
+        # a tool left unpicked had nothing synced, so its permissions are not this run's to reset either
+        if (not (fileBinHere $permParts.0)) or (not (fileToolChosen 'FILE_SYNC_TOOLS' $permParts.0)) {
           continue
         }
 
