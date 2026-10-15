@@ -100,7 +100,8 @@ never sent — so the qemu package must include `socat`.
 
 ```yaml
 cpu:
-  reserve: 2
+  reserve:
+    cores: 2
 ```
 
 The rest of the host's performance cores are the pool. Every instance is sized against the whole pool, not against the

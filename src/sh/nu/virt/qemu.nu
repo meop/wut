@@ -65,7 +65,7 @@ def virtQemuReserved [topo: record, reserve: int] {
 
 # cores per socket kept back from every instance, from the host's limits.yaml
 def virtQemuReserveCores [] {
-  $env.VIRT_LIMITS? | default '{}' | from json | get cpu?.reserve? | default 0
+  $env.VIRT_LIMITS? | default '{}' | from json | get cpu?.reserve?.cores? | default 0
 }
 
 # the host cores behind an instance, the same number in every socket, from the start of the pool or with `reverse` its
@@ -102,7 +102,7 @@ def virtQemuMisfits [topo: record, reserve: int, wants: record] {
   let cores = ($topo.sockets | each { length } | math min)
   let pool = ($cores - $reserve)
   if $pool < 1 {
-    return [$"cpu.reserve ($reserve) takes all ($cores) cores"]
+    return [$"cpu.reserve.cores ($reserve) takes all ($cores) cores"]
   }
   $wants | transpose name cores | where { |w| $w.cores < 1 or $w.cores > $pool } | each { |w| $"($w.name) wants ($w.cores) cores, ($pool) available" }
 }

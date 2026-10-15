@@ -263,7 +263,7 @@ Deno.test('nu / qemu / misfits: a reserve taking every core blocks on its own', 
   if (out == null) {
     return
   }
-  assertEquals(out, ['cpu.reserve 8 takes all 8 cores'])
+  assertEquals(out, ['cpu.reserve.cores 8 takes all 8 cores'])
 })
 
 // the bug this covers: `^swtpm.*glass` and `^qemu-system.*glass` took any process whose command line held glass, so
