@@ -68,11 +68,12 @@ def virtQemuReserveCores [] {
   $env.VIRT_LIMITS? | default '{}' | from json | get cpu?.reserve? | default 0
 }
 
-# the host cores behind an instance, the same number in every socket and the top ones of the pool. instances are sized
-# against the whole pool, never against each other: a second one started while the first is idle shares its cores.
-# `want` unset takes the pool. `pin` lists the host cpu behind each vcpu in qemu's own order (socket, core, thread), so
-# the threads the guest sees as siblings are siblings on the host too
-def virtQemuClaim [topo: record, reserve: int, want?: int] {
+# the host cores behind an instance, the same number in every socket, from the start of the pool or with `reverse` its
+# end. instances are sized against the whole pool, never against each other: a second one started while the first is
+# idle shares its cores, unless they take from opposite ends and fit there together. `want` unset takes the pool. `pin`
+# lists the host cpu behind each vcpu in qemu's own order (socket, core, thread), so the threads the guest sees as
+# siblings are siblings on the host too
+def virtQemuClaim [topo: record, reserve: int, want?: int, --reverse] {
   let pool = (virtQemuPool $topo $reserve)
   let most = ($pool | each { length } | math min)
   let cores = ($want | default $most)
@@ -86,7 +87,7 @@ def virtQemuClaim [topo: record, reserve: int, want?: int] {
     sockets: ($topo.sockets | length),
     cores: $cores,
     threads: ($topo.sockets | first | first | length),
-    pin: ($pool | each { |s| $s | last $cores } | flatten | flatten),
+    pin: ($pool | each { |s| if $reverse { $s | last $cores } else { $s | first $cores } } | flatten | flatten),
     host: (virtQemuCpuList (virtQemuReserved $topo $reserve)),
   }
 }
@@ -252,7 +253,11 @@ def --env virtQemu [] {
     let qemuBlock = $merged | get qemu?.architecture? | get --optional $sysArch | default {}
 
     let want = ($qemuBlock | get cpu?.cores? | default null)
-    let claim = (virtQemuClaim (virtQemuHostCores '/sys') (virtQemuReserveCores) $want)
+    let reverse = ($qemuBlock | get cpu?.reverse? | default false)
+    if ($reverse | describe) != 'bool' {
+      return {instance: $instance, unfit: $"cpu.reverse is ($reverse), not true or false"}
+    }
+    let claim = (virtQemuClaim (virtQemuHostCores '/sys') (virtQemuReserveCores) $want --reverse=$reverse)
     if 'error' in $claim {
       return {instance: $instance, unfit: $claim.error}
     }

@@ -105,8 +105,19 @@ cpu:
 
 The rest of the host's performance cores are the pool. Every instance is sized against the whole pool, not against the
 others, so instances that run at once share cores: one runs all the time, another now and then while it is idle.
-`cpu.cores` in an instance takes that many from the top of the pool; unset takes all of it. A host without `limits.yaml`
-reserves nothing.
+`cpu.cores` in an instance takes that many from the pool; unset takes all of it. They come from its start, or its end
+with `cpu.reverse: true`, so two instances that fit the pool together and take from opposite ends never overlap:
+
+```yaml
+qemu:
+  architecture:
+    x86_64:
+      cpu:
+        cores: 2
+        reverse: true
+```
+
+A host without `limits.yaml` reserves nothing.
 
 Before any virt add or sync, of any manager, the server sends the cores each qemu config wants, and the client checks
 them against its own. One that does not fit blocks the op, since the configs cannot be deployed together until fixed:

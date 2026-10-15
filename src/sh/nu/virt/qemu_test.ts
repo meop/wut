@@ -144,11 +144,11 @@ type Topo = { online: Array<number>; sockets: Array<Array<Array<number>>> }
 type Claim = HostCpus | { error: string }
 
 // claiming needs no sysfs: the topology virtQemuHostCores would read is handed over as it is
-async function claim(topo: Topo, reserve: number, want?: number): Promise<Claim | null> {
+async function claim(topo: Topo, reserve: number, want?: number, reverse = false): Promise<Claim | null> {
   const body = [
     await Deno.readTextFile(QEMU_NU),
     `let topo = (r#'${JSON.stringify(topo)}'# | from json)`,
-    `print (virtQemuClaim $topo ${reserve} ${want ?? ''} | to json --raw)`,
+    `print (virtQemuClaim $topo ${reserve} ${want ?? ''} ${reverse ? '--reverse' : ''} | to json --raw)`,
   ].join('\n')
   const out = await runNu(body)
   return out == null ? null : JSON.parse(out)
@@ -184,8 +184,16 @@ Deno.test('nu / qemu / claim: unset takes the whole pool', async () => {
   assertEquals(out, { sockets: 1, cores: 6, threads: 2, pin: coresOf(2, 3, 4, 5, 6, 7), host: '0-1,8-9' })
 })
 
-Deno.test('nu / qemu / claim: fewer than the pool takes its top cores', async () => {
-  const out = await claim(R5700G, 2, 2)
+Deno.test('nu / qemu / claim: fewer than the pool takes its first cores', async () => {
+  const out = await claim(R5700G, 2, 4)
+  if (out == null) {
+    return
+  }
+  assertEquals(out, { sockets: 1, cores: 4, threads: 2, pin: coresOf(2, 3, 4, 5), host: '0-1,8-9' })
+})
+
+Deno.test('nu / qemu / claim: reverse takes the top cores, clear of one from the start', async () => {
+  const out = await claim(R5700G, 2, 2, true)
   if (out == null) {
     return
   }
