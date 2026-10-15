@@ -44,14 +44,6 @@ def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
   }
 }
 
-# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
-# only what is installed: the rest of what the host's config names is add's
-def virtPlanAdded [entries: list, root: string = '/'] {
-  $entries
-    | each { |e| $e | update instances ($e.instances | where { |i| virtInstanceHere $e.manager $i $root }) }
-    | where { |e| $e.instances | is-not-empty }
-}
-
 # the names a manager's list shows, narrowed by its terms: each term starts a word of the name, and a name has to
 # match every one. list's summary asks this before the gate and each manager's list after it, so what the summary
 # says a manager has and what its dump then shows cannot drift
@@ -74,6 +66,14 @@ def virtListedFiles [dir: string, pattern: string, name: closure] {
     return []
   }
   ls $dir | get name | each { |f| $f | path basename } | where { |b| $b =~ $pattern } | each { |b| do $name $b }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  $entries
+    | each { |e| $e | update instances ($e.instances | where { |i| virtInstanceHere $e.manager $i $root }) }
+    | where { |e| $e.instances | is-not-empty }
 }
 
 def --env virtCallManager [manager: string] {
@@ -111,6 +111,10 @@ def --env virtPlanRun [] {
       opPrintWarn $"manager not installed: ($missing | str join ', ')"
     }
     return
+  }
+
+  if $env.VIRT_OP? in ['add' 'sync'] {
+    virtQemuFitRun
   }
 
   # list's instances are its terms, not names: they go to virtListPlanRun, which finds what they match first
@@ -154,6 +158,14 @@ def --env virtPlanRun [] {
     }
     virtCallManager $manager
     hide-env VIRT_MANAGER
+  }
+
+  # only the exceptions, after everything else had its turn: one instance failing does not stop the next
+  let failed = ($env.VIRT_FAILED? | default [])
+  if ($failed | is-not-empty) {
+    opPrintErr 'failed:'
+    for f in $failed { opPrintErr $"  ($f)" }
+    exit 1
   }
 }
 

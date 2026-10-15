@@ -35,6 +35,27 @@ def virtLxc [] {
     $v
   }
 
+  # a container runs as its own lxc@ unit under machine.slice, as podman's do, so the host reserve qemu sets on the slice
+  # holds it too. relative keeps lxc's cgroups inside the unit instead of escaping to the root
+  def lxcUnitSlice [] {
+    let dropInFilePath = '/etc/systemd/system/lxc@.service.d/wut.conf'
+    let want = "[Service]\nSlice=machine.slice\n"
+    if not ($dropInFilePath | path exists) or (open --raw $dropInFilePath | into string) != $want {
+      opPrintMaybeRunCmd sudo mkdir -p ($dropInFilePath | path dirname)
+      opPrintMaybeRunCmd $"r#'($want)'#" '|' sudo tee $dropInFilePath '|' ignore
+      opPrintMaybeRunCmd sudo systemctl daemon-reload
+    }
+  }
+
+  # stops a container whether its unit runs it or it was started before there was one
+  def lxcStop [cmd, instance] {
+    if (^systemctl is-active $"lxc@($instance)" | complete | get stdout | str trim) == 'active' {
+      opPrintMaybeRunCmd sudo systemctl stop $"lxc@($instance)"
+    } else if (^sudo $"($cmd)-ls" --running | complete | get stdout | split row --regex '\s+' | any { |l| $l == $instance }) {
+      opPrintMaybeRunCmd sudo $"($cmd)-stop" --name $instance
+    }
+  }
+
   def doAdd [cmd, instance] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($cmd).yaml'#"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml'#"
@@ -81,8 +102,7 @@ def virtLxc [] {
     let autostart = $merged | get lxc?.autostart? | default false
 
     let configLines = [
-      [$"lxc.uts.name = ($instance)", $"lxc.rootfs.path = dir:($rootfsDirPath)"],
-      (if $autostart { ['lxc.start.auto = 1'] } else { [] }),
+      [$"lxc.uts.name = ($instance)", $"lxc.rootfs.path = dir:($rootfsDirPath)", 'lxc.cgroup.relative = 1'],
       (flattenLxcConfig ($merged | get lxc?.config? | default {}) | each { |l| replaceEnv $lxcEnv $l }),
       (if ($net | is-not-empty) { [
         [$"lxc.net.0.type = ($net.type)", $"lxc.net.0.link = ($net.link)", $"lxc.net.0.name = ($net.name)"],
@@ -97,18 +117,16 @@ def virtLxc [] {
 
     opPrintMaybeRunCmd $"r#'(($configLines | str join "\n") + "\n")'#" '|' sudo tee $"/var/lib/lxc/($instance)/config" '|' ignore
 
-    if $autostart {
-      opPrintMaybeRunCmd sudo systemctl enable lxc
-    }
-
-    opPrintMaybeRunCmd sudo $"($cmd)-start" --name $instance
+    # autostart is the unit's: lxc.start.auto would have lxc.service start it at boot, outside the unit and the slice
+    lxcUnitSlice
+    opPrintMaybeRunCmd sudo systemctl (if $autostart { 'enable' } else { 'disable' }) --quiet $"lxc@($instance)"
+    opPrintMaybeRunCmd sudo systemctl start $"lxc@($instance)"
   }
 
   def doRem [cmd, instance] {
     let wasRunning = ^sudo $"($cmd)-ls" --running | complete | get stdout | split row --regex '\s+' | any { |l| $l == $instance }
-    if $wasRunning {
-      opPrintMaybeRunCmd sudo $"($cmd)-stop" --name $instance
-    }
+    lxcStop $cmd $instance
+    opPrintMaybeRunCmd sudo systemctl disable --quiet $"lxc@($instance)"
 
     let hasConfig = $"/var/lib/lxc/($instance)" | path exists
     if $hasConfig {
@@ -157,10 +175,7 @@ def virtLxc [] {
           continue
         }
 
-        if (^sudo $"($cmd)-ls" --running | complete | get stdout | split row --regex '\s+' | any { |l| $l == $instance }) {
-          opPrintMaybeRunCmd sudo $"($cmd)-stop" --name $instance
-        }
-
+        lxcStop $cmd $instance
         doAdd $cmd $instance
       }
     }

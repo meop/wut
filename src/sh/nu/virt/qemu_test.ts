@@ -5,9 +5,9 @@ import { runNu } from '../../../_test.ts'
 const QEMU_NU = new URL('./qemu.nu', import.meta.url).pathname
 
 type HostCpu = { cpu: number; socket: number; siblings: string; capacity?: number }
-type HostCpus = { sockets: number; cores: number; threads: number; pin: Array<number> }
+type HostCpus = { sockets: number; cores: number; threads: number; pin: Array<number>; host: string }
 
-// a sysfs tree holding only what virtQemuHostCpus reads; `coreType` is intel hybrid's list of performance cores
+// a sysfs tree holding only what virtQemuHostCores reads; `coreType` is intel hybrid's list of performance cores
 async function hostCpus(cpus: Array<HostCpu>, online: string, coreType?: string): Promise<HostCpus | null> {
   const root = await Deno.makeTempDir()
   try {
@@ -57,6 +57,7 @@ Deno.test('nu / qemu / host cpus: smt pairs each vcpu with its host sibling', as
     cores: 8,
     threads: 2,
     pin: [0, 8, 1, 9, 2, 10, 3, 11, 4, 12, 5, 13, 6, 14, 7, 15],
+    host: '',
   })
 })
 
@@ -66,7 +67,7 @@ Deno.test('nu / qemu / host cpus: smt turned off leaves one thread per core', as
   if (out == null) {
     return
   }
-  assertEquals(out, { sockets: 1, cores: 8, threads: 1, pin: [0, 1, 2, 3, 4, 5, 6, 7] })
+  assertEquals(out, { sockets: 1, cores: 8, threads: 1, pin: [0, 1, 2, 3, 4, 5, 6, 7], host: '' })
 })
 
 Deno.test('nu / qemu / host cpus: intel hybrid keeps only the performance cores', async () => {
@@ -88,6 +89,7 @@ Deno.test('nu / qemu / host cpus: intel hybrid keeps only the performance cores'
     cores: 8,
     threads: 2,
     pin: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    host: '16-23',
   })
 })
 
@@ -97,7 +99,7 @@ Deno.test('nu / qemu / host cpus: intel hybrid without smt, performance cores sp
   if (out == null) {
     return
   }
-  assertEquals(out, { sockets: 1, cores: 8, threads: 1, pin: [0, 1, 2, 3, 8, 9, 10, 11] })
+  assertEquals(out, { sockets: 1, cores: 8, threads: 1, pin: [0, 1, 2, 3, 8, 9, 10, 11], host: '4-7,12-15' })
 })
 
 Deno.test('nu / qemu / host cpus: amd dense cores drop out by capacity', async () => {
@@ -108,7 +110,7 @@ Deno.test('nu / qemu / host cpus: amd dense cores drop out by capacity', async (
   if (out == null) {
     return
   }
-  assertEquals(out, { sockets: 1, cores: 4, threads: 2, pin: [0, 12, 1, 13, 2, 14, 3, 15] })
+  assertEquals(out, { sockets: 1, cores: 4, threads: 2, pin: [0, 12, 1, 13, 2, 14, 3, 15], host: '4-11,16-23' })
 })
 
 Deno.test('nu / qemu / host cpus: sockets come before cores', async () => {
@@ -126,7 +128,7 @@ Deno.test('nu / qemu / host cpus: sockets come before cores', async () => {
   if (out == null) {
     return
   }
-  assertEquals(out, { sockets: 2, cores: 2, threads: 2, pin: [0, 4, 1, 5, 2, 6, 3, 7] })
+  assertEquals(out, { sockets: 2, cores: 2, threads: 2, pin: [0, 4, 1, 5, 2, 6, 3, 7], host: '' })
 })
 
 Deno.test('nu / qemu / host cpus: a kernel without cpu_capacity counts every cpu', async () => {
@@ -135,7 +137,125 @@ Deno.test('nu / qemu / host cpus: a kernel without cpu_capacity counts every cpu
   if (out == null) {
     return
   }
-  assertEquals(out, { sockets: 1, cores: 4, threads: 2, pin: [0, 4, 1, 5, 2, 6, 3, 7] })
+  assertEquals(out, { sockets: 1, cores: 4, threads: 2, pin: [0, 4, 1, 5, 2, 6, 3, 7], host: '' })
+})
+
+type Topo = { online: Array<number>; sockets: Array<Array<Array<number>>> }
+type Claim = HostCpus | { error: string }
+
+// claiming needs no sysfs: the topology virtQemuHostCores would read is handed over as it is
+async function claim(topo: Topo, reserve: number, want?: number): Promise<Claim | null> {
+  const body = [
+    await Deno.readTextFile(QEMU_NU),
+    `let topo = (r#'${JSON.stringify(topo)}'# | from json)`,
+    `print (virtQemuClaim $topo ${reserve} ${want ?? ''} | to json --raw)`,
+  ].join('\n')
+  const out = await runNu(body)
+  return out == null ? null : JSON.parse(out)
+}
+
+// ryzen 7 5700g: eight cores, cpu n and n+8 siblings
+const R5700G: Topo = {
+  online: Array.from({ length: 16 }, (_, c) => c),
+  sockets: [Array.from({ length: 8 }, (_, c) => [c, c + 8])],
+}
+
+const coresOf = (...cores: Array<number>) => cores.flatMap((c) => [c, c + 8])
+
+Deno.test('nu / qemu / claim: the reserve keeps the host its first cores whole', async () => {
+  const out = await claim(R5700G, 2, 6)
+  if (out == null) {
+    return
+  }
+  assertEquals(out, {
+    sockets: 1,
+    cores: 6,
+    threads: 2,
+    pin: coresOf(2, 3, 4, 5, 6, 7),
+    host: '0-1,8-9',
+  })
+})
+
+Deno.test('nu / qemu / claim: unset takes the whole pool', async () => {
+  const out = await claim(R5700G, 2)
+  if (out == null) {
+    return
+  }
+  assertEquals(out, { sockets: 1, cores: 6, threads: 2, pin: coresOf(2, 3, 4, 5, 6, 7), host: '0-1,8-9' })
+})
+
+Deno.test('nu / qemu / claim: fewer than the pool takes its top cores', async () => {
+  const out = await claim(R5700G, 2, 2)
+  if (out == null) {
+    return
+  }
+  assertEquals(out, { sockets: 1, cores: 2, threads: 2, pin: coresOf(6, 7), host: '0-1,8-9' })
+})
+
+Deno.test('nu / qemu / claim: wanting more than the pool fails', async () => {
+  const out = await claim(R5700G, 2, 7)
+  if (out == null) {
+    return
+  }
+  assertEquals(out, { error: 'wants 7 cores, the pool has 6' })
+})
+
+Deno.test('nu / qemu / claim: a reserve that leaves no pool fails', async () => {
+  const out = await claim(R5700G, 8)
+  if (out == null) {
+    return
+  }
+  assertEquals(out, { error: 'no cores outside the reserve' })
+})
+
+Deno.test('nu / qemu / claim: cores count per socket, the reserve too', async () => {
+  // two sockets of two cores, siblings 4 apart
+  const topo: Topo = { online: [0, 1, 2, 3, 4, 5, 6, 7], sockets: [[[0, 4], [1, 5]], [[2, 6], [3, 7]]] }
+  const out = await claim(topo, 1)
+  if (out == null) {
+    return
+  }
+  assertEquals(out, { sockets: 2, cores: 1, threads: 2, pin: [1, 5, 3, 7], host: '0,2,4,6' })
+})
+
+Deno.test("nu / qemu / claim: efficiency cores are never in the pool, so they are the host's", async () => {
+  // four p-cores with adjacent siblings, then four e-cores
+  const topo: Topo = { online: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], sockets: [[[0, 1], [2, 3], [4, 5], [6, 7]]] }
+  const out = await claim(topo, 1)
+  if (out == null) {
+    return
+  }
+  assertEquals(out, { sockets: 1, cores: 3, threads: 2, pin: [2, 3, 4, 5, 6, 7], host: '0-1,8-11' })
+})
+
+// the client's half of the fit check: what the server says each config wants, against the cores this host has
+async function misfits(reserve: number, wants: Record<string, number>): Promise<Array<string> | null> {
+  const out = await runNu([
+    await Deno.readTextFile(QEMU_NU),
+    `let topo = (r#'${JSON.stringify(R5700G)}'# | from json)`,
+    `print (virtQemuMisfits $topo ${reserve} (r#'${JSON.stringify(wants)}'# | from json) | to json --raw)`,
+  ].join('\n'))
+  return out == null ? null : JSON.parse(out)
+}
+
+Deno.test('nu / qemu / misfits: configs that fit the pool, sharing it, block nothing', async () => {
+  assertEquals(await misfits(2, { glass: 6, shard: 6 }) ?? [], [])
+})
+
+Deno.test('nu / qemu / misfits: a config wanting more than the pool is named', async () => {
+  const out = await misfits(3, { glass: 6, 'glass/vga': 4 })
+  if (out == null) {
+    return
+  }
+  assertEquals(out, ['glass wants 6 cores, 5 available'])
+})
+
+Deno.test('nu / qemu / misfits: a reserve taking every core blocks on its own', async () => {
+  const out = await misfits(8, {})
+  if (out == null) {
+    return
+  }
+  assertEquals(out, ['cpu.reserve 8 takes all 8 cores'])
 })
 
 // the bug this covers: `^swtpm.*glass` and `^qemu-system.*glass` took any process whose command line held glass, so

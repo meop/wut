@@ -81,8 +81,8 @@ A config must state `-name {instance}`, though, and keep swtpm's socket and stat
 the running check, the swtpm restart and `list`. Matching the instance name anywhere in a command line took any process
 that held it, so starting `glass` killed `glass2`'s tpm.
 
-The guest's `-smp` topology mirrors the host's performance cores (`virtQemuHostCpus`): efficiency cores are left out —
-the `cpu_core` list on intel hybrid, `cpu_capacity` elsewhere — and the cpu-pin script puts each vcpu on the host cpu
+The guest's `-smp` topology mirrors host performance cores (`virtQemuHostCores`): efficiency cores are left out — the
+`cpu_core` list on intel hybrid, `cpu_capacity` elsewhere — and the cpu-pin script puts each vcpu on the host cpu
 holding the same socket, core and thread, so the siblings the guest sees are siblings on the host.
 
 `run` is the foreground spelling: no unit, no vfio unbind/rebind, no cpu pin. It works in a `run/` subdir of the tmp dir
@@ -93,6 +93,43 @@ still points at. It also strips `-pidfile` and `-daemonize` from the merged args
 The generated `ExecStop` sends `system_powerdown` over QMP with `socat`, then waits for the pid to go. It exits
 immediately if there is no QMP socket or no `socat`, rather than sitting out the whole timeout on a shutdown that was
 never sent — so the qemu package must include `socat`.
+
+## Qemu: the cpu pool and the host reserve
+
+`cfg/virt/<sys_host>/limits.yaml` reserves cores per socket for the host:
+
+```yaml
+cpu:
+  reserve: 2
+```
+
+The rest of the host's performance cores are the pool. Every instance is sized against the whole pool, not against the
+others, so instances that run at once share cores: one runs all the time, another now and then while it is idle.
+`cpu.cores` in an instance takes that many from the top of the pool; unset takes all of it. A host without `limits.yaml`
+reserves nothing.
+
+Before any virt add or sync, of any manager, the server sends the cores each qemu config wants, and the client checks
+them against its own. One that does not fit blocks the op, since the configs cannot be deployed together until fixed:
+
+```
+virt blocked, qemu configs do not fit limits.yaml:
+  glass wants 6 cores, 5 available
+```
+
+The reserve is where everything else runs while any qemu instance runs. The unit starts every process on it
+(`CPUAffinity`), swtpm and qemu's own threads included; the cpu-pin script then moves each vcpu to its own host cpu, and
+re-checks every 5s for threads that stray and interrupts the guest asks for late. Every other manager's containers run
+under `machine.slice` — podman's by default, docker's by `cgroup-parent` in `daemon.json`, lxc's as `lxc@<name>` units
+with a `Slice=machine.slice` drop-in — so the unit holds them all with one runtime
+`systemctl set-property machine.slice` as it starts: the reserved cpus at a tenth of the default weight. The last qemu
+instance to stop lets go, so an instance that is off holds nothing. `rem` it to free its cores for good. lxc's units are
+what start them at boot, so `lxc.start.auto` is left out: `lxc.service` would start them first, outside the slice.
+
+An instance that cannot be set up anyway (a missing NIC) is left as it was and listed under `failed:` at the end, with
+exit 1.
+
+All of it is written at add time, so a restart or reboot recalculates nothing. Like any config change, a new
+`limits.yaml` reaches an instance on its next sync: after changing it, `wut v sync qemu`.
 
 ## Rem and sync act on what was added
 

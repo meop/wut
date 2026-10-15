@@ -1,6 +1,17 @@
-# the guest mirrors the host's performance cores: efficiency cores are left out, and `pin` lists the host cpu behind each
-# vcpu in qemu's own order (socket, core, thread), so the threads the guest sees as siblings are siblings on the host too
-def virtQemuHostCpus [sysRoot: string] {
+# the kernel's own cpu list form ("0-1,8-9"), so a script can compare it against what /proc and sysfs read back
+def virtQemuCpuList [cpus: list<int>] {
+  $cpus | sort | reduce --fold [] { |c, acc|
+    if ($acc | is-not-empty) and (($acc | last).hi + 1 == $c) {
+      $acc | drop | append {lo: ($acc | last).lo, hi: $c}
+    } else {
+      $acc | append {lo: $c, hi: $c}
+    }
+  } | each { |r| if $r.lo == $r.hi { $"($r.lo)" } else { $"($r.lo)-($r.hi)" } } | str join ','
+}
+
+# the host's performance cores as sockets of cores of cpus, every list sorted: efficiency cores are left out, and uneven
+# counts (a core with smt off, a socket short a core) trim to what every socket and core can mirror
+def virtQemuHostCores [sysRoot: string] {
   let cpuDir = ($sysRoot | path join devices/system/cpu)
   let readSys = { |path: string| open --raw $path | into string | str trim }
   let expand = { |list: string|
@@ -33,14 +44,78 @@ def virtQemuHostCpus [sysRoot: string] {
     $s.items | group-by --to-table core | each { |k| $k.items | get cpu | sort } | sort-by { first }
   } | sort-by { first | first }
 
-  # uneven counts (a core with smt off, a socket short a core) trim to what every socket and core can mirror
   let cores = ($sockets | each { length } | math min)
   let threads = ($sockets | each { |s| $s | first $cores | each { length } } | flatten | math min)
   {
-    sockets: ($sockets | length),
+    online: $online,
+    sockets: ($sockets | each { |s| $s | first $cores | each { |k| $k | first $threads } }),
+  }
+}
+
+# the cores per socket no instance is given: the first `reserve` of each, kept for the host, the other managers'
+# containers, and qemu's own threads. `virtQemuReserved` is every online cpu outside the pool, efficiency cores included
+def virtQemuPool [topo: record, reserve: int] {
+  $topo.sockets | each { |s| $s | skip $reserve }
+}
+
+def virtQemuReserved [topo: record, reserve: int] {
+  let pool = (virtQemuPool $topo $reserve | flatten | flatten)
+  $topo.online | where { |c| $c not-in $pool }
+}
+
+# cores per socket kept back from every instance, from the host's limits.yaml
+def virtQemuReserveCores [] {
+  $env.VIRT_LIMITS? | default '{}' | from json | get cpu?.reserve? | default 0
+}
+
+# the host cores behind an instance, the same number in every socket and the top ones of the pool. instances are sized
+# against the whole pool, never against each other: a second one started while the first is idle shares its cores.
+# `want` unset takes the pool. `pin` lists the host cpu behind each vcpu in qemu's own order (socket, core, thread), so
+# the threads the guest sees as siblings are siblings on the host too
+def virtQemuClaim [topo: record, reserve: int, want?: int] {
+  let pool = (virtQemuPool $topo $reserve)
+  let most = ($pool | each { length } | math min)
+  let cores = ($want | default $most)
+  if $most < 1 {
+    return {error: 'no cores outside the reserve'}
+  }
+  if $cores < 1 or $cores > $most {
+    return {error: $"wants ($cores) cores, the pool has ($most)"}
+  }
+  {
+    sockets: ($topo.sockets | length),
     cores: $cores,
-    threads: $threads,
-    pin: ($sockets | each { |s| $s | first $cores | each { |k| $k | first $threads } } | flatten | flatten),
+    threads: ($topo.sockets | first | first | length),
+    pin: ($pool | each { |s| $s | last $cores } | flatten | flatten),
+    host: (virtQemuCpuList (virtQemuReserved $topo $reserve)),
+  }
+}
+
+# the whole host for one instance, as a host without a reserve gives it
+def virtQemuHostCpus [sysRoot: string] {
+  virtQemuClaim (virtQemuHostCores $sysRoot) 0
+}
+
+# the qemu configs that do not fit this host: each wants cores per socket, from the pool its cores leave after the reserve
+def virtQemuMisfits [topo: record, reserve: int, wants: record] {
+  let cores = ($topo.sockets | each { length } | math min)
+  let pool = ($cores - $reserve)
+  if $pool < 1 {
+    return [$"cpu.reserve ($reserve) takes all ($cores) cores"]
+  }
+  $wants | transpose name cores | where { |w| $w.cores < 1 or $w.cores > $pool } | each { |w| $"($w.name) wants ($w.cores) cores, ($pool) available" }
+}
+
+# every virt add and sync stops here if the configs as checked in cannot be deployed together on this host
+def virtQemuFitRun [] {
+  if ($env.VIRT_QEMU_WANTS? == null) or not (virtManagerHere qemu) {
+    return
+  }
+  let misfits = (virtQemuMisfits (virtQemuHostCores '/sys') (virtQemuReserveCores) ($env.VIRT_QEMU_WANTS | from json))
+  if ($misfits | is-not-empty) {
+    opPrintErr 'virt blocked, qemu configs do not fit limits.yaml:'
+    for m in $misfits { opPrintErr $"  ($m)" }
+    exit 1
   }
 }
 
@@ -56,7 +131,7 @@ def virtSwtpmMatch [instance: string] {
   $"^swtpm.*/($instance)/"
 }
 
-def virtQemu [] {
+def --env virtQemu [] {
   let cmd = 'qemu'
   if ('VIRT_MANAGER' in $env and $env.VIRT_MANAGER != $cmd) or (which $"($cmd)-img" | is-empty) {
     return
@@ -127,7 +202,12 @@ def virtQemu [] {
     (^pgrep --ignore-ancestors --full --list-full (virtQemuMatch $instance) | complete | get stdout | is-not-empty)
   }
 
-  def buildQemuSetup [cmd, instance] {
+  # an instance that cannot be set up is skipped and the run goes on, reported at the end the way pack reports its failures
+  def --env failSetup [instance, why] {
+    load-env {VIRT_FAILED: (($env.VIRT_FAILED? | default []) | append $"`($instance)`: ($why)")}
+  }
+
+  def --env buildQemuSetup [cmd, instance] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($cmd).yaml'#"
     let resolved = resolveInstance $cmd $instance
     let instance = $resolved.instance
@@ -141,18 +221,12 @@ def virtQemu [] {
 
     $qemuEnv = $qemuEnv | upsert 'instance' $instance
 
-    let hostCpus = (virtQemuHostCpus '/sys')
-    $qemuEnv = $qemuEnv | upsert 'vm_cpu_sockets' ($hostCpus.sockets | into string)
-    $qemuEnv = $qemuEnv | upsert 'vm_cpu_cores' ($hostCpus.cores | into string)
-    $qemuEnv = $qemuEnv | upsert 'vm_cpu_threads' ($hostCpus.threads | into string)
-    $qemuEnv = $qemuEnv | upsert 'vm_cpu_pin' ($hostCpus.pin | str join ' ')
-
     let cpuVendor = if ((^cat '/proc/cpuinfo' | find --ignore-case 'vendor_id' | last | split row ':' | last | str lowercase | str trim | ansi strip) | str contains 'amd') { 'amd' } else { 'intel' }
     $qemuEnv = $qemuEnv | upsert 'vm_cpu_vendor' ($cpuVendor | str trim)
 
     let nicDirPath = $"/sys/class/net/($qemuEnv.nic)"
     if not ($nicDirPath | path exists) {
-      opPrintWarn $"cannot use `($instance)`: NIC '($qemuEnv.nic)' does not exist"
+      failSetup $instance $"NIC '($qemuEnv.nic)' does not exist"
       return null
     }
     $qemuEnv = $qemuEnv | upsert 'nic_mac' (if ('nic_mac' in $qemuEnv) {
@@ -176,6 +250,17 @@ def virtQemu [] {
     }
 
     let qemuBlock = $merged | get qemu?.architecture? | get --optional $sysArch | default {}
+
+    let want = ($qemuBlock | get cpu?.cores? | default null)
+    let claim = (virtQemuClaim (virtQemuHostCores '/sys') (virtQemuReserveCores) $want)
+    if 'error' in $claim {
+      return {instance: $instance, unfit: $claim.error}
+    }
+    $qemuEnv = $qemuEnv | upsert 'vm_cpu_sockets' ($claim.sockets | into string)
+    $qemuEnv = $qemuEnv | upsert 'vm_cpu_cores' ($claim.cores | into string)
+    $qemuEnv = $qemuEnv | upsert 'vm_cpu_threads' ($claim.threads | into string)
+    $qemuEnv = $qemuEnv | upsert 'vm_cpu_pin' ($claim.pin | str join ' ')
+    $qemuEnv = $qemuEnv | upsert 'vm_cpu_host' $claim.host
 
     let qemuCpuFlags = [
       [cpu flags],
@@ -202,13 +287,20 @@ def virtQemu [] {
     {instance: $instance, merged: $merged, qemuEnv: $qemuEnv, qemuBlock: $qemuBlock, sysArch: $sysArch}
   }
 
-  def doAdd [cmd, instance] {
-    let setup = buildQemuSetup $cmd $instance
+  # sync replaces a running instance only once its setup is known to fit: one that does not is left as it was
+  def --env doAdd [cmd, requested, --replace] {
+    let setup = buildQemuSetup $cmd $requested
     if ($setup == null) {
       return
     }
-    let requested = $instance
+    if 'unfit' in $setup {
+      failSetup $setup.instance $setup.unfit
+      return
+    }
     let instance = $setup.instance
+    if $replace {
+      opPrintMaybeRunCmd sudo systemctl stop $"qemu-($instance)"
+    }
     if (qemuInstanceRunning $instance) {
       opPrintWarn $"`($cmd)` instance `($instance)` is already added"
       return
@@ -380,25 +472,64 @@ def virtQemu [] {
       opPrintMaybeRunCmd sudo chmod +x $shutdownScriptFilePath
       $serviceLines = $serviceLines | append $"ExecStop=($shutdownScriptFilePath) ($qmpSocketPath) ($pidFilePath) 45"
 
+      # while any qemu instance runs, every other manager's containers, all under machine.slice, keep to the reserve at a
+      # tenth of the default cpu weight. runtime only: each instance sets it as it starts, and the last to stop lets go
+      if ($qemuEnv.vm_cpu_host | is-not-empty) {
+        $serviceLines = $serviceLines | append [
+          # every process the unit starts, swtpm and qemu's own threads included, begins on the reserve; the pin script
+          # moves only the vcpus off it
+          $"CPUAffinity=($qemuEnv.vm_cpu_host)",
+          $"ExecStartPre=/usr/bin/systemctl set-property --runtime machine.slice AllowedCPUs=($qemuEnv.vm_cpu_host) CPUWeight=10",
+          "ExecStopPost=/usr/bin/bash -c 'systemctl list-units --state=active,activating --no-legend --plain \"qemu-*.service\" | grep -q . || systemctl set-property --runtime machine.slice AllowedCPUs= CPUWeight='",
+        ]
+      }
+
       if ($qemuBlock | get cpu?.pin? | default false) {
         let pinScriptFilePath = ($configDirPath | path join qemu-cpu-pin.sh)
+        let vfioDevs = ($qemuEnv | get --optional vfio_pci_dev_ids | default '' | split row ',' | where { is-not-empty } | each { |id| $"0000:($id)" } | str join ' ')
         let pinLines = [
           '#!/usr/bin/bash',
           ("pidFile='" + $pidFilePath + "'"),
-          # -daemonize returns before the vcpu threads exist, so wait for them rather than guess at a delay
+          ("vcpuCpus=(" + $qemuEnv.vm_cpu_pin + ")"),
+          ("hostCpus='" + $qemuEnv.vm_cpu_host + "'"),
+          ("vfioDevs=(" + $vfioDevs + ")"),
+          # -daemonize returns before the vcpu threads exist, so wait for the last one rather than guess at a delay
+          'lastVcpu="CPU $((${#vcpuCpus[@]} - 1))/KVM"',
           'for _ in $(seq 1 500); do',
           '  pid=$(cat "$pidFile" 2>/dev/null)',
-          '  if [ -n "$pid" ] && ps --pid "$pid" -T -o ucmd | grep -q "CPU 0/KVM"; then break; fi',
+          '  if [ -n "$pid" ] && grep -qx "$lastVcpu" /proc/$pid/task/*/comm 2>/dev/null; then break; fi',
           '  sleep 0.01',
           'done',
-          'if [ -z "$pid" ]; then exit 0; fi',
-          ("hostCpus=(" + $qemuEnv.vm_cpu_pin + ")"),
-          'for i in "${!hostCpus[@]}"; do',
-          "  spid=$(ps --pid $pid -T -o ucmd,spid | grep \"CPU $i/KVM\" | awk '{print $NF}')",
-          '  if [ -n "$spid" ]; then',
-          '    taskset --pid --cpu-list "${hostCpus[$i]}" $spid',
-          '  fi',
-          'done',
+          'if [ -z "$pid" ] || ! kill -0 "$pid" 2>/dev/null; then exit 0; fi',
+          # each vcpu to its own host cpu; every other thread (main loop, iothreads, vhost, rcu, the worker pools) to the
+          # host's cpus, re-checked because a pool thread inherits the cpus of whichever thread spawned it
+          'pinThreads() {',
+          '  for task in /proc/$pid/task/*; do',
+          '    name=$(cat "$task/comm" 2>/dev/null) || continue',
+          '    want=$hostCpus',
+          '    if [[ $name =~ ^CPU\ ([0-9]+)/KVM$ ]]; then want=${vcpuCpus[${BASH_REMATCH[1]}]}; fi',
+          r#'    have=$(awk '/^Cpus_allowed_list/ { print $2 }' "$task/status" 2>/dev/null)'#,
+          '    if [ -n "$want" ] && [ "$have" != "$want" ]; then taskset --pid --cpu-list "$want" "${task##*/}" > /dev/null 2>&1; fi',
+          '  done',
+          '}',
+          # the guest's driver asks for the passthrough devices' interrupts when it enables msi, long after qemu starts and
+          # again after every guest reboot, and the host would otherwise land them on a vcpu's cpu
+          'pinIrqs() {',
+          '  for dev in "${vfioDevs[@]}"; do',
+          r#'    for irq in $(awk -v d="($dev)" 'index($0, d) { sub(":", "", $1); print $1 }' /proc/interrupts); do'#,
+          '      if [ "$(cat /proc/irq/$irq/smp_affinity_list 2>/dev/null)" != "$hostCpus" ]; then echo "$hostCpus" > /proc/irq/$irq/smp_affinity_list 2>/dev/null; fi',
+          '    done',
+          '  done',
+          '}',
+          'pinThreads',
+          'if [ -z "$hostCpus" ]; then exit 0; fi',
+          '(',
+          '  while kill -0 "$pid" 2>/dev/null; do',
+          '    pinThreads',
+          '    pinIrqs',
+          '    sleep 5',
+          '  done',
+          ') > /dev/null 2>&1 &',
         ]
         # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
         # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
@@ -424,9 +555,13 @@ def virtQemu [] {
   }
 
   # foreground, no systemd unit — skips vfio unbind/rebind and cpu-pin
-  def doRun [cmd, instance] {
+  def --env doRun [cmd, instance] {
     let setup = buildQemuSetup $cmd $instance
     if ($setup == null) {
+      return
+    }
+    if 'unfit' in $setup {
+      failSetup $setup.instance $setup.unfit
       return
     }
     let instance = $setup.instance
@@ -557,9 +692,7 @@ def virtQemu [] {
           continue
         }
 
-        opPrintMaybeRunCmd sudo systemctl stop $"qemu-($instance)"
-
-        doAdd $cmd (if ($requested | str contains '/') { $requested } else { qemuVariantOf $instance })
+        doAdd --replace $cmd (if ($requested | str contains '/') { $requested } else { qemuVariantOf $instance })
       }
     }
   }

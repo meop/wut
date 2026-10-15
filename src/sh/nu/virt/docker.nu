@@ -3,10 +3,31 @@ def virtDocker [] {
   if ('VIRT_MANAGER' in $env and $env.VIRT_MANAGER != $cmd) or (which $cmd | is-empty) {
     return
   }
+
+  # containers run under machine.slice, as podman's and lxc's do, so whatever wut sets on the slice holds them all. set
+  # once, and the daemon restarts only then: a container takes the daemon's cgroup-parent when it starts
+  def dockerSlice [] {
+    let daemonFilePath = '/etc/docker/daemon.json'
+    let daemon = if ($daemonFilePath | path exists) { open --raw $daemonFilePath | into string | from json } else { {} }
+    let parent = ($daemon | get --optional 'cgroup-parent' | default '')
+    if $parent == '' {
+      opPrintMaybeRunCmd sudo mkdir -p ($daemonFilePath | path dirname)
+      opPrintMaybeRunCmd $"r#'((($daemon | upsert 'cgroup-parent' 'machine.slice') | to json --indent 2) + "\n")'#" '|' sudo tee $daemonFilePath '|' ignore
+      opPrintMaybeRunCmd sudo systemctl restart docker
+    } else if $parent != 'machine.slice' {
+      opPrintWarn $"docker's cgroup-parent is ($parent), not machine.slice: its containers are not held to the host reserve"
+    }
+  }
+  if $env.VIRT_OP in ['add' 'sync'] {
+    dockerSlice
+  }
+
   match $env.VIRT_OP {
     add => {
       for instance in $env.VIRT_INSTANCES {
-        if (^sudo $cmd container ls | complete | get stdout | find --ignore-case $instance | is-not-empty) {
+        # its compose project, running or not, by name: a container that only mentions it is someone else's
+        if (virtInstanceHere $cmd $instance) {
+          opPrintWarn $"`($cmd)` instance `($instance)` is already added"
           continue
         }
 
@@ -38,7 +59,7 @@ def virtDocker [] {
           opPrintMaybeRunCmd sudo mkdir -p $src
         }
 
-        opPrintMaybeRunCmd $"r#'($yaml)'#" '|' sudo $cmd compose --file - up --detach --pull always
+        opPrintMaybeRunCmd $"r#'($yaml)'#" '|' sudo $cmd compose --project-name $instance --file - up --detach --pull always
       }
     }
     list => {
@@ -53,10 +74,10 @@ def virtDocker [] {
       let instances = if ($env.VIRT_INSTANCES | is-not-empty) {
         $env.VIRT_INSTANCES
       } else {
-        ^sudo $cmd compose ls --format json | complete | get stdout | if ($in | is-not-empty) { from json | get Name } else { [] }
+        ^sudo $cmd compose ls --all --format json | complete | get stdout | if ($in | is-not-empty) { from json | get Name } else { [] }
       }
       for instance in $instances {
-        opPrintMaybeRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml'#" '|' sudo $cmd compose --file - down
+        opPrintMaybeRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml'#" '|' sudo $cmd compose --project-name $instance --file - down
       }
     }
     sync => {
@@ -65,7 +86,7 @@ def virtDocker [] {
           continue
         }
 
-        opPrintMaybeRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml'#" '|' sudo $cmd compose --file - up --detach --pull always
+        opPrintMaybeRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml'#" '|' sudo $cmd compose --project-name $instance --file - up --detach --pull always
       }
     }
     tidy => {

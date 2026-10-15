@@ -38,6 +38,10 @@ const RUN_MANAGERS: Array<string> = ['qemu']
 const VIRT_KEY = 'virt'
 const VIRT_OP_KEY = [VIRT_KEY, 'op']
 const VIRT_PODMAN_NETWORKS_KEY = [VIRT_KEY, 'podman', 'networks']
+// the host's own limits.yaml, beside its manager folders: the qemu pool and the reserve step both read it
+const VIRT_LIMITS_KEY = [VIRT_KEY, 'limits']
+// config name -> the cores per socket it asks for, for the client's check before any add or sync
+const VIRT_QEMU_WANTS_KEY = [VIRT_KEY, 'qemu', 'wants']
 const VIRT_OP_PARTS_KEY = (op: string) => [VIRT_KEY, op, 'parts']
 
 // manager -> instances, for the client to filter by what is here and run after one prompt
@@ -56,6 +60,62 @@ function getSupportedManagers(context: Ctx) {
   }
 
   return managers
+}
+
+// nu's virtDeepMerge: records merge, lists append, and anything else the later one wins
+function deepMerge(base: unknown, over: unknown): unknown {
+  const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v != null && !Array.isArray(v)
+  if (isRecord(base) && isRecord(over)) {
+    const merged: Record<string, unknown> = { ...base }
+    for (const [k, v] of Object.entries(over)) {
+      merged[k] = k in base ? deepMerge(base[k], v) : v
+    }
+    return merged
+  }
+  if (Array.isArray(base) && Array.isArray(over)) {
+    return [...base, ...over]
+  }
+  return over
+}
+
+// the cores per socket a qemu config asks for, under the architecture its own environment names, as the client reads it
+function qemuWantsCores(config: unknown): number | undefined {
+  const c = config as {
+    environment?: Array<string>
+    qemu?: { architecture?: Record<string, { cpu?: { cores?: number } }> }
+  }
+  const arch = (c?.environment ?? []).filter((e) => e.startsWith('vm_sys_arch=')).map((e) => e.split('=')[1]).at(-1)
+  return arch ? c?.qemu?.architecture?.[arch]?.cpu?.cores : undefined
+}
+
+// the cores per socket each qemu config for the host asks for, variants only where they set their own. the client
+// checks them against the cores it has before any virt add or sync, since the server cannot see the host
+export function qemuWants(configs: Array<[string, unknown]>): Record<string, number> {
+  const wanted = new Map(configs.map(([name, config]) => [name, qemuWantsCores(config)]))
+  const wants: Record<string, number> = {}
+  for (const [name, cores] of wanted) {
+    const inherited = name.includes('/') && wanted.get(name.split('/')[0]) === cores
+    if (cores != null && !inherited) {
+      wants[name] = cores
+    }
+  }
+  return wants
+}
+
+// each config merged as the client merges it: the shared qemu.yaml, the instance, then a variant
+async function loadQemuConfigs(dirParts: Array<string>): Promise<Array<[string, unknown]>> {
+  const load = (parts: Array<string>) => getCfgFileLoad(parts, { extension: Fmt.yaml })
+  const base = await load([VIRT_KEY, 'qemu'])
+  const found = (await getCfgDirDump([...dirParts, 'qemu'], { extension: Fmt.yaml })).filter((p) => p.length)
+  const configs: Array<[string, unknown]> = []
+  for (const parts of found) {
+    let merged = deepMerge(base ?? {}, (await load([...dirParts, 'qemu', parts[0]])) ?? {})
+    if (parts.length > 1) {
+      merged = deepMerge(merged, (await load([...dirParts, 'qemu', ...parts])) ?? {})
+    }
+    configs.push([parts.join('/'), merged])
+  }
+  return configs
 }
 
 function buildAndLog(shell: Sh, environment: Env) {
@@ -173,6 +233,18 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       const networks = podmanConfig?.podman?.networks ?? {}
       _shell = _shell.with(
         _shell.varSetStr(VIRT_PODMAN_NETWORKS_KEY, JSON.stringify(networks)),
+      )
+    }
+
+    if (supportedManagers.includes('qemu')) {
+      const limits = await getCfgFileLoad([...dirParts, 'limits'], { extension: Fmt.yaml })
+      if (op === 'add' || op === 'sync') {
+        _shell = _shell.with(
+          _shell.varSetStr(VIRT_QEMU_WANTS_KEY, JSON.stringify(qemuWants(await loadQemuConfigs(dirParts)))),
+        )
+      }
+      _shell = _shell.with(
+        _shell.varSetStr(VIRT_LIMITS_KEY, JSON.stringify(limits ?? {})),
       )
     }
 
