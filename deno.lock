@@ -12,7 +12,6 @@
     "jsr:@std/path@^1.1.6": "1.1.6",
     "jsr:@std/testing@^1.0.21": "1.0.21",
     "jsr:@std/toml@^1.0.11": "1.0.11",
-    "jsr:@std/yaml@*": "1.3.0",
     "jsr:@std/yaml@^1.3.0": "1.3.0"
   },
   "jsr": {
@@ -76,7 +75,7 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@meop/shire@0.12",
+      "jsr:@meop/shire@~0.12.1",
       "jsr:@std/assert@^1.0.19",
       "jsr:@std/fs@^1.0.24",
       "jsr:@std/path@^1.1.6",
@@ -85,7 +84,7 @@
       "jsr:@std/yaml@^1.3.0"
     ],
     "links": {
-      "jsr:@meop/shire@0.12.0": {
+      "jsr:@meop/shire@0.12.1": {
         "dependencies": [
           "jsr:@std/assert@^1.0.19",
           "jsr:@std/yaml@^1.3.0"

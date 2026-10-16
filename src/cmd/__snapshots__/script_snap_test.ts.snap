@@ -250,6 +250,8 @@ def opPrintCmd --wrapped [...args] {
   \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
   if (\$args | length) > 1 {
     \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  } else {
+    print ''
   }
 }
 
@@ -609,6 +611,8 @@ def opPrintCmd --wrapped [...args] {
   \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
   if (\$args | length) > 1 {
     \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  } else {
+    print ''
   }
 }
 
@@ -1058,6 +1062,8 @@ def opPrintCmd --wrapped [...args] {
   \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
   if (\$args | length) > 1 {
     \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  } else {
+    print ''
   }
 }
 
@@ -1615,6 +1621,8 @@ function opPrintCmd {
     print -n " \\\\033[0;36m"
     print -n -r -- "\$*"
     print "\\\\033[0m"
+  else
+    print
   fi
 }
 
@@ -1973,6 +1981,8 @@ def opPrintCmd --wrapped [...args] {
   \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
   if (\$args | length) > 1 {
     \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  } else {
+    print ''
   }
 }
 
@@ -2528,6 +2538,8 @@ function opPrintCmd {
     print -n " \\\\033[0;36m"
     print -n -r -- "\$*"
     print "\\\\033[0m"
+  else
+    print
   fi
 }
 
@@ -2676,6 +2688,8 @@ function opPrintCmd {
     print -n " \\\\033[0;36m"
     print -n -r -- "\$*"
     print "\\\\033[0m"
+  else
+    print
   fi
 }
 
@@ -2808,6 +2822,8 @@ function opPrintCmd {
     print -n " \\\\033[0;36m"
     print -n -r -- "\$*"
     print "\\\\033[0m"
+  else
+    print
   fi
 }
 
@@ -2940,6 +2956,8 @@ function opPrintCmd {
     print -n " \\\\033[0;36m"
     print -n -r -- "\$*"
     print "\\\\033[0m"
+  else
+    print
   fi
 }
 
@@ -3231,6 +3249,8 @@ def opPrintCmd --wrapped [...args] {
   \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
   if (\$args | length) > 1 {
     \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  } else {
+    print ''
   }
 }
 
@@ -3752,6 +3772,8 @@ def opPrintCmd --wrapped [...args] {
   \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
   if (\$args | length) > 1 {
     \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+  } else {
+    print ''
   }
 }
 
@@ -4307,6 +4329,8 @@ function opPrintCmd {
     print -n " \\\\033[0;36m"
     print -n -r -- "\$*"
     print "\\\\033[0m"
+  else
+    print
   fi
 }
 
@@ -4455,6 +4479,8 @@ function opPrintCmd {
     print -n " \\\\033[0;36m"
     print -n -r -- "\$*"
     print "\\\\033[0m"
+  else
+    print
   fi
 }
 
@@ -4587,6 +4613,8 @@ function opPrintCmd {
     print -n " \\\\033[0;36m"
     print -n -r -- "\$*"
     print "\\\\033[0m"
+  else
+    print
   fi
 }
 
@@ -4719,6 +4747,8 @@ function opPrintCmd {
     print -n " \\\\033[0;36m"
     print -n -r -- "\$*"
     print "\\\\033[0m"
+  else
+    print
   fi
 }
 
