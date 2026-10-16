@@ -42,6 +42,12 @@ any, the table counts them, and a picked manager's list is handed the terms and 
 summary and the dump cannot drift. The terms are never rows: one row a term under every manager read as each holding an
 instance by that name, and picking one of two terms dropped the other from the match.
 
+An instance's name is also its hostname and its unit's name, so it has to be one nothing else on the host answers to:
+not a manager's (`docker`, `lxc`, `podman`, `qemu`), not the host's own, and not one another manager's instance already
+has. A pod counts as an instance here; a pod's containers and a qemu variant do not, since they are named after it.
+Every acting op checks the whole of the host's config first, whatever was named, and a clash stops it before anything
+runs: the config is what needs fixing, and a name half in use would leave two units or two hosts answering to it.
+
 `docker` instances are plain compose files, served whole to `docker compose --file -`. `docker.nu` reads
 `services.*.volumes` to pre-create bind sources, in both the `source: … target: …` and `host:container` spellings, so
 those paths are written out in full — nothing substitutes `{host}` in a compose file.

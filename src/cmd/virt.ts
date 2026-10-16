@@ -54,6 +54,33 @@ const VIRT_PLAN_KEY = [VIRT_KEY, 'plan']
 // manager -> 'pod=instances' entries, filtered by what is here the same way
 const VIRT_FIND_KEY = [VIRT_KEY, 'find']
 
+const ALL_MANAGERS = [...new Set(Object.values(sysOsPlatToManager).flat())]
+
+// an instance's name is its hostname and the name of its unit, so none may be a manager's, the host's, or one another
+// manager's instance already has. a pod counts; the containers inside it are named after it
+export function virtNameClashes(results: Array<Array<string>>, host: string): Array<string> {
+  const owners = new Map<string, Set<string>>()
+  for (const [manager, name] of results) {
+    if (ALL_MANAGERS.includes(manager) && name) {
+      const key = name.toLowerCase()
+      owners.set(key, (owners.get(key) ?? new Set()).add(manager))
+    }
+  }
+  const clashes: Array<string> = []
+  for (const [name, managers] of [...owners].toSorted(([a], [b]) => a.localeCompare(b))) {
+    if (ALL_MANAGERS.includes(name)) {
+      clashes.push(`${name} is a manager's name`)
+    }
+    if (sameName(name, host)) {
+      clashes.push(`${name} is this host's name`)
+    }
+    if (managers.size > 1) {
+      clashes.push(`${name} is an instance of ${[...managers].toSorted().join(' and ')}`)
+    }
+  }
+  return clashes
+}
+
 function getSupportedManagers(context: Ctx) {
   const managers: Array<string> = []
 
@@ -297,6 +324,16 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
           .with(['virtPlanRun'])
       }
     } else {
+      // checked across all of this host's config, whatever was named: a clash anywhere is a config to fix first
+      const clashes = virtNameClashes(await getCfgDirDump(dirParts, { extension: Fmt.yaml }), context.sys_host ?? '')
+      if (clashes.length) {
+        return buildAndLog(
+          shell.with(
+            shell.printErr(`instance names clash, so nothing ran; rename in the config: ${clashes.join(', ')}`),
+          ),
+          environment,
+        )
+      }
       // the acting ops take names whole: a manager, a pod or an instance as it is spelled, in any order
       let results = await getCfgDirDump(dirParts, { extension: Fmt.yaml, filters, match: 'exact' })
       if (op !== 'run') {
