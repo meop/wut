@@ -99,7 +99,7 @@ operation:
           - nushell
       script:
         zsh:
-          file: cfg/script/docker/install.zsh
+          file: cfg/script/ollama/install.zsh
           gate:
             sys_os_plat:
               - linux
@@ -353,12 +353,12 @@ and are answered by the client instead — see [SCRIPT.md](SCRIPT.md#the-clients
 **Examples:**
 
 - `brew/install.zsh` has `sys_os_plat: [darwin]` in YAML and checks `[[ $SYS_OS_PLAT != darwin ]]`
-- `brew/setup.zsh` adds `has_cmd: [brew]` in YAML and checks `type brew > /dev/null`
+- `podman/setup.zsh` adds `has_cmd: [podman]` in YAML and checks `type podman > /dev/null`
 - `deno/install.nu` adds `no_cmd: [deno]` in YAML and checks `which deno | is-not-empty` before it asks
 - `hyperv/install.ps1` adds `no_svc: [vmms]` in YAML and checks `Get-Service vmms` before it asks
 - `rectangle/setup.zsh` adds `has_path: [/Applications/Rectangle.app]` in YAML and checks `[[ ! -d ... ]]`
 - `gnome-terminal/setup.zsh` has `sys_os_de: [gnome]` + `sys_os_plat: [linux]` in YAML and checks both
 - `utm/repair.zsh` adds `no_ssh: true` in YAML and checks `[[ $SSH_CONNECTION ]]`
 - `node/install.zsh` has `sys_os_like: [debian]` in YAML and checks `[[ $SYS_OS_LIKE != *debian* ]]`
-- `docker/install.zsh` has `sys_os: [debian, ubuntu]` in YAML and checks exact `$SYS_OS` (because `$SYS_OS` is also used
-  in URL construction)
+- `docker/repo.zsh` has `sys_os: [debian, fedora, ubuntu]` in YAML and checks exact `$SYS_OS` (because `$SYS_OS` is also
+  used in URL construction)
