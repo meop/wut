@@ -700,6 +700,10 @@ if (\$IsWindows) {
       'windows_x86_64' { 'x86_64-pc-windows-msvc' }
       default { '' }
     }
+    # a musl system (alpine) cannot run the gnu build
+    if (\$SYS_OS_PLAT -eq 'linux' -and (Get-ChildItem -Path '/lib/ld-musl-*.so.1' -ErrorAction SilentlyContinue)) {
+      \$triple = \$triple -replace '-gnu\$', '-musl'
+    }
     if (\$triple -eq '') {
       opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
       exit 1
@@ -1075,6 +1079,12 @@ function () {
         exit 1
         ;;
     esac
+
+    # a musl system (alpine) cannot run the gnu build
+    local -a musl_loaders=(/lib/ld-musl-*.so.1(N))
+    if (( \${#musl_loaders} )); then
+      triple=\${triple/%-gnu/-musl}
+    fi
 
     # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
     local work_dir="\${wut_home}/vendor/.nu"

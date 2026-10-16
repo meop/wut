@@ -36,6 +36,12 @@ function () {
         ;;
     esac
 
+    # a musl system (alpine) cannot run the gnu build
+    local -a musl_loaders=(/lib/ld-musl-*.so.1(N))
+    if (( ${#musl_loaders} )); then
+      triple=${triple/%-gnu/-musl}
+    fi
+
     # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
     local work_dir="${wut_home}/vendor/.nu"
     mkdir -p "${work_dir}"

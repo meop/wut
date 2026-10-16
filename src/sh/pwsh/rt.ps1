@@ -33,6 +33,10 @@
       'windows_x86_64' { 'x86_64-pc-windows-msvc' }
       default { '' }
     }
+    # a musl system (alpine) cannot run the gnu build
+    if ($SYS_OS_PLAT -eq 'linux' -and (Get-ChildItem -Path '/lib/ld-musl-*.so.1' -ErrorAction SilentlyContinue)) {
+      $triple = $triple -replace '-gnu$', '-musl'
+    }
     if ($triple -eq '') {
       opPrintErr "unsupported platform/arch for nu sync: ${SYS_OS_PLAT}/${SYS_CPU_ARCH}"
       exit 1
