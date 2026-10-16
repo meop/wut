@@ -472,10 +472,18 @@ def packManagerBest [manager: string] {
     'script'
   } else if $manager in $PACK_PACMAN_FAMILY {
     packPacmanBest $manager
-  } else if (which $manager | is-not-empty) {
+  } else if (which (packManagerBin $manager) | is-not-empty) {
     $manager
   } else {
     null
+  }
+}
+
+# the command a manager is found by, where it is not the manager's own name: xbps is a set of xbps-* commands
+def packManagerBin [manager: string] {
+  match $manager {
+    xbps => 'xbps-install',
+    _ => $manager,
   }
 }
 
