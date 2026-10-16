@@ -13,9 +13,16 @@ def virtPodman [] {
       | each { from yaml }
   }
 
+  # {host}, {pod} and {instance}, and each name podman.yaml's environment gives, as {name}
+  def fillVars [text: string, host: string, pod: string, instance?: string] {
+    let named = ($env.VIRT_PODMAN_ENV? | default '{}' | from json | upsert host $host | upsert pod $pod)
+    let named = if $instance == null { $named } else { $named | upsert instance $instance }
+    $named | transpose key value | reduce --fold $text { |kv, acc| $acc | str replace --all $"{($kv.key)}" $kv.value }
+  }
+
   def processYaml [yamlRaw, host, pod, instance] {
     mut result = []
-    for doc in ($yamlRaw | str replace --all '{host}' $host | str replace --all '{pod}' $pod | str replace --all '{instance}' $instance | splitYamlDocs) {
+    for doc in (fillVars $yamlRaw $host $pod $instance | splitYamlDocs) {
       if ($doc | get kind? | default '') == Build {
         # custom doc, not passed to podman
       } else {
@@ -28,10 +35,7 @@ def virtPodman [] {
   }
 
   def buildImage [yamlRaw, host, pod, instance, alreadyBuilt: list<string>] {
-    let buildDocs = $yamlRaw
-      | str replace --all '{host}' $host
-      | str replace --all '{pod}' $pod
-      | str replace --all '{instance}' $instance
+    let buildDocs = fillVars $yamlRaw $host $pod $instance
       | splitYamlDocs
       | where { |d| ($d | get kind? | default '') == Build }
     if ($buildDocs | is-empty) {
@@ -125,9 +129,7 @@ def virtPodman [] {
     # layer 2: pod.yaml — base pod metadata (hostname, network, mac, annotations)
     let configPodRaw = opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/podman/($pod).yaml'#"
     mut builtImages = buildImage $configPodRaw $env.SYS_HOST $pod '' []
-    mut podDoc = $configPodRaw
-      | str replace --all '{host}' $env.SYS_HOST
-      | str replace --all '{pod}' $pod
+    mut podDoc = fillVars $configPodRaw $env.SYS_HOST $pod
       | splitYamlDocs
       | where { |d| ($d | get kind? | default '') == Pod }
       | first
@@ -198,6 +200,21 @@ def virtPodman [] {
       ['[Unit]', $"Description=($pod) pod", '', '[Kube]', $"Yaml=($pod).yaml", $"Network=($network)"],
       (if ($mac | is-not-empty) { [$"PodmanArgs=--mac-address ($mac)"] } else { [] }),
     ] | flatten
+
+    # the pod's own data folder, made when missing: on btrfs a subvolume, so a snapshot takes the whole pod
+    let podmanEnv = ($env.VIRT_PODMAN_ENV? | default '{}' | from json)
+    if 'virt_podman_dir_path' in $podmanEnv {
+      let dataDirPath = $"($podmanEnv.virt_podman_dir_path)/($env.SYS_HOST)/($pod)"
+      if not ($dataDirPath | path exists) {
+        let parentDirPath = ($dataDirPath | path dirname)
+        opPrintMaybeRunCmd sudo mkdir -p $parentDirPath
+        if (^stat --file-system --format %T $parentDirPath | complete | get stdout | str trim) == 'btrfs' {
+          opPrintMaybeRunCmd sudo btrfs subvolume create $dataDirPath
+        } else {
+          opPrintMaybeRunCmd sudo mkdir -p $dataDirPath
+        }
+      }
+    }
 
     let boot = if $state == null { not (virtAddOff) } else { $state.enabled }
     opPrintMaybeRunCmd sudo mkdir -p $kubeDirPath

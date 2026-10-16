@@ -224,6 +224,33 @@ way without knowing it is nested. The container shares the host's kernel, so wut
 modules there; the host loads the netfilter modules docker's rules need when they are first used (docker 29 on
 iptables-nft needs none loaded beforehand).
 
+## Snapshots: snap, unsnap, roll, unroll
+
+What an instance owns is one btrfs subvolume: an lxc root, a qemu data folder, a pod's data folder
+(`{virt_podman_dir_path}/<host>/<pod>`, made a subvolume by add). Its snapshots sit on the same filesystem, as btrfs
+requires, under `back/<tier>` at that filesystem's mount, and are named as btrbk names its own:
+`<manager>-<instance>-<live|full>.<timestamp>`, so the kind and the instance travel with a snapshot wherever it is
+moved. A docker stack keeps its data in its binds, and glass on ext4 keeps no subvolume, so neither is snapshotted.
+
+| Op       | Does                                                                             |
+| -------- | -------------------------------------------------------------------------------- |
+| `snap`   | live by default; `--full` stops a running instance first and starts it after     |
+| `unsnap` | removes manual snapshots, picked from a list or named with `--to`                |
+| `roll`   | stops it, keeps its current state in `back/roll`, swaps in a snapshot, starts it |
+| `unroll` | puts back the state the last roll kept                                           |
+
+The tier is `manual` unless `--tier <name>` names a btrbk config, `/etc/btrbk/<name>.conf`: then btrbk takes the
+snapshot, keeps the tier to its retention and copies it to the other disk, and wut only stops and starts around it. That
+is how a timer takes a full snapshot, which btrbk cannot, having no hooks. Nothing rotates `manual`; `roll` keeps one
+snapshot per instance, the latest, replaced by each roll. `roll` goes to the latest snapshot of any tier but `roll`, or
+to the one `--to` names in full or by its timestamp.
+
+A btrfs snapshot shares every block with what it was taken of and costs only what changes after, so there is no chain to
+merge: deleting a snapshot frees what only it held. A live snapshot is what the disk held at that instant, as after a
+power cut, which databases recover from; a full one is clean. Every op holds the virt lock, and the swap in `roll` and
+`unroll` also holds btrbk's lock file, `/run/lock/btrbk.lock`, taken with `flock` as btrbk itself takes it, so a timed
+run never snapshots half a swap.
+
 ## Find
 
 `find` emits `VIRT_FIND` as `manager -> ['pod=instances', ...]` and `virtFindRun` filters it by `virtManagerHere`,

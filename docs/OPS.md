@@ -165,12 +165,12 @@ first run may sit at its prompt for as long as nobody answers, and waiting witho
 
 Commands lock apart, so `wut virt sync` and `wut pack sync` run side by side. Ops that only read take no lock:
 
-| Command  | Locks                                     | Takes no lock                      |
-| -------- | ----------------------------------------- | ---------------------------------- |
-| `pack`   | `add`, `remove`, `sync`, `tidy`           | `find`, `info`, `list`, `outdated` |
-| `virt`   | `add`, `on`, `off`, `rem`, `sync`, `tidy` | `find`, `list`, `run`              |
-| `file`   | `sync`                                    | `diff`, `find`, `list`             |
-| `script` | `exec`                                    | `find`                             |
+| Command  | Locks                                                                         | Takes no lock                      |
+| -------- | ----------------------------------------------------------------------------- | ---------------------------------- |
+| `pack`   | `add`, `remove`, `sync`, `tidy`                                               | `find`, `info`, `list`, `outdated` |
+| `virt`   | `add`, `on`, `off`, `rem`, `snap`, `unsnap`, `roll`, `unroll`, `sync`, `tidy` | `find`, `list`, `run`              |
+| `file`   | `sync`                                                                        | `diff`, `find`, `list`             |
+| `script` | `exec`                                                                        | `find`                             |
 
 `virt run` acts but takes no lock: it is a foreground session that can last hours and touches nothing `add` owns
 ([VIRT.md](VIRT.md#qemu-add-installs-run-does-not)), so holding the lock through it would only block every other virt op

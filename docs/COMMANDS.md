@@ -44,12 +44,12 @@ it: `node`, `js`, `lang-js`, `js-node`.
 
 ## What each op asks
 
-| Command  | A name, whole                            | The start of a word        |
-| -------- | ---------------------------------------- | -------------------------- |
-| `pack`   | `add`, `remove`, `sync`, `info`          | `find`, `list`, `outdated` |
-| `virt`   | `add`, `on`, `off`, `rem`, `sync`, `run` | `find`, `list`             |
-| `script` | `exec`                                   | `find`                     |
-| `file`   | `diff`, `sync`                           | `find`, `list`             |
+| Command  | A name, whole                                                                | The start of a word        |
+| -------- | ---------------------------------------------------------------------------- | -------------------------- |
+| `pack`   | `add`, `remove`, `sync`, `info`                                              | `find`, `list`, `outdated` |
+| `virt`   | `add`, `on`, `off`, `rem`, `snap`, `unsnap`, `roll`, `unroll`, `sync`, `run` | `find`, `list`             |
+| `script` | `exec`                                                                       | `find`                     |
+| `file`   | `diff`, `sync`                                                               | `find`, `list`             |
 
 `script exec` is the one op that splits on cardinality: `wut s e setup` runs every setup script gated for this machine,
 while `wut s e setup ptyxis` names a tool and runs its one script. The `has_cmd` gate is client-side, so a fanned out
@@ -71,11 +71,11 @@ at once.
 
 A term that matches nothing is a no op, and every op says so rather than emitting a body that quietly does nothing:
 
-| Command  | Message                          | When                                              |
-| -------- | -------------------------------- | ------------------------------------------------- |
-| `virt`   | `no instance matched: <filters>` | an add/on/off/rem/sync/run term named no instance |
-| `file`   | `no file matched: <filters>`     | a term named no config key                        |
-| `script` | `no script matched: <filters>`   | an action, or action plus tool, named no script   |
+| Command  | Message                          | When                                            |
+| -------- | -------------------------------- | ----------------------------------------------- |
+| `virt`   | `no instance matched: <filters>` | an acting op's term named no instance           |
+| `file`   | `no file matched: <filters>`     | a term named no config key                      |
+| `script` | `no script matched: <filters>`   | an action, or action plus tool, named no script |
 
 `find` ops are exempt: an empty result is the answer to a search, not a failure. `pack` and `virt` have no manager
 filter to mismatch: the numbered prompt narrows the run instead, and it can only offer what the client actually has.

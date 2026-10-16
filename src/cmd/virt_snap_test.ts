@@ -218,6 +218,33 @@ Deno.test('nu / linux / add (pinned, off)', async (t) => {
   await checkSyntax('nu', body)
   assertEquals(body.includes("$env.VIRT_OFF = r#'1'#"), true)
 })
+// snap, unsnap, roll and unroll act on what was added, through one handler for every manager rather than each
+// manager's own arm, and hand their switches and options on as env vars
+Deno.test('nu / linux / snap, unsnap, roll, unroll (pinned)', async () => {
+  for (const op of ['snap', 'unsnap', 'roll', 'unroll']) {
+    const body = await (await runSrv(req(`/sh/nu/virt/${op}/qemu?${PIN}`))).text()
+    await checkSyntax('nu', body)
+    assertEquals(body.includes(`$env.VIRT_OP = r#'${op}'#`), true, op)
+    assertEquals(body.includes('"qemu":["test","test2"]'), true, op)
+    assertEquals(/^\s*virtSnapRun \$manager$/m.test(body), true, op)
+  }
+})
+Deno.test('nu / linux / snap (pinned, full, a tier)', async () => {
+  const body = await (await runSrv(req(`/sh/nu/virt/snap/--full/--tier/weekly/qemu?${PIN}`))).text()
+  assertEquals(body.includes("$env.VIRT_SNAP_FULL = r#'1'#"), true)
+  assertEquals(body.includes("$env.VIRT_SNAP_TIER = r#'weekly'#"), true)
+})
+Deno.test('nu / linux / snap (pinned, manual and live unless told)', async () => {
+  const body = await (await runSrv(req(`/sh/nu/virt/snap/qemu?${PIN}`))).text()
+  assertEquals(body.includes('$env.VIRT_SNAP_FULL = '), false)
+  assertEquals(body.includes("$env.VIRT_SNAP_TIER = r#'manual'#"), true)
+})
+Deno.test('nu / linux / roll and unsnap (pinned, --to)', async () => {
+  for (const op of ['roll', 'unsnap']) {
+    const body = await (await runSrv(req(`/sh/nu/virt/${op}/--to/20261017T0300/qemu?${PIN}`))).text()
+    assertEquals(body.includes("$env.VIRT_SNAP_TO = r#'20261017T0300'#"), true, op)
+  }
+})
 Deno.test('nu / linux / add (pinned, docker)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/virt/add/docker?${PIN}`))).text()
   await assertSnapshot(t, body)

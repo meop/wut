@@ -21,9 +21,13 @@ export class VirtCmd extends CmdBase implements Cmd {
       new VirtCmdOff([...this.scopes, this.name]),
       new VirtCmdOn([...this.scopes, this.name]),
       new VirtCmdRem([...this.scopes, this.name]),
+      new VirtCmdRoll([...this.scopes, this.name]),
       new VirtCmdRun([...this.scopes, this.name]),
+      new VirtCmdSnap([...this.scopes, this.name]),
       new VirtCmdSync([...this.scopes, this.name]),
       new VirtCmdTidy([...this.scopes, this.name]),
+      new VirtCmdUnroll([...this.scopes, this.name]),
+      new VirtCmdUnsnap([...this.scopes, this.name]),
     ]
   }
 }
@@ -47,6 +51,12 @@ const VIRT_QEMU_WANTS_KEY = [VIRT_KEY, 'qemu', 'wants']
 const VIRT_OP_PARTS_KEY = (op: string) => [VIRT_KEY, op, 'parts']
 // add's --off
 const VIRT_OFF_KEY = [VIRT_KEY, 'off']
+// snap's --full and --tier, and the --to of roll and unsnap
+const VIRT_SNAP_FULL_KEY = [VIRT_KEY, 'snap', 'full']
+const VIRT_SNAP_TIER_KEY = [VIRT_KEY, 'snap', 'tier']
+const VIRT_SNAP_TO_KEY = [VIRT_KEY, 'snap', 'to']
+// podman.yaml's environment, as {name} in a pod's yamls
+const VIRT_PODMAN_ENV_KEY = [VIRT_KEY, 'podman', 'env']
 
 // manager -> instances, for the client to filter by what is here and run after one prompt
 const VIRT_PLAN_KEY = [VIRT_KEY, 'plan']
@@ -167,6 +177,17 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   if (op === 'add' && environment.get([VIRT_KEY, op, 'off'])) {
     _shell = _shell.with(_shell.varSetStr(VIRT_OFF_KEY, '1'))
   }
+  if (op === 'snap' && environment.get([VIRT_KEY, op, 'full'])) {
+    _shell = _shell.with(_shell.varSetStr(VIRT_SNAP_FULL_KEY, '1'))
+  }
+  if (op === 'snap') {
+    _shell = _shell.with(
+      _shell.varSetStr(VIRT_SNAP_TIER_KEY, String(environment.get([VIRT_KEY, op, 'tier']) ?? 'manual')),
+    )
+  }
+  if ((op === 'roll' || op === 'unsnap') && environment.get([VIRT_KEY, op, 'to'])) {
+    _shell = _shell.with(_shell.varSetStr(VIRT_SNAP_TO_KEY, String(environment.get([VIRT_KEY, op, 'to']))))
+  }
   const supportedManagers = op === 'run'
     ? getSupportedManagers(context).filter((m) => RUN_MANAGERS.includes(m))
     : getSupportedManagers(context)
@@ -265,9 +286,14 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
         extension: Fmt.yaml,
       })
       const networks = podmanConfig?.podman?.networks ?? {}
-      _shell = _shell.with(
-        _shell.varSetStr(VIRT_PODMAN_NETWORKS_KEY, JSON.stringify(networks)),
+      const podmanEnv = Object.fromEntries(
+        ((podmanConfig?.environment ?? []) as Array<string>).map((
+          e,
+        ) => [e.split('=')[0], e.split('=').slice(1).join('=')]),
       )
+      _shell = _shell
+        .with(_shell.varSetStr(VIRT_PODMAN_NETWORKS_KEY, JSON.stringify(networks)))
+        .with(_shell.varSetStr(VIRT_PODMAN_ENV_KEY, JSON.stringify(podmanEnv)))
     }
 
     if (supportedManagers.includes('qemu')) {
@@ -511,6 +537,92 @@ export class VirtCmdTidy extends CmdBase implements Cmd {
     this.name = 'tidy'
     this.description = 'tidy on local'
     this.aliases = ['t', 'ti', 'cl', 'clean']
+  }
+  override async work(
+    shell: Sh,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
+    return await execOp(shell, context, environment, this.name)
+  }
+}
+
+export class VirtCmdSnap extends CmdBase implements Cmd {
+  constructor(scopes: Array<string>) {
+    super(scopes)
+    this.name = 'snap'
+    this.description = 'snapshot what an instance owns'
+    this.aliases = ['sn', 'snapshot']
+    this.arguments = [
+      { name: 'parts', description: 'path part(s) to match', required: true },
+    ]
+    this.switches = [
+      { keys: ['-f', '--full'], description: 'stop it first and start it after, for a clean snapshot' },
+    ]
+    this.options = [
+      { keys: ['-t', '--tier'], description: 'a btrbk tier, /etc/btrbk/<tier>.conf, rather than manual' },
+    ]
+  }
+  override async work(
+    shell: Sh,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
+    return await execOp(shell, context, environment, this.name)
+  }
+}
+
+export class VirtCmdUnsnap extends CmdBase implements Cmd {
+  constructor(scopes: Array<string>) {
+    super(scopes)
+    this.name = 'unsnap'
+    this.description = 'remove manual snapshots'
+    this.arguments = [
+      { name: 'parts', description: 'path part(s) to match', required: true },
+    ]
+    this.options = [
+      { keys: ['--to'], description: 'the snapshot, by name or timestamp, rather than picking' },
+    ]
+  }
+  override async work(
+    shell: Sh,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
+    return await execOp(shell, context, environment, this.name)
+  }
+}
+
+export class VirtCmdRoll extends CmdBase implements Cmd {
+  constructor(scopes: Array<string>) {
+    super(scopes)
+    this.name = 'roll'
+    this.description = 'roll back to a snapshot'
+    this.aliases = ['ro', 'rollback']
+    this.arguments = [
+      { name: 'parts', description: 'path part(s) to match', required: true },
+    ]
+    this.options = [
+      { keys: ['--to'], description: 'the snapshot, by name or timestamp, rather than the latest' },
+    ]
+  }
+  override async work(
+    shell: Sh,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
+    return await execOp(shell, context, environment, this.name)
+  }
+}
+
+export class VirtCmdUnroll extends CmdBase implements Cmd {
+  constructor(scopes: Array<string>) {
+    super(scopes)
+    this.name = 'unroll'
+    this.description = 'undo the last roll'
+    this.arguments = [
+      { name: 'parts', description: 'path part(s) to match', required: true },
+    ]
   }
   override async work(
     shell: Sh,
