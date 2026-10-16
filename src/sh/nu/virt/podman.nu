@@ -88,7 +88,35 @@ def virtPodman [] {
     }
   }
 
-  def doAdd [pod, podInstances, cmd] {
+  # a quadlet unit cannot be systemctl enabled: an [Install] drop-in is what starts it at boot
+  def installFilePath [pod] {
+    $"/etc/containers/systemd/($pod).kube.d/install.conf"
+  }
+
+  def podState [pod] {
+    let kubeFilePath = $"/etc/containers/systemd/($pod).kube"
+    if not ($kubeFilePath | path exists) {
+      return null
+    }
+    {
+      # a .kube written before the drop-in carried its own [Install]
+      enabled: ((installFilePath $pod | path exists) or (open --raw $kubeFilePath | str contains '[Install]')),
+      active: ((^systemctl is-active $"($pod).service" | complete | get stdout | str trim) == 'active'),
+    }
+  }
+
+  def podInstall [pod, on: bool] {
+    let filePath = installFilePath $pod
+    if $on {
+      opPrintMaybeRunCmd sudo mkdir -p ($filePath | path dirname)
+      opPrintMaybeRunCmd $"r#'[Install]\nWantedBy=default.target\n'#" '|' sudo tee $filePath '|' ignore
+    } else if ($filePath | path exists) {
+      opPrintMaybeRunCmd sudo rm -rf ($filePath | path dirname)
+    }
+  }
+
+  # state: podState from before a sync stopped the pod, or null for a pod new to this host
+  def doAdd [pod, podInstances, cmd, state] {
     let kubeDirPath = '/etc/containers/systemd'
     let networks = $env.VIRT_PODMAN_NETWORKS | from json
     let yamlFilePath = $"($kubeDirPath)/($pod).yaml"
@@ -171,15 +199,14 @@ def virtPodman [] {
       (if ($mac | is-not-empty) { [$"PodmanArgs=--mac-address ($mac)"] } else { [] }),
     ] | flatten
 
-    let isNew = not ($kubeFilePath | path exists)
+    let boot = if $state == null { not (virtAddOff) } else { $state.enabled }
     opPrintMaybeRunCmd sudo mkdir -p $kubeDirPath
     opPrintMaybeRunCmd $"r#'($allDocs)'#" '|' sudo tee $yamlFilePath '|' ignore
-    opPrintMaybeRunCmd $"r#'(($kubeLines | append ['', '[Install]', 'WantedBy=default.target'] | str join "\n") + "\n")'#" '|' sudo tee $kubeFilePath '|' ignore
+    opPrintMaybeRunCmd $"r#'((($kubeLines | str join "\n") + "\n"))'#" '|' sudo tee $kubeFilePath '|' ignore
+    podInstall $pod $boot
     opPrintMaybeRunCmd sudo systemctl daemon-reload
-    if $isNew {
+    if ($state == null and $boot) or ($state != null and $state.active) {
       opPrintMaybeRunCmd sudo systemctl start $"($pod).service"
-    } else {
-      opPrintMaybeRunCmd sudo systemctl restart $"($pod).service"
     }
   }
 
@@ -194,7 +221,15 @@ def virtPodman [] {
           continue
         }
 
-        doAdd $pod $podInstances $cmd
+        doAdd $pod $podInstances $cmd (podState $pod)
+      }
+    }
+    on | off => {
+      let on = $env.VIRT_OP == 'on'
+      for pod in ($env.VIRT_INSTANCES | each { |p| ($p | split row '/') | first } | uniq) {
+        podInstall $pod $on
+        opPrintMaybeRunCmd sudo systemctl daemon-reload
+        opPrintMaybeRunCmd sudo systemctl (if $on { 'start' } else { 'stop' }) $"($pod).service"
       }
     }
     list => {
@@ -226,7 +261,7 @@ def virtPodman [] {
         let kubeFilePath = $"($kubeDirPath)/($pod).kube"
         let network = readKubeNetwork $kubeFilePath
         opPrintMaybeRunCmd sudo systemctl stop $"($pod).service"
-        opPrintMaybeRunCmd sudo rm -f $yamlFilePath $kubeFilePath
+        opPrintMaybeRunCmd sudo rm -rf $yamlFilePath $kubeFilePath $"($kubeFilePath).d"
         opPrintMaybeRunCmd sudo systemctl daemon-reload
         removeNetworkIfUnused $network $pod $managedNetworks
       }
@@ -237,10 +272,11 @@ def virtPodman [] {
           continue
         }
 
+        let state = podState $pod
         opPrintMaybeRunCmd sudo systemctl stop $"($pod).service"
 
         let podInstances = $env.VIRT_INSTANCES | where { |p| (($p | split row '/') | first) == $pod }
-        doAdd $pod $podInstances $cmd
+        doAdd $pod $podInstances $cmd $state
       }
       # each pull leaves the image it replaced untagged; drop those so they do not pile up
       opPrintMaybeRunCmd sudo $cmd image prune --force

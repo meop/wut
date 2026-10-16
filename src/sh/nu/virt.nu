@@ -76,6 +76,19 @@ def virtPlanAdded [entries: list, root: string = '/'] {
     | where { |e| $e.instances | is-not-empty }
 }
 
+# whether a unit starts at boot, and whether it runs now
+def virtUnitState [unit: string] {
+  {
+    enabled: ((^systemctl is-enabled $unit | complete | get stdout | str trim) == 'enabled'),
+    active: ((^systemctl is-active $unit | complete | get stdout | str trim) == 'active'),
+  }
+}
+
+# add's --off: a new instance is left stopped and is not started at boot
+def virtAddOff [] {
+  ($env.VIRT_OFF? | default '') == '1'
+}
+
 def --env virtCallManager [manager: string] {
   match $manager {
     docker => { virtDocker },
@@ -123,7 +136,7 @@ def --env virtPlanRun [] {
     return
   }
 
-  let here = if $env.VIRT_OP? in ['rem' 'sync'] { virtPlanAdded $managed } else { $managed }
+  let here = if $env.VIRT_OP? in ['off' 'on' 'rem' 'sync'] { virtPlanAdded $managed } else { $managed }
   if ($here | is-empty) {
     opPrintWarn $"instance not added: ($managed | each { |e| $e.instances } | flatten | str join ', ')"
     return

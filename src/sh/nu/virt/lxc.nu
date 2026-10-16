@@ -56,7 +56,8 @@ def virtLxc [] {
     }
   }
 
-  def doAdd [cmd, instance] {
+  # state: virtUnitState from before a sync stopped it, or null when the instance is new
+  def doAdd [cmd, instance, state] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($cmd).yaml'#"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml'#"
     let merged = virtDeepMerge ($config | from yaml) ($configVm | from yaml)
@@ -84,13 +85,21 @@ def virtLxc [] {
       opPrintMaybeRunCmd sudo mkdir -p (replaceEnv $lxcEnv $mnt.source)
     }
 
-    opPrintMaybeRunCmd sudo mkdir -p $rootfsDirPath
-
+    # on btrfs the root is a subvolume of its own
+    let onBtrfs = (^stat --file-system --format %T $lxcDirPath | complete | get stdout | str trim) == 'btrfs'
     let rootfsReady = (^sudo test -d $"($rootfsDirPath)/usr" | complete).exit_code == 0
     if not $rootfsReady {
+      if $onBtrfs {
+        # lxc-create makes the subvolume itself, and fails on a folder left behind
+        if ($rootfsDirPath | path exists) {
+          opPrintMaybeRunCmd sudo rmdir $rootfsDirPath
+        }
+      } else {
+        opPrintMaybeRunCmd sudo mkdir -p $rootfsDirPath
+      }
       let template = $merged | get lxc?.create?.template?
       let templateName = ($template | columns | get 0?) | default 'download'
-      opPrintMaybeRunCmd sudo lxc-create --name $instance --lxcpath $lxcDirPath --template $templateName -- ...(
+      opPrintMaybeRunCmd sudo lxc-create --name $instance --lxcpath $lxcDirPath --bdev (if $onBtrfs { 'btrfs' } else { 'dir' }) --template $templateName -- ...(
         (if ($templateName in ($template | columns)) { $template | get $templateName } else { {} })
         | transpose key value
         | each { |kv| [$"--($kv.key)", $kv.value] }
@@ -99,10 +108,13 @@ def virtLxc [] {
       opPrintMaybeRunCmd sudo rm -f $"($lxcDirPath)/($instance)/config"
     }
 
-    let autostart = $merged | get lxc?.autostart? | default false
+    # a subvolume's root is inode 256
+    let backing = if $rootfsReady {
+      if $onBtrfs and (^sudo stat --format %i $rootfsDirPath | complete | get stdout | str trim) == '256' { 'btrfs' } else { 'dir' }
+    } else if $onBtrfs { 'btrfs' } else { 'dir' }
 
     let configLines = [
-      [$"lxc.uts.name = ($instance)", $"lxc.rootfs.path = dir:($rootfsDirPath)", 'lxc.cgroup.relative = 1'],
+      [$"lxc.uts.name = ($instance)", $"lxc.rootfs.path = ($backing):($rootfsDirPath)", 'lxc.cgroup.relative = 1'],
       (flattenLxcConfig ($merged | get lxc?.config? | default {}) | each { |l| replaceEnv $lxcEnv $l }),
       (if ($net | is-not-empty) { [
         [$"lxc.net.0.type = ($net.type)", $"lxc.net.0.link = ($net.link)", $"lxc.net.0.name = ($net.name)"],
@@ -117,10 +129,15 @@ def virtLxc [] {
 
     opPrintMaybeRunCmd $"r#'(($configLines | str join "\n") + "\n")'#" '|' sudo tee $"/var/lib/lxc/($instance)/config" '|' ignore
 
-    # autostart is the unit's: lxc.start.auto would have lxc.service start it at boot, outside the unit and the slice
+    # starting at boot is the unit's: lxc.start.auto would have lxc.service start it, outside the unit and the slice
     lxcUnitSlice
-    opPrintMaybeRunCmd sudo systemctl (if $autostart { 'enable' } else { 'disable' }) --quiet $"lxc@($instance)"
-    opPrintMaybeRunCmd sudo systemctl start $"lxc@($instance)"
+    if $state == null {
+      if not (virtAddOff) {
+        opPrintMaybeRunCmd sudo systemctl enable --now --quiet $"lxc@($instance)"
+      }
+    } else if $state.active {
+      opPrintMaybeRunCmd sudo systemctl start $"lxc@($instance)"
+    }
   }
 
   def doRem [cmd, instance] {
@@ -146,12 +163,23 @@ def virtLxc [] {
           continue
         }
 
-        doAdd $cmd $instance
+        doAdd $cmd $instance (if (virtInstanceHere $cmd $instance) { virtUnitState $"lxc@($instance)" } else { null })
+      }
+    }
+    on | off => {
+      for instance in $env.VIRT_INSTANCES {
+        if $env.VIRT_OP == 'on' {
+          opPrintMaybeRunCmd sudo systemctl enable --now --quiet $"lxc@($instance)"
+        } else {
+          opPrintMaybeRunCmd sudo systemctl disable --quiet $"lxc@($instance)"
+          lxcStop $cmd $instance
+        }
       }
     }
     list => {
       for instance in (virtListed $cmd $env.VIRT_INSTANCES) {
-        opPrintRunCmd sudo $"($cmd)-ls" --fancy --fancy-format '"NAME,IPV4,IPV6,STATE,AUTOSTART"' -- $instance
+        try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 $"lxc@($instance)" } catch { |e| opRethrowInterrupt $e }
+        opPrintRunCmd sudo $"($cmd)-ls" --fancy --fancy-format '"NAME,IPV4,IPV6,STATE"' -- $instance
       }
     }
     rem => {
@@ -175,8 +203,9 @@ def virtLxc [] {
           continue
         }
 
+        let state = virtUnitState $"lxc@($instance)"
         lxcStop $cmd $instance
-        doAdd $cmd $instance
+        doAdd $cmd $instance $state
       }
     }
   }

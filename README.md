@@ -87,7 +87,7 @@ function wut {
 | `pack`   | `p`     | Package manager operations                            | `add`, `find`, `info`, `list`, `outdated`, `remove`, `sync`, `tidy` |
 | `file`   | `f`     | Dotfile sync from server to local paths               | `diff`, `find`, `list`, `sync`                                      |
 | `script` | `s`     | Run shell scripts stored in config                    | `exec`, `find`                                                      |
-| `virt`   | `v`     | Container / VM management (docker, podman, lxc, qemu) | `add`, `find`, `list`, `rem`, `run`, `sync`, `tidy`                 |
+| `virt`   | `v`     | Container / VM management (docker, podman, lxc, qemu) | `add`, `find`, `list`, `off`, `on`, `rem`, `run`, `sync`, `tidy`    |
 
 Names are matched the same way in every command. An op that acts (`add`, `remove`, `sync`, `run`, `exec`, `diff`,
 `info`) takes a name whole — a group, a folder above it, an instance, or an alias — so `wut p a nush` is not `nushell`.

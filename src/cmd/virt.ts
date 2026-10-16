@@ -18,6 +18,8 @@ export class VirtCmd extends CmdBase implements Cmd {
       new VirtCmdAdd([...this.scopes, this.name]),
       new VirtCmdFind([...this.scopes, this.name]),
       new VirtCmdList([...this.scopes, this.name]),
+      new VirtCmdOff([...this.scopes, this.name]),
+      new VirtCmdOn([...this.scopes, this.name]),
       new VirtCmdRem([...this.scopes, this.name]),
       new VirtCmdRun([...this.scopes, this.name]),
       new VirtCmdSync([...this.scopes, this.name]),
@@ -43,6 +45,8 @@ const VIRT_LIMITS_KEY = [VIRT_KEY, 'limits']
 // config name -> the cores per socket it asks for, for the client's check before any add or sync
 const VIRT_QEMU_WANTS_KEY = [VIRT_KEY, 'qemu', 'wants']
 const VIRT_OP_PARTS_KEY = (op: string) => [VIRT_KEY, op, 'parts']
+// add's --off
+const VIRT_OFF_KEY = [VIRT_KEY, 'off']
 
 // manager -> instances, for the client to filter by what is here and run after one prompt
 const VIRT_PLAN_KEY = [VIRT_KEY, 'plan']
@@ -133,6 +137,9 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   }
 
   let _shell = shell.with(shell.varSetStr(VIRT_OP_KEY, op))
+  if (op === 'add' && environment.get([VIRT_KEY, op, 'off'])) {
+    _shell = _shell.with(_shell.varSetStr(VIRT_OFF_KEY, '1'))
+  }
   const supportedManagers = op === 'run'
     ? getSupportedManagers(context).filter((m) => RUN_MANAGERS.includes(m))
     : getSupportedManagers(context)
@@ -323,6 +330,9 @@ export class VirtCmdAdd extends CmdBase implements Cmd {
     this.arguments = [
       { name: 'parts', description: 'path part(s) to match', required: true },
     ]
+    this.switches = [
+      { keys: ['-o', '--off'], description: 'leave it off: not started, and not started at boot' },
+    ]
   }
   override async work(
     shell: Sh,
@@ -357,6 +367,42 @@ export class VirtCmdList extends CmdBase implements Cmd {
     this.description = 'list on local'
     this.aliases = ['l', 'li', 'ls']
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
+  }
+  override async work(
+    shell: Sh,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
+    return await execOp(shell, context, environment, this.name)
+  }
+}
+
+export class VirtCmdOff extends CmdBase implements Cmd {
+  constructor(scopes: Array<string>) {
+    super(scopes)
+    this.name = 'off'
+    this.description = 'stop, and do not start at boot'
+    this.arguments = [
+      { name: 'parts', description: 'path part(s) to match', required: true },
+    ]
+  }
+  override async work(
+    shell: Sh,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
+    return await execOp(shell, context, environment, this.name)
+  }
+}
+
+export class VirtCmdOn extends CmdBase implements Cmd {
+  constructor(scopes: Array<string>) {
+    super(scopes)
+    this.name = 'on'
+    this.description = 'start, and start at boot'
+    this.arguments = [
+      { name: 'parts', description: 'path part(s) to match', required: true },
+    ]
   }
   override async work(
     shell: Sh,

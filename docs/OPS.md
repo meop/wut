@@ -63,18 +63,18 @@ The plan travels as data and the bodies behind it as generated code — `PACK_PL
 Every op shows what it knows first. Whether it then asks is not about whether it writes — it is about whether anything
 is left to do once you answer:
 
-| Op                                          | Shows                    | Then asks about              |
-| ------------------------------------------- | ------------------------ | ---------------------------- |
-| `pack add`                                  | manager, group, packages | installing them, and `?`     |
-| `pack remove`                               | manager, group, packages | removing them                |
-| `pack sync <names>`                         | manager, group, packages | updating them                |
-| `pack list <term>`/`outdated <term>`        | manager, packages        | running them for those terms |
-| `pack list`/`outdated`/`info`/`sync`/`tidy` | nothing yet              | which managers to run        |
-| `virt add`/`rem`/`list`/`run`/`sync`/`tidy` | manager, instances       | which managers to run        |
-| `file sync`, `file diff`                    | tool, files, directories | which tools to write or read |
-| `script exec`                               | action, tool, shell      | running them                 |
-| `pack find`                                 | the groups it matched    | searching for what it cannot |
-| `virt find`, `file find`, `script find`     | everything               | — nothing left, so no prompt |
+| Op                                                     | Shows                    | Then asks about              |
+| ------------------------------------------------------ | ------------------------ | ---------------------------- |
+| `pack add`                                             | manager, group, packages | installing them, and `?`     |
+| `pack remove`                                          | manager, group, packages | removing them                |
+| `pack sync <names>`                                    | manager, group, packages | updating them                |
+| `pack list <term>`/`outdated <term>`                   | manager, packages        | running them for those terms |
+| `pack list`/`outdated`/`info`/`sync`/`tidy`            | nothing yet              | which managers to run        |
+| `virt add`/`on`/`off`/`rem`/`list`/`run`/`sync`/`tidy` | manager, instances       | which managers to run        |
+| `file sync`, `file diff`                               | tool, files, directories | which tools to write or read |
+| `script exec`                                          | action, tool, shell      | running them                 |
+| `pack find`                                            | the groups it matched    | searching for what it cannot |
+| `virt find`, `file find`, `script find`                | everything               | — nothing left, so no prompt |
 
 A `find` already knows what it is going to say, so answering would gate nothing: it prints and stops. `pack find` is the
 one that can have work left — a typed name no group claimed is only resolvable by asking managers — so the server emits
@@ -165,12 +165,12 @@ first run may sit at its prompt for as long as nobody answers, and waiting witho
 
 Commands lock apart, so `wut virt sync` and `wut pack sync` run side by side. Ops that only read take no lock:
 
-| Command  | Locks                           | Takes no lock                      |
-| -------- | ------------------------------- | ---------------------------------- |
-| `pack`   | `add`, `remove`, `sync`, `tidy` | `find`, `info`, `list`, `outdated` |
-| `virt`   | `add`, `rem`, `sync`, `tidy`    | `find`, `list`, `run`              |
-| `file`   | `sync`                          | `diff`, `find`, `list`             |
-| `script` | `exec`                          | `find`                             |
+| Command  | Locks                                     | Takes no lock                      |
+| -------- | ----------------------------------------- | ---------------------------------- |
+| `pack`   | `add`, `remove`, `sync`, `tidy`           | `find`, `info`, `list`, `outdated` |
+| `virt`   | `add`, `on`, `off`, `rem`, `sync`, `tidy` | `find`, `list`, `run`              |
+| `file`   | `sync`                                    | `diff`, `find`, `list`             |
+| `script` | `exec`                                    | `find`                             |
 
 `virt run` acts but takes no lock: it is a foreground session that can last hours and touches nothing `add` owns
 ([VIRT.md](VIRT.md#qemu-add-installs-run-does-not)), so holding the lock through it would only block every other virt op

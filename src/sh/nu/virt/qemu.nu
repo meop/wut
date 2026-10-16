@@ -303,6 +303,8 @@ def --env virtQemu [] {
       return
     }
     let instance = $setup.instance
+    # read before a replace stops it
+    let state = if (virtInstanceHere $cmd $instance) { virtUnitState $"qemu-($instance)" } else { null }
     if $replace {
       opPrintMaybeRunCmd sudo systemctl stop $"qemu-($instance)"
     }
@@ -325,6 +327,19 @@ def --env virtQemu [] {
 
       opPrintMaybeRunCmd sudo mkdir -p $serviceDirPath
       opPrintMaybeRunCmd sudo mkdir -p $configDirPath
+
+      # its disks' folder, made when missing: on btrfs a subvolume, with copy on write off for the images
+      let dataDirPath = $"($qemuEnv | get --optional virt_qemu_dir_path | default '/virt/qemu')/($instance)"
+      if not ($dataDirPath | path exists) {
+        let parentDirPath = ($dataDirPath | path dirname)
+        opPrintMaybeRunCmd sudo mkdir -p $parentDirPath
+        if (^stat --file-system --format %T $parentDirPath | complete | get stdout | str trim) == 'btrfs' {
+          opPrintMaybeRunCmd sudo btrfs subvolume create $dataDirPath
+          opPrintMaybeRunCmd sudo chattr +C $dataDirPath
+        } else {
+          opPrintMaybeRunCmd sudo mkdir -p $dataDirPath
+        }
+      }
 
       let variantFilePath = ($configDirPath | path join variant)
       let variant = ($requested | split row '/' | skip 1 | str join '/')
@@ -555,7 +570,13 @@ def --env virtQemu [] {
       ]
       opPrintMaybeRunCmd $"r#'(($serviceLines | str join "\n") + "\n")'#" '|' sudo tee $serviceFilePath '|' ignore
       opPrintMaybeRunCmd sudo systemctl daemon-reload
-      opPrintMaybeRunCmd sudo systemctl enable --now $serviceName
+      if $state == null {
+        if not (virtAddOff) {
+          opPrintMaybeRunCmd sudo systemctl enable --now $serviceName
+        }
+      } else if $state.active {
+        opPrintMaybeRunCmd sudo systemctl start $serviceName
+      }
     }
   }
 
@@ -658,6 +679,11 @@ def --env virtQemu [] {
     add => {
       for instance in $env.VIRT_INSTANCES {
         doAdd $cmd $instance
+      }
+    }
+    on | off => {
+      for instance in $env.VIRT_INSTANCES {
+        opPrintMaybeRunCmd sudo systemctl (if $env.VIRT_OP == 'on' { 'enable' } else { 'disable' }) --now $"qemu-($instance)"
       }
     }
     list => {

@@ -199,6 +199,25 @@ Deno.test('nu / linux / rem (pinned, qemu)', async (t) => {
   await checkSyntax('nu', body)
   assertEquals(body.includes('"qemu":["test","test2"]'), true)
 })
+Deno.test('nu / linux / on (pinned, qemu)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/on/qemu?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("$env.VIRT_OP = r#'on'#"), true)
+  assertEquals(body.includes('"qemu":["test","test2"]'), true)
+})
+Deno.test('nu / linux / off (pinned, qemu)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/off/qemu?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("$env.VIRT_OP = r#'off'#"), true)
+})
+Deno.test('nu / linux / add (pinned, off)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/add/--off/qemu?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("$env.VIRT_OFF = r#'1'#"), true)
+})
 Deno.test('nu / linux / add (pinned, docker)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/virt/add/docker?${PIN}`))).text()
   await assertSnapshot(t, body)

@@ -4,22 +4,32 @@ def virtDocker [] {
     return
   }
 
-  # containers run under machine.slice, as podman's and lxc's do, so whatever wut sets on the slice holds them all. set
-  # once, and the daemon restarts only then: a container takes the daemon's cgroup-parent when it starts
-  def dockerSlice [] {
+  # the keys wut owns in daemon.json: machine.slice as every container's parent, then docker.yaml's
+  def dockerDaemon [] {
     let daemonFilePath = '/etc/docker/daemon.json'
-    let daemon = if ($daemonFilePath | path exists) { open --raw $daemonFilePath | into string | from json } else { {} }
-    let parent = ($daemon | get --optional 'cgroup-parent' | default '')
-    if $parent == '' {
-      opPrintMaybeRunCmd sudo mkdir -p ($daemonFilePath | path dirname)
-      opPrintMaybeRunCmd $"r#'((($daemon | upsert 'cgroup-parent' 'machine.slice') | to json --indent 2) + "\n")'#" '|' sudo tee $daemonFilePath '|' ignore
-      opPrintMaybeRunCmd sudo systemctl restart docker
-    } else if $parent != 'machine.slice' {
-      opPrintWarn $"docker's cgroup-parent is ($parent), not machine.slice: its containers are not held to the host reserve"
+    let current = if ($daemonFilePath | path exists) { open --raw $daemonFilePath | into string | from json } else { {} }
+    let config = try { http get --raw --redirect-mode follow $"($env.REQ_URL_CFG)/virt/docker.yaml" | from yaml } catch { |e| opRethrowInterrupt $e; {} }
+    let wanted = {'cgroup-parent': 'machine.slice'} | merge ($config | get --optional docker.daemon | default {})
+    let changed = ($wanted | columns | where { |k| ($current | get --optional $k) != ($wanted | get $k) })
+    if ($changed | is-empty) {
+      return
     }
+    for k in $changed {
+      opPrintInfo $"  daemon.json ($k) -> ($wanted | get $k | to json --raw)"
+    }
+    opPrintMaybeRunCmd sudo mkdir -p ($daemonFilePath | path dirname)
+    opPrintMaybeRunCmd $"r#'((($current | merge $wanted) | to json --indent 2) + "\n")'#" '|' sudo tee $daemonFilePath '|' ignore
+    opPrintMaybeRunCmd sudo systemctl restart docker
   }
   if $env.VIRT_OP in ['add' 'sync'] {
-    dockerSlice
+    dockerDaemon
+  }
+
+  def composeRunning [instance] {
+    ^sudo docker compose ls --all --format json | complete | get stdout
+      | if ($in | is-not-empty) { from json } else { [] }
+      | where Name == $instance
+      | any { |p| $p.Status | str contains 'running' }
   }
 
   match $env.VIRT_OP {
@@ -59,7 +69,13 @@ def virtDocker [] {
           opPrintMaybeRunCmd sudo mkdir -p $src
         }
 
-        opPrintMaybeRunCmd $"r#'($yaml)'#" '|' sudo $cmd compose --project-name $instance --file - up --detach --pull always
+        let start = if (virtAddOff) { '--no-start' } else { '--detach' }
+        opPrintMaybeRunCmd $"r#'($yaml)'#" '|' sudo $cmd compose --project-name $instance --file - up $start --pull always
+      }
+    }
+    on | off => {
+      for instance in $env.VIRT_INSTANCES {
+        opPrintMaybeRunCmd sudo $cmd compose --project-name $instance (if $env.VIRT_OP == 'on' { 'start' } else { 'stop' })
       }
     }
     list => {
@@ -86,7 +102,8 @@ def virtDocker [] {
           continue
         }
 
-        opPrintMaybeRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml'#" '|' sudo $cmd compose --project-name $instance --file - up --detach --pull always
+        let start = if (composeRunning $instance) { '--detach' } else { '--no-start' }
+        opPrintMaybeRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml'#" '|' sudo $cmd compose --project-name $instance --file - up $start --pull always
       }
     }
     tidy => {

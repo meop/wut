@@ -163,6 +163,61 @@ other arms do. An instance that was never added is not offered, a manager left w
 nothing left says `instance not added: ...` instead of showing a table. Each manager's own `sync` arm asks the same
 question again, so a direct call cannot install either. Wanting an instance that is not here is `add`.
 
+## On or off is the host's
+
+Whether an instance runs, now and at boot, belongs to the host once the instance exists. `add` sets it once: a new
+instance is started and starts at boot, or with `--off` neither. After that `wut v on <instance>` and
+`wut v off
+<instance>` change it, through each manager's own standard switch, so the manager's own tools change it the
+same way. `sync` reads it before it rewrites an instance and keeps it: it starts again only an instance that was
+running, and leaves whether it starts at boot as it found it. `add` on an instance that exists keeps it the same way.
+
+| Manager  | Starts at boot when                              | `on` / `off`                               |
+| -------- | ------------------------------------------------ | ------------------------------------------ |
+| `docker` | it was running, under `restart: unless-stopped`  | `docker compose start` / `stop`            |
+| `lxc`    | `lxc@<instance>` is enabled                      | `systemctl enable --now` / `disable`, stop |
+| `podman` | `<pod>.kube.d/install.conf` holds an `[Install]` | write or remove the drop-in, start / stop  |
+| `qemu`   | `qemu-<instance>` is enabled                     | `systemctl enable --now` / `disable --now` |
+
+lxc's own autostart, `lxc.start.auto`, stays unset: `lxc.service` would start those containers itself, outside their
+`lxc@` units and so outside `machine.slice` and the host reserve. A quadlet unit is generated, so `systemctl enable`
+does not apply to a pod; podman's documented way is an `[Install]` section, and its drop-in form lets the `.kube` be
+rewritten without touching it (`podman-systemd.unit(5)`, enabling unit files). A docker stack keeps a stop across
+reboots only under `restart: unless-stopped`; `always` starts what was stopped again whenever the daemon starts.
+
+## Lxc: btrfs roots and a host-only bridge
+
+On btrfs, `lxc-create` makes each root a subvolume of its own (`--bdev btrfs`, `lxc.rootfs.path = btrfs:...`), so a
+snapshot of a container is instant and covers all of it, except a subvolume something inside makes of its own: btrfs
+snapshots do not descend into nested subvolumes. Docker's default overlayfs makes none; its btrfs storage driver would.
+A root made before that is a plain folder (`dir:`) until the container is removed and added again; the config follows
+what is on disk, by the subvolume root's inode, 256.
+
+An instance names its bridge in `network.link`. wut-config's `lxc/setup` serves `lxcbr0`, a bridge with no physical
+port: networkd hands out ipv4 addresses and the host's dns, advertises an ipv6 ula prefix, and masquerades both.
+Containers reach the host, each other, the lan and the internet, and nothing on the lan reaches them: they are for the
+host's own services and for testing. Pods and vms stay on the lan bridge, where the router addresses them over ipv4 and
+ipv6 itself.
+
+## Qemu: a vm's data folder
+
+`{virt_qemu_dir_path}/<instance>` holds an instance's disks. `add` makes it when it is missing, and on btrfs as a
+subvolume with copy on write off (`chattr +C`), the usual setting for disk images there; a snapshot of it still works,
+and is consistent only with the vm off. A folder that exists is left as it is, so `rem` and a later `add` find the disks
+where they were, as every manager's `rem` leaves an instance's storage behind.
+
+## Docker: the daemon keys wut owns
+
+`docker.nu` owns a few keys of `/etc/docker/daemon.json`: `cgroup-parent` as `machine.slice`, and whatever
+`cfg/virt/docker.yaml` names under `docker.daemon`. Add and sync set them, and the daemon restarts only when one
+changed. wut-config's docker.yaml keeps docker from dropping forwarded traffic it did not set up, which would cut off
+the host's other bridges, turns on ipv6 for the default bridge on a ula prefix and gives new networks ipv4 and ipv6
+pools, the ipv4 one clear of `192.168.0.0/16`, which docker's own defaults include and lans use. A compose network still
+asks for ipv6 itself, with `enable_ipv6: true`. Docker may run inside an lxc container, where wut manages it the same
+way without knowing it is nested. The container shares the host's kernel, so wut-config's `docker/setup` loads no
+modules there; the host loads the netfilter modules docker's rules need when they are first used (docker 29 on
+iptables-nft needs none loaded beforehand).
+
 ## Find
 
 `find` emits `VIRT_FIND` as `manager -> ['pod=instances', ...]` and `virtFindRun` filters it by `virtManagerHere`,
