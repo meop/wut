@@ -214,8 +214,8 @@ def jsoncSet [text: string, path: list<string>, value: any] {
   $text
 }
 
-# set each leaf of wanted that differs
-def jsoncMerge [text: string, wanted: record] {
+# the leaves of wanted that differ from text, each as its path and wanted value
+def jsoncChanges [text: string, wanted: record] {
   let leaves = { |self, rec: record, prefix: list<string>|
     $rec | columns | each { |k|
       let v = ($rec | get $k)
@@ -227,10 +227,11 @@ def jsoncMerge [text: string, wanted: record] {
       }
     } | reduce --fold [] { |l, acc| $acc ++ $l }
   }
-  do $leaves $leaves $wanted [] | reduce --fold $text { |leaf, acc|
-    let current = if ($acc | str trim | is-empty) { null } else {
-      $acc | from json | get -o ($leaf.path | into cell-path)
-    }
-    if $current == $leaf.value { $acc } else { jsoncSet $acc $leaf.path $leaf.value }
-  }
+  let current = if ($text | str trim | is-empty) { {} } else { $text | from json }
+  do $leaves $leaves $wanted [] | where { |leaf| ($current | get -o ($leaf.path | into cell-path)) != $leaf.value }
+}
+
+# set each leaf of wanted that differs
+def jsoncMerge [text: string, wanted: record] {
+  jsoncChanges $text $wanted | reduce --fold $text { |leaf, acc| jsoncSet $acc $leaf.path $leaf.value }
 }

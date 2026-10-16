@@ -76,3 +76,20 @@ Deno.test('nu / json / an empty file or object takes what is wanted', async () =
   assertEquals(empty, '{\n  "a": {\n    "b": 1\n  }\n}\n')
   assertEquals(braces, '{\n  "a": 1\n}')
 })
+
+Deno.test('nu / json / changes are the leaves a merge would set', async () => {
+  const text = '{\n  "size": 13, // mine\n  "features": {"a": true}\n}\n'
+  const wanted = `{size: 13, features: {a: true, b: 'x'}, added: false}`
+  const body = [
+    await Deno.readTextFile(JSON_NU),
+    `print (jsoncChanges ${JSON.stringify(text)} ${wanted} | to json --raw)`,
+  ].join('\n')
+  const out = await runNu(body)
+  if (out == null) {
+    return
+  }
+  assertEquals(JSON.parse(out), [
+    { path: ['features', 'b'], value: 'x' },
+    { path: ['added'], value: false },
+  ])
+})
