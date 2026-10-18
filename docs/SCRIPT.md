@@ -84,17 +84,8 @@ registry value, what a config file holds) keeps that check in its body only.
 ## Writing a script
 
 Every script works out what there is to do — reading only — before its first question, and asks through shire's `opAsk`,
-never its own `read`, `Read-Host` or `input`. What it checks before asking is the verb's:
-
-- **install** — the tool is not there yet (its command, or for a windows feature the service it brings)
-- **setup** — the state it would write differs from what is there; run again after a change to wut-config, it brings the
-  machine in line
-- **teardown** — something it would undo is still there
-- **repair** — setup without the "already done" shortcut: asked whenever there is something to repair at all (the tool,
-  its files, a guest), and done again each time
-- **restart** — the service is running; asked each time
-
-A script with several steps asks once per step.
+never its own `read`, `Read-Host` or `input`. wut does not know what an op means: the names and what each one checks
+before asking belong to the config. A script asks only when there is something to do, and once per step.
 
 ## Planning
 
