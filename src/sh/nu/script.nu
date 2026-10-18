@@ -3,20 +3,6 @@ def scriptHasCmd [...cmds: string] {
 }
 
 
-# ghpm's table: a rule as wide as each header, columns padded to their widest cell, the last one loose
-def scriptTable [headers: list<string>, rows: list<list<string>>] {
-  let widths = ($headers | enumerate | each { |h|
-    [($h.item | str length)] ++ ($rows | each { |r| $r | get -o $h.index | default '' | str length }) | math max
-  })
-  let line = { |cells: list<string>|
-    $cells | enumerate | each { |c|
-      if $c.index == (($cells | length) - 1) { $c.item } else { $c.item | fill --alignment left --width ($widths | get $c.index) }
-    } | str join ' '
-  }
-  opPrint (do $line $headers)
-  opPrint (do $line ($headers | each { |h| '-' | fill --alignment left --width ($h | str length) --character '-' }))
-  for r in $rows { opPrint (do $line $r) }
-}
 
 # a service is how a windows feature shows it is installed: sc.exe knows one by name (1060 is no such service), and on
 # linux a systemd unit file names one. a check per name, no shell to start
@@ -100,7 +86,7 @@ def --env scriptPlanRun [] {
     return
   }
 
-  scriptTable ['action' 'tool' 'shell'] ($here | enumerate | each { |u|
+  wutTable ['action' 'tool' 'shell'] ($here | enumerate | each { |u|
     [$"($u.index + 1)\) ($u.item.action)", $u.item.tool, $u.item.shell]
   })
   let picked = (wutSelectRead ($here | length))
@@ -150,11 +136,4 @@ def scriptFindRun [] {
     }
     $shown = true
   }
-  if ($rows | is-empty) {
-    return
-  }
-  opPrint ''
-  scriptTable ['action' 'tools'] ($rows | each { |r|
-    [($r | get 0), (($r | get 1 | split row ', ') | length | into string)]
-  })
 }

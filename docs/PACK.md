@@ -43,28 +43,28 @@ would ask, and searches only the ones picked. Nothing to search for means no tab
 ## Resolving
 
 1. Each cli name resolves to groups via `resolveGroupName`, and has to be a name the group goes by, whole: a run of
-   levels of its own path (`node`, `js-node` and `lang-js-node` are all `lang/js/node.yaml`), a folder above it (`lang`
-   is every group under `lang/`), or one of its aliases. Part of a name is not a name, and neither is a package the
-   group holds — `windirstat` does not reach `desktop-tool-extra`, since adding the group would install everything else
-   in it. A shorter or a second spelling a group should answer to is an alias, stated in its yaml. A name matching no
-   group is a **loose name**, handed to the managers as typed. `remove` resolves exactly as `add` does and takes every
-   group that matches, each a row to pick from.
+   levels of its own path (`claude`, `agent/claude` and `ai/agent/claude` are all `ai/agent/claude.yaml`), a folder
+   above it (`ai` is every group under `lang/`), or one of its aliases. Part of a name is not a name, and neither is a
+   package the group holds — `windirstat` does not reach `desktop/tool/extra`, since adding the group would install
+   everything else in it. A shorter or a second spelling a group should answer to is an alias, stated in its yaml. A
+   name matching no group is a **loose name**, handed to the managers as typed. `remove` resolves exactly as `add` does
+   and takes every group that matches, each a row to pick from.
 2. A group's `group` tier lists other groups (or loose names). The walk is iterative over a stack with a visited set of
    resolved group names, so a cycle stops and a diamond resolves once.
-3. Preference is fixed at **user managers > script > system managers**. The yaml carries one flat `manager` map and says
-   nothing about tiers; wut derives the tier from the manager and owns the order.
+3. Preference is the yaml's own order: the group's flat `manager` map lists its managers, `script` among them, in the
+   order to try them ([RULES.md](RULES.md)). wut's own manager order is only for loose names, which no yaml speaks for.
 
 ## Planning, client side
 
 The server cannot know which managers exist on the machine, so it emits resolved data and the client builds the plan.
 
-- **Group rows** need no search when adding. The winner is the first manager that exists here, in tier order, with names
-  for this group. The yaml already stated what works; there is nothing to verify.
+- **Group rows** need no search when adding. The winner is the first manager that exists here, in the order the yaml
+  lists them, with names for this group. The yaml already stated what works; there is nothing to verify.
 - **Loose rows** need a search, because nothing has stated anything. Every manager is asked, not just until one claims
   the name: the first in wut's order is not always the one wanted (ghpm has a github repo's release binary, go builds
-  the same tool from source). A name one manager claims goes there; when any name has several, the managers that claim
-  them are a second numbered pick (`packSearchPick`), and each name goes to the first picked manager that has it. `-y`
-  picks every row, which is wut's order again.
+  the same tool from source). A name one manager claims goes there; when any name has several, each name under each
+  manager that claims it is a row of a second numbered pick (`packSearchPick`), and a name goes to the first row picked
+  for it. `-y` picks every row, which is wut's order again.
 - A group with no manager on this machine is **config rot**: it blocks the run. Nothing installs, the row says so, and
   one yaml edit fixes it.
 - A loose name nothing can serve is a **typo**: it shows as unservable and the rest of the plan proceeds.
@@ -131,21 +131,44 @@ better pick. `src/sh/nu/pack_test.ts` pins those formats against stub managers.
 
 ## One decision
 
-The plan collapses to one numbered row per manager, and the numbers are the decision:
+The plan is a summary of what each manager would do, then one numbered row per thing to pick, and the numbers are the
+decision:
 
 ```
-manager   packages
--------   --------
-1) pacman ghostty, zsh
-2) ghpm   nu
-3) script rustup
+pacman
+  shell/zsh
+    zsh, zsh-completions
+ghpm
+  lang/go
+    gotm
+    then: gotm/setup
+  lang/go/golangci-lint
+    golangci-lint
+  bat, fd
 
-enter number(s) [empty=all] (0=quit | 1[,][-]3):
+manager   group                 package
+-------   -----                 -------
+1) pacman shell/zsh
+2) ghpm   lang/go
+3) ghpm   lang/go/golangci-lint
+4) ghpm                         bat
+5) ghpm                         fd
+6) ?                            lazygit
+
+enter number(s) [empty=all] (0=quit | 1[,][-]6):
 ```
 
-Empty takes every manager, `0` quits, and anything else is a selection in ghpm's syntax — `1 3`, `1,3`, `1-3`, or a mix.
-Picking a manager takes everything it won, which is why the packages column names them: the number is the only thing to
-read, but what rides along with it is stated.
+Empty takes every row, `0` quits, and anything else is a selection in ghpm's syntax — `1 3`, `1,3`, `1-3`, or a mix. The
+summary is where what a row carries is listed — a group's packages and its `first:` and `then:` scripts — and the table
+never repeats it as a list, so a row stays one line however big the group ([OPS.md](OPS.md#filter-summarise-ask-once)).
+
+A row is a group rather than a manager because a folder brings its groups along: `wut p a go` is the toolchain in
+`lang/go.yaml` and golangci-lint in `lang/go/golangci-lint.yaml`, both served by ghpm, and a row per manager could only
+take both or neither. A group's own packages are never split further — it states they go together, and a package wanted
+on its own is a group of its own. Each loose name is its own row, since nothing ties it to another, and so is each `?`
+name, add's names still to be searched for: picking one is picking that search. When add's search finds a name under
+several managers, the second pick is the same shape, a row per manager and name, and each name goes to the first row
+picked for it.
 
 Selecting rather than confirming is how a run is narrowed. A yes/no gate could only accept or reject the whole plan, so
 narrowing it would mean cancelling, re-typing the command, and re-reading the same table. The list already had to be
@@ -241,9 +264,9 @@ row, as with `remove`, but `list` reads, so the term only has to start a word of
 rather than be a whole name ([COMMANDS.md](COMMANDS.md)). The listing the check reads is `packListCmd`, the same one the
 dump prints, so the answer before the gate and the output after it cannot drift.
 
-What the summary shows under each manager is the lines of its listing that matched, and the table counts them. It is
-never the term: a term that starts a word is not a name, so `wut p l go` finds `gotm` under ghpm, `gopls` under go and
-`Goose Game` under winget, and showing `go` under all three said each had a package called go.
+What the summary shows under each manager is the lines of its listing that matched, and the table is a row per such
+manager. It is never the term: a term that starts a word is not a name, so `wut p l go` finds `gotm` under ghpm, `gopls`
+under go and `Goose Game` under winget, and showing `go` under all three said each had a package called go.
 
 ## The pacman family is one manager
 
@@ -284,16 +307,17 @@ no manager had: ripgrep-x
 Two managers answer fuzzily and need reading rather than an exit code: `ghpm search` always exits 0, so the name column
 decides, and npm and jsr are checked by name (`registry.npmjs.org/<name>`) rather than through their search endpoints.
 
-## A group's pre and post scripts run around the whole run
+## A group's pre and post scripts run around its stage
 
 A group's `pre` and `post` scripts ([RULES.md](RULES.md#pack-pre-and-post)) show in the plan under the group they belong
 to (`first:` and `then:`), so the one decision covers them too — picking a manager is picking its groups' scripts with
 it.
 
 Every `pre` script runs before any install or removal, while what it acts on is still there, and every `post` script
-after all of them, so one can lean on a tool another group in the same run just installed. Each runs once however many
-groups name it, and a group whose install or removal failed has no `post` run for it. A failed `pre` is reported but
-does not hold its group back — the operation is still what was asked.
+after the installs of its stage ([One run, in stages](#one-run-in-stages)), so one can lean on a tool another group in
+the same stage just installed, and a group in a later stage can lean on what the post script put down. Each runs once
+however many groups name it, and a group whose install or removal failed has no `post` run for it. A failed `pre` is
+reported but does not hold its group back — the operation is still what was asked.
 
 `has_cmd` is asked only when a script is about to run, since an install is what put the command there — and after the
 installs the run refreshes its PATH ([OPS.md](OPS.md#the-path-wut-checks-is-the-one-a-new-shell-would-have)), so a
@@ -302,6 +326,49 @@ command that landed in `~/.cargo/bin` on a first rustup, or in brew's keg-only `
 Picking in the plan is the yes. Once the table is answered, `YES` is set for the rest of the run, so a `script` install
 path and a group's scripts run without asking the questions they would ask under a bare `script exec` — the pick already
 answered them, the same way it answers for every manager.
+
+## One run, in stages
+
+A language is a version manager whose setup puts the language down, and its tools are often best installed through that
+manager — node-gyp through pnpm, ruff through uv — which on a fresh machine does not exist until the same run installs
+it. The plan is resolved before anything installs, so without more it would find no pnpm, and `wut p a node` would end
+with pnpm and node but no node-gyp.
+
+A group **provides** a manager when it goes by that manager's name, its own or an alias: `lang/node` is also `pnpm`,
+`lang/python` `uv`, `lang/rust` `cargo`, `sys/manager/ghpm` `ghpm`. The server states it on the unit (`provides`), and
+when a group's managers are not here, one another picked group provides counts as here for the plan. The group is
+planned under that manager, and the summary says what it waits for:
+
+```
+ghpm
+  lang/node
+    pnpm
+    then: pnpm/setup
+pnpm
+  lang/node/node-gyp
+    node-gyp
+    after: lang/node
+
+manager group
+1) ghpm lang/node
+2) pnpm lang/node/node-gyp
+```
+
+The table is unchanged — one row per group, one prompt — since this is only a matter of order. The run goes a stage at a
+time: the groups that wait for nothing, their `post` scripts, a PATH refresh, then the groups that waited for them, and
+so on. A group that serves through a manager another group in the plan provides runs after it whether or not that
+manager is already here, since the provider's setup can matter to it either way. Remove walks the stages backwards, so
+node-gyp goes while pnpm is still there to take it out; sync walks them forwards, the manager before what it serves.
+
+Providing is a forecast, not a promise: the path that wins `lang/node` might be the system nodejs, which puts down no
+pnpm, or the install might fail. So a group that waited is checked again when its stage comes. If its manager is there,
+it runs; if not, the next manager its yaml lists that is here now runs instead, and the run says so
+(`node-gyp: pnpm is
+not here, using ghpm`); with none left it is skipped, and says that. Nothing is added to a run that
+was not asked for — `wut p a node-gyp` alone on a machine without pnpm does not install pnpm to serve it.
+
+There is no row per method. How a group is installed is its yaml's order, decided once, not a question each run; add's
+second pick for loose names is the one place a method is chosen, since no yaml speaks for those.
 
 ## Tools that update themselves
 

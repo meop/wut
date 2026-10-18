@@ -39,8 +39,10 @@ has to say where in the tree its level sits.
 | `script` | `<tool>/<action>`              | all must match; the cli reads action first, the tree is tool first  |
 | `file`   | a key in `file.yaml`           | all must match the one key, through its own name or a path          |
 
-A pack group's full name is its path joined with `-` (`lang-js-node`), and a term may name any run of whole levels of
-it: `node`, `js`, `lang-js`, `js-node`.
+A pack group's full name is its path joined with `/` (`ai/agent/claude`), and a term may name any run of whole levels of
+it: `claude`, `agent`, `ai/agent`, `agent/claude`. `/` is the one character a file name cannot hold, so a level spells
+itself the way the tool does, hyphens and all (`golangci-lint`), and the name always splits back into the path it came
+from.
 
 ## What each op asks
 
@@ -81,5 +83,5 @@ A term that matches nothing is a no op, and every op says so rather than emittin
 filter to mismatch: the numbered prompt narrows the run instead, and it can only offer what the client actually has.
 
 Example fixtures exercise the split: `virt add test` → `[test]` while `virt find test` → `[test, test2]`;
-`pack add nush` is a loose name while `pack find nush` → `shell-nu`; `pack add shell` and `pack rem shell` → both shell
+`pack add nush` is a loose name while `pack find nush` → `shell/nu`; `pack add shell` and `pack rem shell` → both shell
 groups.

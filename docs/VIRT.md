@@ -38,9 +38,9 @@ it has.
 
 `list` with a term reads before it asks, as pack's does ([PACK.md](PACK.md)). `virtListed` is each manager's names
 narrowed by the terms, every one starting a word of the name. The summary shows those names under each manager that has
-any, the table counts them, and a picked manager's list is handed the terms and narrows by the same `virtListed`, so the
-summary and the dump cannot drift. The terms are never rows: one row a term under every manager read as each holding an
-instance by that name, and picking one of two terms dropped the other from the match.
+any, the table is a row per such manager, and a picked manager's list is handed the terms and narrows by the same
+`virtListed`, so the summary and the dump cannot drift. The terms are never rows: one row a term under every manager
+read as each holding an instance by that name, and picking one of two terms dropped the other from the match.
 
 An instance's name is also its hostname and its unit's name, so it has to be one nothing else on the host answers to:
 not a manager's (`docker`, `lxc`, `podman`, `qemu`), not the host's own, and not one another manager's instance already

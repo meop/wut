@@ -1,3 +1,24 @@
+# ghpm's table: a rule as wide as each header, columns padded to their widest cell, the last one loose. a column no
+# row fills says nothing, so it is left out: a plan of only loose names has no group to show
+def wutTable [headers: list<string>, rows: list<list<string>>] {
+  let keep = ($headers | enumerate | where { |h|
+    ($rows | is-empty) or ($rows | any { |r| $r | get -o $h.index | default '' | is-not-empty })
+  } | get index)
+  let headers = ($keep | each { |i| $headers | get $i })
+  let rows = ($rows | each { |r| $keep | each { |i| $r | get -o $i | default '' } })
+  let widths = ($headers | enumerate | each { |h|
+    [($h.item | str length)] ++ ($rows | each { |r| $r | get -o $h.index | default '' | str length }) | math max
+  })
+  let line = { |cells: list<string>|
+    $cells | enumerate | each { |c|
+      if $c.index == (($cells | length) - 1) { $c.item } else { $c.item | fill --alignment left --width ($widths | get $c.index) }
+    } | str join ' ' | str trim --right
+  }
+  opPrint (do $line $headers)
+  opPrint (do $line ($headers | each { |h| '-' | fill --alignment left --width ($h | str length) --character '-' }))
+  for r in $rows { opPrint (do $line $r) }
+}
+
 def wutSelectParse [choice: string, max: int] {
   let trimmed = ($choice | str trim)
   if ($trimmed | is-empty) {

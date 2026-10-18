@@ -521,8 +521,8 @@ def --env packClaimsAll [managers: list<string>, name: string] {
 
 # add's search asks every manager rather than stopping at the first that has a name, since the first in wut's order is
 # not always the one wanted: ghpm has a github repo's release binary, go builds the same tool from source. a name only
-# one manager has goes there; when any has several, the managers are a second pick, and each name goes to the first
-# picked one that has it. -y picks every row, which is wut's order again
+# one manager has goes there; when any has several, every name under every manager that has it is a row of a second
+# pick, and each name goes to the first picked row for it. -y picks every row, which is wut's order again
 def --env packSearchPick [names: list<string>] {
   let here = (packManagersHere)
   mut claims = {}
@@ -539,30 +539,23 @@ def --env packSearchPick [names: list<string>] {
   }
   let claims = $claims
   let ask = ($claims | values | any { |every| ($every | length) > 1 })
-  let offered = ($here | where { |m| $claims | values | any { |every| $m in $every } })
+  # a row is one name under one manager that has it, in wut's order, so each name is decided on its own
+  let rows = ($here | each { |m|
+    $claims | transpose name every | where { |c| $m in $c.every } | each { |c| { manager: $m, package: $c.name } }
+  } | flatten)
   let chosen = if not $ask {
-    $offered
+    $rows
   } else {
     opPrint ''
     opPrint '?'
-    for m in $offered {
-      opPrint $m
-      opPrint $"  ($claims | transpose name every | where { |c| $m in $c.every } | get name | str join ', ')"
-    }
-    opPrint ''
-    packTable ['manager' 'packages'] ($offered | enumerate | each { |o|
-      let count = ($claims | values | where { |every| $o.item in $every } | length)
-      [$"($o.index + 1)\) ($o.item)", ($count | into string)]
-    })
-    let picked = (wutSelectRead ($offered | length))
-    if $picked == null { [] } else { $picked | each { |i| $offered | get ($i - 1) } }
+    wutTable ['manager' 'package'] ($rows | enumerate | each { |r| [$"($r.index + 1)\) ($r.item.manager)", $r.item.package] })
+    let picked = (wutSelectRead ($rows | length))
+    if $picked == null { [] } else { $picked | each { |i| $rows | get ($i - 1) } }
   }
+  # a name picked under two managers goes to the first, which is wut's order again
   mut found = {}
-  for c in ($claims | transpose name every) {
-    let winner = ($offered | where { |m| $m in $chosen and $m in $c.every } | get -o 0)
-    if $winner != null {
-      $found = ($found | upsert $winner (($found | get -o $winner | default []) | append $c.name))
-    }
+  for r in ($chosen | uniq-by package) {
+    $found = ($found | upsert $r.manager (($found | get -o $r.manager | default []) | append $r.package))
   }
   $found
 }
@@ -586,20 +579,6 @@ def --env packCallManager [manager: string] {
 }
 
 
-# ghpm's table: a rule as wide as each header, columns padded to their widest cell, the last one loose
-def packTable [headers: list<string>, rows: list<list<string>>] {
-  let widths = ($headers | enumerate | each { |h|
-    [($h.item | str length)] ++ ($rows | each { |r| $r | get -o $h.index | default '' | str length }) | math max
-  })
-  let line = { |cells: list<string>|
-    $cells | enumerate | each { |c|
-      if $c.index == (($cells | length) - 1) { $c.item } else { $c.item | fill --alignment left --width ($widths | get $c.index) }
-    } | str join ' '
-  }
-  opPrint (do $line $headers)
-  opPrint (do $line ($headers | each { |h| '-' | fill --alignment left --width ($h | str length) --character '-' }))
-  for r in $rows { opPrint (do $line $r) }
-}
 
 def packFindWinner [candidates: list] {
   for c in $candidates {
@@ -644,7 +623,7 @@ def --env packFindSearch [] {
   opPrint '?'
   opPrint $"  ($remaining | str join ', ')"
   opPrint ''
-  packTable ['manager'] ($here | enumerate | each { |m| [$"($m.index + 1)\) ($m.item)"] })
+  wutTable ['manager'] ($here | enumerate | each { |m| [$"($m.index + 1)\) ($m.item)"] })
   let picked = (wutSelectRead ($here | length))
   if $picked == null {
     return
@@ -678,11 +657,13 @@ def --env packFindSearch [] {
 # narrow that: a manager that never installed the group is not the one to act on it, however present it is.
 # remove and sync both take every manager actually holding the group, each a row of the table, so which of them runs
 # is the pick rather than whichever the group stated first
-def --env packPickPaths [unit: record] {
-  let here = ($unit.paths | where { |p| packManagerHere $p.manager })
+def --env packPickPaths [unit: record, provided: record = {}] {
   if not (packOpAsksInstalled) {
-    return ($here | first 1)
+    # add can also take a manager another group in this run puts down: that group is the one it waits for
+    let usable = ($unit.paths | where { |p| (packManagerHere $p.manager) or (packProviderOf $provided $p.manager $unit.group) != null })
+    return ($usable | first 1)
   }
+  let here = ($unit.paths | where { |p| packManagerHere $p.manager })
   mut held = []
   for p in $here {
     let m = (packManagerBest $p.manager)
@@ -699,23 +680,89 @@ def --env packPickPaths [unit: record] {
   $held
 }
 
+# which group in the plan puts a manager down, other than the one asking: a group never waits for itself
+def packProviderOf [provided: record, manager: string, group: string] {
+  $provided | get -o $manager | default [] | where { |g| $g != $group } | get -o 0
+}
+
+# the managers groups in this run put down, and which groups put them down. a group counts only if it can run here
+# itself, now or after another group it waits for, so the answer grows until it stops changing
+def --env packProvided [units: list] {
+  mut provided = {}
+  loop {
+    let known = $provided
+    let next = ($units | where { |u|
+      ($u.provides? | default [] | is-not-empty) and ($u.paths | any { |p|
+        (packManagerHere $p.manager) or (packProviderOf $known $p.manager $u.group) != null
+      })
+    } | each { |u| $u.provides | each { |m| { manager: $m, group: $u.group } } } | flatten)
+    let grown = ($next | group-by manager | transpose manager rows | reduce --fold {} { |e, acc|
+      $acc | upsert $e.manager ($e.rows | get group | uniq)
+    })
+    if ($grown | to json) == ($known | to json) {
+      break
+    }
+    $provided = $grown
+  }
+  $provided
+}
+
+# a group's stage is one past the group it waits for, and a group that waits for nothing is stage 0. any group whose
+# manager another group in the plan puts down waits for it, here or not: pnpm's own setup is what put node down, so
+# a pnpm install runs after it either way
+def packStaged [details: list] {
+  mut staged = ($details | each { |d| $d | insert stage 0 })
+  for _ in ($details | enumerate) {
+    let known = $staged
+    $staged = ($known | each { |d|
+      let after = ($known | where group == $d.after | get -o 0.stage)
+      $d | update stage (if $after == null { 0 } else { $after + 1 })
+    })
+  }
+  $staged
+}
+
+# the arm a picked group runs. one that waited is checked again first, since the group it waited for may have put
+# down something else, or failed: the next manager the yaml lists that is here now runs instead, and it says so
+def --env packStageId [d: record] {
+  if not $d.waits or (packManagerHere $d.manager) {
+    return $d.id
+  }
+  let alt = ($d.alts | where { |a| packManagerHere $a.manager } | get -o 0)
+  if $alt == null {
+    opPrintWarn $"($d.group) skipped: ($d.manager) is not here"
+    return null
+  }
+  opPrintWarn $"($d.group): ($d.manager) is not here, using ($alt.manager)"
+  $alt.id
+}
+
 def --env packPlanRun [] {
   let units = ($env.PACK_PLAN? | default '[]' | from json)
 
   # a group whose every path needs a manager this machine lacks is not a plan, it is an absence: drop it, and let
   # the name it came from fall through to a find like any other unclaimed name
+  let provided = (packProvided $units)
   mut detail = []
   mut served = []
   for unit in $units {
-    let paths = (packPickPaths $unit)
+    let paths = (packPickPaths $unit $provided)
     if ($paths | is-not-empty) {
       $served = ($served | append $unit.name)
       for path in $paths {
-        $detail = ($detail | append { manager: (packManagerBest $path.manager), group: $unit.group, id: $path.id, names: $path.names, pre: ($unit.pre? | default []), post: ($unit.post? | default []) })
+        let here = (packManagerHere $path.manager)
+        # the paths after the winner, in the yaml's order: what add falls back to when the manager it waits for
+        # never turns up
+        let alts = ($unit.paths | skip until { |p| $p.id == $path.id } | skip 1 | each { |p| { id: $p.id, manager: $p.manager } })
+        $detail = ($detail | append {
+          manager: (if $here { packManagerBest $path.manager } else { $path.manager }), group: $unit.group, id: $path.id,
+          names: $path.names, pre: ($unit.pre? | default []), post: ($unit.post? | default []),
+          after: (packProviderOf $provided $path.manager $unit.group), waits: (not $here), alts: $alts,
+        })
       }
     }
   }
-  let planned = $detail
+  let planned = (packStaged $detail)
 
   let fellThrough = ($units | each { |u| $u.name } | uniq | where { |n| $n not-in $served })
   let loose = ((packNameList 'PACK_ADD_NAMES') ++ (packNameList 'PACK_REMOVE_NAMES') ++ (packNameList 'PACK_SYNC_NAMES') ++ $fellThrough | uniq)
@@ -766,6 +813,9 @@ def --env packPlanRun [] {
       if ($d.pre | is-not-empty) {
         opPrint $"    first: ($d.pre | each { |s| $s.id } | str join ', ')"
       }
+      if $d.waits {
+        opPrint $"    after: ($d.after)"
+      }
       if ($d.post | is-not-empty) {
         opPrint $"    then: ($d.post | each { |s| $s.id } | str join ', ')"
       }
@@ -776,69 +826,116 @@ def --env packPlanRun [] {
     }
   }
 
-  # '?' is the names no group claimed and nothing has resolved yet: only add leaves any, and only until the gate
-  let choices = $planManagers ++ (if ($deferred | is-empty) { [] } else { ['?'] })
-  opPrint ''
-  packTable ['manager' 'packages'] ($choices | enumerate | each { |c|
-    let count = if $c.item == '?' {
-      $deferred | length
-    } else {
-      (($planned | where manager == $c.item | each { |d| $d.names } | flatten) ++ ($looseFor | get -o $c.item | default [])) | length
+  # every row is one thing to pick, and the summary above is where a row's contents are listed: a group under the
+  # manager serving it, so a folder that brought several groups along is still picked a group at a time, then each
+  # loose name a manager won. '?' rows are the names no group claimed and nothing has resolved yet: only add leaves
+  # any, and only until the gate, so picking one is picking the search for it
+  mut rows = []
+  for m in $planManagers {
+    for g in ($planned | where manager == $m | get group | uniq) {
+      $rows = ($rows | append { manager: $m, group: $g, package: null })
     }
-    [$"($c.index + 1)\) ($c.item)", ($count | into string)]
+    for n in ($looseFor | get -o $m | default []) {
+      $rows = ($rows | append { manager: $m, group: null, package: $n })
+    }
+  }
+  for n in $deferred {
+    $rows = ($rows | append { manager: '?', group: null, package: $n })
+  }
+  let choices = $rows
+  opPrint ''
+  wutTable ['manager' 'group' 'package'] ($choices | enumerate | each { |c|
+    [$"($c.index + 1)\) ($c.item.manager)", ($c.item.group | default ''), ($c.item.package | default '')]
   })
   let picked = (wutSelectRead ($choices | length))
   if $picked == null {
     return
   }
-  let chosen = ($picked | each { |i| $choices | get ($i - 1) })
+  let chosenRows = ($picked | each { |i| $choices | get ($i - 1) })
+  let chosenLoose = ($chosenRows | where package != null)
 
   # agreed once, up front: nothing below asks again
   $env.PACK_AGREED = '1'
   # the pick is the yes: a script install, or a group's pre or post script, asks nothing further once picked
   $env.YES = '1'
-  let picked = ($planned | where { |d| $d.manager in $chosen })
+  let picked = ($planned | where { |d| $chosenRows | any { |r| $r.manager == $d.manager and $r.group == $d.group } })
   # a group's pre scripts all run before any install or removal, while what they act on is still there
   packRunScripts 'pre' ($picked | each { |d| $d.pre } | flatten | uniq-by id)
-  mut posts = []
-  for d in $picked {
-    let failedBefore = ($env.PACK_FAILED? | default [] | length)
-    try {
-      packRunUnit $d.id
-    } catch { |e|
-      packMarkFailed $d.id $e
-    }
-    # a group whose install or removal failed has nothing to follow it
-    if ($env.PACK_FAILED? | default [] | length) == $failedBefore {
-      $posts = ($posts | append $d.post)
-    }
-  }
-  let donePosts = $posts
 
   # the loose names remove already resolved ride with the manager row that won them; the ones add left behind ride
   # with '?', and are searched only now, against every manager, since picking '?' is picking the search itself
-  mut running = ($looseFor | transpose manager names | where { |e| $e.manager in $chosen })
-  if ('?' in $chosen) and ($deferred | is-not-empty) {
+  mut running = ($chosenLoose | where manager != '?' | group-by manager | transpose manager rows | each { |e|
+    { manager: $e.manager, names: ($e.rows | get package) }
+  })
+  let searched = ($chosenLoose | where manager == '?' | get package)
+  if ($searched | is-not-empty) {
     packRefreshAll
-    $running = ($running ++ (packSearchPick $deferred | transpose manager names))
+    $running = ($running ++ (packSearchPick $searched | transpose manager names))
   }
-  for entry in $running {
-    load-env {PACK_LOOSE_NAMES: $entry.names}
-    try {
-      packRunLoose $entry.manager
-    } catch { |e|
-      packMarkFailed ($entry.names | str join ', ') $e
+  let looseRuns = $running
+
+  # a stage at a time: a group that puts a manager down, then its post scripts — which are what put the language
+  # itself down — then the groups that manager serves. removing walks the stages the other way, so a tool goes while
+  # the manager that installed it is still there to take it out
+  let stages = ($picked | get stage | uniq | sort)
+  let order = if $env.PACK_OP == 'remove' { $stages | reverse } else { $stages }
+  mut ranPosts = []
+  mut first = true
+  for stage in $order {
+    if not $first {
+      wutPathRefresh
+    }
+    mut posts = []
+    for d in ($picked | where stage == $stage) {
+      let id = (packStageId $d)
+      if $id == null {
+        continue
+      }
+      let failedBefore = ($env.PACK_FAILED? | default [] | length)
+      try {
+        packRunUnit $id
+      } catch { |e|
+        packMarkFailed $id $e
+      }
+      # a group whose install or removal failed has nothing to follow it
+      if ($env.PACK_FAILED? | default [] | length) == $failedBefore {
+        $posts = ($posts | append $d.post)
+      }
+    }
+    if $first {
+      for entry in $looseRuns {
+        load-env {PACK_LOOSE_NAMES: $entry.names}
+        try {
+          packRunLoose $entry.manager
+        } catch { |e|
+          packMarkFailed ($entry.names | str join ', ') $e
+        }
+      }
+    }
+    $first = false
+    let ran = $ranPosts
+    let due = ($posts | uniq-by id | where { |p| $p.id not-in $ran })
+    # the installs put their commands where the env stage says they go, which the post scripts are about to look for
+    if ($due | is-not-empty) {
+      wutPathRefresh
+      packRunScripts 'post' $due
+      $ranPosts = ($ranPosts ++ ($due | get id))
     }
   }
-  # the installs put their commands where the env stage says they go, which the post scripts are about to look for
-  if ($donePosts | is-not-empty) {
-    wutPathRefresh
+  if ($looseRuns | is-not-empty) and ($picked | is-empty) {
+    for entry in $looseRuns {
+      load-env {PACK_LOOSE_NAMES: $entry.names}
+      try {
+        packRunLoose $entry.manager
+      } catch { |e|
+        packMarkFailed ($entry.names | str join ', ') $e
+      }
+    }
   }
-  packRunScripts 'post' ($donePosts | uniq-by id)
   packReport
 }
 
-# post scripts run after every install or removal in the run, so one can lean on a tool another group just
+# post scripts run after the installs or removals of their stage, so one can lean on a tool another group just
 # installed, and pre scripts before any of them. either one's has_cmd is asked only when it is about to run, against
 # the PATH refreshed after the installs: the install is what put the command there
 def --env packRunScripts [stage: string, scripts: list] {
@@ -912,9 +1009,7 @@ def --env packTermPlanRun [names_key: string] {
   }
 
   opPrint ''
-  packTable ['manager' 'matches'] ($managers | enumerate | each { |m|
-    [$"($m.index + 1)\) ($m.item)", (($shown | get $m.item) | length | into string)]
-  })
+  wutTable ['manager'] ($managers | enumerate | each { |m| [$"($m.index + 1)\) ($m.item)"] })
   let picked = (wutSelectRead ($managers | length))
   if $picked == null {
     return
@@ -999,7 +1094,7 @@ def --env packManagerPlanRun [] {
   }
   mut chosen = $here
   if 'PACK_AGREED' not-in $env {
-    packTable ['manager'] ($here | enumerate | each { |m| [$"($m.index + 1)\) ($m.item)"] })
+    wutTable ['manager'] ($here | enumerate | each { |m| [$"($m.index + 1)\) ($m.item)"] })
     let picked = (wutSelectRead ($here | length))
     if $picked == null {
       return

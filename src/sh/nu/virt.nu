@@ -99,20 +99,6 @@ def --env virtCallManager [manager: string] {
   }
 }
 
-# ghpm's table: a rule as wide as each header, columns padded to their widest cell, the last one loose
-def virtTable [headers: list<string>, rows: list<list<string>>] {
-  let widths = ($headers | enumerate | each { |h|
-    [($h.item | str length)] ++ ($rows | each { |r| $r | get -o $h.index | default '' | str length }) | math max
-  })
-  let line = { |cells: list<string>|
-    $cells | enumerate | each { |c|
-      if $c.index == (($cells | length) - 1) { $c.item } else { $c.item | fill --alignment left --width ($widths | get $c.index) }
-    } | str join ' '
-  }
-  opPrint (do $line $headers)
-  opPrint (do $line ($headers | each { |h| '-' | fill --alignment left --width ($h | str length) --character '-' }))
-  for r in $rows { opPrint (do $line $r) }
-}
 
 def --env virtPlanRun [] {
   let plan = ($env.VIRT_PLAN? | default '{}' | from json)
@@ -153,7 +139,7 @@ def --env virtPlanRun [] {
     }
   } | flatten)
 
-  virtTable ['manager' 'instance'] ($rows | enumerate | each { |r|
+  wutTable ['manager' 'instance'] ($rows | enumerate | each { |r|
     [$"($r.index + 1)\) ($r.item.manager)", $r.item.instance]
   })
   let picked = (wutSelectRead ($rows | length))
@@ -187,7 +173,7 @@ def --env virtPlanRun [] {
 }
 
 # list with a term reads before it asks, as pack's does: which instances a manager has that match is a local question,
-# so the summary names them under it and the table counts them. offering the terms as rows read as every manager
+# so the summary names them under it and the table is a row per manager that has any. offering the terms as rows read as every manager
 # holding an instance by that name, and picking one of two terms quietly dropped the other from the match. a picked
 # manager is handed the terms unchanged, so its dump narrows by the same rule the summary answered by
 def --env virtListPlanRun [managed: list] {
@@ -207,9 +193,7 @@ def --env virtListPlanRun [managed: list] {
     }
   }
   opPrint ''
-  virtTable ['manager' 'matches'] ($found | enumerate | each { |r|
-    [$"($r.index + 1)\) ($r.item.manager)", ($r.item.instances | length | into string)]
-  })
+  wutTable ['manager'] ($found | enumerate | each { |r| [$"($r.index + 1)\) ($r.item.manager)"] })
   let picked = (wutSelectRead ($found | length))
   if $picked == null {
     return
@@ -377,7 +361,7 @@ def --env virtUnsnapOne [manager: string, target: record] {
   let picked = if $to != '' {
     virtSnapPick $snaps $to
   } else if ($snaps | is-not-empty) {
-    virtTable ['snapshot'] ($snaps | enumerate | each { |s| [$"($s.index + 1)\) ($s.item.name)"] })
+    wutTable ['snapshot'] ($snaps | enumerate | each { |s| [$"($s.index + 1)\) ($s.item.name)"] })
     let chosen = (wutSelectRead ($snaps | length))
     if $chosen == null { [] } else { $chosen | each { |i| $snaps | get ($i - 1) } }
   } else {

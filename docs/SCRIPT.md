@@ -54,8 +54,9 @@ each script's own checks, which is the script's work, so it happens once the scr
 run again after a change to wut-config.
 
 `script find` lists each action with the tools needed here, then the ones these gates leave out, a group per reason in
-the same shape, nested one level as `virt find` nests a manager's pods; its table counts only what is needed. The groups
-come in the order of how little it takes to make their scripts needed, so the top of the list is what to do first:
+the same shape, nested one level as `virt find` nests a manager's pods. The listing is the answer, so there is no table
+under it. The groups come in the order of how little it takes to make their scripts needed, so the top of the list is
+what to do first:
 
 - **unmet tool dependency** — a failed `has_` gate, and nothing else short: once the tool is in, the script is needed. A
   tool short of something its own name does not say is listed with it, as `pxe (syslinux)`,

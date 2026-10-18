@@ -9,20 +9,6 @@ def replaceEnv [line] {
   return $l
 }
 
-# ghpm's table: a rule as wide as each header, columns padded to their widest cell, the last one loose
-def fileTable [headers: list<string>, rows: list<list<string>>] {
-  let widths = ($headers | enumerate | each { |h|
-    [($h.item | str length)] ++ ($rows | each { |r| $r | get -o $h.index | default '' | str length }) | math max
-  })
-  let line = { |cells: list<string>|
-    $cells | enumerate | each { |c|
-      if $c.index == (($cells | length) - 1) { $c.item } else { $c.item | fill --alignment left --width ($widths | get $c.index) }
-    } | str join ' '
-  }
-  opPrint (do $line $headers)
-  opPrint (do $line ($headers | each { |h| '-' | fill --alignment left --width ($h | str length) --character '-' }))
-  for r in $rows { opPrint (do $line $r) }
-}
 
 
 # a tool's key is the bin to look for: a config for something not installed is skipped rather than written
@@ -30,8 +16,9 @@ def fileBinHere [tool: string] {
   which $tool | is-not-empty
 }
 
-# the plan for the two ops that go to the network: which tools are here, and how many files and destination dirs
-# each one accounts for. diff fetches every source it compares, the same GET sync makes, so it is gated the same
+# the plan for the two ops that go to the network: which tools are here, each with the files it writes and the
+# directories it clears first listed in the summary, and a row per tool to pick. diff fetches every source it compares,
+# the same GET sync makes, so it is gated the same
 def filePlanShow [pairsKey: string, dirsKey: string, toolsKey: string] {
   let pairs = ($env | get -o $pairsKey | default []) | where { |p| fileBinHere ($p | split row '|' | get 0) }
   let clearDirs = ($env | get -o $dirsKey | default []) | where { |d| fileBinHere ($d | split row '|' | get 0) }
@@ -42,13 +29,17 @@ def filePlanShow [pairsKey: string, dirsKey: string, toolsKey: string] {
   let fileTools = ($pairs | each { |p| $p | split row '|' | get 0 })
   let dirTools = ($clearDirs | each { |d| $d | split row '|' | get 0 })
   let tools = (($fileTools ++ $dirTools) | uniq | sort)
-  fileTable ['tool' 'files' 'directories'] ($tools | enumerate | each { |t|
-    [
-      $"($t.index + 1)\) ($t.item)",
-      ($fileTools | where { |x| $x == $t.item } | length | into string),
-      ($dirTools | where { |x| $x == $t.item } | length | into string),
-    ]
-  })
+  for t in $tools {
+    opPrint $t
+    for d in ($clearDirs | where { |d| ($d | split row '|' | get 0) == $t }) {
+      opPrint $"  clear: (replaceEnv ($d | split row '|' | get 1) | path expand)"
+    }
+    for p in ($pairs | where { |p| ($p | split row '|' | get 0) == $t }) {
+      opPrint $"  (replaceEnv ($p | split row '|' | get 2) | path expand)"
+    }
+  }
+  opPrint ''
+  wutTable ['tool'] ($tools | enumerate | each { |t| [$"($t.index + 1)\) ($t.item)"] })
   let picked = (wutSelectRead ($tools | length))
   if $picked == null {
     return false
@@ -107,10 +98,6 @@ def file [] {
             opPrint $"  ($e.ins)"
           }
         }
-        opPrint ''
-        fileTable ['tool' 'files'] ($here | each { |e|
-          [$e.bin, ($e.ins | split row ', ' | where { is-not-empty } | length | into string)]
-        })
       }
     }
     list => {

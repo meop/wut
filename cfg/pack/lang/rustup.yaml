@@ -1,4 +1,6 @@
 ---
+aliases:
+  - cargo
 operation:
   add:
     manager:

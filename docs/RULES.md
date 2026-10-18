@@ -131,14 +131,18 @@ The flags qualify the checks as well, not just the install and uninstall. `--cas
 formula sharing the name cannot answer for the cask, and the reverse. A line that is only a flag names no package and is
 ignored.
 
-File names carry no punctuation — the punctuated spelling is an alias. No blank lines inside the file, one newline at
-the end.
+A file is named the way the tool spells itself, hyphens included (`golangci-lint.yaml`): a group's name joins its levels
+with `/`, which no file name can hold, so a hyphen inside a level is never mistaken for the edge of one. No blank lines
+inside the file, one newline at the end.
 
-`ghpm` is always a user manager and `pacman` is always a system one, so wut derives the tier from the manager and owns
-the preference order — user managers, then `script`, then system managers. A yaml that also declared the tier could
-declare it wrongly (a system manager filed under `user:` silently never matched), which is why there is one flat
-`manager` map. `script` is a key inside that map, not beside it: it is spelled where a manager would be so one loop
-walks every install path in file order, so a script is ordered against real managers rather than sitting outside them.
+A group's managers are preferred in the order its yaml lists them: the first one this machine has wins. wut keeps no
+order of its own for a group, because the right one depends on the tool — ghpm's prebuilt binary over go's build from
+source for golangci-lint, a version manager over the distro package for a language — and only the group knows which. Put
+the managers in the order you want them tried, system managers last as a rule. There is one flat `manager` map, so that
+order is the whole statement: a yaml that also declared a tier could declare it wrongly (a system manager filed under
+`user:` silently never matched). `script` is a key inside that map, not beside it: it is spelled where a manager would
+be so one loop walks every install path in file order, so a script is ordered against real managers rather than sitting
+outside them.
 
 The order of the managers in the file is the group's preference, and the first one present on the machine wins it.
 Nothing overrides that: which of the winners actually run is the numbered prompt's answer, not a flag's.
@@ -260,7 +264,7 @@ other env names spelled the way `file.yaml` spells them. A platform with no path
 
 ## pack group aliases
 
-A pack group is named by its path — `cfg/pack/shell/nu.yaml` is `shell-nu` — and `aliases` gives it other names to be
+A pack group is named by its path — `cfg/pack/shell/nu.yaml` is `shell/nu` — and `aliases` gives it other names to be
 found by:
 
 ```yaml
@@ -279,7 +283,7 @@ operation:
 ```
 
 `wut p f nushell`, `wut p add nushell` and `wut p rem nushell` now all reach this group, and `find` shows the alias in
-the heading (`shell-nu (nushell)`) so the match explains itself.
+the heading (`shell/nu (nushell)`) so the match explains itself.
 
 Aliases are a lookup key only — never an install name. Each manager still gets exactly the `names` it declares, so ghpm
 and cargo keep asking for `nu` while pacman asks for `nushell`. That matters wherever the binary, the package and the
@@ -297,6 +301,11 @@ and `info` take it exactly, so `nush` is not `nushell`, and a shorter spelling w
 spellings of one name are two aliases too (`lm-studio` beside a group named `lmstudio`) — nothing is normalised, and an
 alias is there because the tool is commonly called that, not to help a search along. `find` reads further: the start of
 any word of the name, an alias, a declared package, or `descr`.
+
+An alias stands in for the group's own name, so it reaches the folder of the same name too: an alias of `x.yaml` brings
+everything under `x/` along, as `x` itself does. A folder beside a file of its name is how groups combine:
+`lang/go.yaml` is the toolchain and `lang/go/golangci-lint.yaml` the linter, so `wut p a go` installs both, each its own
+row to pick or leave.
 
 ## pack group descr
 

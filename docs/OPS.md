@@ -36,8 +36,8 @@ wut already knows where such tools land: the env stage it deploys (the files `fi
 `~/.pwsh/env`, `env.nu`) states every one, per platform and install approach, and adds each once it exists. So the
 client asks the native shell for the PATH a new one would start with — `zsh -c`, which reads the env stage, and on
 windows `pwsh -c`, joined with the Machine and User PATH the registry holds for installers — and takes it as its own
-before any check runs. `pack` refreshes once more after its installs, before the post scripts that look for what they
-put down. Everything the run spawns inherits the result, and no tool's location is stated anywhere in wut itself.
+before any check runs. `pack` refreshes again after each stage of installs, before the post scripts that look for what
+they put down. Everything the run spawns inherits the result, and no tool's location is stated anywhere in wut itself.
 
 ## Filter, summarise, ask once
 
@@ -54,6 +54,12 @@ rather than asked a question whose answer changes nothing. And the ask is once, 
 quits, and `1 3` / `1,3` / `1-3` take a subset, in ghpm's syntax. The rows were already built and shown, so answering
 them is cheaper than cancelling to re-run behind a filter flag — which is why neither command has one. `-y` takes
 everything.
+
+What goes where is fixed. A **summary** is the indented breakdown above the table — a manager, the groups under it, the
+packages and scripts under each — and it is the only place a list is printed, so a long one wraps where wrapping reads
+fine. The **table** is the choice: one row per thing the op can act on alone, a cell per field, and never a list in a
+cell, so no row grows past one line however much it carries. A group is one row, its packages in the summary; a loose
+name is a row of its own. All of them are drawn by one `wutTable`, in `sel.nu` beside `wutSelectRead`.
 
 The plan travels as data and the bodies behind it as generated code — `PACK_PLAN` with `packRunUnit`, `VIRT_PLAN` with
 `virtPlanRun` — so code stays code and the plan stays data.

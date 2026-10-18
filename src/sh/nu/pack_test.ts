@@ -493,11 +493,11 @@ Deno.test('nu / pack / remove and sync offer every manager holding a name, and t
 // same answer a loose name does: nothing to do, said once
 Deno.test('nu / pack / syncing a group no manager holds says so rather than picking one', async () => {
   const unit = JSON.stringify({
-    group: 'media-vlc',
+    group: 'media/vlc',
     name: 'vlc',
     paths: [
-      { id: 'media-vlc|ghpm', manager: 'ghpm', names: ['vlc'] },
-      { id: 'media-vlc|uv', manager: 'uv', names: ['vlc'] },
+      { id: 'media/vlc|ghpm', manager: 'ghpm', names: ['vlc'] },
+      { id: 'media/vlc|uv', manager: 'uv', names: ['vlc'] },
     ],
   })
   const out = await withStubs(
@@ -840,13 +840,65 @@ Deno.test('nu / pack / pre scripts run before the removals, once each', async ()
   assertEquals(out.includes('first: podman/teardown, docker/teardown'), true)
 })
 
+// a folder brings its groups along — `go` is lang/go and everything under lang/go/ — so each group is a row of its
+// own, and taking golangci-lint out does not take gotm with it. each loose name is a row of its own too
+Deno.test('nu / pack / each group and each loose name is its own row', async () => {
+  const unit = (group: string, names: Array<string>) => ({
+    group,
+    name: 'go',
+    paths: [{ id: `${group}|ghpm`, manager: 'ghpm', names }],
+  })
+  const plan = [unit('lang/go', ['golangci-lint']), unit('lang/go/gotm', ['gotm'])]
+  const ghpm =
+    `case "$*" in\n  "list --long-names") printf 'golangci-lint\\ngotm\\nbat\\nfd\\n' ;;\n  *) exit 0 ;;\nesac`
+  const run = (pick: Array<number> | undefined) =>
+    withStubs(
+      { ghpm },
+      [
+        `def --env packRunUnit [id: string] { print $"ran ($id)" }`,
+        ...(pick == null ? [`$env.YES = '1'`] : []),
+        `$env.PACK_OP = 'remove'`,
+        `$env.NOOP = '1'`,
+        `$env.PACK_PLAN = ${JSON.stringify(JSON.stringify(plan))}`,
+        `$env.PACK_REMOVE_NAMES = ['bat' 'fd']`,
+        'packPlanRun',
+      ].join('\n'),
+      ['ghpm'],
+      ['ghpm'],
+      false,
+      pick,
+    )
+  const ran = (out: string) => out.split('\n').filter((l) => l.startsWith('ran ')).map((l) => l.slice(4))
+  const uninstalls = (out: string) => out.split('\n').filter((l) => l.startsWith('ghpm uninstall'))
+
+  const one = await run([1])
+  if (one == null) {
+    return
+  }
+  const rows = one.split('\n').filter((l) => /^\d+\) /.test(l))
+  // a row holds one thing: the summary above is where a group's packages are listed
+  assertEquals(rows, ['1) ghpm lang/go', '2) ghpm lang/go/gotm', '3) ghpm              bat', '4) ghpm              fd'])
+  assertEquals(ran(one), ['lang/go|ghpm'])
+  assertEquals(uninstalls(one), [])
+
+  // one loose name runs alone
+  const loose = (await run([4]))!
+  assertEquals(ran(loose), [])
+  assertEquals(uninstalls(loose), ['ghpm uninstall fd'])
+
+  // -y is still every row
+  const every = (await run(undefined))!
+  assertEquals(ran(every), ['lang/go|ghpm', 'lang/go/gotm|ghpm'])
+  assertEquals(uninstalls(every), ['ghpm uninstall bat fd'])
+})
+
 // a tool its own installer put down updates itself by that path, and it is best effort: one that refuses — built
 // without self update, turned off, owned by something else — says so, and the rest of the sync still runs
 Deno.test('nu / pack / standalone installs update themselves, and a refusal does not stop the run', async () => {
   const self = [
-    { group: 'lang-yes', path: '{HOME}/.yes/bin/yes', args: ['self', 'update'] },
-    { group: 'lang-no', path: '{HOME}/.no/bin/no', args: ['upgrade'] },
-    { group: 'lang-absent', path: '{HOME}/.absent/bin/absent', args: ['upgrade'] },
+    { group: 'lang/yes', path: '{HOME}/.yes/bin/yes', args: ['self', 'update'] },
+    { group: 'lang/no', path: '{HOME}/.no/bin/no', args: ['upgrade'] },
+    { group: 'lang/absent', path: '{HOME}/.absent/bin/absent', args: ['upgrade'] },
   ]
   const out = await withStubs(
     {},
@@ -869,7 +921,7 @@ Deno.test('nu / pack / standalone installs update themselves, and a refusal does
   }
   assertEquals(out.includes('1) script'), true)
   assertEquals(out.includes('updated self update'), true)
-  assertEquals(out.includes('lang-no did not update itself'), true)
+  assertEquals(out.includes('lang/no did not update itself'), true)
   // nothing at its path, so there is nothing to ask
   assertEquals(out.includes('absent'), false)
   // a refusal is an answer, not a failure: the run reports nothing and goes on
@@ -881,8 +933,8 @@ Deno.test('nu / pack / standalone installs update themselves, and a refusal does
 // a tool that is no manager waits for the script row
 Deno.test('nu / pack / a manager updates itself right before its own sync', async () => {
   const self = [
-    { group: 'ai-code-codex', path: '{HOME}/.local/bin/codex', args: ['update'] },
-    { group: 'sys-manager-ghpm', path: '{HOME}/.ghpm/bin/ghpm', args: ['upgrade'] },
+    { group: 'ai/code/codex', path: '{HOME}/.local/bin/codex', args: ['update'] },
+    { group: 'sys/manager/ghpm', path: '{HOME}/.ghpm/bin/ghpm', args: ['upgrade'] },
   ]
   const out = await withStubs(
     { brew: '', ghpm: '' },
@@ -909,8 +961,8 @@ Deno.test('nu / pack / a manager updates itself right before its own sync', asyn
 
 Deno.test('nu / pack / picking a manager alone still updates it first', async () => {
   const self = [
-    { group: 'ai-code-codex', path: '{HOME}/.local/bin/codex', args: ['update'] },
-    { group: 'sys-manager-ghpm', path: '{HOME}/.ghpm/bin/ghpm', args: ['upgrade'] },
+    { group: 'ai/code/codex', path: '{HOME}/.local/bin/codex', args: ['update'] },
+    { group: 'sys/manager/ghpm', path: '{HOME}/.ghpm/bin/ghpm', args: ['upgrade'] },
   ]
   const out = await withStubs(
     { brew: '', ghpm: '' },
@@ -939,7 +991,7 @@ Deno.test('nu / pack / picking a manager alone still updates it first', async ()
 })
 
 Deno.test('nu / pack / no script row when every standalone install is a manager here', async () => {
-  const self = [{ group: 'sys-manager-ghpm', path: '{HOME}/.ghpm/bin/ghpm', args: ['upgrade'] }]
+  const self = [{ group: 'sys/manager/ghpm', path: '{HOME}/.ghpm/bin/ghpm', args: ['upgrade'] }]
   const out = await withStubs(
     { ghpm: '' },
     [
@@ -1246,9 +1298,9 @@ Deno.test('nu / pack / a post script finds what the run just installed', async (
     return
   }
   const plan = [{
-    group: 'lang-rust-rustup',
+    group: 'lang/rust/rustup',
     name: 'rustup',
-    paths: [{ id: 'lang-rust-rustup|pacman', manager: 'pacman', names: ['rustup'] }],
+    paths: [{ id: 'lang/rust/rustup|pacman', manager: 'pacman', names: ['rustup'] }],
     post: [{ id: 'rustup/setup', cmds: ['rustup'] }],
   }]
   const out = await withStubs(
@@ -1260,7 +1312,7 @@ Deno.test('nu / pack / a post script finds what the run just installed', async (
       `'path=($HOME/.cargo/bin $path)' | save ($env.HOME | path join .zshenv)`,
       // the install is what puts rustup where only the env stage knows to look
       `def --env packRunUnit [id: string] {`,
-      `  if $id == 'lang-rust-rustup|pacman' {`,
+      `  if $id == 'lang/rust/rustup|pacman' {`,
       `    mkdir ($env.HOME | path join .cargo bin)`,
       `    "#!/bin/sh\\n" | save ($env.HOME | path join .cargo bin rustup)`,
       `    ^/bin/chmod +x ($env.HOME | path join .cargo bin rustup)`,
@@ -1280,4 +1332,94 @@ Deno.test('nu / pack / a post script finds what the run just installed', async (
   }
   assertEquals(out.includes('ran rustup/setup'), true)
   assertEquals(out.includes('skipped'), false)
+})
+
+// a tool whose manager the same run puts down waits for the group that puts it down, and for that group's post
+// scripts, which are what put the language itself down: `wut p a node` on a machine with no pnpm yet still ends with
+// node-gyp. the installs that put pnpm somewhere only the env stage knows are stubbed the way rustup's is above
+const STAGED_PLAN = (gypPaths: Array<string>) => [
+  {
+    group: 'lang/node',
+    name: 'node',
+    provides: ['pnpm'],
+    paths: [{ id: 'lang/node|ghpm', manager: 'ghpm', names: ['pnpm'] }],
+    post: [{ id: 'pnpm/setup', cmds: ['pnpm'] }],
+  },
+  {
+    group: 'lang/node/node-gyp',
+    name: 'node',
+    paths: gypPaths.map((m) => ({ id: `lang/node/node-gyp|${m}`, manager: m, names: ['node-gyp'] })),
+  },
+]
+async function runStaged(gypPaths: Array<string>, putsPnpm: boolean, op = 'add', stubs: Record<string, string> = {}) {
+  const zsh = new Deno.Command('sh', { args: ['-c', 'command -v zsh'], stdout: 'piped' }).outputSync()
+  if (!zsh.success) {
+    return null
+  }
+  return await withStubs(
+    { ghpm: '', ...stubs },
+    [
+      `hide-env SUCCINCT`,
+      `$env.SYS_OS_PLAT = 'linux'`,
+      `$env.PATH = ($env.PATH | append ['/usr/bin' '/bin'])`,
+      `'path=($HOME/.pnpm $path)' | save ($env.HOME | path join .zshenv)`,
+      `def --env packRunUnit [id: string] {`,
+      ...(putsPnpm
+        ? [
+          `  if $id == 'lang/node|ghpm' {`,
+          `    mkdir ($env.HOME | path join .pnpm)`,
+          `    "#!/bin/sh\\n" | save ($env.HOME | path join .pnpm pnpm)`,
+          `    ^/bin/chmod +x ($env.HOME | path join .pnpm pnpm)`,
+          `  }`,
+        ]
+        : []),
+      `  print $"ran ($id)"`,
+      `}`,
+      `$env.PACK_OP = '${op}'`,
+      `$env.YES = '1'`,
+      `$env.PACK_PLAN = ${JSON.stringify(JSON.stringify(STAGED_PLAN(gypPaths)))}`,
+      `$env.PACK_${op.toUpperCase()}_NAMES = [  ]`,
+      'packPlanRun',
+    ].join('\n'),
+    ['ghpm', 'pnpm'],
+  )
+}
+const ranOf = (out: string) => out.split('\n').filter((l) => l.startsWith('ran ')).map((l) => l.slice(4))
+
+Deno.test('nu / pack / a group waits for the group that puts its manager down', async () => {
+  const out = await runStaged(['pnpm'], true)
+  if (out == null) {
+    return
+  }
+  // the summary says what it waits for; the row is still one group under the manager it will run through
+  assertEquals(out.includes('pnpm\n  lang/node/node-gyp\n    node-gyp\n    after: lang/node\n'), true)
+  assertEquals(out.includes('2) pnpm lang/node/node-gyp'), true)
+  // pnpm, then its setup, then what pnpm serves
+  assertEquals(ranOf(out), ['lang/node|ghpm', 'pnpm/setup', 'lang/node/node-gyp|pnpm'])
+})
+
+Deno.test('nu / pack / a group whose manager never turns up falls to the next one here, and says so', async () => {
+  const fell = await runStaged(['pnpm', 'ghpm'], false)
+  if (fell == null) {
+    return
+  }
+  assertEquals(fell.includes('lang/node/node-gyp: pnpm is not here, using ghpm'), true)
+  assertEquals(ranOf(fell), ['lang/node|ghpm', 'lang/node/node-gyp|ghpm'])
+
+  const none = (await runStaged(['pnpm'], false))!
+  assertEquals(none.includes('lang/node/node-gyp skipped: pnpm is not here'), true)
+  assertEquals(ranOf(none), ['lang/node|ghpm'])
+})
+
+// removing walks the stages the other way: node-gyp goes while pnpm is still there to take it out
+Deno.test('nu / pack / remove takes a tool out before the group that put its manager down', async () => {
+  const out = await runStaged(['pnpm'], false, 'remove', {
+    ghpm: `case "$*" in\n  "list --long-names") printf 'pnpm\\n' ;;\n  *) exit 0 ;;\nesac`,
+    pnpm: `case "$*" in\n  "list --global --parseable") printf '/g/node_modules/node-gyp\\n' ;;\n  *) exit 0 ;;\nesac`,
+  })
+  if (out == null) {
+    return
+  }
+  // the fixture's post script is add's; the server never sends it with a remove, so only the units matter here
+  assertEquals(ranOf(out).filter((r) => r.includes('|')), ['lang/node/node-gyp|pnpm', 'lang/node|ghpm'])
 })

@@ -125,14 +125,15 @@ esac`,
 
 // the bug this covers: `wut v l web` made a row of web under every manager, before asking any of them, which read as
 // each holding an instance called web. qemu is not on this PATH, so it is not asked at all
-Deno.test('virt.nu - list with a term shows what each manager has that matches, and counts it', async () => {
+Deno.test('virt.nu - list with a term shows what each manager has that matches, and a row per manager', async () => {
   const out = await withListed({ docker: ['web'], lxc: ['web'], qemu: ['web'] }, [2])
   if (out != null) {
     const [summary, after] = out.split('2) lxc')
     assertEquals(summary.includes('docker\n  web-app\nlxc\n  web-proxy\n'), true)
     assertEquals(summary.includes('  web\n'), false)
     assertEquals(summary.includes('qemu'), false)
-    assertEquals(summary.includes('manager   matches'), true)
+    // the summary lists the matches; the table is only the choice
+    assertEquals(summary.includes('manager\n-------\n1) docker'), true)
     assertEquals(after.trim().endsWith('-> lxc web'), true)
   }
 })

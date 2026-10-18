@@ -72,7 +72,7 @@ Deno.test('nu / arch / sync', async (t) => {
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
-// 'shell' resolves to two groups (shell-nu, shell-zsh): add is WIDE (both), rem is PINPOINT (first only)
+// 'shell' resolves to two groups (shell/nu, shell/zsh): add is WIDE (both), rem is PINPOINT (first only)
 Deno.test('nu / arch / add (shell group) — wide', async (t) => {
   const body = await (await runSrv(req('/sh/nu/pack/add/shell?sysOsPlat=linux&sysOs=arch'))).text()
   await assertSnapshot(t, body)
@@ -360,9 +360,9 @@ Deno.test('nu / ubuntu / add (nushell)', async (t) => {
   await checkSyntax('nu', body)
 })
 
-// nu × darwin × add (ai-code) — prefix resolution: expands to all files under ai/code/
-Deno.test('nu / darwin / add (ai-code)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/ai-code?sysOsPlat=darwin'))).text()
+// nu × darwin × add (ai/code) — prefix resolution: expands to all files under ai/code/
+Deno.test('nu / darwin / add (ai/code)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/ai%2Fcode?sysOsPlat=darwin'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
@@ -383,7 +383,7 @@ Deno.test('nu / arch / find (no manager, pinned)', async (t) => {
   )).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('"shell-nu":['), true)
+  assertEquals(body.includes('"shell/nu":['), true)
   assertEquals(body.includes('packPacman'), true)
 })
 
@@ -424,16 +424,16 @@ Deno.test('nu / arch / add (pinned, shell matches both groups)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/add/shell?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('"group":"shell-nu"'), true)
-  assertEquals(body.includes('"group":"shell-zsh"'), true)
+  assertEquals(body.includes('"group":"shell/nu"'), true)
+  assertEquals(body.includes('"group":"shell/zsh"'), true)
 })
 // rem resolves a name exactly as add does: a folder is every group in it, and the numbered pick narrows
 Deno.test('nu / arch / rem (pinned, shell matches both groups, as add does)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/rem/shell?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('"group":"shell-nu"'), true)
-  assertEquals(body.includes('"group":"shell-zsh"'), true)
+  assertEquals(body.includes('"group":"shell/nu"'), true)
+  assertEquals(body.includes('"group":"shell/zsh"'), true)
 })
 // every manager the group declares gets a block; a gated entry still does not
 Deno.test('nu / ubuntu / add (pinned, rustup)', async (t) => {
@@ -457,7 +457,7 @@ Deno.test('nu / linux / add (pinned, script file entry carries its own op preamb
 // the file reads --noop itself, so a dry-run spawns it to print its steps rather than skipping it whole
 Deno.test('nu / linux / add (pinned, a script file runs under noop and prints its own steps)', async () => {
   const body = await (await runSrv(req('/sh/nu/pack/add/scriptfile?sysOsPlat=linux&wutNuPinned=1'))).text()
-  const arm = planArm(body, 'test-scriptfile|script')
+  const arm = planArm(body, 'test/scriptfile|script')
   assertEquals(arm.includes('fixture script for buildFileRunLines regression coverage'), true)
   assertEquals(arm.includes("if 'NOOP' not-in $env"), false)
 })
@@ -471,7 +471,7 @@ Deno.test('nu / linux / add (pinned, manager pre hook runs before the manager ca
   const body = await (await runSrv(req('/sh/nu/pack/add/hooks?sysOsPlat=linux&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  const arm = planArm(body, 'test-hooks|brew')
+  const arm = planArm(body, 'test/hooks|brew')
   const hook = arm.indexOf('brew tap meop/tap')
   const call = arm.indexOf('\npackBrew')
   assertEquals(hook > -1, true)
@@ -482,7 +482,7 @@ Deno.test('nu / linux / remove (pinned, manager post hook runs after the manager
   const body = await (await runSrv(req('/sh/nu/pack/remove/hooks?sysOsPlat=linux&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  const arm = planArm(body, 'test-hooks|brew')
+  const arm = planArm(body, 'test/hooks|brew')
   const call = arm.indexOf('\npackBrew')
   const hook = arm.indexOf('brew untap meop/tap')
   assertEquals(hook > -1, true)
@@ -496,7 +496,7 @@ Deno.test('nu / linux / remove (pinned, a manager with no post hook)', async (t)
   const body = await (await runSrv(req('/sh/nu/pack/remove/hooks?sysOsPlat=linux&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  const arm = planArm(body, 'test-hooks|pacman')
+  const arm = planArm(body, 'test/hooks|pacman')
   assertEquals(arm.includes('packPacman'), true)
   assertEquals(arm.includes('untap'), false)
 })
@@ -554,7 +554,7 @@ Deno.test('nu / linux / sync (pinned, standalone installs the client looks for)'
   const line = body.split('\n').find((l) => l.startsWith("$env.PACK_SELF = r#'"))!
   const self = JSON.parse(line.slice("$env.PACK_SELF = r#'".length, -"'#".length))
   assertEquals(self, [
-    { group: 'test-standalone', path: '{HOME}/.standalone/bin/standalone', args: ['self', 'update'] },
+    { group: 'test/standalone', path: '{HOME}/.standalone/bin/standalone', args: ['self', 'update'] },
   ])
 })
 Deno.test('nu / windows / sync (pinned, a standalone path is stated per platform)', async (t) => {
@@ -570,8 +570,8 @@ Deno.test('nu / linux / sync (pinned, a named standalone install updates itself)
   const [unit] = planUnits(body)
   assertEquals(unit.paths.map((p: { manager: string }) => p.manager), ['pacman', 'script'])
   assertEquals(
-    planArm(body, 'test-standalone|script').includes(
-      "packSelfUpdate r#'test-standalone'# r#'{HOME}/.standalone/bin/standalone'# [r#'self'# r#'update'#]",
+    planArm(body, 'test/standalone|script').includes(
+      "packSelfUpdate r#'test/standalone'# r#'{HOME}/.standalone/bin/standalone'# [r#'self'# r#'update'#]",
     ),
     true,
   )
@@ -661,7 +661,7 @@ Deno.test('nu / arch / find (pinned, a claimed name skips the manager check)', a
   const body = await (await runSrv(req(`/sh/nu/pack/find/nu?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('"shell-nu":['), true)
+  assertEquals(body.includes('"shell/nu":['), true)
   assertEquals(body.includes('"remaining":[]'), true)
   assertEquals(body.includes('packPacman'), true)
 })
@@ -672,7 +672,7 @@ Deno.test('nu / arch / find (pinned, by alias)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/find/nushell?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('"shell-nu":['), true)
+  assertEquals(body.includes('"shell/nu":['), true)
   assertEquals(body.includes('"remaining":[]'), true)
 })
 Deno.test('nu / arch / add (pinned, by alias installs declared names)', async (t) => {
@@ -688,8 +688,8 @@ Deno.test('nu / arch / rem (pinned, by alias)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/rem/nushell?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('"group":"shell-nu"'), true)
-  assertEquals(body.includes('"group":"shell-zsh"'), false)
+  assertEquals(body.includes('"group":"shell/nu"'), true)
+  assertEquals(body.includes('"group":"shell/zsh"'), false)
 })
 
 // the acting ops take a name whole. a group goes by its own name or an alias, so part of either is no group's name,
@@ -700,8 +700,8 @@ const planOf = async (path: string) => {
 }
 Deno.test('nu / arch / add, rem, sync (pinned, part of a name or an alias is not a name)', async () => {
   for (const op of ['add', 'rem', 'sync']) {
-    for (const typed of ['nush', 'n', 'she', 'shell-n']) {
-      const plan = await planOf(`${op}/${typed}`)
+    for (const typed of ['nush', 'n', 'she', 'shell/n']) {
+      const plan = await planOf(`${op}/${encodeURIComponent(typed)}`)
       assertEquals(plan.includes('"group":'), false, `${op} ${typed}`)
       assertEquals(plan.includes(`r#'${typed}'#`), true, `${op} ${typed}`)
     }
@@ -715,10 +715,10 @@ Deno.test('nu / arch / add, rem (pinned, a package inside a group is not a name 
   }
 })
 Deno.test('nu / arch / add (pinned, a group by its own name, a run of its path, or a folder above it)', async () => {
-  for (const typed of ['nu', 'shell-nu', 'NU']) {
-    const plan = await planOf(`add/${typed}`)
-    assertEquals(plan.includes('"group":"shell-nu"'), true, typed)
-    assertEquals(plan.includes('"group":"shell-zsh"'), false, typed)
+  for (const typed of ['nu', 'shell/nu', 'NU']) {
+    const plan = await planOf(`add/${encodeURIComponent(typed)}`)
+    assertEquals(plan.includes('"group":"shell/nu"'), true, typed)
+    assertEquals(plan.includes('"group":"shell/zsh"'), false, typed)
   }
 })
 
@@ -730,19 +730,19 @@ const foundBy = async (typed: string) => {
   return line ? JSON.parse(line.slice("$env.PACK_FIND = r#'".length, -"'#".length)) : { groups: {}, remaining: [] }
 }
 Deno.test('nu / arch / find (pinned, the start of a word of a name or an alias)', async () => {
-  for (const typed of ['nu', 'n', 'nush', 'she', 'shell-n']) {
-    assertEquals(Object.keys((await foundBy(typed)).groups).includes('shell-nu'), true, typed)
+  for (const typed of ['nu', 'n', 'nush', 'she', 'shell/n']) {
+    assertEquals(Object.keys((await foundBy(encodeURIComponent(typed))).groups).includes('shell/nu'), true, typed)
   }
 })
 Deno.test('nu / arch / find (pinned, a package behind its vendor, scope or tap)', async () => {
   for (const typed of ['gopls', 'gop', 'pkg', 'vscode', 'scope', 'tools']) {
-    assertEquals(Object.keys((await foundBy(typed)).groups), ['test-slashed'], typed)
+    assertEquals(Object.keys((await foundBy(typed)).groups), ['test/slashed'], typed)
   }
-  assertEquals(Object.keys((await foundBy('completions')).groups), ['shell-zsh'])
+  assertEquals(Object.keys((await foundBy('completions')).groups), ['shell/zsh'])
 })
 Deno.test('nu / arch / find (pinned, a word of the description)', async () => {
   const found = await foundBy('structured')
-  assertEquals(Object.keys(found.groups), ['shell-nu'])
+  assertEquals(Object.keys(found.groups), ['shell/nu'])
   assertEquals(found.remaining, [])
 })
 Deno.test('nu / arch / find (pinned, the middle or the end of a word is not found)', async () => {
@@ -754,7 +754,7 @@ Deno.test('nu / arch / find (pinned, the middle or the end of a word is not foun
 })
 Deno.test('nu / arch / find (pinned, each name is its own search)', async () => {
   const found = await foundBy('nu/zsh/nosuchpackage')
-  assertEquals(Object.keys(found.groups).filter((g) => g.startsWith('shell-')), ['shell-nu', 'shell-zsh'])
+  assertEquals(Object.keys(found.groups).filter((g) => g.startsWith('shell/')), ['shell/nu', 'shell/zsh'])
   assertEquals(found.remaining, ['nosuchpackage'])
 })
 
@@ -774,7 +774,7 @@ Deno.test('nu / arch / find (pinned, candidates travel to the client)', async (t
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(
-    body.includes('"shell-nu":[{"manager":"ghpm","pkg":"nu"},{"manager":"cargo","pkg":"nu"}'),
+    body.includes('"shell/nu":[{"manager":"ghpm","pkg":"nu"},{"manager":"cargo","pkg":"nu"}'),
     true,
   )
 })
@@ -784,7 +784,7 @@ Deno.test('nu / arch / find (pinned, inline script commands are a candidate)', a
   const body = await (await runSrv(req(`/sh/nu/pack/find/rustup?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('"lang-rustup":[{"manager":"script","pkg":"curl '), true)
+  assertEquals(body.includes('"lang/rustup":[{"manager":"script","pkg":"curl '), true)
   assertEquals(body.includes('"remaining":[]'), true)
 })
 
@@ -804,7 +804,7 @@ Deno.test('nu / arch / add (pinned, emits a plan and a dispatcher)', async (t) =
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(body.includes('def --env packRunUnit [id: string] {'), true)
-  assertEquals(body.includes('"group":"shell-nu"'), true)
+  assertEquals(body.includes('"group":"shell/nu"'), true)
   assertEquals(body.includes('"name":"nu"'), true)
   assertEquals(body.includes('packPlanRun'), true)
   // no cascade of prompts any more
@@ -815,12 +815,21 @@ Deno.test('nu / arch / add (pinned, units carry their cli name)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/add/shell?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('"group":"shell-nu","name":"shell"'), true)
-  assertEquals(body.includes('"group":"shell-zsh","name":"shell"'), true)
+  assertEquals(body.includes('"group":"shell/nu","name":"shell"'), true)
+  assertEquals(body.includes('"group":"shell/zsh","name":"shell"'), true)
 })
 // names no group claimed are stated as loose, even when there are none, since the env dump pre-sets the key
 Deno.test('nu / arch / add (pinned, claimed names are not left loose)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/add/nu?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   assertEquals(body.includes('$env.PACK_ADD_NAMES = [  ]'), true)
+})
+
+// a group goes by a manager's name, its own or an alias, and that is what says it puts the manager down: the client
+// holds back a group that manager serves until this one has run
+Deno.test('nu / arch / add (pinned, a group named for a manager provides it)', async () => {
+  const plan = await planOf('add/rustup')
+  assertEquals(plan.includes('"group":"lang/rustup"'), true)
+  assertEquals(plan.includes('"provides":["cargo"]'), true)
+  assertEquals((await planOf('add/nu')).includes('"provides"'), false)
 })

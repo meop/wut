@@ -4,11 +4,13 @@ import { runNu } from '../../_test.ts'
 import { getScriptFlavorOpPreamble } from '../../sh.ts'
 
 const SCRIPT_NU = new URL('./script.nu', import.meta.url).pathname
+const SEL_NU = new URL('./sel.nu', import.meta.url).pathname
 
 // a plan the way the server writes one; sh is on every PATH these tests run on, and the other command on none
 async function withPlan(units: Array<Record<string, unknown>>, probe: string) {
   return await runNu([
     await getScriptFlavorOpPreamble('nu'),
+    await Deno.readTextFile(SEL_NU),
     await Deno.readTextFile(SCRIPT_NU),
     `$env.SCRIPT_PLAN = r#'${JSON.stringify(units)}'#`,
     probe,

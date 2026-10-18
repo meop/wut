@@ -273,11 +273,16 @@ function groupDescr(content: unknown): string {
   return typeof descr === 'string' ? descr : ''
 }
 
-// a group's name is its path, a word per level, and a term names a run of whole levels: the group itself, or a folder
-// above it, which stands for everything it holds. `go` is lang-go, `lang` is every group under lang/, `lang-js` every
-// one under lang/js/, and `g` is nothing
+// a group's name is its path, levels joined by the one character a file name cannot hold, so a level may spell itself
+// any way a tool does (`golangci-lint`) and the name still splits back into the path it came from
+function groupName(parts: Array<string>): string {
+  return parts.join('/')
+}
+
+// a term names a run of whole levels: the group itself, or a folder above it, which stands for everything it holds.
+// `claude` is ai/agent/claude, `ai` is every group under ai/, `ai/agent` every one under ai/agent/, and `c` is nothing
 function matchesNameParts(groupParts: Array<string>, query: string): boolean {
-  const queryParts = query.toLowerCase().split('-')
+  const queryParts = query.toLowerCase().split('/')
   for (let at = 0; at + queryParts.length <= groupParts.length; at++) {
     if (queryParts.every((q, i) => groupParts[at + i].toLowerCase() === q)) {
       return true
@@ -293,6 +298,14 @@ function isGroupNamed(groupParts: Array<string>, content: unknown, query: string
   return matchesNameParts(groupParts, query) || groupAliases(content).some((a) => sameName(a, query))
 }
 
+// a group provides a manager when it goes by that manager's name, its own or an alias: lang/python is also uv, lang/node
+// pnpm, sys/manager/ghpm ghpm. it is a forecast, not a promise — the path that wins here may put down something else —
+// so the client still checks the manager is there before a group waiting on it runs
+function groupProvides(groupParts: Array<string>, content: unknown): Array<string> {
+  const own = groupParts.at(-1) ?? ''
+  return MANAGERS.filter((m) => sameName(own, m) || groupAliases(content).some((a) => sameName(a, m)))
+}
+
 // a manager's name for a package can carry its flags (`--cask keka`), which are not part of the name
 function withoutFlags(name: string): string {
   return name.split(' ').filter((w) => !w.startsWith('-')).join(' ')
@@ -301,7 +314,7 @@ function withoutFlags(name: string): string {
 // find's question is the wider one, since its job is to turn something half remembered into a name to type: the
 // term starts a word of the group's name, an alias, a package any manager declares for it, or its description
 function isGroupFound(groupParts: Array<string>, content: unknown, query: string): boolean {
-  return wordStartsWith(groupParts.join('-'), query) ||
+  return wordStartsWith(groupName(groupParts), query) ||
     groupAliases(content).some((a) => wordStartsWith(a, query)) ||
     groupPackageNames(content).some((n) => wordStartsWith(withoutFlags(n), query)) ||
     wordStartsWith(groupDescr(content), query)
@@ -351,7 +364,7 @@ async function findGroups(
   const entries: Array<FindEntry> = []
   const found: Array<string> = []
   for (const r of results) {
-    const name = r.join('-')
+    const name = groupName(r)
     const content = await loadGroupConfig(r)
     if (content == null) {
       continue
@@ -467,7 +480,7 @@ function groupSelfUpdate(content: unknown, group: string, plat: string): SelfUpd
 async function findSelfUpdates(plat: string): Promise<Array<SelfUpdate>> {
   const found: Array<SelfUpdate> = []
   for (const parts of await getCfgDirDump([PACK_KEY], { extension: Fmt.yaml })) {
-    const self = groupSelfUpdate(await loadGroupConfig(parts), parts.join('-'), plat)
+    const self = groupSelfUpdate(await loadGroupConfig(parts), groupName(parts), plat)
     if (self) {
       found.push(self)
     }
@@ -479,6 +492,8 @@ type PlanUnit = {
   group: string
   name: string
   paths: Array<PlanPath>
+  // the managers this group puts down, so a group they serve in the same run can wait for it
+  provides?: Array<string>
   pre?: Array<PlanScript>
   post?: Array<PlanScript>
 }
@@ -519,7 +534,7 @@ async function buildGroupUnit(
   name: string,
   cliName: string,
 ): Promise<{ unit: PlanUnit | null; arms: Array<string>; scriptArms: Map<string, Array<string>> }> {
-  const content = await loadGroupConfig(name.split('-'))
+  const content = await loadGroupConfig(name.split('/'))
   if (content == null) {
     return { unit: null, arms: [], scriptArms: new Map() }
   }
@@ -584,6 +599,10 @@ async function buildGroupUnit(
     return { unit: null, arms, scriptArms: new Map() }
   }
   const unit: PlanUnit = { group: name, name: cliName, paths }
+  const provides = groupProvides(name.split('/'), content)
+  if (provides.length) {
+    unit.provides = provides
+  }
   const scriptArms = new Map<string, Array<string>>()
   const opConfig = op === 'add' ? addConfig : op === 'remove' ? removeConfig : undefined
   for (const hook of GROUP_HOOKS) {
@@ -607,7 +626,7 @@ async function resolveGroupName(name: string): Promise<Array<string>> {
   const matched: Array<string> = []
   const aliasMatched: Array<string> = []
   for (const parts of results) {
-    const resolvedName = parts.join('-')
+    const resolvedName = groupName(parts)
     if (matched.includes(resolvedName) || aliasMatched.includes(resolvedName)) {
       continue
     }
@@ -624,9 +643,9 @@ async function resolveGroupName(name: string): Promise<Array<string>> {
   // an alias reaches the folder the same way, since it stands in for the name
   const all = [...matched, ...aliasMatched]
   for (const hit of [...all]) {
-    const prefix = `${hit}-`
+    const prefix = `${hit}/`
     for (const parts of results) {
-      const resolvedName = parts.join('-')
+      const resolvedName = groupName(parts)
       if (resolvedName.startsWith(prefix) && !all.includes(resolvedName)) {
         all.push(resolvedName)
       }
