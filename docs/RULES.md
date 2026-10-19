@@ -367,7 +367,7 @@ and are answered by the client instead — see [SCRIPT.md](SCRIPT.md#the-clients
 - `hyperv/install.ps1` adds `no_svc: [vmms]` in YAML and checks `Get-Service vmms` before it asks
 - `rectangle/setup.zsh` adds `has_path: [/Applications/Rectangle.app]` in YAML and checks `[[ ! -d ... ]]`
 - `gnome-terminal/setup.zsh` has `sys_os_de: [gnome]` + `sys_os_plat: [linux]` in YAML and checks both
-- `utm/sync.zsh` adds `no_ssh: true` in YAML and checks `[[ $SSH_CONNECTION ]]`
+- `utmctl/sync.zsh` adds `no_ssh: true` in YAML and checks `[[ $SSH_CONNECTION ]]`
 - `node/install.zsh` has `sys_os_like: [debian]` in YAML and checks `[[ $SYS_OS_LIKE != *debian* ]]`
 - `docker/repo.zsh` has `sys_os: [debian, fedora, ubuntu]` in YAML and checks exact `$SYS_OS` (because `$SYS_OS` is also
   used in URL construction)
