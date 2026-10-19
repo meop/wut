@@ -1,6 +1,7 @@
 {
   "version": "5",
   "specifiers": {
+    "jsr:@meop/shire@~0.12.1": "0.12.1",
     "jsr:@std/assert@^1.0.19": "1.0.19",
     "jsr:@std/async@^1.5.1": "1.5.1",
     "jsr:@std/collections@^1.1.3": "1.2.0",
@@ -15,6 +16,12 @@
     "jsr:@std/yaml@^1.3.0": "1.3.0"
   },
   "jsr": {
+    "@meop/shire@0.12.1": {
+      "integrity": "925ea7272be8140571712915fc1fb3091086334fc23b780fb58641dcf90bc92a",
+      "dependencies": [
+        "jsr:@std/yaml"
+      ]
+    },
     "@std/assert@1.0.19": {
       "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e",
       "dependencies": [
