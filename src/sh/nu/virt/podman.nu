@@ -1,3 +1,40 @@
+# podman network create's arguments for a network podman.yaml defines; a key it leaves out is left to podman's default
+def virtPodmanNetworkArgs [network: string, networkDef: record] {
+  [
+    ['network', 'create'],
+    (if ($networkDef | get driver? | is-not-empty) { ['--driver', $networkDef.driver] } else { [] }),
+    (if ($networkDef | get interface? | is-not-empty) { ['--interface-name', $networkDef.interface] } else { [] }),
+    (if ($networkDef | get ipam? | is-not-empty) { ['--ipam-driver', $networkDef.ipam] } else { [] }),
+    (if ($networkDef | get dns? | default true) == false { ['--disable-dns'] } else { [] }),
+    ($networkDef | get options? | default {} | transpose key value | each { |opt| ['--opt', $"($opt.key)=($opt.value)"] } | flatten),
+    [$network],
+  ] | flatten
+}
+
+# the keys of a podman.yaml network that the network podman holds no longer matches, as podman network inspect shows
+# it. podman changes none of them in place, so a network that differs is made again. interface and ipam are compared
+# when the definition names them, since podman picks its own otherwise; an unnamed driver is a bridge, and dns runs
+# only on a bridge, as podman has them
+def virtPodmanNetworkDrift [networkDef: record, inspected: record] {
+  let driver = $networkDef | get driver? | default 'bridge'
+  let interface = $networkDef | get interface? | default ''
+  let ipam = $networkDef | get ipam? | default ''
+  let dns = ($networkDef | get dns? | default true) and $driver == 'bridge'
+  # podman holds every option as a string
+  let options = $networkDef
+    | get options?
+    | default {}
+    | transpose key value
+    | reduce --fold {} { |opt, acc| $acc | upsert $opt.key ($opt.value | into string) }
+  [
+    [driver ($driver != ($inspected | get driver? | default ''))]
+    [interface ($interface != '' and $interface != ($inspected | get network_interface? | default ''))]
+    [ipam ($ipam != '' and $ipam != ($inspected.ipam_options?.driver? | default ''))]
+    [dns ($dns != ($inspected | get dns_enabled? | default false))]
+    [options ($options != ($inspected | get options? | default {}))]
+  ] | where { |kv| $kv.1 } | each { |kv| $kv.0 }
+}
+
 def virtPodman [] {
   let cmd = 'podman'
   if ('VIRT_MANAGER' in $env and $env.VIRT_MANAGER != $cmd) or (which $cmd | is-empty) {
@@ -92,6 +129,47 @@ def virtPodman [] {
     }
   }
 
+  # every pod added here whose .kube names the network, not only the ones an op names
+  def podsOnNetwork [network: string] {
+    virtListedFiles '/etc/containers/systemd' '\.kube$' { |b| $b | str replace '.kube' '' }
+      | where { |p| (readKubeNetwork $"/etc/containers/systemd/($p).kube") == $network }
+  }
+
+  # a network podman.yaml now defines otherwise is made again: podman removes one only with no pod on it, so each pod on
+  # it stops first. one this sync replays starts again in doAdd, and any other starts again as it was
+  def remakeNetworks [synced: list<string>] {
+    let networks = $env.VIRT_PODMAN_NETWORKS | from json
+    for network in ($networks | columns) {
+      let inspected = ^sudo podman network inspect $network | complete
+      if $inspected.exit_code != 0 {
+        continue
+      }
+      let networkDef = $networks | get $network
+      let drift = virtPodmanNetworkDrift $networkDef ($inspected.stdout | from json | first)
+      if ($drift | is-empty) {
+        continue
+      }
+
+      let pods = podsOnNetwork $network
+      opPrintInfo $"`podman` network `($network)` differs from podman.yaml in ($drift | str join ', ')"
+      let stopping = if ($pods | is-empty) { '' } else { $", stopping ($pods | str join ', ') meanwhile" }
+      if not (opAsk $"sync - podman ($network) - make it again($stopping)") {
+        opPrintWarn $"`podman` network `($network)` keeps what it has"
+        continue
+      }
+
+      let others = $pods | where { |p| $p not-in $synced } | each { |p| {pod: $p, state: (podState $p)} }
+      for pod in $pods {
+        opPrintMaybeRunCmd sudo systemctl stop $"($pod).service"
+      }
+      opPrintMaybeRunCmd sudo podman network rm $network
+      opPrintMaybeRunCmd sudo podman ...(virtPodmanNetworkArgs $network $networkDef)
+      for other in ($others | where { |o| $o.state.active }) {
+        opPrintMaybeRunCmd sudo systemctl start $"($other.pod).service"
+      }
+    }
+  }
+
   # a quadlet unit cannot be systemctl enabled: an [Install] drop-in is what starts it at boot
   def installFilePath [pod] {
     $"/etc/containers/systemd/($pod).kube.d/install.conf"
@@ -171,15 +249,7 @@ def virtPodman [] {
     let networkDef = $networks | get --optional $network
     if $networkDef != null {
       if not (^sudo podman network ls --format '{{.Name}}' | lines | any { $in == $network }) {
-        let netArgs = [
-          ['network', 'create'],
-          (if ($networkDef | get driver? | is-not-empty) { ['--driver', $networkDef.driver] } else { [] }),
-          (if ($networkDef | get interface? | is-not-empty) { ['--interface-name', $networkDef.interface] } else { [] }),
-          (if ($networkDef | get ipam? | is-not-empty) { ['--ipam-driver', $networkDef.ipam] } else { [] }),
-          ($networkDef | get options? | default {} | transpose key value | each { |opt| ['--opt', $"($opt.key)=($opt.value)"] } | flatten),
-          [$network],
-        ] | flatten
-        opPrintMaybeRunCmd sudo podman ...$netArgs
+        opPrintMaybeRunCmd sudo podman ...(virtPodmanNetworkArgs $network $networkDef)
       }
     }
 
@@ -284,16 +354,19 @@ def virtPodman [] {
       }
     }
     sync => {
-      for pod in ($env.VIRT_INSTANCES | each { |p| ($p | split row '/') | first } | uniq) {
-        if not (virtInstanceHere $cmd $pod) {
-          continue
-        }
+      let pods = $env.VIRT_INSTANCES
+        | each { |p| ($p | split row '/') | first }
+        | uniq
+        | where { |pod| virtInstanceHere $cmd $pod }
+      # each pod's state is read before anything stops, since a network made again stops its pods first
+      let states = $pods | reduce --fold {} { |pod, acc| $acc | upsert $pod (podState $pod) }
+      remakeNetworks $pods
 
-        let state = podState $pod
+      for pod in $pods {
         opPrintMaybeRunCmd sudo systemctl stop $"($pod).service"
 
         let podInstances = $env.VIRT_INSTANCES | where { |p| (($p | split row '/') | first) == $pod }
-        doAdd $pod $podInstances $cmd $state
+        doAdd $pod $podInstances $cmd ($states | get $pod)
       }
       # each pull leaves the image it replaced untagged; drop those so they do not pile up
       opPrintMaybeRunCmd sudo $cmd image prune --force
