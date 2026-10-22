@@ -425,22 +425,22 @@ if \$cut != null { \$cut.raw }
 `;
 
 snapshot[`error / command not found (pwsh) 1`] = `
-\`\$REQ_URL_CFG = 'http://x/cfg'
+\`\$env:REQ_URL_CFG = 'http://x/cfg'
 
-\$REQ_URL_SH = 'http://x/sh/pwsh/file/invalid'
+\$env:REQ_URL_SH = 'http://x/sh/pwsh/file/invalid'
 
 function opPrint {
-  if (\$SUCCINCT) {
+  if (\$env:SUCCINCT) {
     return
   }
   [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
 }
 
 function opPrintErr {
-  if (\$SUCCINCT) {
+  if (\$env:SUCCINCT) {
     return
   }
-  if (\$GRAYSCALE) {
+  if (\$env:GRAYSCALE) {
     [Console]::Error.WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
   }
@@ -450,10 +450,10 @@ function opPrintErr {
 }
 
 function opPrintSucc {
-  if (\$SUCCINCT) {
+  if (\$env:SUCCINCT) {
     return
   }
-  if (\$GRAYSCALE) {
+  if (\$env:GRAYSCALE) {
     [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
   }
@@ -463,10 +463,10 @@ function opPrintSucc {
 }
 
 function opPrintWarn {
-  if (\$SUCCINCT) {
+  if (\$env:SUCCINCT) {
     return
   }
-  if (\$GRAYSCALE) {
+  if (\$env:GRAYSCALE) {
     [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
   }
@@ -476,10 +476,10 @@ function opPrintWarn {
 }
 
 function opPrintInfo {
-  if (\$SUCCINCT) {
+  if (\$env:SUCCINCT) {
     return
   }
-  if (\$GRAYSCALE) {
+  if (\$env:GRAYSCALE) {
     [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
   }
@@ -489,10 +489,10 @@ function opPrintInfo {
 }
 
 function opPrintCmd {
-  if (\$SUCCINCT) {
+  if (\$env:SUCCINCT) {
     return
   }
-  if (\$GRAYSCALE) {
+  if (\$env:GRAYSCALE) {
     [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
   }
@@ -511,7 +511,7 @@ function opPrintCmd {
 }
 
 function opMaybePrintCmd {
-  if (-not \$NOOP) {
+  if (-not \$env:NOOP) {
     opPrintCmd @args
   }
 }
@@ -527,7 +527,7 @@ function opRunSilentCmd {
 # a yes/no question: empty, y or yes is yes, and YES answers yes without asking
 function opAsk {
   param([string] \$question)
-  if (\$YES) {
+  if (\$env:YES) {
     return \$true
   }
   \$yn = Read-Host "\${question} [y,[n]]"
@@ -535,13 +535,13 @@ function opAsk {
 }
 
 function opMaybeRunCmd {
-  if (-not \$NOOP) {
+  if (-not \$env:NOOP) {
     opRunCmd @args
   }
 }
 
 function opMaybeRunSilentCmd {
-  if (-not \$NOOP) {
+  if (-not \$env:NOOP) {
     opRunSilentCmd @args
   }
 }
@@ -583,12 +583,12 @@ if (\$IsWindows) {
 } else {
   \$_raw_arch = "\$(uname -m)".ToLower()
 }
-\$SYS_CPU_ARCH = switch (\$_raw_arch) {
+\$env:SYS_CPU_ARCH = switch (\$_raw_arch) {
   arm64 { 'aarch64' }
   amd64 { 'x86_64' }
   default { \$_raw_arch }
 }
-\$REQ_URL_SH = "\${REQ_URL_SH}?sysCpuArch=\${SYS_CPU_ARCH}"
+\$env:REQ_URL_SH = "\${env:REQ_URL_SH}?sysCpuArch=\${env:SYS_CPU_ARCH}"
 
 if (\$IsWindows) {
   \$_raw_vend = "\$(Get-WmiObject -Class Win32_Processor | Select-Object -ExpandProperty Caption)".ToLower()
@@ -597,36 +597,36 @@ if (\$IsWindows) {
 } else {
   \$_raw_vend = "\$(sysctl machdep.cpu.brand_string 2> /dev/null | cut -d ':' -f 2 | xargs)".ToLower()
 }
-\$SYS_CPU_VEND = switch -Wildcard (\$_raw_vend) {
+\$env:SYS_CPU_VEND = switch -Wildcard (\$_raw_vend) {
   amd* { 'amd' }
   apple* { 'apple' }
   arm* { 'arm' }
   intel* { 'intel' }
 }
-if (\$SYS_CPU_VEND) {
-  \$REQ_URL_SH = "\${REQ_URL_SH}&sysCpuVend=\${SYS_CPU_VEND}"
+if (\$env:SYS_CPU_VEND) {
+  \$env:REQ_URL_SH = "\${env:REQ_URL_SH}&sysCpuVend=\${env:SYS_CPU_VEND}"
 }
 
 if (\$IsWindows) {
-  \$SYS_HOST = "\${env:COMPUTERNAME}".ToLower()
+  \$env:SYS_HOST = "\${env:COMPUTERNAME}".ToLower()
 } else {
-  \$SYS_HOST = "\$(hostname)".ToLower()
+  \$env:SYS_HOST = "\$(hostname)".ToLower()
 }
-\$REQ_URL_SH = "\${REQ_URL_SH}&sysHost=\${SYS_HOST}"
+\$env:REQ_URL_SH = "\${env:REQ_URL_SH}&sysHost=\${env:SYS_HOST}"
 
-\$SYS_OS_PLAT = if (\$IsMacOS) { 'darwin' } elseif (\$IsLinux) { 'linux' } elseif (\$IsWindows) { 'windows' } else { 'unknown' }
-\$REQ_URL_SH = "\${REQ_URL_SH}&sysOsPlat=\${SYS_OS_PLAT}"
+\$env:SYS_OS_PLAT = if (\$IsMacOS) { 'darwin' } elseif (\$IsLinux) { 'linux' } elseif (\$IsWindows) { 'windows' } else { 'unknown' }
+\$env:REQ_URL_SH = "\${env:REQ_URL_SH}&sysOsPlat=\${env:SYS_OS_PLAT}"
 
-if (\$SYS_OS_PLAT -eq 'linux') {
-  if (-not \$SYS_OS_DE -and \$XDG_SESSION_DESKTOP) {
-    \$_de = "\${XDG_SESSION_DESKTOP}".ToLower()
-    \$SYS_OS_DE = switch (\$_de) {
+if (\$env:SYS_OS_PLAT -eq 'linux') {
+  if (-not \$env:SYS_OS_DE -and \$env:XDG_SESSION_DESKTOP) {
+    \$_de = "\${env:XDG_SESSION_DESKTOP}".ToLower()
+    \$env:SYS_OS_DE = switch (\$_de) {
       kde { 'plasma' }
       rpd { 'lxde' }
       rpd-labwc { 'lxde' }
       default { \$_de }
     }
-    \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsDe=\${SYS_OS_DE}"
+    \$env:REQ_URL_SH = "\${env:REQ_URL_SH}&sysOsDe=\${env:SYS_OS_DE}"
   }
 
   if (Test-Path /etc/os-release) {
@@ -635,34 +635,34 @@ if (\$SYS_OS_PLAT -eq 'linux') {
       Set-Variable -Name "\$(\$_.Name)" -Value "\$(\$_.Value)".Trim('"')
     }
 
-    if (-not \$SYS_OS -and \$ID) {
-      \$SYS_OS = "\${ID}".ToLower()
-      \$REQ_URL_SH = "\${REQ_URL_SH}&sysOs=\${SYS_OS}"
+    if (-not \$env:SYS_OS -and \$ID) {
+      \$env:SYS_OS = "\${ID}".ToLower()
+      \$env:REQ_URL_SH = "\${env:REQ_URL_SH}&sysOs=\${env:SYS_OS}"
     }
 
-    if (-not \$SYS_OS_LIKE -and \$SYS_OS) {
-      \$SYS_OS_LIKE = "\$(if (\$ID_LIKE) { "\${SYS_OS}_\${ID_LIKE}" } else { "\${SYS_OS}" })".ToLower().Replace(' ', '_')
-      \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsLike=\${SYS_OS_LIKE}"
+    if (-not \$env:SYS_OS_LIKE -and \$env:SYS_OS) {
+      \$env:SYS_OS_LIKE = "\$(if (\$ID_LIKE) { "\${env:SYS_OS}_\${ID_LIKE}" } else { "\${env:SYS_OS}" })".ToLower().Replace(' ', '_')
+      \$env:REQ_URL_SH = "\${env:REQ_URL_SH}&sysOsLike=\${env:SYS_OS_LIKE}"
     }
 
-    if (-not \$SYS_OS_VERS -and \$VERSION_ID) {
-      \$SYS_OS_VERS = "\${VERSION_ID}".ToLower()
-      \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsVers=\${SYS_OS_VERS}"
+    if (-not \$env:SYS_OS_VERS -and \$VERSION_ID) {
+      \$env:SYS_OS_VERS = "\${VERSION_ID}".ToLower()
+      \$env:REQ_URL_SH = "\${env:REQ_URL_SH}&sysOsVers=\${env:SYS_OS_VERS}"
     }
 
-    if (-not \$SYS_OS_VERS_CODE -and \$VERSION_CODENAME) {
-      \$SYS_OS_VERS_CODE = "\${VERSION_CODENAME}".ToLower()
-      \$REQ_URL_SH = "\${REQ_URL_SH}&sysOsVersCode=\${SYS_OS_VERS_CODE}"
+    if (-not \$env:SYS_OS_VERS_CODE -and \$VERSION_CODENAME) {
+      \$env:SYS_OS_VERS_CODE = "\${VERSION_CODENAME}".ToLower()
+      \$env:REQ_URL_SH = "\${env:REQ_URL_SH}&sysOsVersCode=\${env:SYS_OS_VERS_CODE}"
     }
   }
 }
 
 if (\$IsWindows) {
-  \$SYS_USER = "\${env:USERNAME}".ToLower()
+  \$env:SYS_USER = "\${env:USERNAME}".ToLower()
 } else {
-  \$SYS_USER = "\$(whoami)".ToLower()
+  \$env:SYS_USER = "\$(whoami)".ToLower()
 }
-\$REQ_URL_SH = "\${REQ_URL_SH}&sysUser=\${SYS_USER}"
+\$env:REQ_URL_SH = "\${env:REQ_URL_SH}&sysUser=\${env:SYS_USER}"
 
 
 & {
@@ -691,7 +691,7 @@ if (\$IsWindows) {
       return
     }
 
-    \$triple = switch ("\${SYS_OS_PLAT}_\${SYS_CPU_ARCH}") {
+    \$triple = switch ("\${env:SYS_OS_PLAT}_\${env:SYS_CPU_ARCH}") {
       'darwin_aarch64' { 'aarch64-apple-darwin' }
       'darwin_x86_64' { 'x86_64-apple-darwin' }
       'linux_aarch64' { 'aarch64-unknown-linux-gnu' }
@@ -701,11 +701,11 @@ if (\$IsWindows) {
       default { '' }
     }
     # a musl system (alpine) cannot run the gnu build
-    if (\$SYS_OS_PLAT -eq 'linux' -and (Get-ChildItem -Path '/lib/ld-musl-*.so.1' -ErrorAction SilentlyContinue)) {
+    if (\$env:SYS_OS_PLAT -eq 'linux' -and (Get-ChildItem -Path '/lib/ld-musl-*.so.1' -ErrorAction SilentlyContinue)) {
       \$triple = \$triple -replace '-gnu\$', '-musl'
     }
     if (\$triple -eq '') {
-      opPrintErr "unsupported platform/arch for nu sync: \${SYS_OS_PLAT}/\${SYS_CPU_ARCH}"
+      opPrintErr "unsupported platform/arch for nu sync: \${env:SYS_OS_PLAT}/\${env:SYS_CPU_ARCH}"
       exit 1
     }
 
@@ -745,7 +745,7 @@ if (\$IsWindows) {
       return
     }
 
-    \$extArchive = if (\$SYS_OS_PLAT -eq 'windows') { 'zip' } else { 'tar.gz' }
+    \$extArchive = if (\$env:SYS_OS_PLAT -eq 'windows') { 'zip' } else { 'tar.gz' }
     \$asset = "nu-\${nuVers}-\${triple}.\${extArchive}"
     \$url = "https://github.com/nushell/nushell/releases/download/\${nuVers}/\${asset}"
     \$archivePath = Join-Path \$workDir \$asset
@@ -784,7 +784,7 @@ if (\$IsWindows) {
       exit 1
     }
 
-    if (\$SYS_OS_PLAT -ne 'windows') {
+    if (\$env:SYS_OS_PLAT -ne 'windows') {
       & chmod +x \$extractedBin
     }
     Move-Item -Force -Path \$extractedBin -Destination \$nuBin
@@ -793,7 +793,7 @@ if (\$IsWindows) {
     wutNuLockRelease \$lockDir
   }
 
-  if (\$SYS_OS_PLAT -notin @('darwin', 'linux', 'windows')) {
+  if (\$env:SYS_OS_PLAT -notin @('darwin', 'linux', 'windows')) {
     opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
@@ -801,7 +801,7 @@ if (\$IsWindows) {
   # windows has no HOME, which made this /.wut at the root of the drive; pwsh's own \$HOME is set everywhere
   \$env:WUT_HOME = \$env:WUT_HOME ?? (Join-Path \$HOME '.wut')
   \$wutHome = \$env:WUT_HOME
-  \$ext = if (\$SYS_OS_PLAT -eq 'windows') { '.exe' } else { '' }
+  \$ext = if (\$env:SYS_OS_PLAT -eq 'windows') { '.exe' } else { '' }
   \$nuBin = Join-Path \$wutHome 'vendor' "nu\${ext}"
   \$nuVers = "\${NU_VERS_MAJOR}.\${NU_VERS_MINOR}.\${NU_VERS_PATCH}"
 
@@ -809,15 +809,15 @@ if (\$IsWindows) {
 }
 
 
-Invoke-Expression "\$( Invoke-RestMethod -ErrorAction Stop -ProgressAction SilentlyContinue -Uri \$REQ_URL_SH )"
+Invoke-Expression "\$( Invoke-RestMethod -ErrorAction Stop -ProgressAction SilentlyContinue -Uri \$env:REQ_URL_SH )"
 
 \`
 `;
 
 snapshot[`error / command not found (zsh) 1`] = `
-\`REQ_URL_CFG='http://x/cfg'
+\`export REQ_URL_CFG='http://x/cfg'
 
-REQ_URL_SH='http://x/sh/zsh/file/invalid'
+export REQ_URL_SH='http://x/sh/zsh/file/invalid'
 
 function opPrint {
   if [[ \$SUCCINCT ]]; then

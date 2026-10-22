@@ -56,7 +56,7 @@ export async function redirectShell(
   }
 
   const script = targetShell
-    .with(targetShell.varSetStr(REQ_URL_SH, url))
+    .with(targetShell.envSetStr(REQ_URL_SH, url))
     .with(await targetShell.fileLoad(['get']))
     .build()
 
@@ -85,7 +85,7 @@ export async function redirectCommonShell(shell: Sh, context: Ctx): Promise<stri
 
   const targetShell = new NuSh()
   const script = targetShell
-    .with(targetShell.varSetStr(REQ_URL_SH, url))
+    .with(targetShell.envSetStr(REQ_URL_SH, url))
     .with(await targetShell.fileLoad(['get']))
     .build()
 
@@ -122,24 +122,9 @@ export function getScriptFlavorShell(shellFlavor: string): Sh {
   return shellFlavor === 'nu' ? new NuSh() : shellFlavor === 'pwsh' ? new PowerSh() : new ZSh()
 }
 
-// the switches reach a spawned script as env vars. zsh and nu read their switches from the environment already, but
-// pwsh's op helpers and scripts read plain variables, which do not cross a process boundary — without this, a pwsh
-// script ran its commands under --noop and asked its questions under --yes
-const SWITCH_VARS = ['DEBUG', 'GRAYSCALE', 'NOOP', 'SUCCINCT', 'TRACE', 'YES']
-const PWSH_SWITCH_IMPORT = [
-  `foreach ($flag in ${SWITCH_VARS.map((v) => `'${v}'`).join(', ')}) {`,
-  '  if (Test-Path "env:$flag") {',
-  '    Set-Variable -Name $flag -Value (Get-Item "env:$flag").Value',
-  '  }',
-  '}',
-].join('\n')
-
 // a script file is spawned as its own process, so it needs its shell's op preamble loaded in directly
 export async function getScriptFlavorOpPreamble(shellFlavor: string): Promise<string> {
   const shell = getScriptFlavorShell(shellFlavor)
   const preamble = await shell.fileLoad(['op'])
-  if (shellFlavor === 'pwsh') {
-    return `${PWSH_SWITCH_IMPORT}\n${preamble}`
-  }
   return shellFlavor === 'nu' ? `${preamble}\n${await shell.fileLoad(['json'], import.meta.resolve, ['.'])}` : preamble
 }

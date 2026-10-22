@@ -24,7 +24,7 @@
       return
     }
 
-    $triple = switch ("${SYS_OS_PLAT}_${SYS_CPU_ARCH}") {
+    $triple = switch ("${env:SYS_OS_PLAT}_${env:SYS_CPU_ARCH}") {
       'darwin_aarch64' { 'aarch64-apple-darwin' }
       'darwin_x86_64' { 'x86_64-apple-darwin' }
       'linux_aarch64' { 'aarch64-unknown-linux-gnu' }
@@ -34,11 +34,11 @@
       default { '' }
     }
     # a musl system (alpine) cannot run the gnu build
-    if ($SYS_OS_PLAT -eq 'linux' -and (Get-ChildItem -Path '/lib/ld-musl-*.so.1' -ErrorAction SilentlyContinue)) {
+    if ($env:SYS_OS_PLAT -eq 'linux' -and (Get-ChildItem -Path '/lib/ld-musl-*.so.1' -ErrorAction SilentlyContinue)) {
       $triple = $triple -replace '-gnu$', '-musl'
     }
     if ($triple -eq '') {
-      opPrintErr "unsupported platform/arch for nu sync: ${SYS_OS_PLAT}/${SYS_CPU_ARCH}"
+      opPrintErr "unsupported platform/arch for nu sync: ${env:SYS_OS_PLAT}/${env:SYS_CPU_ARCH}"
       exit 1
     }
 
@@ -78,7 +78,7 @@
       return
     }
 
-    $extArchive = if ($SYS_OS_PLAT -eq 'windows') { 'zip' } else { 'tar.gz' }
+    $extArchive = if ($env:SYS_OS_PLAT -eq 'windows') { 'zip' } else { 'tar.gz' }
     $asset = "nu-${nuVers}-${triple}.${extArchive}"
     $url = "https://github.com/nushell/nushell/releases/download/${nuVers}/${asset}"
     $archivePath = Join-Path $workDir $asset
@@ -117,7 +117,7 @@
       exit 1
     }
 
-    if ($SYS_OS_PLAT -ne 'windows') {
+    if ($env:SYS_OS_PLAT -ne 'windows') {
       & chmod +x $extractedBin
     }
     Move-Item -Force -Path $extractedBin -Destination $nuBin
@@ -126,7 +126,7 @@
     wutNuLockRelease $lockDir
   }
 
-  if ($SYS_OS_PLAT -notin @('darwin', 'linux', 'windows')) {
+  if ($env:SYS_OS_PLAT -notin @('darwin', 'linux', 'windows')) {
     opPrintWarn 'script is for darwin, linux, or windows'
     return
   }
@@ -134,7 +134,7 @@
   # windows has no HOME, which made this /.wut at the root of the drive; pwsh's own $HOME is set everywhere
   $env:WUT_HOME = $env:WUT_HOME ?? (Join-Path $HOME '.wut')
   $wutHome = $env:WUT_HOME
-  $ext = if ($SYS_OS_PLAT -eq 'windows') { '.exe' } else { '' }
+  $ext = if ($env:SYS_OS_PLAT -eq 'windows') { '.exe' } else { '' }
   $nuBin = Join-Path $wutHome 'vendor' "nu${ext}"
   $nuVers = "${NU_VERS_MAJOR}.${NU_VERS_MINOR}.${NU_VERS_PATCH}"
 

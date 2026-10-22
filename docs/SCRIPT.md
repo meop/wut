@@ -19,6 +19,11 @@ shell's own syntax, since it is read by that shell and not by the nu that spawne
 the flavor, and both the preamble and the interpreter follow it rather than the platform: `script.yaml` is free to gate
 a pwsh script onto linux.
 
+What a script reads from wut — the switches (`NOOP`, `YES`, …), `REQ_URL_CFG` and the `SYS_*` context — it reads from
+its environment, which it inherits from the nu that spawned it: `$env.X` in nu, `$env:X` in pwsh, `$X` in zsh. The
+server sets them there in every shell (shire's `envSetStr`), and shire's op helpers read them there, so nothing is
+copied into a script. A pwsh `$X` is a plain variable no process inherits: it is always empty in a script.
+
 ## Tool-first config, action-first cli
 
 The cli reads action first (`wut s e setup ptyxis`); the config tree is tool first (`ptyxis/setup.zsh`). `script` puts

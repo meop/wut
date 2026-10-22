@@ -112,13 +112,13 @@ export async function runSrv(request: Request) {
 
     shell = shell
       .with(
-        shell.varSetStr(
+        shell.envSetStr(
           VAR_REQ_URL_OP_KEY(Op.cfg),
           [context.req_orig, Op.cfg].join('/'),
         ),
       )
       .with(
-        shell.varSetStr(
+        shell.envSetStr(
           VAR_REQ_URL_OP_KEY(Op.sh),
           [context.req_orig, context.req_path, context.req_srch].join(''),
         ),
@@ -162,7 +162,7 @@ export async function runSrv(request: Request) {
         continue
       }
       shell = shell.with(
-        shell.varSetStr([e[0]], e[1]),
+        shell.envSetStr([e[0]], e[1]),
       )
     }
 

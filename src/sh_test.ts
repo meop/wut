@@ -165,8 +165,8 @@ Deno.test('getScriptFlavorOpPreamble - follows the flavor, not the platform', as
   assertEquals((await getScriptFlavorOpPreamble('nu')).includes('def jsoncMerge'), true)
 })
 
-// a pwsh script spawned from nu receives the switches as env vars, but its op helpers and its own prompts read plain
-// variables: before the preamble imported them, --noop ran the commands for real and --yes still asked
+// a pwsh script spawned from nu receives the switches as env vars, and its op helpers and its own checks read them
+// there: when they read plain variables instead, --noop ran the commands for real and --yes still asked
 Deno.test('pwsh / script preamble / the switches cross into a spawned pwsh script', async () => {
   const marker = await Deno.makeTempFile()
   await Deno.remove(marker)
@@ -176,7 +176,7 @@ Deno.test('pwsh / script preamble / the switches cross into a spawned pwsh scrip
       script,
       [
         await getScriptFlavorOpPreamble('pwsh'),
-        `if ($YES) { 'yes' } else { 'asked' }`,
+        `if ($env:YES) { 'yes' } else { 'asked' }`,
         `opPrintMaybeRunCmd "'ran' | Out-File '${marker}'"`,
       ].join('\n'),
     )
