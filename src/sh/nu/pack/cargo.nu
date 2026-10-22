@@ -12,6 +12,38 @@ def packRustupPath [] {
   if ($rustup | path exists) { $rustup } else { null }
 }
 
+# cargo, rustc and rustup are one install: rustup's proxies side by side, or a distro's cargo and rustc. a rustc PATH
+# finds anywhere else builds everything this cargo installs, and a rustup with no default toolchain leaves its cargo
+# nothing to run. compared by the directory each resolves into, since a proxy can be a link to rustup itself
+def --env packCargoHeld [] {
+  let cargo = (which cargo | get -o 0.path)
+  let rustc = (which rustc | get -o 0.path)
+  if $rustc == null {
+    return (packHeld '' 'no rustc on PATH' [$"cargo ($cargo)"])
+  }
+  if ($rustc | path expand | path dirname) != ($cargo | path expand | path dirname) {
+    return (packHeld '' "rustc is another install's" [$"cargo ($cargo)" $"rustc ($rustc)"])
+  }
+  let rustup = (packRustupPath)
+  let rustupFound = (which rustup | get -o 0.path)
+  if $rustup != null and $rustupFound != null and ($rustupFound | path expand) != ($rustup | path expand) {
+    return (packHeld '' "rustup is another install's" [$"cargo ($cargo)" $"rustup ($rustupFound)"])
+  }
+  # the rustc PATH finds is the one beside cargo, so it is asked by name, as it is shown
+  let res = (packAsk [rustc --version] --home)
+  if $res.exit_code == null {
+    return (packHeld '' 'rustc does not start' [$"rustc ($rustc)" $res.stderr])
+  }
+  if $res.exit_code != 0 {
+    if $rustup != null {
+      return (packHeld '' 'rustup has no default toolchain' ['rustup default stable'])
+    }
+    return (packHeld '' 'rustc does not run' [$"rustc ($rustc)"])
+  }
+  let by = if $rustup != null { ' (rustup)' } else { '' }
+  packHeld $"rust (packVersionOf $res.stdout)($by)"
+}
+
 def --env packRustupUpdate [] {
   let rustup = (packRustupPath)
   if $rustup != null {

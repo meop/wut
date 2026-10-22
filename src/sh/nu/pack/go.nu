@@ -34,12 +34,40 @@ def packGoOlder [built: string, toolchain: string] {
   $release > 0 and $release < (packGoRelease $toolchain)
 }
 
-# gotm manages go's toolchains the way rustup manages rust's, and is its own tool rather than a package. where it is
-# on PATH, the toolchains it was asked to keep move before the tools rebuild against them. a go another manager
-# delivered has no gotm behind it, and is that manager's to update
+# the go gotm puts down: a shim in gotm's own bin dir
+def packGotmGo [] {
+  let ext = if $nu.os-info.name == 'windows' { '.exe' } else { '' }
+  [($env.HOME? | default $nu.home-dir) .gotm bin $"go($ext)"] | path join
+}
+
+# whether the go on PATH is gotm's. by the directory PATH found it in, not by what it links to: gotm's go is a shim
+def packGoOwned [] {
+  let go = (which go | get -o 0.path)
+  $go != null and ($go | path dirname) == (packGotmGo | path dirname)
+}
+
+# go and gofmt are one install. a go is a row wherever PATH has it — gotm's, a distro's — and runs with its own dir
+# first, so the gofmt and the toolchain it builds with are its own
+def --env packGoHeld [] {
+  let go = (which go | get -o 0.path)
+  let gofmt = (which gofmt | get -o 0.path)
+  if $gofmt != null and ($gofmt | path dirname) != ($go | path dirname) {
+    return (packHeld '' "gofmt is another install's" [$"go ($go)" $"gofmt ($gofmt)"])
+  }
+  let res = (packAsk [go env GOVERSION] --home)
+  if $res.exit_code != 0 {
+    return (packHeld '' 'go does not run' [$"go ($go)"])
+  }
+  let by = if (packGoOwned) { ' (gotm)' } else { '' }
+  packHeld $"go (packVersionOf $res.stdout)($by)"
+}
+
+# gotm manages go's toolchains the way rustup manages rust's, and is its own tool rather than a package. where the go
+# on PATH is gotm's, the toolchains it was asked to keep move before the tools rebuild against them. a go another
+# manager delivered has no gotm behind it, and is that manager's to update, even with a gotm on PATH beside it
 def --env packGotmUpdate [] {
   let gotm = (which gotm | get -o 0.path)
-  if $gotm != null {
+  if $gotm != null and (packGoOwned) {
     packSelfUpdate 'gotm' $gotm [sync --yes]
   }
 }

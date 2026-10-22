@@ -7,15 +7,18 @@
 # else $XDG_CACHE_HOME/.bun, else ~/.bun, plus install/global. bun creates it on the first global add and errors
 # until then — `bun pm bin -g` included, so it cannot even be asked where it is — and it keeps whatever manifest
 # it finds there, writing only its own `dependencies` into it. so wut seeds the empty one bun would have written
-def packBunProject [] {
-  let root = if 'BUN_INSTALL' in $env {
+def packBunRoot [] {
+  if 'BUN_INSTALL' in $env {
     $env.BUN_INSTALL
   } else if 'XDG_CACHE_HOME' in $env {
     [$env.XDG_CACHE_HOME '.bun'] | path join
   } else {
     [($env.HOME? | default $nu.home-dir) '.bun'] | path join
   }
-  let dir = ([$root install global] | path join)
+}
+
+def packBunProject [] {
+  let dir = ([(packBunRoot) install global] | path join)
   let manifest = ([$dir 'package.json'] | path join)
   if not ($manifest | path exists) {
     mkdir $dir
@@ -89,4 +92,46 @@ def --env packBun [] {
       packBunRun [$cmd pm cache rm]
     }
   }
+}
+
+# bun runs no package itself: a global add links the package's own command into bun's bin dir, and a command that
+# starts `#!/usr/bin/env node` runs on whichever node PATH finds — --bun reaches only a script bun launches. a bun
+# holding one runs it on another install's node. read from the links, so a bun with no global project yet has
+# nothing to say; windows has no links, and no shebangs, so there is nothing to read there either
+def --env packBunHeld [] {
+  let bin = ([(packBunRoot) bin] | path join)
+  if not ($bin | path exists) {
+    return (packHeld)
+  }
+  let onNode = (ls -l $bin | where type == symlink | each { |l|
+    let target = ($l.name | path expand)
+    # a command that is not text has no shebang to read
+    let line = (try {
+      open --raw $target | bytes at 0..200 | decode utf-8 | lines | get -o 0 | default ''
+    } catch { |e| opRethrowInterrupt $e; '' })
+    if ($line =~ '^#!.*\bnode\b') {
+      let parts = ($target | path split)
+      let at = ($parts | enumerate | where item == 'node_modules' | last | get index)
+      let rest = ($parts | skip ($at + 1))
+      if ($rest | first | str starts-with '@') { $rest | first 2 | str join '/' } else { $rest | first }
+    }
+  } | compact | uniq | sort)
+  if ($onNode | is-empty) {
+    return (packBunShadowed $bin)
+  }
+  let names = ($onNode | str join ' ')
+  let what = if ($onNode | length) == 1 { 'a package runs' } else { 'packages run' }
+  packHeld '' $"($what) on node, not bun" [$names $"bun remove --global ($names)" $"pnpm add --global ($names)"]
+}
+
+# the rest start `#!/usr/bin/env bun`, so they run on the bun PATH finds first: a copy further down PATH is updating
+# packages another bun runs
+def --env packBunShadowed [bin: string] {
+  let bun = (which bun | get -o 0.path)
+  let shellBun = (packShellWhich bun)
+  let held = (ls -l $bin | where type == symlink | is-not-empty)
+  if $held and $shellBun != $bun {
+    return (packHeld '' 'its packages run on another bun' [$"bun ($bun)" $"PATH's bun ($shellBun)"])
+  }
+  packHeld
 }

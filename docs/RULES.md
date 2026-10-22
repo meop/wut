@@ -150,7 +150,8 @@ Nothing overrides that: which of the winners actually run is the numbered prompt
 That order is stated once, in `MANAGERS`, and every group yaml is written to match it:
 
 ```
-ghpm  cargo  deno  bun  pnpm  uv  go      user space, no sudo
+ghpm  pnpm  deno  bun  npm  uv  rv         user space, no sudo: release binaries, js, scripting
+dotnet  go  cargo                          user space, no sudo: the compiled stacks, nearest the system last
 script                                     what a group runs instead of a package
 brew  paru  yay  pacman                    darwin, then arch
 apk  apt  dnf  xbps  zypper                one distro each
@@ -160,7 +161,7 @@ winget  choco  scoop                       windows
 Four axes decide it, applied in that order:
 
 - **user, then script, then system** — an install that needs no sudo is preferred to one that does, which is what puts
-  the portable six ahead of every native manager. What a native installer buys is integration with the platform's own
+  the portable managers ahead of every native one. What a native installer buys is integration with the platform's own
   UI, and a cli tool has none to collect: on darwin native means the app store, and on a non-rolling linux it means
   trailing upstream on patches. A gui app would weigh windows the other way — an entry in Add/Remove Programs and the
   Start menu is worth reaching for — but that is not what these groups hold

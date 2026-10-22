@@ -31,15 +31,26 @@ export class PackCmd extends CmdBase implements Cmd {
 
 // every manager wut knows, in the order to prefer them. which of these a machine actually has is a question only
 // the client can answer, so there is no platform or distro map here to go stale
+// after ghpm, a project's own release binary, the user managers run from the furthest from the system to the closest:
+// the js runtimes, then python, then the compiled ones, with cargo last since a rust tool is the nearest kin of what a
+// system installer ships. a dotnet would sit between python and go
 const PORTABLE_MANAGERS: Array<string> = [
   'ghpm',
-  'cargo',
+  // ahead of deno and bun: it holds node for the packages it installs, and can hold bun and deno as well, where a
+  // package bun installs runs on whatever node PATH finds
+  'pnpm',
   'deno',
   'bun',
-  'pnpm',
+  // node's own, with the node it came with: after the managers that hold their runtime, since it moves none
+  'npm',
   'uv',
-  // last: a go tool builds from source, so a manager with it prebuilt is preferred
+  // ruby's uv: its tools run through rvx, on rv's own ruby
+  'rv',
+  // its tools find their runtime through DOTNET_ROOT rather than PATH: see dotnet.nu
+  'dotnet',
   'go',
+  // binstall fetching a tool prebuilt is only a shortcut: what it installs is still native code
+  'cargo',
 ]
 
 const NATIVE_MANAGERS: Array<string> = [

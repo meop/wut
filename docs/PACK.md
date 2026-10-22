@@ -125,9 +125,10 @@ names where none does (`uv tool list`, `cargo install --list`, `ghpm list --long
 looks: these listings hang detail off their entries — uv restates each tool as `- name` beneath it, cargo indents the
 binaries a crate installs — and reading that detail as an entry is how a check starts agreeing with everything. deno and
 go have no listing command at all. deno keeps a shim per install in its bin dir, and go keeps the one binary it built,
-which names the package and module it came from (`go version -m`) — so both answer by reading their bin dir. go is last
-among the user managers: it builds every tool from source, so another manager holding the same tool prebuilt is the
-better pick. `src/sh/nu/pack_test.ts` pins those formats against stub managers.
+which names the package and module it came from (`go version -m`) — so both answer by reading their bin dir. The user
+managers run from the furthest from the system to the closest — js, then python, then go, then cargo, whose rust tools
+are the nearest kin of what a system installer ships — and all of them ahead of the system installers, whose tools are
+older. `src/sh/nu/pack_test.ts` pins those formats against stub managers.
 
 ## One decision
 
@@ -394,11 +395,11 @@ does not exit non-zero for it.
 
 ## Toolchain managers
 
-Four managers manage toolchains as well as packages: rustup (cargo and rustc), uv (pythons), pnpm (the node, bun and
-deno runtimes) and gotm (go). A bare sync moves the toolchains before the packages, so the packages update against
-current ones, each the way its manager moves them — rustup along its channels, uv within each installed minor, pnpm to
-the latest release, gotm to the newest release each pin allows. A named sync is about the packages it names and leaves
-the toolchains alone.
+Six manage toolchains as well as packages: rustup (cargo and rustc), uv (pythons), rv (rubies), dotnetup (.NET SDKs),
+pnpm (the node, bun and deno runtimes) and gotm (go). A bare sync moves the toolchains before the packages, so the
+packages update against current ones, each the way its manager moves them — rustup along its channels, uv within each
+installed minor, pnpm to the latest release, gotm to the newest release each pin allows. A named sync is about the
+packages it names and leaves the toolchains alone.
 
 - **rustup** is not a package manager at all: the `cargo` on PATH is usually its proxy, a link to the rustup beside it
   (a hard link on windows) dispatching to the real cargo inside the active toolchain. That makes cargo the one manager
@@ -409,17 +410,92 @@ the toolchains alone.
   cargo tidy uninstalls the ones pinned to a version — the ones a project's `rust-toolchain.toml` asked for, which
   rustup installs again when that project next builds (1.28.1+). The channels stay, and so does any toolchain rustup
   marks as default or active.
-- **uv** is its own top layer — it installs pythons and tools and updates itself — so a bare uv sync runs
-  `uv python
-  upgrade`, which moves each installed python to the newest patch of its minor, before
-  `uv tool upgrade --all`.
+- **uv** is its own top layer — it installs pythons and tools and updates itself — and a bare uv sync moves both to the
+  latest, the way rustup's `stable` and rv's `latest` do. `uv python upgrade` moves each installed python to the newest
+  patch of its minor, and a bare `uv python install` is done once any python is in, so the newest stable minor comes in
+  through `uv python install --upgrade --default`, which moves the `python` and `python3` links onto it. The tools then
+  move with `uv tool upgrade --all --managed-python --python <minor>`: a tool's venv is made on one python and stays on
+  it through a plain upgrade. uv does not hold a tool back by its own `requires-python` when it is given a python, so a
+  tool that has not caught up with a new minor moves anyway. The upgrade puts the new patch beside the old and keeps
+  both, so the older patch of each minor is then uninstalled, as every other manager lets a release go once a newer one
+  is in place — unless a tool's venv was made on it. A pre-release is never pruned, and an older minor stays. A tidy
+  prunes the same way, for an upgrade made outside wut. A machine with no python of uv's is not given one by a sync. A
+  tool is added with `--managed-python`, so it never lands on a distro's python.
 - **pnpm** records a runtime as the exact version it installed, so `update` cannot move one: a runtime is set again at
-  `latest` — `pnpm runtime set node latest --global` — before the packages update to theirs.
+  `latest` — `pnpm runtime set node latest --global` — before the packages update to theirs. pnpm runs no package
+  itself: a package's command runs on the node beside it in pnpm's bin dir, and falls back to whatever node PATH finds
+  only when pnpm holds none. So an add to a pnpm that holds no node sets one first.
+- **rv** is ruby's uv: it installs rubies, and gems as tools, each in an environment of its own, run through `rvx` on
+  rv's own ruby. A bare sync installs the latest ruby first. rv keeps every version a tool was installed at, has no
+  upgrade, and its uninstall takes a gem whole, so an update installs the latest beside what is there and, where that
+  leaves more than one version, puts the tool back at the latest alone, from rv's cache.
+- **dotnetup** keeps .NET SDKs side by side under its own root, tracking a channel rather than a version: where the
+  dotnet row is dotnetup's copy, a bare sync runs `dotnetup update` before `dotnet tool update --global --all`. A
+  distro's dotnet is that distro's to move. dotnet has no listing of outdated tools, so it is not offered for
+  `outdated`.
 - **gotm** is to go what rustup is to cargo — its own tool, managing toolchains rather than packages, with no row of its
-  own: a bare go sync looks for `gotm` on PATH and runs `gotm sync --yes` first, best effort like a self update, so each
-  go it was asked to keep moves to the newest release its pin allows before the tools rebuild. A go another manager
-  delivered has no gotm behind it and is left to that manager. gotm keeps every archive it downloaded until its own
-  tidy, as ghpm does, so a go tidy runs `gotm tidy` before it cleans the module cache.
+  own: the go row that is gotm's copy — the one in `~/.gotm/bin` — runs `gotm sync --yes` first on a bare sync, best
+  effort like a self update, so each go it was asked to keep moves to the newest release its pin allows before the tools
+  rebuild. A distro's go is a row of its own with no gotm behind it, and the distro moves it. gotm keeps every archive
+  it downloaded until its own tidy, as ghpm does, so a go tidy runs `gotm tidy` before it cleans the module cache.
+
+### Every copy, one install each
+
+A language manager can be installed more than once — a distro's go beside gotm's, a distro's cargo beside rustup's, a
+distro's pnpm 10 beside a pnpm 12 — and every copy that is valid is a row of its own, kept up to date like any other,
+never just the one PATH finds first. `which --all` finds them: each dir down PATH the manager is in. The copies under
+the home come first, since a local install is newer than the system's, and PATH order decides within each. The plain
+name is the copy PATH finds first, which is what a group's plan and a bare command mean; another copy is `go@/usr/bin`,
+and with more than one copy each row's toolchain column says which it is.
+
+A copy runs with its own dir first on PATH, so everything it reaches for by name — rustc, gofmt, a cargo subcommand, a
+node — is its own install's. Copies that share a package home are safe to run one after another: each manager keeps its
+record of what it installed in that home (cargo's `.crates.toml`, uv's receipts, bun's global `package.json`), or keeps
+none and reads the dir (go's binaries, npm's `node_modules`), so a later copy finds what an earlier one updated and
+leaves it. pnpm keeps one global dir per layout (`global/5` for pnpm 10, `global/v11` for 11 and 12), so two majors are
+two sets of packages, and a remove asks each copy what it holds. A sync and an add reach every copy, since each moves or
+builds with its own toolchain; the ops that only read, and a remove, ask one copy per package home, so two cargos
+sharing `~/.cargo`, or two dotnets sharing `~/.dotnet/tools`, list each package once and remove it once. A copy the OS
+will not start (rustup's symlinked proxies over ssh on Windows) is warned about and holds nothing, rather than ending
+the run.
+
+A manager and the toolchain it builds and runs on come from one install, never two that PATH order happens to pair. Each
+copy is checked once a run, before anything is offered, and the checks are shown as every check is. One that is split is
+said once — the reason on one line, the paths or the fix under it — and is not offered for an add or a sync:
+
+```
+uv skipped: a tool runs on a python uv does not manage
+  hf /usr/bin
+  uv tool install --reinstall --managed-python hf
+```
+
+The ops that only read, and a remove, still reach it: they are how a split is undone. The fix is the user's, since wut
+does not reorder PATH or reinstall to heal it.
+
+| manager | one install means                                                                                              |
+| ------- | -------------------------------------------------------------------------------------------------------------- |
+| bun     | no package starts `#!/usr/bin/env node`, and a copy whose packages start `env bun` is the bun PATH finds first |
+| cargo   | `rustc` (and `rustup`, where there is one) resolve into the directory `cargo` does, and `rustc` runs           |
+| deno    | a copy with installs is the deno PATH finds first: each install is a script that runs `exec deno`              |
+| dotnet  | DOTNET_ROOT names its root (or, unset, it is the system's), and `~/.dotnet/tools` is on PATH                   |
+| go      | `gofmt` is beside `go`                                                                                         |
+| npm     | `node` is beside `npm` and is the node PATH finds first, and its global prefix is in your home, bin on PATH    |
+| pnpm    | a pnpm with packages holds a node for them, and its bin dir is on PATH                                         |
+| rv      | `rvx` is beside `rv`: a tool runs only through it, on rv's own ruby                                            |
+| uv      | every tool's venv was made on a python uv manages                                                              |
+
+A copy further down PATH is not split for that alone. go, cargo, uv and pnpm bind what they install by absolute path — a
+native binary, a venv's own python, the node beside pnpm's commands — so their packages run on the right install
+wherever the copy sits. npm, bun and deno bind through PATH, so for them it is the deciding question.
+
+What the check reads is also what the manager table shows beside each row: the toolchain its sync moves —
+`rust 1.99.1 (rustup)`, `go 1.27.3 (gotm)`, `node 26.12.0`, `python 3.13, 3.14`. A few local version calls, no network.
+deno and bun are their own runtimes, updated by whatever installed them, so their rows name nothing. npm names the node
+it came with, which it does not move: that is the distro's or the tarball's.
+
+The npm pnpm holds is not a manager at all — not split, just not here: its global prefix is inside pnpm's own node
+runtime package, so an install there would land in pnpm's tree and be gone when pnpm next moved node. pnpm 12 marks
+every command it puts down with a `.pnpm-shim-v1-<name>-target` file beside it, and that is the whole check.
 
 go's tools are what a toolchain move leaves behind. `go install` is go's only update and always builds — free while go's
 caches hold the last build, a full compile once they are cleared — so a go sync installs only the tools that need it, as

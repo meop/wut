@@ -30,11 +30,20 @@ async function withStubs(
   const dir = await Deno.makeTempDir()
   const home = await Deno.makeTempDir()
   try {
+    // a stub named ~/<path> is put under the test's home instead, its dir ahead of the others on PATH: where an
+    // installer of its own would put it, like gotm's go
+    const path: Array<string> = []
     for (const [name, body] of Object.entries(stubs)) {
-      const path = `${dir}/${name}`
-      await Deno.writeTextFile(path, `#!/bin/sh\n${body}\n`)
-      await Deno.chmod(path, 0o755)
+      const at = name.startsWith('~/') ? `${home}/${name.slice(2)}` : `${dir}/${name}`
+      const atDir = at.slice(0, at.lastIndexOf('/'))
+      if (atDir !== dir && !path.includes(atDir)) {
+        await Deno.mkdir(atDir, { recursive: true })
+        path.push(atDir)
+      }
+      await Deno.writeTextFile(at, `#!/bin/sh\n${body}\n`)
+      await Deno.chmod(at, 0o755)
     }
+    path.push(dir)
     const body = [
       // the same op helpers the client is sent, so the checks print and run exactly as they do in a real script
       await getScriptFlavorOpPreamble('nu'),
@@ -55,7 +64,7 @@ async function withStubs(
       // plain rather than coloured, so an assertion can match the command a check printed
       `$env.GRAYSCALE = '1'`,
       `$env.HOME = '${home}'`,
-      `$env.PATH = ['${dir}']`,
+      `$env.PATH = ${JSON.stringify(path).replaceAll('"', "'")}`,
       `$env.PACK_MANAGERS = ${JSON.stringify(managers).replaceAll('"', "'")}`,
       probe,
     ].join('\n')
@@ -65,6 +74,9 @@ async function withStubs(
     await Deno.remove(home, { recursive: true })
   }
 }
+
+// a rustc beside cargo, as every cargo has: one from another install is a split, and the cargo is not offered
+const RUSTC = `printf 'rustc 1.99.1 (58cf8f9c3 2026-10-13)\\n'`
 
 // what each manager really prints, trimmed to the shapes that have to parse correctly
 const LISTINGS: Record<string, string> = {
@@ -420,7 +432,7 @@ esac`
 esac`
   const run = (names: Array<string>, pick: string | null) =>
     withStubs(
-      { ghpm, cargo },
+      { ghpm, cargo, rustc: RUSTC },
       [
         `$env.PACK_OP = 'add'`,
         ...(pick == null ? [`$env.YES = '1'`] : []),
@@ -1163,7 +1175,7 @@ esac`
       ['go'],
       ['go'],
     )
-  const managed = await run({ go, gotm: '' }, [])
+  const managed = await run({ '~/.gotm/bin/go': go, gotm: '' }, [])
   if (managed == null) {
     return
   }
@@ -1174,7 +1186,9 @@ esac`
   assertEquals(tools > -1, true)
   assertEquals(gotm < tools, true)
   assertEquals((await run({ go }, []))!.includes('gotm sync'), false)
-  assertEquals((await run({ go, gotm: '' }, ['gopls']))!.includes('gotm sync'), false)
+  // a gotm on PATH is not behind a go it did not put down
+  assertEquals((await run({ go, gotm: '' }, []))!.includes('gotm sync'), false)
+  assertEquals((await run({ '~/.gotm/bin/go': go, gotm: '' }, ['gopls']))!.includes('gotm sync'), false)
 })
 
 // gotm keeps its downloaded archives until its own tidy runs, so a go tidy asks it first, only where gotm is
@@ -1359,7 +1373,6 @@ async function runStaged(gypPaths: Array<string>, putsPnpm: boolean, op = 'add',
   return await withStubs(
     { ghpm: '', ...stubs },
     [
-      `hide-env SUCCINCT`,
       `$env.SYS_OS_PLAT = 'linux'`,
       `$env.PATH = ($env.PATH | append ['/usr/bin' '/bin'])`,
       `'path=($HOME/.pnpm $path)' | save ($env.HOME | path join .zshenv)`,
@@ -1382,6 +1395,8 @@ async function runStaged(gypPaths: Array<string>, putsPnpm: boolean, op = 'add',
       'packPlanRun',
     ].join('\n'),
     ['ghpm', 'pnpm'],
+    // a pnpm here is asked what it runs on, as every client is sent each manager's file
+    ['pnpm'],
   )
 }
 const ranOf = (out: string) => out.split('\n').filter((l) => l.startsWith('ran ')).map((l) => l.slice(4))
@@ -1415,11 +1430,596 @@ Deno.test('nu / pack / a group whose manager never turns up falls to the next on
 Deno.test('nu / pack / remove takes a tool out before the group that put its manager down', async () => {
   const out = await runStaged(['pnpm'], false, 'remove', {
     ghpm: `case "$*" in\n  "list --long-names") printf 'pnpm\\n' ;;\n  *) exit 0 ;;\nesac`,
-    pnpm: `case "$*" in\n  "list --global --parseable") printf '/g/node_modules/node-gyp\\n' ;;\n  *) exit 0 ;;\nesac`,
+    pnpm:
+      `case "$*" in\n  "list --global --parseable") printf '/g/node_modules/node\\n/g/node_modules/node-gyp\\n' ;;\n  "bin --global") printf '%s\\n' "\${0%/*}" ;;\n  *) exit 0 ;;\nesac`,
+    node: `printf 'v26.12.0\\n'`,
   })
   if (out == null) {
     return
   }
   // the fixture's post script is add's; the server never sends it with a remove, so only the units matter here
   assertEquals(ranOf(out).filter((r) => r.includes('|')), ['lang/node/node-gyp|pnpm', 'lang/node|ghpm'])
+})
+
+// a manager and what it runs on come from one install. what each runs on is its row's toolchain, and one that is split
+// across two installs is said once and not offered
+const held = async (
+  stubs: Record<string, string>,
+  managers: Array<string>,
+  setup: Array<string> = [],
+  op = 'sync',
+) => {
+  const out = await withStubs(
+    stubs,
+    [...setup, `$env.PACK_OP = '${op}'`, 'packManagerCheck', `print ($env.PACK_HELD? | default {} | to json --raw)`]
+      .join('\n'),
+    managers,
+    managers,
+  )
+  if (out == null) {
+    return null
+  }
+  const lines = out.split('\n')
+  // what was said before the answer: the checks it ran, then each split and the lines under it
+  return { said: lines.slice(0, -1), held: JSON.parse(lines.at(-1)!) }
+}
+const fine = (note: string) => ({ note, split: '', detail: [] })
+
+const GO = `case "$*" in
+  "env GOVERSION") printf 'go1.27.0\\n' ;;
+  *) exit 0 ;;
+esac`
+
+Deno.test('nu / pack / the manager table names what each manager runs on', async () => {
+  const out = await withStubs(
+    { cargo: LISTINGS.cargo, rustc: RUSTC, rustup: '', '~/.gotm/bin/go': GO },
+    [`$env.PACK_OP = 'sync'`, 'packManagerPlanRun'].join('\n'),
+    ['cargo', 'go'],
+    ['cargo', 'go'],
+    false,
+    'null',
+  )
+  if (out == null) {
+    return
+  }
+  const rows = stripVTControlCharacters(out).split('\n')
+  assertEquals(rows.some((l) => /^manager\s+toolchain$/.test(l)), true)
+  assertEquals(rows.some((l) => /^1\) cargo\s+rust 1\.99\.1 \(rustup\)$/.test(l)), true)
+  assertEquals(rows.some((l) => /^2\) go\s+go 1\.27\.0 \(gotm\)$/.test(l)), true)
+})
+
+Deno.test('nu / pack / cargo is split from a rustc or rustup another install put on PATH', async () => {
+  const one = await held({ cargo: '', rustc: RUSTC }, ['cargo'])
+  if (one == null) {
+    return
+  }
+  assertEquals(one.held.cargo, fine('rust 1.99.1'))
+  // the check is shown, as every check is
+  assertEquals(one.said, ['rustc --version'])
+
+  const apart = (await held({ '~/other/rustc': RUSTC, cargo: '', rustc: RUSTC }, ['cargo']))!
+  assertEquals(apart.held.cargo.split, "rustc is another install's")
+  // the reason is one short line, and what to look at is under it
+  assertEquals(apart.said[0], "cargo skipped: rustc is another install's")
+  assertEquals(/^ {2}cargo \/.+\/cargo$/.test(apart.said[1]), true)
+  assertEquals(/^ {2}rustc \/.+\/other\/rustc$/.test(apart.said[2]), true)
+
+  // rustup's rustc proxy fails when there is no toolchain for it to run
+  const empty = (await held({ cargo: '', rustc: 'exit 1', rustup: '' }, ['cargo']))!
+  assertEquals(empty.held.cargo.split, 'rustup has no default toolchain')
+  assertEquals(empty.held.cargo.detail, ['rustup default stable'])
+
+  // only an install or a sync builds on it: the read ops, and a remove that undoes a split, still reach it
+  assertEquals((await held({ '~/other/rustc': RUSTC, cargo: '', rustc: RUSTC }, ['cargo'], [], 'remove'))!.held, {})
+})
+
+Deno.test('nu / pack / a split manager is not offered', async () => {
+  const out = await withStubs(
+    { '~/other/rustc': RUSTC, cargo: LISTINGS.cargo, rustc: RUSTC, ghpm: '' },
+    [`$env.PACK_OP = 'sync'`, 'packManagerPlanRun'].join('\n'),
+    ['ghpm', 'cargo'],
+    ['cargo'],
+    false,
+    'null',
+  )
+  if (out == null) {
+    return
+  }
+  const rows = stripVTControlCharacters(out).split('\n')
+  assertEquals(rows.filter((l) => l.includes('skipped:')).length, 1)
+  assertEquals(rows.some((l) => /^1\) ghpm/.test(l)), true)
+  assertEquals(rows.some((l) => /^\d\) cargo/.test(l)), false)
+})
+
+Deno.test('nu / pack / every go here is a row, the local one first, each asked inside its own copy', async () => {
+  const owned = await held({ '~/.gotm/bin/go': GO }, ['go'])
+  if (owned == null) {
+    return
+  }
+  assertEquals(owned.held.go, fine('go 1.27.0 (gotm)'))
+  assertEquals(owned.said, ['go env GOVERSION'])
+  assertEquals((await held({ go: GO }, ['go']))!.held.go, fine('go 1.27.0'))
+
+  // a distro's go ahead of gotm's on PATH: neither hijacks the other. both are rows, gotm's first since it is under
+  // the home, and each answers with its own toolchain because each is asked with its own dir first on PATH
+  const both = (await held({ go: GO.replace('go1.27.0', 'go1.26.0'), '~/.gotm/bin/go': GO }, ['go'], [
+    `$env.PATH = ($env.PATH | reverse)`,
+  ]))!
+  const ids = Object.keys(both.held)
+  assertEquals(ids.length, 2)
+  assertEquals(/^go@.+\/\.gotm\/bin$/.test(ids[0]), true)
+  assertEquals(ids[1], 'go')
+  assertEquals(both.held[ids[0]], fine('go 1.27.0 (gotm)'))
+  assertEquals(/^go 1\.26\.0 \(\/.+\)$/.test(both.held.go.note), true)
+  const gofmt = (await held({ '~/sys/bin/gofmt': '', go: GO }, ['go']))!
+  assertEquals(gofmt.held.go.split, "gofmt is another install's")
+})
+
+// pnpm's bin dir holds its runtimes beside its packages' commands, which run on the node there before any on PATH
+const PNPM = (listed: Array<string>) =>
+  `case "$*" in
+  "list --global --parseable") printf '${listed.map((n) => `/g/node_modules/${n}\\n`).join('')}' ;;
+  "bin --global") printf '%s\\n' "\${0%/*}" ;;
+  *) exit 0 ;;
+esac`
+const NODE = `printf 'v26.12.0\\n'`
+
+Deno.test('nu / pack / pnpm is split when its packages would run on a node it does not hold', async () => {
+  const own = await held({ pnpm: PNPM(['node', 'npm']), node: NODE }, ['pnpm'])
+  if (own == null) {
+    return
+  }
+  assertEquals(own.held.pnpm, fine('node 26.12.0'))
+  assertEquals(own.said, ['pnpm bin --global', 'pnpm list --global --parseable', 'node --version'])
+  // nothing held, nothing to run: a pnpm with no packages is not split
+  assertEquals((await held({ pnpm: PNPM([]) }, ['pnpm']))!.held.pnpm, fine(''))
+
+  const none = (await held({ pnpm: PNPM(['npm']), node: NODE }, ['pnpm']))!
+  assertEquals(none.held.pnpm.split, 'pnpm holds no node for its packages')
+  assertEquals(none.held.pnpm.detail, ['pnpm runtime set node latest --global'])
+  // its packages run on the node beside them, so another node ahead on PATH takes nothing from it
+  const shadowed =
+    (await held({ '~/sys/bin/node': `printf 'v20.0.0\\n'`, pnpm: PNPM(['node']), node: NODE }, ['pnpm']))!
+  assertEquals(shadowed.held.pnpm, fine('node 26.12.0'))
+})
+
+Deno.test('nu / pack / pnpm puts its own node down before its first package', async () => {
+  const run = (listed: Array<string>, names: Array<string>) =>
+    withStubs(
+      { pnpm: PNPM(listed) },
+      [
+        `$env.PACK_OP = 'add'`,
+        `$env.NOOP = '1'`,
+        `$env.PACK_MANAGER = 'pnpm'`,
+        `$env.PACK_ADD_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
+        'packPnpm',
+      ].join('\n'),
+      ['pnpm'],
+      ['pnpm'],
+    )
+  const bare = await run([], ['npm'])
+  if (bare == null) {
+    return
+  }
+  const lines = bare.split('\n')
+  const node = lines.findIndex((l) => l.includes('pnpm runtime set node latest --global'))
+  const pkg = lines.findIndex((l) => l.includes('pnpm add --global npm'))
+  assertEquals(node > -1 && pkg > -1 && node < pkg, true)
+  assertEquals((await run(['node'], ['npm']))!.includes('runtime set node'), false)
+  assertEquals((await run([], ['node']))!.includes('runtime set node'), false)
+})
+
+// uv's own pythons, as `uv python list --only-installed --managed-python --output-format json` names them: each once
+// per link to it
+const UV_PYTHON = (version: string) => {
+  const [major, minor, patch] = version.split('.').map((n) => parseInt(n))
+  const key = `cpython-${version}-linux-x86_64-gnu`
+  return {
+    key,
+    version,
+    version_parts: { major, minor, patch },
+    os: 'linux',
+    arch: 'x86_64',
+    libc: 'gnu',
+    variant: 'default',
+    implementation: 'cpython',
+  }
+}
+// downloads are what uv could install beside what is in: the newest patch of each minor, a pre-release among them
+const UV = (pythons: Array<string>, downloads: Array<string> = []) =>
+  `case "$*" in
+  "tool dir") printf '%s\\n' "$HOME/tools" ;;
+  "python dir") printf '%s\\n' "$HOME/py" ;;
+  "python list --only-installed --managed-python --output-format json") printf '%s' '${
+    JSON.stringify([...pythons, ...pythons].map(UV_PYTHON))
+  }' ;;
+  "python list --output-format json") printf '%s' '${
+    JSON.stringify([
+      ...downloads.map(UV_PYTHON),
+      ...downloads.map((v) => ({ ...UV_PYTHON(v), variant: 'freethreaded' })),
+      ...pythons.map(UV_PYTHON),
+    ])
+  }' ;;
+  *) exit 0 ;;
+esac`
+// a tool's venv, made on the python at home
+const UV_TOOL = (name: string, home: string) => [
+  `mkdir ($env.HOME | path join tools ${name})`,
+  `$"home = (${home})\\n" | save ($env.HOME | path join tools ${name} pyvenv.cfg)`,
+]
+
+Deno.test('nu / pack / uv is split when a tool runs on a python uv does not manage', async () => {
+  const setup = [
+    `mkdir ($env.HOME | path join py cpython-3.14-linux-x86_64-gnu bin)`,
+    ...UV_TOOL('ruff', `$env.HOME | path join py cpython-3.14-linux-x86_64-gnu bin`),
+  ]
+  const own = await held({ uv: UV(['3.14.8', '3.13.2']) }, ['uv'], setup)
+  if (own == null) {
+    return
+  }
+  assertEquals(own.held.uv, fine('python 3.13, 3.14'))
+
+  const off = (await held({ uv: UV(['3.14.8']) }, ['uv'], [...setup, ...UV_TOOL('hf', `'/usr/bin'`)]))!
+  assertEquals(off.held.uv.split, 'a tool runs on a python uv does not manage')
+  assertEquals(off.held.uv.detail, ['hf /usr/bin', 'uv tool install --reinstall --managed-python hf'])
+})
+
+Deno.test('nu / pack / uv lets an old patch go once a newer one is in, unless a tool runs on it', async () => {
+  const run = (op: string, names: Array<string>) =>
+    withStubs(
+      { uv: UV(['3.14.5', '3.14.8', '3.13.0', '3.13.2', '3.12.9'], ['3.16.0a1', '3.15.0', '3.14.8']) },
+      [
+        `mkdir ($env.HOME | path join py cpython-3.13.0-linux-x86_64-gnu bin)`,
+        ...UV_TOOL('old', `$env.HOME | path join py cpython-3.13.0-linux-x86_64-gnu bin`),
+        `$env.PACK_OP = '${op}'`,
+        `$env.NOOP = '1'`,
+        `$env.PACK_MANAGER = 'uv'`,
+        `$env.PACK_${op.toUpperCase()}_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
+        'packUv',
+      ].join('\n'),
+      ['uv'],
+      ['uv'],
+    )
+  const uninstalls = (out: string) =>
+    out.split('\n').filter((l) => l.includes('uv python uninstall')).map((l) => l.trim().split(' ').at(-2))
+  const synced = await run('sync', [])
+  if (synced == null) {
+    return
+  }
+  const lines = synced.split('\n')
+  assertEquals(uninstalls(synced), ['cpython-3.14.5-linux-x86_64-gnu'])
+  assertEquals(
+    lines.findIndex((l) => l.includes('uv python upgrade')) < lines.findIndex((l) => l.includes('uninstall')),
+    true,
+  )
+  // the newest stable minor comes in too, not the pre-release, and the tools move onto it, never onto a distro's
+  const at = (text: string) => lines.findIndex((l) => l.includes(text))
+  assertEquals(at('uv python upgrade') < at('uv python install --upgrade --default'), true)
+  assertEquals(
+    at('uv python install --upgrade --default') < at('uv tool upgrade --all --managed-python --python 3.15'),
+    true,
+  )
+  assertEquals(at('uv tool upgrade --all --managed-python --python 3.15') < at('uv python uninstall'), true)
+  assertEquals(uninstalls((await run('sync', ['ruff']))!), [])
+  assertEquals(uninstalls((await run('tidy', []))!), ['cpython-3.14.5-linux-x86_64-gnu'])
+  assertEquals((await run('add', ['ruff']))!.includes('uv tool install --managed-python ruff'), true)
+})
+
+// bun links a package's own command into its bin dir, and one that starts `#!/usr/bin/env node` runs on whichever
+// node PATH finds, not on bun
+Deno.test('nu / pack / bun is split when a package it holds runs on node', async () => {
+  const link = (pkg: string, bin: string, shebang: string) => [
+    `mkdir ($env.HOME | path join .bun install global node_modules ${pkg} bin)`,
+    `'${shebang}\nconsole.log(1)\n' | save ($env.HOME | path join .bun install global node_modules ${pkg} bin ${bin}.js)`,
+    `mkdir ($env.HOME | path join .bun bin)`,
+    `^ln -s ($env.HOME | path join .bun install global node_modules ${pkg} bin ${bin}.js) ($env.HOME | path join .bun bin ${bin})`,
+  ]
+  const ln = new Deno.Command('sh', { args: ['-c', 'command -v ln'], stdout: 'piped' }).outputSync()
+  if (!ln.success) {
+    return
+  }
+  // bun's root is the test home's ~/.bun, never one the machine running the tests points it at
+  const path = [`$env.PATH = ($env.PATH | append ['/usr/bin' '/bin'])`, 'hide-env -i BUN_INSTALL XDG_CACHE_HOME']
+  const fineBun = await held({ bun: '' }, ['bun'], [...path, ...link('tsx-like', 'own', '#!/usr/bin/env bun')])
+  if (fineBun == null) {
+    return
+  }
+  assertEquals(fineBun.held.bun, fine(''))
+  // nothing installed globally yet: no bin dir to read, and nothing to say
+  assertEquals((await held({ bun: '' }, ['bun']))!.held.bun, fine(''))
+
+  const onNode = (await held({ bun: '' }, ['bun'], [
+    ...path,
+    ...link('semver', 'semver', '#!/usr/bin/env node'),
+    ...link('@scope/tool', 'tool', '#!/usr/bin/env node'),
+  ]))!
+  assertEquals(onNode.held.bun.split, 'packages run on node, not bun')
+  assertEquals(onNode.held.bun.detail, [
+    '@scope/tool semver',
+    'bun remove --global @scope/tool semver',
+    'pnpm add --global @scope/tool semver',
+  ])
+})
+
+// npm comes with the node it runs on, a distro's or the tarball's, and installs into a prefix in the user's home
+const NPM = (prefix: string) =>
+  `case "$*" in
+  "prefix --global") printf '%s\\n' "${prefix}" ;;
+  "ls --global --depth 0 --parseable") printf '%s\\n' "${prefix}/lib" "${prefix}/lib/node_modules/semver" "${prefix}/lib/node_modules/@scope/tool" ;;
+  *) exit 0 ;;
+esac`
+const NODE_24 = `printf 'v24.11.0\\n'`
+const npmBin = [`$env.PATH = ($env.PATH | append ($env.HOME | path join .local bin))`]
+
+Deno.test('nu / pack / npm is one install with its node, and installs into a prefix in your home', async () => {
+  const own = await held({ npm: NPM('$HOME/.local'), node: NODE_24 }, ['npm'], npmBin)
+  if (own == null) {
+    return
+  }
+  assertEquals(own.held.npm, fine('node 24.11.0'))
+  assertEquals(own.said, ['npm prefix --global', 'node --version'])
+
+  const system = (await held({ npm: NPM('/usr'), node: NODE_24 }, ['npm'], npmBin))!
+  assertEquals(system.held.npm.split, "npm's global prefix is outside your home")
+  assertEquals(system.held.npm.detail, ['/usr', 'npm config set prefix ~/.local'])
+
+  // its packages start `env node`, so another node ahead on PATH is the one they would run on
+  const apart = (await held({ '~/other/node': NODE_24, npm: NPM('$HOME/.local'), node: NODE_24 }, ['npm'], npmBin))!
+  assertEquals(apart.held.npm.split, 'its packages run on another node')
+  const alone = (await held({ '~/other/node': NODE_24, npm: NPM('$HOME/.local') }, ['npm'], npmBin))!
+  assertEquals(alone.held.npm.split, 'no node beside npm')
+  const offPath = (await held({ npm: NPM('$HOME/.local'), node: NODE_24 }, ['npm']))!
+  assertEquals(offPath.held.npm.split, "npm's bin dir is not on PATH")
+})
+
+// the npm pnpm holds keeps its global prefix inside pnpm's own node: it is a pnpm package, never a manager of its own
+Deno.test("nu / pack / pnpm's npm is not a manager", async () => {
+  const marked = `touch ($env.PATH | last | path join .pnpm-shim-v1-npm-target)`
+  const here = (setup: Array<string>) =>
+    withStubs(
+      { npm: NPM('$HOME/.local'), pnpm: PNPM(['node', 'npm']) },
+      [
+        ...setup,
+        'print (packManagersHere | str join " ")',
+      ].join('\n'),
+      ['pnpm', 'npm'],
+      ['npm'],
+    )
+  const plain = await here([])
+  if (plain == null) {
+    return
+  }
+  assertEquals(plain, 'pnpm npm')
+  assertEquals(await here([marked]), 'pnpm')
+})
+
+Deno.test('nu / pack / npm reads what it holds from its parseable listing', async () => {
+  const out = await withStubs(
+    { npm: NPM('$HOME/.local') },
+    `print (packNpmInstalled | str join ' ')`,
+    ['npm'],
+    ['npm'],
+  )
+  if (out == null) {
+    return
+  }
+  assertEquals(out.split('\n').at(-1), 'semver @scope/tool')
+})
+
+// every copy of a manager is a row, and a row runs its manager with that copy's dir first on PATH: what it reaches for
+// by name is its own install's, and nothing it runs is another copy's
+Deno.test('nu / pack / each copy runs inside itself, the local copy first', async () => {
+  const out = await withStubs(
+    { go: '', '~/.gotm/bin/go': '' },
+    [
+      `$env.PATH = ($env.PATH | reverse)`,
+      `def --env packGoHeld [] { packHeld $"go \\((which go | get 0.path | path dirname | path basename))" }`,
+      `def --env packGo [] { print $"ran (which go | get 0.path)" }`,
+      `hide-env SUCCINCT`,
+      `$env.PACK_OP = 'sync'`,
+      'packManagerPlanRun',
+    ].join('\n'),
+    ['go'],
+    [],
+    false,
+    [1, 2],
+  )
+  if (out == null) {
+    return
+  }
+  const lines = stripVTControlCharacters(out).split('\n')
+  // two rows, both named go: the toolchain column says which is which
+  assertEquals(lines.filter((l) => /^\d\) go\s/.test(l)).length, 2)
+  const ran = lines.filter((l) => l.startsWith('ran ')).map((l) => l.slice(4))
+  assertEquals(ran.length, 2)
+  assertEquals(ran[0].endsWith('/.gotm/bin/go'), true)
+  assertEquals(ran[1].endsWith('/.gotm/bin/go'), false)
+})
+
+// a pnpm 10 and a pnpm 12 keep separate global dirs, so a remove asks each copy what it holds and only the one that has
+// the name takes it out. the stub under the home is ahead on PATH, so it is the plain name here
+Deno.test('nu / pack / a name is claimed by the copy that holds it', async () => {
+  const claims = async (name: string) => {
+    const out = await withStubs(
+      { pnpm: PNPM(['node', 'twelve']), '~/old/bin/pnpm': PNPM(['ten']), node: NODE },
+      [`$env.PACK_OP = 'remove'`, `print (packClaimsAll (packManagersHere) '${name}' | to json --raw)`].join('\n'),
+      ['pnpm'],
+    )
+    return out == null ? null : JSON.parse(out.split('\n').at(-1)!)
+  }
+  const ten = await claims('ten')
+  if (ten == null) {
+    return
+  }
+  assertEquals(ten, ['pnpm'])
+  const twelve = (await claims('twelve'))!
+  assertEquals(twelve.length, 1)
+  assertEquals(/^pnpm@\//.test(twelve[0]), true)
+})
+
+// every cargo installs into ~/.cargo, so a second copy holds nothing the first does not: a listing or a remove asks
+// one, while sync still reaches both, each moving its own toolchain
+Deno.test('nu / pack / copies that share a package home are asked once, but each is synced', async () => {
+  const here = async (op: string) => {
+    const out = await withStubs(
+      { cargo: '', '~/.cargo/bin/cargo': '' },
+      [`$env.PACK_OP = '${op}'`, `print (packManagersHere | where { |id| (packCopyBase $id) == 'cargo' } | length)`]
+        .join('\n'),
+      ['cargo'],
+    )
+    return out == null ? null : Number(out.split('\n').at(-1))
+  }
+  const remove = await here('remove')
+  if (remove == null) {
+    return
+  }
+  assertEquals(remove, 1)
+  assertEquals(await here('list'), 1)
+  assertEquals(await here('sync'), 2)
+})
+
+// a command the os will not start answers as a failed one with no exit code, so the manager it belongs to is skipped
+// or listed as empty rather than ending the run
+Deno.test('nu / pack / a command that cannot start answers rather than throws', async () => {
+  const out = await withStubs(
+    {},
+    [`print (packComplete ['/no/such/dir/cargo' 'install' '--list'] | to json --raw)`].join('\n'),
+    [],
+  )
+  if (out == null) {
+    return
+  }
+  const res = JSON.parse(out.split('\n').at(-1)!)
+  assertEquals(res.exit_code, null)
+  assertEquals(res.stdout, '')
+  assertEquals(res.stderr.length > 0, true)
+})
+
+// a bun or deno install runs on whichever bun or deno PATH finds first, so a copy further down is updating what
+// another copy runs
+Deno.test('nu / pack / a shadowed bun or deno is split when its packages run on another copy', async () => {
+  const ln = new Deno.Command('sh', { args: ['-c', 'command -v ln'], stdout: 'piped' }).outputSync()
+  if (!ln.success) {
+    return
+  }
+  const bun = await held({ '~/first/bun': '', bun: '' }, ['bun'], [
+    `$env.PATH = ($env.PATH | append ['/usr/bin' '/bin'])`,
+    'hide-env -i BUN_INSTALL XDG_CACHE_HOME',
+    `mkdir ($env.HOME | path join .bun install global node_modules tool bin) ($env.HOME | path join .bun bin)`,
+    `'#!/usr/bin/env bun' | save ($env.HOME | path join .bun install global node_modules tool bin tool.js)`,
+    `^ln -s ($env.HOME | path join .bun install global node_modules tool bin tool.js) ($env.HOME | path join .bun bin tool)`,
+  ])
+  if (bun == null) {
+    return
+  }
+  const bunIds = Object.keys(bun.held)
+  // with two copies, each row says where it is
+  assertEquals(bun.held.bun.split, '')
+  assertEquals(bun.said[0].endsWith(') skipped: its packages run on another bun'), true)
+  assertEquals(bun.held[bunIds.find((i) => i !== 'bun')!].split, 'its packages run on another bun')
+
+  const deno = (await held({ '~/first/deno': '', deno: '' }, ['deno'], [
+    `mkdir ($env.HOME | path join .deno bin .tool)`,
+  ]))!
+  const denoIds = Object.keys(deno.held)
+  assertEquals(deno.held.deno.split, '')
+  assertEquals(deno.held[denoIds.find((i) => i !== 'deno')!].split, 'its installs run on another deno')
+})
+
+// a dotnet tool finds its runtime through DOTNET_ROOT, and with it unset, through the system's dotnet location
+const DOTNET = `case "$*" in
+  "--version") printf '10.0.402\\n' ;;
+  "tool list --global --format json") printf '%s' '{"version":1,"data":[{"packageId":"dotnetsay","version":"3.0.3","commands":["dotnetsay"]}]}' ;;
+  *) exit 0 ;;
+esac`
+const dotnetTools = [
+  `$env.PATH = ($env.PATH | append ($env.HOME | path join .dotnet tools))`,
+  'hide-env -i DOTNET_ROOT',
+]
+
+Deno.test('nu / pack / dotnet is one install with its tools when DOTNET_ROOT names it', async () => {
+  const system = await held({ dotnet: DOTNET }, ['dotnet'], dotnetTools)
+  if (system == null) {
+    return
+  }
+  assertEquals(system.held.dotnet, fine('sdk 10.0.402'))
+  assertEquals(system.said, ['dotnet --version'])
+
+  // a dotnet under the home that DOTNET_ROOT does not name: its tools would run on the system's
+  const local = (await held({ '~/dn/dotnet': DOTNET }, ['dotnet'], dotnetTools))!
+  assertEquals(local.held.dotnet.split, "DOTNET_ROOT is not set, so its tools run on the system's dotnet")
+  assertEquals(/^DOTNET_ROOT=\/.+\/dn$/.test(local.held.dotnet.detail[0]), true)
+  const named = (await held({ '~/dn/dotnet': DOTNET }, ['dotnet'], [
+    ...dotnetTools,
+    `$env.DOTNET_ROOT = ($env.HOME | path join dn)`,
+  ]))!
+  assertEquals(named.held.dotnet, fine('sdk 10.0.402'))
+  const other = (await held({ dotnet: DOTNET }, ['dotnet'], [...dotnetTools, `$env.DOTNET_ROOT = '/opt/dotnet'`]))!
+  assertEquals(other.held.dotnet.split, "DOTNET_ROOT is another install's")
+  // its tools dir off PATH matters once it holds a tool, and not before
+  assertEquals(
+    (await held({ dotnet: DOTNET }, ['dotnet'], ['hide-env -i DOTNET_ROOT']))!.held.dotnet,
+    fine('sdk 10.0.402'),
+  )
+  const offPath = (await held({ dotnet: DOTNET }, ['dotnet'], [
+    'hide-env -i DOTNET_ROOT',
+    `mkdir ($env.HOME | path join .dotnet tools .store dotnetsay)`,
+  ]))!
+  assertEquals(offPath.held.dotnet.split, "dotnet's tools dir is not on PATH")
+
+  const listed = await withStubs({ dotnet: DOTNET }, `print (packDotnetInstalled | str join ' ')`, ['dotnet'], [
+    'dotnet',
+  ])
+  assertEquals(listed!.split('\n').at(-1), 'dotnetsay')
+})
+
+// rv keeps every version of a tool side by side and runs the newest through rvx, so a sync puts each tool back at its
+// latest alone
+const RV = (tools: Array<[string, string]>) =>
+  `case "$*" in
+  "tool list --format json") printf '%s' '${
+    JSON.stringify(tools.map(([gem_name, version]) => ({ gem_name, version })))
+  }' ;;
+  "ruby list --installed-only --format json") printf '%s' '[{"Installed":{"version":"ruby-4.0.7"},"active":true}]' ;;
+  *) exit 0 ;;
+esac`
+
+Deno.test('nu / pack / rv runs its tools through rvx, on its own ruby', async () => {
+  const own = await held({ rv: RV([]), rvx: '' }, ['rv'])
+  if (own == null) {
+    return
+  }
+  assertEquals(own.held.rv, fine('ruby 4.0.7'))
+  assertEquals((await held({ rv: RV([]) }, ['rv']))!.held.rv.split, 'no rvx beside rv, so its tools cannot run')
+})
+
+Deno.test('nu / pack / rv puts a tool back at its latest alone', async () => {
+  const run = (tools: Array<[string, string]>, names: Array<string>) =>
+    withStubs(
+      { rv: RV(tools), rvx: '' },
+      [
+        `$env.PACK_OP = 'sync'`,
+        `$env.PACK_MANAGER = 'rv'`,
+        `$env.PACK_SYNC_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
+        'packRv',
+      ].join('\n'),
+      ['rv'],
+      ['rv'],
+    )
+  const ops = (out: string) =>
+    out.split('\n').filter((l) => /rv (ruby|tool) (install|uninstall)/.test(l)).map((l) => l.trim())
+  const twice = await run([['lolcat', '100.0.1'], ['lolcat', '99.9.21'], ['rerun', '0.14.0']], [])
+  if (twice == null) {
+    return
+  }
+  assertEquals(ops(twice).map((l) => l.replace(/^try \{ | \}$/g, '')), [
+    'rv ruby install latest',
+    'rv tool install lolcat',
+    'rv tool install rerun',
+    'rv tool uninstall lolcat',
+    'rv tool install lolcat',
+  ])
+  // a named sync is about the tool it names, and leaves the rubies alone
+  const named = (await run([['rerun', '0.14.0']], ['rerun']))!
+  assertEquals(ops(named).map((l) => l.replace(/^try \{ | \}$/g, '')), ['rv tool install rerun'])
 })

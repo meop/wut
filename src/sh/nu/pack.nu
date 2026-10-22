@@ -34,10 +34,33 @@ def --env packDoIn [dir: string, cmds: list<string>] {
   cd $prev
 }
 
+# a command run for its answer. one the os will not start at all answers as a failed one, with no exit code, so a
+# manager it belongs to never ends the run: on windows over ssh, rustup's symlinked proxies are refused (os error 448)
+def --env packComplete [cmds: list<string>] {
+  try {
+    run-external ($cmds | first) ...($cmds | skip 1) | complete
+  } catch { |e|
+    opRethrowInterrupt $e
+    # an io error carries the os's reason only in its debug form; a missing command, in its label
+    let why = ($e.debug | parse --regex 'AdditionalContext\("(?<m>[^"]+)"\)' | get -o 0.m
+      | default ($e.details?.labels? | default [] | get -o 0.text) | default $e.msg)
+    { stdout: '', stderr: $why, exit_code: null }
+  }
+}
+
+# a listing that could not start says so, rather than reading as a manager that holds nothing
+def --env packCompleteListing [cmds: list<string>] {
+  let res = (packComplete $cmds)
+  if $res.exit_code == null {
+    opPrintWarn $"($cmds | first) did not start: ($res.stderr)"
+  }
+  $res
+}
+
 def --env packOk [cmds: list<string>] {
   $env.PACK_PRINTED = '1'
   opPrintCmd ...$cmds
-  (run-external ($cmds | first) ...($cmds | skip 1) | complete | get exit_code) == 0
+  (packComplete $cmds | get exit_code) == 0
 }
 
 # bun, pnpm and deno all ask npm about the same name, so the round trip is made once and the answer kept
@@ -122,6 +145,10 @@ def --env packExists [manager: string, raw: string] {
     uv => (packExistsPypi $name),
     # bun and pnpm are npm clients; jsr is deno's own registry, so it answers there first
     pnpm => (packExistsNpm $name),
+    npm => (packExistsNpm $name),
+    # rubygems and nuget answer 404 for a name they have never had
+    rv => (packHttpOk $"https://rubygems.org/api/v1/gems/($name).json"),
+    dotnet => (packHttpOk $"https://api.nuget.org/v3-flatcontainer/($name | str lowercase)/index.json"),
     bun => ((packExistsNpm $name) or (packExistsJsr $name)),
     deno => ((packExistsJsr $name) or (packExistsNpm $name)),
     go => (packExistsGo $name),
@@ -145,7 +172,7 @@ def --env packExists [manager: string, raw: string] {
 # what they name, not by an exit code. a listing is run once per run and remembered: a plan resolving five names
 # against uv asked `uv tool list` five times and printed it five times, for one answer that could not have changed
 def --env packListedNames [cmds: list<string>, keep: closure] {
-  let key = ($cmds | str join ' ')
+  let key = $"($env.PACK_COPY? | default '')|($cmds | str join ' ')"
   let cached = ($env.PACK_LISTED? | default [] | where key == $key | get -o 0.names)
   if $cached != null {
     return $cached
@@ -153,8 +180,7 @@ def --env packListedNames [cmds: list<string>, keep: closure] {
   $env.PACK_PRINTED = '1'
   opPrintCmd ...$cmds
   let names = (
-    run-external ($cmds | first) ...($cmds | skip 1)
-      | complete
+    packCompleteListing $cmds
       | get stdout
       | lines
       | each { |l| do $keep $l }
@@ -223,13 +249,17 @@ def --env packPnpmInstalled [] {
 # go keeps each tool as one binary in its bin dir, and the binary carries the package and module it was built from:
 # `go version -m` reads them back, so the listing is a directory read like deno's. its first line is the toolchain
 # that built the binary
-def --env packGoTools [] {
+def packGoBinDir [] {
   let gobin = (^go env GOBIN | str trim)
-  let dirPath = if ($gobin | is-not-empty) {
+  if ($gobin | is-not-empty) {
     $gobin
   } else {
     [(^go env GOPATH | str trim | split row (char esep) | first) bin] | path join
   }
+}
+
+def --env packGoTools [] {
+  let dirPath = (packGoBinDir)
   $env.PACK_PRINTED = '1'
   opPrintCmd 'ls' $dirPath
   if not ($dirPath | path exists) {
@@ -275,6 +305,15 @@ def --env packInstalledDeno [name: string] {
 }
 
 # a manager's own installed listing, stated once. `list` dumps it and the plan reads it to answer before the gate;
+# npm's own --parseable listing is pnpm's shape: the prefix's node_modules first, then a full path per package
+def --env packNpmInstalled [] {
+  packListedNames [npm ls --global --depth 0 --parseable] { |line|
+    let parts = ($line | path split)
+    let at = ($parts | enumerate | where item == 'node_modules' | get -o 0.index)
+    if $at == null { null } else { $parts | skip ($at + 1) | str join '/' }
+  }
+}
+
 # two statements of it is how `list` and `remove` came to disagree about the same name. deno has no such command —
 # it keeps its global installs as shim directories — so it answers through packDenoInstalled instead
 def packListCmd [manager: string] {
@@ -283,6 +322,9 @@ def packListCmd [manager: string] {
     cargo => [cargo install --list],
     uv => [uv tool list],
     pnpm => [pnpm list --global],
+    npm => [npm ls --global --depth 0],
+    dotnet => [dotnet tool list --global],
+    rv => [rv tool list],
     bun => [bun list --global],
     brew => [brew list],
     apk => [apk list --installed],
@@ -312,6 +354,15 @@ def --env packListedRaw [manager: string] {
   if $manager == 'pnpm' {
     return (packPnpmInstalled)
   }
+  if $manager == 'npm' {
+    return (packNpmInstalled)
+  }
+  if $manager == 'dotnet' {
+    return (packDotnetInstalled)
+  }
+  if $manager == 'rv' {
+    return (packRvInstalled)
+  }
   if $manager == 'go' {
     return (packGoTools | get path)
   }
@@ -321,7 +372,7 @@ def --env packListedRaw [manager: string] {
   }
   $env.PACK_PRINTED = '1'
   opPrintCmd ...$cmds
-  run-external ($cmds | first) ...($cmds | skip 1) | complete | get stdout | lines
+  packCompleteListing $cmds | get stdout | lines
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -340,7 +391,7 @@ def --env packInstalled [manager: string, raw: string] {
   if $cached != null {
     return $cached
   }
-  let answer = (packInstalledCheck $manager $raw)
+  let answer = (packInstalledCheck (packCopyBase $manager) $raw)
   load-env {PACK_INSTALLED: (($env.PACK_INSTALLED? | default []) | append { key: $key, answer: $answer })}
   $answer
 }
@@ -359,6 +410,9 @@ def --env packInstalledCheck [manager: string, raw: string] {
     cargo => (packListedHas (packListCmd 'cargo') $name { |l| packListedHead $l }),
     uv => (packListedHas (packListCmd 'uv') $name { |l| packListedHead $l }),
     pnpm => (packNamesHas (packPnpmInstalled) $name),
+    npm => (packNamesHas (packNpmInstalled) $name),
+    dotnet => (packNamesHas (packDotnetInstalled) $name),
+    rv => (packNamesHas (packRvInstalled) $name),
     bun => (packListedHas (packListCmd 'bun') $name { |l| packListedNodeName $l }),
     deno => (packInstalledDeno $name),
     go => (packInstalledGo $name),
@@ -391,9 +445,9 @@ def packOpAsksInstalled [] {
 # add asks who could serve a name, remove and sync ask who already has it; the walk over managers is the same either way
 def --env packClaims [manager: string, name: string] {
   if (packOpAsksInstalled) {
-    packInstalled $manager $name
+    packInCopy $manager { packInstalled $manager $name }
   } else {
-    packExists $manager $name
+    packExists (packCopyBase $manager) $name
   }
 }
 
@@ -472,11 +526,148 @@ def packManagerBest [manager: string] {
     'script'
   } else if $manager in $PACK_PACMAN_FAMILY {
     packPacmanBest $manager
-  } else if (which (packManagerBin $manager) | is-not-empty) {
+  } else if $manager == 'npm' and (packNpmIsPnpms (which npm | get -o 0.path | default '' | path dirname)) {
+    null
+  } else if (which (packManagerBin $manager) | is-not-empty) and not (packManagerSplit $manager) {
     $manager
   } else {
     null
   }
+}
+
+# a manager and the toolchain it builds and runs on come from one install, or it does not install or sync: a cargo
+# whose rustc is another install's, or a go ahead of gotm's on PATH, would act through one install and run on
+# another. the ops that only read or take something out still reach it, since they are how a split is undone. each
+# manager here is asked once a run, before anything is offered, and a split is said once, with what to look at
+def --env packManagerCheck [] {
+  if 'PACK_HELD' in $env or ($env.PACK_OP? | default '') not-in ['add' 'sync'] {
+    return
+  }
+  let ids = (packManagersHere)
+  mut held = {}
+  for id in $ids {
+    let base = (packCopyBase $id)
+    mut h = (packInCopy $id { packManagerHeld $base })
+    # a manager here more than once says which copy each row is, where its toolchain does not already
+    if ($ids | where { |i| (packCopyBase $i) == $base } | length) > 1 and not ($h.note | str ends-with ')') {
+      $h.note = ([$h.note $"\((packCopyAt $id))"] | where { is-not-empty } | str join ' ')
+    }
+    if ($h.split | is-not-empty) {
+      opPrintWarn $"(packCopyLabel $id) skipped: ($h.split)"
+      for d in $h.detail {
+        opPrintWarn $"  ($d)"
+      }
+    }
+    $held = ($held | upsert $id $h)
+  }
+  $env.PACK_HELD = $held
+}
+
+# the language managers can each be installed more than once — a distro's go beside gotm's, a distro's cargo beside
+# rustup's, a distro's pnpm 10 beside a pnpm 12 — and every copy that is valid is a row of its own, kept up to date
+# like any other: never just the one PATH finds first. the native managers are the system's, one each
+const PACK_COPIED = ['pnpm' 'deno' 'bun' 'npm' 'uv' 'rv' 'dotnet' 'go' 'cargo']
+
+# a row is a manager, or a copy of one further down PATH: go@/usr/bin. the plain name is the copy PATH finds first,
+# which is the one a group's plan and a bare command mean
+def packCopyBase [id: string] {
+  $id | split row '@' | first
+}
+
+def packCopyDir [id: string] {
+  if ($id | str contains '@') { $id | split row '@' | skip 1 | str join '@' } else { null }
+}
+
+# where a copy is: its own dir, or for the plain name, wherever PATH finds it first
+def packCopyAt [id: string] {
+  packCopyDir $id | default (which (packManagerBin $id) | get -o 0.path | default '' | path dirname)
+}
+
+def packCopyLabel [id: string] {
+  if (packCopyDir $id) == null { $id } else { $"(packCopyBase $id) \((packCopyDir $id))" }
+}
+
+# every copy of a manager down PATH, as `which --all` walks it: each dir it is in, once. the copies under the home come
+# first, since a local install is newer than the system's, and PATH order decides within each. npm's copy in pnpm's
+# bin dir is pnpm's package, not a manager (see packNpmIsPnpms)
+def packCopies [manager: string] {
+  let home = ($env.HOME? | default $nu.home-dir)
+  let dirs = (
+    which --all (packManagerBin $manager) | where type == external | get path | path dirname | uniq
+      | where { |d| not ($manager == 'npm' and (packNpmIsPnpms $d)) }
+  )
+  let first = (which (packManagerBin $manager) | get -o 0.path | default '' | path dirname)
+  ($dirs | where { |d| packUnder $d $home }) ++ ($dirs | where { |d| not (packUnder $d $home) })
+    | each { |d| if $d == $first { $manager } else { $"($manager)@($d)" } }
+}
+
+# a copy runs with its own dir first on PATH, so everything it reaches for by name — rustc, gofmt, a cargo
+# subcommand, a node — is its own install's rather than whichever PATH finds first. the first copy runs as PATH is.
+# the PATH it came in with stays readable, for the checks about what a package will run on once wut is done
+def --env packInCopy [id: string, body: closure] {
+  let dir = (packCopyDir $id)
+  let saved = { path: $env.PATH, copy: ($env.PACK_COPY? | default ''), shell: ($env.PACK_SHELL_PATH? | default null) }
+  $env.PACK_COPY = $id
+  $env.PACK_SHELL_PATH = ($saved.shell | default $saved.path)
+  if $dir != null {
+    $env.PATH = ($env.PATH | prepend $dir)
+  }
+  let out = (try { do --env $body } catch { |e|
+    opRethrowInterrupt $e
+    $env.PATH = $saved.path
+    $e.raw
+  })
+  $env.PATH = $saved.path
+  $env.PACK_COPY = $saved.copy
+  if $saved.shell == null { hide-env PACK_SHELL_PATH } else { $env.PACK_SHELL_PATH = $saved.shell }
+  $out
+}
+
+# what a name resolves to on the PATH wut was run with, not the one a copy runs inside
+def packShellWhich [name: string] {
+  with-env { PATH: ($env.PACK_SHELL_PATH? | default $env.PATH) } { which $name | get -o 0.path }
+}
+
+# what a manager runs on — the toolchain its sync moves, for its row — and, when it is split, why, with the paths or
+# the fix that say more
+def --env packManagerHeld [manager: string] {
+  match $manager {
+    bun => (packBunHeld), cargo => (packCargoHeld), deno => (packDenoHeld), dotnet => (packDotnetHeld),
+    go => (packGoHeld), npm => (packNpmHeld), pnpm => (packPnpmHeld), rv => (packRvHeld), uv => (packUvHeld),
+    _ => (packHeld),
+  }
+}
+
+def packHeld [note: string = '', split: string = '', detail: list<string> = []] {
+  { note: $note, split: $split, detail: $detail }
+}
+
+# whether a path is inside a dir, by where each really is
+def packUnder [path: string, dir: string] {
+  ($path | is-not-empty) and (($path | path expand) | str starts-with (($dir | path expand) + (char path_sep)))
+}
+
+def packManagerSplit [manager: string] {
+  $env.PACK_HELD? | default {} | get -o $manager | get -o split | default '' | is-not-empty
+}
+
+def packManagerNote [manager: string] {
+  $env.PACK_HELD? | default {} | get -o $manager | get -o note | default ''
+}
+
+# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
+def packVersionOf [text: string] {
+  $text | parse --regex '(?<v>\d+\.\d+(?:\.\d+)?)' | get -o 0.v | default ''
+}
+
+# a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
+# the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
+# about the machine's
+def --env packAsk [cmds: list<string>, --home] {
+  $env.PACK_PRINTED = '1'
+  opPrintCmd ...$cmds
+  let dir = if $home { $env.HOME? | default $nu.home-dir } else { $env.PWD }
+  do { cd $dir; packComplete $cmds }
 }
 
 # the command a manager is found by, where it is not the manager's own name: xbps is a set of xbps-* commands
@@ -492,12 +683,69 @@ def packManagerHere [manager: string] {
 }
 
 # the pacman family collapses to one entry, so it is never offered or run three times over
-def packManagersHere [] {
-  ($env.PACK_MANAGERS? | default []) | each { |m| packManagerBest $m } | compact | uniq
+# and each language manager is every valid copy of it here
+def --env packManagersHere [] {
+  mut ids = []
+  for m in ($env.PACK_MANAGERS? | default []) {
+    if $m in $PACK_COPIED {
+      $ids = ($ids ++ (packCopiesApart (packCopies $m | where { |id| not (packManagerSplit $id) })))
+    } else {
+      $ids = ($ids ++ ([(packManagerBest $m)] | compact))
+    }
+  }
+  $ids | uniq
+}
+
+# where a copy keeps the packages it installs. most copies of a manager share one — every cargo installs into
+# ~/.cargo, every dotnet's tools are in ~/.dotnet/tools — while a pnpm or an npm keeps its own per version or prefix.
+# null where it is not known, which keeps the copy apart
+def --env packManagerHome [manager: string] {
+  let home = ($env.HOME? | default $nu.home-dir)
+  let asked = { |cmds| let r = (packComplete $cmds); if $r.exit_code == 0 { $r.stdout | str trim } else { '' } }
+  let dir = match $manager {
+    bun => (packBunRoot),
+    cargo => ($env.CARGO_INSTALL_ROOT? | default ($env.CARGO_HOME? | default ([$home .cargo] | path join))),
+    deno => ($env.DENO_INSTALL_ROOT? | default ([$home .deno] | path join)),
+    dotnet => (packDotnetToolsDir),
+    go => (try { packGoBinDir } catch { |e| opRethrowInterrupt $e; '' }),
+    npm => (do $asked [npm prefix --global]),
+    pnpm => (do $asked [pnpm root --global]),
+    uv => (do $asked [uv tool dir]),
+    _ => '',
+  }
+  if ($dir | is-empty) { null } else { $dir | path expand }
+}
+
+# sync moves each copy's own toolchain, and add builds with the copy picked, so both reach every copy. the rest only
+# read or remove packages, and a copy whose packages an earlier copy already holds would list each of them again, and
+# remove each twice: it is left out of those
+def --env packCopiesApart [ids: list<string>] {
+  if ($ids | length) < 2 or ($env.PACK_OP? | default '') in ['add' 'sync'] {
+    return $ids
+  }
+  mut seen = []
+  mut kept = []
+  for id in $ids {
+    let cached = ($env.PACK_HOMES? | default [] | where id == $id)
+    let dir = if ($cached | is-not-empty) {
+      $cached | first | get dir
+    } else {
+      let d = (packInCopy $id { packManagerHome (packCopyBase $id) })
+      load-env {PACK_HOMES: (($env.PACK_HOMES? | default []) | append { id: $id, dir: $d })}
+      $d
+    }
+    if $dir == null or $dir not-in $seen {
+      $kept = ($kept | append $id)
+    }
+    if $dir != null {
+      $seen = ($seen | append $dir)
+    }
+  }
+  $kept
 }
 
 def --env packRefreshAll [] {
-  for m in (packManagersHere) { packRefresh $m }
+  for m in (packManagersHere | each { |id| packCopyBase $id } | uniq) { packRefresh $m }
 }
 
 def --env packFindFirstIn [managers: list<string>, name: string] {
@@ -568,9 +816,23 @@ def --env packRunLoose [manager: string] {
   hide-env PACK_MANAGER
 }
 
-def --env packCallManager [manager: string] {
+# a copy's manager runs inside that copy, and is the manager it is a copy of to everything that asks
+def --env packCallManager [id: string] {
+  let manager = (packCopyBase $id)
+  let asked = ($env.PACK_MANAGER? | default null)
+  if $asked != null {
+    $env.PACK_MANAGER = $manager
+  }
+  packInCopy $id { packCallBase $manager }
+  if $asked != null {
+    $env.PACK_MANAGER = $asked
+  }
+}
+
+def --env packCallBase [manager: string] {
   match $manager {
-    ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm },
+    ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
+    dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
@@ -738,6 +1000,7 @@ def --env packStageId [d: record] {
 }
 
 def --env packPlanRun [] {
+  packManagerCheck
   let units = ($env.PACK_PLAN? | default '[]' | from json)
 
   # a group whose every path needs a manager this machine lacks is not a plan, it is an absence: drop it, and let
@@ -958,6 +1221,7 @@ def --env packRunScripts [stage: string, scripts: list] {
 # run it before the gate and the table names the managers rather than offering all of them. bare, neither has
 # anything cheaper than running the managers, so the only question left is which ones
 def --env packTermPlanRun [names_key: string] {
+  packManagerCheck
   let names = (packNameList $names_key)
   if ($names | is-empty) {
     packManagerPlanRun
@@ -975,7 +1239,7 @@ def --env packTermPlanRun [names_key: string] {
   mut hits = {}
   mut entries = {}
   for m in $here {
-    let lines = (packListedRaw $m)
+    let lines = (packInCopy $m { packListedRaw (packCopyBase $m) })
     let matched = ($names | where { |n| packLinesLike $lines $n })
     if ($matched | is-not-empty) {
       $hits = ($hits | upsert $m $matched)
@@ -1077,11 +1341,19 @@ def packSelfManager [path: string] {
   packExpandPath $path | path parse | get stem
 }
 
+# the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
+def packSelfRow [s: record, rows: list<string>] {
+  let copies = ($rows | where { |id| (packCopyBase $id) == (packSelfManager $s.path) })
+  let dir = (packExpandPath $s.path | path dirname)
+  $copies | where { |id| (packCopyAt $id | path expand) == ($dir | path expand) } | get -o 0 | default ($copies | get -o 0)
+}
+
 def --env packManagerPlanRun [] {
+  packManagerCheck
   let managers = (packManagersHere)
   let selfHere = if ($env.PACK_OP? | default '') == 'sync' { packSelfHere } else { [] }
   # a manager's self update runs in its own row; the rest in the script row
-  let selfManaged = ($selfHere | where { |s| (packSelfManager $s.path) in $managers })
+  let selfManaged = ($selfHere | where { |s| packSelfRow $s $managers | is-not-empty })
   let selfRest = ($selfHere | where { |s| $s not-in $selfManaged })
   let here = if ($selfRest | is-empty) { $managers } else { $managers | append 'script' }
   if ($here | is-empty) {
@@ -1094,7 +1366,10 @@ def --env packManagerPlanRun [] {
   }
   mut chosen = $here
   if 'PACK_AGREED' not-in $env {
-    wutTable ['manager'] ($here | enumerate | each { |m| [$"($m.index + 1)\) ($m.item)"] })
+    # each row names what it runs on, which is also what its sync moves: go 1.27.3 (gotm), rust 1.99.1 (rustup)
+    wutTable ['manager' 'toolchain'] ($here | enumerate | each { |m|
+      [$"($m.index + 1)\) (packCopyBase $m.item)", (packManagerNote $m.item)]
+    })
     let picked = (wutSelectRead ($here | length))
     if $picked == null {
       return
@@ -1110,7 +1385,7 @@ def --env packManagerPlanRun [] {
       }
       continue
     }
-    for s in ($selfManaged | where { |s| (packSelfManager $s.path) == $m }) {
+    for s in ($selfManaged | where { |s| (packSelfRow $s $managers) == $m }) {
       packSelfUpdate $s.group $s.path $s.args
     }
     # stated, so an op that keeps per-manager detail — info's declared names — knows who is asking
