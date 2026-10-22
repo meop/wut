@@ -96,6 +96,10 @@ Every op resolves data on the server, lets the **client** filter it by what is a
 `find` included. The server never pre-renders a listing, because pre-rendered text has nowhere left to apply that
 filter. See [docs/OPS.md](docs/OPS.md).
 
+wut gates only itself: `-y` answers that one question and is never passed on as a tool's flag (`--noconfirm`, `--yes`,
+`-y`). A tool's own prompts — pacman's `[Y/n]`, apt's, a binstall confirm — are between the user and the tool; do not
+add flags that answer them. See [docs/PACK.md](docs/PACK.md).
+
 ## Docs
 
 Cross-cutting:

@@ -175,10 +175,15 @@ Selecting rather than confirming is how a run is narrowed. A yes/no gate could o
 narrowing it would mean cancelling, re-typing the command, and re-reading the same table. The list already had to be
 built and shown; letting it be answered is the same table doing one more job.
 
-There are no per-manager prompts either — a prompt was never a veto, it was "here is what wut decided, do you agree",
-and asking it seven times only obscured that. Whatever is picked runs non-interactively, so `-y` is exact and takes
+There are no per-manager prompts of wut's either — a prompt was never a veto, it was "here is what wut decided, do you
+agree", and asking it seven times only obscured that. wut asks nothing after the pick, so `-y` is exact and takes
 everything, and `wutSelectRead` is the single place `-y` is read. The per-manager confirms are deleted rather than
 guarded: a check that can never fire reads like a safety net and holds nothing.
+
+wut gates only itself. `-y` answers wut's question and goes no further: it is never turned into a manager's own flag
+(`--noconfirm`, `--yes`, `--assumeyes`, `--accept-package-agreements`). What a tool asks while it runs — pacman's
+`[Y/n]` before a sysupgrade, apt's before an install — is between the user and that tool, and is answered at the
+terminal as if the tool had been run by hand.
 
 The server emits the plan as data (`PACK_PLAN`) and the bodies behind ids in a generated `packRunUnit`, so code stays
 code and the plan stays data. The client picks each group's winner and resolves loose names with an exact per-manager

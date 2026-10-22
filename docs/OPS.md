@@ -53,7 +53,8 @@ rather than asked a question whose answer changes nothing. And the ask is once, 
 `pack` and `virt` ask it as a numbered selection over the summary rather than a yes/no: empty takes everything, `0`
 quits, and `1 3` / `1,3` / `1-3` take a subset, in ghpm's syntax. The rows were already built and shown, so answering
 them is cheaper than cancelling to re-run behind a filter flag — which is why neither command has one. `-y` takes
-everything.
+everything. It answers wut's question only: a tool's own prompts are the tool's, and wut never answers them for the user
+(see [PACK.md](PACK.md)).
 
 What goes where is fixed. A **summary** is the indented breakdown above the table — a manager, the groups under it, the
 packages and scripts under each — and it is the only place a list is printed, so a long one wraps where wrapping reads
