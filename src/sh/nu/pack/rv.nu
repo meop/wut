@@ -16,6 +16,15 @@ def --env packRvInstalled [] {
     | try { from json | get gem_name | uniq } catch { |e| opRethrowInterrupt $e; [] }
 }
 
+# the rubies rv has installed, by version
+def --env packRvRubies [] {
+  let res = (packAsk [rv ruby list --installed-only --format json])
+  if $res.exit_code != 0 {
+    return []
+  }
+  $res.stdout | from json | each { |r| $r.Installed?.version? } | compact | each { |v| packVersionOf $v }
+}
+
 # rvx comes beside rv, and is the only way a tool runs
 def --env packRvHeld [] {
   let rv = (which rv | get -o 0.path)
@@ -23,10 +32,7 @@ def --env packRvHeld [] {
   if not ($rv | path dirname | path join $"rvx($ext)" | path exists) {
     return (packHeld '' 'no rvx beside rv, so its tools cannot run' [$"rv ($rv)"])
   }
-  let res = (packAsk [rv ruby list --installed-only --format json])
-  let rubies = if $res.exit_code == 0 {
-    $res.stdout | from json | each { |r| $r.Installed?.version? } | compact | each { |v| packVersionOf $v }
-  } else { [] }
+  let rubies = (packRvRubies)
   packHeld (if ($rubies | is-empty) { '' } else { $"ruby ($rubies | sort | str join ', ')" })
 }
 
@@ -67,10 +73,17 @@ def --env packRv [] {
       packOpRemove [$cmd tool uninstall] --each
     }
     sync => {
+      # rv pins the machine's ruby the way a project's is pinned, by the .ruby-version (or .tool-versions) in the home
+      # dir, and with none it runs the newest ruby it has. a bare `rv ruby install` reads that pin itself and installs
+      # the newest ruby it allows, or the newest of all, and does nothing when that one is in: asked from home, so no
+      # project's pin answers instead. a machine with no ruby of rv's is not given one, and the rubies it moves past
+      # stay, since a project may still be pinned to one: `rv ruby uninstall` lets them go
       let asked = (packNameList 'PACK_SYNC_NAMES')
-      # the newest ruby goes in first, the way uv moves its pythons before the tools
-      if ($asked | is-empty) {
-        packOp [$cmd ruby install latest]
+      if ($asked | is-empty) and (packRvRubies | is-not-empty) {
+        let here = $env.PWD
+        cd ($env.HOME? | default $nu.home-dir)
+        packOp [$cmd ruby install]
+        cd $here
       }
       packRvUpdate (if ($asked | is-empty) { packRvTools | get name | uniq } else { packSyncNames })
     }

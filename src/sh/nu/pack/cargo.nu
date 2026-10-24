@@ -51,24 +51,6 @@ def --env packRustupUpdate [] {
   }
 }
 
-# rustup keeps every toolchain it installs. one pinned to a version is one a project's rust-toolchain.toml asked for,
-# and rustup installs it again when that project next builds (1.28.1+), so tidy lets those go. the channels stay, and
-# so does any toolchain rustup marks as the default or the active one
-def --env packRustupTidy [] {
-  let rustup = (packRustupPath)
-  if $rustup == null {
-    return
-  }
-  let pinned = (
-    ^$rustup toolchain list | complete | get stdout | lines
-      | where { |l| ($l =~ '^\d+\.\d+') and not ($l =~ '\(') }
-      | each { |l| $l | str trim }
-  )
-  for toolchain in $pinned {
-    packOp [$rustup toolchain uninstall $toolchain]
-  }
-}
-
 def --env packCargo [] {
   let cmd = 'cargo'
   if (packSkip $cmd) {
@@ -99,7 +81,6 @@ def --env packCargo [] {
       packOpSync [$cmd install-update --all] [$cmd install-update]
     }
     tidy => {
-      packRustupTidy
       packOp [$cmd cache --autoclean]
     }
   }

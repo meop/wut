@@ -1056,30 +1056,24 @@ Deno.test('nu / pack / cargo updates the toolchains first only when rustup is be
   assertEquals((await run({ cargo: LISTINGS.cargo, rustup: '' }, ['cargo-update']))!.includes('rustup update'), false)
 })
 
-// rustup keeps every toolchain; tidy uninstalls the ones pinned to a version, which a project's rust-toolchain.toml
-// brings back when it builds, and keeps the channels and whatever is the default or active
-Deno.test('nu / pack / cargo tidy lets the version pinned rustup toolchains go', async () => {
+// a rustup toolchain's name is its pin, and rustup update moves each in place, so there is nothing for a tidy to let go:
+// one a project's rust-toolchain.toml asked for is a pin as much as one installed by hand
+Deno.test('nu / pack / cargo tidy leaves every rustup toolchain', async () => {
   const rustup = `case "$*" in
-  "toolchain list") printf 'stable-x86_64-unknown-linux-gnu (active, default)\\nnightly-x86_64-unknown-linux-gnu\\n1.96.0-x86_64-unknown-linux-gnu\\n1.97.0-x86_64-unknown-linux-gnu\\n1.98.0-x86_64-unknown-linux-gnu (active)\\n' ;;
+  "toolchain list") printf 'stable-x86_64-unknown-linux-gnu (active, default)\\n1.98-x86_64-unknown-linux-gnu\\n1.99.0-x86_64-unknown-linux-gnu\\n' ;;
   *) exit 0 ;;
 esac`
-  const run = (stubs: Record<string, string>) =>
-    withStubs(
-      stubs,
-      [`$env.PACK_OP = 'tidy'`, `$env.NOOP = '1'`, `$env.PACK_MANAGER = 'cargo'`, 'packCargo'].join('\n'),
-      ['cargo'],
-      ['cargo'],
-    )
-  const out = await run({ cargo: LISTINGS.cargo, rustup })
+  const out = await withStubs(
+    { cargo: LISTINGS.cargo, rustup },
+    [`$env.PACK_OP = 'tidy'`, `$env.NOOP = '1'`, `$env.PACK_MANAGER = 'cargo'`, 'packCargo'].join('\n'),
+    ['cargo'],
+    ['cargo'],
+  )
   if (out == null) {
     return
   }
-  const removed = out.split('\n').filter((l) => l.includes('toolchain uninstall')).map((l) =>
-    l.trim().split(' ').at(-2)
-  )
-  assertEquals(removed, ['1.96.0-x86_64-unknown-linux-gnu', '1.97.0-x86_64-unknown-linux-gnu'])
+  assertEquals(out.includes('toolchain uninstall'), false)
   assertEquals(out.includes('cargo cache --autoclean'), true)
-  assertEquals((await run({ cargo: LISTINGS.cargo }))!.includes('toolchain uninstall'), false)
 })
 
 // go has no listing or uninstall of its own: a tool is a binary in its bin dir that names the package it was built
@@ -1610,14 +1604,15 @@ Deno.test('nu / pack / pnpm puts its own node down before its first package', as
 })
 
 // uv's own pythons, as `uv python list --only-installed --managed-python --output-format json` names them: each once
-// per link to it
-const UV_PYTHON = (version: string) => {
+// for the install, and again for every link to it, under the install's key
+const UV_PYTHON = (version: string, path = '') => {
   const [major, minor, patch] = version.split('.').map((n) => parseInt(n))
   const key = `cpython-${version}-linux-x86_64-gnu`
   return {
     key,
     version,
     version_parts: { major, minor, patch },
+    path: path || `@HOME@/py/${key}/bin/python${major}.${minor}`,
     os: 'linux',
     arch: 'x86_64',
     libc: 'gnu',
@@ -1625,21 +1620,38 @@ const UV_PYTHON = (version: string) => {
     implementation: 'cpython',
   }
 }
-// downloads are what uv could install beside what is in: the newest patch of each minor, a pre-release among them
-const UV = (pythons: Array<string>, downloads: Array<string> = []) =>
+// a stub's printf of json that names paths under the test's home: the stub's PATH holds only stubs, so $HOME is spliced
+// in by printf itself, which repeats '%s' over every argument
+const UV_PRINTF = (value: unknown) =>
+  `printf '%s' ${JSON.stringify(value).split('@HOME@').map((part) => `'${part}'`).join(' "$HOME" ')}`
+// downloads are what uv could install beside what is in: the newest patch of each minor, a pre-release among them.
+// links are what uv's bin dir holds, by name, each to the install it reaches: one named by a path under home is
+// elsewhere, as a minor's own link in uv's python dir is
+const UV = (pythons: Array<string>, downloads: Array<string> = [], links: Record<string, string> = {}) =>
   `case "$*" in
   "tool dir") printf '%s\\n' "$HOME/tools" ;;
+  "tool list") printf 'ruff v0.15.0\\n- ruff\\n' ;;
   "python dir") printf '%s\\n' "$HOME/py" ;;
-  "python list --only-installed --managed-python --output-format json") printf '%s' '${
-    JSON.stringify([...pythons, ...pythons].map(UV_PYTHON))
-  }' ;;
-  "python list --output-format json") printf '%s' '${
-    JSON.stringify([
-      ...downloads.map(UV_PYTHON),
-      ...downloads.map((v) => ({ ...UV_PYTHON(v), variant: 'freethreaded' })),
-      ...pythons.map(UV_PYTHON),
-    ])
-  }' ;;
+  "python dir --bin") printf '%s\\n' "$HOME/bin" ;;
+  "python list --only-installed --managed-python --output-format json") ${
+    UV_PRINTF(
+      [
+        ...pythons.map((v) => UV_PYTHON(v)),
+        ...Object.entries(links).map(([name, v]) =>
+          UV_PYTHON(v, name.includes('/') ? `@HOME@/${name}` : `@HOME@/bin/${name}`)
+        ),
+      ],
+    )
+  } ;;
+  "python list --output-format json") ${
+    UV_PRINTF(
+      [
+        ...downloads.map((v) => UV_PYTHON(v)),
+        ...downloads.map((v) => ({ ...UV_PYTHON(v), variant: 'freethreaded' })),
+        ...pythons.map((v) => UV_PYTHON(v)),
+      ],
+    )
+  } ;;
   *) exit 0 ;;
 esac`
 // a tool's venv, made on the python at home
@@ -1664,45 +1676,99 @@ Deno.test('nu / pack / uv is split when a tool runs on a python uv does not mana
   assertEquals(off.held.uv.detail, ['hf /usr/bin', 'uv tool install --reinstall --managed-python hf'])
 })
 
-Deno.test('nu / pack / uv lets an old patch go once a newer one is in, unless a tool runs on it', async () => {
-  const run = (op: string, names: Array<string>) =>
-    withStubs(
-      { uv: UV(['3.14.5', '3.14.8', '3.13.0', '3.13.2', '3.12.9'], ['3.16.0a1', '3.15.0', '3.14.8']) },
-      [
-        `mkdir ($env.HOME | path join py cpython-3.13.0-linux-x86_64-gnu bin)`,
-        ...UV_TOOL('old', `$env.HOME | path join py cpython-3.13.0-linux-x86_64-gnu bin`),
-        `$env.PACK_OP = '${op}'`,
-        `$env.NOOP = '1'`,
-        `$env.PACK_MANAGER = 'uv'`,
-        `$env.PACK_${op.toUpperCase()}_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
-        'packUv',
-      ].join('\n'),
-      ['uv'],
-      ['uv'],
-    )
-  const uninstalls = (out: string) =>
-    out.split('\n').filter((l) => l.includes('uv python uninstall')).map((l) => l.trim().split(' ').at(-2))
-  const synced = await run('sync', [])
+const uvRun = (stub: string, op: string, names: Array<string>, setup: Array<string> = []) =>
+  withStubs(
+    { uv: stub },
+    [
+      ...setup,
+      `$env.PACK_OP = '${op}'`,
+      `$env.NOOP = '1'`,
+      `$env.PACK_MANAGER = 'uv'`,
+      `$env.PACK_${op.toUpperCase()}_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
+      'packUv',
+    ].join('\n'),
+    ['uv'],
+    ['uv'],
+  )
+const uvLines = (out: string, text: string) => out.split('\n').filter((l) => l.includes(text)).map((l) => l.trim())
+const uvUninstalls = (out: string) => uvLines(out, 'uv python uninstall').map((l) => l.split(' ').at(-2))
+
+// each link in uv's bin dir is a pin, as a ghpm name is: python follows the newest stable python, python3 the newest
+// 3, python3.14 the newest 3.14 patch. the tools follow the bare link, and sync lets nothing go: that is tidy's
+Deno.test('nu / pack / uv sync moves each python link as far as its pin allows', async () => {
+  const downloads = ['3.16.0a1', '3.15.0', '3.14.8', '3.13.2']
+  const links = { python: '3.14.8', python3: '3.14.8', 'python3.14': '3.14.8', 'python3.13': '3.13.2' }
+  const synced = await uvRun(UV(['3.14.5', '3.14.8', '3.13.2'], downloads, links), 'sync', [])
   if (synced == null) {
     return
   }
-  const lines = synced.split('\n')
-  assertEquals(uninstalls(synced), ['cpython-3.14.5-linux-x86_64-gnu'])
+  const at = (text: string) => synced.split('\n').findIndex((l) => l.includes(text))
+  // one --default moves python and python3 together, onto the newest stable minor rather than the pre-release
+  assertEquals(uvLines(synced, 'uv python install').map((l) => l.split(' ').at(-2)), ['3.15'])
+  assertEquals(at('uv python upgrade') < at('uv python install --default 3.15'), true)
   assertEquals(
-    lines.findIndex((l) => l.includes('uv python upgrade')) < lines.findIndex((l) => l.includes('uninstall')),
+    at('uv python install --default 3.15') < at('uv tool upgrade --all --managed-python --python 3.15'),
     true,
   )
-  // the newest stable minor comes in too, not the pre-release, and the tools move onto it, never onto a distro's
-  const at = (text: string) => lines.findIndex((l) => l.includes(text))
-  assertEquals(at('uv python upgrade') < at('uv python install --upgrade --default'), true)
-  assertEquals(
-    at('uv python install --upgrade --default') < at('uv tool upgrade --all --managed-python --python 3.15'),
-    true,
+  assertEquals(uvUninstalls(synced), [])
+
+  // already at the newest: the minors move to their newest patches and nothing more comes in
+  const current = (await uvRun(UV(['3.15.0'], downloads, { python: '3.15.0', python3: '3.15.0' }), 'sync', []))!
+  assertEquals(uvLines(current, 'uv python install'), [])
+  assertEquals(current.includes('uv tool upgrade --all --managed-python --python 3.15'), true)
+
+  // a named sync leaves the links alone, and the tools it names move to the minor the bare link has now
+  const named = (await uvRun(UV(['3.14.8'], downloads, links), 'sync', ['ruff']))!
+  assertEquals(named.includes('python upgrade'), false)
+  assertEquals(uvLines(named, 'uv python install'), [])
+  assertEquals(named.includes('uv tool upgrade --managed-python --python 3.14 ruff'), true)
+})
+
+// --default sets the bare link too, so a pythonX below the newest major moves first and the bare link is set back
+// after it. a pythonX with no bare link was taken apart by hand and is left, and a link naming a patch never moves
+Deno.test('nu / pack / uv moves a major link without taking the bare link off the newest', async () => {
+  const below = await uvRun(
+    UV(['4.0.1', '3.14.8'], ['4.0.1', '3.15.0', '3.14.8'], { python: '4.0.1', python4: '4.0.1', python3: '3.14.8' }),
+    'sync',
+    [],
   )
-  assertEquals(at('uv tool upgrade --all --managed-python --python 3.15') < at('uv python uninstall'), true)
-  assertEquals(uninstalls((await run('sync', ['ruff']))!), [])
-  assertEquals(uninstalls((await run('tidy', []))!), ['cpython-3.14.5-linux-x86_64-gnu'])
-  assertEquals((await run('add', ['ruff']))!.includes('uv tool install --managed-python ruff'), true)
+  if (below == null) {
+    return
+  }
+  assertEquals(uvLines(below, 'uv python install').map((l) => l.split(' ').at(-2)), ['3.15', '4.0'])
+  assertEquals(below.includes('uv tool upgrade --all --managed-python --python 4.0'), true)
+
+  const alone = (await uvRun(UV(['3.14.8'], ['3.15.0', '3.14.8'], { python3: '3.14.8' }), 'sync', []))!
+  assertEquals(uvLines(alone, 'uv python install'), [])
+  assertEquals(alone.includes('uv tool upgrade --all'), true)
+  assertEquals(alone.includes('--python'), false)
+
+  const patch = (await uvRun(UV(['3.14.5'], ['3.15.0', '3.14.8'], { 'python3.14.5': '3.14.5' }), 'sync', []))!
+  assertEquals(uvLines(patch, 'uv python install'), [])
+})
+
+// tidy lets a python go once nothing links to it, as ghpm lets go of a release no pin is on: a link in uv's bin dir
+// keeps one, a minor's own link in uv's python dir keeps one, and an old minor that still has a link is uv's to drop
+Deno.test('nu / pack / uv tidy lets go of every python nothing links to', async () => {
+  const pythons = ['3.16.0a1', '3.15.0', '3.14.5', '3.14.8', '3.13.0', '3.13.2']
+  const links = {
+    python: '3.15.0',
+    python3: '3.15.0',
+    'python3.15': '3.15.0',
+    'python3.14': '3.14.8',
+    'py/cpython-3.13-linux-x86_64-gnu/bin/python3.13': '3.13.2',
+  }
+  const tidied = await uvRun(UV(pythons, [], links), 'tidy', [])
+  if (tidied == null) {
+    return
+  }
+  assertEquals(uvUninstalls(tidied), [
+    'cpython-3.16.0a1-linux-x86_64-gnu',
+    'cpython-3.14.5-linux-x86_64-gnu',
+    'cpython-3.13.0-linux-x86_64-gnu',
+  ])
+  assertEquals(tidied.includes('uv cache clean'), true)
+  assertEquals((await uvRun(UV(['3.14.8']), 'add', ['ruff']))!.includes('uv tool install --managed-python ruff'), true)
 })
 
 // bun links a package's own command into its bin dir, and one that starts `#!/usr/bin/env node` runs on whichever
@@ -1975,12 +2041,16 @@ Deno.test('nu / pack / dotnet is one install with its tools when DOTNET_ROOT nam
 
 // rv keeps every version of a tool side by side and runs the newest through rvx, so a sync puts each tool back at its
 // latest alone
-const RV = (tools: Array<[string, string]>) =>
+// a ruby install says where it was asked from, since a project's pin there would answer before the home dir's
+const RV = (tools: Array<[string, string]>, rubies: Array<string> = ['ruby-4.0.7']) =>
   `case "$*" in
   "tool list --format json") printf '%s' '${
     JSON.stringify(tools.map(([gem_name, version]) => ({ gem_name, version })))
   }' ;;
-  "ruby list --installed-only --format json") printf '%s' '[{"Installed":{"version":"ruby-4.0.7"},"active":true}]' ;;
+  "ruby list --installed-only --format json") printf '%s' '${
+    JSON.stringify(rubies.map((version) => ({ Installed: { version }, active: true })))
+  }' ;;
+  "ruby install") if [ "$PWD" = "$HOME" ]; then printf 'asked from home\\n'; fi ;;
   *) exit 0 ;;
 esac`
 
@@ -1994,9 +2064,9 @@ Deno.test('nu / pack / rv runs its tools through rvx, on its own ruby', async ()
 })
 
 Deno.test('nu / pack / rv puts a tool back at its latest alone', async () => {
-  const run = (tools: Array<[string, string]>, names: Array<string>) =>
+  const run = (tools: Array<[string, string]>, names: Array<string>, rubies?: Array<string>) =>
     withStubs(
-      { rv: RV(tools), rvx: '' },
+      { rv: RV(tools, rubies), rvx: '' },
       [
         `$env.PACK_OP = 'sync'`,
         `$env.PACK_MANAGER = 'rv'`,
@@ -2012,14 +2082,17 @@ Deno.test('nu / pack / rv puts a tool back at its latest alone', async () => {
   if (twice == null) {
     return
   }
+  // the ruby moves first, along the home dir's pin or to the newest, as rv reads it from home
   assertEquals(ops(twice).map((l) => l.replace(/^try \{ | \}$/g, '')), [
-    'rv ruby install latest',
+    'rv ruby install',
     'rv tool install lolcat',
     'rv tool install rerun',
     'rv tool uninstall lolcat',
     'rv tool install lolcat',
   ])
-  // a named sync is about the tool it names, and leaves the rubies alone
+  assertEquals(twice.includes('asked from home'), true)
+  // a named sync is about the tool it names, and a machine with no ruby of rv's is not given one
   const named = (await run([['rerun', '0.14.0']], ['rerun']))!
   assertEquals(ops(named).map((l) => l.replace(/^try \{ | \}$/g, '')), ['rv tool install rerun'])
+  assertEquals((await run([['rerun', '0.14.0']], [], []))!.includes('rv ruby install'), false)
 })

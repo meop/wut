@@ -402,8 +402,8 @@ does not exit non-zero for it.
 
 Six manage toolchains as well as packages: rustup (cargo and rustc), uv (pythons), rv (rubies), dotnetup (.NET SDKs),
 pnpm (the node, bun and deno runtimes) and gotm (go). A bare sync moves the toolchains before the packages, so the
-packages update against current ones, each the way its manager moves them — rustup along its channels, uv within each
-installed minor, pnpm to the latest release, gotm to the newest release each pin allows. A named sync is about the
+packages update against current ones, each the way its manager moves them — rustup along its channels, uv along each
+link it keeps, pnpm to the latest release, gotm to the newest release each pin allows. A named sync is about the
 packages it names and leaves the toolchains alone.
 
 - **rustup** is not a package manager at all: the `cargo` on PATH is usually its proxy, a link to the rustup beside it
@@ -411,33 +411,47 @@ packages it names and leaves the toolchains alone.
   whose own binary another manager delivers, so rustup has no row of its own: a bare cargo sync looks for a `rustup`
   beside wherever `cargo` resolves and runs `rustup update` first, best effort like a self update. That holds however
   rustup arrived — its own installer, winget, pacman, apt or brew — since each puts the proxies beside it. A distro
-  cargo has no rustup beside it and is left to its package manager. rustup also keeps every toolchain it installs, so a
-  cargo tidy uninstalls the ones pinned to a version — the ones a project's `rust-toolchain.toml` asked for, which
-  rustup installs again when that project next builds (1.28.1+). The channels stay, and so does any toolchain rustup
-  marks as default or active.
-- **uv** is its own top layer — it installs pythons and tools and updates itself — and a bare uv sync moves both to the
-  latest, the way rustup's `stable` and rv's `latest` do. `uv python upgrade` moves each installed python to the newest
-  patch of its minor, and a bare `uv python install` is done once any python is in, so the newest stable minor comes in
-  through `uv python install --upgrade --default`, which moves the `python` and `python3` links onto it. The tools then
-  move with `uv tool upgrade --all --managed-python --python <minor>`: a tool's venv is made on one python and stays on
-  it through a plain upgrade. uv does not hold a tool back by its own `requires-python` when it is given a python, so a
-  tool that has not caught up with a new minor moves anyway. The upgrade puts the new patch beside the old and keeps
-  both, so the older patch of each minor is then uninstalled, as every other manager lets a release go once a newer one
-  is in place — unless a tool's venv was made on it. A pre-release is never pruned, and an older minor stays. A tidy
-  prunes the same way, for an upgrade made outside wut. A machine with no python of uv's is not given one by a sync. A
-  tool is added with `--managed-python`, so it never lands on a distro's python.
+  cargo has no rustup beside it and is left to its package manager. A toolchain's name is its pin — `stable`, `1.99`
+  following the newest 1.99 patch, `1.99.0` staying on it — and `rustup update` moves each in place, leaving nothing
+  behind, so a cargo tidy lets no toolchain go: one a project's `rust-toolchain.toml` asked for is as much a pin as one
+  installed by hand, and `rustup toolchain uninstall` drops it.
+- **uv** is its own top layer — it installs pythons and tools and updates itself — and pins its pythons the way ghpm
+  pins a name, by the links in its bin dir: `python` follows the newest stable python, `python3` the newest 3,
+  `python3.14` the newest 3.14 patch, and a link naming a patch stays on it. A bare sync moves each link as far as its
+  pin allows. `uv python upgrade` moves each installed minor to its newest patch, and the `pythonX.Y` links with it. A
+  `pythonX` link moves only through `uv python install --default X.Y`, which sets the bare `python` link as well, so a
+  major below the newest moves first and the bare link is set back onto the newest last. `--default` makes the two
+  together, so a `pythonX` with no bare link is one taken apart by hand, and is left. The tools then move to the minor
+  the bare link names, with `uv tool upgrade --all --managed-python --python <minor>`: a tool's venv is made on one
+  python and stays on it through a plain upgrade. uv does not hold a tool back by its own `requires-python` when it is
+  given a python, so a tool that has not caught up with a new minor moves anyway. With no bare link the tools upgrade
+  where they are, and a machine with no python of uv's is not given one by a sync.
+
+  uv keeps every python it installs, and sync lets none go: a tidy uninstalls the ones nothing links to, as ghpm lets go
+  of a release no pin is on. A python's links are the ones in uv's bin dir and the minor's own beside it in uv's python
+  dir (`cpython-3.14-...`), which a venv uv made runs through, so the patch `uv python upgrade` moved past is left with
+  none. What a project's venv or a tool rests on is not otherwise known, so a python that still has a link stays,
+  however old, until `uv python uninstall` drops it. A tool is added with `--managed-python`, so it never lands on a
+  distro's python.
 - **pnpm** records a runtime as the exact version it installed, so `update` cannot move one: a runtime is set again at
   `latest` — `pnpm runtime set node latest --global` — before the packages update to theirs. pnpm runs no package
   itself: a package's command runs on the node beside it in pnpm's bin dir, and falls back to whatever node PATH finds
   only when pnpm holds none. So an add to a pnpm that holds no node sets one first.
 - **rv** is ruby's uv: it installs rubies, and gems as tools, each in an environment of its own, run through `rvx` on
-  rv's own ruby. A bare sync installs the latest ruby first. rv keeps every version a tool was installed at, has no
-  upgrade, and its uninstall takes a gem whole, so an update installs the latest beside what is there and, where that
-  leaves more than one version, puts the tool back at the latest alone, from rv's cache.
-- **dotnetup** keeps .NET SDKs side by side under its own root, tracking a channel rather than a version: where the
-  dotnet row is dotnetup's copy, a bare sync runs `dotnetup update` before `dotnet tool update --global --all`. A
-  distro's dotnet is that distro's to move. dotnet has no listing of outdated tools, so it is not offered for
-  `outdated`.
+  rv's own ruby. rv pins the machine's ruby the way a project's is pinned, by the `.ruby-version` (or `.tool-versions`)
+  in the home dir, and with none it runs the newest ruby it has; its shell integration puts that ruby on PATH. A bare
+  sync runs `rv ruby install` from the home dir, so no project's pin answers instead: rv reads the pin itself and
+  installs the newest ruby it allows, or the newest of all, and does nothing when that one is in. A machine with no ruby
+  of rv's is not given one, and the rubies a sync moves past stay, since a project may still be pinned to one:
+  `rv ruby uninstall` lets them go. rv keeps every version a tool was installed at, has no upgrade, and its uninstall
+  takes a gem whole, so an update installs the latest beside what is there and, where that leaves more than one version,
+  puts the tool back at the latest alone, from rv's cache.
+- **dotnetup** keeps .NET SDKs and runtimes side by side under its own root, and pins them the way ghpm does: its
+  manifest records each install spec — `lts`, `latest`, `10`, `10.0.4xx`, `10.0.402` — apart from what is installed, and
+  `dotnetup update` moves each spec to the newest release it allows and then removes whatever no spec needs, so it
+  leaves nothing for a tidy. Where the dotnet row is dotnetup's copy, a bare sync runs `dotnetup update` before
+  `dotnet tool update --global --all`. A distro's dotnet is that distro's to move. dotnet has no listing of outdated
+  tools, so it is not offered for `outdated`.
 - **gotm** is to go what rustup is to cargo — its own tool, managing toolchains rather than packages, with no row of its
   own: the go row that is gotm's copy — the one in `~/.gotm/bin` — runs `gotm sync --yes` first on a bare sync, best
   effort like a self update, so each go it was asked to keep moves to the newest release its pin allows before the tools
