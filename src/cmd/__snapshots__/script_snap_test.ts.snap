@@ -292,12 +292,17 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
 }
 
-# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: input would fail there with an i/o error
 def opAsk [question: string] {
   if 'YES' in \$env {
     return true
   }
-  let yn = (input \$"(\$question) [y,[n]]: " | str lowercase)
+  if not (is-terminal --stdin) {
+    opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
+    return false
+  }
+  let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
 
@@ -653,12 +658,17 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
 }
 
-# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: input would fail there with an i/o error
 def opAsk [question: string] {
   if 'YES' in \$env {
     return true
   }
-  let yn = (input \$"(\$question) [y,[n]]: " | str lowercase)
+  if not (is-terminal --stdin) {
+    opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
+    return false
+  }
+  let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
 
@@ -1104,12 +1114,17 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
 }
 
-# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: input would fail there with an i/o error
 def opAsk [question: string] {
   if 'YES' in \$env {
     return true
   }
-  let yn = (input \$"(\$question) [y,[n]]: " | str lowercase)
+  if not (is-terminal --stdin) {
+    opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
+    return false
+  }
+  let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
 
@@ -1398,6 +1413,11 @@ def wutSelectRead [max: int] {
   if YES in \$env {
     return (1..\$max | each { |i| \$i })
   }
+  # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
+  if not (is-terminal --stdin) {
+    opPrintWarn 'no terminal to choose from, so none; -y picks all'
+    return null
+  }
   opPrint ''
   wutSelectParse (input \$"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): ") \$max
 }
@@ -1640,13 +1660,18 @@ function opRunSilentCmd {
   eval "\$*" &> /dev/null
 }
 
-# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: an empty read there is nobody's answer, not an enter
 function opAsk {
   if [[ \$YES ]]; then
     return 0
   fi
+  if [[ ! -t 0 ]]; then
+    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    return 1
+  fi
   local yn=''
-  read "yn?\${1} [y,[n]]: "
+  read "yn?\${1} [[y]/n]: "
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
@@ -1681,13 +1706,7 @@ function () {
     opPrintWarn 'cargo is not installed'
     return
   fi
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    read 'yn?setup - cargo - install tools (user) [y,[n]]: '
-  fi
-  if [[ \$yn == n ]]; then
+  if ! opAsk 'setup - cargo - install tools (user)'; then
     return
   fi
   local url='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
@@ -2023,12 +2042,17 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
 }
 
-# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: input would fail there with an i/o error
 def opAsk [question: string] {
   if 'YES' in \$env {
     return true
   }
-  let yn = (input \$"(\$question) [y,[n]]: " | str lowercase)
+  if not (is-terminal --stdin) {
+    opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
+    return false
+  }
+  let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
 
@@ -2315,6 +2339,11 @@ def wutSelectRead [max: int] {
   if YES in \$env {
     return (1..\$max | each { |i| \$i })
   }
+  # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
+  if not (is-terminal --stdin) {
+    opPrintWarn 'no terminal to choose from, so none; -y picks all'
+    return null
+  }
   opPrint ''
   wutSelectParse (input \$"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): ") \$max
 }
@@ -2557,13 +2586,18 @@ function opRunSilentCmd {
   eval "\$*" &> /dev/null
 }
 
-# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: an empty read there is nobody's answer, not an enter
 function opAsk {
   if [[ \$YES ]]; then
     return 0
   fi
+  if [[ ! -t 0 ]]; then
+    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    return 1
+  fi
   local yn=''
-  read "yn?\${1} [y,[n]]: "
+  read "yn?\${1} [[y]/n]: "
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
@@ -2598,13 +2632,7 @@ function () {
     opPrintWarn 'cargo is not installed'
     return
   fi
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    read 'yn?setup - cargo - install tools (user) [y,[n]]: '
-  fi
-  if [[ \$yn == n ]]; then
+  if ! opAsk 'setup - cargo - install tools (user)'; then
     return
   fi
   local url='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
@@ -2707,13 +2735,18 @@ function opRunSilentCmd {
   eval "\$*" &> /dev/null
 }
 
-# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: an empty read there is nobody's answer, not an enter
 function opAsk {
   if [[ \$YES ]]; then
     return 0
   fi
+  if [[ ! -t 0 ]]; then
+    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    return 1
+  fi
   local yn=''
-  read "yn?\${1} [y,[n]]: "
+  read "yn?\${1} [[y]/n]: "
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
@@ -2841,13 +2874,18 @@ function opRunSilentCmd {
   eval "\$*" &> /dev/null
 }
 
-# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: an empty read there is nobody's answer, not an enter
 function opAsk {
   if [[ \$YES ]]; then
     return 0
   fi
+  if [[ ! -t 0 ]]; then
+    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    return 1
+  fi
   local yn=''
-  read "yn?\${1} [y,[n]]: "
+  read "yn?\${1} [[y]/n]: "
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
@@ -2975,13 +3013,18 @@ function opRunSilentCmd {
   eval "\$*" &> /dev/null
 }
 
-# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: an empty read there is nobody's answer, not an enter
 function opAsk {
   if [[ \$YES ]]; then
     return 0
   fi
+  if [[ ! -t 0 ]]; then
+    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    return 1
+  fi
   local yn=''
-  read "yn?\${1} [y,[n]]: "
+  read "yn?\${1} [[y]/n]: "
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
@@ -3012,13 +3055,7 @@ function () {
     opPrintWarn 'docker is not installed'
     return
   fi
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    read 'yn?setup - docker - enable service (system) [y,[n]]: '
-  fi
-  if [[ -n \$yn && \${(L)yn} != y && \${(L)yn} != yes ]]; then
+  if ! opAsk 'setup - docker - enable service (system)'; then
     return
   fi
   opPrintMaybeRunCmd sudo systemctl enable --now docker
@@ -3291,12 +3328,17 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
 }
 
-# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: input would fail there with an i/o error
 def opAsk [question: string] {
   if 'YES' in \$env {
     return true
   }
-  let yn = (input \$"(\$question) [y,[n]]: " | str lowercase)
+  if not (is-terminal --stdin) {
+    opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
+    return false
+  }
+  let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
 
@@ -3581,6 +3623,11 @@ def wutSelectRead [max: int] {
   if YES in \$env {
     return (1..\$max | each { |i| \$i })
   }
+  # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
+  if not (is-terminal --stdin) {
+    opPrintWarn 'no terminal to choose from, so none; -y picks all'
+    return null
+  }
   opPrint ''
   wutSelectParse (input \$"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): ") \$max
 }
@@ -3857,12 +3904,17 @@ def opRunSilentCmd --wrapped [...args] {
   ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
 }
 
-# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: input would fail there with an i/o error
 def opAsk [question: string] {
   if 'YES' in \$env {
     return true
   }
-  let yn = (input \$"(\$question) [y,[n]]: " | str lowercase)
+  if not (is-terminal --stdin) {
+    opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
+    return false
+  }
+  let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
 
@@ -4149,6 +4201,11 @@ def wutSelectRead [max: int] {
   if YES in \$env {
     return (1..\$max | each { |i| \$i })
   }
+  # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
+  if not (is-terminal --stdin) {
+    opPrintWarn 'no terminal to choose from, so none; -y picks all'
+    return null
+  }
   opPrint ''
   wutSelectParse (input \$"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): ") \$max
 }
@@ -4391,13 +4448,18 @@ function opRunSilentCmd {
   eval "\$*" &> /dev/null
 }
 
-# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: an empty read there is nobody's answer, not an enter
 function opAsk {
   if [[ \$YES ]]; then
     return 0
   fi
+  if [[ ! -t 0 ]]; then
+    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    return 1
+  fi
   local yn=''
-  read "yn?\${1} [y,[n]]: "
+  read "yn?\${1} [[y]/n]: "
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
@@ -4432,13 +4494,7 @@ function () {
     opPrintWarn 'cargo is not installed'
     return
   fi
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    read 'yn?setup - cargo - install tools (user) [y,[n]]: '
-  fi
-  if [[ \$yn == n ]]; then
+  if ! opAsk 'setup - cargo - install tools (user)'; then
     return
   fi
   local url='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
@@ -4541,13 +4597,18 @@ function opRunSilentCmd {
   eval "\$*" &> /dev/null
 }
 
-# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: an empty read there is nobody's answer, not an enter
 function opAsk {
   if [[ \$YES ]]; then
     return 0
   fi
+  if [[ ! -t 0 ]]; then
+    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    return 1
+  fi
   local yn=''
-  read "yn?\${1} [y,[n]]: "
+  read "yn?\${1} [[y]/n]: "
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
@@ -4675,13 +4736,18 @@ function opRunSilentCmd {
   eval "\$*" &> /dev/null
 }
 
-# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: an empty read there is nobody's answer, not an enter
 function opAsk {
   if [[ \$YES ]]; then
     return 0
   fi
+  if [[ ! -t 0 ]]; then
+    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    return 1
+  fi
   local yn=''
-  read "yn?\${1} [y,[n]]: "
+  read "yn?\${1} [[y]/n]: "
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
@@ -4809,13 +4875,18 @@ function opRunSilentCmd {
   eval "\$*" &> /dev/null
 }
 
-# a yes/no question: empty, y or yes is yes, and YES answers yes without asking
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: an empty read there is nobody's answer, not an enter
 function opAsk {
   if [[ \$YES ]]; then
     return 0
   fi
+  if [[ ! -t 0 ]]; then
+    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    return 1
+  fi
   local yn=''
-  read "yn?\${1} [y,[n]]: "
+  read "yn?\${1} [[y]/n]: "
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
@@ -4846,13 +4917,7 @@ function () {
     opPrintWarn 'docker is not installed'
     return
   fi
-  local yn=''
-  if [[ \$YES ]]; then
-    yn=y
-  else
-    read 'yn?setup - docker - enable service (system) [y,[n]]: '
-  fi
-  if [[ -n \$yn && \${(L)yn} != y && \${(L)yn} != yes ]]; then
+  if ! opAsk 'setup - docker - enable service (system)'; then
     return
   fi
   opPrintMaybeRunCmd sudo systemctl enable --now docker

@@ -3,13 +3,7 @@ function () {
     opPrintWarn 'docker is not installed'
     return
   fi
-  local yn=''
-  if [[ $YES ]]; then
-    yn=y
-  else
-    read 'yn?teardown - docker - disable service (system) [y,[n]]: '
-  fi
-  if [[ -n $yn && ${(L)yn} != y && ${(L)yn} != yes ]]; then
+  if ! opAsk 'teardown - docker - disable service (system)'; then
     return
   fi
   opPrintMaybeRunCmd sudo systemctl disable --now docker

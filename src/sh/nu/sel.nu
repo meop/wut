@@ -57,6 +57,11 @@ def wutSelectRead [max: int] {
   if YES in $env {
     return (1..$max | each { |i| $i })
   }
+  # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
+  if not (is-terminal --stdin) {
+    opPrintWarn 'no terminal to choose from, so none; -y picks all'
+    return null
+  }
   opPrint ''
   wutSelectParse (input $"enter number\(s\) [empty=all] \(0=quit | 1[,][-]($max)\): ") $max
 }

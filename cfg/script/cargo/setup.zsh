@@ -7,13 +7,7 @@ function () {
     opPrintWarn 'cargo is not installed'
     return
   fi
-  local yn=''
-  if [[ $YES ]]; then
-    yn=y
-  else
-    read 'yn?setup - cargo - install tools (user) [y,[n]]: '
-  fi
-  if [[ $yn == n ]]; then
+  if ! opAsk 'setup - cargo - install tools (user)'; then
     return
   fi
   local url='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
