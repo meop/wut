@@ -1,7 +1,7 @@
 import type { Ctx } from '@meop/shire/ctx'
 import { assertEquals } from '@std/assert'
 
-import { evaluateGate, getSupportedManagers, selectScriptEntry } from './pack.ts'
+import { evaluateGate, getSupportedManagers, groupOrdered, selectScriptEntry } from './pack.ts'
 
 // --- helpers ---
 
@@ -168,6 +168,23 @@ Deno.test('getSupportedManagers - every manager, portable ones first', () => {
   // a user space install is preferred over one that needs sudo
   assertEquals(all.indexOf('cargo') < all.indexOf('pacman'), true)
   assertEquals(all.includes('winget'), true)
+})
+
+// a group's managers are tried in GROUP_ORDER whatever order its yaml lists them: a project's own installer after
+// every user manager and before the system's, so ghpm or cargo serves a group before its script does
+Deno.test('groupOrdered - GROUP_ORDER decides, not the yaml', () => {
+  assertEquals(groupOrdered(['brew', 'script', 'pacman', 'cargo', 'ghpm']), [
+    'ghpm',
+    'cargo',
+    'script',
+    'brew',
+    'pacman',
+  ])
+  assertEquals(groupOrdered(['winget', 'script']), ['script', 'winget'])
+  // go before cargo: cargo is last of the user managers
+  assertEquals(groupOrdered(['cargo', 'go']), ['go', 'cargo'])
+  // an unknown key goes last, in the order given
+  assertEquals(groupOrdered(['zz', 'brew', 'yy']), ['brew', 'zz', 'yy'])
 })
 
 // --- manager entry gates ---

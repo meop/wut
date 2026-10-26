@@ -135,19 +135,19 @@ A file is named the way the tool spells itself, hyphens included (`golangci-lint
 with `/`, which no file name can hold, so a hyphen inside a level is never mistaken for the edge of one. No blank lines
 inside the file, one newline at the end.
 
-A group's managers are preferred in the order its yaml lists them: the first one this machine has wins. wut keeps no
-order of its own for a group, because the right one depends on the tool — ghpm's prebuilt binary over go's build from
-source for golangci-lint, a version manager over the distro package for a language — and only the group knows which. Put
-the managers in the order you want them tried, system managers last as a rule. There is one flat `manager` map, so that
-order is the whole statement: a yaml that also declared a tier could declare it wrongly (a system manager filed under
-`user:` silently never matched). `script` is a key inside that map, not beside it: it is spelled where a manager would
-be so one loop walks every install path in file order, so a script is ordered against real managers rather than sitting
-outside them.
+A group's managers are tried in one fixed order, whatever order its yaml lists them, and the first one this machine has
+wins. The yaml says which managers can serve the group and by what names; the order is not its to state, so no two
+groups can disagree about ghpm against brew. `script` is a key inside the flat `manager` map, not beside it: it is a
+project's own installer — the way in its docs call official, with a package manager the fallback — and takes the slot
+between the user managers and the system's. So ghpm or cargo serves a group before its script does, and its script
+before any system manager; a group whose script is its only way in short of a system package (rustup, dotnetup) simply
+names no user manager. A yaml that also declared a tier could declare it wrongly (a system manager filed under `user:`
+silently never matched), so there is none.
 
-The order of the managers in the file is the group's preference, and the first one present on the machine wins it.
-Nothing overrides that: which of the winners actually run is the numbered prompt's answer, not a flag's.
+The first manager present on the machine wins, and nothing overrides that: which of the winners actually run is the
+numbered prompt's answer, not a flag's.
 
-That order is stated once, in `MANAGERS`, and every group yaml is written to match it:
+That order is stated once, in `GROUP_ORDER` (`MANAGERS` with `script` in its slot), and loose names take `MANAGERS`:
 
 ```
 ghpm  pnpm  deno  bun  npm  uv  rv         user space, no sudo: release binaries, js, scripting

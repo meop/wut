@@ -564,7 +564,7 @@ def --env packManagerCheck [] {
 }
 
 # the language managers can each be installed more than once — a distro's go beside gotm's, a winget .NET beside
-# dotnetup's and scoop's, a pnpm 10 beside a pnpm 12 — and PATH holds whatever else put one there. wut uses the copies of
+# dotnetup's and scoop's, a pnpm 10 beside a pnpm 12 — and PATH holds whatever else put one there. the copies used are of
 # the best kind of install there is, as add prefers the most portable manager: one in the home (packCopyTier) over a
 # native manager's own tree, and either over the system's. each of those is a row, and the rest are left alone. the
 # native managers are the system's, one each
@@ -643,8 +643,8 @@ def packCopies [manager: string] {
 
 # a copy runs with its own dir first on PATH, so everything it reaches for by name — rustc, gofmt, a cargo
 # subcommand, a node — is its own install's rather than whichever PATH finds first, the plain name too: PATH may find
-# a copy wut leaves alone ahead of it. the PATH it came in with stays readable, for the checks about what a package
-# will run on once wut is done
+# a copy left alone ahead of it. the PATH it came in with stays readable, for the checks about what a package will
+# run on once the run is done
 def --env packInCopy [id: string, body: closure] {
   let dir = if (packCopyBase $id) in $PACK_COPIED { packCopyAt $id | default '' } else { '' }
   let saved = { path: $env.PATH, copy: ($env.PACK_COPY? | default ''), shell: ($env.PACK_SHELL_PATH? | default null) }

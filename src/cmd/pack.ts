@@ -85,6 +85,19 @@ const PACK_SELF_KEY = [PACK_KEY, 'self']
 
 const SCRIPT_PATH = 'script'
 
+// the order a group's managers are tried in, whatever order its yaml lists them: the user managers, then what a group
+// runs instead of a package — a project's own installer, its official way in — then the system's. the first present
+// wins, so a group's script runs only where none of the user managers it names is here
+const GROUP_ORDER: Array<string> = [...PORTABLE_MANAGERS, SCRIPT_PATH, ...NATIVE_MANAGERS]
+
+export function groupOrdered(managers: Array<string>): Array<string> {
+  const rank = (m: string) => {
+    const i = GROUP_ORDER.indexOf(m)
+    return i < 0 ? GROUP_ORDER.length : i
+  }
+  return [...managers].sort((a, b) => rank(a) - rank(b))
+}
+
 export function getSupportedManagers(): Array<string> {
   return [...MANAGERS]
 }
@@ -335,7 +348,7 @@ type FindCandidate = { manager: string; pkg: string }
 type FindEntry = { label: string; candidates: Array<FindCandidate> }
 
 // a group is on offer here if this platform has a manager it names, or its script is gated in. the managers it names
-// are only candidates, in declared order: whether one is really on this machine is the client's to answer
+// are only candidates, in GROUP_ORDER: whether one is really on this machine is the client's to answer
 function groupCandidates(
   // deno-lint-ignore no-explicit-any
   content: any,
@@ -347,7 +360,7 @@ function groupCandidates(
   }
   const managerConfig = (groupOp(content, 'add')?.manager ?? {}) as Record<string, ManagerEntry>
   const candidates: Array<FindCandidate> = []
-  for (const tier of Object.keys(managerConfig)) {
+  for (const tier of groupOrdered(Object.keys(managerConfig))) {
     if (tier === SCRIPT_PATH) {
       const selected = selectScriptEntry(managerConfig[tier] as unknown as Record<string, ScriptEntry>, context)
       // inline commands are as much an install path as a file, and a group whose only path here is one must still show
@@ -563,7 +576,7 @@ async function buildGroupUnit(
     arms.push(`    ${shell.toLiteral(id)} => {`, ...lines, '    }')
   }
 
-  for (const tier of Object.keys(managerConfig)) {
+  for (const tier of groupOrdered(Object.keys(managerConfig))) {
     const id = `${name}|${tier}`
     if (tier === SCRIPT_PATH) {
       if (op !== 'add') {

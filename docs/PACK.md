@@ -33,7 +33,7 @@ you are on. Applicability is answered in two places, because neither side knows 
 - **server** — does this platform have a manager the group names, or is its script gated in. `p f llm` lists the llm
   groups on arch and nothing on fedora, since none of them declares a dnf entry.
 - **client** — is one of those candidates really on this PATH. `packFindWinner` picks the first one that is, in the
-  group's own declared order — the same rule `packPickPath` uses for add.
+  order the server sent (`GROUP_ORDER`) — the same rule `packPickPath` uses for add.
 
 `packFindShow` prints what matched — manager, then group, then the package name (or the script's rel file path) — and
 that is the whole of it when every typed name was claimed. A name no group claimed is the only thing find cannot answer
@@ -51,15 +51,15 @@ would ask, and searches only the ones picked. Nothing to search for means no tab
    and takes every group that matches, each a row to pick from.
 2. A group's `group` tier lists other groups (or loose names). The walk is iterative over a stack with a visited set of
    resolved group names, so a cycle stops and a diamond resolves once.
-3. Preference is the yaml's own order: the group's flat `manager` map lists its managers, `script` among them, in the
-   order to try them ([RULES.md](RULES.md)). wut's own manager order is only for loose names, which no yaml speaks for.
+3. Preference is one fixed order, not the yaml's: the user managers, then a group's `script`, then the system's
+   ([RULES.md](RULES.md)). A group's flat `manager` map says which of them can serve it, in any order.
 
 ## Planning, client side
 
 The server cannot know which managers exist on the machine, so it emits resolved data and the client builds the plan.
 
-- **Group rows** need no search when adding. The winner is the first manager that exists here, in the order the yaml
-  lists them, with names for this group. The yaml already stated what works; there is nothing to verify.
+- **Group rows** need no search when adding. The winner is the first manager that exists here, in that order, with names
+  for this group. The yaml already stated what works; there is nothing to verify.
 - **Loose rows** need a search, because nothing has stated anything. Every manager is asked, not just until one claims
   the name: the first in wut's order is not always the one wanted (ghpm has a github repo's release binary, go builds
   the same tool from source). A name one manager claims goes there; when any name has several, each name under each
@@ -108,7 +108,7 @@ names stay behind `?` until something is picked — see [OPS.md](OPS.md#an-op-as
 the winner by name. Neither has a `?` row: by the time they ask, there is nothing left to find out.
 
 The same split applies one level up, to group rows, in `packPickPaths`. A group states which managers _can_ serve it,
-never which one did, so removing walks its stated order and takes the first whose declared names are actually installed,
+never which one did, so removing walks the same order and takes the first whose declared names are actually installed,
 and syncing takes every one of them. A group nothing holds is already gone — it is dropped rather than acted on through
 a manager that is merely present, and the cli name it came from falls through like any unclaimed name.
 
@@ -373,7 +373,7 @@ it runs; if not, the next manager its yaml lists that is here now runs instead, 
 not here, using ghpm`); with none left it is skipped, and says that. Nothing is added to a run that
 was not asked for — `wut p a node-gyp` alone on a machine without pnpm does not install pnpm to serve it.
 
-There is no row per method. How a group is installed is its yaml's order, decided once, not a question each run; add's
+There is no row per method. How a group is installed is the fixed order, decided once, not a question each run; add's
 second pick for loose names is the one place a method is chosen, since no yaml speaks for those.
 
 ## Tools that update themselves
@@ -459,13 +459,13 @@ packages it names and leaves the toolchains alone.
   no gotm behind it, and the distro moves it. gotm keeps every archive it downloaded until its own tidy, as ghpm does,
   so a go tidy runs `gotm tidy` before it cleans the module cache.
 
-### The copies wut uses
+### The copies used
 
 PATH holds whatever put a manager there — a distro's go beside gotm's, a winget .NET beside dotnetup's and scoop's, a
-desktop tool's standalone bun in `~/.local/bin`, a pnpm 10 beside a pnpm 12 — and wut cannot expect what it will find.
-It finds every copy by walking PATH (`which --all`: each dir the manager is in), and the best kind of install there is
-claims the work, the way add's first manager claims a package — with no prompt of its own, since nothing is installed by
-it:
+desktop tool's standalone bun in `~/.local/bin`, a pnpm 10 beside a pnpm 12 — and nothing can be expected of what is
+found. It finds every copy by walking PATH (`which --all`: each dir the manager is in), and the best kind of install
+there is claims the work, the way add's first manager claims a package — with no prompt of its own, since nothing is
+installed by it:
 
 1. one in the home, where a toolchain's own manager or an installer puts it: dotnetup's, gotm's, rustup's
    `~/.cargo/bin`, ghpm's, `~/.bun/bin`
