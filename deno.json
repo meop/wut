@@ -6,6 +6,10 @@
     "singleQuote": true,
     "trailingCommas": "onlyMultiLine"
   },
+  "minimumDependencyAge": {
+    "age": "P1D",
+    "exclude": ["jsr:@meop/*"]
+  },
   "imports": {
     "@meop/shire": "jsr:@meop/shire@^0.14.0",
     "@std/assert": "jsr:@std/assert@^1.0.19",
