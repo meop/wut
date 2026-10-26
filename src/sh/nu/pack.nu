@@ -563,13 +563,15 @@ def --env packManagerCheck [] {
   $env.PACK_HELD = $held
 }
 
-# the language managers can each be installed more than once — a distro's go beside gotm's, a distro's cargo beside
-# rustup's, a distro's pnpm 10 beside a pnpm 12 — and every copy that is valid is a row of its own, kept up to date
-# like any other: never just the one PATH finds first. the native managers are the system's, one each
+# the language managers can each be installed more than once — a distro's go beside gotm's, a winget .NET beside
+# dotnetup's and scoop's, a pnpm 10 beside a pnpm 12 — and PATH holds whatever else put one there. wut uses the copies of
+# the best kind of install there is, as add prefers the most portable manager: one in the home (packCopyTier) over a
+# native manager's own tree, and either over the system's. each of those is a row, and the rest are left alone. the
+# native managers are the system's, one each
 const PACK_COPIED = ['pnpm' 'deno' 'bun' 'npm' 'uv' 'rv' 'dotnet' 'go' 'cargo']
 
-# a row is a manager, or a copy of one further down PATH: go@/usr/bin. the plain name is the copy PATH finds first,
-# which is the one a group's plan and a bare command mean
+# a row is a manager, or another copy of one: go@/opt/go/bin. the plain name is the first copy (packCopyDirs), which
+# is the one a group's plan and a bare command mean
 def packCopyBase [id: string] {
   $id | split row '@' | first
 }
@@ -578,38 +580,77 @@ def packCopyDir [id: string] {
   if ($id | str contains '@') { $id | split row '@' | skip 1 | str join '@' } else { null }
 }
 
-# where a copy is: its own dir, or for the plain name, wherever PATH finds it first
+# where a copy is: its own dir, or for the plain name, the first copy's
 def packCopyAt [id: string] {
-  packCopyDir $id | default (which (packManagerBin $id) | get -o 0.path | default '' | path dirname)
+  packCopyDir $id | default (
+    if $id in $PACK_COPIED { packCopyDirs $id | get -o 0 | default '' } else {
+      which (packManagerBin $id) | get -o 0.path | default '' | path dirname
+    }
+  )
 }
 
 def packCopyLabel [id: string] {
   if (packCopyDir $id) == null { $id } else { $"(packCopyBase $id) \((packCopyDir $id))" }
 }
 
-# every copy of a manager down PATH, as `which --all` walks it: each dir it is in, once. the copies under the home come
-# first, since a local install is newer than the system's, and PATH order decides within each. npm's copy in pnpm's
-# bin dir is pnpm's package, not a manager (see packNpmIsPnpms)
-def packCopies [manager: string] {
+# the trees a native manager keeps in, where an install is that manager's to move: scoop's (its global one too),
+# homebrew's prefix, and the links winget makes for a user's install
+def packNativeTrees [] {
   let home = ($env.HOME? | default $nu.home-dir)
+  let local = ($env.LOCALAPPDATA? | default '')
+  [
+    ($env.SCOOP? | default ([$home scoop] | path join))
+    ($env.SCOOP_GLOBAL? | default '')
+    ($env.HOMEBREW_PREFIX? | default '')
+    (if $nu.os-info.name == macos { '/opt/homebrew' } else { '/home/linuxbrew/.linuxbrew' })
+    (if ($local | is-empty) { '' } else { [$local Microsoft WinGet] | path join })
+  ] | where { is-not-empty }
+}
+
+# what kind of install a copy is, the way add orders its managers from the most portable: 0 for one in the home, as a
+# toolchain's own manager or an installer puts it (dotnetup's, gotm's, rustup's, ghpm's, ~/.bun/bin), 1 for one a
+# native manager keeps in its own tree, and 2 for the system's (/usr/bin, Program Files)
+def packCopyTier [dir: string] {
+  if (packNativeTrees | any { |t| packUnder $dir $t }) {
+    1
+  } else if (packUnder $dir ($env.HOME? | default $nu.home-dir)) {
+    0
+  } else {
+    2
+  }
+}
+
+# the dirs down PATH a manager is in, as `which --all` walks it, once each, and of those the best kind of install
+# there is, in PATH order: a system dotnet is not a copy where dotnetup's or scoop's is here. npm's copy in pnpm's bin
+# dir is pnpm's package, not a manager (see packNpmIsPnpms)
+def packCopyDirs [manager: string] {
   let dirs = (
     which --all (packManagerBin $manager) | where type == external | get path | path dirname | uniq
       | where { |d| not ($manager == 'npm' and (packNpmIsPnpms $d)) }
+      | each { |d| { dir: $d, tier: (packCopyTier $d) } }
   )
-  let first = (which (packManagerBin $manager) | get -o 0.path | default '' | path dirname)
-  ($dirs | where { |d| packUnder $d $home }) ++ ($dirs | where { |d| not (packUnder $d $home) })
-    | each { |d| if $d == $first { $manager } else { $"($manager)@($d)" } }
+  if ($dirs | is-empty) {
+    return []
+  }
+  let best = ($dirs | get tier | math min)
+  $dirs | where tier == $best | get dir
+}
+
+# every copy of a manager, the first by its plain name
+def packCopies [manager: string] {
+  packCopyDirs $manager | enumerate | each { |d| if $d.index == 0 { $manager } else { $"($manager)@($d.item)" } }
 }
 
 # a copy runs with its own dir first on PATH, so everything it reaches for by name — rustc, gofmt, a cargo
-# subcommand, a node — is its own install's rather than whichever PATH finds first. the first copy runs as PATH is.
-# the PATH it came in with stays readable, for the checks about what a package will run on once wut is done
+# subcommand, a node — is its own install's rather than whichever PATH finds first, the plain name too: PATH may find
+# a copy wut leaves alone ahead of it. the PATH it came in with stays readable, for the checks about what a package
+# will run on once wut is done
 def --env packInCopy [id: string, body: closure] {
-  let dir = (packCopyDir $id)
+  let dir = if (packCopyBase $id) in $PACK_COPIED { packCopyAt $id | default '' } else { '' }
   let saved = { path: $env.PATH, copy: ($env.PACK_COPY? | default ''), shell: ($env.PACK_SHELL_PATH? | default null) }
   $env.PACK_COPY = $id
   $env.PACK_SHELL_PATH = ($saved.shell | default $saved.path)
-  if $dir != null {
+  if ($dir | is-not-empty) {
     $env.PATH = ($env.PATH | prepend $dir)
   }
   let out = (try { do --env $body } catch { |e|
@@ -710,15 +751,16 @@ def --env packManagerHome [manager: string] {
     go => (try { packGoBinDir } catch { |e| opRethrowInterrupt $e; '' }),
     npm => (do $asked [npm prefix --global]),
     pnpm => (do $asked [pnpm root --global]),
+    rv => (do $asked [rv tool dir]),
     uv => (do $asked [uv tool dir]),
     _ => '',
   }
   if ($dir | is-empty) { null } else { $dir | path expand }
 }
 
-# sync moves each copy's own toolchain, and add builds with the copy picked, so both reach every copy. the rest only
-# read or remove packages, and a copy whose packages an earlier copy already holds would list each of them again, and
-# remove each twice: it is left out of those
+# sync moves each copy's own toolchain, and add builds with the copy picked, so both reach every copy, one at a time:
+# each does only what its own toolchain calls for. the rest only read or remove packages, and a copy whose packages an
+# earlier copy already holds would list each of them again, and remove each twice: it is left out of those
 def --env packCopiesApart [ids: list<string>] {
   if ($ids | length) < 2 or ($env.PACK_OP? | default '') in ['add' 'sync'] {
     return $ids

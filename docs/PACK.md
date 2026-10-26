@@ -455,32 +455,43 @@ packages it names and leaves the toolchains alone.
 - **gotm** is to go what rustup is to cargo — its own tool, managing toolchains rather than packages, with no row of its
   own: the go row that is gotm's copy — the one in `~/.gotm/bin` — runs `gotm sync` first on a bare sync, best effort
   like a self update, so each go it was asked to keep moves to the newest release its pin allows before the tools
-  rebuild. A distro's go is a row of its own with no gotm behind it, and the distro moves it. gotm keeps every archive
-  it downloaded until its own tidy, as ghpm does, so a go tidy runs `gotm tidy` before it cleans the module cache.
+  rebuild. A distro's go beside gotm's is the system's install, and is left to the distro; one alone is the go row, with
+  no gotm behind it, and the distro moves it. gotm keeps every archive it downloaded until its own tidy, as ghpm does,
+  so a go tidy runs `gotm tidy` before it cleans the module cache.
 
-### Every copy, one install each
+### The copies wut uses
 
-A language manager can be installed more than once — a distro's go beside gotm's, a distro's cargo beside rustup's, a
-distro's pnpm 10 beside a pnpm 12 — and every copy that is valid is a row of its own, kept up to date like any other,
-never just the one PATH finds first. `which --all` finds them: each dir down PATH the manager is in. The copies under
-the home come first, since a local install is newer than the system's, and PATH order decides within each. The plain
-name is the copy PATH finds first, which is what a group's plan and a bare command mean; another copy is `go@/usr/bin`,
-and with more than one copy each row's toolchain column says which it is.
+PATH holds whatever put a manager there — a distro's go beside gotm's, a winget .NET beside dotnetup's and scoop's, a
+desktop tool's standalone bun in `~/.local/bin`, a pnpm 10 beside a pnpm 12 — and wut cannot expect what it will find.
+It finds every copy by walking PATH (`which --all`: each dir the manager is in), and the best kind of install there is
+claims the work, the way add's first manager claims a package — with no prompt of its own, since nothing is installed by
+it:
 
-A copy runs with its own dir first on PATH, so everything it reaches for by name — rustc, gofmt, a cargo subcommand, a
-node — is its own install's. Copies that share a package home are safe to run one after another: each manager keeps its
-record of what it installed in that home (cargo's `.crates.toml`, uv's receipts, bun's global `package.json`), or keeps
-none and reads the dir (go's binaries, npm's `node_modules`), so a later copy finds what an earlier one updated and
-leaves it. pnpm keeps one global dir per layout (`global/5` for pnpm 10, `global/v11` for 11 and 12), so two majors are
-two sets of packages, and a remove asks each copy what it holds. A sync and an add reach every copy, since each moves or
-builds with its own toolchain; the ops that only read, and a remove, ask one copy per package home, so two cargos
-sharing `~/.cargo`, or two dotnets sharing `~/.dotnet/tools`, list each package once and remove it once. A copy the OS
-will not start (rustup's symlinked proxies over ssh on Windows) is warned about and holds nothing, rather than ending
-the run.
+1. one in the home, where a toolchain's own manager or an installer puts it: dotnetup's, gotm's, rustup's
+   `~/.cargo/bin`, ghpm's, `~/.bun/bin`
+2. one a native manager keeps in its own tree: scoop's, homebrew's prefix, the links winget makes for a user's install
+3. the system's: `/usr/bin`, Program Files
+
+Every copy of that kind is a row, and the rest are left alone, unchecked and unsaid: a system dotnet is not used for
+global tools where dotnetup's or scoop's is here, and is used when it is the only one. The rows run one at a time, in
+PATH order, each doing only what its own toolchain calls for — three gos that share `~/go/bin`, at 1.12, 1.79 and 1.15,
+rebuild a tool for 1.12, again for 1.79, and leave it for 1.15 — so copies that share a package home are safe to run one
+after another: each manager keeps its record of what it installed in that home (cargo's `.crates.toml`, uv's receipts,
+bun's global `package.json`), or keeps none and reads the dir (go's binaries, npm's `node_modules`), so a later copy
+finds what an earlier one updated. pnpm keeps one global dir per layout (`global/5` for pnpm 10, `global/v11` for 11 and
+12), so two majors are two sets of packages, and a remove asks each copy what it holds. A sync and an add reach every
+copy, since each moves or builds with its own toolchain; the ops that only read, and a remove, ask one copy per package
+home, so two cargos sharing `~/.cargo` list each package once and remove it once.
+
+The plain name is the first copy used, which is what a group's plan and a bare command mean; another is
+`go@/opt/go/bin`, and with more than one copy each row's toolchain column says which it is. Every copy runs with its own
+dir first on PATH, the plain one too, so everything it reaches for by name — rustc, gofmt, a cargo subcommand, a node —
+is its own install's, whatever PATH finds first. A copy the OS will not start (rustup's symlinked proxies over ssh on
+Windows) is warned about and holds nothing, rather than ending the run.
 
 A manager and the toolchain it builds and runs on come from one install, never two that PATH order happens to pair. Each
-copy is checked once a run, before anything is offered, and the checks are shown as every check is. One that is split is
-said once — the reason on one line, the paths or the fix under it — and is not offered for an add or a sync:
+copy used is checked once a run, before anything is offered, and the checks are shown as every check is. One that is
+split is said once — the reason on one line, the paths or the fix under it — and is not offered for an add or a sync:
 
 ```
 uv skipped: a tool runs on a python uv does not manage
@@ -503,9 +514,9 @@ does not reorder PATH or reinstall to heal it.
 | rv      | `rvx` is beside `rv`: a tool runs only through it, on rv's own ruby                                            |
 | uv      | every tool's venv was made on a python uv manages                                                              |
 
-A copy further down PATH is not split for that alone. go, cargo, uv and pnpm bind what they install by absolute path — a
-native binary, a venv's own python, the node beside pnpm's commands — so their packages run on the right install
-wherever the copy sits. npm, bun and deno bind through PATH, so for them it is the deciding question.
+A copy used that PATH does not find first is not split for that alone. go, cargo, uv and pnpm bind what they install by
+absolute path — a native binary, a venv's own python, the node beside pnpm's commands — so their packages run on the
+right install wherever the copy sits. npm, bun and deno bind through PATH, so for them it is the deciding question.
 
 What the check reads is also what the manager table shows beside each row: the toolchain its sync moves —
 `rust 1.99.1 (rustup)`, `go 1.27.3 (gotm)`, `node 26.12.0`, `python 3.13, 3.14`. A few local version calls, no network.

@@ -1491,7 +1491,12 @@ Deno.test('nu / pack / cargo is split from a rustc or rustup another install put
   // the check is shown, as every check is
   assertEquals(one.said, ['rustc --version'])
 
-  const apart = (await held({ '~/other/rustc': RUSTC, cargo: '', rustc: RUSTC }, ['cargo']))!
+  // cargo runs inside its own dir, so a rustc further up PATH is not the one it builds with
+  const ahead = (await held({ '~/other/rustc': RUSTC, cargo: '', rustc: RUSTC }, ['cargo']))!
+  assertEquals(ahead.held.cargo, fine('rust 1.99.1'))
+
+  // with none beside it, it would build with another install's
+  const apart = (await held({ '~/other/rustc': RUSTC, cargo: '' }, ['cargo']))!
   assertEquals(apart.held.cargo.split, "rustc is another install's")
   // the reason is one short line, and what to look at is under it
   assertEquals(apart.said[0], "cargo skipped: rustc is another install's")
@@ -1504,12 +1509,12 @@ Deno.test('nu / pack / cargo is split from a rustc or rustup another install put
   assertEquals(empty.held.cargo.detail, ['rustup default stable'])
 
   // only an install or a sync builds on it: the read ops, and a remove that undoes a split, still reach it
-  assertEquals((await held({ '~/other/rustc': RUSTC, cargo: '', rustc: RUSTC }, ['cargo'], [], 'remove'))!.held, {})
+  assertEquals((await held({ '~/other/rustc': RUSTC, cargo: '' }, ['cargo'], [], 'remove'))!.held, {})
 })
 
 Deno.test('nu / pack / a split manager is not offered', async () => {
   const out = await withStubs(
-    { '~/other/rustc': RUSTC, cargo: LISTINGS.cargo, rustc: RUSTC, ghpm: '' },
+    { '~/other/rustc': RUSTC, cargo: LISTINGS.cargo, ghpm: '' },
     [`$env.PACK_OP = 'sync'`, 'packManagerPlanRun'].join('\n'),
     ['ghpm', 'cargo'],
     ['cargo'],
@@ -1525,7 +1530,7 @@ Deno.test('nu / pack / a split manager is not offered', async () => {
   assertEquals(rows.some((l) => /^\d\) cargo/.test(l)), false)
 })
 
-Deno.test('nu / pack / every go here is a row, the local one first, each asked inside its own copy', async () => {
+Deno.test('nu / pack / of the gos here, the local one is the row, asked inside its own copy', async () => {
   const owned = await held({ '~/.gotm/bin/go': GO }, ['go'])
   if (owned == null) {
     return
@@ -1534,17 +1539,13 @@ Deno.test('nu / pack / every go here is a row, the local one first, each asked i
   assertEquals(owned.said, ['go env GOVERSION'])
   assertEquals((await held({ go: GO }, ['go']))!.held.go, fine('go 1.27.0'))
 
-  // a distro's go ahead of gotm's on PATH: neither hijacks the other. both are rows, gotm's first since it is under
-  // the home, and each answers with its own toolchain because each is asked with its own dir first on PATH
+  // a distro's go ahead of gotm's on PATH is the system's install, and not used where one in the home is: gotm's is
+  // the row, and answers with its own toolchain though PATH finds the other first
   const both = (await held({ go: GO.replace('go1.27.0', 'go1.26.0'), '~/.gotm/bin/go': GO }, ['go'], [
     `$env.PATH = ($env.PATH | reverse)`,
   ]))!
-  const ids = Object.keys(both.held)
-  assertEquals(ids.length, 2)
-  assertEquals(/^go@.+\/\.gotm\/bin$/.test(ids[0]), true)
-  assertEquals(ids[1], 'go')
-  assertEquals(both.held[ids[0]], fine('go 1.27.0 (gotm)'))
-  assertEquals(/^go 1\.26\.0 \(\/.+\)$/.test(both.held.go.note), true)
+  assertEquals(both.held, { go: fine('go 1.27.0 (gotm)') })
+  assertEquals(both.said, ['go env GOVERSION'])
   const gofmt = (await held({ '~/sys/bin/gofmt': '', go: GO }, ['go']))!
   assertEquals(gofmt.held.go.split, "gofmt is another install's")
 })
@@ -1874,7 +1875,7 @@ Deno.test('nu / pack / npm reads what it holds from its parseable listing', asyn
 
 // every copy of a manager is a row, and a row runs its manager with that copy's dir first on PATH: what it reaches for
 // by name is its own install's, and nothing it runs is another copy's
-Deno.test('nu / pack / each copy runs inside itself, the local copy first', async () => {
+Deno.test('nu / pack / the copy kept runs inside itself, though PATH finds another first', async () => {
   const out = await withStubs(
     { go: '', '~/.gotm/bin/go': '' },
     [
@@ -1888,26 +1889,24 @@ Deno.test('nu / pack / each copy runs inside itself, the local copy first', asyn
     ['go'],
     [],
     false,
-    [1, 2],
+    [1],
   )
   if (out == null) {
     return
   }
   const lines = stripVTControlCharacters(out).split('\n')
-  // two rows, both named go: the toolchain column says which is which
-  assertEquals(lines.filter((l) => /^\d\) go\s/.test(l)).length, 2)
+  assertEquals(lines.filter((l) => /^\d\) go\s/.test(l)).length, 1)
   const ran = lines.filter((l) => l.startsWith('ran ')).map((l) => l.slice(4))
-  assertEquals(ran.length, 2)
+  assertEquals(ran.length, 1)
   assertEquals(ran[0].endsWith('/.gotm/bin/go'), true)
-  assertEquals(ran[1].endsWith('/.gotm/bin/go'), false)
 })
 
 // a pnpm 10 and a pnpm 12 keep separate global dirs, so a remove asks each copy what it holds and only the one that has
-// the name takes it out. the stub under the home is ahead on PATH, so it is the plain name here
+// the name takes it out. both are in the home, and the one ahead on PATH is the plain name
 Deno.test('nu / pack / a name is claimed by the copy that holds it', async () => {
   const claims = async (name: string) => {
     const out = await withStubs(
-      { pnpm: PNPM(['node', 'twelve']), '~/old/bin/pnpm': PNPM(['ten']), node: NODE },
+      { '~/old/bin/pnpm': PNPM(['ten']), '~/new/bin/pnpm': PNPM(['node', 'twelve']), node: NODE },
       [`$env.PACK_OP = 'remove'`, `print (packClaimsAll (packManagersHere) '${name}' | to json --raw)`].join('\n'),
       ['pnpm'],
     )
@@ -1923,12 +1922,40 @@ Deno.test('nu / pack / a name is claimed by the copy that holds it', async () =>
   assertEquals(/^pnpm@\//.test(twelve[0]), true)
 })
 
+// copies are the best kind of install there is, as add prefers the most portable manager: one in the home over one a
+// native manager keeps in its own tree (scoop's here), and either over the system's, which is used only alone
+Deno.test('nu / pack / the copies used are the best kind of install here', async () => {
+  const dirs = async (stubs: Record<string, string>) => {
+    const out = await withStubs(stubs, `print (packCopies 'dotnet' | each { |id| packCopyAt $id } | to json --raw)`, [
+      'dotnet',
+    ])
+    return out == null ? null : (JSON.parse(out.split('\n').at(-1)!) as Array<string>)
+  }
+  const all = await dirs({ '~/dn/dotnet': '', '~/scoop/shims/dotnet': '', dotnet: '' })
+  if (all == null) {
+    return
+  }
+  assertEquals(all.length, 1)
+  assertEquals(all[0].endsWith('/dn'), true)
+  const native = (await dirs({ '~/scoop/shims/dotnet': '', dotnet: '' }))!
+  assertEquals(native.length, 1)
+  assertEquals(native[0].endsWith('/scoop/shims'), true)
+  const system = (await dirs({ dotnet: '' }))!
+  assertEquals(system.length, 1)
+  assertEquals(system[0].includes('/scoop/') || system[0].endsWith('/dn'), false)
+  // two of the best kind are both used, in PATH order
+  assertEquals((await dirs({ '~/a/dotnet': '', '~/b/dotnet': '', dotnet: '' }))!.map((d) => d.split('/').at(-1)), [
+    'a',
+    'b',
+  ])
+})
+
 // every cargo installs into ~/.cargo, so a second copy holds nothing the first does not: a listing or a remove asks
-// one, while sync still reaches both, each moving its own toolchain
+// one, while sync and add still reach both, one at a time, each doing what its own toolchain calls for
 Deno.test('nu / pack / copies that share a package home are asked once, but each is synced', async () => {
   const here = async (op: string) => {
     const out = await withStubs(
-      { cargo: '', '~/.cargo/bin/cargo': '' },
+      { '~/other/bin/cargo': '', '~/.cargo/bin/cargo': '' },
       [`$env.PACK_OP = '${op}'`, `print (packManagersHere | where { |id| (packCopyBase $id) == 'cargo' } | length)`]
         .join('\n'),
       ['cargo'],
@@ -1942,6 +1969,7 @@ Deno.test('nu / pack / copies that share a package home are asked once, but each
   assertEquals(remove, 1)
   assertEquals(await here('list'), 1)
   assertEquals(await here('sync'), 2)
+  assertEquals(await here('add'), 2)
 })
 
 // a command the os will not start answers as a failed one with no exit code, so the manager it belongs to is skipped
@@ -1961,35 +1989,42 @@ Deno.test('nu / pack / a command that cannot start answers rather than throws', 
   assertEquals(res.stderr.length > 0, true)
 })
 
-// a bun or deno install runs on whichever bun or deno PATH finds first, so a copy further down is updating what
-// another copy runs
-Deno.test('nu / pack / a shadowed bun or deno is split when its packages run on another copy', async () => {
+// a bun or deno install runs on whichever bun or deno PATH finds first. the copy in the home is the one used, and a
+// system one beside it is left alone; but where PATH finds that one first, the copy used is updating what it runs
+Deno.test('nu / pack / a bun or deno is split when its packages run on another copy', async () => {
   const ln = new Deno.Command('sh', { args: ['-c', 'command -v ln'], stdout: 'piped' }).outputSync()
   if (!ln.success) {
     return
   }
-  const bun = await held({ '~/first/bun': '', bun: '' }, ['bun'], [
+  const bunSetup = (reversed: boolean) => [
+    ...(reversed ? [`$env.PATH = ($env.PATH | reverse)`] : []),
     `$env.PATH = ($env.PATH | append ['/usr/bin' '/bin'])`,
     'hide-env -i BUN_INSTALL XDG_CACHE_HOME',
     `mkdir ($env.HOME | path join .bun install global node_modules tool bin) ($env.HOME | path join .bun bin)`,
     `'#!/usr/bin/env bun' | save ($env.HOME | path join .bun install global node_modules tool bin tool.js)`,
     `^ln -s ($env.HOME | path join .bun install global node_modules tool bin tool.js) ($env.HOME | path join .bun bin tool)`,
-  ])
+  ]
+  const bun = await held({ '~/first/bun': '', bun: '' }, ['bun'], bunSetup(false))
   if (bun == null) {
     return
   }
-  const bunIds = Object.keys(bun.held)
-  // with two copies, each row says where it is
-  assertEquals(bun.held.bun.split, '')
-  assertEquals(bun.said[0].endsWith(') skipped: its packages run on another bun'), true)
-  assertEquals(bun.held[bunIds.find((i) => i !== 'bun')!].split, 'its packages run on another bun')
+  // the other bun is not a row, and nothing is said about it
+  assertEquals(bun.held, { bun: fine('') })
+  assertEquals(bun.said.some((l) => l.includes('skipped')), false)
+  const shadowed = (await held({ '~/first/bun': '', bun: '' }, ['bun'], bunSetup(true)))!
+  assertEquals(Object.keys(shadowed.held), ['bun'])
+  assertEquals(shadowed.held.bun.split, 'its packages run on another bun')
+  assertEquals(shadowed.said[0], 'bun skipped: its packages run on another bun')
 
-  const deno = (await held({ '~/first/deno': '', deno: '' }, ['deno'], [
-    `mkdir ($env.HOME | path join .deno bin .tool)`,
+  const denoSetup = [`mkdir ($env.HOME | path join .deno bin .tool)`]
+  const deno = (await held({ '~/first/deno': '', deno: '' }, ['deno'], denoSetup))!
+  assertEquals(deno.held, { deno: fine('') })
+  const denoShadowed = (await held({ '~/first/deno': '', deno: '' }, ['deno'], [
+    `$env.PATH = ($env.PATH | reverse)`,
+    ...denoSetup,
   ]))!
-  const denoIds = Object.keys(deno.held)
-  assertEquals(deno.held.deno.split, '')
-  assertEquals(deno.held[denoIds.find((i) => i !== 'deno')!].split, 'its installs run on another deno')
+  assertEquals(Object.keys(denoShadowed.held), ['deno'])
+  assertEquals(denoShadowed.held.deno.split, 'its installs run on another deno')
 })
 
 // a dotnet tool finds its runtime through DOTNET_ROOT, and with it unset, through the system's dotnet location
@@ -2032,6 +2067,16 @@ Deno.test('nu / pack / dotnet is one install with its tools when DOTNET_ROOT nam
     `mkdir ($env.HOME | path join .dotnet tools .store dotnetsay)`,
   ]))!
   assertEquals(offPath.held.dotnet.split, "dotnet's tools dir is not on PATH")
+
+  // a second dotnet, a system install ahead on PATH, is not used where one in the home is: it is left alone, unchecked
+  // and unsaid, and the one DOTNET_ROOT names is the row, asked inside its own dir
+  const beside = (await held({ '~/dn/dotnet': DOTNET, dotnet: DOTNET.replace('10.0.402', '6.0.428') }, ['dotnet'], [
+    `$env.PATH = ($env.PATH | reverse)`,
+    ...dotnetTools,
+    `$env.DOTNET_ROOT = ($env.HOME | path join dn)`,
+  ]))!
+  assertEquals(beside.held, { dotnet: fine('sdk 10.0.402') })
+  assertEquals(beside.said, ['dotnet --version'])
 
   const listed = await withStubs({ dotnet: DOTNET }, `print (packDotnetInstalled | str join ' ')`, ['dotnet'], [
     'dotnet',
