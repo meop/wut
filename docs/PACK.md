@@ -453,7 +453,7 @@ packages it names and leaves the toolchains alone.
   `dotnet tool update --global --all`. A distro's dotnet is that distro's to move. dotnet has no listing of outdated
   tools, so it is not offered for `outdated`.
 - **gotm** is to go what rustup is to cargo — its own tool, managing toolchains rather than packages, with no row of its
-  own: the go row that is gotm's copy — the one in `~/.gotm/bin` — runs `gotm sync --yes` first on a bare sync, best
+  own: the go row that is gotm's copy — the one in `~/.gotm/bin` — runs `gotm sync` first on a bare sync, best
   effort like a self update, so each go it was asked to keep moves to the newest release its pin allows before the tools
   rebuild. A distro's go is a row of its own with no gotm behind it, and the distro moves it. gotm keeps every archive
   it downloaded until its own tidy, as ghpm does, so a go tidy runs `gotm tidy` before it cleans the module cache.

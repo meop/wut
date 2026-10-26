@@ -68,7 +68,7 @@ def --env packGoHeld [] {
 def --env packGotmUpdate [] {
   let gotm = (which gotm | get -o 0.path)
   if $gotm != null and (packGoOwned) {
-    packSelfUpdate 'gotm' $gotm [sync --yes]
+    packSelfUpdate 'gotm' $gotm [sync]
   }
 }
 

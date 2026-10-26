@@ -1174,7 +1174,7 @@ esac`
     return
   }
   const lines = managed.split('\n')
-  const gotm = lines.findIndex((l) => l.endsWith('gotm sync --yes'))
+  const gotm = lines.findIndex((l) => l.endsWith('gotm sync'))
   const tools = lines.findIndex((l) => l.includes('go install golang.org/x/tools/gopls@latest'))
   assertEquals(gotm > -1, true)
   assertEquals(tools > -1, true)
