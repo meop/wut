@@ -64,6 +64,8 @@ const NATIVE_MANAGERS: Array<string> = [
   'emerge',
   'xbps',
   'zypper',
+  // after the distro's own, which it would otherwise take every name from where nix is installed beside them
+  'nix',
   'winget',
   'choco',
   'scoop',

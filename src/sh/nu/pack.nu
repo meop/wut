@@ -163,6 +163,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info $name]),
     xbps => (packOk [xbps-query --repository --show $name]),
     zypper => (packOk [zypper --non-interactive info $name]),
+    nix => (packOk [nix eval --raw $"(packNixInstallable $name).name"]),
     choco => (packOk [choco info $name]),
     scoop => (packOk ((packScoopCmd) ++ [info $name])),
     winget => (packOk [winget show --exact --id $name]),
@@ -340,6 +341,7 @@ def packListCmd [manager: string] {
     # not `search --installed-only`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -428,6 +430,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show $name]),
     dnf => (packOk [rpm --query $name]),
     emerge => (packOk [portageq has_version / $name]),
+    nix => (packNixHas $name),
     yay => (packOk [pacman --query $name]),
     paru => (packOk [pacman --query $name]),
     pacman => (packOk [pacman --query $name]),
@@ -882,7 +885,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }

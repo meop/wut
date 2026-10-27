@@ -1320,6 +1320,216 @@ if \$cut != null { \$cut.raw }
 }'##"
 `;
 
+snapshot[`nu / nixos / add 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=nixos&wutNuPinned=1'#
+
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
+# the script reported its own failure; this passes on its exit code
+if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
+
+
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}'##"
+`;
+
+snapshot[`nu / nixos / find 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=nixos&wutNuPinned=1'#
+
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
+# the script reported its own failure; this passes on its exit code
+if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
+
+
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}'##"
+`;
+
+snapshot[`nu / nixos / list 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=nixos&wutNuPinned=1'#
+
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
+# the script reported its own failure; this passes on its exit code
+if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
+
+
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}'##"
+`;
+
+snapshot[`nu / nixos / out 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=nixos&wutNuPinned=1'#
+
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
+# the script reported its own failure; this passes on its exit code
+if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
+
+
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}'##"
+`;
+
+snapshot[`nu / nixos / rem 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=nixos&wutNuPinned=1'#
+
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
+# the script reported its own failure; this passes on its exit code
+if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
+
+
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}'##"
+`;
+
+snapshot[`nu / nixos / sync 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=nixos&wutNuPinned=1'#
+
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
+# the script reported its own failure; this passes on its exit code
+if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
+
+
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}'##"
+`;
+
+snapshot[`nu / nixos / tidy 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=nixos&wutNuPinned=1'#
+
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
+# the script reported its own failure; this passes on its exit code
+if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
+
+
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}'##"
+`;
+
 snapshot[`nu / suse / add 1`] = `
 "^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
 try {
@@ -3197,6 +3407,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -3374,6 +3585,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -3462,6 +3674,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -3916,7 +4129,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -5986,6 +6199,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -6088,7 +6351,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_FIND = r#'{\\"groups\\":{\\"lang/rustup\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs '|' sh\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"rustlang.rustup\\"}],\\"shell/nu\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"nushell.nushell\\"}],\\"shell/zsh\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"zsh, zsh-completions\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"zsh, zsh-completions\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"zsh\\"}],\\"test/around\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"around\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"around\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"around\\"}],\\"test/hooks\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"hooks\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"hooks\\"}],\\"test/scriptfile\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"cfg/script/scriptfile/install.zsh\\"}],\\"test/slashed\\":[{\\"manager\\":\\"pnpm\\",\\"pkg\\":\\"@scope/pkg\\"},{\\"manager\\":\\"go\\",\\"pkg\\":\\"golang.org/x/tools/gopls\\"},{\\"manager\\":\\"scoop\\",\\"pkg\\":\\"extras/vscode\\"}],\\"test/standalone\\":[{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"standalone\\"}]},\\"remaining\\":[]}'#
 
@@ -6708,6 +6971,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -6885,6 +7149,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -6973,6 +7238,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -7427,7 +7693,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -9497,6 +9763,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -9599,7 +9915,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -10365,6 +10681,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -10542,6 +10859,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -10630,6 +10948,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -11084,7 +11403,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -13154,6 +13473,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -13256,7 +13625,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -14022,6 +14391,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -14199,6 +14569,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -14287,6 +14658,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -14741,7 +15113,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -16811,6 +17183,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -16913,7 +17335,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -17709,6 +18131,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -17886,6 +18309,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -17974,6 +18398,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -18428,7 +18853,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -20498,6 +20923,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -20600,7 +21075,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -21396,6 +21871,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -21573,6 +22049,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -21661,6 +22138,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -22115,7 +22593,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -24185,6 +24663,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -24287,7 +24815,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -25048,6 +25576,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -25225,6 +25754,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -25313,6 +25843,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -25767,7 +26298,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -27837,6 +28368,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -27939,7 +28520,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -28802,6 +29383,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -28979,6 +29561,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -29067,6 +29650,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -29521,7 +30105,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -31591,6 +32175,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -31693,7 +32327,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -32435,6 +33069,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -32612,6 +33247,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -32700,6 +33336,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -33154,7 +33791,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -35224,6 +35861,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -35326,7 +36013,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -36068,6 +36755,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -36245,6 +36933,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -36333,6 +37022,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -36787,7 +37477,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -38857,6 +39547,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -38959,7 +39699,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -39701,6 +40441,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -39878,6 +40619,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -39966,6 +40708,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -40420,7 +41163,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -42490,6 +43233,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -42592,7 +43385,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -43633,6 +44426,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -43810,6 +44604,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -43898,6 +44693,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -44352,7 +45148,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -46422,6 +47218,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -46524,7 +47370,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -47421,6 +48267,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -47598,6 +48445,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -47686,6 +48534,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -48140,7 +48989,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -50210,6 +51059,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -50312,7 +51211,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -51355,6 +52254,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -51532,6 +52432,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -51620,6 +52521,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -52074,7 +52976,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -54144,6 +55046,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -54246,7 +55198,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -55134,6 +56086,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -55311,6 +56264,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -55399,6 +56353,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -55853,7 +56808,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -57923,6 +58878,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -58025,7 +59030,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_SELF = r#'[{\\"group\\":\\"test/standalone\\",\\"path\\":\\"{HOME}/.standalone/bin/standalone\\",\\"args\\":[\\"self\\",\\"update\\"]}]'#
 
@@ -58743,6 +59748,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -58920,6 +59926,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -59008,6 +60015,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -59462,7 +60470,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -61532,6 +62540,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -61634,7 +62692,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_SELF = r#'[{\\"group\\":\\"test/standalone\\",\\"path\\":\\"{HOME}/.standalone/bin/standalone.exe\\",\\"args\\":[\\"self\\",\\"update\\"]}]'#
 
@@ -62354,6 +63412,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -62531,6 +63590,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -62619,6 +63679,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -63073,7 +64134,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -65143,6 +66204,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -65245,7 +66356,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -65982,6 +67093,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -66159,6 +67271,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -66247,6 +67360,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -66701,7 +67815,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -68771,6 +69885,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -68873,7 +70037,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_SELF = r#'[{\\"group\\":\\"test/standalone\\",\\"path\\":\\"{HOME}/.standalone/bin/standalone\\",\\"args\\":[\\"self\\",\\"update\\"]}]'#
 
@@ -69595,6 +70759,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -69772,6 +70937,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -69860,6 +71026,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -70314,7 +71481,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -72384,6 +73551,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -72486,7 +73703,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -73252,6 +74469,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -73429,6 +74647,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -73517,6 +74736,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -73971,7 +75191,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -76041,6 +77261,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -76143,7 +77413,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -76871,6 +78141,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -77048,6 +78319,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -77136,6 +78408,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -77590,7 +78863,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -79660,6 +80933,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -79762,7 +81085,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'choco'#, r#'scoop'# ]
 
 # one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
 
@@ -80480,6 +81803,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -80657,6 +81981,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -80745,6 +82070,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -81199,7 +82525,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -83264,6 +84590,56 @@ def --env packZypper [] {
           packOp ([\$cmd remove --clean-deps] ++ \$pkgs)
         }
       }
+    }
+  }
+}
+
+
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
     }
   }
 }
@@ -83990,6 +85366,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -84167,6 +85544,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -84255,6 +85633,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -84709,7 +86088,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -86774,6 +88153,56 @@ def --env packZypper [] {
           packOp ([\$cmd remove --clean-deps] ++ \$pkgs)
         }
       }
+    }
+  }
+}
+
+
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
     }
   }
 }
@@ -87500,6 +88929,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -87677,6 +89107,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -87765,6 +89196,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -88219,7 +89651,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -90289,6 +91721,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -90391,7 +91873,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_INFO_MAP = r#'{\\"ghpm\\":[\\"nu\\"],\\"cargo\\":[\\"nu\\"],\\"brew\\":[\\"nushell\\"],\\"pacman\\":[\\"nushell\\"],\\"xbps\\":[\\"nushell\\"],\\"winget\\":[\\"nushell.nushell\\"]}'#
 
@@ -91014,6 +92496,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -91191,6 +92674,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -91279,6 +92763,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -91733,7 +93218,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -93803,6 +95288,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -93905,7 +95440,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_INFO_MAP = r#'{}'#
 
@@ -94526,6 +96061,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -94703,6 +96239,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -94791,6 +96328,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -95245,7 +96783,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -97315,6 +98853,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -97417,7 +99005,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_FIND = r#'{\\"groups\\":{\\"shell/nu\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"nushell.nushell\\"}]},\\"remaining\\":[]}'#
 
@@ -98037,6 +99625,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -98214,6 +99803,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -98302,6 +99892,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -98756,7 +100347,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -100826,6 +102417,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -100928,7 +102569,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_FIND = r#'{\\"groups\\":{\\"shell/nu\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"nushell.nushell\\"}]},\\"remaining\\":[]}'#
 
@@ -101548,6 +103189,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -101725,6 +103367,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -101813,6 +103456,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -102267,7 +103911,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -104337,6 +105981,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -104439,7 +106133,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -105205,6 +106899,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -105382,6 +107077,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -105470,6 +107166,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -105924,7 +107621,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -107994,6 +109691,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -108096,7 +109843,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -108862,6 +110609,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -109039,6 +110787,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -109127,6 +110876,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -109581,7 +111331,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -111651,6 +113401,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -111753,7 +113553,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_FIND = r#'{\\"groups\\":{},\\"remaining\\":[\\"nosuchpackage\\"]}'#
 
@@ -112371,6 +114171,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -112548,6 +114349,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -112636,6 +114438,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -113090,7 +114893,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -115160,6 +116963,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -115262,7 +117115,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_FIND = r#'{\\"groups\\":{\\"lang/rustup\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs '|' sh\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"rustlang.rustup\\"}],\\"shell/nu\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"nushell.nushell\\"}],\\"shell/zsh\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"zsh, zsh-completions\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"zsh, zsh-completions\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"zsh\\"}],\\"test/around\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"around\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"around\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"around\\"}],\\"test/hooks\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"hooks\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"hooks\\"}],\\"test/scriptfile\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"cfg/script/scriptfile/install.zsh\\"}],\\"test/slashed\\":[{\\"manager\\":\\"pnpm\\",\\"pkg\\":\\"@scope/pkg\\"},{\\"manager\\":\\"go\\",\\"pkg\\":\\"golang.org/x/tools/gopls\\"},{\\"manager\\":\\"scoop\\",\\"pkg\\":\\"extras/vscode\\"}],\\"test/standalone\\":[{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"standalone\\"}]},\\"remaining\\":[]}'#
 
@@ -115882,6 +117735,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -116059,6 +117913,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -116147,6 +118002,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -116601,7 +118457,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -118671,6 +120527,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -118773,7 +120679,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_FIND = r#'{\\"groups\\":{\\"lang/rustup\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs '|' sh\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"rustlang.rustup\\"}]},\\"remaining\\":[]}'#
 
@@ -119393,6 +121299,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -119570,6 +121477,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -119658,6 +121566,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -120112,7 +122021,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -122182,6 +124091,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -122284,7 +124243,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -123050,6 +125009,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -123227,6 +125187,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -123315,6 +125276,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -123769,7 +125731,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -125839,6 +127801,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -125941,7 +127953,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -126707,6 +128719,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -126884,6 +128897,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -126972,6 +128986,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -127426,7 +129441,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -129496,6 +131511,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -129598,7 +131663,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -130394,6 +132459,7 @@ def --env packExists [manager: string, raw: string] {
     pacman => (packOk [pacman --sync --info \$name]),
     xbps => (packOk [xbps-query --repository --show \$name]),
     zypper => (packOk [zypper --non-interactive info \$name]),
+    nix => (packOk [nix eval --raw \$\\"(packNixInstallable \$name).name\\"]),
     choco => (packOk [choco info \$name]),
     scoop => (packOk ((packScoopCmd) ++ [info \$name])),
     winget => (packOk [winget show --exact --id \$name]),
@@ -130571,6 +132637,7 @@ def packListCmd [manager: string] {
     # not \`search --installed-only\`: it can report packages as installed when they aren't
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
+    nix => [nix profile list],
     choco => [choco list],
     scoop => ((packScoopCmd) ++ [list]),
     winget => [winget list],
@@ -130659,6 +132726,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
     emerge => (packOk [portageq has_version / \$name]),
+    nix => (packNixHas \$name),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -131113,7 +133181,7 @@ def --env packCallBase [manager: string] {
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
-    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
+    pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
 }
@@ -133183,6 +135251,56 @@ def --env packZypper [] {
 }
 
 
+# a bare name is nixpkgs' attribute of that name, which is what profile add and eval take; profile list, remove and
+# upgrade name an element by its attribute alone
+def packNixInstallable [raw: string] {
+  \$raw | split row ' ' | each { |w|
+    if (\$w | is-empty) or (\$w | str starts-with '-') or (\$w | str contains '#') { \$w } else { \$\\"nixpkgs#(\$w)\\" }
+  } | str join ' '
+}
+
+def packNixHas [name: string] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return false
+  }
+  (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
+}
+
+def --env packNix [] {
+  let mgr = 'nix'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  # a profile is the user's own, so nothing here takes sudo
+  match \$env.PACK_OP {
+    add => {
+      load-env {PACK_ADD_NAMES: (packNameList 'PACK_ADD_NAMES' | each { |n| packNixInstallable \$n })}
+      packOpAdd [\$mgr profile add]
+    }
+    info => {
+      for term in (packInfoNames) {
+        packDo [\$mgr search (packNixInstallable \$term) '^']
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    remove => {
+      packOpRemove [\$mgr profile remove]
+    }
+    sync => {
+      packOpSync [\$mgr profile upgrade --all] [\$mgr profile upgrade]
+    }
+    tidy => {
+      packOp [\$mgr profile wipe-history]
+      packOp [\$mgr store gc]
+    }
+  }
+}
+
+
 def --env packWinget [] {
   let cmd = 'winget'
   if (packSkip \$cmd) {
@@ -133285,7 +135403,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {

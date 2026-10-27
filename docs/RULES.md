@@ -155,6 +155,7 @@ dotnet  go  cargo                          user space, no sudo: the compiled sta
 script                                     what a group runs instead of a package
 brew  paru  yay  pacman                    darwin, then arch
 apk  apt  dnf  emerge  xbps  zypper        one distro each
+nix                                        nixos, or beside a distro's own
 winget  choco  scoop                       windows
 ```
 

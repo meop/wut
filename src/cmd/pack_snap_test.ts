@@ -237,6 +237,43 @@ Deno.test('nu / gentoo / tidy', async (t) => {
   await checkSyntax('nu', body)
 })
 
+// nu × nixos (nix)
+Deno.test('nu / nixos / add', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=nixos'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / nixos / find', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=nixos'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / nixos / list', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/list?sysOsPlat=linux&sysOs=nixos'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / nixos / out', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/out?sysOsPlat=linux&sysOs=nixos'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / nixos / rem', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/rem/firefox?sysOsPlat=linux&sysOs=nixos'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / nixos / sync', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/sync?sysOsPlat=linux&sysOs=nixos'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+Deno.test('nu / nixos / tidy', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=nixos'))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+})
+
 // nu × suse (zypper)
 Deno.test('nu / suse / add', async (t) => {
   const body = await (await runSrv(req('/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=suse'))).text()

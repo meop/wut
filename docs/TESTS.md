@@ -45,10 +45,10 @@ During CI, run `deno task test` (without `--update`) — any unexpected script c
 Package manager commands — nu × all supported managers × all 7 ops (`add`, `find`, `list`, `out`, `rem`, `sync`,
 `tidy`):
 
-| Shell | Platforms / managers                                                                                                                                    |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| nu    | alpine (apk), arch (pacman family), ubuntu (apt), rocky (dnf), gentoo (emerge), void (xbps), suse (zypper), darwin (brew), windows (winget+choco+scoop) |
-| nu    | no-sys params → bootstrap script                                                                                                                        |
+| Shell | Platforms / managers                                                                                                                                                 |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| nu    | alpine (apk), arch (pacman family), ubuntu (apt), rocky (dnf), gentoo (emerge), nixos (nix), void (xbps), suse (zypper), darwin (brew), windows (winget+choco+scoop) |
+| nu    | no-sys params → bootstrap script                                                                                                                                     |
 
 ### `src/cmd/virt_snap_test.ts`
 
