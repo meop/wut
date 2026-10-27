@@ -10,17 +10,42 @@ A group exists to state something the client cannot work out for itself:
 - **companions that ship separately** — `nodejs` plus `npm` on pacman, one package on brew
 - **something to run instead of a package install** — the `script` tier
 - **membership** — a group whose contents are other groups
+- **a place in a folder** — an optional companion of the group above it, or a tool of the same kind as its neighbours,
+  found and combined through that folder: `desktop/tool/remote/remmina/freerdp`
 
-A file whose every manager installs one name identical to the file name states none of those, and should not exist. The
-name falls through to the managers on its own.
+## Every entry is the same thing
+
+`add` runs one entry of a group, the first manager present in `GROUP_ORDER`, so a group is one thing, and each manager's
+entry is that thing in its own names. An entry that holds more or less than the others makes the same `wut p a` install
+something different on each machine, and nothing says so. Where one platform ships a companion inside the thing's own
+package, the group is the two together and every other entry lists both: brew's `node` carries npm, so pacman's entry is
+`nodejs` and `npm`. Where none does, a companion worth picking or leaving on its own — a plugin, a client beside a
+server, a tool that goes with another — is a group of its own in the folder of the one it goes with, a row of its own:
+`editor/nvim/pynvim`, `lang/go/golangci-lint`. A group also installs through one manager per machine, so two things one
+platform takes from different managers, one from winget and another from scoop, are two groups, even where another
+platform could keep them together. A group that is a whole setup by design, the same setup on every platform it names,
+is one thing too: `desktop/gnome`.
+
+## An entry can be gated
+
+A manager's entry takes a `gate`, with the same `sys_*` conditions a script's does. Where it fails, the group has no
+entry for that manager on this machine, and the next manager in `GROUP_ORDER` is the one reached.
+
+## Drop-ins
+
+A group's names can differ by more than the manager: debian and ubuntu both use apt. A drop-in is a file beside the
+group, named for it with levels after a dot, `<group>.<plat>[.<os>[.<arch>]]`, holding the same shape as the group.
+Wherever its levels match the machine (`sys_os_plat`, then `sys_os`, then `sys_cpu_arch`), it is merged into the group,
+broadest first: lists combine, maps merge key by key, and a single value the group already sets otherwise is an error. A
+drop-in is never a group of its own, so nothing lists it, and the common names stay in the group.
 
 ## Finding
 
 `pack find` is how something half remembered becomes a name to type, so it asks the wider of the two questions in
 [COMMANDS.md](COMMANDS.md): the term starts a word of a group's name, of an alias, of a package any manager declares for
-it, or of its `descr`. `wut p f tightvnc` finds the group that holds `glavsoft.tightvnc`, `wut p f remmina` the group
-remmina is part of, and `wut p f shell` everything whose description mentions one. What it prints is the group and its
-packages, which are the names `add` takes.
+it, or of its `descr`. `wut p f tightvnc` finds the group that holds `glavsoft.tightvnc`, `wut p f containerd` the group
+containerd.io is part of, and `wut p f shell` everything whose description mentions one. What it prints is the group and
+its packages, which are the names `add` takes.
 
 `add`, `remove`, `sync` and `info` ask the narrower one (Resolving, below), so find matching a group does not mean the
 same term adds it — that is the point of looking first. A name no group is found by is not dropped; it becomes a
@@ -45,7 +70,7 @@ would ask, and searches only the ones picked. Nothing to search for means no tab
 1. Each cli name resolves to groups via `resolveGroupName`, and has to be a name the group goes by, whole: a run of
    levels of its own path (`claude`, `agent/claude` and `ai/agent/claude` are all `ai/agent/claude.yaml`), a folder
    above it (`ai` is every group under `lang/`), or one of its aliases. Part of a name is not a name, and neither is a
-   package the group holds — `windirstat` does not reach `desktop/tool/extra`, since adding the group would install
+   package the group holds — `containerd.io` does not reach `virt/docker`, since adding the group would install
    everything else in it. A shorter or a second spelling a group should answer to is an alias, stated in its yaml. A
    name matching no group is a **loose name**, handed to the managers as typed. `remove` resolves exactly as `add` does
    and takes every group that matches, each a row to pick from.

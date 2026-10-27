@@ -1,7 +1,7 @@
 import type { Ctx } from '@meop/shire/ctx'
-import { assertEquals } from '@std/assert'
+import { assertEquals, assertThrows } from '@std/assert'
 
-import { evaluateGate, getSupportedManagers, groupOrdered, selectScriptEntry } from './pack.ts'
+import { evaluateGate, getSupportedManagers, groupOrdered, isDropIn, mergeDropIn, selectScriptEntry } from './pack.ts'
 
 // --- helpers ---
 
@@ -195,4 +195,38 @@ Deno.test('evaluateGate - a manager entry gate reads like a script entry gate', 
   assertEquals(evaluateGate(gate, mkCtx({ sys_os_plat: 'darwin', sys_os_like: 'darwin' })), false)
   // a gate naming context the client never sent cannot pass
   assertEquals(evaluateGate(gate, mkCtx({ sys_os_plat: 'linux' })), false)
+})
+
+// --- drop-ins ---
+
+Deno.test('isDropIn - a group file is not one', () => {
+  assertEquals(isDropIn(['sys', 'build', 'linux-headers']), false)
+})
+
+Deno.test('isDropIn - levels after a dot are', () => {
+  assertEquals(isDropIn(['sys', 'build', 'linux-headers.linux.debian']), true)
+})
+
+Deno.test('mergeDropIn - a manager the group lacks is added', () => {
+  const base = { operation: { add: { manager: { pacman: { names: ['linux-headers'] } } } } }
+  const dropIn = { operation: { add: { manager: { apt: { names: ['linux-headers-generic'] } } } } }
+  assertEquals(mergeDropIn(base, dropIn, 'x'), {
+    operation: {
+      add: { manager: { pacman: { names: ['linux-headers'] }, apt: { names: ['linux-headers-generic'] } } },
+    },
+  })
+})
+
+Deno.test('mergeDropIn - names combine with the common ones, once each', () => {
+  const base = { operation: { add: { manager: { apt: { names: ['a', 'b'] } } } } }
+  const dropIn = { operation: { add: { manager: { apt: { names: ['b', 'c'] } } } } }
+  assertEquals(mergeDropIn(base, dropIn, 'x'), { operation: { add: { manager: { apt: { names: ['a', 'b', 'c'] } } } } })
+})
+
+Deno.test('mergeDropIn - a single value set differently is an error', () => {
+  assertThrows(() => mergeDropIn({ descr: 'one' }, { descr: 'two' }, 'x'))
+})
+
+Deno.test('mergeDropIn - a single value set the same is kept', () => {
+  assertEquals(mergeDropIn({ descr: 'one' }, { descr: 'one' }, 'x'), { descr: 'one' })
 })

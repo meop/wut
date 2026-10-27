@@ -261,8 +261,56 @@ async function initOp(
   return { shell: _shell, allManagers }
 }
 
-async function loadGroupConfig(parts: Array<string>) {
-  return await getCfgFileLoad([PACK_KEY, ...parts], { extension: Fmt.yaml })
+// a drop-in is a group's file with levels after a dot, `<group>.<plat>[.<os>[.<arch>]]`: it is merged into the group
+// wherever its levels match this machine, so it is never a group of its own
+export function isDropIn(parts: Array<string>): boolean {
+  return parts.at(-1)?.includes('.') ?? false
+}
+
+async function getGroupParts(): Promise<Array<Array<string>>> {
+  return (await getCfgDirDump([PACK_KEY], { extension: Fmt.yaml })).filter((parts) => !isDropIn(parts))
+}
+
+// a drop-in adds to its group: lists combine, maps merge key by key, and a single value both set differently is an
+// error, since neither is more right than the other
+export function mergeDropIn(base: unknown, dropIn: unknown, where: string): unknown {
+  if (Array.isArray(base) && Array.isArray(dropIn)) {
+    return [...new Set([...base, ...dropIn])]
+  }
+  const isMap = (v: unknown): v is Record<string, unknown> => v != null && typeof v === 'object' && !Array.isArray(v)
+  if (isMap(base) && isMap(dropIn)) {
+    const merged: Record<string, unknown> = { ...base }
+    for (const [key, value] of Object.entries(dropIn)) {
+      merged[key] = key in base ? mergeDropIn(base[key], value, `${where}.${key}`) : value
+    }
+    return merged
+  }
+  if (base === dropIn) {
+    return base
+  }
+  throw new Error(`drop-in sets ${where}, which its group already sets otherwise`)
+}
+
+// with a machine to load for, each drop-in whose levels it matches is merged in, broadest first
+async function loadGroupConfig(parts: Array<string>, context?: Ctx) {
+  const content = await getCfgFileLoad([PACK_KEY, ...parts], { extension: Fmt.yaml })
+  if (content == null || !context) {
+    return content
+  }
+  let merged: unknown = content
+  let name = parts.at(-1) ?? ''
+  for (const level of [context.sys_os_plat, context.sys_os, context.sys_cpu_arch]) {
+    if (!level) {
+      break
+    }
+    name = `${name}.${level}`
+    const dropInParts = [...parts.slice(0, -1), name]
+    const dropIn = await getCfgFileLoad([PACK_KEY, ...dropInParts], { extension: Fmt.yaml })
+    if (dropIn != null) {
+      merged = mergeDropIn(merged, dropIn, groupName(dropInParts))
+    }
+  }
+  return merged
 }
 
 // operations live under 'operation', beside the group's own metadata
@@ -384,12 +432,12 @@ async function findGroups(
   allManagers: Array<string> | null,
   context: Ctx | null,
 ): Promise<{ entries: Array<FindEntry>; found: Array<string> }> {
-  const results = await getCfgDirDump([PACK_KEY], { extension: Fmt.yaml })
+  const results = await getGroupParts()
   const entries: Array<FindEntry> = []
   const found: Array<string> = []
   for (const r of results) {
     const name = groupName(r)
-    const content = await loadGroupConfig(r)
+    const content = await loadGroupConfig(r, context ?? undefined)
     if (content == null) {
       continue
     }
@@ -503,7 +551,7 @@ function groupSelfUpdate(content: unknown, group: string, plat: string): SelfUpd
 
 async function findSelfUpdates(plat: string): Promise<Array<SelfUpdate>> {
   const found: Array<SelfUpdate> = []
-  for (const parts of await getCfgDirDump([PACK_KEY], { extension: Fmt.yaml })) {
+  for (const parts of await getGroupParts()) {
     const self = groupSelfUpdate(await loadGroupConfig(parts), groupName(parts), plat)
     if (self) {
       found.push(self)
@@ -558,7 +606,7 @@ async function buildGroupUnit(
   name: string,
   cliName: string,
 ): Promise<{ unit: PlanUnit | null; arms: Array<string>; scriptArms: Map<string, Array<string>> }> {
-  const content = await loadGroupConfig(name.split('/'))
+  const content = await loadGroupConfig(name.split('/'), context)
   if (content == null) {
     return { unit: null, arms: [], scriptArms: new Map() }
   }
@@ -646,7 +694,7 @@ async function buildGroupUnit(
 }
 
 async function resolveGroupName(name: string): Promise<Array<string>> {
-  const results = await getCfgDirDump([PACK_KEY], { extension: Fmt.yaml })
+  const results = await getGroupParts()
   const matched: Array<string> = []
   const aliasMatched: Array<string> = []
   for (const parts of results) {
