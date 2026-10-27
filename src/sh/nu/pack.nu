@@ -338,7 +338,7 @@ def packListCmd [manager: string] {
     paru => [paru --query],
     pacman => [pacman --query],
     xbps => [xbps-query --list-pkgs],
-    # not `search --installed-only`: it can report packages as installed when they aren't
+    # not `search --installed-only`: it lists installed patterns too, beside packages of the same name
     # https://github.com/openSUSE/zypper/issues/498
     zypper => [zypper packages --installed-only],
     nix => [nix profile list],
