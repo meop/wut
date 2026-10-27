@@ -29,6 +29,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if $env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = ($triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not ($gnu_loader | path exists))
+  let triple = if $musl { $triple | str replace --regex '-gnu$' '-musl' } else { $triple }
   if $triple == '' {
     opPrintErr $"unsupported platform/arch for nu sync: ($env.SYS_OS_PLAT)/($env.SYS_CPU_ARCH)"
     exit 1

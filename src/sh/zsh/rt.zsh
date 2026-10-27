@@ -36,9 +36,12 @@ function () {
         ;;
     esac
 
-    # a musl system (alpine) cannot run the gnu build
     local -a musl_loaders=(/lib/ld-musl-*.so.1(N))
-    if (( ${#musl_loaders} )); then
+    local gnu_loader=/lib64/ld-linux-x86-64.so.2
+    if [[ ${SYS_CPU_ARCH} == aarch64 ]]; then
+      gnu_loader=/lib/ld-linux-aarch64.so.1
+    fi
+    if [[ ${triple} == *-gnu ]] && { (( ${#musl_loaders} )) || [[ ! -e ${gnu_loader} ]] }; then
       triple=${triple/%-gnu/-musl}
     fi
 

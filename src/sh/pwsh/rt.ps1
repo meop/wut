@@ -33,8 +33,8 @@
       'windows_x86_64' { 'x86_64-pc-windows-msvc' }
       default { '' }
     }
-    # a musl system (alpine) cannot run the gnu build
-    if ($env:SYS_OS_PLAT -eq 'linux' -and (Get-ChildItem -Path '/lib/ld-musl-*.so.1' -ErrorAction SilentlyContinue)) {
+    $gnuLoader = if ($env:SYS_CPU_ARCH -eq 'aarch64') { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+    if ($triple -like '*-gnu' -and ((Get-ChildItem -Path '/lib/ld-musl-*.so.1' -ErrorAction SilentlyContinue) -or -not (Test-Path $gnuLoader))) {
       $triple = $triple -replace '-gnu$', '-musl'
     }
     if ($triple -eq '') {

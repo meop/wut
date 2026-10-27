@@ -14,6 +14,29 @@ def packNixHas [name: string] {
   ($name | split row '#' | last) in ($listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if $listed.exit_code != 0 {
+    return []
+  }
+  $listed.stdout | from json | get elements | transpose name element
+    | where { |r| $r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = $"($r.element.originalUrl)#($r.element.attrPath).outPath"
+      let res = (do { ^nix eval --raw $target } | complete)
+      if $res.exit_code != 0 {
+        opPrintWarn $"nix eval ($target) failed: ($res.stderr | str trim | lines | last 1 | str join)"
+        return null
+      }
+      if $res.stdout in $r.element.storePaths {
+        return null
+      }
+      let named = { |p| $p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: $r.name, from: (do $named ($r.element.storePaths | first)), to: (do $named $res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip $mgr) {
@@ -33,6 +56,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd $mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if ($terms | is-empty) or ($terms | any { |t| wutWordMatch $o.name $t }) {
+          opPrint (if $o.from == $o.to { $"($o.name) ($o.from) rebuilt" } else { $"($o.name) ($o.from) -> ($o.to)" })
+        }
+      }
     }
     remove => {
       packOpRemove [$mgr profile remove]

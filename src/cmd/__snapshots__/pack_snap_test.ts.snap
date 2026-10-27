@@ -2674,6 +2674,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
     exit 1
@@ -3021,6 +3024,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -3263,7 +3269,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -3621,7 +3627,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -6215,6 +6221,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -6234,6 +6263,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -6583,6 +6620,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -6827,7 +6867,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -7185,7 +7225,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -9779,6 +9819,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -9798,6 +9861,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -10293,6 +10364,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -10537,7 +10611,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -10895,7 +10969,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -13489,6 +13563,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -13508,6 +13605,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -14003,6 +14108,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -14247,7 +14355,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -14605,7 +14713,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -17199,6 +17307,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -17218,6 +17349,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -17743,6 +17882,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -17987,7 +18129,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -18345,7 +18487,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -20939,6 +21081,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -20958,6 +21123,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -21483,6 +21656,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -21727,7 +21903,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -22085,7 +22261,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -24679,6 +24855,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -24698,6 +24897,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -25188,6 +25395,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -25432,7 +25642,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -25790,7 +26000,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -28384,6 +28594,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -28403,6 +28636,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -28995,6 +29236,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -29239,7 +29483,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -29597,7 +29841,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -32191,6 +32435,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -32210,6 +32477,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -32681,6 +32956,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -32925,7 +33203,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -33283,7 +33561,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -35877,6 +36155,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -35896,6 +36197,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -36367,6 +36676,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -36611,7 +36923,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -36969,7 +37281,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -39563,6 +39875,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -39582,6 +39917,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -40053,6 +40396,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -40297,7 +40643,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -40655,7 +41001,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -43249,6 +43595,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -43268,6 +43637,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -44038,6 +44415,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -44282,7 +44662,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -44640,7 +45020,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -47234,6 +47614,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -47253,6 +47656,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -47879,6 +48290,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -48123,7 +48537,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -48481,7 +48895,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -51075,6 +51489,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -51094,6 +51531,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -51866,6 +52311,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -52110,7 +52558,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -52468,7 +52916,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -55062,6 +55510,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -55081,6 +55552,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -55700,6 +56179,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -55942,7 +56424,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -56300,7 +56782,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -58894,6 +59376,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -58913,6 +59418,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -59362,6 +59875,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -59604,7 +60120,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -59962,7 +60478,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -62556,6 +63072,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -62575,6 +63114,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -63024,6 +63571,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -63268,7 +63818,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -63626,7 +64176,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -66220,6 +66770,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -66239,6 +66812,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -66707,6 +67288,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -66949,7 +67533,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -67307,7 +67891,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -69901,6 +70485,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -69920,6 +70527,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -70371,6 +70986,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -70615,7 +71233,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -70973,7 +71591,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -73567,6 +74185,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -73586,6 +74227,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -74081,6 +74730,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -74325,7 +74977,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -74683,7 +75335,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -77277,6 +77929,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -77296,6 +77971,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -77755,6 +78438,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -77997,7 +78683,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -78355,7 +79041,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -80949,6 +81635,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -80968,6 +81677,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -81417,6 +82134,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -81659,7 +82379,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -82017,7 +82737,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -84611,6 +85331,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -84630,6 +85373,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -84747,7 +85498,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'npm'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'npm'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_OUTDATED_NAMES = [  ]
 
@@ -84978,6 +85729,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -85222,7 +85976,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -85580,7 +86334,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -88174,6 +88928,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -88193,6 +88970,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -88310,7 +89095,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'npm'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'npm'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'nix'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_OUTDATED_NAMES = [ r#'nu'# ]
 
@@ -88541,6 +89326,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -88785,7 +89573,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -89143,7 +89931,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -91737,6 +92525,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -91756,6 +92567,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -92108,6 +92927,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -92352,7 +93174,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -92710,7 +93532,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -95304,6 +96126,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -95323,6 +96168,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -95673,6 +96526,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -95917,7 +96773,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -96275,7 +97131,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -98869,6 +99725,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -98888,6 +99767,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -99237,6 +100124,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -99481,7 +100371,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -99839,7 +100729,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -102433,6 +103323,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -102452,6 +103365,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -102801,6 +103722,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -103045,7 +103969,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -103403,7 +104327,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -105997,6 +106921,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -106016,6 +106963,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -106511,6 +107466,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -106755,7 +107713,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -107113,7 +108071,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -109707,6 +110665,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -109726,6 +110707,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -110221,6 +111210,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -110465,7 +111457,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -110823,7 +111815,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -113417,6 +114409,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -113436,6 +114451,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -113785,6 +114808,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -114027,7 +115053,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -114385,7 +115411,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -116979,6 +118005,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -116998,6 +118047,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -117347,6 +118404,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -117591,7 +118651,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -117949,7 +119009,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -120543,6 +121603,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -120562,6 +121645,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -120911,6 +122002,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -121155,7 +122249,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -121513,7 +122607,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -124107,6 +125201,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -124126,6 +125243,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -124621,6 +125746,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -124865,7 +125993,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -125223,7 +126351,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -127817,6 +128945,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -127836,6 +128987,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -128331,6 +129490,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -128575,7 +129737,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -128933,7 +130095,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -131527,6 +132689,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -131546,6 +132731,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]
@@ -132071,6 +133264,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     'windows_x86_64' => 'x86_64-pc-windows-msvc',
     _ => '',
   }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
     opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
@@ -132315,7 +133511,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in \$names {
-    packDo (\$cmds ++ ['|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
+    packDo (\$cmds ++ ['|' ansi strip '|' find --regex \$\\"r#'(wutWordPattern \$term)'#\\"])
   }
 }
 
@@ -132673,7 +133869,7 @@ def --env packListedRaw [manager: string] {
   }
   \$env.PACK_PRINTED = '1'
   opPrintCmd ...\$cmds
-  packCompleteListing \$cmds | get stdout | lines
+  packCompleteListing \$cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
@@ -135267,6 +136463,29 @@ def packNixHas [name: string] {
   (\$name | split row '#' | last) in (\$listed.stdout | from json | get elements | columns)
 }
 
+def packNixOutdated [] {
+  let listed = (do { ^nix profile list --json } | complete)
+  if \$listed.exit_code != 0 {
+    return []
+  }
+  \$listed.stdout | from json | get elements | transpose name element
+    | where { |r| \$r.element.originalUrl? | is-not-empty }
+    | each { |r|
+      let target = \$\\"(\$r.element.originalUrl)#(\$r.element.attrPath).outPath\\"
+      let res = (do { ^nix eval --raw \$target } | complete)
+      if \$res.exit_code != 0 {
+        opPrintWarn \$\\"nix eval (\$target) failed: (\$res.stderr | str trim | lines | last 1 | str join)\\"
+        return null
+      }
+      if \$res.stdout in \$r.element.storePaths {
+        return null
+      }
+      let named = { |p| \$p | path basename | str replace --regex '^[0-9a-z]{32}-' '' }
+      {name: \$r.name, from: (do \$named (\$r.element.storePaths | first)), to: (do \$named \$res.stdout)}
+    }
+    | compact
+}
+
 def --env packNix [] {
   let mgr = 'nix'
   if (packSkip \$mgr) {
@@ -135286,6 +136505,14 @@ def --env packNix [] {
     }
     list => {
       packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      let terms = (packNameList 'PACK_OUTDATED_NAMES')
+      for o in (packNixOutdated) {
+        if (\$terms | is-empty) or (\$terms | any { |t| wutWordMatch \$o.name \$t }) {
+          opPrint (if \$o.from == \$o.to { \$\\"(\$o.name) (\$o.from) rebuilt\\" } else { \$\\"(\$o.name) (\$o.from) -> (\$o.to)\\" })
+        }
+      }
     }
     remove => {
       packOpRemove [\$mgr profile remove]

@@ -19,7 +19,7 @@ def --env packFiltered [cmds: list<string>, names: list<string>] {
     return
   }
   for term in $names {
-    packDo ($cmds ++ ['|' find --regex $"r#'(wutWordPattern $term)'#"])
+    packDo ($cmds ++ ['|' ansi strip '|' find --regex $"r#'(wutWordPattern $term)'#"])
   }
 }
 
@@ -377,7 +377,7 @@ def --env packListedRaw [manager: string] {
   }
   $env.PACK_PRINTED = '1'
   opPrintCmd ...$cmds
-  packCompleteListing $cmds | get stdout | lines
+  packCompleteListing $cmds | get stdout | lines | ansi strip
 }
 
 def packLinesLike [lines: list<string>, term: string] {
