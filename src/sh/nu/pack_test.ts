@@ -45,8 +45,12 @@ async function withStubs(
     }
     path.push(dir)
     const body = [
-      // the same op helpers the client is sent, so the checks print and run exactly as they do in a real script
-      await getScriptFlavorOpPreamble('nu'),
+      // the same op helpers the client is sent, so the checks print and run exactly as they do in a real script. the
+      // checks echo themselves, which is right in a run and noise in a decision probe, so a probe hides them
+      (await getScriptFlavorOpPreamble('nu')).replace(
+        /^def opPrintCmd --wrapped \[\.\.\.args\] \{$/m,
+        '$&\n  if PROBE_QUIET in $env { return }',
+      ),
       await Deno.readTextFile(PATH_NU),
       await Deno.readTextFile(MATCH_NU),
       pick == null ? await Deno.readTextFile(SEL_NU) : (await Deno.readTextFile(SEL_NU)).replace(
@@ -59,10 +63,9 @@ async function withStubs(
       ...await Promise.all(
         managerFiles.map((m) => Deno.readTextFile(new URL(`./pack/${m}.nu`, import.meta.url).pathname)),
       ),
-      // the checks echo themselves, which is right in a run and noise in a decision probe
-      ...(managerFiles.length ? [] : [`$env.SUCCINCT = '1'`]),
       // plain rather than coloured, so an assertion can match the command a check printed
       `$env.GRAYSCALE = '1'`,
+      ...(managerFiles.length ? [] : [`$env.PROBE_QUIET = '1'`]),
       `$env.HOME = '${home}'`,
       `$env.PATH = ${JSON.stringify(path).replaceAll('"', "'")}`,
       `$env.PACK_MANAGERS = ${JSON.stringify(managers).replaceAll('"', "'")}`,
@@ -788,7 +791,7 @@ Deno.test('nu / pack / post scripts run after the installs that succeeded, once 
     { pacman: '', rustup: '', cargo: '' },
     [
       // the listing and the skip notice are what is under test here, not just the decision
-      `hide-env SUCCINCT`,
+      `hide-env PROBE_QUIET`,
       `def --env packRunUnit [id: string] {`,
       `  if $id == 'broken|pacman' { error make { msg: 'install failed' } }`,
       `  print $"ran ($id)"`,
@@ -833,7 +836,7 @@ Deno.test('nu / pack / pre scripts run before the removals, once each', async ()
     // pacman answers that both are installed, so both are removed through it
     { pacman: 'exit 0', docker: '' },
     [
-      `hide-env SUCCINCT`,
+      `hide-env PROBE_QUIET`,
       `def --env packRunUnit [id: string] { print $"ran ($id)" }`,
       `$env.PACK_OP = 'remove'`,
       `$env.YES = '1'`,
@@ -916,7 +919,7 @@ Deno.test('nu / pack / standalone installs update themselves, and a refusal does
   const out = await withStubs(
     {},
     [
-      `hide-env SUCCINCT`,
+      `hide-env PROBE_QUIET`,
       `mkdir ($env.HOME | path join .yes bin) ($env.HOME | path join .no bin)`,
       `"#!/bin/sh\\necho \\"updated $*\\"\\n" | save ($env.HOME | path join .yes bin yes)`,
       `"#!/bin/sh\\necho 'self update is disabled for this build'\\nexit 1\\n" | save ($env.HOME | path join .no bin no)`,
@@ -952,7 +955,7 @@ Deno.test('nu / pack / a manager updates itself right before its own sync', asyn
   const out = await withStubs(
     { brew: '', ghpm: '' },
     [
-      `hide-env SUCCINCT`,
+      `hide-env PROBE_QUIET`,
       `mkdir ($env.HOME | path join .ghpm bin) ($env.HOME | path join .local bin)`,
       `touch ($env.HOME | path join .ghpm bin ghpm) ($env.HOME | path join .local bin codex)`,
       `def --env packBrew [] { print 'ran brew' }`,
@@ -980,7 +983,7 @@ Deno.test('nu / pack / picking a manager alone still updates it first', async ()
   const out = await withStubs(
     { brew: '', ghpm: '' },
     [
-      `hide-env SUCCINCT`,
+      `hide-env PROBE_QUIET`,
       `mkdir ($env.HOME | path join .ghpm bin) ($env.HOME | path join .local bin)`,
       `touch ($env.HOME | path join .ghpm bin ghpm) ($env.HOME | path join .local bin codex)`,
       `def --env packBrew [] { print 'ran brew' }`,
@@ -1008,7 +1011,7 @@ Deno.test('nu / pack / no script row when every standalone install is a manager 
   const out = await withStubs(
     { ghpm: '' },
     [
-      `hide-env SUCCINCT`,
+      `hide-env PROBE_QUIET`,
       `mkdir ($env.HOME | path join .ghpm bin)`,
       `touch ($env.HOME | path join .ghpm bin ghpm)`,
       `def --env packGhpm [] { print 'ran ghpm' }`,
@@ -1315,7 +1318,7 @@ Deno.test('nu / pack / a post script finds what the run just installed', async (
   const out = await withStubs(
     { pacman: '' },
     [
-      `hide-env SUCCINCT`,
+      `hide-env PROBE_QUIET`,
       `$env.SYS_OS_PLAT = 'linux'`,
       `$env.PATH = ($env.PATH | append ['/usr/bin' '/bin'])`,
       `'path=($HOME/.cargo/bin $path)' | save ($env.HOME | path join .zshenv)`,
@@ -1883,7 +1886,7 @@ Deno.test('nu / pack / the copy kept runs inside itself, though PATH finds anoth
       `$env.PATH = ($env.PATH | reverse)`,
       `def --env packGoHeld [] { packHeld $"go \\((which go | get 0.path | path dirname | path basename))" }`,
       `def --env packGo [] { print $"ran (which go | get 0.path)" }`,
-      `hide-env SUCCINCT`,
+      `hide-env PROBE_QUIET`,
       `$env.PACK_OP = 'sync'`,
       'packManagerPlanRun',
     ].join('\n'),

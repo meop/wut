@@ -21,8 +21,11 @@
 
   function wutNuInstall ([string]$wutHome, [string]$nuBin, [string]$nuVers, [string]$ext) {
     if (wutNuVersCurrent $nuBin $nuVers) {
+      opPrintVerbose "nu ${nuVers}: current at ${nuBin}"
       return
     }
+    $found = if (Test-Path -Path $nuBin -PathType Leaf) { (& $nuBin --version 2>$null | Out-String).Trim() } else { '' }
+    opPrintVerbose "nu ${nuVers}: ${nuBin} has $(if ($found) { $found } else { 'none' }), syncing"
 
     $triple = switch ("${env:SYS_OS_PLAT}_${env:SYS_CPU_ARCH}") {
       'darwin_aarch64' { 'aarch64-apple-darwin' }
@@ -58,6 +61,9 @@
         $acquired = $true
         break
       } catch {
+        if ($waited -eq 0) {
+          opPrintVerbose "nu ${nuVers}: waiting on another sync's lock ${lockDir}"
+        }
         Start-Sleep -Milliseconds 500
         $waited += 1
       }
@@ -86,6 +92,7 @@
 
     Remove-Item -Force -Recurse -Path $archivePath, $extractDir -ErrorAction SilentlyContinue
 
+    opPrintVerbose "nu ${nuVers}: fetching ${url}"
     & curl --fail-with-body --location --no-progress-meter --output $archivePath --url $url
     if ($LASTEXITCODE -ne 0) {
       opPrintErr "failed to download nu ${nuVers}: ${url}"
@@ -96,6 +103,7 @@
 
     # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
     # extractDir; tar.gz assets already contain their own nu-${nuVers}-${triple} folder, so they extract into workDir
+    opPrintVerbose "nu ${nuVers}: extracting into $(if ($extArchive -eq 'zip') { $extractDir } else { $workDir })"
     if ($extArchive -eq 'zip') {
       New-Item -ItemType Directory -Force -Path $extractDir | Out-Null
       & tar -xf $archivePath -C $extractDir
@@ -122,6 +130,7 @@
     }
     Move-Item -Force -Path $extractedBin -Destination $nuBin
     Remove-Item -Force -Recurse -Path $archivePath, $extractDir -ErrorAction SilentlyContinue
+    opPrintVerbose "nu ${nuVers}: installed at ${nuBin}"
 
     wutNuLockRelease $lockDir
   }

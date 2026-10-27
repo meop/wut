@@ -2408,16 +2408,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$"(\$args | flatten | str join ' ')" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print --stderr
     return
@@ -2426,9 +2420,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
@@ -2437,9 +2428,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
@@ -2448,9 +2436,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
@@ -2458,10 +2443,14 @@ def opPrintInfo --wrapped [...args] {
   \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$"(\$args | flatten | str join ' ')" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$"(\$args | flatten | str join ' ')" | print
     return
@@ -2662,8 +2651,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$"nu (\$nu_vers): current at (\$nu_bin)"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing"
 
   let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -2698,6 +2690,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -2724,7 +2719,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$"nu (\$nu_vers): fetching (\$url)"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -2739,7 +2737,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$"nu (\$nu_vers): extracting into (\$extract_target)"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$"failed to extract nu (\$nu_vers)"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -2759,6 +2760,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$"nu (\$nu_vers): installed at (\$nu_bin)"
 
   wutNuLockRelease \$lock_path
 }
@@ -2821,16 +2823,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -2839,9 +2835,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -2850,9 +2843,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -2861,9 +2851,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -2871,10 +2858,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -3012,8 +3003,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -3048,6 +3042,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -3074,7 +3071,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -3089,7 +3089,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -3109,6 +3112,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -6417,16 +6421,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/nu?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -6435,9 +6433,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -6446,9 +6441,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -6457,9 +6449,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -6467,10 +6456,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -6608,8 +6601,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -6644,6 +6640,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -6670,7 +6669,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -6685,7 +6687,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -6705,6 +6710,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -10161,16 +10167,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/rem/nu?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -10179,9 +10179,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -10190,9 +10187,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -10201,9 +10195,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -10211,10 +10202,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -10352,8 +10347,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -10388,6 +10386,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -10414,7 +10415,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -10429,7 +10433,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -10449,6 +10456,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -13905,16 +13913,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/shell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -13923,9 +13925,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -13934,9 +13933,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -13945,9 +13941,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -13955,10 +13948,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -14096,8 +14093,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -14132,6 +14132,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -14158,7 +14161,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -14173,7 +14179,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -14193,6 +14202,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -17679,16 +17689,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/rem/shell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -17697,9 +17701,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -17708,9 +17709,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -17719,9 +17717,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -17729,10 +17724,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -17870,8 +17869,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -17906,6 +17908,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -17932,7 +17937,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -17947,7 +17955,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -17967,6 +17978,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -21453,16 +21465,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/rustup?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -21471,9 +21477,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -21482,9 +21485,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -21493,9 +21493,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -21503,10 +21500,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -21644,8 +21645,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -21680,6 +21684,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -21706,7 +21713,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -21721,7 +21731,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -21741,6 +21754,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -25194,16 +25208,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/scriptfile?sysOsPlat=linux&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -25212,9 +25220,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -25223,9 +25228,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -25234,9 +25236,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -25244,10 +25243,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -25383,8 +25386,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -25419,6 +25425,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -25445,7 +25454,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -25460,7 +25472,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -25480,6 +25495,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -28767,16 +28783,10 @@ def --env packRunUnit [id: string] {
   match \$id {
     r#'test/scriptfile|script'# => {
 zsh --no-rcs -c r#'function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\" >&2
     return
@@ -28787,9 +28797,6 @@ function opPrintErr {
 }
 
 function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -28800,9 +28807,6 @@ function opPrintSucc {
 }
 
 function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -28813,9 +28817,6 @@ function opPrintWarn {
 }
 
 function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -28825,10 +28826,14 @@ function opPrintInfo {
   print \\"\\\\033[0m\\"
 }
 
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
+function opPrintVerbose {
+  if [[ -z \$VERBOSE ]]; then
     return
   fi
+  print -r -- \\"\$*\\" >&2
+}
+
+function opPrintCmd {
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -29035,16 +29040,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/hooks?sysOsPlat=linux&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -29053,9 +29052,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -29064,9 +29060,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -29075,9 +29068,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -29085,10 +29075,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -29224,8 +29218,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -29260,6 +29257,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -29286,7 +29286,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -29301,7 +29304,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -29321,6 +29327,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -32755,16 +32762,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/hooks?sysOsPlat=linux&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -32773,9 +32774,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -32784,9 +32782,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -32795,9 +32790,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -32805,10 +32797,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -32944,8 +32940,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -32980,6 +32979,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -33006,7 +33008,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -33021,7 +33026,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -33041,6 +33049,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -36475,16 +36484,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/hooks?sysOsPlat=linux&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -36493,9 +36496,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -36504,9 +36504,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -36515,9 +36512,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -36525,10 +36519,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -36664,8 +36662,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -36700,6 +36701,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -36726,7 +36730,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -36741,7 +36748,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -36761,6 +36771,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -40195,16 +40206,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/around?sysOsPlat=linux&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -40213,9 +40218,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -40224,9 +40226,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -40235,9 +40234,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -40245,10 +40241,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -40384,8 +40384,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -40420,6 +40423,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -40446,7 +40452,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -40461,7 +40470,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -40481,6 +40493,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -43786,16 +43799,10 @@ hide-env PACK_MANAGER
     }
     r#'cargo/setup'# => {
       zsh --no-rcs -c r#'function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\" >&2
     return
@@ -43806,9 +43813,6 @@ function opPrintErr {
 }
 
 function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -43819,9 +43823,6 @@ function opPrintSucc {
 }
 
 function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -43832,9 +43833,6 @@ function opPrintWarn {
 }
 
 function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -43844,10 +43842,14 @@ function opPrintInfo {
   print \\"\\\\033[0m\\"
 }
 
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
+function opPrintVerbose {
+  if [[ -z \$VERBOSE ]]; then
     return
   fi
+  print -r -- \\"\$*\\" >&2
+}
+
+function opPrintCmd {
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -43937,16 +43939,10 @@ function () {
     }
     r#'docker/setup'# => {
       zsh --no-rcs -c r#'function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\" >&2
     return
@@ -43957,9 +43953,6 @@ function opPrintErr {
 }
 
 function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -43970,9 +43963,6 @@ function opPrintSucc {
 }
 
 function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -43983,9 +43973,6 @@ function opPrintWarn {
 }
 
 function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -43995,10 +43982,14 @@ function opPrintInfo {
   print \\"\\\\033[0m\\"
 }
 
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
+function opPrintVerbose {
+  if [[ -z \$VERBOSE ]]; then
     return
   fi
+  print -r -- \\"\$*\\" >&2
+}
+
+function opPrintCmd {
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -44214,16 +44205,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/around?sysOsPlat=darwin&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -44232,9 +44217,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -44243,9 +44225,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -44254,9 +44233,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -44264,10 +44240,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -44403,8 +44383,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -44439,6 +44422,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -44465,7 +44451,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -44480,7 +44469,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -44500,6 +44492,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -47805,16 +47798,10 @@ hide-env PACK_MANAGER
     }
     r#'cargo/setup'# => {
       zsh --no-rcs -c r#'function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\" >&2
     return
@@ -47825,9 +47812,6 @@ function opPrintErr {
 }
 
 function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -47838,9 +47822,6 @@ function opPrintSucc {
 }
 
 function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -47851,9 +47832,6 @@ function opPrintWarn {
 }
 
 function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -47863,10 +47841,14 @@ function opPrintInfo {
   print \\"\\\\033[0m\\"
 }
 
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
+function opPrintVerbose {
+  if [[ -z \$VERBOSE ]]; then
     return
   fi
+  print -r -- \\"\$*\\" >&2
+}
+
+function opPrintCmd {
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -48089,16 +48071,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/around?sysOsPlat=windows&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -48107,9 +48083,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -48118,9 +48091,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -48129,9 +48099,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -48139,10 +48106,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -48278,8 +48249,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -48314,6 +48288,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -48340,7 +48317,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -48355,7 +48335,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -48375,6 +48358,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -51680,16 +51664,10 @@ hide-env PACK_MANAGER
     }
     r#'cargo/setup'# => {
       pwsh -noprofile -c r#'function opPrint {
-  if (\$env:SUCCINCT) {
-    return
-  }
   [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
 }
 
 function opPrintErr {
-  if (\$env:SUCCINCT) {
-    return
-  }
   if (\$env:GRAYSCALE) {
     [Console]::Error.WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
@@ -51700,9 +51678,6 @@ function opPrintErr {
 }
 
 function opPrintSucc {
-  if (\$env:SUCCINCT) {
-    return
-  }
   if (\$env:GRAYSCALE) {
     [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
@@ -51713,9 +51688,6 @@ function opPrintSucc {
 }
 
 function opPrintWarn {
-  if (\$env:SUCCINCT) {
-    return
-  }
   if (\$env:GRAYSCALE) {
     [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
@@ -51726,9 +51698,6 @@ function opPrintWarn {
 }
 
 function opPrintInfo {
-  if (\$env:SUCCINCT) {
-    return
-  }
   if (\$env:GRAYSCALE) {
     [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
@@ -51738,10 +51707,14 @@ function opPrintInfo {
   [Console]::ResetColor()
 }
 
-function opPrintCmd {
-  if (\$env:SUCCINCT) {
+function opPrintVerbose {
+  if (-not \$env:VERBOSE) {
     return
   }
+  [Console]::Error.WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
+}
+
+function opPrintCmd {
   if (\$env:GRAYSCALE) {
     [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
@@ -51832,16 +51805,10 @@ function opPrintMaybeRunCmd {
     }
     r#'docker/setup'# => {
       pwsh -noprofile -c r#'function opPrint {
-  if (\$env:SUCCINCT) {
-    return
-  }
   [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
 }
 
 function opPrintErr {
-  if (\$env:SUCCINCT) {
-    return
-  }
   if (\$env:GRAYSCALE) {
     [Console]::Error.WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
@@ -51852,9 +51819,6 @@ function opPrintErr {
 }
 
 function opPrintSucc {
-  if (\$env:SUCCINCT) {
-    return
-  }
   if (\$env:GRAYSCALE) {
     [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
@@ -51865,9 +51829,6 @@ function opPrintSucc {
 }
 
 function opPrintWarn {
-  if (\$env:SUCCINCT) {
-    return
-  }
   if (\$env:GRAYSCALE) {
     [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
@@ -51878,9 +51839,6 @@ function opPrintWarn {
 }
 
 function opPrintInfo {
-  if (\$env:SUCCINCT) {
-    return
-  }
   if (\$env:GRAYSCALE) {
     [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
@@ -51890,10 +51848,14 @@ function opPrintInfo {
   [Console]::ResetColor()
 }
 
-function opPrintCmd {
-  if (\$env:SUCCINCT) {
+function opPrintVerbose {
+  if (-not \$env:VERBOSE) {
     return
   }
+  [Console]::Error.WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
+}
+
+function opPrintCmd {
   if (\$env:GRAYSCALE) {
     [Console]::WriteLine(((\$args | ForEach-Object { \$_ }) -join ' '))
     return
@@ -52110,16 +52072,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/around?sysOsPlat=linux&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -52128,9 +52084,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -52139,9 +52092,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -52150,9 +52100,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -52160,10 +52107,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -52299,8 +52250,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -52335,6 +52289,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -52361,7 +52318,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -52376,7 +52336,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -52396,6 +52359,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -55701,16 +55665,10 @@ hide-env PACK_MANAGER
     }
     r#'docker/teardown'# => {
       zsh --no-rcs -c r#'function opPrint {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\" >&2
     return
@@ -55721,9 +55679,6 @@ function opPrintErr {
 }
 
 function opPrintSucc {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -55734,9 +55689,6 @@ function opPrintSucc {
 }
 
 function opPrintWarn {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -55747,9 +55699,6 @@ function opPrintWarn {
 }
 
 function opPrintInfo {
-  if [[ \$SUCCINCT ]]; then
-    return
-  fi
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -55759,10 +55708,14 @@ function opPrintInfo {
   print \\"\\\\033[0m\\"
 }
 
-function opPrintCmd {
-  if [[ \$SUCCINCT ]]; then
+function opPrintVerbose {
+  if [[ -z \$VERBOSE ]]; then
     return
   fi
+  print -r -- \\"\$*\\" >&2
+}
+
+function opPrintCmd {
   if [[ \$GRAYSCALE ]]; then
     print -r -- \\"\$*\\"
     return
@@ -55978,16 +55931,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -55996,9 +55943,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -56007,9 +55951,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -56018,9 +55959,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -56028,10 +55966,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -56167,8 +56109,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -56203,6 +56148,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -56229,7 +56177,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -56244,7 +56195,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -56264,6 +56218,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -59674,16 +59629,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=windows&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -59692,9 +59641,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -59703,9 +59649,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -59714,9 +59657,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -59724,10 +59664,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -59863,8 +59807,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -59899,6 +59846,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -59925,7 +59875,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -59940,7 +59893,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -59960,6 +59916,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -63370,16 +63327,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync/standalone?sysOsPlat=linux&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -63388,9 +63339,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -63399,9 +63347,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -63410,9 +63355,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -63420,10 +63362,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -63559,8 +63505,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -63595,6 +63544,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -63621,7 +63573,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -63636,7 +63591,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -63656,6 +63614,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -67085,16 +67044,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -67103,9 +67056,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -67114,9 +67064,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -67125,9 +67072,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -67135,10 +67079,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -67276,8 +67224,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -67312,6 +67263,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -67338,7 +67292,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -67353,7 +67310,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -67373,6 +67333,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -70783,16 +70744,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync/nu?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -70801,9 +70756,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -70812,9 +70764,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -70823,9 +70772,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -70833,10 +70779,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -70974,8 +70924,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -71010,6 +70963,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -71036,7 +70992,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -71051,7 +71010,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -71071,6 +71033,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -74527,16 +74490,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync/nosuchpackage?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -74545,9 +74502,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -74556,9 +74510,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -74567,9 +74518,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -74577,10 +74525,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -74718,8 +74670,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -74754,6 +74709,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -74780,7 +74738,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -74795,7 +74756,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -74815,6 +74779,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -78235,16 +78200,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -78253,9 +78212,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -78264,9 +78220,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -78275,9 +78228,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -78285,10 +78235,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -78426,8 +78380,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -78462,6 +78419,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -78488,7 +78448,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -78503,7 +78466,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -78523,6 +78489,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -81931,16 +81898,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -81949,9 +81910,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -81960,9 +81918,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -81971,9 +81926,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -81981,10 +81933,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -82122,8 +82078,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -82158,6 +82117,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -82184,7 +82146,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -82199,7 +82164,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -82219,6 +82187,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -85526,16 +85495,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated/nu?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -85544,9 +85507,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -85555,9 +85515,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -85566,9 +85523,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -85576,10 +85530,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -85717,8 +85675,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -85753,6 +85714,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -85779,7 +85743,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -85794,7 +85761,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -85814,6 +85784,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -89123,16 +89094,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/info/nu?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -89141,9 +89106,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -89152,9 +89114,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -89163,9 +89122,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -89173,10 +89129,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -89314,8 +89274,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -89350,6 +89313,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -89376,7 +89342,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -89391,7 +89360,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -89411,6 +89383,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -92724,16 +92697,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/info/nosuchpackage?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -92742,9 +92709,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -92753,9 +92717,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -92764,9 +92725,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -92774,10 +92732,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -92915,8 +92877,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -92951,6 +92916,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -92977,7 +92945,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -92992,7 +92963,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -93012,6 +92986,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -96323,16 +96298,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/nu?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -96341,9 +96310,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -96352,9 +96318,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -96363,9 +96326,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -96373,10 +96333,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -96514,8 +96478,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -96550,6 +96517,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -96576,7 +96546,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -96591,7 +96564,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -96611,6 +96587,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -99921,16 +99898,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/nushell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -99939,9 +99910,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -99950,9 +99918,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -99961,9 +99926,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -99971,10 +99933,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -100112,8 +100078,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -100148,6 +100117,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -100174,7 +100146,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -100189,7 +100164,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -100209,6 +100187,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -103519,16 +103498,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/nushell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -103537,9 +103510,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -103548,9 +103518,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -103559,9 +103526,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -103569,10 +103533,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -103710,8 +103678,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -103746,6 +103717,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -103772,7 +103746,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -103787,7 +103764,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -103807,6 +103787,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -107263,16 +107244,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/rem/nushell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -107281,9 +107256,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -107292,9 +107264,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -107303,9 +107272,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -107313,10 +107279,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -107454,8 +107424,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -107490,6 +107463,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -107516,7 +107492,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -107531,7 +107510,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -107551,6 +107533,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -111007,16 +110990,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/nosuchpackage?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -111025,9 +111002,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -111036,9 +111010,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -111047,9 +111018,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -111057,10 +111025,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -111198,8 +111170,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -111234,6 +111209,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -111260,7 +111238,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -111275,7 +111256,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -111295,6 +111279,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -114605,16 +114590,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -114623,9 +114602,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -114634,9 +114610,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -114645,9 +114618,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -114655,10 +114625,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -114796,8 +114770,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -114832,6 +114809,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -114858,7 +114838,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -114873,7 +114856,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -114893,6 +114879,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -118201,16 +118188,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/rustup?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -118219,9 +118200,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -118230,9 +118208,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -118241,9 +118216,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -118251,10 +118223,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -118392,8 +118368,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -118428,6 +118407,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -118454,7 +118436,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -118469,7 +118454,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -118489,6 +118477,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -121799,16 +121788,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/rustup?sysOsPlat=darwin&sysOs=darwin&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -121817,9 +121800,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -121828,9 +121808,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -121839,9 +121816,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -121849,10 +121823,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -121990,8 +121968,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -122026,6 +122007,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -122052,7 +122036,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -122067,7 +122054,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -122087,6 +122077,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -125543,16 +125534,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/nu?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -125561,9 +125546,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -125572,9 +125554,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -125583,9 +125562,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -125593,10 +125569,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -125734,8 +125714,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -125770,6 +125753,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -125796,7 +125782,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -125811,7 +125800,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -125831,6 +125823,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -129287,16 +129280,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/shell?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -129305,9 +129292,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -129316,9 +129300,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -129327,9 +129308,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -129337,10 +129315,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -129478,8 +129460,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -129514,6 +129499,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -129540,7 +129528,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -129555,7 +129546,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -129575,6 +129569,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -133061,16 +133056,10 @@ try {
 \$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/nu?sysOsPlat=linux&sysOs=arch&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
@@ -133079,9 +133068,6 @@ def opPrintErr --wrapped [...args] {
 }
 
 def opPrintSucc --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -133090,9 +133076,6 @@ def opPrintSucc --wrapped [...args] {
 }
 
 def opPrintWarn --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -133101,9 +133084,6 @@ def opPrintWarn --wrapped [...args] {
 }
 
 def opPrintInfo --wrapped [...args] {
-  if SUCCINCT in \$env {
-    return
-  }
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -133111,10 +133091,14 @@ def opPrintInfo --wrapped [...args] {
   \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
-def opPrintCmd --wrapped [...args] {
-  if SUCCINCT in \$env {
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
     return
   }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
     \$\\"(\$args | flatten | str join ' ')\\" | print
     return
@@ -133252,8 +133236,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
   let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -133288,6 +133275,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       \$acquired = true
       break
     }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
     sleep 500ms
     \$waited = \$waited + 1
   }
@@ -133314,7 +133304,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
     opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
@@ -133329,7 +133322,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  if (do { ^tar -xf \$archive_path -C \$extract_target } | complete).exit_code != 0 {
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
     opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
@@ -133349,6 +133345,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }

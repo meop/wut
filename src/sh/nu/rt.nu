@@ -17,8 +17,11 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent $nu_bin $nu_vers) {
+    opPrintVerbose $"nu ($nu_vers): current at ($nu_bin)"
     return
   }
+  let found = if ($nu_bin | path exists) { (do { ^$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose $"nu ($nu_vers): ($nu_bin) has (if ($found | is-empty) { 'none' } else { $found }), syncing"
 
   let triple = match $"($env.SYS_OS_PLAT)_($env.SYS_CPU_ARCH)" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
@@ -53,6 +56,9 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
       $acquired = true
       break
     }
+    if $waited == 0 {
+      opPrintVerbose $"nu ($nu_vers): waiting on another sync's lock ($lock_path)"
+    }
     sleep 500ms
     $waited = $waited + 1
   }
@@ -79,7 +85,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
 
   rm --force --recursive $archive_path $extract_dir
 
-  if (do { ^curl --fail-with-body --location --no-progress-meter --output $archive_path --url $url } | complete).exit_code != 0 {
+  opPrintVerbose $"nu ($nu_vers): fetching ($url)"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output $archive_path --url $url } | complete)
+  if $fetched.exit_code != 0 {
+    opPrintErr ($fetched.stderr | str trim)
     opPrintErr $"failed to download nu ($nu_vers): ($url)"
     rm --force $archive_path
     wutNuLockRelease $lock_path
@@ -94,7 +103,10 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     $work_dir
   }
-  if (do { ^tar -xf $archive_path -C $extract_target } | complete).exit_code != 0 {
+  opPrintVerbose $"nu ($nu_vers): extracting into ($extract_target)"
+  let extracted = (do { ^tar -xf $archive_path -C $extract_target } | complete)
+  if $extracted.exit_code != 0 {
+    opPrintErr ($extracted.stderr | str trim)
     opPrintErr $"failed to extract nu ($nu_vers)"
     rm --force --recursive $archive_path $extract_dir
     wutNuLockRelease $lock_path
@@ -114,6 +126,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force $extracted_bin $nu_bin
   rm --force --recursive $archive_path $extract_dir
+  opPrintVerbose $"nu ($nu_vers): installed at ($nu_bin)"
 
   wutNuLockRelease $lock_path
 }

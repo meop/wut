@@ -21,8 +21,14 @@ function () {
 
   function nu_sync {
     if nu_vers_current; then
+      opPrintVerbose "nu ${nu_vers}: current at ${nu_bin}"
       return
     fi
+    local found=none
+    if [[ -x "${nu_bin}" ]]; then
+      found="$("${nu_bin}" --version 2> /dev/null)"
+    fi
+    opPrintVerbose "nu ${nu_vers}: ${nu_bin} has ${found:-none}, syncing"
 
     local triple=''
     case "${SYS_OS_PLAT}_${SYS_CPU_ARCH}" in
@@ -60,6 +66,9 @@ function () {
         acquired=1
         break
       fi
+      if (( waited == 0 )); then
+        opPrintVerbose "nu ${nu_vers}: waiting on another sync's lock ${lock_dir}"
+      fi
       sleep 0.5
       waited=$(( waited + 1 ))
     done
@@ -84,6 +93,7 @@ function () {
 
     rm -rf "${archive_path}" "${extract_dir}"
 
+    opPrintVerbose "nu ${nu_vers}: fetching ${url}"
     if ! curl --fail-with-body --location --no-progress-meter --output "${archive_path}" --url "${url}"; then
       opPrintErr "failed to download nu ${nu_vers}: ${url}"
       rm -f "${archive_path}"
@@ -91,6 +101,7 @@ function () {
       exit 1
     fi
 
+    opPrintVerbose "nu ${nu_vers}: extracting into ${work_dir}"
     if ! tar -xzf "${archive_path}" -C "${work_dir}"; then
       opPrintErr "failed to extract nu ${nu_vers}"
       rm -rf "${archive_path}" "${extract_dir}"
@@ -108,6 +119,7 @@ function () {
     chmod +x "${extract_dir}/nu"
     mv -f "${extract_dir}/nu" "${nu_bin}"
     rm -rf "${archive_path}" "${extract_dir}"
+    opPrintVerbose "nu ${nu_vers}: installed at ${nu_bin}"
 
     nu_lock_release
   }

@@ -125,6 +125,12 @@ export async function runSrv(request: Request) {
       )
       .with(await shell.fileLoad(['op']))
 
+    const cmd = new SrvCmd()
+    const canonicalParts = resolveCanonicalParts(cmd, parts.slice(2))
+    if (canonicalParts.includes('--verbose')) {
+      shell = shell.with(shell.envSetStr(['verbose'], '1'))
+    }
+
     const vers = VERSIONS[sh]
     shell = shell
       .with(shell.varSet(SH_VERS_MAJOR_KEY, String(vers.major)))
@@ -149,8 +155,6 @@ export async function runSrv(request: Request) {
       )
     }
 
-    const cmd = new SrvCmd()
-    const canonicalParts = resolveCanonicalParts(cmd, parts.slice(2))
     // encoded again, since a redirect sends this path back to the server, which splits it once more
     const canonicalContext: Ctx = {
       ...context,
