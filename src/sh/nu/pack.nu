@@ -156,6 +156,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e $name]),
     apt => (packOk [apt-cache show $name]),
     dnf => (packOk [dnf info $name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / $name]),
     yay => (packOk [yay --sync --info $name]),
     paru => (packOk [paru --sync --info $name]),
     pacman => (packOk [pacman --sync --info $name]),
@@ -330,6 +332,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -424,6 +427,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show $name]),
     dnf => (packOk [rpm --query $name]),
+    emerge => (packOk [portageq has_version / $name]),
     yay => (packOk [pacman --query $name]),
     paru => (packOk [pacman --query $name]),
     pacman => (packOk [pacman --query $name]),
@@ -458,6 +462,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -876,7 +881,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }

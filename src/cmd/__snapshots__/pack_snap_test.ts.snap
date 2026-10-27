@@ -1110,6 +1110,216 @@ if \$cut != null { \$cut.raw }
 }'##"
 `;
 
+snapshot[`nu / gentoo / add 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/add/firefox?sysOsPlat=linux&sysOs=gentoo&wutNuPinned=1'#
+
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
+# the script reported its own failure; this passes on its exit code
+if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
+
+
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}'##"
+`;
+
+snapshot[`nu / gentoo / find 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/find/firefox?sysOsPlat=linux&sysOs=gentoo&wutNuPinned=1'#
+
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
+# the script reported its own failure; this passes on its exit code
+if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
+
+
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}'##"
+`;
+
+snapshot[`nu / gentoo / list 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/list?sysOsPlat=linux&sysOs=gentoo&wutNuPinned=1'#
+
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
+# the script reported its own failure; this passes on its exit code
+if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
+
+
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}'##"
+`;
+
+snapshot[`nu / gentoo / out 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/outdated?sysOsPlat=linux&sysOs=gentoo&wutNuPinned=1'#
+
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
+# the script reported its own failure; this passes on its exit code
+if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
+
+
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}'##"
+`;
+
+snapshot[`nu / gentoo / rem 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/remove/firefox?sysOsPlat=linux&sysOs=gentoo&wutNuPinned=1'#
+
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
+# the script reported its own failure; this passes on its exit code
+if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
+
+
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}'##"
+`;
+
+snapshot[`nu / gentoo / sync 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/sync?sysOsPlat=linux&sysOs=gentoo&wutNuPinned=1'#
+
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
+# the script reported its own failure; this passes on its exit code
+if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
+
+
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}'##"
+`;
+
+snapshot[`nu / gentoo / tidy 1`] = `
+"^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
+try {
+\$env.REQ_URL_SH = r#'http://x/sh/nu/pack/tidy?sysOsPlat=linux&sysOs=gentoo&wutNuPinned=1'#
+
+# by file, not argument: a real script can exceed the command line length limit
+let scriptFilePath = (mktemp --suffix '.nu' --tmpdir)
+http get --raw --redirect-mode follow \$env.REQ_URL_SH | save --force \$scriptFilePath
+let failure = (try { ^(\$nu.current-exe) --no-config-file \$scriptFilePath; null } catch { |e| \$e })
+# a ctrl-c fires once: if it cuts the removal short, the second one runs
+let cut = (try { rm --force --permanent \$scriptFilePath; null } catch { |e| rm --force --permanent \$scriptFilePath; \$e })
+# the script reported its own failure; this passes on its exit code
+if \$failure != null { \$failure.raw }
+if \$cut != null { \$cut.raw }
+
+
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}'##"
+`;
+
 snapshot[`nu / suse / add 1`] = `
 "^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
 try {
@@ -2980,6 +3190,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -3154,6 +3366,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -3248,6 +3461,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -3282,6 +3496,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -3700,7 +3915,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -5644,6 +5859,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -5830,7 +6088,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_FIND = r#'{\\"groups\\":{\\"lang/rustup\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs '|' sh\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"rustlang.rustup\\"}],\\"shell/nu\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"nushell.nushell\\"}],\\"shell/zsh\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"zsh, zsh-completions\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"zsh, zsh-completions\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"zsh\\"}],\\"test/around\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"around\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"around\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"around\\"}],\\"test/hooks\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"hooks\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"hooks\\"}],\\"test/scriptfile\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"cfg/script/scriptfile/install.zsh\\"}],\\"test/slashed\\":[{\\"manager\\":\\"pnpm\\",\\"pkg\\":\\"@scope/pkg\\"},{\\"manager\\":\\"go\\",\\"pkg\\":\\"golang.org/x/tools/gopls\\"},{\\"manager\\":\\"scoop\\",\\"pkg\\":\\"extras/vscode\\"}],\\"test/standalone\\":[{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"standalone\\"}]},\\"remaining\\":[]}'#
 
@@ -6443,6 +6701,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -6617,6 +6877,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -6711,6 +6972,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -6745,6 +7007,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -7163,7 +7426,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -9107,6 +9370,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -9293,7 +9599,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -10052,6 +10358,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -10226,6 +10534,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -10320,6 +10629,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -10354,6 +10664,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -10772,7 +11083,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -12716,6 +13027,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -12902,7 +13256,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -13661,6 +14015,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -13835,6 +14191,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -13929,6 +14286,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -13963,6 +14321,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -14381,7 +14740,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -16325,6 +16684,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -16511,7 +16913,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -17300,6 +17702,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -17474,6 +17878,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -17568,6 +17973,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -17602,6 +18008,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -18020,7 +18427,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -19964,6 +20371,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -20150,7 +20600,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -20939,6 +21389,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -21113,6 +21565,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -21207,6 +21660,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -21241,6 +21695,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -21659,7 +22114,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -23603,6 +24058,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -23789,7 +24287,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -24543,6 +25041,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -24717,6 +25217,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -24811,6 +25312,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -24845,6 +25347,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -25263,7 +25766,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -27207,6 +27710,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -27393,7 +27939,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -28249,6 +28795,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -28423,6 +28971,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -28517,6 +29066,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -28551,6 +29101,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -28969,7 +29520,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -30913,6 +31464,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -31099,7 +31693,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -31834,6 +32428,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -32008,6 +32604,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -32102,6 +32699,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -32136,6 +32734,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -32554,7 +33153,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -34498,6 +35097,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -34684,7 +35326,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -35419,6 +36061,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -35593,6 +36237,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -35687,6 +36332,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -35721,6 +36367,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -36139,7 +36786,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -38083,6 +38730,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -38269,7 +38959,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -39004,6 +39694,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -39178,6 +39870,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -39272,6 +39965,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -39306,6 +40000,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -39724,7 +40419,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -41668,6 +42363,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -41854,7 +42592,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -42888,6 +43626,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -43062,6 +43802,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -43156,6 +43897,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -43190,6 +43932,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -43608,7 +44351,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -45552,6 +46295,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -45738,7 +46524,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -46628,6 +47414,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -46802,6 +47590,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -46896,6 +47685,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -46930,6 +47720,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -47348,7 +48139,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -49292,6 +50083,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -49478,7 +50312,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -50514,6 +51348,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -50688,6 +51524,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -50782,6 +51619,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -50816,6 +51654,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -51234,7 +52073,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -53178,6 +54017,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -53364,7 +54246,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -54245,6 +55127,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -54419,6 +55303,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -54513,6 +55398,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -54547,6 +55433,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -54965,7 +55852,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -56909,6 +57796,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -57095,7 +58025,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_SELF = r#'[{\\"group\\":\\"test/standalone\\",\\"path\\":\\"{HOME}/.standalone/bin/standalone\\",\\"args\\":[\\"self\\",\\"update\\"]}]'#
 
@@ -57806,6 +58736,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -57980,6 +58912,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -58074,6 +59007,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -58108,6 +59042,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -58526,7 +59461,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -60470,6 +61405,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -60656,7 +61634,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_SELF = r#'[{\\"group\\":\\"test/standalone\\",\\"path\\":\\"{HOME}/.standalone/bin/standalone.exe\\",\\"args\\":[\\"self\\",\\"update\\"]}]'#
 
@@ -61369,6 +62347,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -61543,6 +62523,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -61637,6 +62618,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -61671,6 +62653,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -62089,7 +63072,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -64033,6 +65016,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -64219,7 +65245,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -64949,6 +65975,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -65123,6 +66151,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -65217,6 +66246,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -65251,6 +66281,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -65669,7 +66700,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -67613,6 +68644,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -67799,7 +68873,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_SELF = r#'[{\\"group\\":\\"test/standalone\\",\\"path\\":\\"{HOME}/.standalone/bin/standalone\\",\\"args\\":[\\"self\\",\\"update\\"]}]'#
 
@@ -68514,6 +69588,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -68688,6 +69764,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -68782,6 +69859,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -68816,6 +69894,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -69234,7 +70313,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -71178,6 +72257,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -71364,7 +72486,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -72123,6 +73245,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -72297,6 +73421,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -72391,6 +73516,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -72425,6 +73551,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -72843,7 +73970,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -74787,6 +75914,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -74973,7 +76143,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -75694,6 +76864,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -75868,6 +77040,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -75962,6 +77135,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -75996,6 +77170,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -76414,7 +77589,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -78358,6 +79533,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -78544,7 +79762,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'choco'#, r#'scoop'# ]
 
 # one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
 
@@ -79255,6 +80473,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -79429,6 +80649,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -79523,6 +80744,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -79557,6 +80779,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -79975,7 +81198,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -81919,6 +83142,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -82105,7 +83371,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'npm'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'npm'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_OUTDATED_NAMES = [  ]
 
@@ -82717,6 +83983,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -82891,6 +84159,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -82985,6 +84254,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -83019,6 +84289,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -83437,7 +84708,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -85381,6 +86652,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -85567,7 +86881,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'npm'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'npm'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_OUTDATED_NAMES = [ r#'nu'# ]
 
@@ -86179,6 +87493,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -86353,6 +87669,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -86447,6 +87764,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -86481,6 +87799,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -86899,7 +88218,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -88843,6 +90162,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -89029,7 +90391,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_INFO_MAP = r#'{\\"ghpm\\":[\\"nu\\"],\\"cargo\\":[\\"nu\\"],\\"brew\\":[\\"nushell\\"],\\"pacman\\":[\\"nushell\\"],\\"xbps\\":[\\"nushell\\"],\\"winget\\":[\\"nushell.nushell\\"]}'#
 
@@ -89645,6 +91007,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -89819,6 +91183,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -89913,6 +91278,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -89947,6 +91313,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -90365,7 +91732,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -92309,6 +93676,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -92495,7 +93905,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_INFO_MAP = r#'{}'#
 
@@ -93109,6 +94519,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -93283,6 +94695,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -93377,6 +94790,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -93411,6 +94825,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -93829,7 +95244,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -95773,6 +97188,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -95959,7 +97417,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_FIND = r#'{\\"groups\\":{\\"shell/nu\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"nushell.nushell\\"}]},\\"remaining\\":[]}'#
 
@@ -96572,6 +98030,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -96746,6 +98206,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -96840,6 +98301,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -96874,6 +98336,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -97292,7 +98755,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -99236,6 +100699,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -99422,7 +100928,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_FIND = r#'{\\"groups\\":{\\"shell/nu\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"nushell.nushell\\"}]},\\"remaining\\":[]}'#
 
@@ -100035,6 +101541,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -100209,6 +101717,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -100303,6 +101812,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -100337,6 +101847,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -100755,7 +102266,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -102699,6 +104210,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -102885,7 +104439,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -103644,6 +105198,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -103818,6 +105374,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -103912,6 +105469,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -103946,6 +105504,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -104364,7 +105923,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -106308,6 +107867,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -106494,7 +108096,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -107253,6 +108855,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -107427,6 +109031,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -107521,6 +109126,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -107555,6 +109161,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -107973,7 +109580,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -109917,6 +111524,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -110103,7 +111753,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_FIND = r#'{\\"groups\\":{},\\"remaining\\":[\\"nosuchpackage\\"]}'#
 
@@ -110714,6 +112364,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -110888,6 +112540,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -110982,6 +112635,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -111016,6 +112670,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -111434,7 +113089,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -113378,6 +115033,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -113564,7 +115262,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_FIND = r#'{\\"groups\\":{\\"lang/rustup\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs '|' sh\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"rustlang.rustup\\"}],\\"shell/nu\\":[{\\"manager\\":\\"ghpm\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"cargo\\",\\"pkg\\":\\"nu\\"},{\\"manager\\":\\"brew\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"nushell\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"nushell.nushell\\"}],\\"shell/zsh\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"zsh, zsh-completions\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"zsh, zsh-completions\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"zsh\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"zsh\\"}],\\"test/around\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"around\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"around\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"around\\"}],\\"test/hooks\\":[{\\"manager\\":\\"brew\\",\\"pkg\\":\\"hooks\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"hooks\\"}],\\"test/scriptfile\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"cfg/script/scriptfile/install.zsh\\"}],\\"test/slashed\\":[{\\"manager\\":\\"pnpm\\",\\"pkg\\":\\"@scope/pkg\\"},{\\"manager\\":\\"go\\",\\"pkg\\":\\"golang.org/x/tools/gopls\\"},{\\"manager\\":\\"scoop\\",\\"pkg\\":\\"extras/vscode\\"}],\\"test/standalone\\":[{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"standalone\\"}]},\\"remaining\\":[]}'#
 
@@ -114177,6 +115875,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -114351,6 +116051,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -114445,6 +116146,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -114479,6 +116181,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -114897,7 +116600,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -116841,6 +118544,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -117027,7 +118773,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 \$env.PACK_FIND = r#'{\\"groups\\":{\\"lang/rustup\\":[{\\"manager\\":\\"script\\",\\"pkg\\":\\"curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs '|' sh\\"},{\\"manager\\":\\"pacman\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"apt\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"dnf\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"xbps\\",\\"pkg\\":\\"rustup\\"},{\\"manager\\":\\"winget\\",\\"pkg\\":\\"rustlang.rustup\\"}]},\\"remaining\\":[]}'#
 
@@ -117640,6 +119386,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -117814,6 +119562,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -117908,6 +119657,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -117942,6 +119692,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -118360,7 +120111,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -120304,6 +122055,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -120490,7 +122284,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -121249,6 +123043,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -121423,6 +123219,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -121517,6 +123314,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -121551,6 +123349,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -121969,7 +123768,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -123913,6 +125712,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -124099,7 +125941,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -124858,6 +126700,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -125032,6 +126876,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -125126,6 +126971,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -125160,6 +127006,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -125578,7 +127425,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -127522,6 +129369,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -127708,7 +129598,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {
@@ -128497,6 +130387,8 @@ def --env packExists [manager: string, raw: string] {
     apk => (packOk [apk search -e \$name]),
     apt => (packOk [apt-cache show \$name]),
     dnf => (packOk [dnf info \$name]),
+    # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
+    emerge => (packOk [portageq best_visible / \$name]),
     yay => (packOk [yay --sync --info \$name]),
     paru => (packOk [paru --sync --info \$name]),
     pacman => (packOk [pacman --sync --info \$name]),
@@ -128671,6 +130563,7 @@ def packListCmd [manager: string] {
     apk => [apk list --installed],
     apt => [apt list --installed],
     dnf => [dnf list --installed],
+    emerge => [qlist --installed],
     yay => [yay --query],
     paru => [paru --query],
     pacman => [pacman --query],
@@ -128765,6 +130658,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
     apt => (packOk [dpkg-query --show \$name]),
     dnf => (packOk [rpm --query \$name]),
+    emerge => (packOk [portageq has_version / \$name]),
     yay => (packOk [pacman --query \$name]),
     paru => (packOk [pacman --query \$name]),
     pacman => (packOk [pacman --query \$name]),
@@ -128799,6 +130693,7 @@ def --env packRefresh [manager: string] {
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
     dnf => { packOp [(packElevate 'dnf') makecache] },
+    emerge => { packOp [(packElevate 'emerge') --sync] },
     yay => { packOp [yay --sync --refresh] },
     paru => { packOp [paru --sync --refresh] },
     pacman => { packOp [(packElevate 'pacman') --sync --refresh] },
@@ -129217,7 +131112,7 @@ def --env packCallBase [manager: string] {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
     dotnet => { packDotnet }, rv => { packRv },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
-    apt => { packApt }, dnf => { packDnf }, yay => { packPacman }, paru => { packPacman },
+    apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper },
     choco => { packChoco }, scoop => { packScoop }, winget => { packWinget }, _ => {},
   }
@@ -131161,6 +133056,49 @@ def --env packDnf [] {
 }
 
 
+def --env packEmerge [] {
+  let mgr = 'emerge'
+  if (packSkip \$mgr) {
+    return
+  }
+
+  let cmd = packElevate \$mgr
+
+  packRefreshForOp \$mgr
+
+  match \$env.PACK_OP {
+    add => {
+      # --noreplace: a name already here is recorded in world, not rebuilt
+      packOpAdd [\$cmd --noreplace]
+    }
+    info => {
+      # a bare term is a prefix to --search, so git answers with git-lfs and two dozen more; a % prefix makes it a
+      # regex, which the anchors pin to the one name, and @ matches it against category/name, which a whole name is
+      for term in (packInfoNames) {
+        let key = if (\$term | str contains '/') { \$\\"%@^(\$term)\$\\" } else { \$\\"%^(\$term)\$\\" }
+        packDo [\$cmd --search \$key]
+      }
+    }
+    list => {
+      packOpList (packListCmd \$mgr)
+    }
+    outdated => {
+      packOpOutdated [\$cmd --pretend --update --deep --newuse '@world']
+    }
+    remove => {
+      # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
+      packOpRemove [\$cmd --depclean]
+    }
+    sync => {
+      packOpSync [\$cmd --update --deep --newuse '@world'] [\$cmd --update]
+    }
+    tidy => {
+      packOp [\$cmd --depclean]
+    }
+  }
+}
+
+
 def --env packXbps [] {
   let mgr = 'xbps'
   if (packSkip \$mgr \$\\"(\$mgr)-install\\") {
@@ -131347,7 +133285,7 @@ def --env packScoop [] {
 }
 
 
-\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
+\$env.PACK_MANAGERS = [ r#'ghpm'#, r#'pnpm'#, r#'deno'#, r#'bun'#, r#'npm'#, r#'uv'#, r#'rv'#, r#'dotnet'#, r#'go'#, r#'cargo'#, r#'brew'#, r#'paru'#, r#'yay'#, r#'pacman'#, r#'apk'#, r#'apt'#, r#'dnf'#, r#'emerge'#, r#'xbps'#, r#'zypper'#, r#'winget'#, r#'choco'#, r#'scoop'# ]
 
 def --env packRunUnit [id: string] {
   match \$id {

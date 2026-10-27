@@ -61,6 +61,7 @@ const NATIVE_MANAGERS: Array<string> = [
   'apk',
   'apt',
   'dnf',
+  'emerge',
   'xbps',
   'zypper',
   'winget',

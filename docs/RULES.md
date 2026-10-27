@@ -154,7 +154,7 @@ ghpm  pnpm  deno  bun  npm  uv  rv         user space, no sudo: release binaries
 dotnet  go  cargo                          user space, no sudo: the compiled stacks, nearest the system last
 script                                     what a group runs instead of a package
 brew  paru  yay  pacman                    darwin, then arch
-apk  apt  dnf  xbps  zypper                one distro each
+apk  apt  dnf  emerge  xbps  zypper        one distro each
 winget  choco  scoop                       windows
 ```
 

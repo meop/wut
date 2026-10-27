@@ -737,6 +737,7 @@ Deno.test('nu / pack / an elevated manager still knows its own listing command',
     ['apk', 'apk', 'list --installed'],
     ['apt', 'apt', 'list --installed'],
     ['dnf', 'dnf', 'list --installed'],
+    ['emerge', 'qlist', '--installed'],
     ['xbps', 'xbps-query', '--list-pkgs'],
     ['zypper', 'zypper', 'packages --installed-only'],
   ]
