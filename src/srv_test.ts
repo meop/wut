@@ -83,3 +83,32 @@ Deno.test('pack / a name with a slash stays one name, typed or in a group', asyn
   assertEquals(loose.includes('github.com/owner/tool'), true)
   assertEquals(loose.includes("'github.com'"), false)
 })
+
+// the runtime checks and syncs the pinned nu before the command runs, so -v has to be in the environment by then, in
+// the bootstrap every shell starts from and in the pinned nu's own body
+Deno.test('-v / is set before the nu runtime runs, and only when asked', async () => {
+  const runtime: Record<string, RegExp> = {
+    nu: /^wutNuSync$/,
+    pwsh: /^ {2}wutNuInstall \$wutHome /,
+    zsh: /^ {2}nu_sync$/,
+  }
+  const verbose = /^(\$env\.VERBOSE = |\$env:VERBOSE = |export VERBOSE=)/
+  for (
+    const [sh, query] of [
+      ['nu', ''],
+      ['pwsh', ''],
+      ['zsh', ''],
+      ['nu', '?sysOsPlat=linux&wutNuPinned=1'],
+    ]
+  ) {
+    const lines = (await (await runSrv(req(`/sh/${sh}/-v/pack/list${query}`))).text()).split('\n')
+    const set = lines.findIndex((l) => verbose.test(l))
+    const run = lines.findIndex((l) => runtime[sh].test(l))
+    assertEquals(run > -1, true, `${sh}${query}: no runtime`)
+    assertEquals(set > -1 && set < run, true, `${sh}${query}: VERBOSE at ${set}, runtime at ${run}`)
+
+    const quiet = (await (await runSrv(req(`/sh/${sh}/pack/list${query}`))).text()).split('\n')
+    assertEquals(quiet.some((l) => verbose.test(l)), false, `${sh}${query}: VERBOSE without -v`)
+  }
+})
+

@@ -120,6 +120,18 @@ Tier 3 — the host cpu topology `virtQemuHostCpus` reads from sysfs, run agains
 smt off, intel hybrid (the `cpu_core` list), amd dense cores (`cpu_capacity`), multiple sockets, and a kernel without
 `cpu_capacity`. It asserts the sockets, cores and threads the guest gets and the host cpu each vcpu is pinned to.
 
+### `src/sh/nu/sel_test.ts`
+
+Tier 3 — the row picker every plan asks through: what an answer picks (a number, a range, a list of either, empty for
+all, and nothing for 0 or for anything it cannot read whole), `-y` picking every row, no terminal picking none, and the
+table leaving out a column no row fills.
+
+### `src/sh/rt_test.ts`
+
+The pinned nu runtime in each shell (nu, pwsh, zsh), run for real against a temp `WUT_HOME` with a stub `nu` and a
+`curl` that always fails, so nothing reaches the network: a current nu is said only under `-v`, and a sync says each
+step under `-v` and its failure always, then gives its lock back. Skipped per shell when that shell is not installed.
+
 ### `src/sh/nu/lock_test.ts`
 
 Tier 3 — the per-command lock ([OPS.md](OPS.md#one-run-of-a-command-at-a-time)), with each run its own nu process

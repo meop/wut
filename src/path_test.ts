@@ -86,6 +86,16 @@ Deno.test('getPlatAclPermCmds - windows always grants SYSTEM read', () => {
   assertEquals(withOther.endsWith('"SYSTEM:(gr,gw)"'), true)
 })
 
+// an empty scope is spelled out too: chmod's `o=` takes away what other had
+Deno.test('getPlatAclPermCmds - every scope and every permission is spelled out', () => {
+  const perm = { user: { read: true, write: true, execute: true }, group: { read: true, execute: true }, other: {} }
+  assertEquals(getPlatAclPermCmds('linux', '/opt/app', perm, 'appuser'), [`chmod -R a-s,u=rwx,g=rx,o= '/opt/app'`])
+  assertEquals(getPlatAclPermCmds('windows', 'C:/app', perm, 'appuser'), [
+    `icacls 'C:\\app' /t /reset`,
+    `icacls 'C:\\app' /t /inheritance:r /grant "appuser:(gr,gw,ge)" "Administrators:(gr,ge)" "SYSTEM:(gr)"`,
+  ])
+})
+
 Deno.test('getPlatAclPermCmds - throws for unsupported platform', () => {
   assertThrows(() => getPlatAclPermCmds('freebsd', '/path', { user: { read: true } }, 'user'))
 })
