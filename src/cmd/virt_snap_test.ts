@@ -192,6 +192,20 @@ Deno.test('nu / linux / add (pinned, qemu)', async (t) => {
   assertEquals(body.includes('"qemu":["test","test2"]'), true)
   assertEquals(/^\s*virtPlanRun$/m.test(body), true)
 })
+Deno.test('nu / linux / add (pinned, lxc)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/virt/add/dev?${PIN}`))).text()
+  await assertSnapshot(t, body)
+  await checkSyntax('nu', body)
+  assertEquals(body.includes('{"build":["dev"],"setup":["dev"]}'), true)
+  assertEquals(body.includes("r#'build/dev'# => {"), true)
+  assertEquals(body.includes("r#'setup/dev'# => {"), true)
+  assertEquals(body.includes('def lxcSetupHolds [script: string] {'), true)
+})
+Deno.test('nu / linux / add (pinned, qemu): no lxc hooks', async () => {
+  const body = await (await runSrv(req(`/sh/nu/virt/add/qemu?${PIN}`))).text()
+  assertEquals(body.includes('{"build":[],"setup":[]}'), true)
+  assertEquals(body.includes("r#'build/dev'# => {"), false)
+})
 // rem fans out like add, and like `pack` and `file` do; only run pinpoints, since it runs one in the foreground
 Deno.test('nu / linux / rem (pinned, qemu)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/virt/rem/qemu?${PIN}`))).text()

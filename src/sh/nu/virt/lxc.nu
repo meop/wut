@@ -1,4 +1,4 @@
-def virtLxc [] {
+def --env virtLxc [] {
   let cmd = 'lxc'
   if ('VIRT_MANAGER' in $env and $env.VIRT_MANAGER != $cmd) or (which $"($cmd)-ls" | is-empty) {
     return
@@ -47,6 +47,41 @@ def virtLxc [] {
     }
   }
 
+  # a failed hook stops that instance alone, listed at the end
+  def --env lxcHook [hook, instance, hookEnv] {
+    if $instance not-in ($env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional $hook | default []) {
+      return true
+    }
+    opPrintInfo $"`($instance)` ($hook)"
+    try {
+      with-env $hookEnv { virtLxcHook $hook $instance }
+      true
+    } catch { |e|
+      opRethrowInterrupt $e
+      load-env {VIRT_FAILED: (($env.VIRT_FAILED? | default []) | append $"`($instance)`: ($hook) failed")}
+      false
+    }
+  }
+
+  def lxcWaitUp [instance, net] {
+    if (^sudo lxc-wait --name $instance --state RUNNING --timeout 30 | complete).exit_code != 0 {
+      opPrintWarn $"`($instance)` did not start running"
+      return
+    }
+    if ($net | is-empty) {
+      return
+    }
+    # slaac comes before the dhcp lease, which brings dns
+    for _ in 1..30 {
+      let ipv4 = ^sudo lxc-info --name $instance --ips --no-humanize | complete | get stdout | lines | any { |ip| $ip =~ '^\d+\.\d+\.\d+\.\d+$' }
+      if $ipv4 and (null | ^sudo lxc-attach --name $instance --clear-env --set-var 'PATH=/run/current-system/sw/bin:/usr/bin:/bin' -- /bin/sh -c 'grep -q ^nameserver /etc/resolv.conf' | complete).exit_code == 0 {
+        return
+      }
+      sleep 1sec
+    }
+    opPrintWarn $"`($instance)` has no ipv4 address or nameserver yet"
+  }
+
   # stops a container whether its unit runs it or it was started before there was one
   def lxcStop [cmd, instance] {
     if (^systemctl is-active $"lxc@($instance)" | complete | get stdout | str trim) == 'active' {
@@ -57,7 +92,7 @@ def virtLxc [] {
   }
 
   # state: virtUnitState from before a sync stopped it, or null when the instance is new
-  def doAdd [cmd, instance, state] {
+  def --env doAdd [cmd, instance, state] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($cmd).yaml'#"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow $"r#'($env.REQ_URL_CFG)/virt/($env.SYS_HOST)/($cmd)/($instance).yaml'#"
     let merged = virtDeepMerge ($config | from yaml) ($configVm | from yaml)
@@ -78,6 +113,15 @@ def virtLxc [] {
     let net = $merged | get lxc?.network? | default {}
     if ('link' in $net) and not ($"/sys/class/net/($net.link)" | path exists) {
       opPrintWarn $"cannot add `($instance)`: network link '($net.link)' does not exist"
+      return
+    }
+
+    let hookEnv = $lxcEnv
+      | reject instance rootfs
+      | transpose key value
+      | reduce --fold {VIRT_INSTANCE: $instance, VIRT_LXC_ROOTFS: $rootfsDirPath} { |kv, acc| $acc | upsert ($kv.key | str uppercase) $kv.value }
+
+    if not (lxcHook build $instance $hookEnv) {
       return
     }
 
@@ -137,6 +181,17 @@ def virtLxc [] {
       }
     } else if $state.active {
       opPrintMaybeRunCmd sudo systemctl start $"lxc@($instance)"
+    }
+
+    let running = if $state == null { not (virtAddOff) } else { $state.active }
+    let hasSetup = $instance in ($env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional setup | default [])
+    if $hasSetup and not $running {
+      opPrintInfo $"`($instance)` is off, so its setup waits until it runs"
+    } else if $hasSetup {
+      if NOOP not-in $env {
+        lxcWaitUp $instance $net
+      }
+      lxcHook setup $instance $hookEnv | ignore
     }
   }
 

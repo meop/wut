@@ -6266,7 +6266,7 @@ def virtDocker [] {
 }
 
 
-def virtLxc [] {
+def --env virtLxc [] {
   let cmd = 'lxc'
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
@@ -6315,6 +6315,41 @@ def virtLxc [] {
     }
   }
 
+  # a failed hook stops that instance alone, listed at the end
+  def --env lxcHook [hook, instance, hookEnv] {
+    if \$instance not-in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional \$hook | default []) {
+      return true
+    }
+    opPrintInfo \$\\"\`(\$instance)\` (\$hook)\\"
+    try {
+      with-env \$hookEnv { virtLxcHook \$hook \$instance }
+      true
+    } catch { |e|
+      opRethrowInterrupt \$e
+      load-env {VIRT_FAILED: ((\$env.VIRT_FAILED? | default []) | append \$\\"\`(\$instance)\`: (\$hook) failed\\")}
+      false
+    }
+  }
+
+  def lxcWaitUp [instance, net] {
+    if (^sudo lxc-wait --name \$instance --state RUNNING --timeout 30 | complete).exit_code != 0 {
+      opPrintWarn \$\\"\`(\$instance)\` did not start running\\"
+      return
+    }
+    if (\$net | is-empty) {
+      return
+    }
+    # slaac comes before the dhcp lease, which brings dns
+    for _ in 1..30 {
+      let ipv4 = ^sudo lxc-info --name \$instance --ips --no-humanize | complete | get stdout | lines | any { |ip| \$ip =~ '^\\\\d+\\\\.\\\\d+\\\\.\\\\d+\\\\.\\\\d+\$' }
+      if \$ipv4 and (null | ^sudo lxc-attach --name \$instance --clear-env --set-var 'PATH=/run/current-system/sw/bin:/usr/bin:/bin' -- /bin/sh -c 'grep -q ^nameserver /etc/resolv.conf' | complete).exit_code == 0 {
+        return
+      }
+      sleep 1sec
+    }
+    opPrintWarn \$\\"\`(\$instance)\` has no ipv4 address or nameserver yet\\"
+  }
+
   # stops a container whether its unit runs it or it was started before there was one
   def lxcStop [cmd, instance] {
     if (^systemctl is-active \$\\"lxc@(\$instance)\\" | complete | get stdout | str trim) == 'active' {
@@ -6325,7 +6360,7 @@ def virtLxc [] {
   }
 
   # state: virtUnitState from before a sync stopped it, or null when the instance is new
-  def doAdd [cmd, instance, state] {
+  def --env doAdd [cmd, instance, state] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
     let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
@@ -6346,6 +6381,15 @@ def virtLxc [] {
     let net = \$merged | get lxc?.network? | default {}
     if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
       opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    let hookEnv = \$lxcEnv
+      | reject instance rootfs
+      | transpose key value
+      | reduce --fold {VIRT_INSTANCE: \$instance, VIRT_LXC_ROOTFS: \$rootfsDirPath} { |kv, acc| \$acc | upsert (\$kv.key | str uppercase) \$kv.value }
+
+    if not (lxcHook build \$instance \$hookEnv) {
       return
     }
 
@@ -6405,6 +6449,17 @@ def virtLxc [] {
       }
     } else if \$state.active {
       opPrintMaybeRunCmd sudo systemctl start \$\\"lxc@(\$instance)\\"
+    }
+
+    let running = if \$state == null { not (virtAddOff) } else { \$state.active }
+    let hasSetup = \$instance in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional setup | default [])
+    if \$hasSetup and not \$running {
+      opPrintInfo \$\\"\`(\$instance)\` is off, so its setup waits until it runs\\"
+    } else if \$hasSetup {
+      if NOOP not-in \$env {
+        lxcWaitUp \$instance \$net
+      }
+      lxcHook setup \$instance \$hookEnv | ignore
     }
   }
 
@@ -7600,7 +7655,3341 @@ def --env virtQemu [] {
 
 \$env.VIRT_LIMITS = r#'{}'#
 
+def virtLxcHook [hook: string, instance: string] {
+  match \$\\"(\$hook)/(\$instance)\\" {
+    _ => {}
+  }
+}
+\$env.VIRT_LXC_HOOKS = r#'{\\"build\\":[],\\"setup\\":[]}'#
+
 \$env.VIRT_PLAN = r#'{\\"qemu\\":[\\"test\\",\\"test2\\"]}'#
+
+# one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
+
+def wutLockPath [name: string] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' \$name
+}
+
+def wutLockEnvKey [name: string] {
+  \$\\"WUT_LOCK_(\$name | str uppercase)\\"
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockHolder [dir: string] {
+  try { open --raw (\$dir | path join 'pid') | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# true once this run holds the lock, false when the run that started this one already does
+def --env wutLockTake [name: string] {
+  let dir = (wutLockPath \$name)
+  let key = (wutLockEnvKey \$name)
+  let inherited = (\$env | get -o \$key | default '')
+  if \$inherited != '' and (wutLockHolder \$dir) == \$inherited {
+    let pid = (\$inherited | split row ' ' | first | into int)
+    if (wutLockStamp \$pid) == \$inherited {
+      return false
+    }
+  }
+
+  let own = (wutLockStamp \$nu.pid)
+  for attempt in 1..50 {
+    if (wutLockMake \$dir) {
+      \$own | save --force (\$dir | path join 'pid')
+      load-env { \$key: \$own }
+      return true
+    }
+    let held = (wutLockHolder \$dir)
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 })
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        opPrintErr \$\\"wut (\$name) is already running here as pid (\$pid): wait for it to end, or stop it\\"
+        exit 1
+      }
+    }
+    if (wutLockHolder \$dir) == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+  opPrintErr \$\\"could not take the wut (\$name) lock: (\$dir)\\"
+  exit 1
+}
+
+def --env wutLockDrop [name: string] {
+  let dir = (wutLockPath \$name)
+  let key = (wutLockEnvKey \$name)
+  if (wutLockHolder \$dir) == (\$env | get -o \$key) {
+    rm --recursive --force \$dir
+  }
+  hide-env -i \$key
+}
+
+def --env wutLockRun [name: string, work: closure] {
+  if not (wutLockTake \$name) {
+    do --env \$work
+    return
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    wutLockDrop \$name
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  wutLockDrop \$name
+}
+
+wutLockRun r#'virt'# {
+  virtPlanRun
+}
+
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}"
+`;
+
+snapshot[`nu / linux / add (pinned, lxc) 1`] = `
+"try {
+try {
+\$env.REQ_URL_CFG = r#'http://x/cfg'#
+
+\$env.REQ_URL_SH = r#'http://x/sh/nu/virt/add/dev?sysOsPlat=linux&sysHost=host&wutNuPinned=1'#
+
+def opPrint --wrapped [...args] {
+  \$\\"(\$args | flatten | str join ' ')\\" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+    return
+  }
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
+    return
+  }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  let args = \$args | flatten
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
+  if (\$args | length) > 1 {
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+  } else {
+    print ''
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
+# a ctrl-c: nu's own, an input prompt's, or the exit of a command it stopped (130, SIGINT, windows' ctrl-c status)
+def opInterrupted [e: record] {
+  (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510])
+}
+
+# a catch hands its error here first, so a ctrl-c is not stepped past
+def opRethrowInterrupt [e: record] {
+  if (opInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+# NuSh.quietInterrupt, line for line, for the child nu a command runs in
+def opQuietInterrupt [body: string] {
+  let stop = [
+    r#'if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {'#
+    r#'  exit 130'#
+    r#'}'#
+    r#'\$e.raw'#
+  ] | each { |l| \$\\"  (\$l)\\" }
+  [r#'try {'# r#'try {'# \$body r#'} catch { |e|'# ...\$stop r#'}'# r#'} catch { |e|'# ...\$stop r#'}'#] | str join \\"\\\\n\\"
+}
+
+def opRunCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: input would fail there with an i/o error
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  if not (is-terminal --stdin) {
+    opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
+    return false
+  }
+  let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunSilentCmd ...\$args
+  }
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opMaybeRunCmd ...\$args
+}
+
+
+\$env.SH_VERS_MAJOR = 0
+
+\$env.SH_VERS_MINOR = 116
+
+do {
+  let major = \$env.SH_VERS_MAJOR | into int
+  let minor = \$env.SH_VERS_MINOR | into int
+
+  if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
+    exit 1
+  }
+}
+
+
+\$env.NU_VERS_MAJOR = 0
+
+\$env.NU_VERS_MINOR = 116
+
+\$env.NU_VERS_PATCH = 0
+
+\$env.SYS_HOST = r#'host'#
+
+\$env.REQ_ORIG = r#'http://x'#
+
+\$env.SYS_OS_PLAT = r#'linux'#
+
+\$env.REQ_PATH = r#'/sh/nu/virt/add/dev'#
+
+\$env.REQ_SRCH = r#'?sysOsPlat=linux&sysHost=host&wutNuPinned=1'#
+
+def wutNuVersCurrent [nu_bin: string, nu_vers: string] {
+  if not (\$nu_bin | path exists) {
+    return false
+  }
+  let installed = (do { ^\$nu_bin --version } | complete)
+  if \$installed.exit_code != 0 {
+    return false
+  }
+  (\$installed.stdout | str trim) == \$nu_vers
+}
+
+def wutNuLockRelease [lock_path: string] {
+  rm --force \$lock_path
+  # best-effort: only succeeds if now empty, so a concurrent process's own in-flight files are never touched
+  try { rm (\$lock_path | path dirname) } catch { |e| opRethrowInterrupt \$e }
+}
+
+def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
+  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
+    return
+  }
+  let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
+
+  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
+    'darwin_aarch64' => 'aarch64-apple-darwin',
+    'darwin_x86_64' => 'x86_64-apple-darwin',
+    'linux_aarch64' => 'aarch64-unknown-linux-gnu',
+    'linux_x86_64' => 'x86_64-unknown-linux-gnu',
+    'windows_aarch64' => 'aarch64-pc-windows-msvc',
+    'windows_x86_64' => 'x86_64-pc-windows-msvc',
+    _ => '',
+  }
+  let gnu_loader = if \$env.SYS_CPU_ARCH == 'aarch64' { '/lib/ld-linux-aarch64.so.1' } else { '/lib64/ld-linux-x86-64.so.2' }
+  let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
+  let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
+  if \$triple == '' {
+    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
+    exit 1
+  }
+
+  # a hidden dir nested inside vendor (not vendor itself) so a fresh download can never collide with the pinned nu_bin path
+  let work_dir = (\$wut_home | path join 'vendor' '.nu')
+  mkdir \$work_dir
+
+  let lock_path = (\$work_dir | path join 'nu.lock')
+  mut acquired = false
+  mut waited = 0
+  while \$waited < 240 {
+    if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+      return
+    }
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
+    if \$locked {
+      \$acquired = true
+      break
+    }
+    if \$waited == 0 {
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
+    }
+    sleep 500ms
+    \$waited = \$waited + 1
+  }
+  if not \$acquired {
+    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
+    rm --force \$lock_path
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
+    if not \$locked {
+      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
+      exit 1
+    }
+  }
+
+  if (wutNuVersCurrent \$nu_bin \$nu_vers) {
+    wutNuLockRelease \$lock_path
+    return
+  }
+
+  let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
+  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
+  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
+  let archive_path = (\$work_dir | path join \$asset)
+  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
+
+  rm --force --recursive \$archive_path \$extract_dir
+
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
+  let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
+  if \$fetched.exit_code != 0 {
+    opPrintErr (\$fetched.stderr | str trim)
+    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
+    rm --force \$archive_path
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
+  # extract_dir; tar.gz assets already contain their own nu-(\$nu_vers)-(\$triple) folder, so they extract into work_dir
+  let extract_target = if \$ext_archive == 'zip' {
+    mkdir \$extract_dir
+    \$extract_dir
+  } else {
+    \$work_dir
+  }
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
+  let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
+  if \$extracted.exit_code != 0 {
+    opPrintErr (\$extracted.stderr | str trim)
+    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
+    rm --force --recursive \$archive_path \$extract_dir
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
+  if not (\$extracted_bin | path exists) {
+    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
+    rm --force --recursive \$archive_path \$extract_dir
+    wutNuLockRelease \$lock_path
+    exit 1
+  }
+
+  if \$env.SYS_OS_PLAT != 'windows' {
+    ^chmod +x \$extracted_bin
+  }
+  mv --force \$extracted_bin \$nu_bin
+  rm --force --recursive \$archive_path \$extract_dir
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
+
+  wutNuLockRelease \$lock_path
+}
+
+def --env wutNuSync [] {
+  if \$env.SYS_OS_PLAT not-in ['darwin' 'linux' 'windows'] {
+    opPrintWarn 'script is for darwin, linux, or windows'
+    return
+  }
+
+  # windows has no HOME, and default's argument is evaluated even when WUT_HOME is set, so nu's own answer stands in,
+  # as it does for the lock
+  \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
+  let wut_home = \$env.WUT_HOME
+  let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
+  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
+
+  wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
+}
+
+wutNuSync
+
+# pwsh's module dirs would otherwise leak into windows powershell (scoop)
+if \$env.SYS_OS_PLAT == 'windows' {
+  hide-env -i PSModulePath
+}
+
+
+# a tool this run installed, or one installed since the calling shell started, lands somewhere that shell's PATH may
+# not reach yet. the env stage wut deploys already knows every such place, and adds each once it exists, so the run
+# asks the native shell for the PATH a new one would start with, rather than leaving the next step to find nothing.
+# windows keeps PATH in the registry too, where installers record theirs, so that joins what the profile builds
+def --env wutPathRefresh [] {
+  let out = if \$env.SYS_OS_PLAT? == 'windows' {
+    if (which pwsh | is-empty) {
+      return
+    }
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
+    ^pwsh -NoLogo -Command \$cmd | complete
+  } else {
+    if (which zsh | is-empty) {
+      return
+    }
+    ^zsh -c 'print -r -- \$PATH' | complete
+  }
+  # the last line, since an env stage is free to print on its way through
+  let path = (\$out.stdout | lines | where { is-not-empty } | last 1 | get -o 0)
+  if \$out.exit_code != 0 or \$path == null {
+    return
+  }
+  \$env.PATH = (\$path | split row (char esep) | where { is-not-empty } | uniq)
+}
+
+
+wutPathRefresh
+
+\$env.VIRT_ADD_PARTS = r#'dev'#
+
+\$env.VIRT_OP = r#'add'#
+
+# ghpm's table: a rule as wide as each header, columns padded to their widest cell, the last one loose. a column no
+# row fills says nothing, so it is left out: a plan of only loose names has no group to show
+def wutTable [headers: list<string>, rows: list<list<string>>] {
+  let keep = (\$headers | enumerate | where { |h|
+    (\$rows | is-empty) or (\$rows | any { |r| \$r | get -o \$h.index | default '' | is-not-empty })
+  } | get index)
+  let headers = (\$keep | each { |i| \$headers | get \$i })
+  let rows = (\$rows | each { |r| \$keep | each { |i| \$r | get -o \$i | default '' } })
+  let widths = (\$headers | enumerate | each { |h|
+    [(\$h.item | str length)] ++ (\$rows | each { |r| \$r | get -o \$h.index | default '' | str length }) | math max
+  })
+  let line = { |cells: list<string>|
+    \$cells | enumerate | each { |c|
+      if \$c.index == ((\$cells | length) - 1) { \$c.item } else { \$c.item | fill --alignment left --width (\$widths | get \$c.index) }
+    } | str join ' ' | str trim --right
+  }
+  opPrint (do \$line \$headers)
+  opPrint (do \$line (\$headers | each { |h| '-' | fill --alignment left --width (\$h | str length) --character '-' }))
+  for r in \$rows { opPrint (do \$line \$r) }
+}
+
+def wutSelectParse [choice: string, max: int] {
+  let trimmed = (\$choice | str trim)
+  if (\$trimmed | is-empty) {
+    return (1..\$max | each { |i| \$i })
+  }
+  mut picked = []
+  for part in (\$trimmed | split row --regex '[, ]+' | where { |p| \$p | is-not-empty }) {
+    let bounds = if (\$part | str contains '-') {
+      let halves = (\$part | split row '-')
+      if (\$halves | length) != 2 {
+        return null
+      }
+      [(try { \$halves | get 0 | into int } catch { |e| opRethrowInterrupt \$e; null }), (try { \$halves | get 1 | into int } catch { |e| opRethrowInterrupt \$e; null })]
+    } else {
+      let n = (try { \$part | into int } catch { |e| opRethrowInterrupt \$e; null })
+      if \$n == 0 {
+        return null
+      }
+      [\$n, \$n]
+    }
+    let from = (\$bounds | get 0)
+    let to = (\$bounds | get 1)
+    if \$from == null or \$to == null or \$from < 1 or \$to > \$max or \$from > \$to {
+      return null
+    }
+    for i in \$from..\$to {
+      if \$i not-in \$picked {
+        \$picked = (\$picked | append \$i)
+      }
+    }
+  }
+  \$picked | sort
+}
+
+def wutSelectRead [max: int] {
+  if YES in \$env {
+    return (1..\$max | each { |i| \$i })
+  }
+  # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
+  if not (is-terminal --stdin) {
+    opPrintWarn 'no terminal to choose from, so none; -y picks all'
+    return null
+  }
+  opPrint ''
+  wutSelectParse (input \$\\"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): \\") \$max
+}
+
+
+# find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
+# that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
+def wutWordPattern [term: string] {
+  \$\\"\\\\(?i\\\\)\\\\(^|[^a-z0-9]\\\\)(\$term | str replace --all --regex '[\\\\\\\\.+*?()\\\\[\\\\]{}|^\$]' '\\\\\$0')\\"
+}
+
+def wutWordMatch [name: string, term: string] {
+  (\$term | is-not-empty) and (\$name =~ (wutWordPattern \$term))
+}
+
+
+def virtDeepMerge [base, override] {
+  mut result = \$base
+  for kv in (\$override | transpose key value) {
+    if (\$kv.key in \$result) {
+      let baseVal = \$result | get \$kv.key
+      let baseDesc = (\$baseVal | describe)
+      let overrideDesc = (\$kv.value | describe)
+      if (\$baseDesc | str starts-with record) and (\$overrideDesc | str starts-with record) {
+        \$result = \$result | upsert \$kv.key (virtDeepMerge \$baseVal \$kv.value)
+      } else if (\$baseDesc | str starts-with list) and (\$overrideDesc | str starts-with list) {
+        \$result = \$result | upsert \$kv.key (\$baseVal | append \$kv.value)
+      } else {
+        \$result = \$result | upsert \$kv.key \$kv.value
+      }
+    } else {
+      \$result = \$result | upsert \$kv.key \$kv.value
+    }
+  }
+  \$result
+}
+
+
+def virtManagerHere [manager: string] {
+  let bin = match \$manager {
+    docker => 'docker',
+    lxc => 'lxc-ls',
+    podman => 'podman',
+    qemu => 'qemu-img',
+    _ => \$manager,
+  }
+  which \$bin | is-not-empty
+}
+
+# whether an instance was added here: the file its manager's add leaves behind, or for docker, which leaves none, the
+# compose project the daemon holds, stopped ones included
+def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
+  let name = (\$instance | split row '/' | first)
+  match \$manager {
+    docker => (\$name in (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] })),
+    lxc => ([\$root 'var/lib/lxc' \$name 'config'] | path join | path exists),
+    podman => ([\$root 'etc/containers/systemd' \$\\"(\$name).kube\\"] | path join | path exists),
+    qemu => ([\$root 'etc/systemd/system' \$\\"qemu-(\$name).service\\"] | path join | path exists),
+    _ => false,
+  }
+}
+
+# the names a manager's list shows, narrowed by its terms: each term starts a word of the name, and a name has to
+# match every one. list's summary asks this before the gate and each manager's list after it, so what the summary
+# says a manager has and what its dump then shows cannot drift
+def virtListed [manager: string, terms: list<string> = []] {
+  let names = match \$manager {
+    # --all, as virtInstanceHere has it: a stopped project is still added, and rem and sync still act on it
+    docker => (^sudo docker compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }),
+    # bare lxc-ls wraps names across lines at terminal width, not just spaces within one. split on whitespace alone:
+    # split words also breaks at a hyphen, which made web-proxy two instances, web and proxy
+    lxc => (^sudo lxc-ls | complete | get stdout | split row --regex '\\\\s+' | where { is-not-empty }),
+    podman => (virtListedFiles '/etc/containers/systemd' '\\\\.kube\$' { |b| \$b | str replace '.kube' '' }),
+    qemu => (virtListedFiles '/etc/systemd/system' '^qemu-[^/]+\\\\.service\$' { |b| \$b | str replace 'qemu-' '' | str replace '.service' '' }),
+    _ => [],
+  }
+  \$names | where { |n| \$terms | all { |t| wutWordMatch \$n \$t } }
+}
+
+def virtListedFiles [dir: string, pattern: string, name: closure] {
+  if not (\$dir | path exists) {
+    return []
+  }
+  ls \$dir | get name | each { |f| \$f | path basename } | where { |b| \$b =~ \$pattern } | each { |b| do \$name \$b }
+}
+
+# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# only what is installed: the rest of what the host's config names is add's
+def virtPlanAdded [entries: list, root: string = '/'] {
+  \$entries
+    | each { |e| \$e | update instances (\$e.instances | where { |i| virtInstanceHere \$e.manager \$i \$root }) }
+    | where { |e| \$e.instances | is-not-empty }
+}
+
+# whether a unit starts at boot, and whether it runs now
+def virtUnitState [unit: string] {
+  {
+    enabled: ((^systemctl is-enabled \$unit | complete | get stdout | str trim) == 'enabled'),
+    active: ((^systemctl is-active \$unit | complete | get stdout | str trim) == 'active'),
+  }
+}
+
+# add's --off: a new instance is left stopped and is not started at boot
+def virtAddOff [] {
+  (\$env.VIRT_OFF? | default '') == '1'
+}
+
+def --env virtCallManager [manager: string] {
+  match \$manager {
+    docker => { virtDocker },
+    lxc => { virtLxc },
+    podman => { virtPodman },
+    qemu => { virtQemu },
+    _ => {},
+  }
+}
+
+
+def --env virtPlanRun [] {
+  let plan = (\$env.VIRT_PLAN? | default '{}' | from json)
+  let managed = (\$plan | transpose manager instances | where { |e| virtManagerHere \$e.manager })
+
+  if (\$managed | is-empty) {
+    let missing = (\$plan | transpose manager instances | each { |e| \$e.manager })
+    if (\$missing | is-not-empty) {
+      opPrintWarn \$\\"manager not installed: (\$missing | str join ', ')\\"
+    }
+    return
+  }
+
+  if \$env.VIRT_OP? in ['add' 'sync'] {
+    virtQemuFitRun
+  }
+
+  # list's instances are its terms, not names: they go to virtListPlanRun, which finds what they match first
+  if \$env.VIRT_OP? == 'list' and (\$managed | any { |e| \$e.instances | is-not-empty }) {
+    virtListPlanRun \$managed
+    return
+  }
+
+  let here = if \$env.VIRT_OP? in ['off' 'on' 'rem' 'sync' 'snap' 'unsnap' 'roll' 'unroll'] { virtPlanAdded \$managed } else { \$managed }
+  if (\$here | is-empty) {
+    opPrintWarn \$\\"instance not added: (\$managed | each { |e| \$e.instances } | flatten | str join ', ')\\"
+    return
+  }
+
+  # one row per instance: removing a vm is destructive and they are independent of each other, so the
+  # choice has to reach a single one. an empty instance list is not none, it is every one the manager
+  # has, which only the manager can name — so it collapses to one row that stands for all of them
+  let rows = (\$here | each { |e|
+    if (\$e.instances | is-empty) {
+      [{manager: \$e.manager, instance: 'all', every: true}]
+    } else {
+      \$e.instances | each { |i| {manager: \$e.manager, instance: \$i, every: false} }
+    }
+  } | flatten)
+
+  wutTable ['manager' 'instance'] (\$rows | enumerate | each { |r|
+    [\$\\"(\$r.index + 1)\\\\) (\$r.item.manager)\\", \$r.item.instance]
+  })
+  let picked = (wutSelectRead (\$rows | length))
+  if \$picked == null {
+    return
+  }
+  let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
+
+  \$env.VIRT_AGREED = '1'
+  for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
+    let own = (\$chosen | where manager == \$manager)
+    load-env {
+      VIRT_MANAGER: \$manager,
+      VIRT_INSTANCES: (if (\$own | any { |r| \$r.every }) { [] } else { \$own | each { |r| \$r.instance } }),
+    }
+    if \$env.VIRT_OP? in ['snap' 'unsnap' 'roll' 'unroll'] {
+      virtSnapRun \$manager
+    } else {
+      virtCallManager \$manager
+    }
+    hide-env VIRT_MANAGER
+  }
+
+  # only the exceptions, after everything else had its turn: one instance failing does not stop the next
+  let failed = (\$env.VIRT_FAILED? | default [])
+  if (\$failed | is-not-empty) {
+    opPrintErr 'failed:'
+    for f in \$failed { opPrintErr \$\\"  (\$f)\\" }
+    exit 1
+  }
+}
+
+# list with a term reads before it asks, as pack's does: which instances a manager has that match is a local question,
+# so the summary names them under it and the table is a row per manager that has any. offering the terms as rows read as every manager
+# holding an instance by that name, and picking one of two terms quietly dropped the other from the match. a picked
+# manager is handed the terms unchanged, so its dump narrows by the same rule the summary answered by
+def --env virtListPlanRun [managed: list] {
+  let terms = (\$managed | first | get instances)
+  let found = (\$managed
+    | each { |e| {manager: \$e.manager, instances: (virtListed \$e.manager \$terms)} }
+    | where { |e| \$e.instances | is-not-empty })
+  if (\$found | is-empty) {
+    opPrintWarn \$\\"no instance matches: (\$terms | str join ' ')\\"
+    return
+  }
+
+  for e in \$found {
+    opPrint \$e.manager
+    for i in \$e.instances {
+      opPrint \$\\"  (\$i)\\"
+    }
+  }
+  opPrint ''
+  wutTable ['manager'] (\$found | enumerate | each { |r| [\$\\"(\$r.index + 1)\\\\) (\$r.item.manager)\\"] })
+  let picked = (wutSelectRead (\$found | length))
+  if \$picked == null {
+    return
+  }
+
+  \$env.VIRT_AGREED = '1'
+  for i in \$picked {
+    let manager = (\$found | get (\$i - 1) | get manager)
+    load-env {VIRT_MANAGER: \$manager, VIRT_INSTANCES: \$terms}
+    virtCallManager \$manager
+    hide-env VIRT_MANAGER
+  }
+}
+
+def --env virtFindRun [] {
+  let groups = (\$env.VIRT_FIND? | default '{}' | from json | transpose manager entries)
+  let here = (\$groups | where { |g| virtManagerHere \$g.manager })
+
+  if (\$here | is-empty) {
+    let missing = (\$groups | each { |g| \$g.manager })
+    if (\$missing | is-not-empty) {
+      opPrintWarn \$\\"manager not installed: (\$missing | str join ', ')\\"
+    }
+    return
+  }
+
+  for g in \$here {
+    opPrint \$g.manager
+    for entry in \$g.entries {
+      let parts = (\$entry | split row '=')
+      let pod = (\$parts | get 0)
+      let instances = (\$parts | get -o 1 | default '' | split row ',' | where { is-not-empty })
+      if (\$pod | is-empty) {
+        if (\$instances | is-not-empty) { opPrint \$\\"  (\$instances | str join ', ')\\" }
+      } else {
+        opPrint \$\\"  (\$pod)\\"
+        if (\$instances | is-not-empty) { opPrint \$\\"    (\$instances | str join ', ')\\" }
+      }
+    }
+  }
+}
+
+
+# what an instance owns is one btrfs subvolume, and its snapshots sit beside it on the same filesystem, in back/<tier>,
+# named as btrbk names them: <manager>-<instance>-<live|full>.<timestamp>. btrbk keeps the timed tiers, daily and
+# weekly, and copies them to the other disk; manual and roll are wut's, and nothing rotates manual
+const VIRT_SNAP_LOCK = '/run/lock/btrbk.lock'
+
+# the instance's environment as its add merges it: the manager's yaml, then its own; podman's comes from the server
+def virtSnapEnv [manager: string, name: string] {
+  let entries = if \$manager == 'podman' {
+    \$env.VIRT_PODMAN_ENV? | default '{}' | from json | transpose key value
+  } else {
+    let fetch = { |path| opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$path).yaml'#\\" | from yaml | get -o environment | default [] }
+    (do \$fetch \$manager) ++ (do \$fetch \$\\"(\$env.SYS_HOST)/(\$manager)/(\$name)\\")
+      | each { |e| let kv = (\$e | split row '='); {key: \$kv.0, value: (\$kv | skip 1 | str join '=')} }
+  }
+  \$entries | reduce --fold {} { |kv, acc| \$acc | upsert \$kv.key \$kv.value }
+}
+
+# the subvolume an instance owns, the unit that runs it, and where its snapshots go; null when it keeps none
+def virtSnapTarget [manager: string, instance: string] {
+  let name = (\$instance | split row '/' | first)
+  let vars = (virtSnapEnv \$manager \$name)
+  let found = match \$manager {
+    lxc => {subvol: \$\\"(\$vars | get -o virt_lxc_dir_path | default '/var/lib/lxc')/(\$name)/rootfs\\", unit: \$\\"lxc@(\$name)\\"},
+    qemu => {subvol: \$\\"(\$vars | get -o virt_qemu_dir_path | default '/virt/qemu')/(\$name)\\", unit: \$\\"qemu-(\$name)\\"},
+    podman => (if 'virt_podman_dir_path' in \$vars { {subvol: \$\\"(\$vars.virt_podman_dir_path)/(\$env.SYS_HOST)/(\$name)\\", unit: \$\\"(\$name).service\\"} }),
+    _ => null,
+  }
+  if \$found == null {
+    opPrintWarn \$\\"\`(\$manager)\` instance \`(\$name)\` keeps no folder of its own to snapshot\\"
+    return null
+  }
+  # a subvolume's root is inode 256
+  let onBtrfs = (^sudo stat --file-system --format %T \$found.subvol | complete | get stdout | str trim) == 'btrfs'
+  if not (\$onBtrfs and (^sudo stat --format %i \$found.subvol | complete | get stdout | str trim) == '256') {
+    opPrintWarn \$\\"\`(\$manager)\` instance \`(\$name)\` is not a btrfs subvolume: (\$found.subvol)\\"
+    return null
+  }
+  let mount = (^sudo findmnt --noheadings --output TARGET --target \$found.subvol | str trim)
+  \$found | insert name \$name | insert back (\$mount | path join 'back') | insert prefix \$\\"(\$manager)-(\$name)\\"
+}
+
+# the instance's snapshots in those tiers, oldest first; the name is matched whole, so alma never finds alma-test's
+def virtSnapList [target: record, tiers: list<string>] {
+  let pattern = \$\\"^(\$target.prefix)-\\\\(live|full\\\\)\\\\\\\\.\\\\\\\\d{8}T\\\\\\\\d{4}\\\\(_\\\\\\\\d+\\\\)?\$\\"
+  \$tiers | each { |tier|
+    let dir = (\$target.back | path join \$tier)
+    ^sudo find \$dir -mindepth 1 -maxdepth 1 -type d | complete | get stdout | lines
+      | each { |p| \$p | path basename }
+      | where { |n| \$n =~ \$pattern }
+      | each { |n| {tier: \$tier, name: \$n, path: (\$dir | path join \$n), ts: (\$n | split row '.' | last)} }
+  } | flatten | sort-by ts
+}
+
+# a new snapshot's name: btrbk's timestamp, and _N when one already has it
+def virtSnapName [dir: string, base: string] {
+  let ts = (date now | format date '%Y%m%dT%H%M')
+  mut name = \$\\"(\$base).(\$ts)\\"
+  mut n = 1
+  while ((^sudo test -e (\$dir | path join \$name) | complete).exit_code == 0) {
+    \$name = \$\\"(\$base).(\$ts)_(\$n)\\"
+    \$n += 1
+  }
+  \$name
+}
+
+# a snapshot named in full, or by its timestamp
+def virtSnapPick [snaps: list, to: string] {
+  \$snaps | where { |s| \$s.name == \$to or \$s.ts == \$to }
+}
+
+def --env virtSnapFail [what: string] {
+  \$env.VIRT_FAILED = (\$env.VIRT_FAILED? | default []) | append \$what
+}
+
+# steps that swap an instance's subvolume, under btrbk's lock, so a timed run never snapshots half a swap
+def virtSnapSwap [steps: list<string>] {
+  opPrintMaybeRunCmd sudo flock --nonblock \$VIRT_SNAP_LOCK sh -c \$\\"r#'(\$steps | str join ' && ')'#\\"
+}
+
+def --env virtSnapOne [manager: string, target: record] {
+  let tier = (\$env.VIRT_SNAP_TIER? | default 'manual')
+  let full = (\$env.VIRT_SNAP_FULL? | default '') == '1'
+  let conf = \$\\"/etc/btrbk/(\$tier).conf\\"
+  if \$tier != 'manual' and not (\$conf | path exists) {
+    opPrintWarn \$\\"no btrbk tier (\$tier): (\$conf) does not exist\\"
+    return
+  }
+  let stop = \$full and (virtUnitState \$target.unit).active
+  if \$stop {
+    opPrintMaybeRunCmd sudo systemctl stop \$target.unit
+  }
+  try {
+    if \$tier == 'manual' {
+      let dir = (\$target.back | path join 'manual')
+      opPrintMaybeRunCmd sudo mkdir -p \$dir
+      let name = (virtSnapName \$dir \$\\"(\$target.prefix)-(if \$full { 'full' } else { 'live' })\\")
+      opPrintMaybeRunCmd sudo btrfs subvolume snapshot -r \$target.subvol (\$dir | path join \$name)
+    } else {
+      opPrintMaybeRunCmd sudo btrbk -c \$conf snapshot \$target.subvol
+    }
+  } catch { |e|
+    opRethrowInterrupt \$e
+    virtSnapFail \$\\"snap (\$manager) (\$target.name)\\"
+  }
+  if \$stop {
+    opPrintMaybeRunCmd sudo systemctl start \$target.unit
+  }
+  # the copy to the other disk, once the instance is back
+  if \$tier != 'manual' {
+    try {
+      opPrintMaybeRunCmd sudo btrbk -c \$conf resume \$target.subvol
+    } catch { |e|
+      opRethrowInterrupt \$e
+      virtSnapFail \$\\"copy (\$manager) (\$target.name)\\"
+    }
+  }
+}
+
+def --env virtUnsnapOne [manager: string, target: record] {
+  let snaps = (virtSnapList \$target ['manual'])
+  let to = (\$env.VIRT_SNAP_TO? | default '')
+  let picked = if \$to != '' {
+    virtSnapPick \$snaps \$to
+  } else if (\$snaps | is-not-empty) {
+    wutTable ['snapshot'] (\$snaps | enumerate | each { |s| [\$\\"(\$s.index + 1)\\\\) (\$s.item.name)\\"] })
+    let chosen = (wutSelectRead (\$snaps | length))
+    if \$chosen == null { [] } else { \$chosen | each { |i| \$snaps | get (\$i - 1) } }
+  } else {
+    []
+  }
+  if (\$picked | is-empty) {
+    opPrintWarn \$\\"no manual snapshot of \`(\$manager)\` instance \`(\$target.name)\`(if \$to != '' { \$' named (\$to)' } else { '' })\\"
+    return
+  }
+  for s in \$picked {
+    opPrintMaybeRunCmd sudo btrfs subvolume delete \$s.path
+  }
+}
+
+def --env virtRollOne [manager: string, target: record] {
+  let snaps = (virtSnapList \$target ['daily' 'weekly' 'manual'])
+  let to = (\$env.VIRT_SNAP_TO? | default '')
+  let picked = if \$to != '' { virtSnapPick \$snaps \$to } else { \$snaps | last 1 }
+  if (\$picked | is-empty) {
+    opPrintWarn \$\\"no snapshot of \`(\$manager)\` instance \`(\$target.name)\` to roll back to(if \$to != '' { \$' named (\$to)' } else { '' })\\"
+    return
+  }
+  if (\$picked | length) > 1 {
+    opPrintWarn \$\\"(\$to) names more than one snapshot, give one in full: (\$picked | each { |s| \$s.name } | str join ', ')\\"
+    return
+  }
+  let chosen = (\$picked | first)
+  let running = (virtUnitState \$target.unit).active
+  let rollDir = (\$target.back | path join 'roll')
+  let previous = (virtSnapList \$target ['roll'])
+  let keep = (\$rollDir | path join (virtSnapName \$rollDir \$\\"(\$target.prefix)-full\\"))
+  opPrintInfo \$\\"  back to: (\$chosen.path)\\"
+  let replaces = if (\$previous | is-not-empty) { \$\\", in place of (\$previous | each { |p| \$p.name } | str join ', ')\\" } else { '' }
+  opPrintInfo \$\\"  its current state kept as: (\$keep)(\$replaces)\\"
+  if \$running {
+    opPrintInfo \$\\"  (\$target.unit) is running, so it stops first and starts after\\"
+  }
+  if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
+    return
+  }
+  if \$running {
+    opPrintMaybeRunCmd sudo systemctl stop \$target.unit
+  }
+  try {
+    virtSnapSwap ([
+      (\$previous | each { |p| \$\\"btrfs subvolume delete (\$p.path)\\" }),
+      [
+        \$\\"mkdir -p (\$rollDir)\\",
+        \$\\"btrfs subvolume snapshot -r (\$target.subvol) (\$keep)\\",
+        \$\\"btrfs subvolume delete (\$target.subvol)\\",
+        \$\\"btrfs subvolume snapshot (\$chosen.path) (\$target.subvol)\\",
+      ],
+    ] | flatten)
+  } catch { |e|
+    opRethrowInterrupt \$e
+    virtSnapFail \$\\"roll (\$manager) (\$target.name)\\"
+  }
+  if \$running {
+    opPrintMaybeRunCmd sudo systemctl start \$target.unit
+  }
+}
+
+def --env virtUnrollOne [manager: string, target: record] {
+  let kept = (virtSnapList \$target ['roll'])
+  if (\$kept | is-empty) {
+    opPrintWarn \$\\"no roll of \`(\$manager)\` instance \`(\$target.name)\` to undo\\"
+    return
+  }
+  let last = (\$kept | last)
+  let running = (virtUnitState \$target.unit).active
+  opPrintInfo \$\\"  back to its state before the last roll: (\$last.path)\\"
+  if \$running {
+    opPrintInfo \$\\"  (\$target.unit) is running, so it stops first and starts after\\"
+  }
+  if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
+    return
+  }
+  if \$running {
+    opPrintMaybeRunCmd sudo systemctl stop \$target.unit
+  }
+  try {
+    virtSnapSwap [
+      \$\\"btrfs subvolume delete (\$target.subvol)\\",
+      \$\\"btrfs subvolume snapshot (\$last.path) (\$target.subvol)\\",
+      \$\\"btrfs subvolume delete (\$last.path)\\",
+    ]
+  } catch { |e|
+    opRethrowInterrupt \$e
+    virtSnapFail \$\\"unroll (\$manager) (\$target.name)\\"
+  }
+  if \$running {
+    opPrintMaybeRunCmd sudo systemctl start \$target.unit
+  }
+}
+
+def --env virtSnapRun [manager: string] {
+  # a pod is one subvolume however many of its instances were named
+  for instance in (\$env.VIRT_INSTANCES | each { |i| \$i | split row '/' | first } | uniq) {
+    let target = (virtSnapTarget \$manager \$instance)
+    if \$target == null {
+      continue
+    }
+    match \$env.VIRT_OP {
+      snap => { virtSnapOne \$manager \$target }
+      unsnap => { virtUnsnapOne \$manager \$target }
+      roll => { virtRollOne \$manager \$target }
+      unroll => { virtUnrollOne \$manager \$target }
+    }
+  }
+}
+
+
+def virtDocker [] {
+  let cmd = 'docker'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+
+  # the keys wut owns in daemon.json: machine.slice as every container's parent, then docker.yaml's
+  def dockerDaemon [] {
+    let daemonFilePath = '/etc/docker/daemon.json'
+    let current = if (\$daemonFilePath | path exists) { open --raw \$daemonFilePath | into string | from json } else { {} }
+    let config = try { http get --raw --redirect-mode follow \$\\"(\$env.REQ_URL_CFG)/virt/docker.yaml\\" | from yaml } catch { |e| opRethrowInterrupt \$e; {} }
+    let wanted = {'cgroup-parent': 'machine.slice'} | merge (\$config | get --optional docker.daemon | default {})
+    let changed = (\$wanted | columns | where { |k| (\$current | get --optional \$k) != (\$wanted | get \$k) })
+    if (\$changed | is-empty) {
+      return
+    }
+    for k in \$changed {
+      opPrintInfo \$\\"  daemon.json (\$k) -> (\$wanted | get \$k | to json --raw)\\"
+    }
+    opPrintMaybeRunCmd sudo mkdir -p (\$daemonFilePath | path dirname)
+    opPrintMaybeRunCmd \$\\"r#'(((\$current | merge \$wanted) | to json --indent 2) + \\"\\\\n\\")'#\\" '|' sudo tee \$daemonFilePath '|' ignore
+    opPrintMaybeRunCmd sudo systemctl restart docker
+  }
+  if \$env.VIRT_OP in ['add' 'sync'] {
+    dockerDaemon
+  }
+
+  def composeRunning [instance] {
+    ^sudo docker compose ls --all --format json | complete | get stdout
+      | if (\$in | is-not-empty) { from json } else { [] }
+      | where Name == \$instance
+      | any { |p| \$p.Status | str contains 'running' }
+  }
+
+  match \$env.VIRT_OP {
+    add => {
+      for instance in \$env.VIRT_INSTANCES {
+        # its compose project, running or not, by name: a container that only mentions it is someone else's
+        if (virtInstanceHere \$cmd \$instance) {
+          opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
+          continue
+        }
+
+        let yaml = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
+
+        for src in (\$yaml
+          | from yaml
+          | get services? | default {}
+          | values
+          | each { |svc|
+              \$svc | get volumes? | default []
+              | each { |v|
+                  if (\$v | describe) == string {
+                    let host = \$v | split row ':' | first
+                    if (\$host | str starts-with '/') {
+                      \$host
+                    } else {
+                      null
+                    }
+                  } else if (\$v | get type? | default '') == bind {
+                    \$v.source
+                  } else {
+                    null
+                  }
+                }
+              | compact
+            }
+          | flatten) {
+          opPrintMaybeRunCmd sudo mkdir -p \$src
+        }
+
+        let start = if (virtAddOff) { '--no-start' } else { '--detach' }
+        opPrintMaybeRunCmd \$\\"r#'(\$yaml)'#\\" '|' sudo \$cmd compose --project-name \$instance --file - up \$start --pull always
+      }
+    }
+    on | off => {
+      for instance in \$env.VIRT_INSTANCES {
+        opPrintMaybeRunCmd sudo \$cmd compose --project-name \$instance (if \$env.VIRT_OP == 'on' { 'start' } else { 'stop' })
+      }
+    }
+    list => {
+      # an instance is a compose project, so its containers are the ones compose labelled with it. a name filter
+      # matched part of a container's name, which put mydb's containers under db, and with no instance at all there
+      # was no filter, so every container on the machine was listed
+      for instance in (virtListed \$cmd \$env.VIRT_INSTANCES) {
+        opPrintRunCmd sudo \$cmd container ls --all --filter \$\\"label=com.docker.compose.project=(\$instance)\\" --format '\\"table {{.Names}}\\\\\\\\t{{.Image}}\\\\\\\\t{{.Ports}}\\\\\\\\t{{.State}}\\\\\\\\t{{.Status}}\\"' --no-trunc
+      }
+    }
+    rem => {
+      let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
+        \$env.VIRT_INSTANCES
+      } else {
+        ^sudo \$cmd compose ls --all --format json | complete | get stdout | if (\$in | is-not-empty) { from json | get Name } else { [] }
+      }
+      for instance in \$instances {
+        opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --project-name \$instance --file - down
+      }
+    }
+    sync => {
+      for instance in \$env.VIRT_INSTANCES {
+        if not (virtInstanceHere \$cmd \$instance) {
+          continue
+        }
+
+        let start = if (composeRunning \$instance) { '--detach' } else { '--no-start' }
+        opPrintMaybeRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\" '|' sudo \$cmd compose --project-name \$instance --file - up \$start --pull always
+      }
+    }
+    tidy => {
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
+    }
+  }
+}
+
+
+def --env virtLxc [] {
+  let cmd = 'lxc'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
+    return
+  }
+  if \$env.VIRT_OP == tidy {
+    return
+  }
+
+  def flattenLxcConfig [cfg, prefix = ''] {
+    mut lines = []
+    for kv in (\$cfg | transpose key value) {
+      let key = if \$prefix == '' { \$kv.key } else { \$\\"(\$prefix).(\$kv.key)\\" }
+      let desc = (\$kv.value | describe)
+      if (\$desc | str starts-with 'record') {
+        \$lines = \$lines | append (flattenLxcConfig \$kv.value \$key)
+      } else if (\$desc | str starts-with 'list') {
+        for item in \$kv.value {
+          \$lines = \$lines | append \$\\"lxc.(\$key) = (\$item)\\"
+        }
+      } else {
+        \$lines = \$lines | append \$\\"lxc.(\$key) = (\$kv.value)\\"
+      }
+    }
+    \$lines
+  }
+
+  def replaceEnv [localEnv, value] {
+    mut v = \$value
+    if (\$v | str contains '{') {
+      for e in (\$localEnv | items { |k, val| [\$k, \$val] }) {
+        \$v = \$v | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
+      }
+    }
+    \$v
+  }
+
+  # a container runs as its own lxc@ unit under machine.slice, as podman's do, so the host reserve qemu sets on the slice
+  # holds it too. relative keeps lxc's cgroups inside the unit instead of escaping to the root
+  def lxcUnitSlice [] {
+    let dropInFilePath = '/etc/systemd/system/lxc@.service.d/wut.conf'
+    let want = \\"[Service]\\\\nSlice=machine.slice\\\\n\\"
+    if not (\$dropInFilePath | path exists) or (open --raw \$dropInFilePath | into string) != \$want {
+      opPrintMaybeRunCmd sudo mkdir -p (\$dropInFilePath | path dirname)
+      opPrintMaybeRunCmd \$\\"r#'(\$want)'#\\" '|' sudo tee \$dropInFilePath '|' ignore
+      opPrintMaybeRunCmd sudo systemctl daemon-reload
+    }
+  }
+
+  # a failed hook stops that instance alone, listed at the end
+  def --env lxcHook [hook, instance, hookEnv] {
+    if \$instance not-in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional \$hook | default []) {
+      return true
+    }
+    opPrintInfo \$\\"\`(\$instance)\` (\$hook)\\"
+    try {
+      with-env \$hookEnv { virtLxcHook \$hook \$instance }
+      true
+    } catch { |e|
+      opRethrowInterrupt \$e
+      load-env {VIRT_FAILED: ((\$env.VIRT_FAILED? | default []) | append \$\\"\`(\$instance)\`: (\$hook) failed\\")}
+      false
+    }
+  }
+
+  def lxcWaitUp [instance, net] {
+    if (^sudo lxc-wait --name \$instance --state RUNNING --timeout 30 | complete).exit_code != 0 {
+      opPrintWarn \$\\"\`(\$instance)\` did not start running\\"
+      return
+    }
+    if (\$net | is-empty) {
+      return
+    }
+    # slaac comes before the dhcp lease, which brings dns
+    for _ in 1..30 {
+      let ipv4 = ^sudo lxc-info --name \$instance --ips --no-humanize | complete | get stdout | lines | any { |ip| \$ip =~ '^\\\\d+\\\\.\\\\d+\\\\.\\\\d+\\\\.\\\\d+\$' }
+      if \$ipv4 and (null | ^sudo lxc-attach --name \$instance --clear-env --set-var 'PATH=/run/current-system/sw/bin:/usr/bin:/bin' -- /bin/sh -c 'grep -q ^nameserver /etc/resolv.conf' | complete).exit_code == 0 {
+        return
+      }
+      sleep 1sec
+    }
+    opPrintWarn \$\\"\`(\$instance)\` has no ipv4 address or nameserver yet\\"
+  }
+
+  # stops a container whether its unit runs it or it was started before there was one
+  def lxcStop [cmd, instance] {
+    if (^systemctl is-active \$\\"lxc@(\$instance)\\" | complete | get stdout | str trim) == 'active' {
+      opPrintMaybeRunCmd sudo systemctl stop \$\\"lxc@(\$instance)\\"
+    } else if (^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row --regex '\\\\s+' | any { |l| \$l == \$instance }) {
+      opPrintMaybeRunCmd sudo \$\\"(\$cmd)-stop\\" --name \$instance
+    }
+  }
+
+  # state: virtUnitState from before a sync stopped it, or null when the instance is new
+  def --env doAdd [cmd, instance, state] {
+    let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
+    let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
+    let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
+
+    mut lxcEnv = {}
+
+    for e in (\$merged | get environment? | default [] | each { split row '=' }) {
+      \$lxcEnv = \$lxcEnv | upsert \$e.0 \$e.1
+    }
+
+    \$lxcEnv = \$lxcEnv | upsert 'instance' \$instance
+
+    let lxcDirPath = \$lxcEnv.virt_lxc_dir_path
+    let rootfsDirPath = \$\\"(\$lxcDirPath)/(\$instance)/rootfs\\"
+    \$lxcEnv = \$lxcEnv | upsert 'rootfs' \$rootfsDirPath
+    let lxcEnv = \$lxcEnv
+
+    let net = \$merged | get lxc?.network? | default {}
+    if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
+      opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    let hookEnv = \$lxcEnv
+      | reject instance rootfs
+      | transpose key value
+      | reduce --fold {VIRT_INSTANCE: \$instance, VIRT_LXC_ROOTFS: \$rootfsDirPath} { |kv, acc| \$acc | upsert (\$kv.key | str uppercase) \$kv.value }
+
+    if not (lxcHook build \$instance \$hookEnv) {
+      return
+    }
+
+    for mnt in (\$merged | get lxc?.mounts? | default []) {
+      opPrintMaybeRunCmd sudo mkdir -p (replaceEnv \$lxcEnv \$mnt.source)
+    }
+
+    # on btrfs the root is a subvolume of its own
+    let onBtrfs = (^stat --file-system --format %T \$lxcDirPath | complete | get stdout | str trim) == 'btrfs'
+    let rootfsReady = (^sudo test -d \$\\"(\$rootfsDirPath)/usr\\" | complete).exit_code == 0
+    if not \$rootfsReady {
+      if \$onBtrfs {
+        # lxc-create makes the subvolume itself, and fails on a folder left behind
+        if (\$rootfsDirPath | path exists) {
+          opPrintMaybeRunCmd sudo rmdir \$rootfsDirPath
+        }
+      } else {
+        opPrintMaybeRunCmd sudo mkdir -p \$rootfsDirPath
+      }
+      let template = \$merged | get lxc?.create?.template?
+      let templateName = (\$template | columns | get 0?) | default 'download'
+      opPrintMaybeRunCmd sudo lxc-create --name \$instance --lxcpath \$lxcDirPath --bdev (if \$onBtrfs { 'btrfs' } else { 'dir' }) --template \$templateName -- ...(
+        (if (\$templateName in (\$template | columns)) { \$template | get \$templateName } else { {} })
+        | transpose key value
+        | each { |kv| [\$\\"--(\$kv.key)\\", \$kv.value] }
+        | flatten
+      )
+      opPrintMaybeRunCmd sudo rm -f \$\\"(\$lxcDirPath)/(\$instance)/config\\"
+    }
+
+    # a subvolume's root is inode 256
+    let backing = if \$rootfsReady {
+      if \$onBtrfs and (^sudo stat --format %i \$rootfsDirPath | complete | get stdout | str trim) == '256' { 'btrfs' } else { 'dir' }
+    } else if \$onBtrfs { 'btrfs' } else { 'dir' }
+
+    let configLines = [
+      [\$\\"lxc.uts.name = (\$instance)\\", \$\\"lxc.rootfs.path = (\$backing):(\$rootfsDirPath)\\", 'lxc.cgroup.relative = 1'],
+      (flattenLxcConfig (\$merged | get lxc?.config? | default {}) | each { |l| replaceEnv \$lxcEnv \$l }),
+      (if (\$net | is-not-empty) { [
+        [\$\\"lxc.net.0.type = (\$net.type)\\", \$\\"lxc.net.0.link = (\$net.link)\\", \$\\"lxc.net.0.name = (\$net.name)\\"],
+        (if 'hwaddr' in \$net { [\$\\"lxc.net.0.hwaddr = (\$net.hwaddr)\\"] } else { [] }),
+        (if \$net.type == veth { [\$\\"lxc.net.0.veth.pair = veth-(\$instance)\\"] } else if \$net.type == macvlan { [\$\\"lxc.net.0.macvlan.mode = (\$net.mode? | default bridge)\\"] } else { [] }),
+        ['lxc.net.0.flags = up'],
+      ] | flatten } else { [] }),
+      (\$merged | get lxc?.mounts? | default [] | each { |mnt| \$\\"lxc.mount.entry = (replaceEnv \$lxcEnv \$mnt.source) ((replaceEnv \$lxcEnv \$mnt.target) | str trim --left --char '/') none bind,create=dir 0 0\\" }),
+    ] | flatten
+
+    opPrintMaybeRunCmd sudo mkdir -p \$\\"/var/lib/lxc/(\$instance)\\"
+
+    opPrintMaybeRunCmd \$\\"r#'((\$configLines | str join \\"\\\\n\\") + \\"\\\\n\\")'#\\" '|' sudo tee \$\\"/var/lib/lxc/(\$instance)/config\\" '|' ignore
+
+    # starting at boot is the unit's: lxc.start.auto would have lxc.service start it, outside the unit and the slice
+    lxcUnitSlice
+    if \$state == null {
+      if not (virtAddOff) {
+        opPrintMaybeRunCmd sudo systemctl enable --now --quiet \$\\"lxc@(\$instance)\\"
+      }
+    } else if \$state.active {
+      opPrintMaybeRunCmd sudo systemctl start \$\\"lxc@(\$instance)\\"
+    }
+
+    let running = if \$state == null { not (virtAddOff) } else { \$state.active }
+    let hasSetup = \$instance in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional setup | default [])
+    if \$hasSetup and not \$running {
+      opPrintInfo \$\\"\`(\$instance)\` is off, so its setup waits until it runs\\"
+    } else if \$hasSetup {
+      if NOOP not-in \$env {
+        lxcWaitUp \$instance \$net
+      }
+      lxcHook setup \$instance \$hookEnv | ignore
+    }
+  }
+
+  def doRem [cmd, instance] {
+    let wasRunning = ^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row --regex '\\\\s+' | any { |l| \$l == \$instance }
+    lxcStop \$cmd \$instance
+    opPrintMaybeRunCmd sudo systemctl disable --quiet \$\\"lxc@(\$instance)\\"
+
+    let hasConfig = \$\\"/var/lib/lxc/(\$instance)\\" | path exists
+    if \$hasConfig {
+      opPrintMaybeRunCmd sudo rm -rf \$\\"/var/lib/lxc/(\$instance)\\"
+    }
+
+    if not (\$wasRunning or \$hasConfig) {
+      opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already removed\\"
+    }
+  }
+
+  match \$env.VIRT_OP {
+    add => {
+      for instance in \$env.VIRT_INSTANCES {
+        if (^sudo \$\\"(\$cmd)-ls\\" --running | complete | get stdout | split row --regex '\\\\s+' | any { |l| \$l == \$instance }) {
+          opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
+          continue
+        }
+
+        doAdd \$cmd \$instance (if (virtInstanceHere \$cmd \$instance) { virtUnitState \$\\"lxc@(\$instance)\\" } else { null })
+      }
+    }
+    on | off => {
+      for instance in \$env.VIRT_INSTANCES {
+        if \$env.VIRT_OP == 'on' {
+          opPrintMaybeRunCmd sudo systemctl enable --now --quiet \$\\"lxc@(\$instance)\\"
+        } else {
+          opPrintMaybeRunCmd sudo systemctl disable --quiet \$\\"lxc@(\$instance)\\"
+          lxcStop \$cmd \$instance
+        }
+      }
+    }
+    list => {
+      for instance in (virtListed \$cmd \$env.VIRT_INSTANCES) {
+        try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"lxc@(\$instance)\\" } catch { |e| opRethrowInterrupt \$e }
+        opPrintRunCmd sudo \$\\"(\$cmd)-ls\\" --fancy --fancy-format '\\"NAME,IPV4,IPV6,STATE\\"' -- \$instance
+      }
+    }
+    rem => {
+      let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
+        \$env.VIRT_INSTANCES
+      } else {
+        let lxcDirPath = '/var/lib/lxc'
+        if (\$lxcDirPath | path exists) {
+          ls \$lxcDirPath | where type == dir | get name | each { |f| \$f | path basename }
+        } else {
+          []
+        }
+      }
+      for instance in \$instances {
+        doRem \$cmd \$instance
+      }
+    }
+    sync => {
+      for instance in \$env.VIRT_INSTANCES {
+        if not (virtInstanceHere \$cmd \$instance) {
+          continue
+        }
+
+        let state = virtUnitState \$\\"lxc@(\$instance)\\"
+        lxcStop \$cmd \$instance
+        doAdd \$cmd \$instance \$state
+      }
+    }
+  }
+}
+
+
+# podman network create's arguments for a network podman.yaml defines; a key it leaves out is left to podman's default
+def virtPodmanNetworkArgs [network: string, networkDef: record] {
+  [
+    ['network', 'create'],
+    (if (\$networkDef | get driver? | is-not-empty) { ['--driver', \$networkDef.driver] } else { [] }),
+    (if (\$networkDef | get interface? | is-not-empty) { ['--interface-name', \$networkDef.interface] } else { [] }),
+    (if (\$networkDef | get ipam? | is-not-empty) { ['--ipam-driver', \$networkDef.ipam] } else { [] }),
+    (if (\$networkDef | get dns? | default true) == false { ['--disable-dns'] } else { [] }),
+    (\$networkDef | get options? | default {} | transpose key value | each { |opt| ['--opt', \$\\"(\$opt.key)=(\$opt.value)\\"] } | flatten),
+    [\$network],
+  ] | flatten
+}
+
+# the keys of a podman.yaml network that the network podman holds no longer matches, as podman network inspect shows
+# it. podman changes none of them in place, so a network that differs is made again. interface and ipam are compared
+# when the definition names them, since podman picks its own otherwise; an unnamed driver is a bridge, and dns runs
+# only on a bridge, as podman has them
+def virtPodmanNetworkDrift [networkDef: record, inspected: record] {
+  let driver = \$networkDef | get driver? | default 'bridge'
+  let interface = \$networkDef | get interface? | default ''
+  let ipam = \$networkDef | get ipam? | default ''
+  let dns = (\$networkDef | get dns? | default true) and \$driver == 'bridge'
+  # podman holds every option as a string
+  let options = \$networkDef
+    | get options?
+    | default {}
+    | transpose key value
+    | reduce --fold {} { |opt, acc| \$acc | upsert \$opt.key (\$opt.value | into string) }
+  [
+    [driver (\$driver != (\$inspected | get driver? | default ''))]
+    [interface (\$interface != '' and \$interface != (\$inspected | get network_interface? | default ''))]
+    [ipam (\$ipam != '' and \$ipam != (\$inspected.ipam_options?.driver? | default ''))]
+    [dns (\$dns != (\$inspected | get dns_enabled? | default false))]
+    [options (\$options != (\$inspected | get options? | default {}))]
+  ] | where { |kv| \$kv.1 } | each { |kv| \$kv.0 }
+}
+
+def virtPodman [] {
+  let cmd = 'podman'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$cmd | is-empty) {
+    return
+  }
+
+  def splitYamlDocs [] {
+    \$in
+      | str replace --regex '^---\\\\n' ''
+      | split row \\"\\\\n---\\\\n\\"
+      | each { str trim }
+      | where { is-not-empty }
+      | each { from yaml }
+  }
+
+  # {host}, {pod} and {instance}, and each name podman.yaml's environment gives, as {name}
+  def fillVars [text: string, host: string, pod: string, instance?: string] {
+    let named = (\$env.VIRT_PODMAN_ENV? | default '{}' | from json | upsert host \$host | upsert pod \$pod)
+    let named = if \$instance == null { \$named } else { \$named | upsert instance \$instance }
+    \$named | transpose key value | reduce --fold \$text { |kv, acc| \$acc | str replace --all \$\\"{(\$kv.key)}\\" \$kv.value }
+  }
+
+  def processYaml [yamlRaw, host, pod, instance] {
+    mut result = []
+    for doc in (fillVars \$yamlRaw \$host \$pod \$instance | splitYamlDocs) {
+      if (\$doc | get kind? | default '') == Build {
+        # custom doc, not passed to podman
+      } else {
+        let doc = if (\$doc | get apiVersion? | is-empty) { \$doc | insert apiVersion 'v1' } else { \$doc }
+        \$result = \$result | append (\$doc | to yaml)
+      }
+    }
+
+    \$result | str join \\"---\\\\n\\"
+  }
+
+  def buildImage [yamlRaw, host, pod, instance, alreadyBuilt: list<string>] {
+    let buildDocs = fillVars \$yamlRaw \$host \$pod \$instance
+      | splitYamlDocs
+      | where { |d| (\$d | get kind? | default '') == Build }
+    if (\$buildDocs | is-empty) {
+      return \$alreadyBuilt
+    }
+
+    mut built = \$alreadyBuilt
+    for buildInfo in (\$buildDocs | first | get images) {
+      let image = \$buildInfo.name
+      if \$image in \$built { continue }
+
+      let contextDirPath = \$buildInfo.buildContextPath
+      let containerfileUrl = \$\\"(\$env.REQ_URL_CFG)(\$buildInfo.filePath)\\"
+
+      let containerfileFilePath = (\$contextDirPath | path join (\$buildInfo.filePath | path basename))
+      let containerfileContent = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$containerfileUrl)'#\\"
+
+      opPrintMaybeRunCmd sudo mkdir -p \$contextDirPath
+      opPrintMaybeRunCmd \$\\"r#'(\$containerfileContent)'#\\" '|' sudo tee \$containerfileFilePath '|' ignore
+      opPrintMaybeRunCmd sudo podman build --file \$containerfileFilePath --tag \$image \$contextDirPath
+
+      \$built = \$built | append \$image
+    }
+    \$built
+  }
+
+  def upsertByName [existing, incoming] {
+    let incomingNames = \$incoming | each { |x| \$x.name }
+    (\$existing | where { |x| not (\$incomingNames | any { |n| \$n == \$x.name }) }) | append \$incoming
+  }
+
+  def readKubeNetwork [kubeFilePath: string] {
+    if not (\$kubeFilePath | path exists) { return '' }
+    let networkLines = open --raw \$kubeFilePath | lines | where { \$in | str starts-with 'Network=' }
+    if (\$networkLines | is-empty) { return '' }
+    \$networkLines | first | str replace 'Network=' '' | str trim
+  }
+
+  def removeNetworkIfUnused [network: string, pod: string, managedNetworks: record] {
+    if (\$network | is-empty) { return }
+    if (\$managedNetworks | get --optional \$network) == null { return }
+    let kubeDirPath = '/etc/containers/systemd'
+    if not (\$kubeDirPath | path exists) {
+      opPrintMaybeRunCmd sudo podman network rm \$network
+      return
+    }
+    if not (ls \$kubeDirPath
+      | where name =~ '\\\\.kube\$'
+      | where { |f| not (\$f.name | str ends-with \$\\"(\$pod).kube\\") }
+      | each { |f| open --raw \$f.name }
+      | str join \\"\\\\n\\"
+      | str contains \$\\"Network=(\$network)\\") {
+      opPrintMaybeRunCmd sudo podman network rm \$network
+    }
+  }
+
+  # every pod added here whose .kube names the network, not only the ones an op names
+  def podsOnNetwork [network: string] {
+    virtListedFiles '/etc/containers/systemd' '\\\\.kube\$' { |b| \$b | str replace '.kube' '' }
+      | where { |p| (readKubeNetwork \$\\"/etc/containers/systemd/(\$p).kube\\") == \$network }
+  }
+
+  # a network podman.yaml now defines otherwise is made again: podman removes one only with no pod on it, so each pod on
+  # it stops first. one this sync replays starts again in doAdd, and any other starts again as it was
+  def remakeNetworks [synced: list<string>] {
+    let networks = \$env.VIRT_PODMAN_NETWORKS | from json
+    for network in (\$networks | columns) {
+      let inspected = ^sudo podman network inspect \$network | complete
+      if \$inspected.exit_code != 0 {
+        continue
+      }
+      let networkDef = \$networks | get \$network
+      let drift = virtPodmanNetworkDrift \$networkDef (\$inspected.stdout | from json | first)
+      if (\$drift | is-empty) {
+        continue
+      }
+
+      let pods = podsOnNetwork \$network
+      opPrintInfo \$\\"\`podman\` network \`(\$network)\` differs from podman.yaml in (\$drift | str join ', ')\\"
+      let stopping = if (\$pods | is-empty) { '' } else { \$\\", stopping (\$pods | str join ', ') meanwhile\\" }
+      if not (opAsk \$\\"sync - podman (\$network) - make it again(\$stopping)\\") {
+        opPrintWarn \$\\"\`podman\` network \`(\$network)\` keeps what it has\\"
+        continue
+      }
+
+      let others = \$pods | where { |p| \$p not-in \$synced } | each { |p| {pod: \$p, state: (podState \$p)} }
+      for pod in \$pods {
+        opPrintMaybeRunCmd sudo systemctl stop \$\\"(\$pod).service\\"
+      }
+      opPrintMaybeRunCmd sudo podman network rm \$network
+      opPrintMaybeRunCmd sudo podman ...(virtPodmanNetworkArgs \$network \$networkDef)
+      for other in (\$others | where { |o| \$o.state.active }) {
+        opPrintMaybeRunCmd sudo systemctl start \$\\"(\$other.pod).service\\"
+      }
+    }
+  }
+
+  # a quadlet unit cannot be systemctl enabled: an [Install] drop-in is what starts it at boot
+  def installFilePath [pod] {
+    \$\\"/etc/containers/systemd/(\$pod).kube.d/install.conf\\"
+  }
+
+  def podState [pod] {
+    let kubeFilePath = \$\\"/etc/containers/systemd/(\$pod).kube\\"
+    if not (\$kubeFilePath | path exists) {
+      return null
+    }
+    {
+      # a .kube written before the drop-in carried its own [Install]
+      enabled: ((installFilePath \$pod | path exists) or (open --raw \$kubeFilePath | str contains '[Install]')),
+      active: ((^systemctl is-active \$\\"(\$pod).service\\" | complete | get stdout | str trim) == 'active'),
+    }
+  }
+
+  def podInstall [pod, on: bool] {
+    let filePath = installFilePath \$pod
+    if \$on {
+      opPrintMaybeRunCmd sudo mkdir -p (\$filePath | path dirname)
+      opPrintMaybeRunCmd \$\\"r#'[Install]\\\\nWantedBy=default.target\\\\n'#\\" '|' sudo tee \$filePath '|' ignore
+    } else if (\$filePath | path exists) {
+      opPrintMaybeRunCmd sudo rm -rf (\$filePath | path dirname)
+    }
+  }
+
+  # state: podState from before a sync stopped the pod, or null for a pod new to this host
+  def doAdd [pod, podInstances, cmd, state] {
+    let kubeDirPath = '/etc/containers/systemd'
+    let networks = \$env.VIRT_PODMAN_NETWORKS | from json
+    let yamlFilePath = \$\\"(\$kubeDirPath)/(\$pod).yaml\\"
+    let kubeFilePath = \$\\"(\$kubeDirPath)/(\$pod).kube\\"
+
+    # layer 2: pod.yaml — base pod metadata (hostname, network, mac, annotations)
+    let configPodRaw = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/podman/(\$pod).yaml'#\\"
+    mut builtImages = buildImage \$configPodRaw \$env.SYS_HOST \$pod '' []
+    mut podDoc = fillVars \$configPodRaw \$env.SYS_HOST \$pod
+      | splitYamlDocs
+      | where { |d| (\$d | get kind? | default '') == Pod }
+      | first
+
+    mut configMaps = []
+
+    # layer 3: instance yamls — overlaid onto pod base
+    for instancePath in \$podInstances {
+      let instance = (\$instancePath | split row '/') | last
+      let yamlRaw = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/podman/(\$instancePath).yaml'#\\"
+
+      \$builtImages = buildImage \$yamlRaw \$env.SYS_HOST \$pod \$instance \$builtImages
+
+      let instanceDocs = processYaml \$yamlRaw \$env.SYS_HOST \$pod \$instance | splitYamlDocs
+      let instancePodDoc = \$instanceDocs | where { |d| (\$d | get kind? | default '') == Pod } | first
+
+      \$podDoc = \$podDoc
+        | upsert metadata.annotations (virtDeepMerge (\$podDoc | get metadata.annotations? | default {}) (\$instancePodDoc | get metadata.annotations? | default {}))
+        | upsert spec.containers (upsertByName (\$podDoc | get spec.containers? | default []) (\$instancePodDoc | get spec.containers? | default []))
+        | upsert spec.volumes (upsertByName (\$podDoc | get spec.volumes? | default []) (\$instancePodDoc | get spec.volumes? | default []))
+
+      let instanceHostname = \$instancePodDoc | get spec.hostname?
+      if \$instanceHostname != null {
+        \$podDoc = \$podDoc | upsert spec.hostname \$instanceHostname
+      }
+
+      for cm in (\$instanceDocs | where { |d| (\$d | get kind? | default '') == ConfigMap }) {
+        \$configMaps = (\$configMaps | where { |m| \$m.metadata.name != \$cm.metadata.name }) | append \$cm
+      }
+    }
+
+    let annotations = \$podDoc | get metadata.annotations? | default {}
+    let network = \$annotations | get 'io.podman.kube.network'? | default ''
+    let mac = \$annotations | get 'io.podman.kube.podmanargs.mac-address'? | default ''
+    let containers = \$podDoc | get spec.containers? | default []
+    let volumes = \$podDoc | get spec.volumes? | default []
+    let hostname = \$podDoc | get spec.hostname? | default \$pod
+
+    let networkDef = \$networks | get --optional \$network
+    if \$networkDef != null {
+      if not (^sudo podman network ls --format '{{.Name}}' | lines | any { \$in == \$network }) {
+        opPrintMaybeRunCmd sudo podman ...(virtPodmanNetworkArgs \$network \$networkDef)
+      }
+    }
+
+    for container in \$containers {
+      if not (\$container.image | str starts-with 'localhost/') {
+        opPrintMaybeRunCmd sudo \$cmd pull \$container.image
+      }
+    }
+
+    let allDocs = ([({
+      apiVersion: 'v1',
+      kind: 'Pod',
+      metadata: { name: \$pod, annotations: \$annotations },
+      spec: { hostname: \$hostname, containers: \$containers, volumes: \$volumes },
+    } | to yaml)] | append (\$configMaps | each { |cm| \$cm | to yaml })) | str join \\"---\\\\n\\"
+
+    let kubeLines = [
+      ['[Unit]', \$\\"Description=(\$pod) pod\\", '', '[Kube]', \$\\"Yaml=(\$pod).yaml\\", \$\\"Network=(\$network)\\"],
+      (if (\$mac | is-not-empty) { [\$\\"PodmanArgs=--mac-address (\$mac)\\"] } else { [] }),
+    ] | flatten
+
+    # the pod's own data folder, made when missing: on btrfs a subvolume, so a snapshot takes the whole pod
+    let podmanEnv = (\$env.VIRT_PODMAN_ENV? | default '{}' | from json)
+    if 'virt_podman_dir_path' in \$podmanEnv {
+      let dataDirPath = \$\\"(\$podmanEnv.virt_podman_dir_path)/(\$env.SYS_HOST)/(\$pod)\\"
+      if not (\$dataDirPath | path exists) {
+        let parentDirPath = (\$dataDirPath | path dirname)
+        opPrintMaybeRunCmd sudo mkdir -p \$parentDirPath
+        if (^stat --file-system --format %T \$parentDirPath | complete | get stdout | str trim) == 'btrfs' {
+          opPrintMaybeRunCmd sudo btrfs subvolume create \$dataDirPath
+        } else {
+          opPrintMaybeRunCmd sudo mkdir -p \$dataDirPath
+        }
+      }
+    }
+
+    let boot = if \$state == null { not (virtAddOff) } else { \$state.enabled }
+    opPrintMaybeRunCmd sudo mkdir -p \$kubeDirPath
+    opPrintMaybeRunCmd \$\\"r#'(\$allDocs)'#\\" '|' sudo tee \$yamlFilePath '|' ignore
+    opPrintMaybeRunCmd \$\\"r#'(((\$kubeLines | str join \\"\\\\n\\") + \\"\\\\n\\"))'#\\" '|' sudo tee \$kubeFilePath '|' ignore
+    podInstall \$pod \$boot
+    opPrintMaybeRunCmd sudo systemctl daemon-reload
+    if (\$state == null and \$boot) or (\$state != null and \$state.active) {
+      opPrintMaybeRunCmd sudo systemctl start \$\\"(\$pod).service\\"
+    }
+  }
+
+  match \$env.VIRT_OP {
+    add => {
+      let pods = \$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq
+      for pod in \$pods {
+        let podInstances = \$env.VIRT_INSTANCES | where { |p| ((\$p | split row '/') | first) == \$pod }
+
+        if (^sudo systemctl is-active \$\\"(\$pod).service\\" | complete | get stdout | str trim) == active {
+          opPrintWarn \$\\"\`(\$cmd)\` pod \`(\$pod)\` is already added\\"
+          continue
+        }
+
+        doAdd \$pod \$podInstances \$cmd (podState \$pod)
+      }
+    }
+    on | off => {
+      let on = \$env.VIRT_OP == 'on'
+      for pod in (\$env.VIRT_INSTANCES | each { |p| (\$p | split row '/') | first } | uniq) {
+        podInstall \$pod \$on
+        opPrintMaybeRunCmd sudo systemctl daemon-reload
+        opPrintMaybeRunCmd sudo systemctl (if \$on { 'start' } else { 'stop' }) \$\\"(\$pod).service\\"
+      }
+    }
+    list => {
+      for pod in (virtListed \$cmd \$env.VIRT_INSTANCES) {
+        try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"(\$pod).service\\" } catch { |e| opRethrowInterrupt \$e }
+        # podman takes a pod name filter as a regex, so a bare name also listed every pod it was part of: cave and caveman
+        opPrintRunCmd sudo \$cmd pod list --filter \$\\"name=^(\$pod)\$\\" --format '\\"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Created}}\\\\t{{.NumberOfContainers}}\\"'
+        opPrintRunCmd sudo \$cmd container list --filter \$\\"pod=(\$pod)\\" --format '\\"table {{.PodName}}\\\\t{{.Names}}\\\\t{{.Image}}\\\\t{{.Ports}}\\\\t{{.State}}\\\\t{{.Status}}\\"'
+      }
+    }
+    rem => {
+      let managedNetworks = \$env.VIRT_PODMAN_NETWORKS | from json
+      let kubeDirPath = '/etc/containers/systemd'
+
+      let pods = if (\$env.VIRT_INSTANCES | is-not-empty) {
+        \$env.VIRT_INSTANCES | each { (\$in | split row '/') | first } | uniq
+      } else {
+        if (\$kubeDirPath | path exists) {
+          ls \$kubeDirPath
+            | where name =~ '\\\\.kube\$'
+            | get name
+            | each { |f| \$f | path basename | str replace '.kube' '' }
+        } else {
+          []
+        }
+      }
+      for pod in \$pods {
+        let yamlFilePath = \$\\"(\$kubeDirPath)/(\$pod).yaml\\"
+        let kubeFilePath = \$\\"(\$kubeDirPath)/(\$pod).kube\\"
+        let network = readKubeNetwork \$kubeFilePath
+        opPrintMaybeRunCmd sudo systemctl stop \$\\"(\$pod).service\\"
+        opPrintMaybeRunCmd sudo rm -rf \$yamlFilePath \$kubeFilePath \$\\"(\$kubeFilePath).d\\"
+        opPrintMaybeRunCmd sudo systemctl daemon-reload
+        removeNetworkIfUnused \$network \$pod \$managedNetworks
+      }
+    }
+    sync => {
+      let pods = \$env.VIRT_INSTANCES
+        | each { |p| (\$p | split row '/') | first }
+        | uniq
+        | where { |pod| virtInstanceHere \$cmd \$pod }
+      # each pod's state is read before anything stops, since a network made again stops its pods first
+      let states = \$pods | reduce --fold {} { |pod, acc| \$acc | upsert \$pod (podState \$pod) }
+      remakeNetworks \$pods
+
+      for pod in \$pods {
+        opPrintMaybeRunCmd sudo systemctl stop \$\\"(\$pod).service\\"
+
+        let podInstances = \$env.VIRT_INSTANCES | where { |p| ((\$p | split row '/') | first) == \$pod }
+        doAdd \$pod \$podInstances \$cmd (\$states | get \$pod)
+      }
+      # each pull leaves the image it replaced untagged; drop those so they do not pile up
+      opPrintMaybeRunCmd sudo \$cmd image prune --force
+    }
+    tidy => {
+      opPrintMaybeRunCmd sudo \$cmd system prune --all --force
+    }
+  }
+}
+
+
+# the kernel's own cpu list form (\\"0-1,8-9\\"), so a script can compare it against what /proc and sysfs read back
+def virtQemuCpuList [cpus: list<int>] {
+  \$cpus | sort | reduce --fold [] { |c, acc|
+    if (\$acc | is-not-empty) and ((\$acc | last).hi + 1 == \$c) {
+      \$acc | drop | append {lo: (\$acc | last).lo, hi: \$c}
+    } else {
+      \$acc | append {lo: \$c, hi: \$c}
+    }
+  } | each { |r| if \$r.lo == \$r.hi { \$\\"(\$r.lo)\\" } else { \$\\"(\$r.lo)-(\$r.hi)\\" } } | str join ','
+}
+
+# the host's performance cores as sockets of cores of cpus, every list sorted: efficiency cores are left out, and uneven
+# counts (a core with smt off, a socket short a core) trim to what every socket and core can mirror
+def virtQemuHostCores [sysRoot: string] {
+  let cpuDir = (\$sysRoot | path join devices/system/cpu)
+  let readSys = { |path: string| open --raw \$path | into string | str trim }
+  let expand = { |list: string|
+    \$list | split row ',' | each { |r| let b = (\$r | split row '-' | into int); seq \$b.0 (\$b | last) } | flatten
+  }
+  let online = (do \$expand (do \$readSys (\$cpuDir | path join online)))
+
+  # intel hybrid names its performance cores; elsewhere the scheduler's own cpu_capacity sets a slower core type well
+  # below the rest, and a kernel without it schedules every cpu as one type
+  let coreTypeFilePath = (\$sysRoot | path join devices/cpu_core/cpus)
+  let perf = if (\$coreTypeFilePath | path exists) {
+    do \$expand (do \$readSys \$coreTypeFilePath) | where { |c| \$c in \$online }
+  } else {
+    let capacities = \$online | each { |c|
+      let f = (\$cpuDir | path join \$\\"cpu(\$c)/cpu_capacity\\")
+      {cpu: \$c, capacity: (if (\$f | path exists) { do \$readSys \$f | into int } else { 1024 })}
+    }
+    let top = (\$capacities | get capacity | math max)
+    \$capacities | where { |c| \$c.capacity * 10 >= \$top * 9 } | get cpu
+  }
+
+  let sockets = \$perf | each { |c|
+    let topo = (\$cpuDir | path join \$\\"cpu(\$c)/topology\\")
+    {
+      cpu: \$c,
+      socket: (do \$readSys (\$topo | path join physical_package_id) | into int),
+      core: (do \$readSys (\$topo | path join thread_siblings_list)),
+    }
+  } | group-by --to-table socket | each { |s|
+    \$s.items | group-by --to-table core | each { |k| \$k.items | get cpu | sort } | sort-by { first }
+  } | sort-by { first | first }
+
+  let cores = (\$sockets | each { length } | math min)
+  let threads = (\$sockets | each { |s| \$s | first \$cores | each { length } } | flatten | math min)
+  {
+    online: \$online,
+    sockets: (\$sockets | each { |s| \$s | first \$cores | each { |k| \$k | first \$threads } }),
+  }
+}
+
+# the cores per socket no instance is given: the first \`reserve\` of each, kept for the host, the other managers'
+# containers, and qemu's own threads. \`virtQemuReserved\` is every online cpu outside the pool, efficiency cores included
+def virtQemuPool [topo: record, reserve: int] {
+  \$topo.sockets | each { |s| \$s | skip \$reserve }
+}
+
+def virtQemuReserved [topo: record, reserve: int] {
+  let pool = (virtQemuPool \$topo \$reserve | flatten | flatten)
+  \$topo.online | where { |c| \$c not-in \$pool }
+}
+
+# cores per socket kept back from every instance, from the host's limits.yaml
+def virtQemuReserveCores [] {
+  \$env.VIRT_LIMITS? | default '{}' | from json | get cpu?.reserve?.cores? | default 0
+}
+
+# the host cores behind an instance, the same number in every socket, from the start of the pool or with \`reverse\` its
+# end. instances are sized against the whole pool, never against each other: a second one started while the first is
+# idle shares its cores, unless they take from opposite ends and fit there together. \`want\` unset takes the pool. \`pin\`
+# lists the host cpu behind each vcpu in qemu's own order (socket, core, thread), so the threads the guest sees as
+# siblings are siblings on the host too
+def virtQemuClaim [topo: record, reserve: int, want?: int, --reverse] {
+  let pool = (virtQemuPool \$topo \$reserve)
+  let most = (\$pool | each { length } | math min)
+  let cores = (\$want | default \$most)
+  if \$most < 1 {
+    return {error: 'no cores outside the reserve'}
+  }
+  if \$cores < 1 or \$cores > \$most {
+    return {error: \$\\"wants (\$cores) cores, the pool has (\$most)\\"}
+  }
+  {
+    sockets: (\$topo.sockets | length),
+    cores: \$cores,
+    threads: (\$topo.sockets | first | first | length),
+    pin: (\$pool | each { |s| if \$reverse { \$s | last \$cores } else { \$s | first \$cores } } | flatten | flatten),
+    host: (virtQemuCpuList (virtQemuReserved \$topo \$reserve)),
+  }
+}
+
+# the whole host for one instance, as a host without a reserve gives it
+def virtQemuHostCpus [sysRoot: string] {
+  virtQemuClaim (virtQemuHostCores \$sysRoot) 0
+}
+
+# the qemu configs that do not fit this host: each wants cores per socket, from the pool its cores leave after the reserve
+def virtQemuMisfits [topo: record, reserve: int, wants: record] {
+  let cores = (\$topo.sockets | each { length } | math min)
+  let pool = (\$cores - \$reserve)
+  if \$pool < 1 {
+    return [\$\\"cpu.reserve.cores (\$reserve) takes all (\$cores) cores\\"]
+  }
+  \$wants | transpose name cores | where { |w| \$w.cores < 1 or \$w.cores > \$pool } | each { |w| \$\\"(\$w.name) wants (\$w.cores) cores, (\$pool) available\\" }
+}
+
+# every virt add and sync stops here if the configs as checked in cannot be deployed together on this host
+def virtQemuFitRun [] {
+  if (\$env.VIRT_QEMU_WANTS? == null) or not (virtManagerHere qemu) {
+    return
+  }
+  let misfits = (virtQemuMisfits (virtQemuHostCores '/sys') (virtQemuReserveCores) (\$env.VIRT_QEMU_WANTS | from json))
+  if (\$misfits | is-not-empty) {
+    opPrintErr 'virt blocked, qemu configs do not fit limits.yaml:'
+    for m in \$misfits { opPrintErr \$\\"  (\$m)\\" }
+    exit 1
+  }
+}
+
+# the processes an instance runs, found by what names that instance alone: qemu by its -name, which every instance's
+# config gives it, and swtpm by the instance's own dir in its socket and state paths, which wut puts under
+# tmp_qemu_dir_path/<instance>. a bare .*glass took any process whose command line held glass anywhere, so starting
+# glass killed glass2's tpm. both are extended regexes, for pgrep and pkill
+def virtQemuMatch [instance: string] {
+  \$\\"^qemu-system.* -name \\\\(guest=\\\\)?(\$instance)\\\\(,| |\$\\\\)\\"
+}
+
+def virtSwtpmMatch [instance: string] {
+  \$\\"^swtpm.*/(\$instance)/\\"
+}
+
+def --env virtQemu [] {
+  let cmd = 'qemu'
+  if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-img\\" | is-empty) {
+    return
+  }
+  if \$env.VIRT_OP == tidy {
+    return
+  }
+
+  def replaceEnv [localEnv, lines] {
+    let localEnvItems = \$localEnv | items { |key, value| [\$key, \$value] }
+
+    mut linesX = []
+    for l in \$lines {
+      mut l = \$l
+      if (\$l | str contains '{') {
+        for e in \$localEnvItems {
+          \$l = \$l | str replace --all \$\\"{(\$e.0)}\\" (\$e.1)
+        }
+      }
+      \$linesX = \$linesX | append \$l
+    }
+
+    return \$linesX
+  }
+
+  def intoCellPath [...items] {
+    \$items | each {
+      |i| {value: \$i, optional: true}
+    } | into cell-path
+  }
+
+  # one flag per line: a human reads these while working out why a vm will not boot
+  def qemuCmdWrap [cmd: string, args: list<string>] {
+    let sep = \\" \\\\\\\\\\\\n  \\"
+    \$cmd + (if (\$args | length) > 0 { \$sep + (\$args | str join \$sep) } else { '' })
+  }
+
+  def fetchInstanceYaml [cmd, name] {
+    opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$name).yaml'#\\" | from yaml
+  }
+
+  # requested is \\"glass\\" or \\"glass/vfio\\" (fragment folder) — either way, instance resolves to \\"glass\\"
+  def resolveInstance [cmd, requested] {
+    if not (\$requested | str contains '/') {
+      return {instance: \$requested, config: (fetchInstanceYaml \$cmd \$requested)}
+    }
+    let baseName = (\$requested | split row '/' | first)
+    let baseConfig = fetchInstanceYaml \$cmd \$baseName
+    let fragmentConfig = fetchInstanceYaml \$cmd \$requested
+    {instance: \$baseName, config: (virtDeepMerge \$baseConfig \$fragmentConfig)}
+  }
+
+  # \`add glass/vfio\` installs the unit as \`qemu-glass\`, so the variant is not recoverable from the service
+  # name — doAdd records it and sync replays it, rather than rebuilding from a base config that for some
+  # instances is not a functional vm on its own
+  def qemuVariantOf [instance] {
+    let variantFilePath = \$\\"/var/lib/qemu/(\$instance)/variant\\"
+    if (\$variantFilePath | path exists) {
+      let variant = (open --raw \$variantFilePath | lines | get 0? | default '' | str trim)
+      if (\$variant | is-not-empty) {
+        return \$\\"(\$instance)/(\$variant)\\"
+      }
+    }
+    \$instance
+  }
+
+  def qemuInstanceRunning [instance] {
+    (^pgrep --ignore-ancestors --full --list-full (virtQemuMatch \$instance) | complete | get stdout | is-not-empty)
+  }
+
+  # an instance that cannot be set up is skipped and the run goes on, reported at the end the way pack reports its failures
+  def --env failSetup [instance, why] {
+    load-env {VIRT_FAILED: ((\$env.VIRT_FAILED? | default []) | append \$\\"\`(\$instance)\`: (\$why)\\")}
+  }
+
+  def --env buildQemuSetup [cmd, instance] {
+    let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
+    let resolved = resolveInstance \$cmd \$instance
+    let instance = \$resolved.instance
+    let merged = virtDeepMerge (\$config | from yaml) \$resolved.config
+
+    mut qemuEnv = {}
+
+    for e in (\$merged | get environment? | default [] | each { split row '=' }) {
+      \$qemuEnv = \$qemuEnv | upsert \$e.0 \$e.1
+    }
+
+    \$qemuEnv = \$qemuEnv | upsert 'instance' \$instance
+
+    let cpuVendor = if ((^cat '/proc/cpuinfo' | find --ignore-case 'vendor_id' | last | split row ':' | last | str lowercase | str trim | ansi strip) | str contains 'amd') { 'amd' } else { 'intel' }
+    \$qemuEnv = \$qemuEnv | upsert 'vm_cpu_vendor' (\$cpuVendor | str trim)
+
+    let nicDirPath = \$\\"/sys/class/net/(\$qemuEnv.nic)\\"
+    if not (\$nicDirPath | path exists) {
+      failSetup \$instance \$\\"NIC '(\$qemuEnv.nic)' does not exist\\"
+      return null
+    }
+    \$qemuEnv = \$qemuEnv | upsert 'nic_mac' (if ('nic_mac' in \$qemuEnv) {
+      \$qemuEnv.nic_mac
+    } else {
+      ^cat \$\\"(\$nicDirPath)/address\\" | str trim
+    })
+    \$qemuEnv = \$qemuEnv | upsert 'nic_if_index' (if ('nic_if_index' in \$qemuEnv) {
+      \$qemuEnv.nic_if_index
+    } else {
+      ^cat \$\\"(\$nicDirPath)/ifindex\\" | str trim
+    })
+
+    let sysArch = \$qemuEnv.vm_sys_arch
+    let sysPlat = \$qemuEnv.vm_sys_plat
+
+    if (\$qemuEnv | get --optional vfio_pci_dev_ids | default '' | is-not-empty) {
+      for pciDevId in ((\$qemuEnv.vfio_pci_dev_ids | split row ',') | enumerate) {
+        \$qemuEnv = \$qemuEnv | upsert \$\\"vfio_pci_dev_ids_(\$pciDevId.index)\\" \$pciDevId.item
+      }
+    }
+
+    let qemuBlock = \$merged | get qemu?.architecture? | get --optional \$sysArch | default {}
+
+    let want = (\$qemuBlock | get cpu?.cores? | default null)
+    let reverse = (\$qemuBlock | get cpu?.reverse? | default false)
+    if (\$reverse | describe) != 'bool' {
+      return {instance: \$instance, unfit: \$\\"cpu.reverse is (\$reverse), not true or false\\"}
+    }
+    let claim = (virtQemuClaim (virtQemuHostCores '/sys') (virtQemuReserveCores) \$want --reverse=\$reverse)
+    if 'error' in \$claim {
+      return {instance: \$instance, unfit: \$claim.error}
+    }
+    \$qemuEnv = \$qemuEnv | upsert 'vm_cpu_sockets' (\$claim.sockets | into string)
+    \$qemuEnv = \$qemuEnv | upsert 'vm_cpu_cores' (\$claim.cores | into string)
+    \$qemuEnv = \$qemuEnv | upsert 'vm_cpu_threads' (\$claim.threads | into string)
+    \$qemuEnv = \$qemuEnv | upsert 'vm_cpu_pin' (\$claim.pin | str join ' ')
+    \$qemuEnv = \$qemuEnv | upsert 'vm_cpu_host' \$claim.host
+
+    let qemuCpuFlags = [
+      [cpu flags],
+      [cpu vendor \$cpuVendor flags],
+      [cpu platform \$sysPlat flags],
+      [cpu vendor \$cpuVendor platform \$sysPlat flags],
+    ] | each {
+      |s| let p = (intoCellPath ...\$s)
+      if (\$qemuBlock | get \$p | is-not-empty) {
+        \$qemuBlock | get \$p
+      } else {
+        []
+      }
+    } | flatten
+
+    \$qemuEnv = \$qemuEnv | upsert 'vm_cpu_flags' (
+      if (\$qemuCpuFlags | length) > 0 {
+        \$\\",(\$qemuCpuFlags | str join ',')\\"
+      } else {
+        ''
+      }
+    )
+
+    {instance: \$instance, merged: \$merged, qemuEnv: \$qemuEnv, qemuBlock: \$qemuBlock, sysArch: \$sysArch}
+  }
+
+  # sync replaces a running instance only once its setup is known to fit: one that does not is left as it was
+  def --env doAdd [cmd, requested, --replace] {
+    let setup = buildQemuSetup \$cmd \$requested
+    if (\$setup == null) {
+      return
+    }
+    if 'unfit' in \$setup {
+      failSetup \$setup.instance \$setup.unfit
+      return
+    }
+    let instance = \$setup.instance
+    # read before a replace stops it
+    let state = if (virtInstanceHere \$cmd \$instance) { virtUnitState \$\\"qemu-(\$instance)\\" } else { null }
+    if \$replace {
+      opPrintMaybeRunCmd sudo systemctl stop \$\\"qemu-(\$instance)\\"
+    }
+    if (qemuInstanceRunning \$instance) {
+      opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already added\\"
+      return
+    }
+
+    let merged = \$setup.merged
+    mut qemuEnv = \$setup.qemuEnv
+    let qemuBlock = \$setup.qemuBlock
+    let sysArch = \$setup.sysArch
+
+    if 'qemu' in \$merged {
+      let serviceName = \$\\"qemu-(\$instance)\\"
+      let serviceDirPath = '/etc/systemd/system'
+      let configDirPath = \$\\"/var/lib/qemu/(\$instance)\\"
+
+      let serviceFilePath = (\$serviceDirPath | path join \$\\"(\$serviceName).service\\")
+
+      opPrintMaybeRunCmd sudo mkdir -p \$serviceDirPath
+      opPrintMaybeRunCmd sudo mkdir -p \$configDirPath
+
+      # its disks' folder, made when missing: on btrfs a subvolume, with copy on write off for the images
+      let dataDirPath = \$\\"(\$qemuEnv | get --optional virt_qemu_dir_path | default '/virt/qemu')/(\$instance)\\"
+      if not (\$dataDirPath | path exists) {
+        let parentDirPath = (\$dataDirPath | path dirname)
+        opPrintMaybeRunCmd sudo mkdir -p \$parentDirPath
+        if (^stat --file-system --format %T \$parentDirPath | complete | get stdout | str trim) == 'btrfs' {
+          opPrintMaybeRunCmd sudo btrfs subvolume create \$dataDirPath
+          opPrintMaybeRunCmd sudo chattr +C \$dataDirPath
+        } else {
+          opPrintMaybeRunCmd sudo mkdir -p \$dataDirPath
+        }
+      }
+
+      let variantFilePath = (\$configDirPath | path join variant)
+      let variant = (\$requested | split row '/' | skip 1 | str join '/')
+      if (\$variant | is-empty) {
+        opPrintMaybeRunCmd sudo rm -f \$variantFilePath
+      } else {
+        opPrintMaybeRunCmd \$\\"r#'((\$variant) + \\"\\\\n\\")'#\\" '|' sudo tee \$variantFilePath '|' ignore
+      }
+
+      let tmpDirPath = \$\\"(\$qemuEnv.tmp_qemu_dir_path)/(\$instance)\\"
+      let pidFilePath = (\$tmpDirPath | path join qemu.pid)
+
+      mut serviceLines = [
+        '[Unit]',
+        \$\\"Description=QEMU instance (\$instance)\\",
+        'Wants=network-online.target',
+        'After=network-online.target',
+        'StartLimitIntervalSec=300',
+        'StartLimitBurst=3',
+        '',
+        '[Service]',
+        'Type=forking',
+        'KillMode=control-group',
+        'OOMScoreAdjust=-1000',
+        \$\\"PIDFile=(\$pidFilePath)\\",
+        \$\\"WorkingDirectory=(\$configDirPath)\\",
+        \$\\"ExecStartPre=/usr/bin/mkdir -p (\$tmpDirPath)\\",
+      ]
+
+      let unbindEfiFbScriptFilePath = (\$configDirPath | path join 'unbind-efi-fb.sh')
+      let unbindEfiFbLines = [
+        '#!/usr/bin/bash',
+        \\"checkPath='/sys/bus/platform/drivers/efi-framebuffer/efi-framebuffer.0'\\",
+        'if [ ! -e \\"\$checkPath\\" ]; then exit 0; fi',
+        'for vtcon in /sys/class/vtconsole/vtcon*/bind; do',
+        '  echo 0 > \\"\$vtcon\\"',
+        'done',
+        'echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/unbind',
+        ## the handover needs to settle before the gpu is rebound; the early exit above skips it entirely
+        'sleep 2',
+      ]
+      # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+      # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+      opPrintMaybeRunCmd \$\\"r##'((\$unbindEfiFbLines | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$unbindEfiFbScriptFilePath '|' ignore
+      opPrintMaybeRunCmd sudo chmod +x \$unbindEfiFbScriptFilePath
+      \$serviceLines = \$serviceLines | append \$\\"ExecStartPre=(\$unbindEfiFbScriptFilePath)\\"
+
+      if (\$qemuEnv | get --optional vfio_pci_dev_ids | default '' | is-not-empty) {
+        let rebindScriptFilePath = (\$configDirPath | path join 'rebind-vfio-pci.sh')
+        let rebindLines = [
+          '#!/usr/bin/bash',
+          \\"driver='vfio-pci'\\",
+          \\"rebound=''\\",
+          \$\\"for fullPciDevId in (\$qemuEnv.vfio_pci_dev_ids | split row ',' | each { |id| \$\\"0000:(\$id)\\" } | str join ' '); do\\",
+          '  if [ -e \\"/sys/bus/pci/devices/\$fullPciDevId/driver_override\\" ]; then',
+          '    currentDriver=\$(basename \$(readlink \\"/sys/bus/pci/devices/\$fullPciDevId/driver\\" 2>/dev/null) 2>/dev/null)',
+          '    if [ \\"\$currentDriver\\" != \\"\$driver\\" ]; then',
+          '      echo \\"\$driver\\" > \\"/sys/bus/pci/devices/\$fullPciDevId/driver_override\\"',
+          '      echo \\"\$fullPciDevId\\" > \\"/sys/bus/pci/devices/\$fullPciDevId/driver/unbind\\"',
+          '      echo \\"\$fullPciDevId\\" > \\"/sys/bus/pci/drivers/\$driver/bind\\"',
+          '      echo > \\"/sys/bus/pci/devices/\$fullPciDevId/driver_override\\"',
+          \\"      rebound=1\\",
+          '    fi',
+          '  fi',
+          'done',
+          ## the common case is already bound at host boot, so the settle is dead time unless something moved
+          'if [ -n \\"\$rebound\\" ]; then sleep 2; fi',
+        ]
+        # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+        # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+        opPrintMaybeRunCmd \$\\"r##'((\$rebindLines | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$rebindScriptFilePath '|' ignore
+        opPrintMaybeRunCmd sudo chmod +x \$rebindScriptFilePath
+        \$serviceLines = \$serviceLines | append \$\\"ExecStartPre=(\$rebindScriptFilePath)\\"
+      } else {
+        opPrintMaybeRunCmd sudo rm -f (\$configDirPath | path join 'rebind-vfio-pci.sh')
+      }
+
+      if 'swtpm' in \$merged {
+        let swtpmScriptFilePath = (\$configDirPath | path join swtpm.sh)
+        let swtpmArgs = replaceEnv \$qemuEnv (\$merged | get swtpm?.arguments? | default [])
+        let swtpmCmd = (qemuCmdWrap 'swtpm' \$swtpmArgs)
+
+        let swtpmLines = [
+          '#!/usr/bin/bash',
+          (\\"socketPath='\\" + \$tmpDirPath + \\"/tpm.socket'\\"),
+          (\$swtpmCmd + ' || exit 1'),
+          # --daemon returns before the control socket is listening, and qemu exits if it connects first
+          'for _ in \$(seq 1 500); do',
+          '  if [ -S \\"\$socketPath\\" ]; then exit 0; fi',
+          '  sleep 0.01',
+          'done',
+          'exit 1',
+        ]
+        # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+        # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+        opPrintMaybeRunCmd \$\\"r##'((\$swtpmLines | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$swtpmScriptFilePath '|' ignore
+        opPrintMaybeRunCmd sudo chmod +x \$swtpmScriptFilePath
+        \$serviceLines = \$serviceLines | append [
+          \$\\"ExecStartPre=-/usr/bin/pkill --full \\\\\\"(virtSwtpmMatch \$instance)\\\\\\"\\",
+          \$\\"ExecStartPre=-/usr/bin/rm -f (\$tmpDirPath)/tpm.socket\\",
+          \$\\"ExecStartPre=(\$swtpmScriptFilePath)\\",
+        ]
+      } else {
+        opPrintMaybeRunCmd sudo rm -f (\$configDirPath | path join swtpm.sh)
+      }
+
+      \$serviceLines = \$serviceLines | append \$\\"ExecStartPre=-/usr/bin/rm -f (\$pidFilePath)\\"
+
+      let qemuBin = \$\\"(\$cmd)-system-(\$sysArch)\\"
+
+      let qemuScriptFilePath = (\$configDirPath | path join qemu.sh)
+      let qemuArgs = (replaceEnv \$qemuEnv (\$merged | get qemu?.arguments? | default [])) | append [\$\\"-pidfile (\$pidFilePath)\\", '-daemonize']
+      let qemuCmd = (qemuCmdWrap \$qemuBin \$qemuArgs)
+      # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+      # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+      opPrintMaybeRunCmd \$\\"r##'((['#!/usr/bin/bash', ('exec ' + \$qemuCmd)] | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$qemuScriptFilePath '|' ignore
+      opPrintMaybeRunCmd sudo chmod +x \$qemuScriptFilePath
+      \$serviceLines = \$serviceLines | append \$\\"ExecStart=(\$qemuScriptFilePath)\\"
+
+      let qmpSocketPath = \$\\"(\$tmpDirPath)/qmp.socket\\"
+      let shutdownScriptFilePath = (\$configDirPath | path join qemu-shutdown.sh)
+      let shutdownLines = [
+        '#!/usr/bin/bash',
+        'qmpSocket=\\"\$1\\"',
+        'pidFile=\\"\$2\\"',
+        'timeoutSec=\\"\${3:-45}\\"',
+        # no qmp socket, no socat to speak it, or qemu not listening yet — let systemd kill it rather than
+        # sit out the whole timeout waiting on a shutdown that was never sent
+        'if [ ! -S \\"\$qmpSocket\\" ]; then exit 0; fi',
+        'if ! command -v socat > /dev/null 2>&1; then exit 0; fi',
+        '',
+        'pid=\$(cat \\"\$pidFile\\" 2>/dev/null)',
+        'if [ -z \\"\$pid\\" ] || ! kill -0 \\"\$pid\\" 2>/dev/null; then exit 0; fi',
+        '',
+        '{',
+        \\"  echo '{\\\\\\"execute\\\\\\":\\\\\\"qmp_capabilities\\\\\\"}'\\",
+        \\"  echo '{\\\\\\"execute\\\\\\":\\\\\\"system_powerdown\\\\\\"}'\\",
+        '} | timeout 5 socat - \\"UNIX-CONNECT:\$qmpSocket\\" > /dev/null 2>&1',
+        '',
+        'waited=0',
+        'while kill -0 \\"\$pid\\" 2>/dev/null; do',
+        '  if [ \\"\$waited\\" -ge \\"\$timeoutSec\\" ]; then exit 0; fi',
+        '  sleep 1',
+        '  waited=\$((waited + 1))',
+        'done',
+      ]
+      # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+      # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+      opPrintMaybeRunCmd \$\\"r##'((\$shutdownLines | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$shutdownScriptFilePath '|' ignore
+      opPrintMaybeRunCmd sudo chmod +x \$shutdownScriptFilePath
+      \$serviceLines = \$serviceLines | append \$\\"ExecStop=(\$shutdownScriptFilePath) (\$qmpSocketPath) (\$pidFilePath) 45\\"
+
+      # while any qemu instance runs, every other manager's containers, all under machine.slice, keep to the reserve at a
+      # tenth of the default cpu weight. runtime only: each instance sets it as it starts, and the last to stop lets go
+      if (\$qemuEnv.vm_cpu_host | is-not-empty) {
+        \$serviceLines = \$serviceLines | append [
+          # every process the unit starts, swtpm and qemu's own threads included, begins on the reserve; the pin script
+          # moves only the vcpus off it
+          \$\\"CPUAffinity=(\$qemuEnv.vm_cpu_host)\\",
+          \$\\"ExecStartPre=/usr/bin/systemctl set-property --runtime machine.slice AllowedCPUs=(\$qemuEnv.vm_cpu_host) CPUWeight=10\\",
+          \\"ExecStopPost=/usr/bin/bash -c 'systemctl list-units --state=active,activating --no-legend --plain \\\\\\"qemu-*.service\\\\\\" | grep -q . || systemctl set-property --runtime machine.slice AllowedCPUs= CPUWeight='\\",
+        ]
+      }
+
+      if (\$qemuBlock | get cpu?.pin? | default false) {
+        let pinScriptFilePath = (\$configDirPath | path join qemu-cpu-pin.sh)
+        let vfioDevs = (\$qemuEnv | get --optional vfio_pci_dev_ids | default '' | split row ',' | where { is-not-empty } | each { |id| \$\\"0000:(\$id)\\" } | str join ' ')
+        let pinLines = [
+          '#!/usr/bin/bash',
+          (\\"pidFile='\\" + \$pidFilePath + \\"'\\"),
+          (\\"vcpuCpus=(\\" + \$qemuEnv.vm_cpu_pin + \\")\\"),
+          (\\"hostCpus='\\" + \$qemuEnv.vm_cpu_host + \\"'\\"),
+          (\\"vfioDevs=(\\" + \$vfioDevs + \\")\\"),
+          # -daemonize returns before the vcpu threads exist, so wait for the last one rather than guess at a delay
+          'lastVcpu=\\"CPU \$((\${#vcpuCpus[@]} - 1))/KVM\\"',
+          'for _ in \$(seq 1 500); do',
+          '  pid=\$(cat \\"\$pidFile\\" 2>/dev/null)',
+          '  if [ -n \\"\$pid\\" ] && grep -qx \\"\$lastVcpu\\" /proc/\$pid/task/*/comm 2>/dev/null; then break; fi',
+          '  sleep 0.01',
+          'done',
+          'if [ -z \\"\$pid\\" ] || ! kill -0 \\"\$pid\\" 2>/dev/null; then exit 0; fi',
+          # each vcpu to its own host cpu; every other thread (main loop, iothreads, vhost, rcu, the worker pools) to the
+          # host's cpus, re-checked because a pool thread inherits the cpus of whichever thread spawned it
+          'pinThreads() {',
+          '  for task in /proc/\$pid/task/*; do',
+          '    name=\$(cat \\"\$task/comm\\" 2>/dev/null) || continue',
+          '    want=\$hostCpus',
+          '    if [[ \$name =~ ^CPU\\\\ ([0-9]+)/KVM\$ ]]; then want=\${vcpuCpus[\${BASH_REMATCH[1]}]}; fi',
+          r#'    have=\$(awk '/^Cpus_allowed_list/ { print \$2 }' \\"\$task/status\\" 2>/dev/null)'#,
+          '    if [ -n \\"\$want\\" ] && [ \\"\$have\\" != \\"\$want\\" ]; then taskset --pid --cpu-list \\"\$want\\" \\"\${task##*/}\\" > /dev/null 2>&1; fi',
+          '  done',
+          '}',
+          # the guest's driver asks for the passthrough devices' interrupts when it enables msi, long after qemu starts and
+          # again after every guest reboot, and the host would otherwise land them on a vcpu's cpu
+          'pinIrqs() {',
+          '  for dev in \\"\${vfioDevs[@]}\\"; do',
+          r#'    for irq in \$(awk -v d=\\"(\$dev)\\" 'index(\$0, d) { sub(\\":\\", \\"\\", \$1); print \$1 }' /proc/interrupts); do'#,
+          '      if [ \\"\$(cat /proc/irq/\$irq/smp_affinity_list 2>/dev/null)\\" != \\"\$hostCpus\\" ]; then echo \\"\$hostCpus\\" > /proc/irq/\$irq/smp_affinity_list 2>/dev/null; fi',
+          '    done',
+          '  done',
+          '}',
+          'pinThreads',
+          'if [ -z \\"\$hostCpus\\" ]; then exit 0; fi',
+          '(',
+          '  while kill -0 \\"\$pid\\" 2>/dev/null; do',
+          '    pinThreads',
+          '    pinIrqs',
+          '    sleep 5',
+          '  done',
+          ') > /dev/null 2>&1 &',
+        ]
+        # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+        # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+        opPrintMaybeRunCmd \$\\"r##'((\$pinLines | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$pinScriptFilePath '|' ignore
+        opPrintMaybeRunCmd sudo chmod +x \$pinScriptFilePath
+        \$serviceLines = \$serviceLines | append \$\\"ExecStartPost=(\$pinScriptFilePath)\\"
+      } else {
+        opPrintMaybeRunCmd sudo rm -f (\$configDirPath | path join qemu-cpu-pin.sh)
+      }
+
+      \$serviceLines = \$serviceLines | append [
+        'Restart=on-failure',
+        'RestartSec=5',
+        'TimeoutStopSec=60',
+        '',
+        '[Install]',
+        'WantedBy=default.target',
+      ]
+      opPrintMaybeRunCmd \$\\"r#'((\$serviceLines | str join \\"\\\\n\\") + \\"\\\\n\\")'#\\" '|' sudo tee \$serviceFilePath '|' ignore
+      opPrintMaybeRunCmd sudo systemctl daemon-reload
+      if \$state == null {
+        if not (virtAddOff) {
+          opPrintMaybeRunCmd sudo systemctl enable --now \$serviceName
+        }
+      } else if \$state.active {
+        opPrintMaybeRunCmd sudo systemctl start \$serviceName
+      }
+    }
+  }
+
+  # foreground, no systemd unit — skips vfio unbind/rebind and cpu-pin
+  def --env doRun [cmd, instance] {
+    let setup = buildQemuSetup \$cmd \$instance
+    if (\$setup == null) {
+      return
+    }
+    if 'unfit' in \$setup {
+      failSetup \$setup.instance \$setup.unfit
+      return
+    }
+    let instance = \$setup.instance
+    if (qemuInstanceRunning \$instance) {
+      opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already running\\"
+      return
+    }
+
+    let merged = \$setup.merged
+    mut qemuEnv = \$setup.qemuEnv
+    let sysArch = \$setup.sysArch
+
+    if 'qemu' not-in \$merged {
+      return
+    }
+
+    # never /var/lib/qemu/<instance>: that is doAdd's, and the unit there references every script in it
+    let tmpDirPath = \$\\"(\$qemuEnv.tmp_qemu_dir_path)/(\$instance)\\"
+    let runDirPath = (\$tmpDirPath | path join run)
+
+    opPrintMaybeRunCmd sudo mkdir -p \$tmpDirPath
+    opPrintMaybeRunCmd sudo mkdir -p \$runDirPath
+
+    if 'swtpm' in \$merged {
+      let swtpmScriptFilePath = (\$runDirPath | path join swtpm.sh)
+      let swtpmArgs = replaceEnv \$qemuEnv (\$merged | get swtpm?.arguments? | default [])
+      let swtpmCmd = (qemuCmdWrap 'swtpm' \$swtpmArgs)
+
+      # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+      # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+      opPrintMaybeRunCmd \$\\"r##'((['#!/usr/bin/bash', ('exec ' + \$swtpmCmd)] | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$swtpmScriptFilePath '|' ignore
+      opPrintMaybeRunCmd sudo chmod +x \$swtpmScriptFilePath
+      try { opPrintMaybeRunCmd sudo pkill --full --ignore-ancestors (virtSwtpmMatch \$instance) } catch { |e| opRethrowInterrupt \$e }
+      opPrintMaybeRunCmd sudo rm -f \$\\"(\$tmpDirPath)/tpm.socket\\"
+      opPrintMaybeRunCmd sudo \$swtpmScriptFilePath
+    }
+
+    let qemuBin = \$\\"(\$cmd)-system-(\$sysArch)\\"
+    let qemuScriptFilePath = (\$runDirPath | path join qemu.sh)
+    # doAdd appends these; run is foreground, so drop them wherever they come from
+    let qemuArgs = replaceEnv \$qemuEnv (\$merged | get qemu?.arguments? | default [])
+      | where { |a| not ((\$a | str starts-with '-daemonize') or (\$a | str starts-with '-pidfile')) }
+    let qemuCmd = (qemuCmdWrap \$qemuBin \$qemuArgs)
+    # content starts with #!, so use r##'...'## instead of r#'...'# — nushell misparsed r#'# as a comment start
+    # fix merged in 0.101, then reverted: https://github.com/nushell/nushell/pull/14548
+    opPrintMaybeRunCmd \$\\"r##'((['#!/usr/bin/bash', ('exec ' + \$qemuCmd)] | str join \\"\\\\n\\") + \\"\\\\n\\")'##\\" '|' sudo tee \$qemuScriptFilePath '|' ignore
+    opPrintMaybeRunCmd sudo chmod +x \$qemuScriptFilePath
+
+    # the cleanup runs however qemu ended, twice if a ctrl-c cuts it short; a ctrl-c stops the run after
+    let failure = (try { opPrintMaybeRunCmd sudo \$qemuScriptFilePath; null } catch { |e| \$e })
+    let cut = (try { doRunCleanup \$instance \$runDirPath; null } catch { |e| doRunCleanup \$instance \$runDirPath; \$e })
+    if \$failure != null {
+      opRethrowInterrupt \$failure
+    }
+    if \$cut != null {
+      opRethrowInterrupt \$cut
+    }
+  }
+
+  def doRunCleanup [instance, runDirPath] {
+    try { opPrintMaybeRunCmd sudo pkill --full --ignore-ancestors (virtSwtpmMatch \$instance) } catch { |e| opRethrowInterrupt \$e }
+    opPrintMaybeRunCmd sudo rm -rf \$runDirPath
+  }
+
+  def doRem [cmd, instance] {
+    let serviceName = \$\\"qemu-(\$instance)\\"
+    let serviceDirPath = '/etc/systemd/system'
+    let serviceFilePath = (\$serviceDirPath | path join \$\\"(\$serviceName).service\\")
+    let configDirPath = \$\\"/var/lib/qemu/(\$instance)\\"
+
+    let cleanedService = \$serviceFilePath | path exists
+    if \$cleanedService {
+      opPrintMaybeRunCmd sudo systemctl disable --now \$serviceName
+      opPrintMaybeRunCmd sudo rm -f \$serviceFilePath
+      opPrintMaybeRunCmd sudo systemctl daemon-reload
+    }
+
+    let cleanedConfig = \$configDirPath | path exists
+    if \$cleanedConfig {
+      opPrintMaybeRunCmd sudo rm -rf \$configDirPath
+    }
+
+    if not (\$cleanedService or \$cleanedConfig) {
+      opPrintWarn \$\\"\`(\$cmd)\` instance \`(\$instance)\` is already removed\\"
+    }
+  }
+
+  match \$env.VIRT_OP {
+    add => {
+      for instance in \$env.VIRT_INSTANCES {
+        doAdd \$cmd \$instance
+      }
+    }
+    on | off => {
+      for instance in \$env.VIRT_INSTANCES {
+        opPrintMaybeRunCmd sudo systemctl (if \$env.VIRT_OP == 'on' { 'enable' } else { 'disable' }) --now \$\\"qemu-(\$instance)\\"
+      }
+    }
+    list => {
+      for instance in (virtListed \$cmd \$env.VIRT_INSTANCES) {
+        try { opPrintRunCmd sudo systemctl status --no-pager --lines 0 \$\\"qemu-(\$instance).service\\" } catch { |e| opRethrowInterrupt \$e }
+        try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"\\\\\\"(virtSwtpmMatch \$instance)\\\\\\"\\" } catch { |e| opRethrowInterrupt \$e }
+        try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full \$\\"\\\\\\"(virtQemuMatch \$instance)\\\\\\"\\" } catch { |e| opRethrowInterrupt \$e }
+      }
+    }
+    rem => {
+      let instances = if (\$env.VIRT_INSTANCES | is-not-empty) {
+        \$env.VIRT_INSTANCES
+      } else {
+        let serviceDirPath = '/etc/systemd/system'
+        if (\$serviceDirPath | path exists) {
+          ls \$serviceDirPath
+            | where name =~ '/qemu-[^/]+\\\\.service\$'
+            | get name
+            | each { |f| \$f | path basename | str replace 'qemu-' '' | str replace '.service' '' }
+        } else {
+          []
+        }
+      }
+      for instance in \$instances {
+        doRem \$cmd \$instance
+      }
+    }
+    run => {
+      for instance in \$env.VIRT_INSTANCES {
+        doRun \$cmd \$instance
+      }
+    }
+    sync => {
+      for requested in \$env.VIRT_INSTANCES {
+        let instance = (\$requested | split row '/' | first)
+        if not (virtInstanceHere \$cmd \$instance) {
+          continue
+        }
+
+        doAdd --replace \$cmd (if (\$requested | str contains '/') { \$requested } else { qemuVariantOf \$instance })
+      }
+    }
+  }
+}
+
+
+\$env.VIRT_PODMAN_NETWORKS = r#'{\\"net0\\":{\\"driver\\":\\"bridge\\",\\"interface\\":\\"br0\\",\\"ipam\\":\\"dhcp\\",\\"options\\":{\\"mode\\":\\"unmanaged\\"}}}'#
+
+\$env.VIRT_PODMAN_ENV = r#'{}'#
+
+\$env.VIRT_QEMU_WANTS = r#'{}'#
+
+\$env.VIRT_LIMITS = r#'{}'#
+
+def virtLxcHook [hook: string, instance: string] {
+  match \$\\"(\$hook)/(\$instance)\\" {
+    r#'build/dev'# => { ^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
+try {
+def opPrint --wrapped [...args] {
+  \$\\"(\$args | flatten | str join ' ')\\" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+    return
+  }
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
+    return
+  }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  let args = \$args | flatten
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
+  if (\$args | length) > 1 {
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+  } else {
+    print ''
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
+# a ctrl-c: nu's own, an input prompt's, or the exit of a command it stopped (130, SIGINT, windows' ctrl-c status)
+def opInterrupted [e: record] {
+  (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510])
+}
+
+# a catch hands its error here first, so a ctrl-c is not stepped past
+def opRethrowInterrupt [e: record] {
+  if (opInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+# NuSh.quietInterrupt, line for line, for the child nu a command runs in
+def opQuietInterrupt [body: string] {
+  let stop = [
+    r#'if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {'#
+    r#'  exit 130'#
+    r#'}'#
+    r#'\$e.raw'#
+  ] | each { |l| \$\\"  (\$l)\\" }
+  [r#'try {'# r#'try {'# \$body r#'} catch { |e|'# ...\$stop r#'}'# r#'} catch { |e|'# ...\$stop r#'}'#] | str join \\"\\\\n\\"
+}
+
+def opRunCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: input would fail there with an i/o error
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  if not (is-terminal --stdin) {
+    opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
+    return false
+  }
+  let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunSilentCmd ...\$args
+  }
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opMaybeRunCmd ...\$args
+}
+
+# merge into json text, keeping comments, order and layout. allows comments and trailing commas
+
+# past whitespace and comments
+def jsoncSkip [cs: list<string>, start: int] {
+  let n = (\$cs | length)
+  mut i = \$start
+  loop {
+    if \$i >= \$n {
+      break
+    }
+    let c = (\$cs | get \$i)
+    if \$c in [' ' \\"\\\\t\\" \\"\\\\n\\" \\"\\\\r\\"] {
+      \$i += 1
+      continue
+    }
+    if \$c == '/' and (\$i + 1) < \$n and (\$cs | get (\$i + 1)) == '/' {
+      while \$i < \$n and (\$cs | get \$i) != \\"\\\\n\\" {
+        \$i += 1
+      }
+      continue
+    }
+    if \$c == '/' and (\$i + 1) < \$n and (\$cs | get (\$i + 1)) == '*' {
+      \$i += 2
+      while (\$i + 1) < \$n and not ((\$cs | get \$i) == '*' and (\$cs | get (\$i + 1)) == '/') {
+        \$i += 1
+      }
+      \$i += 2
+      continue
+    }
+    break
+  }
+  \$i
+}
+
+# end of the string at start
+def jsoncStringEnd [cs: list<string>, start: int] {
+  let n = (\$cs | length)
+  mut i = \$start + 1
+  while \$i < \$n {
+    let c = (\$cs | get \$i)
+    if \$c == '\\\\' {
+      \$i += 2
+    } else if \$c == '\\"' {
+      return (\$i + 1)
+    } else {
+      \$i += 1
+    }
+  }
+  \$n
+}
+
+# end of the value at start
+def jsoncValueEnd [cs: list<string>, start: int] {
+  let n = (\$cs | length)
+  let c = (\$cs | get \$start)
+  if \$c == '\\"' {
+    return (jsoncStringEnd \$cs \$start)
+  }
+  if \$c in ['{' '['] {
+    mut depth = 0
+    mut i = \$start
+    while \$i < \$n {
+      let d = (\$cs | get \$i)
+      if \$d == '\\"' {
+        \$i = (jsoncStringEnd \$cs \$i)
+      } else if \$d == '/' {
+        \$i = (jsoncSkip \$cs \$i)
+      } else if \$d in ['{' '['] {
+        \$depth += 1
+        \$i += 1
+      } else if \$d in ['}' ']'] {
+        \$depth -= 1
+        \$i += 1
+        if \$depth == 0 {
+          return \$i
+        }
+      } else {
+        \$i += 1
+      }
+    }
+    return \$n
+  }
+  mut i = \$start
+  while \$i < \$n and (\$cs | get \$i) not-in [',' '}' ']' ' ' \\"\\\\t\\" \\"\\\\n\\" \\"\\\\r\\" '/'] {
+    \$i += 1
+  }
+  \$i
+}
+
+# members of the object at start, with key and value positions
+def jsoncMembers [cs: list<string>, start: int] {
+  let n = (\$cs | length)
+  mut i = (jsoncSkip \$cs (\$start + 1))
+  mut members = []
+  while \$i < \$n and (\$cs | get \$i) == '\\"' {
+    let ks = \$i
+    let ke = (jsoncStringEnd \$cs \$ks)
+    let key = (\$cs | skip \$ks | take (\$ke - \$ks) | str join | from json)
+    \$i = (jsoncSkip \$cs \$ke)
+    \$i = (jsoncSkip \$cs (\$i + 1))
+    let vs = \$i
+    let ve = (jsoncValueEnd \$cs \$vs)
+    \$members = (\$members | append {key: \$key, ks: \$ks, vs: \$vs, ve: \$ve})
+    \$i = (jsoncSkip \$cs \$ve)
+    if \$i < \$n and (\$cs | get \$i) == ',' {
+      \$i = (jsoncSkip \$cs (\$i + 1))
+    }
+  }
+  {members: \$members, close: \$i}
+}
+
+# indent of the line holding pos
+def jsoncLineIndent [cs: list<string>, pos: int] {
+  mut j = \$pos
+  while \$j > 0 and (\$cs | get (\$j - 1)) != \\"\\\\n\\" {
+    \$j -= 1
+  }
+  mut k = \$j
+  while \$k < (\$cs | length) and (\$cs | get \$k) in [' ' \\"\\\\t\\"] {
+    \$k += 1
+  }
+  \$cs | skip \$j | take (\$k - \$j) | str join
+}
+
+# whether pos is the first thing on its line
+def jsoncLineFirst [cs: list<string>, pos: int] {
+  mut j = \$pos
+  while \$j > 0 and (\$cs | get (\$j - 1)) in [' ' \\"\\\\t\\"] {
+    \$j -= 1
+  }
+  \$j == 0 or (\$cs | get (\$j - 1)) == \\"\\\\n\\"
+}
+
+# value as json, nested lines indented
+def jsoncRender [value: any, indent: string] {
+  \$value | to json --indent 2 | lines | enumerate | each { |l|
+    if \$l.index == 0 { \$l.item } else { \$indent + \$l.item }
+  } | str join \\"\\\\n\\"
+}
+
+def jsoncSplice [cs: list<string>, from: int, to: int, text: string] {
+  (\$cs | take \$from | str join) + \$text + (\$cs | skip \$to | str join)
+}
+
+# set the value at path
+def jsoncSet [text: string, path: list<string>, value: any] {
+  let nested = { |rest: list<string>| \$rest | reverse | reduce --fold \$value { |k, acc| {\$k: \$acc} } }
+  if (\$text | str trim | is-empty) {
+    return (((do \$nested \$path) | to json --indent 2) + \\"\\\\n\\")
+  }
+  let cs = (\$text | split chars)
+  let n = (\$cs | length)
+  mut obj = (jsoncSkip \$cs 0)
+  for d in 0..<(\$path | length) {
+    let key = (\$path | get \$d)
+    let m = (jsoncMembers \$cs \$obj)
+    let found = (\$m.members | where key == \$key | get -o 0)
+    if \$found != null {
+      let last = (\$d == (\$path | length) - 1)
+      if not \$last and (\$cs | get \$found.vs) == '{' {
+        \$obj = \$found.vs
+        continue
+      }
+      let v = if \$last { \$value } else { do \$nested (\$path | skip (\$d + 1)) }
+      return (jsoncSplice \$cs \$found.vs \$found.ve (jsoncRender \$v (jsoncLineIndent \$cs \$found.ks)))
+    }
+
+    let v = (do \$nested (\$path | skip (\$d + 1)))
+    if (\$m.members | is-empty) {
+      # empty object
+      let base = (jsoncLineIndent \$cs \$obj)
+      let indent = \$base + '  '
+      let entry = \$\\"(\$key | to json): (jsoncRender \$v \$indent)\\"
+      let tail = if (jsoncLineFirst \$cs \$m.close) { '' } else { \\"\\\\n\\" + \$base }
+      return (jsoncSplice \$cs (\$obj + 1) (\$obj + 1) \$\\"\\\\n(\$indent)(\$entry)(\$tail)\\")
+    }
+    let prev = (\$m.members | last)
+    if not (jsoncLineFirst \$cs \$prev.ks) {
+      # one-line object
+      let entry = \$\\"(\$key | to json): (\$v | to json --raw)\\"
+      return (jsoncSplice \$cs \$prev.ve \$prev.ve \$\\", (\$entry)\\")
+    }
+    let indent = (jsoncLineIndent \$cs \$prev.ks)
+    let entry = \$\\"(\$key | to json): (jsoncRender \$v \$indent)\\"
+    # after the last member, past its trailing comma or comment
+    mut q = \$prev.ve
+    while \$q < \$n and (\$cs | get \$q) in [' ' \\"\\\\t\\"] {
+      \$q += 1
+    }
+    let comma = (\$q < \$n and (\$cs | get \$q) == ',')
+    if \$comma {
+      \$q += 1
+    }
+    mut eol = \$q
+    while \$eol < \$n and (\$cs | get \$eol) in [' ' \\"\\\\t\\"] {
+      \$eol += 1
+    }
+    let comment = (\$eol + 1 < \$n and (\$cs | get \$eol) == '/' and (\$cs | get (\$eol + 1)) in ['/' '*'])
+    if \$comment {
+      \$eol = (jsoncSkip \$cs \$eol)
+      while \$eol > \$q and (\$cs | get (\$eol - 1)) in [' ' \\"\\\\t\\" \\"\\\\n\\" \\"\\\\r\\"] {
+        \$eol -= 1
+      }
+    }
+    if \$comma {
+      return (jsoncSplice \$cs \$eol \$eol \$\\"\\\\n(\$indent)(\$entry),\\")
+    }
+    if \$comment {
+      let withComma = (jsoncSplice \$cs \$prev.ve \$prev.ve ',' | split chars)
+      return (jsoncSplice \$withComma (\$eol + 1) (\$eol + 1) \$\\"\\\\n(\$indent)(\$entry)\\")
+    }
+    return (jsoncSplice \$cs \$prev.ve \$prev.ve \$\\",\\\\n(\$indent)(\$entry)\\")
+  }
+  \$text
+}
+
+# the leaves of wanted that differ from text, each as its path and wanted value
+def jsoncChanges [text: string, wanted: record] {
+  let leaves = { |self, rec: record, prefix: list<string>|
+    \$rec | columns | each { |k|
+      let v = (\$rec | get \$k)
+      let p = (\$prefix | append \$k)
+      if (\$v | describe | str starts-with 'record') and (\$v | is-not-empty) {
+        do \$self \$self \$v \$p
+      } else {
+        [{path: \$p, value: \$v}]
+      }
+    } | reduce --fold [] { |l, acc| \$acc ++ \$l }
+  }
+  let current = if (\$text | str trim | is-empty) { {} } else { \$text | from json }
+  do \$leaves \$leaves \$wanted [] | where { |leaf| (\$current | get -o (\$leaf.path | into cell-path)) != \$leaf.value }
+}
+
+# set each leaf of wanted that differs
+def jsoncMerge [text: string, wanted: record] {
+  jsoncChanges \$text \$wanted | reduce --fold \$text { |leaf, acc| jsoncSet \$acc \$leaf.path \$leaf.value }
+}
+
+do {
+  opPrintInfo \$\\"build (\$env.VIRT_INSTANCE): nothing to build\\"
+}
+
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}'## }
+    r#'setup/dev'# => { ^(\$env.WUT_HOME | path join 'vendor' 'nu') --no-config-file -c r##'try {
+try {
+def opPrint --wrapped [...args] {
+  \$\\"(\$args | flatten | str join ' ')\\" | print
+}
+
+def opPrintErr --wrapped [...args] {
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+    return
+  }
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
+}
+
+def opPrintSucc --wrapped [...args] {
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintWarn --wrapped [...args] {
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintInfo --wrapped [...args] {
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
+}
+
+def opPrintVerbose --wrapped [...args] {
+  if VERBOSE not-in \$env {
+    return
+  }
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
+}
+
+def opPrintCmd --wrapped [...args] {
+  if GRAYSCALE in \$env {
+    \$\\"(\$args | flatten | str join ' ')\\" | print
+    return
+  }
+  let args = \$args | flatten
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
+  if (\$args | length) > 1 {
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
+  } else {
+    print ''
+  }
+}
+
+def opMaybePrintCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opPrintCmd ...\$args
+  }
+}
+
+# a ctrl-c: nu's own, an input prompt's, or the exit of a command it stopped (130, SIGINT, windows' ctrl-c status)
+def opInterrupted [e: record] {
+  (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510])
+}
+
+# a catch hands its error here first, so a ctrl-c is not stepped past
+def opRethrowInterrupt [e: record] {
+  if (opInterrupted \$e) {
+    \$e.raw
+  }
+}
+
+# NuSh.quietInterrupt, line for line, for the child nu a command runs in
+def opQuietInterrupt [body: string] {
+  let stop = [
+    r#'if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {'#
+    r#'  exit 130'#
+    r#'}'#
+    r#'\$e.raw'#
+  ] | each { |l| \$\\"  (\$l)\\" }
+  [r#'try {'# r#'try {'# \$body r#'} catch { |e|'# ...\$stop r#'}'# r#'} catch { |e|'# ...\$stop r#'}'#] | str join \\"\\\\n\\"
+}
+
+def opRunCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
+}
+
+def opRunSilentCmd --wrapped [...args] {
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
+}
+
+# a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
+# as under cron or a pipe, it is no: input would fail there with an i/o error
+def opAsk [question: string] {
+  if 'YES' in \$env {
+    return true
+  }
+  if not (is-terminal --stdin) {
+    opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
+    return false
+  }
+  let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
+  \$yn in ['' 'y' 'yes']
+}
+
+def opMaybeRunCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunCmd ...\$args
+  }
+}
+
+def opMaybeRunSilentCmd --wrapped [...args] {
+  if NOOP not-in \$env {
+    opRunSilentCmd ...\$args
+  }
+}
+
+def opPrintRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opRunCmd ...\$args
+}
+
+def opPrintMaybeRunCmd --wrapped [...args] {
+  opPrintCmd ...\$args
+  opMaybeRunCmd ...\$args
+}
+
+# merge into json text, keeping comments, order and layout. allows comments and trailing commas
+
+# past whitespace and comments
+def jsoncSkip [cs: list<string>, start: int] {
+  let n = (\$cs | length)
+  mut i = \$start
+  loop {
+    if \$i >= \$n {
+      break
+    }
+    let c = (\$cs | get \$i)
+    if \$c in [' ' \\"\\\\t\\" \\"\\\\n\\" \\"\\\\r\\"] {
+      \$i += 1
+      continue
+    }
+    if \$c == '/' and (\$i + 1) < \$n and (\$cs | get (\$i + 1)) == '/' {
+      while \$i < \$n and (\$cs | get \$i) != \\"\\\\n\\" {
+        \$i += 1
+      }
+      continue
+    }
+    if \$c == '/' and (\$i + 1) < \$n and (\$cs | get (\$i + 1)) == '*' {
+      \$i += 2
+      while (\$i + 1) < \$n and not ((\$cs | get \$i) == '*' and (\$cs | get (\$i + 1)) == '/') {
+        \$i += 1
+      }
+      \$i += 2
+      continue
+    }
+    break
+  }
+  \$i
+}
+
+# end of the string at start
+def jsoncStringEnd [cs: list<string>, start: int] {
+  let n = (\$cs | length)
+  mut i = \$start + 1
+  while \$i < \$n {
+    let c = (\$cs | get \$i)
+    if \$c == '\\\\' {
+      \$i += 2
+    } else if \$c == '\\"' {
+      return (\$i + 1)
+    } else {
+      \$i += 1
+    }
+  }
+  \$n
+}
+
+# end of the value at start
+def jsoncValueEnd [cs: list<string>, start: int] {
+  let n = (\$cs | length)
+  let c = (\$cs | get \$start)
+  if \$c == '\\"' {
+    return (jsoncStringEnd \$cs \$start)
+  }
+  if \$c in ['{' '['] {
+    mut depth = 0
+    mut i = \$start
+    while \$i < \$n {
+      let d = (\$cs | get \$i)
+      if \$d == '\\"' {
+        \$i = (jsoncStringEnd \$cs \$i)
+      } else if \$d == '/' {
+        \$i = (jsoncSkip \$cs \$i)
+      } else if \$d in ['{' '['] {
+        \$depth += 1
+        \$i += 1
+      } else if \$d in ['}' ']'] {
+        \$depth -= 1
+        \$i += 1
+        if \$depth == 0 {
+          return \$i
+        }
+      } else {
+        \$i += 1
+      }
+    }
+    return \$n
+  }
+  mut i = \$start
+  while \$i < \$n and (\$cs | get \$i) not-in [',' '}' ']' ' ' \\"\\\\t\\" \\"\\\\n\\" \\"\\\\r\\" '/'] {
+    \$i += 1
+  }
+  \$i
+}
+
+# members of the object at start, with key and value positions
+def jsoncMembers [cs: list<string>, start: int] {
+  let n = (\$cs | length)
+  mut i = (jsoncSkip \$cs (\$start + 1))
+  mut members = []
+  while \$i < \$n and (\$cs | get \$i) == '\\"' {
+    let ks = \$i
+    let ke = (jsoncStringEnd \$cs \$ks)
+    let key = (\$cs | skip \$ks | take (\$ke - \$ks) | str join | from json)
+    \$i = (jsoncSkip \$cs \$ke)
+    \$i = (jsoncSkip \$cs (\$i + 1))
+    let vs = \$i
+    let ve = (jsoncValueEnd \$cs \$vs)
+    \$members = (\$members | append {key: \$key, ks: \$ks, vs: \$vs, ve: \$ve})
+    \$i = (jsoncSkip \$cs \$ve)
+    if \$i < \$n and (\$cs | get \$i) == ',' {
+      \$i = (jsoncSkip \$cs (\$i + 1))
+    }
+  }
+  {members: \$members, close: \$i}
+}
+
+# indent of the line holding pos
+def jsoncLineIndent [cs: list<string>, pos: int] {
+  mut j = \$pos
+  while \$j > 0 and (\$cs | get (\$j - 1)) != \\"\\\\n\\" {
+    \$j -= 1
+  }
+  mut k = \$j
+  while \$k < (\$cs | length) and (\$cs | get \$k) in [' ' \\"\\\\t\\"] {
+    \$k += 1
+  }
+  \$cs | skip \$j | take (\$k - \$j) | str join
+}
+
+# whether pos is the first thing on its line
+def jsoncLineFirst [cs: list<string>, pos: int] {
+  mut j = \$pos
+  while \$j > 0 and (\$cs | get (\$j - 1)) in [' ' \\"\\\\t\\"] {
+    \$j -= 1
+  }
+  \$j == 0 or (\$cs | get (\$j - 1)) == \\"\\\\n\\"
+}
+
+# value as json, nested lines indented
+def jsoncRender [value: any, indent: string] {
+  \$value | to json --indent 2 | lines | enumerate | each { |l|
+    if \$l.index == 0 { \$l.item } else { \$indent + \$l.item }
+  } | str join \\"\\\\n\\"
+}
+
+def jsoncSplice [cs: list<string>, from: int, to: int, text: string] {
+  (\$cs | take \$from | str join) + \$text + (\$cs | skip \$to | str join)
+}
+
+# set the value at path
+def jsoncSet [text: string, path: list<string>, value: any] {
+  let nested = { |rest: list<string>| \$rest | reverse | reduce --fold \$value { |k, acc| {\$k: \$acc} } }
+  if (\$text | str trim | is-empty) {
+    return (((do \$nested \$path) | to json --indent 2) + \\"\\\\n\\")
+  }
+  let cs = (\$text | split chars)
+  let n = (\$cs | length)
+  mut obj = (jsoncSkip \$cs 0)
+  for d in 0..<(\$path | length) {
+    let key = (\$path | get \$d)
+    let m = (jsoncMembers \$cs \$obj)
+    let found = (\$m.members | where key == \$key | get -o 0)
+    if \$found != null {
+      let last = (\$d == (\$path | length) - 1)
+      if not \$last and (\$cs | get \$found.vs) == '{' {
+        \$obj = \$found.vs
+        continue
+      }
+      let v = if \$last { \$value } else { do \$nested (\$path | skip (\$d + 1)) }
+      return (jsoncSplice \$cs \$found.vs \$found.ve (jsoncRender \$v (jsoncLineIndent \$cs \$found.ks)))
+    }
+
+    let v = (do \$nested (\$path | skip (\$d + 1)))
+    if (\$m.members | is-empty) {
+      # empty object
+      let base = (jsoncLineIndent \$cs \$obj)
+      let indent = \$base + '  '
+      let entry = \$\\"(\$key | to json): (jsoncRender \$v \$indent)\\"
+      let tail = if (jsoncLineFirst \$cs \$m.close) { '' } else { \\"\\\\n\\" + \$base }
+      return (jsoncSplice \$cs (\$obj + 1) (\$obj + 1) \$\\"\\\\n(\$indent)(\$entry)(\$tail)\\")
+    }
+    let prev = (\$m.members | last)
+    if not (jsoncLineFirst \$cs \$prev.ks) {
+      # one-line object
+      let entry = \$\\"(\$key | to json): (\$v | to json --raw)\\"
+      return (jsoncSplice \$cs \$prev.ve \$prev.ve \$\\", (\$entry)\\")
+    }
+    let indent = (jsoncLineIndent \$cs \$prev.ks)
+    let entry = \$\\"(\$key | to json): (jsoncRender \$v \$indent)\\"
+    # after the last member, past its trailing comma or comment
+    mut q = \$prev.ve
+    while \$q < \$n and (\$cs | get \$q) in [' ' \\"\\\\t\\"] {
+      \$q += 1
+    }
+    let comma = (\$q < \$n and (\$cs | get \$q) == ',')
+    if \$comma {
+      \$q += 1
+    }
+    mut eol = \$q
+    while \$eol < \$n and (\$cs | get \$eol) in [' ' \\"\\\\t\\"] {
+      \$eol += 1
+    }
+    let comment = (\$eol + 1 < \$n and (\$cs | get \$eol) == '/' and (\$cs | get (\$eol + 1)) in ['/' '*'])
+    if \$comment {
+      \$eol = (jsoncSkip \$cs \$eol)
+      while \$eol > \$q and (\$cs | get (\$eol - 1)) in [' ' \\"\\\\t\\" \\"\\\\n\\" \\"\\\\r\\"] {
+        \$eol -= 1
+      }
+    }
+    if \$comma {
+      return (jsoncSplice \$cs \$eol \$eol \$\\"\\\\n(\$indent)(\$entry),\\")
+    }
+    if \$comment {
+      let withComma = (jsoncSplice \$cs \$prev.ve \$prev.ve ',' | split chars)
+      return (jsoncSplice \$withComma (\$eol + 1) (\$eol + 1) \$\\"\\\\n(\$indent)(\$entry)\\")
+    }
+    return (jsoncSplice \$cs \$prev.ve \$prev.ve \$\\",\\\\n(\$indent)(\$entry)\\")
+  }
+  \$text
+}
+
+# the leaves of wanted that differ from text, each as its path and wanted value
+def jsoncChanges [text: string, wanted: record] {
+  let leaves = { |self, rec: record, prefix: list<string>|
+    \$rec | columns | each { |k|
+      let v = (\$rec | get \$k)
+      let p = (\$prefix | append \$k)
+      if (\$v | describe | str starts-with 'record') and (\$v | is-not-empty) {
+        do \$self \$self \$v \$p
+      } else {
+        [{path: \$p, value: \$v}]
+      }
+    } | reduce --fold [] { |l, acc| \$acc ++ \$l }
+  }
+  let current = if (\$text | str trim | is-empty) { {} } else { \$text | from json }
+  do \$leaves \$leaves \$wanted [] | where { |leaf| (\$current | get -o (\$leaf.path | into cell-path)) != \$leaf.value }
+}
+
+# set each leaf of wanted that differs
+def jsoncMerge [text: string, wanted: record] {
+  jsoncChanges \$text \$wanted | reduce --fold \$text { |leaf, acc| jsoncSet \$acc \$leaf.path \$leaf.value }
+}
+
+def lxcSetupHolds [script: string] {
+  (null | ^sudo lxc-attach --name \$env.VIRT_INSTANCE -- /bin/sh -c \$script | complete).exit_code == 0
+}
+
+def lxcSetupAsRoot [script: string] {
+  opPrintMaybeRunCmd null '|' sudo lxc-attach --name \$env.VIRT_INSTANCE -- /bin/sh -ec \$\\"r#'(\$script)'#\\" 'o+e>|' cat
+}
+
+if not (lxcSetupHolds 'test -d /srv/code') {
+  lxcSetupAsRoot 'mkdir -p /srv/code'
+}
+
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}
+} catch { |e|
+  if (\$e.debug | str starts-with 'Interrupted ') or (\$e.details.code? == 'nu::shell::io::interrupted') or (\$e.exit_code? in [130, -2, -1073741510]) {
+    exit 130
+  }
+  \$e.raw
+}'## }
+    _ => {}
+  }
+}
+\$env.VIRT_LXC_HOOKS = r#'{\\"build\\":[\\"dev\\"],\\"setup\\":[\\"dev\\"]}'#
+
+\$env.VIRT_PLAN = r#'{\\"lxc\\":[\\"dev\\"]}'#
 
 # one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
 
@@ -8751,7 +12140,7 @@ def virtDocker [] {
 }
 
 
-def virtLxc [] {
+def --env virtLxc [] {
   let cmd = 'lxc'
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
@@ -8800,6 +12189,41 @@ def virtLxc [] {
     }
   }
 
+  # a failed hook stops that instance alone, listed at the end
+  def --env lxcHook [hook, instance, hookEnv] {
+    if \$instance not-in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional \$hook | default []) {
+      return true
+    }
+    opPrintInfo \$\\"\`(\$instance)\` (\$hook)\\"
+    try {
+      with-env \$hookEnv { virtLxcHook \$hook \$instance }
+      true
+    } catch { |e|
+      opRethrowInterrupt \$e
+      load-env {VIRT_FAILED: ((\$env.VIRT_FAILED? | default []) | append \$\\"\`(\$instance)\`: (\$hook) failed\\")}
+      false
+    }
+  }
+
+  def lxcWaitUp [instance, net] {
+    if (^sudo lxc-wait --name \$instance --state RUNNING --timeout 30 | complete).exit_code != 0 {
+      opPrintWarn \$\\"\`(\$instance)\` did not start running\\"
+      return
+    }
+    if (\$net | is-empty) {
+      return
+    }
+    # slaac comes before the dhcp lease, which brings dns
+    for _ in 1..30 {
+      let ipv4 = ^sudo lxc-info --name \$instance --ips --no-humanize | complete | get stdout | lines | any { |ip| \$ip =~ '^\\\\d+\\\\.\\\\d+\\\\.\\\\d+\\\\.\\\\d+\$' }
+      if \$ipv4 and (null | ^sudo lxc-attach --name \$instance --clear-env --set-var 'PATH=/run/current-system/sw/bin:/usr/bin:/bin' -- /bin/sh -c 'grep -q ^nameserver /etc/resolv.conf' | complete).exit_code == 0 {
+        return
+      }
+      sleep 1sec
+    }
+    opPrintWarn \$\\"\`(\$instance)\` has no ipv4 address or nameserver yet\\"
+  }
+
   # stops a container whether its unit runs it or it was started before there was one
   def lxcStop [cmd, instance] {
     if (^systemctl is-active \$\\"lxc@(\$instance)\\" | complete | get stdout | str trim) == 'active' {
@@ -8810,7 +12234,7 @@ def virtLxc [] {
   }
 
   # state: virtUnitState from before a sync stopped it, or null when the instance is new
-  def doAdd [cmd, instance, state] {
+  def --env doAdd [cmd, instance, state] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
     let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
@@ -8831,6 +12255,15 @@ def virtLxc [] {
     let net = \$merged | get lxc?.network? | default {}
     if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
       opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    let hookEnv = \$lxcEnv
+      | reject instance rootfs
+      | transpose key value
+      | reduce --fold {VIRT_INSTANCE: \$instance, VIRT_LXC_ROOTFS: \$rootfsDirPath} { |kv, acc| \$acc | upsert (\$kv.key | str uppercase) \$kv.value }
+
+    if not (lxcHook build \$instance \$hookEnv) {
       return
     }
 
@@ -8890,6 +12323,17 @@ def virtLxc [] {
       }
     } else if \$state.active {
       opPrintMaybeRunCmd sudo systemctl start \$\\"lxc@(\$instance)\\"
+    }
+
+    let running = if \$state == null { not (virtAddOff) } else { \$state.active }
+    let hasSetup = \$instance in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional setup | default [])
+    if \$hasSetup and not \$running {
+      opPrintInfo \$\\"\`(\$instance)\` is off, so its setup waits until it runs\\"
+    } else if \$hasSetup {
+      if NOOP not-in \$env {
+        lxcWaitUp \$instance \$net
+      }
+      lxcHook setup \$instance \$hookEnv | ignore
     }
   }
 
@@ -10082,6 +13526,13 @@ def --env virtQemu [] {
 \$env.VIRT_PODMAN_ENV = r#'{}'#
 
 \$env.VIRT_LIMITS = r#'{}'#
+
+def virtLxcHook [hook: string, instance: string] {
+  match \$\\"(\$hook)/(\$instance)\\" {
+    _ => {}
+  }
+}
+\$env.VIRT_LXC_HOOKS = r#'{\\"build\\":[],\\"setup\\":[]}'#
 
 \$env.VIRT_PLAN = r#'{\\"qemu\\":[\\"test\\",\\"test2\\"]}'#
 
@@ -11234,7 +14685,7 @@ def virtDocker [] {
 }
 
 
-def virtLxc [] {
+def --env virtLxc [] {
   let cmd = 'lxc'
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
@@ -11283,6 +14734,41 @@ def virtLxc [] {
     }
   }
 
+  # a failed hook stops that instance alone, listed at the end
+  def --env lxcHook [hook, instance, hookEnv] {
+    if \$instance not-in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional \$hook | default []) {
+      return true
+    }
+    opPrintInfo \$\\"\`(\$instance)\` (\$hook)\\"
+    try {
+      with-env \$hookEnv { virtLxcHook \$hook \$instance }
+      true
+    } catch { |e|
+      opRethrowInterrupt \$e
+      load-env {VIRT_FAILED: ((\$env.VIRT_FAILED? | default []) | append \$\\"\`(\$instance)\`: (\$hook) failed\\")}
+      false
+    }
+  }
+
+  def lxcWaitUp [instance, net] {
+    if (^sudo lxc-wait --name \$instance --state RUNNING --timeout 30 | complete).exit_code != 0 {
+      opPrintWarn \$\\"\`(\$instance)\` did not start running\\"
+      return
+    }
+    if (\$net | is-empty) {
+      return
+    }
+    # slaac comes before the dhcp lease, which brings dns
+    for _ in 1..30 {
+      let ipv4 = ^sudo lxc-info --name \$instance --ips --no-humanize | complete | get stdout | lines | any { |ip| \$ip =~ '^\\\\d+\\\\.\\\\d+\\\\.\\\\d+\\\\.\\\\d+\$' }
+      if \$ipv4 and (null | ^sudo lxc-attach --name \$instance --clear-env --set-var 'PATH=/run/current-system/sw/bin:/usr/bin:/bin' -- /bin/sh -c 'grep -q ^nameserver /etc/resolv.conf' | complete).exit_code == 0 {
+        return
+      }
+      sleep 1sec
+    }
+    opPrintWarn \$\\"\`(\$instance)\` has no ipv4 address or nameserver yet\\"
+  }
+
   # stops a container whether its unit runs it or it was started before there was one
   def lxcStop [cmd, instance] {
     if (^systemctl is-active \$\\"lxc@(\$instance)\\" | complete | get stdout | str trim) == 'active' {
@@ -11293,7 +14779,7 @@ def virtLxc [] {
   }
 
   # state: virtUnitState from before a sync stopped it, or null when the instance is new
-  def doAdd [cmd, instance, state] {
+  def --env doAdd [cmd, instance, state] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
     let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
@@ -11314,6 +14800,15 @@ def virtLxc [] {
     let net = \$merged | get lxc?.network? | default {}
     if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
       opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    let hookEnv = \$lxcEnv
+      | reject instance rootfs
+      | transpose key value
+      | reduce --fold {VIRT_INSTANCE: \$instance, VIRT_LXC_ROOTFS: \$rootfsDirPath} { |kv, acc| \$acc | upsert (\$kv.key | str uppercase) \$kv.value }
+
+    if not (lxcHook build \$instance \$hookEnv) {
       return
     }
 
@@ -11373,6 +14868,17 @@ def virtLxc [] {
       }
     } else if \$state.active {
       opPrintMaybeRunCmd sudo systemctl start \$\\"lxc@(\$instance)\\"
+    }
+
+    let running = if \$state == null { not (virtAddOff) } else { \$state.active }
+    let hasSetup = \$instance in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional setup | default [])
+    if \$hasSetup and not \$running {
+      opPrintInfo \$\\"\`(\$instance)\` is off, so its setup waits until it runs\\"
+    } else if \$hasSetup {
+      if NOOP not-in \$env {
+        lxcWaitUp \$instance \$net
+      }
+      lxcHook setup \$instance \$hookEnv | ignore
     }
   }
 
@@ -12565,6 +16071,13 @@ def --env virtQemu [] {
 \$env.VIRT_PODMAN_ENV = r#'{}'#
 
 \$env.VIRT_LIMITS = r#'{}'#
+
+def virtLxcHook [hook: string, instance: string] {
+  match \$\\"(\$hook)/(\$instance)\\" {
+    _ => {}
+  }
+}
+\$env.VIRT_LXC_HOOKS = r#'{\\"build\\":[],\\"setup\\":[]}'#
 
 \$env.VIRT_PLAN = r#'{\\"qemu\\":[\\"test\\",\\"test2\\"]}'#
 
@@ -13717,7 +17230,7 @@ def virtDocker [] {
 }
 
 
-def virtLxc [] {
+def --env virtLxc [] {
   let cmd = 'lxc'
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
@@ -13766,6 +17279,41 @@ def virtLxc [] {
     }
   }
 
+  # a failed hook stops that instance alone, listed at the end
+  def --env lxcHook [hook, instance, hookEnv] {
+    if \$instance not-in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional \$hook | default []) {
+      return true
+    }
+    opPrintInfo \$\\"\`(\$instance)\` (\$hook)\\"
+    try {
+      with-env \$hookEnv { virtLxcHook \$hook \$instance }
+      true
+    } catch { |e|
+      opRethrowInterrupt \$e
+      load-env {VIRT_FAILED: ((\$env.VIRT_FAILED? | default []) | append \$\\"\`(\$instance)\`: (\$hook) failed\\")}
+      false
+    }
+  }
+
+  def lxcWaitUp [instance, net] {
+    if (^sudo lxc-wait --name \$instance --state RUNNING --timeout 30 | complete).exit_code != 0 {
+      opPrintWarn \$\\"\`(\$instance)\` did not start running\\"
+      return
+    }
+    if (\$net | is-empty) {
+      return
+    }
+    # slaac comes before the dhcp lease, which brings dns
+    for _ in 1..30 {
+      let ipv4 = ^sudo lxc-info --name \$instance --ips --no-humanize | complete | get stdout | lines | any { |ip| \$ip =~ '^\\\\d+\\\\.\\\\d+\\\\.\\\\d+\\\\.\\\\d+\$' }
+      if \$ipv4 and (null | ^sudo lxc-attach --name \$instance --clear-env --set-var 'PATH=/run/current-system/sw/bin:/usr/bin:/bin' -- /bin/sh -c 'grep -q ^nameserver /etc/resolv.conf' | complete).exit_code == 0 {
+        return
+      }
+      sleep 1sec
+    }
+    opPrintWarn \$\\"\`(\$instance)\` has no ipv4 address or nameserver yet\\"
+  }
+
   # stops a container whether its unit runs it or it was started before there was one
   def lxcStop [cmd, instance] {
     if (^systemctl is-active \$\\"lxc@(\$instance)\\" | complete | get stdout | str trim) == 'active' {
@@ -13776,7 +17324,7 @@ def virtLxc [] {
   }
 
   # state: virtUnitState from before a sync stopped it, or null when the instance is new
-  def doAdd [cmd, instance, state] {
+  def --env doAdd [cmd, instance, state] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
     let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
@@ -13797,6 +17345,15 @@ def virtLxc [] {
     let net = \$merged | get lxc?.network? | default {}
     if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
       opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    let hookEnv = \$lxcEnv
+      | reject instance rootfs
+      | transpose key value
+      | reduce --fold {VIRT_INSTANCE: \$instance, VIRT_LXC_ROOTFS: \$rootfsDirPath} { |kv, acc| \$acc | upsert (\$kv.key | str uppercase) \$kv.value }
+
+    if not (lxcHook build \$instance \$hookEnv) {
       return
     }
 
@@ -13856,6 +17413,17 @@ def virtLxc [] {
       }
     } else if \$state.active {
       opPrintMaybeRunCmd sudo systemctl start \$\\"lxc@(\$instance)\\"
+    }
+
+    let running = if \$state == null { not (virtAddOff) } else { \$state.active }
+    let hasSetup = \$instance in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional setup | default [])
+    if \$hasSetup and not \$running {
+      opPrintInfo \$\\"\`(\$instance)\` is off, so its setup waits until it runs\\"
+    } else if \$hasSetup {
+      if NOOP not-in \$env {
+        lxcWaitUp \$instance \$net
+      }
+      lxcHook setup \$instance \$hookEnv | ignore
     }
   }
 
@@ -15048,6 +18616,13 @@ def --env virtQemu [] {
 \$env.VIRT_PODMAN_ENV = r#'{}'#
 
 \$env.VIRT_LIMITS = r#'{}'#
+
+def virtLxcHook [hook: string, instance: string] {
+  match \$\\"(\$hook)/(\$instance)\\" {
+    _ => {}
+  }
+}
+\$env.VIRT_LXC_HOOKS = r#'{\\"build\\":[],\\"setup\\":[]}'#
 
 \$env.VIRT_PLAN = r#'{\\"qemu\\":[\\"test\\",\\"test2\\"]}'#
 
@@ -16204,7 +19779,7 @@ def virtDocker [] {
 }
 
 
-def virtLxc [] {
+def --env virtLxc [] {
   let cmd = 'lxc'
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
@@ -16253,6 +19828,41 @@ def virtLxc [] {
     }
   }
 
+  # a failed hook stops that instance alone, listed at the end
+  def --env lxcHook [hook, instance, hookEnv] {
+    if \$instance not-in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional \$hook | default []) {
+      return true
+    }
+    opPrintInfo \$\\"\`(\$instance)\` (\$hook)\\"
+    try {
+      with-env \$hookEnv { virtLxcHook \$hook \$instance }
+      true
+    } catch { |e|
+      opRethrowInterrupt \$e
+      load-env {VIRT_FAILED: ((\$env.VIRT_FAILED? | default []) | append \$\\"\`(\$instance)\`: (\$hook) failed\\")}
+      false
+    }
+  }
+
+  def lxcWaitUp [instance, net] {
+    if (^sudo lxc-wait --name \$instance --state RUNNING --timeout 30 | complete).exit_code != 0 {
+      opPrintWarn \$\\"\`(\$instance)\` did not start running\\"
+      return
+    }
+    if (\$net | is-empty) {
+      return
+    }
+    # slaac comes before the dhcp lease, which brings dns
+    for _ in 1..30 {
+      let ipv4 = ^sudo lxc-info --name \$instance --ips --no-humanize | complete | get stdout | lines | any { |ip| \$ip =~ '^\\\\d+\\\\.\\\\d+\\\\.\\\\d+\\\\.\\\\d+\$' }
+      if \$ipv4 and (null | ^sudo lxc-attach --name \$instance --clear-env --set-var 'PATH=/run/current-system/sw/bin:/usr/bin:/bin' -- /bin/sh -c 'grep -q ^nameserver /etc/resolv.conf' | complete).exit_code == 0 {
+        return
+      }
+      sleep 1sec
+    }
+    opPrintWarn \$\\"\`(\$instance)\` has no ipv4 address or nameserver yet\\"
+  }
+
   # stops a container whether its unit runs it or it was started before there was one
   def lxcStop [cmd, instance] {
     if (^systemctl is-active \$\\"lxc@(\$instance)\\" | complete | get stdout | str trim) == 'active' {
@@ -16263,7 +19873,7 @@ def virtLxc [] {
   }
 
   # state: virtUnitState from before a sync stopped it, or null when the instance is new
-  def doAdd [cmd, instance, state] {
+  def --env doAdd [cmd, instance, state] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
     let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
@@ -16284,6 +19894,15 @@ def virtLxc [] {
     let net = \$merged | get lxc?.network? | default {}
     if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
       opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    let hookEnv = \$lxcEnv
+      | reject instance rootfs
+      | transpose key value
+      | reduce --fold {VIRT_INSTANCE: \$instance, VIRT_LXC_ROOTFS: \$rootfsDirPath} { |kv, acc| \$acc | upsert (\$kv.key | str uppercase) \$kv.value }
+
+    if not (lxcHook build \$instance \$hookEnv) {
       return
     }
 
@@ -16343,6 +19962,17 @@ def virtLxc [] {
       }
     } else if \$state.active {
       opPrintMaybeRunCmd sudo systemctl start \$\\"lxc@(\$instance)\\"
+    }
+
+    let running = if \$state == null { not (virtAddOff) } else { \$state.active }
+    let hasSetup = \$instance in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional setup | default [])
+    if \$hasSetup and not \$running {
+      opPrintInfo \$\\"\`(\$instance)\` is off, so its setup waits until it runs\\"
+    } else if \$hasSetup {
+      if NOOP not-in \$env {
+        lxcWaitUp \$instance \$net
+      }
+      lxcHook setup \$instance \$hookEnv | ignore
     }
   }
 
@@ -17537,6 +21167,13 @@ def --env virtQemu [] {
 \$env.VIRT_QEMU_WANTS = r#'{}'#
 
 \$env.VIRT_LIMITS = r#'{}'#
+
+def virtLxcHook [hook: string, instance: string] {
+  match \$\\"(\$hook)/(\$instance)\\" {
+    _ => {}
+  }
+}
+\$env.VIRT_LXC_HOOKS = r#'{\\"build\\":[],\\"setup\\":[]}'#
 
 \$env.VIRT_PLAN = r#'{\\"qemu\\":[\\"test\\",\\"test2\\"]}'#
 
@@ -18689,7 +22326,7 @@ def virtDocker [] {
 }
 
 
-def virtLxc [] {
+def --env virtLxc [] {
   let cmd = 'lxc'
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
@@ -18738,6 +22375,41 @@ def virtLxc [] {
     }
   }
 
+  # a failed hook stops that instance alone, listed at the end
+  def --env lxcHook [hook, instance, hookEnv] {
+    if \$instance not-in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional \$hook | default []) {
+      return true
+    }
+    opPrintInfo \$\\"\`(\$instance)\` (\$hook)\\"
+    try {
+      with-env \$hookEnv { virtLxcHook \$hook \$instance }
+      true
+    } catch { |e|
+      opRethrowInterrupt \$e
+      load-env {VIRT_FAILED: ((\$env.VIRT_FAILED? | default []) | append \$\\"\`(\$instance)\`: (\$hook) failed\\")}
+      false
+    }
+  }
+
+  def lxcWaitUp [instance, net] {
+    if (^sudo lxc-wait --name \$instance --state RUNNING --timeout 30 | complete).exit_code != 0 {
+      opPrintWarn \$\\"\`(\$instance)\` did not start running\\"
+      return
+    }
+    if (\$net | is-empty) {
+      return
+    }
+    # slaac comes before the dhcp lease, which brings dns
+    for _ in 1..30 {
+      let ipv4 = ^sudo lxc-info --name \$instance --ips --no-humanize | complete | get stdout | lines | any { |ip| \$ip =~ '^\\\\d+\\\\.\\\\d+\\\\.\\\\d+\\\\.\\\\d+\$' }
+      if \$ipv4 and (null | ^sudo lxc-attach --name \$instance --clear-env --set-var 'PATH=/run/current-system/sw/bin:/usr/bin:/bin' -- /bin/sh -c 'grep -q ^nameserver /etc/resolv.conf' | complete).exit_code == 0 {
+        return
+      }
+      sleep 1sec
+    }
+    opPrintWarn \$\\"\`(\$instance)\` has no ipv4 address or nameserver yet\\"
+  }
+
   # stops a container whether its unit runs it or it was started before there was one
   def lxcStop [cmd, instance] {
     if (^systemctl is-active \$\\"lxc@(\$instance)\\" | complete | get stdout | str trim) == 'active' {
@@ -18748,7 +22420,7 @@ def virtLxc [] {
   }
 
   # state: virtUnitState from before a sync stopped it, or null when the instance is new
-  def doAdd [cmd, instance, state] {
+  def --env doAdd [cmd, instance, state] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
     let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
@@ -18769,6 +22441,15 @@ def virtLxc [] {
     let net = \$merged | get lxc?.network? | default {}
     if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
       opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    let hookEnv = \$lxcEnv
+      | reject instance rootfs
+      | transpose key value
+      | reduce --fold {VIRT_INSTANCE: \$instance, VIRT_LXC_ROOTFS: \$rootfsDirPath} { |kv, acc| \$acc | upsert (\$kv.key | str uppercase) \$kv.value }
+
+    if not (lxcHook build \$instance \$hookEnv) {
       return
     }
 
@@ -18828,6 +22509,17 @@ def virtLxc [] {
       }
     } else if \$state.active {
       opPrintMaybeRunCmd sudo systemctl start \$\\"lxc@(\$instance)\\"
+    }
+
+    let running = if \$state == null { not (virtAddOff) } else { \$state.active }
+    let hasSetup = \$instance in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional setup | default [])
+    if \$hasSetup and not \$running {
+      opPrintInfo \$\\"\`(\$instance)\` is off, so its setup waits until it runs\\"
+    } else if \$hasSetup {
+      if NOOP not-in \$env {
+        lxcWaitUp \$instance \$net
+      }
+      lxcHook setup \$instance \$hookEnv | ignore
     }
   }
 
@@ -20022,6 +23714,13 @@ def --env virtQemu [] {
 \$env.VIRT_QEMU_WANTS = r#'{}'#
 
 \$env.VIRT_LIMITS = r#'{}'#
+
+def virtLxcHook [hook: string, instance: string] {
+  match \$\\"(\$hook)/(\$instance)\\" {
+    _ => {}
+  }
+}
+\$env.VIRT_LXC_HOOKS = r#'{\\"build\\":[],\\"setup\\":[]}'#
 
 \$env.VIRT_PLAN = r#'{\\"docker\\":[\\"svc\\"]}'#
 
@@ -22841,7 +26540,7 @@ def virtDocker [] {
 }
 
 
-def virtLxc [] {
+def --env virtLxc [] {
   let cmd = 'lxc'
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
@@ -22890,6 +26589,41 @@ def virtLxc [] {
     }
   }
 
+  # a failed hook stops that instance alone, listed at the end
+  def --env lxcHook [hook, instance, hookEnv] {
+    if \$instance not-in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional \$hook | default []) {
+      return true
+    }
+    opPrintInfo \$\\"\`(\$instance)\` (\$hook)\\"
+    try {
+      with-env \$hookEnv { virtLxcHook \$hook \$instance }
+      true
+    } catch { |e|
+      opRethrowInterrupt \$e
+      load-env {VIRT_FAILED: ((\$env.VIRT_FAILED? | default []) | append \$\\"\`(\$instance)\`: (\$hook) failed\\")}
+      false
+    }
+  }
+
+  def lxcWaitUp [instance, net] {
+    if (^sudo lxc-wait --name \$instance --state RUNNING --timeout 30 | complete).exit_code != 0 {
+      opPrintWarn \$\\"\`(\$instance)\` did not start running\\"
+      return
+    }
+    if (\$net | is-empty) {
+      return
+    }
+    # slaac comes before the dhcp lease, which brings dns
+    for _ in 1..30 {
+      let ipv4 = ^sudo lxc-info --name \$instance --ips --no-humanize | complete | get stdout | lines | any { |ip| \$ip =~ '^\\\\d+\\\\.\\\\d+\\\\.\\\\d+\\\\.\\\\d+\$' }
+      if \$ipv4 and (null | ^sudo lxc-attach --name \$instance --clear-env --set-var 'PATH=/run/current-system/sw/bin:/usr/bin:/bin' -- /bin/sh -c 'grep -q ^nameserver /etc/resolv.conf' | complete).exit_code == 0 {
+        return
+      }
+      sleep 1sec
+    }
+    opPrintWarn \$\\"\`(\$instance)\` has no ipv4 address or nameserver yet\\"
+  }
+
   # stops a container whether its unit runs it or it was started before there was one
   def lxcStop [cmd, instance] {
     if (^systemctl is-active \$\\"lxc@(\$instance)\\" | complete | get stdout | str trim) == 'active' {
@@ -22900,7 +26634,7 @@ def virtLxc [] {
   }
 
   # state: virtUnitState from before a sync stopped it, or null when the instance is new
-  def doAdd [cmd, instance, state] {
+  def --env doAdd [cmd, instance, state] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
     let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
@@ -22921,6 +26655,15 @@ def virtLxc [] {
     let net = \$merged | get lxc?.network? | default {}
     if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
       opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    let hookEnv = \$lxcEnv
+      | reject instance rootfs
+      | transpose key value
+      | reduce --fold {VIRT_INSTANCE: \$instance, VIRT_LXC_ROOTFS: \$rootfsDirPath} { |kv, acc| \$acc | upsert (\$kv.key | str uppercase) \$kv.value }
+
+    if not (lxcHook build \$instance \$hookEnv) {
       return
     }
 
@@ -22980,6 +26723,17 @@ def virtLxc [] {
       }
     } else if \$state.active {
       opPrintMaybeRunCmd sudo systemctl start \$\\"lxc@(\$instance)\\"
+    }
+
+    let running = if \$state == null { not (virtAddOff) } else { \$state.active }
+    let hasSetup = \$instance in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional setup | default [])
+    if \$hasSetup and not \$running {
+      opPrintInfo \$\\"\`(\$instance)\` is off, so its setup waits until it runs\\"
+    } else if \$hasSetup {
+      if NOOP not-in \$env {
+        lxcWaitUp \$instance \$net
+      }
+      lxcHook setup \$instance \$hookEnv | ignore
     }
   }
 
@@ -24174,6 +27928,13 @@ def --env virtQemu [] {
 \$env.VIRT_QEMU_WANTS = r#'{}'#
 
 \$env.VIRT_LIMITS = r#'{}'#
+
+def virtLxcHook [hook: string, instance: string] {
+  match \$\\"(\$hook)/(\$instance)\\" {
+    _ => {}
+  }
+}
+\$env.VIRT_LXC_HOOKS = r#'{\\"build\\":[],\\"setup\\":[]}'#
 
 \$env.VIRT_PLAN = r#'{\\"qemu\\":[\\"test/vga\\"]}'#
 
@@ -25326,7 +29087,7 @@ def virtDocker [] {
 }
 
 
-def virtLxc [] {
+def --env virtLxc [] {
   let cmd = 'lxc'
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
@@ -25375,6 +29136,41 @@ def virtLxc [] {
     }
   }
 
+  # a failed hook stops that instance alone, listed at the end
+  def --env lxcHook [hook, instance, hookEnv] {
+    if \$instance not-in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional \$hook | default []) {
+      return true
+    }
+    opPrintInfo \$\\"\`(\$instance)\` (\$hook)\\"
+    try {
+      with-env \$hookEnv { virtLxcHook \$hook \$instance }
+      true
+    } catch { |e|
+      opRethrowInterrupt \$e
+      load-env {VIRT_FAILED: ((\$env.VIRT_FAILED? | default []) | append \$\\"\`(\$instance)\`: (\$hook) failed\\")}
+      false
+    }
+  }
+
+  def lxcWaitUp [instance, net] {
+    if (^sudo lxc-wait --name \$instance --state RUNNING --timeout 30 | complete).exit_code != 0 {
+      opPrintWarn \$\\"\`(\$instance)\` did not start running\\"
+      return
+    }
+    if (\$net | is-empty) {
+      return
+    }
+    # slaac comes before the dhcp lease, which brings dns
+    for _ in 1..30 {
+      let ipv4 = ^sudo lxc-info --name \$instance --ips --no-humanize | complete | get stdout | lines | any { |ip| \$ip =~ '^\\\\d+\\\\.\\\\d+\\\\.\\\\d+\\\\.\\\\d+\$' }
+      if \$ipv4 and (null | ^sudo lxc-attach --name \$instance --clear-env --set-var 'PATH=/run/current-system/sw/bin:/usr/bin:/bin' -- /bin/sh -c 'grep -q ^nameserver /etc/resolv.conf' | complete).exit_code == 0 {
+        return
+      }
+      sleep 1sec
+    }
+    opPrintWarn \$\\"\`(\$instance)\` has no ipv4 address or nameserver yet\\"
+  }
+
   # stops a container whether its unit runs it or it was started before there was one
   def lxcStop [cmd, instance] {
     if (^systemctl is-active \$\\"lxc@(\$instance)\\" | complete | get stdout | str trim) == 'active' {
@@ -25385,7 +29181,7 @@ def virtLxc [] {
   }
 
   # state: virtUnitState from before a sync stopped it, or null when the instance is new
-  def doAdd [cmd, instance, state] {
+  def --env doAdd [cmd, instance, state] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
     let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
@@ -25406,6 +29202,15 @@ def virtLxc [] {
     let net = \$merged | get lxc?.network? | default {}
     if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
       opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    let hookEnv = \$lxcEnv
+      | reject instance rootfs
+      | transpose key value
+      | reduce --fold {VIRT_INSTANCE: \$instance, VIRT_LXC_ROOTFS: \$rootfsDirPath} { |kv, acc| \$acc | upsert (\$kv.key | str uppercase) \$kv.value }
+
+    if not (lxcHook build \$instance \$hookEnv) {
       return
     }
 
@@ -25465,6 +29270,17 @@ def virtLxc [] {
       }
     } else if \$state.active {
       opPrintMaybeRunCmd sudo systemctl start \$\\"lxc@(\$instance)\\"
+    }
+
+    let running = if \$state == null { not (virtAddOff) } else { \$state.active }
+    let hasSetup = \$instance in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional setup | default [])
+    if \$hasSetup and not \$running {
+      opPrintInfo \$\\"\`(\$instance)\` is off, so its setup waits until it runs\\"
+    } else if \$hasSetup {
+      if NOOP not-in \$env {
+        lxcWaitUp \$instance \$net
+      }
+      lxcHook setup \$instance \$hookEnv | ignore
     }
   }
 
@@ -26659,6 +30475,13 @@ def --env virtQemu [] {
 \$env.VIRT_QEMU_WANTS = r#'{}'#
 
 \$env.VIRT_LIMITS = r#'{}'#
+
+def virtLxcHook [hook: string, instance: string] {
+  match \$\\"(\$hook)/(\$instance)\\" {
+    _ => {}
+  }
+}
+\$env.VIRT_LXC_HOOKS = r#'{\\"build\\":[],\\"setup\\":[]}'#
 
 opPrintWarn r#'no instance matched: vga'#
 
@@ -27706,7 +31529,7 @@ def virtDocker [] {
 }
 
 
-def virtLxc [] {
+def --env virtLxc [] {
   let cmd = 'lxc'
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
@@ -27755,6 +31578,41 @@ def virtLxc [] {
     }
   }
 
+  # a failed hook stops that instance alone, listed at the end
+  def --env lxcHook [hook, instance, hookEnv] {
+    if \$instance not-in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional \$hook | default []) {
+      return true
+    }
+    opPrintInfo \$\\"\`(\$instance)\` (\$hook)\\"
+    try {
+      with-env \$hookEnv { virtLxcHook \$hook \$instance }
+      true
+    } catch { |e|
+      opRethrowInterrupt \$e
+      load-env {VIRT_FAILED: ((\$env.VIRT_FAILED? | default []) | append \$\\"\`(\$instance)\`: (\$hook) failed\\")}
+      false
+    }
+  }
+
+  def lxcWaitUp [instance, net] {
+    if (^sudo lxc-wait --name \$instance --state RUNNING --timeout 30 | complete).exit_code != 0 {
+      opPrintWarn \$\\"\`(\$instance)\` did not start running\\"
+      return
+    }
+    if (\$net | is-empty) {
+      return
+    }
+    # slaac comes before the dhcp lease, which brings dns
+    for _ in 1..30 {
+      let ipv4 = ^sudo lxc-info --name \$instance --ips --no-humanize | complete | get stdout | lines | any { |ip| \$ip =~ '^\\\\d+\\\\.\\\\d+\\\\.\\\\d+\\\\.\\\\d+\$' }
+      if \$ipv4 and (null | ^sudo lxc-attach --name \$instance --clear-env --set-var 'PATH=/run/current-system/sw/bin:/usr/bin:/bin' -- /bin/sh -c 'grep -q ^nameserver /etc/resolv.conf' | complete).exit_code == 0 {
+        return
+      }
+      sleep 1sec
+    }
+    opPrintWarn \$\\"\`(\$instance)\` has no ipv4 address or nameserver yet\\"
+  }
+
   # stops a container whether its unit runs it or it was started before there was one
   def lxcStop [cmd, instance] {
     if (^systemctl is-active \$\\"lxc@(\$instance)\\" | complete | get stdout | str trim) == 'active' {
@@ -27765,7 +31623,7 @@ def virtLxc [] {
   }
 
   # state: virtUnitState from before a sync stopped it, or null when the instance is new
-  def doAdd [cmd, instance, state] {
+  def --env doAdd [cmd, instance, state] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
     let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
@@ -27786,6 +31644,15 @@ def virtLxc [] {
     let net = \$merged | get lxc?.network? | default {}
     if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
       opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    let hookEnv = \$lxcEnv
+      | reject instance rootfs
+      | transpose key value
+      | reduce --fold {VIRT_INSTANCE: \$instance, VIRT_LXC_ROOTFS: \$rootfsDirPath} { |kv, acc| \$acc | upsert (\$kv.key | str uppercase) \$kv.value }
+
+    if not (lxcHook build \$instance \$hookEnv) {
       return
     }
 
@@ -27845,6 +31712,17 @@ def virtLxc [] {
       }
     } else if \$state.active {
       opPrintMaybeRunCmd sudo systemctl start \$\\"lxc@(\$instance)\\"
+    }
+
+    let running = if \$state == null { not (virtAddOff) } else { \$state.active }
+    let hasSetup = \$instance in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional setup | default [])
+    if \$hasSetup and not \$running {
+      opPrintInfo \$\\"\`(\$instance)\` is off, so its setup waits until it runs\\"
+    } else if \$hasSetup {
+      if NOOP not-in \$env {
+        lxcWaitUp \$instance \$net
+      }
+      lxcHook setup \$instance \$hookEnv | ignore
     }
   }
 
@@ -29039,6 +32917,13 @@ def --env virtQemu [] {
 \$env.VIRT_QEMU_WANTS = r#'{}'#
 
 \$env.VIRT_LIMITS = r#'{}'#
+
+def virtLxcHook [hook: string, instance: string] {
+  match \$\\"(\$hook)/(\$instance)\\" {
+    _ => {}
+  }
+}
+\$env.VIRT_LXC_HOOKS = r#'{\\"build\\":[],\\"setup\\":[]}'#
 
 \$env.VIRT_PLAN = r#'{\\"qemu\\":[\\"test\\"]}'#
 
@@ -30191,7 +34076,7 @@ def virtDocker [] {
 }
 
 
-def virtLxc [] {
+def --env virtLxc [] {
   let cmd = 'lxc'
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
@@ -30240,6 +34125,41 @@ def virtLxc [] {
     }
   }
 
+  # a failed hook stops that instance alone, listed at the end
+  def --env lxcHook [hook, instance, hookEnv] {
+    if \$instance not-in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional \$hook | default []) {
+      return true
+    }
+    opPrintInfo \$\\"\`(\$instance)\` (\$hook)\\"
+    try {
+      with-env \$hookEnv { virtLxcHook \$hook \$instance }
+      true
+    } catch { |e|
+      opRethrowInterrupt \$e
+      load-env {VIRT_FAILED: ((\$env.VIRT_FAILED? | default []) | append \$\\"\`(\$instance)\`: (\$hook) failed\\")}
+      false
+    }
+  }
+
+  def lxcWaitUp [instance, net] {
+    if (^sudo lxc-wait --name \$instance --state RUNNING --timeout 30 | complete).exit_code != 0 {
+      opPrintWarn \$\\"\`(\$instance)\` did not start running\\"
+      return
+    }
+    if (\$net | is-empty) {
+      return
+    }
+    # slaac comes before the dhcp lease, which brings dns
+    for _ in 1..30 {
+      let ipv4 = ^sudo lxc-info --name \$instance --ips --no-humanize | complete | get stdout | lines | any { |ip| \$ip =~ '^\\\\d+\\\\.\\\\d+\\\\.\\\\d+\\\\.\\\\d+\$' }
+      if \$ipv4 and (null | ^sudo lxc-attach --name \$instance --clear-env --set-var 'PATH=/run/current-system/sw/bin:/usr/bin:/bin' -- /bin/sh -c 'grep -q ^nameserver /etc/resolv.conf' | complete).exit_code == 0 {
+        return
+      }
+      sleep 1sec
+    }
+    opPrintWarn \$\\"\`(\$instance)\` has no ipv4 address or nameserver yet\\"
+  }
+
   # stops a container whether its unit runs it or it was started before there was one
   def lxcStop [cmd, instance] {
     if (^systemctl is-active \$\\"lxc@(\$instance)\\" | complete | get stdout | str trim) == 'active' {
@@ -30250,7 +34170,7 @@ def virtLxc [] {
   }
 
   # state: virtUnitState from before a sync stopped it, or null when the instance is new
-  def doAdd [cmd, instance, state] {
+  def --env doAdd [cmd, instance, state] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
     let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
@@ -30271,6 +34191,15 @@ def virtLxc [] {
     let net = \$merged | get lxc?.network? | default {}
     if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
       opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    let hookEnv = \$lxcEnv
+      | reject instance rootfs
+      | transpose key value
+      | reduce --fold {VIRT_INSTANCE: \$instance, VIRT_LXC_ROOTFS: \$rootfsDirPath} { |kv, acc| \$acc | upsert (\$kv.key | str uppercase) \$kv.value }
+
+    if not (lxcHook build \$instance \$hookEnv) {
       return
     }
 
@@ -30330,6 +34259,17 @@ def virtLxc [] {
       }
     } else if \$state.active {
       opPrintMaybeRunCmd sudo systemctl start \$\\"lxc@(\$instance)\\"
+    }
+
+    let running = if \$state == null { not (virtAddOff) } else { \$state.active }
+    let hasSetup = \$instance in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional setup | default [])
+    if \$hasSetup and not \$running {
+      opPrintInfo \$\\"\`(\$instance)\` is off, so its setup waits until it runs\\"
+    } else if \$hasSetup {
+      if NOOP not-in \$env {
+        lxcWaitUp \$instance \$net
+      }
+      lxcHook setup \$instance \$hookEnv | ignore
     }
   }
 
@@ -31522,6 +35462,13 @@ def --env virtQemu [] {
 \$env.VIRT_PODMAN_ENV = r#'{}'#
 
 \$env.VIRT_LIMITS = r#'{}'#
+
+def virtLxcHook [hook: string, instance: string] {
+  match \$\\"(\$hook)/(\$instance)\\" {
+    _ => {}
+  }
+}
+\$env.VIRT_LXC_HOOKS = r#'{\\"build\\":[],\\"setup\\":[]}'#
 
 opPrintWarn r#'no instance matched: test vga'#
 
@@ -34232,7 +38179,7 @@ def virtDocker [] {
 }
 
 
-def virtLxc [] {
+def --env virtLxc [] {
   let cmd = 'lxc'
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
@@ -34281,6 +38228,41 @@ def virtLxc [] {
     }
   }
 
+  # a failed hook stops that instance alone, listed at the end
+  def --env lxcHook [hook, instance, hookEnv] {
+    if \$instance not-in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional \$hook | default []) {
+      return true
+    }
+    opPrintInfo \$\\"\`(\$instance)\` (\$hook)\\"
+    try {
+      with-env \$hookEnv { virtLxcHook \$hook \$instance }
+      true
+    } catch { |e|
+      opRethrowInterrupt \$e
+      load-env {VIRT_FAILED: ((\$env.VIRT_FAILED? | default []) | append \$\\"\`(\$instance)\`: (\$hook) failed\\")}
+      false
+    }
+  }
+
+  def lxcWaitUp [instance, net] {
+    if (^sudo lxc-wait --name \$instance --state RUNNING --timeout 30 | complete).exit_code != 0 {
+      opPrintWarn \$\\"\`(\$instance)\` did not start running\\"
+      return
+    }
+    if (\$net | is-empty) {
+      return
+    }
+    # slaac comes before the dhcp lease, which brings dns
+    for _ in 1..30 {
+      let ipv4 = ^sudo lxc-info --name \$instance --ips --no-humanize | complete | get stdout | lines | any { |ip| \$ip =~ '^\\\\d+\\\\.\\\\d+\\\\.\\\\d+\\\\.\\\\d+\$' }
+      if \$ipv4 and (null | ^sudo lxc-attach --name \$instance --clear-env --set-var 'PATH=/run/current-system/sw/bin:/usr/bin:/bin' -- /bin/sh -c 'grep -q ^nameserver /etc/resolv.conf' | complete).exit_code == 0 {
+        return
+      }
+      sleep 1sec
+    }
+    opPrintWarn \$\\"\`(\$instance)\` has no ipv4 address or nameserver yet\\"
+  }
+
   # stops a container whether its unit runs it or it was started before there was one
   def lxcStop [cmd, instance] {
     if (^systemctl is-active \$\\"lxc@(\$instance)\\" | complete | get stdout | str trim) == 'active' {
@@ -34291,7 +38273,7 @@ def virtLxc [] {
   }
 
   # state: virtUnitState from before a sync stopped it, or null when the instance is new
-  def doAdd [cmd, instance, state] {
+  def --env doAdd [cmd, instance, state] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
     let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
@@ -34312,6 +38294,15 @@ def virtLxc [] {
     let net = \$merged | get lxc?.network? | default {}
     if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
       opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    let hookEnv = \$lxcEnv
+      | reject instance rootfs
+      | transpose key value
+      | reduce --fold {VIRT_INSTANCE: \$instance, VIRT_LXC_ROOTFS: \$rootfsDirPath} { |kv, acc| \$acc | upsert (\$kv.key | str uppercase) \$kv.value }
+
+    if not (lxcHook build \$instance \$hookEnv) {
       return
     }
 
@@ -34371,6 +38362,17 @@ def virtLxc [] {
       }
     } else if \$state.active {
       opPrintMaybeRunCmd sudo systemctl start \$\\"lxc@(\$instance)\\"
+    }
+
+    let running = if \$state == null { not (virtAddOff) } else { \$state.active }
+    let hasSetup = \$instance in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional setup | default [])
+    if \$hasSetup and not \$running {
+      opPrintInfo \$\\"\`(\$instance)\` is off, so its setup waits until it runs\\"
+    } else if \$hasSetup {
+      if NOOP not-in \$env {
+        lxcWaitUp \$instance \$net
+      }
+      lxcHook setup \$instance \$hookEnv | ignore
     }
   }
 
@@ -35564,6 +39566,13 @@ def --env virtQemu [] {
 
 \$env.VIRT_LIMITS = r#'{}'#
 
+def virtLxcHook [hook: string, instance: string] {
+  match \$\\"(\$hook)/(\$instance)\\" {
+    _ => {}
+  }
+}
+\$env.VIRT_LXC_HOOKS = r#'{\\"build\\":[],\\"setup\\":[]}'#
+
 \$env.VIRT_PLAN = r#'{\\"docker\\":[],\\"lxc\\":[],\\"podman\\":[],\\"qemu\\":[]}'#
 
 virtPlanRun
@@ -36612,7 +40621,7 @@ def virtDocker [] {
 }
 
 
-def virtLxc [] {
+def --env virtLxc [] {
   let cmd = 'lxc'
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
@@ -36661,6 +40670,41 @@ def virtLxc [] {
     }
   }
 
+  # a failed hook stops that instance alone, listed at the end
+  def --env lxcHook [hook, instance, hookEnv] {
+    if \$instance not-in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional \$hook | default []) {
+      return true
+    }
+    opPrintInfo \$\\"\`(\$instance)\` (\$hook)\\"
+    try {
+      with-env \$hookEnv { virtLxcHook \$hook \$instance }
+      true
+    } catch { |e|
+      opRethrowInterrupt \$e
+      load-env {VIRT_FAILED: ((\$env.VIRT_FAILED? | default []) | append \$\\"\`(\$instance)\`: (\$hook) failed\\")}
+      false
+    }
+  }
+
+  def lxcWaitUp [instance, net] {
+    if (^sudo lxc-wait --name \$instance --state RUNNING --timeout 30 | complete).exit_code != 0 {
+      opPrintWarn \$\\"\`(\$instance)\` did not start running\\"
+      return
+    }
+    if (\$net | is-empty) {
+      return
+    }
+    # slaac comes before the dhcp lease, which brings dns
+    for _ in 1..30 {
+      let ipv4 = ^sudo lxc-info --name \$instance --ips --no-humanize | complete | get stdout | lines | any { |ip| \$ip =~ '^\\\\d+\\\\.\\\\d+\\\\.\\\\d+\\\\.\\\\d+\$' }
+      if \$ipv4 and (null | ^sudo lxc-attach --name \$instance --clear-env --set-var 'PATH=/run/current-system/sw/bin:/usr/bin:/bin' -- /bin/sh -c 'grep -q ^nameserver /etc/resolv.conf' | complete).exit_code == 0 {
+        return
+      }
+      sleep 1sec
+    }
+    opPrintWarn \$\\"\`(\$instance)\` has no ipv4 address or nameserver yet\\"
+  }
+
   # stops a container whether its unit runs it or it was started before there was one
   def lxcStop [cmd, instance] {
     if (^systemctl is-active \$\\"lxc@(\$instance)\\" | complete | get stdout | str trim) == 'active' {
@@ -36671,7 +40715,7 @@ def virtLxc [] {
   }
 
   # state: virtUnitState from before a sync stopped it, or null when the instance is new
-  def doAdd [cmd, instance, state] {
+  def --env doAdd [cmd, instance, state] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
     let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
@@ -36692,6 +40736,15 @@ def virtLxc [] {
     let net = \$merged | get lxc?.network? | default {}
     if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
       opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    let hookEnv = \$lxcEnv
+      | reject instance rootfs
+      | transpose key value
+      | reduce --fold {VIRT_INSTANCE: \$instance, VIRT_LXC_ROOTFS: \$rootfsDirPath} { |kv, acc| \$acc | upsert (\$kv.key | str uppercase) \$kv.value }
+
+    if not (lxcHook build \$instance \$hookEnv) {
       return
     }
 
@@ -36751,6 +40804,17 @@ def virtLxc [] {
       }
     } else if \$state.active {
       opPrintMaybeRunCmd sudo systemctl start \$\\"lxc@(\$instance)\\"
+    }
+
+    let running = if \$state == null { not (virtAddOff) } else { \$state.active }
+    let hasSetup = \$instance in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional setup | default [])
+    if \$hasSetup and not \$running {
+      opPrintInfo \$\\"\`(\$instance)\` is off, so its setup waits until it runs\\"
+    } else if \$hasSetup {
+      if NOOP not-in \$env {
+        lxcWaitUp \$instance \$net
+      }
+      lxcHook setup \$instance \$hookEnv | ignore
     }
   }
 
@@ -37945,6 +42009,13 @@ def --env virtQemu [] {
 \$env.VIRT_QEMU_WANTS = r#'{}'#
 
 \$env.VIRT_LIMITS = r#'{}'#
+
+def virtLxcHook [hook: string, instance: string] {
+  match \$\\"(\$hook)/(\$instance)\\" {
+    _ => {}
+  }
+}
+\$env.VIRT_LXC_HOOKS = r#'{\\"build\\":[],\\"setup\\":[]}'#
 
 \$env.VIRT_PLAN = r#'{\\"podman\\":[\\"web/app\\",\\"web/hub\\"]}'#
 
@@ -39097,7 +43168,7 @@ def virtDocker [] {
 }
 
 
-def virtLxc [] {
+def --env virtLxc [] {
   let cmd = 'lxc'
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
@@ -39146,6 +43217,41 @@ def virtLxc [] {
     }
   }
 
+  # a failed hook stops that instance alone, listed at the end
+  def --env lxcHook [hook, instance, hookEnv] {
+    if \$instance not-in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional \$hook | default []) {
+      return true
+    }
+    opPrintInfo \$\\"\`(\$instance)\` (\$hook)\\"
+    try {
+      with-env \$hookEnv { virtLxcHook \$hook \$instance }
+      true
+    } catch { |e|
+      opRethrowInterrupt \$e
+      load-env {VIRT_FAILED: ((\$env.VIRT_FAILED? | default []) | append \$\\"\`(\$instance)\`: (\$hook) failed\\")}
+      false
+    }
+  }
+
+  def lxcWaitUp [instance, net] {
+    if (^sudo lxc-wait --name \$instance --state RUNNING --timeout 30 | complete).exit_code != 0 {
+      opPrintWarn \$\\"\`(\$instance)\` did not start running\\"
+      return
+    }
+    if (\$net | is-empty) {
+      return
+    }
+    # slaac comes before the dhcp lease, which brings dns
+    for _ in 1..30 {
+      let ipv4 = ^sudo lxc-info --name \$instance --ips --no-humanize | complete | get stdout | lines | any { |ip| \$ip =~ '^\\\\d+\\\\.\\\\d+\\\\.\\\\d+\\\\.\\\\d+\$' }
+      if \$ipv4 and (null | ^sudo lxc-attach --name \$instance --clear-env --set-var 'PATH=/run/current-system/sw/bin:/usr/bin:/bin' -- /bin/sh -c 'grep -q ^nameserver /etc/resolv.conf' | complete).exit_code == 0 {
+        return
+      }
+      sleep 1sec
+    }
+    opPrintWarn \$\\"\`(\$instance)\` has no ipv4 address or nameserver yet\\"
+  }
+
   # stops a container whether its unit runs it or it was started before there was one
   def lxcStop [cmd, instance] {
     if (^systemctl is-active \$\\"lxc@(\$instance)\\" | complete | get stdout | str trim) == 'active' {
@@ -39156,7 +43262,7 @@ def virtLxc [] {
   }
 
   # state: virtUnitState from before a sync stopped it, or null when the instance is new
-  def doAdd [cmd, instance, state] {
+  def --env doAdd [cmd, instance, state] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
     let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
@@ -39177,6 +43283,15 @@ def virtLxc [] {
     let net = \$merged | get lxc?.network? | default {}
     if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
       opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    let hookEnv = \$lxcEnv
+      | reject instance rootfs
+      | transpose key value
+      | reduce --fold {VIRT_INSTANCE: \$instance, VIRT_LXC_ROOTFS: \$rootfsDirPath} { |kv, acc| \$acc | upsert (\$kv.key | str uppercase) \$kv.value }
+
+    if not (lxcHook build \$instance \$hookEnv) {
       return
     }
 
@@ -39236,6 +43351,17 @@ def virtLxc [] {
       }
     } else if \$state.active {
       opPrintMaybeRunCmd sudo systemctl start \$\\"lxc@(\$instance)\\"
+    }
+
+    let running = if \$state == null { not (virtAddOff) } else { \$state.active }
+    let hasSetup = \$instance in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional setup | default [])
+    if \$hasSetup and not \$running {
+      opPrintInfo \$\\"\`(\$instance)\` is off, so its setup waits until it runs\\"
+    } else if \$hasSetup {
+      if NOOP not-in \$env {
+        lxcWaitUp \$instance \$net
+      }
+      lxcHook setup \$instance \$hookEnv | ignore
     }
   }
 
@@ -40430,6 +44556,13 @@ def --env virtQemu [] {
 \$env.VIRT_QEMU_WANTS = r#'{}'#
 
 \$env.VIRT_LIMITS = r#'{}'#
+
+def virtLxcHook [hook: string, instance: string] {
+  match \$\\"(\$hook)/(\$instance)\\" {
+    _ => {}
+  }
+}
+\$env.VIRT_LXC_HOOKS = r#'{\\"build\\":[],\\"setup\\":[]}'#
 
 opPrintWarn r#'no instance matched: nosuchthing'#
 
@@ -42393,7 +46526,7 @@ def virtDocker [] {
 }
 
 
-def virtLxc [] {
+def --env virtLxc [] {
   let cmd = 'lxc'
   if ('VIRT_MANAGER' in \$env and \$env.VIRT_MANAGER != \$cmd) or (which \$\\"(\$cmd)-ls\\" | is-empty) {
     return
@@ -42442,6 +46575,41 @@ def virtLxc [] {
     }
   }
 
+  # a failed hook stops that instance alone, listed at the end
+  def --env lxcHook [hook, instance, hookEnv] {
+    if \$instance not-in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional \$hook | default []) {
+      return true
+    }
+    opPrintInfo \$\\"\`(\$instance)\` (\$hook)\\"
+    try {
+      with-env \$hookEnv { virtLxcHook \$hook \$instance }
+      true
+    } catch { |e|
+      opRethrowInterrupt \$e
+      load-env {VIRT_FAILED: ((\$env.VIRT_FAILED? | default []) | append \$\\"\`(\$instance)\`: (\$hook) failed\\")}
+      false
+    }
+  }
+
+  def lxcWaitUp [instance, net] {
+    if (^sudo lxc-wait --name \$instance --state RUNNING --timeout 30 | complete).exit_code != 0 {
+      opPrintWarn \$\\"\`(\$instance)\` did not start running\\"
+      return
+    }
+    if (\$net | is-empty) {
+      return
+    }
+    # slaac comes before the dhcp lease, which brings dns
+    for _ in 1..30 {
+      let ipv4 = ^sudo lxc-info --name \$instance --ips --no-humanize | complete | get stdout | lines | any { |ip| \$ip =~ '^\\\\d+\\\\.\\\\d+\\\\.\\\\d+\\\\.\\\\d+\$' }
+      if \$ipv4 and (null | ^sudo lxc-attach --name \$instance --clear-env --set-var 'PATH=/run/current-system/sw/bin:/usr/bin:/bin' -- /bin/sh -c 'grep -q ^nameserver /etc/resolv.conf' | complete).exit_code == 0 {
+        return
+      }
+      sleep 1sec
+    }
+    opPrintWarn \$\\"\`(\$instance)\` has no ipv4 address or nameserver yet\\"
+  }
+
   # stops a container whether its unit runs it or it was started before there was one
   def lxcStop [cmd, instance] {
     if (^systemctl is-active \$\\"lxc@(\$instance)\\" | complete | get stdout | str trim) == 'active' {
@@ -42452,7 +46620,7 @@ def virtLxc [] {
   }
 
   # state: virtUnitState from before a sync stopped it, or null when the instance is new
-  def doAdd [cmd, instance, state] {
+  def --env doAdd [cmd, instance, state] {
     let config = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$cmd).yaml'#\\"
     let configVm = opPrintRunCmd http get --raw --redirect-mode follow \$\\"r#'(\$env.REQ_URL_CFG)/virt/(\$env.SYS_HOST)/(\$cmd)/(\$instance).yaml'#\\"
     let merged = virtDeepMerge (\$config | from yaml) (\$configVm | from yaml)
@@ -42473,6 +46641,15 @@ def virtLxc [] {
     let net = \$merged | get lxc?.network? | default {}
     if ('link' in \$net) and not (\$\\"/sys/class/net/(\$net.link)\\" | path exists) {
       opPrintWarn \$\\"cannot add \`(\$instance)\`: network link '(\$net.link)' does not exist\\"
+      return
+    }
+
+    let hookEnv = \$lxcEnv
+      | reject instance rootfs
+      | transpose key value
+      | reduce --fold {VIRT_INSTANCE: \$instance, VIRT_LXC_ROOTFS: \$rootfsDirPath} { |kv, acc| \$acc | upsert (\$kv.key | str uppercase) \$kv.value }
+
+    if not (lxcHook build \$instance \$hookEnv) {
       return
     }
 
@@ -42532,6 +46709,17 @@ def virtLxc [] {
       }
     } else if \$state.active {
       opPrintMaybeRunCmd sudo systemctl start \$\\"lxc@(\$instance)\\"
+    }
+
+    let running = if \$state == null { not (virtAddOff) } else { \$state.active }
+    let hasSetup = \$instance in (\$env.VIRT_LXC_HOOKS? | default '{}' | from json | get --optional setup | default [])
+    if \$hasSetup and not \$running {
+      opPrintInfo \$\\"\`(\$instance)\` is off, so its setup waits until it runs\\"
+    } else if \$hasSetup {
+      if NOOP not-in \$env {
+        lxcWaitUp \$instance \$net
+      }
+      lxcHook setup \$instance \$hookEnv | ignore
     }
   }
 
@@ -43726,6 +47914,13 @@ def --env virtQemu [] {
 \$env.VIRT_QEMU_WANTS = r#'{}'#
 
 \$env.VIRT_LIMITS = r#'{}'#
+
+def virtLxcHook [hook: string, instance: string] {
+  match \$\\"(\$hook)/(\$instance)\\" {
+    _ => {}
+  }
+}
+\$env.VIRT_LXC_HOOKS = r#'{\\"build\\":[],\\"setup\\":[]}'#
 
 \$env.VIRT_PLAN = r#'{\\"podman\\":[\\"web/app\\",\\"web/hub\\"]}'#
 

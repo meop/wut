@@ -4,9 +4,9 @@ import { type Env } from '@meop/shire/env'
 import { Fmt } from '@meop/shire/serde'
 import type { Sh } from '@meop/shire/sh'
 
-import { getCfgDirDump, getCfgFileLoad } from '../cfg.ts'
+import { getCfgDirDump, getCfgFileContent, getCfgFileLoad } from '../cfg.ts'
 import { partsMatch, sameName, wordStartsWith } from '../match.ts'
-import { lockRun, redirectCommonShell } from '../sh.ts'
+import { execScriptShell, getScriptFlavorOpPreamble, lockRun, redirectCommonShell } from '../sh.ts'
 
 export class VirtCmd extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
@@ -57,6 +57,10 @@ const VIRT_SNAP_TIER_KEY = [VIRT_KEY, 'snap', 'tier']
 const VIRT_SNAP_TO_KEY = [VIRT_KEY, 'snap', 'to']
 // podman.yaml's environment, as {name} in a pod's yamls
 const VIRT_PODMAN_ENV_KEY = [VIRT_KEY, 'podman', 'env']
+
+// hook -> lxc instances that have one
+const VIRT_LXC_HOOKS_KEY = [VIRT_KEY, 'lxc', 'hooks']
+const LXC_HOOKS = ['build', 'setup']
 
 // manager -> instances, for the client to filter by what is here and run after one prompt
 const VIRT_PLAN_KEY = [VIRT_KEY, 'plan']
@@ -157,6 +161,39 @@ async function loadQemuConfigs(dirParts: Array<string>): Promise<Array<[string, 
     configs.push([parts.join('/'), merged])
   }
   return configs
+}
+
+// <instance>.build.nu and <instance>.setup.nu beside an lxc yaml, for the planned instances only, each after the defs
+// lxc.<hook>.nu beside lxc.yaml holds for every instance's
+async function lxcHooks(shell: Sh, plat: string, dirParts: Array<string>, instances: Array<string>) {
+  const arms: Array<string> = []
+  const hooks: Record<string, Array<string>> = Object.fromEntries(LXC_HOOKS.map((hook) => [hook, []]))
+  if (instances.length) {
+    const preamble = await getScriptFlavorOpPreamble('nu')
+    const shared: Record<string, string> = {}
+    for (const hook of LXC_HOOKS) {
+      shared[hook] = (await getCfgFileContent([VIRT_KEY, `lxc.${hook}`], { extension: 'nu' })) ?? ''
+    }
+    for (const instance of new Set(instances)) {
+      for (const hook of LXC_HOOKS) {
+        const content = await getCfgFileContent([...dirParts, 'lxc', `${instance}.${hook}`], { extension: 'nu' })
+        if (content) {
+          const run = execScriptShell(shell, plat, 'nu', [preamble, shared[hook], content].filter((p) => p).join('\n'))
+          arms.push(`    ${shell.toLiteral(`${hook}/${instance}`)} => { ${run} }`)
+          hooks[hook].push(instance)
+        }
+      }
+    }
+  }
+  return [
+    'def virtLxcHook [hook: string, instance: string] {',
+    '  match $"($hook)/($instance)" {',
+    ...arms,
+    '    _ => {}',
+    '  }',
+    '}',
+    shell.varSetStr(VIRT_LXC_HOOKS_KEY, JSON.stringify(hooks)),
+  ]
 }
 
 function buildAndLog(shell: Sh, environment: Env) {
@@ -344,6 +381,9 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       const virtMap: Record<string, Array<string>> = Object.fromEntries(
         managersToOp.map((m) => [m, instanceFilters]),
       )
+      if (supportedManagers.includes('lxc')) {
+        _shell = _shell.with(await lxcHooks(_shell, context.sys_os_plat ?? '', dirParts, []))
+      }
       if (Object.keys(virtMap).length) {
         _shell = _shell
           .with(_shell.varSetStr(VIRT_PLAN_KEY, JSON.stringify(virtMap)))
@@ -373,6 +413,12 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
         results = results
           .filter((parts) => parts[1] && !(parts[0] === 'podman' && !parts[2]))
           .slice(0, 1)
+      }
+      if (supportedManagers.includes('lxc')) {
+        const planned = op === 'add' || op === 'sync'
+          ? results.filter((parts) => parts[0] === 'lxc' && parts.length === 2).map((parts) => parts[1])
+          : []
+        _shell = _shell.with(await lxcHooks(_shell, context.sys_os_plat ?? '', dirParts, planned))
       }
       const applied = applyResults(results)
       if (!applied && filters.length) {

@@ -205,6 +205,31 @@ Containers reach the host, each other, the lan and the internet, and nothing on 
 host's own services and for testing. Pods and vms stay on the lan bridge, where the router addresses them over ipv4 and
 ipv6 itself.
 
+## Lxc: build and setup hooks
+
+An instance may have nu scripts beside its yaml, each optional:
+
+| File                  | Runs                                           |
+| --------------------- | ---------------------------------------------- |
+| `<instance>.build.nu` | on every add and sync, before the root is made |
+| `<instance>.setup.nu` | on every add and sync, once the instance runs  |
+
+Both run on the host, with the op preamble, so `--noop` and `-y` reach them, and after `lxc.<hook>.nu` beside `lxc.yaml`
+when there is one: defs every instance's hook of that name can call, so what is not one instance's own is written once.
+Each works out for itself whether there is anything to do: a build keeps an image that is current, and a setup reaches
+inside through `lxc-attach` and changes only what is not as it should be, so a sync, or an add after a rem, finds little
+or nothing to do. A setup that needs a restart does it itself, through `systemctl restart lxc@<instance>` so the
+instance stays in its unit. `lxc-attach` chowns its stdio to the user it runs as, so a hook hands it pipes, never the
+terminal or a file of the host's.
+
+They read `VIRT_INSTANCE`, `VIRT_LXC_ROOTFS` (the root on the host) and `lxc.yaml`'s environment, upper-cased
+(`VIRT_LXC_IMAGE_DIR_PATH`), and they run as the host's user, so a setup takes its user from `$USER` and `id`. Before a
+setup, wut waits for the instance to run and, with a network, for an ipv4 address and a nameserver. An instance left off
+skips its setup until a sync finds it running. A hook that fails stops that instance alone, listed under `failed:` at
+the end.
+
+The server embeds only the hooks of the instances an add or sync plans, since each carries the op preamble.
+
 ## Qemu: a vm's data folder
 
 `{virt_qemu_dir_path}/<instance>` holds an instance's disks. `add` makes it when it is missing, and on btrfs as a
