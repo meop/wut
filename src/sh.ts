@@ -23,47 +23,6 @@ function pinnedNuBinCmd(shell: Sh, sysOsPlat: string): string {
     : `^($env.WUT_HOME | path join 'vendor' 'nu${ext}')`
 }
 
-export async function redirectShell(
-  shell: Sh,
-  target: string,
-  context: Ctx,
-  params: Array<string> = [],
-): Promise<string | null> {
-  if (shell.name === target) {
-    return null
-  }
-
-  const url = [
-    context.req_orig,
-    context.req_path.replace(`/sh/${shell.name}`, `/sh/${target}`),
-    context.req_srch,
-    ...(params.length ? [context.req_srch ? '&' : '?', params.join('&')] : []),
-  ].join('')
-
-  let targetShell: NuSh | PowerSh | ZSh
-  switch (target) {
-    case 'nu':
-      targetShell = new NuSh()
-      break
-    case 'pwsh':
-      targetShell = new PowerSh()
-      break
-    case 'zsh':
-      targetShell = new ZSh()
-      break
-    default:
-      return null
-  }
-
-  const script = targetShell
-    .with(targetShell.envSetStr(REQ_URL_SH, url))
-    .with(await targetShell.fileLoad(['get']))
-    .build()
-
-  const bin = target === 'nu' ? pinnedNuBinCmd(shell, context.sys_os_plat ?? '') : target
-  return `${bin} ${targetShell.execArgs(shell.toLiteral(script))}`
-}
-
 // the pinned nu is where a command's client side runs: the only place a refreshed PATH has anything to serve
 export function isPinnedNu(shell: Sh, context: Ctx): boolean {
   return shell.name === 'nu' && context.req_srch.includes(WUT_NU_PINNED_PARAM)
