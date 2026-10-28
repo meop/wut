@@ -37,6 +37,11 @@ deno task test:update     # regenerate snapshots after intentional changes
 - `deno update` — update lockfile within version constraints
 - `deno update --latest` — update deno.json and lockfile to absolute latest
 
+## Comments
+
+No comment explains why code does what it does where a unit test can show it: the test is the explanation, and it fails
+when the reasoning stops holding. A comment is only for what no test can show.
+
 ## Code Formatting
 
 Deno formatting rules (deno.json):
