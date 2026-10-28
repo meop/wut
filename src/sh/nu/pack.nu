@@ -186,6 +186,7 @@ def --env packListedNames [cmds: list<string>, keep: closure] {
     packCompleteListing $cmds
       | get stdout
       | lines
+      | ansi strip
       | each { |l| do $keep $l }
       | compact
       | where { is-not-empty }
@@ -653,7 +654,7 @@ def packCopies [manager: string] {
 # subcommand, a node — is its own install's rather than whichever PATH finds first, the plain name too: PATH may find
 # a copy left alone ahead of it. the PATH it came in with stays readable, for the checks about what a package will
 # run on once the run is done
-def --env packInCopy [id: string, body: closure] {
+def --env packCopyEnter [id: string] {
   let dir = if (packCopyBase $id) in $PACK_COPIED { packCopyAt $id | default '' } else { '' }
   let saved = { path: $env.PATH, copy: ($env.PACK_COPY? | default ''), shell: ($env.PACK_SHELL_PATH? | default null) }
   $env.PACK_COPY = $id
@@ -661,14 +662,23 @@ def --env packInCopy [id: string, body: closure] {
   if ($dir | is-not-empty) {
     $env.PATH = ($env.PATH | prepend $dir)
   }
-  let out = (try { do --env $body } catch { |e|
-    opRethrowInterrupt $e
-    $env.PATH = $saved.path
-    $e.raw
-  })
+  $saved
+}
+
+def --env packCopyLeave [saved: record] {
   $env.PATH = $saved.path
   $env.PACK_COPY = $saved.copy
   if $saved.shell == null { hide-env PACK_SHELL_PATH } else { $env.PACK_SHELL_PATH = $saved.shell }
+}
+
+def --env packInCopy [id: string, body: closure] {
+  let saved = (packCopyEnter $id)
+  let out = (try { do --env $body } catch { |e|
+    opRethrowInterrupt $e
+    packCopyLeave $saved
+    $e.raw
+  })
+  packCopyLeave $saved
   $out
 }
 
@@ -873,7 +883,13 @@ def --env packCallManager [id: string] {
   if $asked != null {
     $env.PACK_MANAGER = $manager
   }
-  packInCopy $id { packCallBase $manager }
+  let saved = (packCopyEnter $id)
+  try { packCallBase $manager } catch { |e|
+    opRethrowInterrupt $e
+    packCopyLeave $saved
+    $e.raw
+  }
+  packCopyLeave $saved
   if $asked != null {
     $env.PACK_MANAGER = $asked
   }

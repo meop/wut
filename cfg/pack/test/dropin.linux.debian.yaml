@@ -1,0 +1,7 @@
+---
+operation:
+  add:
+    manager:
+      apt:
+        names:
+          - dropin-debian

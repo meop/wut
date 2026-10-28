@@ -1213,6 +1213,168 @@ Deno.test('nu / pack / go tidy has gotm tidy its toolchains, only where gotm is'
   assertEquals(unmanaged.includes('go clean -modcache'), true)
 })
 
+// nix bolds the names in its listing even into a pipe, and an escape code ahead of a name hides where its word starts:
+// list and the installed check read a listing the same way, so they cannot disagree about what it holds
+Deno.test('nu / pack / a coloured listing still matches, for list and for the installed check', async () => {
+  const bold = (s: string) => `\\033[1m${s}\\033[0m`
+  const stubs = {
+    ghpm: `case "$*" in
+  "list --long-names") printf '${bold('bat')}\\n${bold('ripgrep')}\\n' ;;
+  "list") printf '${bold('bat')} 0.24.0\\n${bold('ripgrep')} 14.1.0\\n' ;;
+  *) exit 1 ;;
+esac`,
+  }
+  const out = await withStubs(
+    stubs,
+    [
+      `print (packInstalled 'ghpm' 'bat')`,
+      `print (packInstalled 'ghpm' 'ripgr')`,
+      `$env.PACK_OP = 'list'`,
+      `$env.PACK_LIST_NAMES = ['bat']`,
+      `$env.PACK_MANAGER = 'ghpm'`,
+      'packGhpm',
+    ].join('\n'),
+    ['ghpm'],
+    ['ghpm'],
+  )
+  if (out == null) {
+    return
+  }
+  const lines = out.split('\n').map((l) => stripVTControlCharacters(l))
+  assertEquals(lines.filter((l) => l === 'true' || l === 'false'), ['true', 'false'])
+  assertEquals(lines.some((l) => l.includes('bat 0.24.0')), true, out)
+  assertEquals(lines.some((l) => l.includes('ripgrep')), false, out)
+})
+
+// nix has no outdated of its own: each profile element's flake is evaluated again and its store path compared
+Deno.test('nu / pack / nix reports outdated from what each element evaluates to now', async () => {
+  const store = (hash: string, name: string) => `/nix/store/${hash.repeat(32)}-${name}`
+  const element = (attr: string, path: string, url = 'flake:nixpkgs') => ({
+    attrPath: `legacyPackages.x86_64-linux.${attr}`,
+    originalUrl: url,
+    storePaths: [path],
+  })
+  const listing = JSON.stringify({
+    elements: {
+      ripgrep: element('ripgrep', store('a', 'ripgrep-14.1.0')),
+      jq: element('jq', store('b', 'jq-1.7.1')),
+      bat: element('bat', store('c', 'bat-0.24.0')),
+      broken: element('broken', store('d', 'broken-1.0')),
+      local: { storePaths: [store('e', 'local-1.0')] },
+    },
+    version: 3,
+  })
+  const evals: Record<string, string> = {
+    ripgrep: `printf '${store('f', 'ripgrep-14.1.1')}'`,
+    jq: `printf '${store('b', 'jq-1.7.1')}'`,
+    bat: `printf '${store('g', 'bat-0.24.0')}'`,
+    broken: `echo 'error: attribute missing' >&2; exit 1`,
+  }
+  const nix = [
+    'case "$*" in',
+    `  "profile list --json") printf '%s' '${listing}' ;;`,
+    ...Object.entries(evals).map(([attr, body]) =>
+      `  "eval --raw flake:nixpkgs#legacyPackages.x86_64-linux.${attr}.outPath") ${body} ;;`
+    ),
+    '  *) exit 1 ;;',
+    'esac',
+  ].join('\n')
+  const run = (names: Array<string>) =>
+    withStubs(
+      { nix },
+      [
+        `$env.PACK_OP = 'outdated'`,
+        `$env.PACK_OUTDATED_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
+        `$env.PACK_MANAGER = 'nix'`,
+        'packNix',
+      ].join('\n'),
+      ['nix'],
+      ['nix'],
+    )
+  const all = await run([])
+  if (all == null) {
+    return
+  }
+  // a new version, and the same version built again; jq is current, an element with no flake is not asked, and one
+  // that fails to evaluate is said in its place in the profile
+  assertEquals(all.split('\n'), [
+    'ripgrep ripgrep-14.1.0 -> ripgrep-14.1.1',
+    'bat bat-0.24.0 rebuilt',
+    'nix eval flake:nixpkgs#legacyPackages.x86_64-linux.broken.outPath failed: error: attribute missing',
+  ])
+  assertEquals((await run(['rip']))!.split('\n').filter((l) => !l.includes('failed')), [
+    'ripgrep ripgrep-14.1.0 -> ripgrep-14.1.1',
+  ])
+})
+
+Deno.test('nu / pack / nix takes a bare name as nixpkgs and asks the profile by attribute', async () => {
+  const listing = JSON.stringify({ elements: { ripgrep: { storePaths: [] } }, version: 3 })
+  const out = await withStubs(
+    { nix: `case "$*" in\n  "profile list --json") printf '%s' '${listing}' ;;\n  *) exit 1 ;;\nesac` },
+    [
+      `print (packNixInstallable 'ripgrep')`,
+      `print (packNixInstallable '--impure github:owner/repo#tool fd')`,
+      `print (packNixHas 'nixpkgs#ripgrep') (packNixHas 'ripgrep') (packNixHas 'fd')`,
+    ].join('\n'),
+    ['nix'],
+    ['nix'],
+  )
+  if (out == null) {
+    return
+  }
+  assertEquals(out.split('\n'), [
+    'nixpkgs#ripgrep',
+    '--impure github:owner/repo#tool nixpkgs#fd',
+    'true',
+    'true',
+    'false',
+  ])
+  // a profile nix cannot list holds nothing, rather than failing the check
+  assertEquals(await withStubs({ nix: 'exit 1' }, `print (packNixHas 'ripgrep')`, ['nix'], ['nix']), 'false')
+})
+
+// a manager that fails is reported and the run goes on to the next, so the copy it ran in has to be left behind: a
+// failure that kept PACK_COPY had the next manager's checks asking about a copy that was not theirs
+Deno.test('nu / pack / a manager that fails leaves its copy behind', async () => {
+  const out = await withStubs(
+    { ghpm: 'exit 1' },
+    [
+      `$env.PACK_OP = 'add'`,
+      `$env.PACK_ADD_NAMES = ['bat']`,
+      `$env.PACK_MANAGER = 'ghpm'`,
+      `$env.PACK_COPY = 'outer'`,
+      'let path = $env.PATH',
+      `try { packCallManager ghpm } catch { |e| print 'manager failed' }`,
+      `let state = { [$env.PACK_COPY ('PACK_SHELL_PATH' in $env) ($env.PATH == $path)] | str join ' ' }`,
+      'print (do $state)',
+      `try { packInCopy ghpm { error make {msg: 'boom'} } } catch { |e| print 'body failed' }`,
+      'print (do $state)',
+    ].join('\n'),
+    ['ghpm'],
+    ['ghpm'],
+  )
+  if (out == null) {
+    return
+  }
+  // the copy's id, the PATH wut came in with and the PATH it runs on are all as they were before the copy
+  assertEquals(out.split('\n').slice(-4), ['manager failed', 'outer false true', 'body failed', 'outer false true'])
+})
+
+// a tidy's command is the last thing its manager runs, so it is what the manager returns: run inside a copy, that
+// came back as a value nobody read, and `wut p t` showed the command but never what it said
+Deno.test("nu / pack / a manager's tidy says what it did", async () => {
+  const out = await withStubs(
+    { ghpm: `echo 'nothing to tidy'` },
+    [`$env.PACK_OP = 'tidy'`, `$env.PACK_MANAGER = 'ghpm'`, 'packCallManager ghpm'].join('\n'),
+    ['ghpm'],
+    ['ghpm'],
+  )
+  if (out == null) {
+    return
+  }
+  assertEquals(out.split('\n'), ['try { ghpm tidy }', 'nothing to tidy'])
+})
+
 // pnpm records a runtime as the exact version it installed, so `update` cannot move it: a runtime is set again at its
 // latest release, and packages update to latest. a named sync touches only what it names
 Deno.test('nu / pack / pnpm sets its runtimes to latest and updates its packages', async () => {

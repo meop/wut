@@ -1,0 +1,10 @@
+---
+operation:
+  add:
+    manager:
+      apt:
+        names:
+          - dropin-base
+      pacman:
+        names:
+          - dropin

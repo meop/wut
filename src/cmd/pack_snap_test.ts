@@ -580,6 +580,35 @@ function planUnits(body: string) {
   const line = body.split('\n').find((l) => l.startsWith("$env.PACK_PLAN = r#'"))
   return line ? JSON.parse(line.slice("$env.PACK_PLAN = r#'".length, -"'#".length)) : []
 }
+// a drop-in is merged where its levels match the machine, broadest first, and is never a group of its own
+Deno.test('nu / add (pinned, drop-ins merge level by level into their group)', async () => {
+  const names = async (query: string) => {
+    const body = await (await runSrv(req(`/sh/nu/pack/add/dropin?${query}&wutNuPinned=1`))).text()
+    return Object.fromEntries(
+      planUnits(body)[0].paths.map((p: { manager: string; names: Array<string> }) => [p.manager, p.names]),
+    )
+  }
+  assertEquals(await names('sysOsPlat=linux&sysOs=ubuntu&sysCpuArch=x86_64'), {
+    pacman: ['dropin'],
+    apt: ['dropin-base', 'dropin-linux', 'dropin-ubuntu', 'dropin-amd64'],
+  })
+  // another distro's drop-in is not this machine's
+  assertEquals((await names('sysOsPlat=linux&sysOs=debian'))['apt'], ['dropin-base', 'dropin-linux', 'dropin-debian'])
+  assertEquals(await names('sysOsPlat=darwin'), {
+    brew: ['dropin'],
+    pacman: ['dropin'],
+    apt: ['dropin-base'],
+  })
+
+  const find = await (await runSrv(req('/sh/nu/pack/find/dropin?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'))).text()
+  const found = find.split('\n').find((l) => l.startsWith("$env.PACK_FIND = r#'"))!
+  assertEquals(Object.keys(JSON.parse(found.slice("$env.PACK_FIND = r#'".length, -"'#".length)).groups), [
+    'test/dropin',
+  ])
+  // typed whole, a drop-in's file name is a name like any other, not a group
+  const typed = await (await runSrv(req('/sh/nu/pack/add/dropin.linux?sysOsPlat=linux&wutNuPinned=1'))).text()
+  assertEquals(planUnits(typed), [])
+})
 Deno.test('nu / linux / add (pinned, a group names the scripts that follow its install)', async (t) => {
   const body = await (await runSrv(req('/sh/nu/pack/add/around?sysOsPlat=linux&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)

@@ -1,0 +1,7 @@
+---
+operation:
+  add:
+    manager:
+      brew:
+        names:
+          - dropin
