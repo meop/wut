@@ -112,3 +112,21 @@ Deno.test('-v / is set before the nu runtime runs, and only when asked', async (
   }
 })
 
+// a switch belongs to the nearest command that has it, so wut's own can follow the command, and a command's own
+// letter stays its own
+Deno.test('switches / a root switch after the command is the root one, unless the command has that letter', async () => {
+  const lines = async (path: string) => (await (await runSrv(req(path))).text()).split('\n')
+  const pinned = 'sysOsPlat=linux&wutNuPinned=1'
+
+  const add = await lines(`/sh/nu/pack/add/bat/-y?${pinned}`)
+  assertEquals(add.includes("$env.YES = r#'1'#"), true)
+  assertEquals(add.includes("$env.PACK_ADD_NAMES = r#'bat'#"), true)
+
+  // the hop carries it to the pinned nu at the level it belongs to
+  const hop = await lines('/sh/zsh/pack/tidy/-v?sysOsPlat=linux')
+  assertEquals(hop.some((l) => l.includes('http://x/sh/nu/--verbose/pack/tidy?sysOsPlat=linux&wutNuPinned=1')), true)
+
+  const snap = await lines(`/sh/nu/virt/snap/-f?${pinned}`)
+  assertEquals(snap.includes("$env.VIRT_SNAP_FULL = r#'1'#"), true)
+  assertEquals(snap.some((l) => l.startsWith('$env.FORMAT = ')), false)
+})
