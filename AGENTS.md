@@ -36,6 +36,8 @@ deno task test:update     # regenerate snapshots after intentional changes
 - `deno outdated` — check for available updates
 - `deno update` — update lockfile within version constraints
 - `deno update --latest` — update deno.json and lockfile to absolute latest
+- `deno.lock` is written by deno alone (`deno install`, `deno update`); never edit it by hand. While `links` holds
+  `../shire`, deno leaves the jsr shire entry out of the lock, and puts it back once the link is gone
 
 ## Comments
 
@@ -138,6 +140,10 @@ list-vs-pipeline, `http get --raw`) have caused bugs there. See [docs/NUSHELL.md
 nushell output.
 
 ## Testing
+
+Run tests through `deno task test`, never a bare `deno test`: the task sets `WUT_ENV=test`, which loads
+`settings-test.toml` and the fixtures in `./cfg`. Without it, the tests read the live wut-config that `settings.toml`
+names and fail on its content rather than on the code.
 
 See [docs/TESTS.md](docs/TESTS.md) for full details on test architecture, how to update snapshots, and how to add new
 test cases.
