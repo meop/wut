@@ -103,7 +103,7 @@ Deno.test('nu / lock / a second run stops while the first holds it, and ctrl-c g
   await withHome(async (home) => {
     let first: Deno.ChildProcess
     try {
-      first = (await nuCmd(home, `wutLockRun 'virt' { print held; sleep 20sec; print finished }`)).spawn()
+      first = (await nuCmd(home, `wutLockRun 'virt' { print $'held ($nu.pid)'; sleep 20sec; print finished }`)).spawn()
     } catch (e) {
       if (e instanceof Deno.errors.NotFound) {
         return
@@ -112,20 +112,26 @@ Deno.test('nu / lock / a second run stops while the first holds it, and ctrl-c g
     }
     const reader = first.stdout.pipeThrough(new TextDecoderStream()).getReader()
     let seen = ''
-    while (!seen.includes('held')) {
+    while (!/held \d+\n/.test(seen)) {
       const { value, done } = await reader.read()
       assert(!done, 'the first run ended before it held the lock')
       seen += value
     }
+    // nu's own pid, not the spawned one's: a nu on PATH can be a shim that runs nu as its child
+    const held = seen.match(/held (\d+)/)![1]
 
     const second = await nuRun(home, `wutLockRun 'virt' { print ran }`)
     assertEquals(second?.code, 1)
     assertEquals(second?.stdout, '')
-    assertStringIncludes(second?.stderr ?? '', `wut virt is already running here as pid ${first.pid}`)
+    assertStringIncludes(second?.stderr ?? '', `wut virt is already running here as pid ${held}`)
     assertEquals((await nuRun(home, `wutLockRun 'pack' { print ran }`))?.stdout, 'ran')
 
-    first.kill('SIGINT')
+    Deno.kill(Number(held), 'SIGINT')
     await first.status
+    for (let r = await reader.read(); !r.done; r = await reader.read()) {
+      seen += r.value
+    }
+    assert(!seen.includes('finished'), 'the first run slept out its sleep rather than stop at ctrl-c')
     await reader.cancel()
     await first.stderr.cancel()
     assertEquals(await exists(lockDir(home, 'virt')), false)
