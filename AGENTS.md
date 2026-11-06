@@ -10,6 +10,20 @@ complete shell scripts that the shell executes locally. Supports nushell, PowerS
 - **shire** (`@meop/shire`) — shell abstraction library (cmd parsing, shell-specific syntax generation)
 - **wut-config** — config files (package definitions, dotfile mappings, scripts) — loaded via `WUT_CFG_DIR` env var
 
+## The live checkout
+
+On stone, `wut.service` runs `deno run --watch src/srv.ts` in `/vol/code/meop/wut`, on port 9000, with the config in
+`../wut-config/cfg`. Every host's `wut` talks to it, so any edit, staged change or branch switch in that checkout reaches
+every host at once. Make changes in a worktree. To try one from a host before it is merged, run a second server from
+the worktree:
+
+1. Write a `settings.toml` in the worktree. It is gitignored. Copy the live one, but change the `port` (9010) and set
+   `cfg.dir` to the config to serve: `../wut-config/cfg`, or a wut-config worktree's `cfg`.
+2. Run `deno task start` in the worktree.
+3. On the host, run one command with `WUT_URL=http://stone.lan:9010` and a temporary `WUT_HOME`. That way the host's own
+   `~/.wut` is left alone.
+4. Stop the server when you're done.
+
 ## Development Commands
 
 ```bash
