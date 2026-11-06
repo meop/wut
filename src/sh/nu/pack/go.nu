@@ -34,19 +34,19 @@ def packGoOlder [built: string, toolchain: string] {
   $release > 0 and $release < (packGoRelease $toolchain)
 }
 
-# the go gotm puts down: a shim in gotm's own bin dir
-def packGotmGo [] {
+# the go goup puts down: a shim in goup's own bin dir
+def packGoupGo [] {
   let ext = if $nu.os-info.name == 'windows' { '.exe' } else { '' }
-  [($env.HOME? | default $nu.home-dir) .gotm bin $"go($ext)"] | path join
+  [($env.HOME? | default $nu.home-dir) .goup bin $"go($ext)"] | path join
 }
 
-# whether the go on PATH is gotm's. by the directory PATH found it in, not by what it links to: gotm's go is a shim
+# whether the go on PATH is goup's. by the directory PATH found it in, not by what it links to: goup's go is a shim
 def packGoOwned [] {
   let go = (which go | get -o 0.path)
-  $go != null and ($go | path dirname) == (packGotmGo | path dirname)
+  $go != null and ($go | path dirname) == (packGoupGo | path dirname)
 }
 
-# go and gofmt are one install. a go is a row wherever PATH has it — gotm's, a distro's — and runs with its own dir
+# go and gofmt are one install. a go is a row wherever PATH has it — goup's, a distro's — and runs with its own dir
 # first, so the gofmt and the toolchain it builds with are its own
 def --env packGoHeld [] {
   let go = (which go | get -o 0.path)
@@ -58,25 +58,25 @@ def --env packGoHeld [] {
   if $res.exit_code != 0 {
     return (packHeld '' 'go does not run' [$"go ($go)"])
   }
-  let by = if (packGoOwned) { ' (gotm)' } else { '' }
+  let by = if (packGoOwned) { ' (goup)' } else { '' }
   packHeld $"go (packVersionOf $res.stdout)($by)"
 }
 
-# gotm manages go's toolchains the way rustup manages rust's, and is its own tool rather than a package. where the go
-# on PATH is gotm's, the toolchains it was asked to keep move before the tools rebuild against them. a go another
-# manager delivered has no gotm behind it, and is that manager's to update, even with a gotm on PATH beside it
-def --env packGotmUpdate [] {
-  let gotm = (which gotm | get -o 0.path)
-  if $gotm != null and (packGoOwned) {
-    packSelfUpdate 'gotm' $gotm [sync]
+# goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
+# on PATH is goup's, it moves along its channel before the tools rebuild against it. a go another manager delivered
+# has no goup behind it, and is that manager's to update, even with a goup on PATH beside it
+def --env packGoupUpdate [] {
+  let goup = (which goup | get -o 0.path)
+  if $goup != null and (packGoOwned) {
+    packSelfUpdate 'goup' $goup [update]
   }
 }
 
-# gotm keeps every archive it downloaded, and whatever a failed install left behind, until asked: its own tidy is the
+# goup keeps every archive it downloaded, and whatever a failed install left behind, until asked: its own tidy is the
 # only thing that lets them go, as ghpm's is
-def --env packGotmTidy [] {
-  if (which gotm | is-not-empty) {
-    packOp [gotm tidy]
+def --env packGoupTidy [] {
+  if (which goup | is-not-empty) {
+    packOp [goup tidy]
   }
 }
 
@@ -145,7 +145,7 @@ def --env packGo [] {
       # tools are whatever it holds, narrowed by what was asked for
       let asked = (packNameList 'PACK_SYNC_NAMES')
       if ($asked | is-empty) {
-        packGotmUpdate
+        packGoupUpdate
       }
       let tools = (packGoTools | where { |t| ($asked | is-empty) or ($asked | any { |n| packGoNamed $t $n }) })
       # an install always builds, and a build is only free while go's caches still hold the last one, so a tool
@@ -161,7 +161,7 @@ def --env packGo [] {
       }
     }
     tidy => {
-      packGotmTidy
+      packGoupTidy
       # the build cache trims itself; the module cache keeps every download until it is cleaned
       packOp [$cmd clean -modcache]
     }

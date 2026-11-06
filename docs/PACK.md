@@ -166,8 +166,8 @@ pacman
     zsh, zsh-completions
 ghpm
   lang/go
-    gotm
-    then: gotm/setup
+    goup
+    then: goup/setup
   lang/go/golangci-lint
     golangci-lint
   bat, fd
@@ -296,7 +296,7 @@ rather than be a whole name ([COMMANDS.md](COMMANDS.md)). The listing the check 
 dump prints, so the answer before the gate and the output after it cannot drift.
 
 What the summary shows under each manager is the lines of its listing that matched, and the table is a row per such
-manager. It is never the term: a term that starts a word is not a name, so `wut p l go` finds `gotm` under ghpm, `gopls`
+manager. It is never the term: a term that starts a word is not a name, so `wut p l go` finds `goup` under ghpm, `gopls`
 under go and `Goose Game` under winget, and showing `go` under all three said each had a package called go.
 
 ## The pacman family is one manager
@@ -426,9 +426,9 @@ does not exit non-zero for it.
 ## Toolchain managers
 
 Six manage toolchains as well as packages: rustup (cargo and rustc), uv (pythons), rv (rubies), dotnetup (.NET SDKs),
-pnpm (the node, bun and deno runtimes) and gotm (go). A bare sync moves the toolchains before the packages, so the
+pnpm (the node, bun and deno runtimes) and goup (go). A bare sync moves the toolchains before the packages, so the
 packages update against current ones, each the way its manager moves them — rustup along its channels, uv along each
-link it keeps, pnpm to the latest release, gotm to the newest release each pin allows. A named sync is about the
+link it keeps, pnpm to the latest release, goup to the newest release its channel allows. A named sync is about the
 packages it names and leaves the toolchains alone.
 
 - **rustup** is not a package manager at all: the `cargo` on PATH is usually its proxy, a link to the rustup beside it
@@ -477,22 +477,22 @@ packages it names and leaves the toolchains alone.
   leaves nothing for a tidy. Where the dotnet row is dotnetup's copy, a bare sync runs `dotnetup update` before
   `dotnet tool update --global --all`. A distro's dotnet is that distro's to move. dotnet has no listing of outdated
   tools, so it is not offered for `outdated`.
-- **gotm** is to go what rustup is to cargo — its own tool, managing toolchains rather than packages, with no row of its
-  own: the go row that is gotm's copy — the one in `~/.gotm/bin` — runs `gotm sync` first on a bare sync, best effort
-  like a self update, so each go it was asked to keep moves to the newest release its pin allows before the tools
-  rebuild. A distro's go beside gotm's is the system's install, and is left to the distro; one alone is the go row, with
-  no gotm behind it, and the distro moves it. gotm keeps every archive it downloaded until its own tidy, as ghpm does,
-  so a go tidy runs `gotm tidy` before it cleans the module cache.
+- **goup** is to go what rustup is to cargo — its own tool, managing toolchains rather than packages, with no row of its
+  own: the go row that is goup's copy — the one in `~/.goup/bin` — runs `goup update` first on a bare sync, best effort
+  like a self update, so its one go moves to the newest release its channel allows before the tools rebuild. A distro's
+  go beside goup's is the system's install, and is left to the distro; one alone is the go row, with no goup behind it,
+  and the distro moves it. goup keeps every archive it downloaded until its own tidy, as ghpm does, so a go tidy runs
+  `goup tidy` before it cleans the module cache.
 
 ### The copies used
 
-PATH holds whatever put a manager there — a distro's go beside gotm's, a winget .NET beside dotnetup's and scoop's, a
+PATH holds whatever put a manager there — a distro's go beside goup's, a winget .NET beside dotnetup's and scoop's, a
 desktop tool's standalone bun in `~/.local/bin`, a pnpm 10 beside a pnpm 12 — and nothing can be expected of what is
 found. It finds every copy by walking PATH (`which --all`: each dir the manager is in), and the best kind of install
 there is claims the work, the way add's first manager claims a package — with no prompt of its own, since nothing is
 installed by it:
 
-1. one in the home, where a toolchain's own manager or an installer puts it: dotnetup's, gotm's, rustup's
+1. one in the home, where a toolchain's own manager or an installer puts it: dotnetup's, goup's, rustup's
    `~/.cargo/bin`, ghpm's, `~/.bun/bin`
 2. one a native manager keeps in its own tree: scoop's, homebrew's prefix, the links winget makes for a user's install
 3. the system's: `/usr/bin`, Program Files
@@ -544,7 +544,7 @@ absolute path — a native binary, a venv's own python, the node beside pnpm's c
 right install wherever the copy sits. npm, bun and deno bind through PATH, so for them it is the deciding question.
 
 What the check reads is also what the manager table shows beside each row: the toolchain its sync moves —
-`rust 1.99.1 (rustup)`, `go 1.27.3 (gotm)`, `node 26.12.0`, `python 3.13, 3.14`. A few local version calls, no network.
+`rust 1.99.1 (rustup)`, `go 1.27.3 (goup)`, `node 26.12.0`, `python 3.13, 3.14`. A few local version calls, no network.
 deno and bun are their own runtimes, updated by whatever installed them, so their rows name nothing. npm names the node
 it came with, which it does not move: that is the distro's or the tarball's.
 

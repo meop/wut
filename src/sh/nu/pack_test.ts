@@ -31,7 +31,7 @@ async function withStubs(
   const home = await Deno.makeTempDir()
   try {
     // a stub named ~/<path> is put under the test's home instead, its dir ahead of the others on PATH: where an
-    // installer of its own would put it, like gotm's go
+    // installer of its own would put it, like goup's go
     const path: Array<string> = []
     for (const [name, body] of Object.entries(stubs)) {
       const at = name.startsWith('~/') ? `${home}/${name.slice(2)}` : `${dir}/${name}`
@@ -321,7 +321,7 @@ Deno.test('nu / pack / list runs a listing before the gate only when it has a te
   assertEquals(stripVTControlCharacters(started!).includes('git-filter-repo v2.47.0'), true)
 
   // the summary before the gate names what matched, never the term: `wut p l go` showed `go` under ghpm, go and
-  // winget, which read as each having a package called go when they had gotm, gopls and goose game. hf is not
+  // winget, which read as each having a package called go when they had goup, gopls and goose game. hf is not
   // shown, since filter starts no word of it
   const summary = stripVTControlCharacters(started!).split('1) uv')[0].split('uv tool list').slice(1).join('')
   assertEquals(summary.includes('  git-filter-repo v2.47.0'), true)
@@ -857,16 +857,16 @@ Deno.test('nu / pack / pre scripts run before the removals, once each', async ()
 })
 
 // a folder brings its groups along — `go` is lang/go and everything under lang/go/ — so each group is a row of its
-// own, and taking golangci-lint out does not take gotm with it. each loose name is a row of its own too
+// own, and taking golangci-lint out does not take goup with it. each loose name is a row of its own too
 Deno.test('nu / pack / each group and each loose name is its own row', async () => {
   const unit = (group: string, names: Array<string>) => ({
     group,
     name: 'go',
     paths: [{ id: `${group}|ghpm`, manager: 'ghpm', names }],
   })
-  const plan = [unit('lang/go', ['golangci-lint']), unit('lang/go/gotm', ['gotm'])]
+  const plan = [unit('lang/go', ['golangci-lint']), unit('lang/go/goup', ['goup'])]
   const ghpm =
-    `case "$*" in\n  "list --long-names") printf 'golangci-lint\\ngotm\\nbat\\nfd\\n' ;;\n  *) exit 0 ;;\nesac`
+    `case "$*" in\n  "list --long-names") printf 'golangci-lint\\ngoup\\nbat\\nfd\\n' ;;\n  *) exit 0 ;;\nesac`
   const run = (pick: Array<number> | undefined) =>
     withStubs(
       { ghpm },
@@ -893,7 +893,7 @@ Deno.test('nu / pack / each group and each loose name is its own row', async () 
   }
   const rows = one.split('\n').filter((l) => /^\d+\) /.test(l))
   // a row holds one thing: the summary above is where a group's packages are listed
-  assertEquals(rows, ['1) ghpm lang/go', '2) ghpm lang/go/gotm', '3) ghpm              bat', '4) ghpm              fd'])
+  assertEquals(rows, ['1) ghpm lang/go', '2) ghpm lang/go/goup', '3) ghpm              bat', '4) ghpm              fd'])
   assertEquals(ran(one), ['lang/go|ghpm'])
   assertEquals(uninstalls(one), [])
 
@@ -904,7 +904,7 @@ Deno.test('nu / pack / each group and each loose name is its own row', async () 
 
   // -y is still every row
   const every = (await run(undefined))!
-  assertEquals(ran(every), ['lang/go|ghpm', 'lang/go/gotm|ghpm'])
+  assertEquals(ran(every), ['lang/go|ghpm', 'lang/go/goup|ghpm'])
   assertEquals(uninstalls(every), ['ghpm uninstall bat fd'])
 })
 
@@ -1148,9 +1148,9 @@ esac`
   assertEquals(listed.includes('golang.org/x/tools/gopls v0.23.0'), true)
 })
 
-// gotm is to go what rustup is to cargo: where it is on PATH, a bare go sync has it move the toolchains before the
-// tools rebuild against them. a go with no gotm is another manager's, and a named sync is about the tools it names
-Deno.test('nu / pack / go has gotm move the toolchains first, only where gotm is', async () => {
+// goup is to go what rustup is to cargo: where it is on PATH, a bare go sync has it move its go before the tools
+// rebuild against it. a go with no goup is another manager's, and a named sync is about the tools it names
+Deno.test('nu / pack / go has goup move its go first, only where goup is', async () => {
   const go = `case "$*" in
   "env GOBIN") printf '\\n' ;;
   "env GOVERSION") printf 'go1.27.0\\n' ;;
@@ -1173,24 +1173,24 @@ esac`
       ['go'],
       ['go'],
     )
-  const managed = await run({ '~/.gotm/bin/go': go, gotm: '' }, [])
+  const managed = await run({ '~/.goup/bin/go': go, goup: '' }, [])
   if (managed == null) {
     return
   }
   const lines = managed.split('\n')
-  const gotm = lines.findIndex((l) => l.endsWith('gotm sync'))
+  const goup = lines.findIndex((l) => l.endsWith('goup update'))
   const tools = lines.findIndex((l) => l.includes('go install golang.org/x/tools/gopls@latest'))
-  assertEquals(gotm > -1, true)
+  assertEquals(goup > -1, true)
   assertEquals(tools > -1, true)
-  assertEquals(gotm < tools, true)
-  assertEquals((await run({ go }, []))!.includes('gotm sync'), false)
-  // a gotm on PATH is not behind a go it did not put down
-  assertEquals((await run({ go, gotm: '' }, []))!.includes('gotm sync'), false)
-  assertEquals((await run({ '~/.gotm/bin/go': go, gotm: '' }, ['gopls']))!.includes('gotm sync'), false)
+  assertEquals(goup < tools, true)
+  assertEquals((await run({ go }, []))!.includes('goup update'), false)
+  // a goup on PATH is not behind a go it did not put down
+  assertEquals((await run({ go, goup: '' }, []))!.includes('goup update'), false)
+  assertEquals((await run({ '~/.goup/bin/go': go, goup: '' }, ['gopls']))!.includes('goup update'), false)
 })
 
-// gotm keeps its downloaded archives until its own tidy runs, so a go tidy asks it first, only where gotm is
-Deno.test('nu / pack / go tidy has gotm tidy its toolchains, only where gotm is', async () => {
+// goup keeps its downloaded archives until its own tidy runs, so a go tidy asks it first, only where goup is
+Deno.test('nu / pack / go tidy has goup tidy its toolchains, only where goup is', async () => {
   const run = (stubs: Record<string, string>) =>
     withStubs(
       stubs,
@@ -1198,18 +1198,18 @@ Deno.test('nu / pack / go tidy has gotm tidy its toolchains, only where gotm is'
       ['go'],
       ['go'],
     )
-  const managed = await run({ go: '', gotm: '' })
+  const managed = await run({ go: '', goup: '' })
   if (managed == null) {
     return
   }
   const lines = managed.split('\n')
-  const gotm = lines.findIndex((l) => l.includes('gotm tidy'))
+  const goup = lines.findIndex((l) => l.includes('goup tidy'))
   const cache = lines.findIndex((l) => l.includes('go clean -modcache'))
-  assertEquals(gotm > -1, true)
+  assertEquals(goup > -1, true)
   assertEquals(cache > -1, true)
-  assertEquals(gotm < cache, true)
+  assertEquals(goup < cache, true)
   const unmanaged = (await run({ go: '' }))!
-  assertEquals(unmanaged.includes('gotm tidy'), false)
+  assertEquals(unmanaged.includes('goup tidy'), false)
   assertEquals(unmanaged.includes('go clean -modcache'), true)
 })
 
@@ -1632,7 +1632,7 @@ esac`
 
 Deno.test('nu / pack / the manager table names what each manager runs on', async () => {
   const out = await withStubs(
-    { cargo: LISTINGS.cargo, rustc: RUSTC, rustup: '', '~/.gotm/bin/go': GO },
+    { cargo: LISTINGS.cargo, rustc: RUSTC, rustup: '', '~/.goup/bin/go': GO },
     [`$env.PACK_OP = 'sync'`, 'packManagerPlanRun'].join('\n'),
     ['cargo', 'go'],
     ['cargo', 'go'],
@@ -1645,7 +1645,7 @@ Deno.test('nu / pack / the manager table names what each manager runs on', async
   const rows = stripVTControlCharacters(out).split('\n')
   assertEquals(rows.some((l) => /^manager\s+toolchain$/.test(l)), true)
   assertEquals(rows.some((l) => /^1\) cargo\s+rust 1\.99\.1 \(rustup\)$/.test(l)), true)
-  assertEquals(rows.some((l) => /^2\) go\s+go 1\.27\.0 \(gotm\)$/.test(l)), true)
+  assertEquals(rows.some((l) => /^2\) go\s+go 1\.27\.0 \(goup\)$/.test(l)), true)
 })
 
 Deno.test('nu / pack / cargo is split from a rustc or rustup another install put on PATH', async () => {
@@ -1697,20 +1697,20 @@ Deno.test('nu / pack / a split manager is not offered', async () => {
 })
 
 Deno.test('nu / pack / of the gos here, the local one is the row, asked inside its own copy', async () => {
-  const owned = await held({ '~/.gotm/bin/go': GO }, ['go'])
+  const owned = await held({ '~/.goup/bin/go': GO }, ['go'])
   if (owned == null) {
     return
   }
-  assertEquals(owned.held.go, fine('go 1.27.0 (gotm)'))
+  assertEquals(owned.held.go, fine('go 1.27.0 (goup)'))
   assertEquals(owned.said, ['go env GOVERSION'])
   assertEquals((await held({ go: GO }, ['go']))!.held.go, fine('go 1.27.0'))
 
-  // a distro's go ahead of gotm's on PATH is the system's install, and not used where one in the home is: gotm's is
+  // a distro's go ahead of goup's on PATH is the system's install, and not used where one in the home is: goup's is
   // the row, and answers with its own toolchain though PATH finds the other first
-  const both = (await held({ go: GO.replace('go1.27.0', 'go1.26.0'), '~/.gotm/bin/go': GO }, ['go'], [
+  const both = (await held({ go: GO.replace('go1.27.0', 'go1.26.0'), '~/.goup/bin/go': GO }, ['go'], [
     `$env.PATH = ($env.PATH | reverse)`,
   ]))!
-  assertEquals(both.held, { go: fine('go 1.27.0 (gotm)') })
+  assertEquals(both.held, { go: fine('go 1.27.0 (goup)') })
   assertEquals(both.said, ['go env GOVERSION'])
   const gofmt = (await held({ '~/sys/bin/gofmt': '', go: GO }, ['go']))!
   assertEquals(gofmt.held.go.split, "gofmt is another install's")
@@ -2043,7 +2043,7 @@ Deno.test('nu / pack / npm reads what it holds from its parseable listing', asyn
 // by name is its own install's, and nothing it runs is another copy's
 Deno.test('nu / pack / the copy kept runs inside itself, though PATH finds another first', async () => {
   const out = await withStubs(
-    { go: '', '~/.gotm/bin/go': '' },
+    { go: '', '~/.goup/bin/go': '' },
     [
       `$env.PATH = ($env.PATH | reverse)`,
       `def --env packGoHeld [] { packHeld $"go \\((which go | get 0.path | path dirname | path basename))" }`,
@@ -2064,7 +2064,7 @@ Deno.test('nu / pack / the copy kept runs inside itself, though PATH finds anoth
   assertEquals(lines.filter((l) => /^\d\) go\s/.test(l)).length, 1)
   const ran = lines.filter((l) => l.startsWith('ran ')).map((l) => l.slice(4))
   assertEquals(ran.length, 1)
-  assertEquals(ran[0].endsWith('/.gotm/bin/go'), true)
+  assertEquals(ran[0].endsWith('/.goup/bin/go'), true)
 })
 
 // a pnpm 10 and a pnpm 12 keep separate global dirs, so a remove asks each copy what it holds and only the one that has

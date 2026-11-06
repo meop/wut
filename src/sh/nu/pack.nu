@@ -545,7 +545,7 @@ def packManagerBest [manager: string] {
 }
 
 # a manager and the toolchain it builds and runs on come from one install, or it does not install or sync: a cargo
-# whose rustc is another install's, or a go ahead of gotm's on PATH, would act through one install and run on
+# whose rustc is another install's, or a go ahead of goup's on PATH, would act through one install and run on
 # another. the ops that only read or take something out still reach it, since they are how a split is undone. each
 # manager here is asked once a run, before anything is offered, and a split is said once, with what to look at
 def --env packManagerCheck [] {
@@ -572,7 +572,7 @@ def --env packManagerCheck [] {
   $env.PACK_HELD = $held
 }
 
-# the language managers can each be installed more than once — a distro's go beside gotm's, a winget .NET beside
+# the language managers can each be installed more than once — a distro's go beside goup's, a winget .NET beside
 # dotnetup's and scoop's, a pnpm 10 beside a pnpm 12 — and PATH holds whatever else put one there. the copies used are of
 # the best kind of install there is, as add prefers the most portable manager: one in the home (packCopyTier) over a
 # native manager's own tree, and either over the system's. each of those is a row, and the rest are left alone. the
@@ -617,7 +617,7 @@ def packNativeTrees [] {
 }
 
 # what kind of install a copy is, the way add orders its managers from the most portable: 0 for one in the home, as a
-# toolchain's own manager or an installer puts it (dotnetup's, gotm's, rustup's, ghpm's, ~/.bun/bin), 1 for one a
+# toolchain's own manager or an installer puts it (dotnetup's, goup's, rustup's, ghpm's, ~/.bun/bin), 1 for one a
 # native manager keeps in its own tree, and 2 for the system's (/usr/bin, Program Files)
 def packCopyTier [dir: string] {
   if (packNativeTrees | any { |t| packUnder $dir $t }) {
@@ -1301,7 +1301,7 @@ def --env packTermPlanRun [names_key: string] {
 
   # what a manager matched is kept twice: the terms, which its op is handed after the gate, and the lines of its
   # listing they matched, which are what the summary shows. a term starts a word rather than being a name, so the
-  # term itself is not something the manager has: `go` under ghpm is gotm, and under winget it is goose game
+  # term itself is not something the manager has: `go` under ghpm is goup, and under winget it is goose game
   mut hits = {}
   mut entries = {}
   for m in $here {
@@ -1432,7 +1432,7 @@ def --env packManagerPlanRun [] {
   }
   mut chosen = $here
   if 'PACK_AGREED' not-in $env {
-    # each row names what it runs on, which is also what its sync moves: go 1.27.3 (gotm), rust 1.99.1 (rustup)
+    # each row names what it runs on, which is also what its sync moves: go 1.27.3 (goup), rust 1.99.1 (rustup)
     wutTable ['manager' 'toolchain'] ($here | enumerate | each { |m|
       [$"($m.index + 1)\) (packCopyBase $m.item)", (packManagerNote $m.item)]
     })
