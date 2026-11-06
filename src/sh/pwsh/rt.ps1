@@ -101,6 +101,19 @@
       exit 1
     }
 
+    $sumsUrl = "https://github.com/nushell/nushell/releases/download/${nuVers}/SHA256SUMS"
+    opPrintVerbose "nu ${nuVers}: checking against ${sumsUrl}"
+    $want = & curl --fail-with-body --location --no-progress-meter --url $sumsUrl |
+      ForEach-Object { $f = -split $_; if ($f.Count -eq 2 -and $f[1] -eq $asset) { $f[0] } } |
+      Select-Object -First 1
+    $got = (Get-FileHash -Algorithm SHA256 -Path $archivePath).Hash
+    if (-not $want -or $got -ne $want) {
+      opPrintErr "nu ${nuVers}: ${asset} does not match the release's SHA256SUMS"
+      Remove-Item -Force -Path $archivePath -ErrorAction SilentlyContinue
+      wutNuLockRelease $lockDir
+      exit 1
+    }
+
     # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
     # extractDir; tar.gz assets already contain their own nu-${nuVers}-${triple} folder, so they extract into workDir
     opPrintVerbose "nu ${nuVers}: extracting into $(if ($extArchive -eq 'zip') { $extractDir } else { $workDir })"

@@ -101,6 +101,22 @@ function () {
       exit 1
     fi
 
+    local sums_url="https://github.com/nushell/nushell/releases/download/${nu_vers}/SHA256SUMS"
+    opPrintVerbose "nu ${nu_vers}: checking against ${sums_url}"
+    local want got
+    want=$(curl --fail-with-body --location --no-progress-meter --url "${sums_url}" | awk -v a="${asset}" '$2 == a { print $1 }')
+    if (( ${+commands[sha256sum]} )); then
+      got=$(sha256sum "${archive_path}" | awk '{ print $1 }')
+    else
+      got=$(shasum -a 256 "${archive_path}" | awk '{ print $1 }')
+    fi
+    if [[ -z "${want}" || "${got}" != "${want}" ]]; then
+      opPrintErr "nu ${nu_vers}: ${asset} does not match the release's SHA256SUMS"
+      rm -f "${archive_path}"
+      nu_lock_release
+      exit 1
+    fi
+
     opPrintVerbose "nu ${nu_vers}: extracting into ${work_dir}"
     if ! tar -xzf "${archive_path}" -C "${work_dir}"; then
       opPrintErr "failed to extract nu ${nu_vers}"

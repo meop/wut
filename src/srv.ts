@@ -12,6 +12,7 @@ import { FileCmd } from './cmd/file.ts'
 import { PackCmd } from './cmd/pack.ts'
 import { ScriptCmd } from './cmd/script.ts'
 import { VirtCmd } from './cmd/virt.ts'
+import { nuVersion } from './nu.ts'
 import { isPinnedNu } from './sh.ts'
 import { SETTINGS } from './stng.ts'
 import { VERSIONS } from './vers.ts'
@@ -137,7 +138,7 @@ export async function runSrv(request: Request) {
       .with(shell.varSet(SH_VERS_MINOR_KEY, String(vers.minor)))
     shell = shell.with(await shell.fileLoad(['vers']))
 
-    const nuVers = VERSIONS.nu
+    const nuVers = await nuVersion()
     shell = shell
       .with(shell.varSet(NU_VERS_MAJOR_KEY, String(nuVers.major)))
       .with(shell.varSet(NU_VERS_MINOR_KEY, String(nuVers.minor)))

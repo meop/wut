@@ -128,9 +128,11 @@ table leaving out a column no row fills.
 
 ### `src/sh/rt_test.ts`
 
-The pinned nu runtime in each shell (nu, pwsh, zsh), run for real against a temp `WUT_HOME` with a stub `nu` and a
-`curl` that always fails, so nothing reaches the network: a current nu is said only under `-v`, and a sync says each
-step under `-v` and its failure always, then gives its lock back. Skipped per shell when that shell is not installed.
+The pinned nu runtime in each shell (nu, pwsh, zsh), run for real against a temp `WUT_HOME` with a stub `nu` and a stub
+`curl`, so nothing reaches the network: a current nu is said only under `-v`, and a sync says each step under `-v` and
+its failure always, then gives its lock back. A `curl` that serves a fake release shows a release installed only when
+its archive matches the release's `SHA256SUMS`, and the nu that was there kept when it does not. Skipped per shell when
+that shell is not installed.
 
 ### `src/sh/nu/lock_test.ts`
 

@@ -95,6 +95,18 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     exit 1
   }
 
+  let sums_url = $"https://github.com/nushell/nushell/releases/download/($nu_vers)/SHA256SUMS"
+  opPrintVerbose $"nu ($nu_vers): checking against ($sums_url)"
+  let sums = (do { ^curl --fail-with-body --location --no-progress-meter --url $sums_url } | complete)
+  let want = ($sums.stdout | lines | split column --regex '\s+' sum name | where name == $asset | get -o 0.sum | default '')
+  let got = (open --raw $archive_path | hash sha256)
+  if $sums.exit_code != 0 or ($want | is-empty) or $got != $want {
+    opPrintErr $"nu ($nu_vers): ($asset) does not match the release's SHA256SUMS"
+    rm --force $archive_path
+    wutNuLockRelease $lock_path
+    exit 1
+  }
+
   # zip assets (windows) have no wrapping folder, unlike tar.gz assets, so they must extract directly into
   # extract_dir; tar.gz assets already contain their own nu-($nu_vers)-($triple) folder, so they extract into work_dir
   let extract_target = if $ext_archive == 'zip' {

@@ -19,13 +19,16 @@ const SHELLS: Array<{ sh: Sh; bin: string; args: Array<string>; ext: string }> =
 // then rt itself. a curl that always fails is first on PATH, so a sync never reaches the network
 async function runRuntime(
   shell: (typeof SHELLS)[number],
-  opts: { nuBody?: string; verbose: boolean },
+  opts: { nuBody?: string; verbose: boolean; curl?: string; env?: Record<string, string> },
 ): Promise<{ code: number; stdout: string; stderr: string; wutHome: string } | null> {
   const wutHome = await Deno.makeTempDir()
   const stubs = await Deno.makeTempDir()
   const script = await Deno.makeTempFile({ suffix: `.${shell.ext}` })
   try {
-    await Deno.writeTextFile(`${stubs}/curl`, '#!/bin/sh\necho "curl: no network in tests" >&2\nexit 22\n')
+    await Deno.writeTextFile(
+      `${stubs}/curl`,
+      opts.curl ?? '#!/bin/sh\necho "curl: no network in tests" >&2\nexit 22\n',
+    )
     await Deno.chmod(`${stubs}/curl`, 0o755)
     if (opts.nuBody != null) {
       await Deno.mkdir(`${wutHome}/vendor`)
@@ -54,6 +57,7 @@ async function runRuntime(
           SYS_CPU_ARCH: Deno.build.arch,
           GRAYSCALE: '1',
           ...(opts.verbose ? { VERBOSE: '1' } : {}),
+          ...opts.env,
         },
         stdout: 'piped',
         stderr: 'piped',
@@ -138,4 +142,80 @@ for (const shell of SHELLS) {
       await Deno.remove(quiet.wutHome, { recursive: true })
     }
   })
+
+  // a release is checked against its SHA256SUMS before it is unpacked: what matches is installed, what does not is not
+  Deno.test(`rt / ${shell.sh.name} / a release is installed only when it matches its SHA256SUMS`, async () => {
+    for (const matches of [true, false]) {
+      const release = await Deno.makeTempDir()
+      try {
+        if (!matches) {
+          await Deno.writeTextFile(`${release}/sum`, '0'.repeat(64))
+        }
+        const run = await runRuntime(shell, {
+          nuBody: 'echo 0.0.1',
+          verbose: false,
+          curl: RELEASE_CURL,
+          env: { RELEASE: release, NU_VERS: NU_VERS },
+        })
+        if (run == null) {
+          return
+        }
+        try {
+          const said = `${run.stdout}\n${run.stderr}`
+          if (matches) {
+            assertEquals(run.code, 0, said)
+            assertEquals(
+              new TextDecoder().decode(
+                await new Deno.Command(`${run.wutHome}/vendor/nu`).output().then((o) => o.stdout),
+              )
+                .trim(),
+              NU_VERS,
+            )
+          } else {
+            assertEquals(run.code, 1, said)
+            assertEquals(said.includes("does not match the release's SHA256SUMS"), true, said)
+            assertEquals(
+              new TextDecoder().decode(
+                await new Deno.Command(`${run.wutHome}/vendor/nu`).output().then((o) => o.stdout),
+              )
+                .trim(),
+              '0.0.1',
+            )
+          }
+        } finally {
+          await Deno.remove(run.wutHome, { recursive: true })
+        }
+      } finally {
+        await Deno.remove(release, { recursive: true })
+      }
+    }
+  })
 }
+
+// curl as a nushell release: an archive holding a nu that says NU_VERS, its top dir named as the release names it, and
+// a SHA256SUMS listing it with its sum, or with the one in $RELEASE/sum when a test put one there
+const RELEASE_CURL = `#!/bin/sh
+out=''
+url=''
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --output) out="$2"; shift ;;
+    --url) url="$2"; shift ;;
+  esac
+  shift
+done
+name="\${url##*/}"
+if [ "$name" = SHA256SUMS ]; then
+  printf '%s  %s\\n' "$(cat "$RELEASE/sum")" "$(cat "$RELEASE/asset")"
+  exit 0
+fi
+echo "$name" > "$RELEASE/asset"
+dir="\${name%.tar.gz}"
+mkdir -p "$RELEASE/a/$dir"
+printf '#!/bin/sh\\necho %s\\n' "$NU_VERS" > "$RELEASE/a/$dir/nu"
+chmod +x "$RELEASE/a/$dir/nu"
+tar -czf "$out" -C "$RELEASE/a" "$dir"
+if [ ! -f "$RELEASE/sum" ]; then
+  (sha256sum "$out" 2>/dev/null || shasum -a 256 "$out") | cut -d' ' -f1 > "$RELEASE/sum"
+fi
+`
