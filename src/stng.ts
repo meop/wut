@@ -9,9 +9,6 @@ export interface Stng {
   cfg: {
     dir: string
   }
-  nu: {
-    latest: boolean
-  }
 }
 
 const env = Deno.env.get('WUT_ENV')
@@ -28,8 +25,5 @@ export const SETTINGS: Stng = {
   },
   cfg: {
     dir: Deno.env.get('WUT_CFG_DIR') ?? raw.cfg?.dir ?? 'cfg',
-  },
-  nu: {
-    latest: raw.nu?.latest ?? true,
   },
 }

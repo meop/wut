@@ -410,6 +410,8 @@ Deno.test('nu / pack / a named sync only runs the managers that hold the name', 
   assertEquals(held.includes('1) ghpm'), true)
   assertEquals(held.includes('uv)'), false)
   assertEquals(held.includes('ghpm sync nu'), true)
+  // its refresh brings its own gh and wedge up to date before it syncs with them
+  assertEquals(held.indexOf('ghpm refresh') > -1 && held.indexOf('ghpm refresh') < held.indexOf('ghpm sync nu'), true)
   assertEquals(held.includes('uv tool upgrade'), false)
 
   const absent = await run(['vlc'])
@@ -1006,6 +1008,30 @@ Deno.test('nu / pack / picking a manager alone still updates it first', async ()
   assertEquals(order, ['ghpm upgrade', 'ran ghpm'])
 })
 
+// goup is go's: it updates itself in the go row, then refreshes and moves its go, all before the tools rebuild
+Deno.test("nu / pack / goup updates itself in go's row, before go syncs", async () => {
+  const self = [{ group: 'lang/go', path: '{HOME}/.goup/bin/goup', args: ['upgrade'] }]
+  const out = await withStubs(
+    { '~/.goup/bin/go': `case "$*" in "env GOVERSION") printf 'go1.27.0\\n' ;; *) exit 0 ;; esac`, goup: '' },
+    [
+      `touch ($env.HOME | path join .goup bin goup)`,
+      `$env.YES = '1'`,
+      `$env.PACK_OP = 'sync'`,
+      `$env.NOOP = '1'`,
+      `$env.PACK_SELF = ${JSON.stringify(JSON.stringify(self))}`,
+      'packManagerPlanRun',
+    ].join('\n'),
+    ['go'],
+    ['go'],
+  )
+  if (out == null) {
+    return
+  }
+  assertEquals(out.includes('script'), false)
+  const order = out.split('\n').filter((l) => /goup (upgrade|refresh|update)/.test(l)).map((l) => l.split('/').pop())
+  assertEquals(order, ['goup upgrade', 'try { goup refresh }', 'goup update'])
+})
+
 Deno.test('nu / pack / no script row when every standalone install is a manager here', async () => {
   const self = [{ group: 'sys/manager/ghpm', path: '{HOME}/.ghpm/bin/ghpm', args: ['upgrade'] }]
   const out = await withStubs(
@@ -1178,8 +1204,12 @@ esac`
     return
   }
   const lines = managed.split('\n')
+  const refresh = lines.findIndex((l) => l.includes('goup refresh'))
   const goup = lines.findIndex((l) => l.endsWith('goup update'))
   const tools = lines.findIndex((l) => l.includes('go install golang.org/x/tools/gopls@latest'))
+  // the wedge it stamps the new go's shims with is the latest
+  assertEquals(refresh > -1, true)
+  assertEquals(refresh < goup, true)
   assertEquals(goup > -1, true)
   assertEquals(tools > -1, true)
   assertEquals(goup < tools, true)

@@ -2557,7 +2557,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.SYS_CPU_ARCH = match (uname | get machine | str lowercase) {
   arm64 => 'aarch64',
@@ -2984,7 +2984,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -3740,6 +3740,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -4680,9 +4681,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -4907,7 +4910,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -5732,6 +5735,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -6610,7 +6614,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -7368,6 +7372,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -8308,9 +8313,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -8535,7 +8542,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -9360,6 +9367,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -10384,7 +10392,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -11142,6 +11150,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -12082,9 +12091,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -12309,7 +12320,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -13134,6 +13145,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -14158,7 +14170,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -14916,6 +14928,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -15856,9 +15869,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -16083,7 +16098,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -16908,6 +16923,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -17962,7 +17978,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -18720,6 +18736,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -19660,9 +19677,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -19887,7 +19906,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -20712,6 +20731,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -21766,7 +21786,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -22524,6 +22544,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -23464,9 +23485,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -23691,7 +23714,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -24516,6 +24539,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -25537,7 +25561,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -26293,6 +26317,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -27233,9 +27258,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -27460,7 +27487,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -28285,6 +28312,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -29397,7 +29425,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -30153,6 +30181,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -31093,9 +31122,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -31320,7 +31351,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -32145,6 +32176,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -33147,7 +33179,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -33903,6 +33935,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -34843,9 +34876,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -35070,7 +35105,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -35895,6 +35930,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -36897,7 +36933,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -37653,6 +37689,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -38593,9 +38630,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -38820,7 +38859,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -39645,6 +39684,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -40647,7 +40687,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -41403,6 +41443,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -42343,9 +42384,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -42570,7 +42613,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -43395,6 +43438,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -44674,7 +44718,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -45430,6 +45474,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -46370,9 +46415,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -46597,7 +46644,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -47422,6 +47469,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -48568,7 +48616,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -49324,6 +49372,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -50264,9 +50313,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -50491,7 +50542,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -51316,6 +51367,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -52627,7 +52679,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -53383,6 +53435,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -54323,9 +54376,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -54550,7 +54605,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -55375,6 +55430,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -56514,7 +56570,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -57268,6 +57324,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -58208,9 +58265,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -58435,7 +58494,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -59260,6 +59319,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -60240,7 +60300,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -60994,6 +61054,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -61934,9 +61995,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -62161,7 +62224,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -62986,6 +63049,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -63966,7 +64030,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -64722,6 +64786,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -65662,9 +65727,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -65889,7 +65956,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -66714,6 +66781,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -67711,7 +67779,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -68467,6 +68535,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -69407,9 +69476,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -69634,7 +69705,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -70459,6 +70530,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -71439,7 +71511,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -72197,6 +72269,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -73137,9 +73210,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -73364,7 +73439,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -74189,6 +74264,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -75213,7 +75289,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -75971,6 +76047,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -76911,9 +76988,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -77138,7 +77217,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -77963,6 +78042,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -78951,7 +79031,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -79707,6 +79787,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -80647,9 +80728,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -80874,7 +80957,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -81699,6 +81782,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -82677,7 +82761,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -83433,6 +83517,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -84373,9 +84458,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -84600,7 +84687,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -85425,6 +85512,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -86302,7 +86390,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -87060,6 +87148,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -88000,9 +88089,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -88227,7 +88318,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -89052,6 +89143,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -89929,7 +90021,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -90687,6 +90779,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -91627,9 +91720,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -91854,7 +91949,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -92679,6 +92774,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -93560,7 +93656,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -94318,6 +94414,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -95258,9 +95355,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -95485,7 +95584,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -96310,6 +96409,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -97189,7 +97289,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -97947,6 +98047,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -98887,9 +98988,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -99114,7 +99217,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -99939,6 +100042,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -100817,7 +100921,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -101575,6 +101679,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -102515,9 +102620,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -102742,7 +102849,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -103567,6 +103674,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -104445,7 +104553,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -105203,6 +105311,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -106143,9 +106252,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -106370,7 +106481,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -107195,6 +107306,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -108219,7 +108331,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -108977,6 +109089,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -109917,9 +110030,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -110144,7 +110259,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -110969,6 +111084,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -111993,7 +112109,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -112751,6 +112867,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -113691,9 +113808,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -113918,7 +114037,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -114743,6 +114862,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -115621,7 +115741,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -116377,6 +116497,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -117317,9 +117438,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -117544,7 +117667,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -118369,6 +118492,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -119247,7 +119371,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -120005,6 +120129,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -120945,9 +121070,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -121172,7 +121299,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -121997,6 +122124,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -122875,7 +123003,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -123633,6 +123761,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -124573,9 +124702,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -124800,7 +124931,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -125625,6 +125756,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -126649,7 +126781,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -127407,6 +127539,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -128347,9 +128480,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -128574,7 +128709,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -129399,6 +129534,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -130423,7 +130559,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -131181,6 +131317,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -132121,9 +132258,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -132348,7 +132487,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -133173,6 +133312,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }
@@ -134227,7 +134367,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -134985,6 +135125,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match \$manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -135925,9 +136066,11 @@ def packSelfHere [] {
   (\$env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath \$s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath \$path | path parse | get stem
+  let stem = (packExpandPath \$path | path parse | get stem)
+  if \$stem == 'goup' { 'go' } else { \$stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
@@ -136152,7 +136295,7 @@ def --env packGhpm [] {
   }
 
 
-  if \$env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if \$env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match \$env.PACK_OP {
     add => {
@@ -136977,6 +137120,7 @@ def --env packGoHeld [] {
 def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if \$goup != null and (packGoOwned) {
+    packRefresh 'goup'
     packSelfUpdate 'goup' \$goup [update]
   }
 }

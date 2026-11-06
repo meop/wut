@@ -462,6 +462,7 @@ def --env packClaims [manager: string, name: string] {
 def --env packRefresh [manager: string] {
   match $manager {
     ghpm => { packOp [ghpm refresh] },
+    goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },
@@ -1402,9 +1403,11 @@ def packSelfHere [] {
   ($env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath $s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
+# updates itself before the go it moves
 def packSelfManager [path: string] {
-  packExpandPath $path | path parse | get stem
+  let stem = (packExpandPath $path | path parse | get stem)
+  if $stem == 'goup' { 'go' } else { $stem }
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy

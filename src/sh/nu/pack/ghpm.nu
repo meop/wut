@@ -5,7 +5,7 @@ def --env packGhpm [] {
   }
 
 
-  if $env.PACK_OP == 'add' { packRefresh 'ghpm' }
+  if $env.PACK_OP in ['add', 'sync'] { packRefresh 'ghpm' }
 
   match $env.PACK_OP {
     add => {

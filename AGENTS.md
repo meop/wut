@@ -127,12 +127,9 @@ Per command:
 
 ## The nu clients run
 
-Every client runs wut's own nu, `~/.wut/vendor/nu`, at the version the server hands it, and fetches that release when it
-has another. The server hands out nushell's latest release, looked up at most once a day (`src/nu.ts`), so a new nu
-reaches every host with no change here; `src/vers.ts` is what it falls back to when github cannot be asked, and what the
-tests run (`settings-test.toml`'s `nu.latest = false`). A client checks the archive against the release's `SHA256SUMS`
-before it unpacks it. nushell does not sign its releases, so that proves the archive is the release's and not who made
-it; when it does, the server will check the signature and hand clients the sum.
+Every client runs wut's own nu, `~/.wut/vendor/nu`, at exactly the version in `src/vers.ts`, and fetches that release
+when it has another. `src/vers.ts` is also the oldest of each shell wut's scripts are written for, so a new nu is a
+change there. A client checks the archive against the release's `SHA256SUMS` before it unpacks it.
 
 ## Multi-Shell Support
 

@@ -4,7 +4,3 @@ port = 9001
 
 [cfg]
 dir = './cfg'
-
-# the tests run vers.ts's nu, and never ask github
-[nu]
-latest = false

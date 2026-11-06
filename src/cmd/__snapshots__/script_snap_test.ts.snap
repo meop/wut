@@ -337,7 +337,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -720,7 +720,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -1193,7 +1193,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -2127,7 +2127,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -3386,7 +3386,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 
@@ -3979,7 +3979,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 0
+\$env.NU_VERS_PATCH = 1
 
 \$env.REQ_ORIG = r#'http://x'#
 

@@ -213,9 +213,11 @@ terminal as if the tool had been run by hand.
 The server emits the plan as data (`PACK_PLAN`) and the bodies behind ids in a generated `packRunUnit`, so code stays
 code and the plan stays data. The client picks each group's winner and resolves loose names with an exact per-manager
 check — `packExists` when adding, `packInstalled` when removing. Refreshes run before add's checks so the answers are
-current; remove refreshes nothing, since a remote index has no bearing on what is already here. `find`'s remaining names
-resolve the way add's do, every manager asked (`packClaimsAll`), just after its own gate rather than add's, and each is
-listed under every manager that has it. They answer to a `?` row so they can be taken or left like any manager.
+current; remove refreshes nothing, since a remote index has no bearing on what is already here. ghpm's refresh also
+moves its own gh and wedge to their latest, so it runs before a sync too, after ghpm has updated itself. `find`'s
+remaining names resolve the way add's do, every manager asked (`packClaimsAll`), just after its own gate rather than
+add's, and each is listed under every manager that has it. They answer to a `?` row so they can be taken or left like
+any manager.
 
 `tidy`, `info` and a bare `sync` have no per-package decision to make — the only question is which managers this run
 touches — so they share a plainer plan, `packManagerPlanRun`, whose rows are just the managers present. A `sync` given
@@ -415,9 +417,10 @@ manager's copy, and `deno upgrade` run against ghpm's deno overwrites a file ghp
 against that themselves — `uv self update` refuses a copy its installer did not put down, `deno upgrade` does not.
 
 A tool that is itself a manager — ghpm, uv, deno, bun, pnpm — updates itself right before that manager's sync runs, so
-it syncs as its newest self: picking the manager's row is what lets it run. The rest run at the `script` row, which is
-offered only when there is one of them. The binary's name is how the two are matched. On windows the path is printed and
-run with backslashes, whatever the yaml wrote.
+it syncs as its newest self: picking the manager's row is what lets it run. goup updates itself in the go row the same
+way, before the go it moves. The rest run at the `script` row, which is offered only when there is one of them. The
+binary's name is how the two are matched. On windows the path is printed and run with backslashes, whatever the yaml
+wrote.
 
 Updating is best effort. A distro build usually has self update compiled out, and a user can turn it off; a copy that
 refuses answers exactly that, so it is said as a warning and is not a failure — the rest of the sync runs, and the run
@@ -478,11 +481,11 @@ packages it names and leaves the toolchains alone.
   `dotnet tool update --global --all`. A distro's dotnet is that distro's to move. dotnet has no listing of outdated
   tools, so it is not offered for `outdated`.
 - **goup** is to go what rustup is to cargo — its own tool, managing toolchains rather than packages, with no row of its
-  own: the go row that is goup's copy — the one in `~/.goup/bin` — runs `goup update` first on a bare sync, best effort
-  like a self update, so its one go moves to the newest release its channel allows before the tools rebuild. A distro's
-  go beside goup's is the system's install, and is left to the distro; one alone is the go row, with no goup behind it,
-  and the distro moves it. goup keeps every archive it downloaded until its own tidy, as ghpm does, so a go tidy runs
-  `goup tidy` before it cleans the module cache.
+  own: the go row that is goup's copy — the one in `~/.goup/bin` — runs `goup refresh` and `goup update` first on a bare
+  sync, best effort like a self update, so its one go moves to the newest release its channel allows before the tools
+  rebuild. A distro's go beside goup's is the system's install, and is left to the distro; one alone is the go row, with
+  no goup behind it, and the distro moves it. goup keeps every archive it downloaded until its own tidy, as ghpm does,
+  so a go tidy runs `goup tidy` before it cleans the module cache.
 
 ### The copies used
 
