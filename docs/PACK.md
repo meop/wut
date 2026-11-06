@@ -496,11 +496,11 @@ global tools where dotnetup's or scoop's is here, and is used when it is the onl
 PATH order, each doing only what its own toolchain calls for — three gos that share `~/go/bin`, at 1.12, 1.79 and 1.15,
 rebuild a tool for 1.12, again for 1.79, and leave it for 1.15 — so copies that share a package home are safe to run one
 after another: each manager keeps its record of what it installed in that home (cargo's `.crates.toml`, uv's receipts,
-bun's global `package.json`), or keeps none and reads the dir (go's binaries, npm's `node_modules`), so a later copy
-finds what an earlier one updated. pnpm keeps one global dir per layout (`global/5` for pnpm 10, `global/v11` for 11 and
-12), so two majors are two sets of packages, and a remove asks each copy what it holds. A sync and an add reach every
-copy, since each moves or builds with its own toolchain; the ops that only read, and a remove, ask one copy per package
-home, so two cargos sharing `~/.cargo` list each package once and remove it once.
+bun's global `package.json`), or keeps none and reads the dir (go's binaries), so a later copy finds what an earlier one
+updated. pnpm keeps one global dir per layout (`global/5` for pnpm 10, `global/v11` for 11 and 12), so two majors are
+two sets of packages, and a remove asks each copy what it holds. A sync and an add reach every copy, since each moves or
+builds with its own toolchain; the ops that only read, and a remove, ask one copy per package home, so two cargos
+sharing `~/.cargo` list each package once and remove it once.
 
 The plain name is the first copy used, which is what a group's plan and a bare command mean; another is
 `go@/opt/go/bin`, and with more than one copy each row's toolchain column says which it is. Every copy runs with its own
@@ -528,22 +528,20 @@ does not reorder PATH or reinstall to heal it.
 | deno    | a copy with installs is the deno PATH finds first: each install is a script that runs `exec deno`              |
 | dotnet  | DOTNET_ROOT names its root (or, unset, it is the system's), and `~/.dotnet/tools` is on PATH                   |
 | go      | `gofmt` is beside `go`                                                                                         |
-| npm     | `node` is beside `npm` and is the node PATH finds first, and its global prefix is in your home, bin on PATH    |
 | pnpm    | a pnpm with packages holds a node for them, and its bin dir is on PATH                                         |
 | uv      | every tool's venv was made on a python uv manages                                                              |
 
 A copy used that PATH does not find first is not split for that alone. go, cargo, uv and pnpm bind what they install by
 absolute path — a native binary, a venv's own python, the node beside pnpm's commands — so their packages run on the
-right install wherever the copy sits. npm, bun and deno bind through PATH, so for them it is the deciding question.
+right install wherever the copy sits. bun and deno bind through PATH, so for them it is the deciding question.
 
 What the check reads is also what the manager table shows beside each row: the toolchain its sync moves —
 `rust 1.99.1 (rustup)`, `go 1.27.3 (goup)`, `node 26.12.0`, `python 3.13, 3.14`. A few local version calls, no network.
-deno and bun are their own runtimes, updated by whatever installed them, so their rows name nothing. npm names the node
-it came with, which it does not move: that is the distro's or the tarball's.
+deno and bun are their own runtimes, updated by whatever installed them, so their rows name nothing.
 
-The npm pnpm holds is not a manager at all — not split, just not here: its global prefix is inside pnpm's own node
-runtime package, so an install there would land in pnpm's tree and be gone when pnpm next moved node. pnpm 12 marks
-every command it puts down with a `.pnpm-shim-v1-<name>-target` file beside it, and that is the whole check.
+npm is not a manager wut knows: pnpm holds node and npm itself, and a global package belongs to pnpm. The npm pnpm holds
+keeps its global prefix inside pnpm's own node runtime package, so an install there would land in pnpm's tree and be
+gone when pnpm next moved node.
 
 go's tools are what a toolchain move leaves behind. `go install` is go's only update and always builds — free while go's
 caches hold the last build, a full compile once they are cleared — so a go sync installs only the tools that need it, as

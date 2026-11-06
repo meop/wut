@@ -145,7 +145,6 @@ def --env packExists [manager: string, raw: string] {
     uv => (packExistsPypi $name),
     # bun and pnpm are npm clients; jsr is deno's own registry, so it answers there first
     pnpm => (packExistsNpm $name),
-    npm => (packExistsNpm $name),
     # nuget answers 404 for a name it has never had
     dotnet => (packHttpOk $"https://api.nuget.org/v3-flatcontainer/($name | str lowercase)/index.json"),
     bun => ((packExistsNpm $name) or (packExistsJsr $name)),
@@ -308,15 +307,6 @@ def --env packInstalledDeno [name: string] {
 }
 
 # a manager's own installed listing, stated once. `list` dumps it and the plan reads it to answer before the gate;
-# npm's own --parseable listing is pnpm's shape: the prefix's node_modules first, then a full path per package
-def --env packNpmInstalled [] {
-  packListedNames [npm ls --global --depth 0 --parseable] { |line|
-    let parts = ($line | path split)
-    let at = ($parts | enumerate | where item == 'node_modules' | get -o 0.index)
-    if $at == null { null } else { $parts | skip ($at + 1) | str join '/' }
-  }
-}
-
 # two statements of it is how `list` and `remove` came to disagree about the same name. deno has no such command —
 # it keeps its global installs as shim directories — so it answers through packDenoInstalled instead
 def packListCmd [manager: string] {
@@ -325,7 +315,6 @@ def packListCmd [manager: string] {
     cargo => [cargo install --list],
     uv => [uv tool list],
     pnpm => [pnpm list --global],
-    npm => [npm ls --global --depth 0],
     dotnet => [dotnet tool list --global],
     bun => [bun list --global],
     brew => [brew list],
@@ -357,9 +346,6 @@ def --env packListedRaw [manager: string] {
   }
   if $manager == 'pnpm' {
     return (packPnpmInstalled)
-  }
-  if $manager == 'npm' {
-    return (packNpmInstalled)
   }
   if $manager == 'dotnet' {
     return (packDotnetInstalled)
@@ -411,7 +397,6 @@ def --env packInstalledCheck [manager: string, raw: string] {
     cargo => (packListedHas (packListCmd 'cargo') $name { |l| packListedHead $l }),
     uv => (packListedHas (packListCmd 'uv') $name { |l| packListedHead $l }),
     pnpm => (packNamesHas (packPnpmInstalled) $name),
-    npm => (packNamesHas (packNpmInstalled) $name),
     dotnet => (packNamesHas (packDotnetInstalled) $name),
     bun => (packListedHas (packListCmd 'bun') $name { |l| packListedNodeName $l }),
     deno => (packInstalledDeno $name),
@@ -530,8 +515,6 @@ def packManagerBest [manager: string] {
     'script'
   } else if $manager in $PACK_PACMAN_FAMILY {
     packPacmanBest $manager
-  } else if $manager == 'npm' and (packNpmIsPnpms (which npm | get -o 0.path | default '' | path dirname)) {
-    null
   } else if (which (packManagerBin $manager) | is-not-empty) and not (packManagerSplit $manager) {
     $manager
   } else {
@@ -572,7 +555,7 @@ def --env packManagerCheck [] {
 # the best kind of install there is, as add prefers the most portable manager: one in the home (packCopyTier) over a
 # native manager's own tree, and either over the system's. each of those is a row, and the rest are left alone. the
 # native managers are the system's, one each
-const PACK_COPIED = ['pnpm' 'deno' 'bun' 'npm' 'uv' 'dotnet' 'go' 'cargo']
+const PACK_COPIED = ['pnpm' 'deno' 'bun' 'uv' 'dotnet' 'go' 'cargo']
 
 # a row is a manager, or another copy of one: go@/opt/go/bin. the plain name is the first copy (packCopyDirs), which
 # is the one a group's plan and a bare command mean
@@ -625,12 +608,10 @@ def packCopyTier [dir: string] {
 }
 
 # the dirs down PATH a manager is in, as `which --all` walks it, once each, and of those the best kind of install
-# there is, in PATH order: a system dotnet is not a copy where dotnetup's or scoop's is here. npm's copy in pnpm's bin
-# dir is pnpm's package, not a manager (see packNpmIsPnpms)
+# there is, in PATH order: a system dotnet is not a copy where dotnetup's or scoop's is here
 def packCopyDirs [manager: string] {
   let dirs = (
     which --all (packManagerBin $manager) | where type == external | get path | path dirname | uniq
-      | where { |d| not ($manager == 'npm' and (packNpmIsPnpms $d)) }
       | each { |d| { dir: $d, tier: (packCopyTier $d) } }
   )
   if ($dirs | is-empty) {
@@ -687,7 +668,7 @@ def packShellWhich [name: string] {
 def --env packManagerHeld [manager: string] {
   match $manager {
     bun => (packBunHeld), cargo => (packCargoHeld), deno => (packDenoHeld), dotnet => (packDotnetHeld),
-    go => (packGoHeld), npm => (packNpmHeld), pnpm => (packPnpmHeld), uv => (packUvHeld),
+    go => (packGoHeld), pnpm => (packPnpmHeld), uv => (packUvHeld),
     _ => (packHeld),
   }
 }
@@ -751,7 +732,7 @@ def --env packManagersHere [] {
 }
 
 # where a copy keeps the packages it installs. most copies of a manager share one — every cargo installs into
-# ~/.cargo, every dotnet's tools are in ~/.dotnet/tools — while a pnpm or an npm keeps its own per version or prefix.
+# ~/.cargo, every dotnet's tools are in ~/.dotnet/tools — while a pnpm keeps its own per version.
 # null where it is not known, which keeps the copy apart
 def --env packManagerHome [manager: string] {
   let home = ($env.HOME? | default $nu.home-dir)
@@ -762,7 +743,6 @@ def --env packManagerHome [manager: string] {
     deno => ($env.DENO_INSTALL_ROOT? | default ([$home .deno] | path join)),
     dotnet => (packDotnetToolsDir),
     go => (try { packGoBinDir } catch { |e| opRethrowInterrupt $e; '' }),
-    npm => (do $asked [npm prefix --global]),
     pnpm => (do $asked [pnpm root --global]),
     uv => (do $asked [uv tool dir]),
     _ => '',
@@ -891,7 +871,7 @@ def --env packCallManager [id: string] {
 
 def --env packCallBase [manager: string] {
   match $manager {
-    ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
+    ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm },
     dotnet => { packDotnet },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },

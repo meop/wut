@@ -41,8 +41,6 @@ const PORTABLE_MANAGERS: Array<string> = [
   'pnpm',
   'deno',
   'bun',
-  // node's own, with the node it came with: after the managers that hold their runtime, since it moves none
-  'npm',
   'uv',
   // its tools find their runtime through DOTNET_ROOT rather than PATH: see dotnet.nu
   'dotnet',
