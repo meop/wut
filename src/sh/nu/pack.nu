@@ -146,8 +146,7 @@ def --env packExists [manager: string, raw: string] {
     # bun and pnpm are npm clients; jsr is deno's own registry, so it answers there first
     pnpm => (packExistsNpm $name),
     npm => (packExistsNpm $name),
-    # rubygems and nuget answer 404 for a name they have never had
-    rv => (packHttpOk $"https://rubygems.org/api/v1/gems/($name).json"),
+    # nuget answers 404 for a name it has never had
     dotnet => (packHttpOk $"https://api.nuget.org/v3-flatcontainer/($name | str lowercase)/index.json"),
     bun => ((packExistsNpm $name) or (packExistsJsr $name)),
     deno => ((packExistsJsr $name) or (packExistsNpm $name)),
@@ -328,7 +327,6 @@ def packListCmd [manager: string] {
     pnpm => [pnpm list --global],
     npm => [npm ls --global --depth 0],
     dotnet => [dotnet tool list --global],
-    rv => [rv tool list],
     bun => [bun list --global],
     brew => [brew list],
     apk => [apk list --installed],
@@ -365,9 +363,6 @@ def --env packListedRaw [manager: string] {
   }
   if $manager == 'dotnet' {
     return (packDotnetInstalled)
-  }
-  if $manager == 'rv' {
-    return (packRvInstalled)
   }
   if $manager == 'go' {
     return (packGoTools | get path)
@@ -418,7 +413,6 @@ def --env packInstalledCheck [manager: string, raw: string] {
     pnpm => (packNamesHas (packPnpmInstalled) $name),
     npm => (packNamesHas (packNpmInstalled) $name),
     dotnet => (packNamesHas (packDotnetInstalled) $name),
-    rv => (packNamesHas (packRvInstalled) $name),
     bun => (packListedHas (packListCmd 'bun') $name { |l| packListedNodeName $l }),
     deno => (packInstalledDeno $name),
     go => (packInstalledGo $name),
@@ -578,7 +572,7 @@ def --env packManagerCheck [] {
 # the best kind of install there is, as add prefers the most portable manager: one in the home (packCopyTier) over a
 # native manager's own tree, and either over the system's. each of those is a row, and the rest are left alone. the
 # native managers are the system's, one each
-const PACK_COPIED = ['pnpm' 'deno' 'bun' 'npm' 'uv' 'rv' 'dotnet' 'go' 'cargo']
+const PACK_COPIED = ['pnpm' 'deno' 'bun' 'npm' 'uv' 'dotnet' 'go' 'cargo']
 
 # a row is a manager, or another copy of one: go@/opt/go/bin. the plain name is the first copy (packCopyDirs), which
 # is the one a group's plan and a bare command mean
@@ -693,7 +687,7 @@ def packShellWhich [name: string] {
 def --env packManagerHeld [manager: string] {
   match $manager {
     bun => (packBunHeld), cargo => (packCargoHeld), deno => (packDenoHeld), dotnet => (packDotnetHeld),
-    go => (packGoHeld), npm => (packNpmHeld), pnpm => (packPnpmHeld), rv => (packRvHeld), uv => (packUvHeld),
+    go => (packGoHeld), npm => (packNpmHeld), pnpm => (packPnpmHeld), uv => (packUvHeld),
     _ => (packHeld),
   }
 }
@@ -770,7 +764,6 @@ def --env packManagerHome [manager: string] {
     go => (try { packGoBinDir } catch { |e| opRethrowInterrupt $e; '' }),
     npm => (do $asked [npm prefix --global]),
     pnpm => (do $asked [pnpm root --global]),
-    rv => (do $asked [rv tool dir]),
     uv => (do $asked [uv tool dir]),
     _ => '',
   }
@@ -899,7 +892,7 @@ def --env packCallManager [id: string] {
 def --env packCallBase [manager: string] {
   match $manager {
     ghpm => { packGhpm }, cargo => { packCargo }, uv => { packUv }, pnpm => { packPnpm }, npm => { packNpm },
-    dotnet => { packDotnet }, rv => { packRv },
+    dotnet => { packDotnet },
     bun => { packBun }, deno => { packDeno }, go => { packGo }, brew => { packBrew }, apk => { packApk },
     apt => { packApt }, dnf => { packDnf }, emerge => { packEmerge }, yay => { packPacman }, paru => { packPacman },
     pacman => { packPacman }, xbps => { packXbps }, zypper => { packZypper }, nix => { packNix },

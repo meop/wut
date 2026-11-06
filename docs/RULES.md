@@ -150,7 +150,7 @@ numbered prompt's answer, not a flag's.
 That order is stated once, in `GROUP_ORDER` (`MANAGERS` with `script` in its slot), and loose names take `MANAGERS`:
 
 ```
-ghpm  pnpm  deno  bun  npm  uv  rv         user space, no sudo: release binaries, js, scripting
+ghpm  pnpm  deno  bun  npm  uv             user space, no sudo: release binaries, js, scripting
 dotnet  go  cargo                          user space, no sudo: the compiled stacks, nearest the system last
 script                                     what a group runs instead of a package
 brew  paru  yay  pacman                    darwin, then arch

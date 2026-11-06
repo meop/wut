@@ -44,8 +44,6 @@ const PORTABLE_MANAGERS: Array<string> = [
   // node's own, with the node it came with: after the managers that hold their runtime, since it moves none
   'npm',
   'uv',
-  // ruby's uv: its tools run through rvx, on rv's own ruby
-  'rv',
   // its tools find their runtime through DOTNET_ROOT rather than PATH: see dotnet.nu
   'dotnet',
   'go',

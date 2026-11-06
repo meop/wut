@@ -428,11 +428,11 @@ does not exit non-zero for it.
 
 ## Toolchain managers
 
-Six manage toolchains as well as packages: rustup (cargo and rustc), uv (pythons), rv (rubies), dotnetup (.NET SDKs),
-pnpm (the node, bun and deno runtimes) and goup (go). A bare sync moves the toolchains before the packages, so the
-packages update against current ones, each the way its manager moves them — rustup along its channels, uv along each
-link it keeps, pnpm to the latest release, goup to the newest release its channel allows. A named sync is about the
-packages it names and leaves the toolchains alone.
+Five manage toolchains as well as packages: rustup (cargo and rustc), uv (pythons), dotnetup (.NET SDKs), pnpm (the
+node, bun and deno runtimes) and goup (go). A bare sync moves the toolchains before the packages, so the packages update
+against current ones, each the way its manager moves them — rustup along its channels, uv along each link it keeps, pnpm
+to the latest release, goup to the newest release its channel allows. A named sync is about the packages it names and
+leaves the toolchains alone.
 
 - **rustup** is not a package manager at all: the `cargo` on PATH is usually its proxy, a link to the rustup beside it
   (a hard link on windows) dispatching to the real cargo inside the active toolchain. That makes cargo the one manager
@@ -465,15 +465,6 @@ packages it names and leaves the toolchains alone.
   `latest` — `pnpm runtime set node latest --global` — before the packages update to theirs. pnpm runs no package
   itself: a package's command runs on the node beside it in pnpm's bin dir, and falls back to whatever node PATH finds
   only when pnpm holds none. So an add to a pnpm that holds no node sets one first.
-- **rv** is ruby's uv: it installs rubies, and gems as tools, each in an environment of its own, run through `rvx` on
-  rv's own ruby. rv pins the machine's ruby the way a project's is pinned, by the `.ruby-version` (or `.tool-versions`)
-  in the home dir, and with none it runs the newest ruby it has; its shell integration puts that ruby on PATH. A bare
-  sync runs `rv ruby install` from the home dir, so no project's pin answers instead: rv reads the pin itself and
-  installs the newest ruby it allows, or the newest of all, and does nothing when that one is in. A machine with no ruby
-  of rv's is not given one, and the rubies a sync moves past stay, since a project may still be pinned to one:
-  `rv ruby uninstall` lets them go. rv keeps every version a tool was installed at, has no upgrade, and its uninstall
-  takes a gem whole, so an update installs the latest beside what is there and, where that leaves more than one version,
-  puts the tool back at the latest alone, from rv's cache.
 - **dotnetup** keeps .NET SDKs and runtimes side by side under its own root, and pins them the way ghpm does: its
   manifest records each install spec — `lts`, `latest`, `10`, `10.0.4xx`, `10.0.402` — apart from what is installed, and
   `dotnetup update` moves each spec to the newest release it allows and then removes whatever no spec needs, so it
@@ -539,7 +530,6 @@ does not reorder PATH or reinstall to heal it.
 | go      | `gofmt` is beside `go`                                                                                         |
 | npm     | `node` is beside `npm` and is the node PATH finds first, and its global prefix is in your home, bin on PATH    |
 | pnpm    | a pnpm with packages holds a node for them, and its bin dir is on PATH                                         |
-| rv      | `rvx` is beside `rv`: a tool runs only through it, on rv's own ruby                                            |
 | uv      | every tool's venv was made on a python uv manages                                                              |
 
 A copy used that PATH does not find first is not split for that alone. go, cargo, uv and pnpm bind what they install by
