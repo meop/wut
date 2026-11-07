@@ -6,12 +6,16 @@ def packNixInstallable [raw: string] {
   } | str join ' '
 }
 
-def packNixHas [name: string] {
+def packNixElements [] {
   let listed = (do { ^nix profile list --json } | complete)
   if $listed.exit_code != 0 {
-    return false
+    return []
   }
-  ($name | split row '#' | last) in ($listed.stdout | from json | get elements | columns)
+  $listed.stdout | from json | get elements | columns
+}
+
+def packNixHas [name: string] {
+  ($name | split row '#' | last) in (packNixElements)
 }
 
 def packNixOutdated [] {
@@ -69,6 +73,9 @@ def --env packNix [] {
       packOpRemove [$mgr profile remove]
     }
     sync => {
+      if ((packNameList 'PACK_SYNC_NAMES') | is-empty) and ((packNixElements) | is-empty) {
+        return
+      }
       packOpSync [$mgr profile upgrade --all] [$mgr profile upgrade]
     }
     tidy => {

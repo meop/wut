@@ -1452,6 +1452,25 @@ Deno.test('nu / pack / nix takes a bare name as nixpkgs and asks the profile by 
   assertEquals(await withStubs({ nix: 'exit 1' }, `print (packNixHas 'ripgrep')`, ['nix'], ['nix']), 'false')
 })
 
+// an empty profile has nothing to upgrade, and nix warns twice to say so: a bare sync leaves it alone
+Deno.test('nu / pack / nix sync upgrades a profile only when it holds something', async () => {
+  const run = (elements: Record<string, unknown>) => {
+    const listing = JSON.stringify({ elements, version: 3 })
+    return withStubs(
+      { nix: `case "$*" in\n  "profile list --json") printf '%s' '${listing}' ;;\n  *) exit 0 ;;\nesac` },
+      [`$env.PACK_OP = 'sync'`, `$env.NOOP = '1'`, `$env.PACK_MANAGER = 'nix'`, 'packNix'].join('\n'),
+      ['nix'],
+      ['nix'],
+    )
+  }
+  const empty = await run({})
+  if (empty == null) {
+    return
+  }
+  assertEquals(empty.includes('profile upgrade'), false, empty)
+  assertEquals((await run({ ripgrep: { storePaths: [] } }))!.includes('nix profile upgrade --all'), true)
+})
+
 // a manager that fails is reported and the run goes on to the next, so the copy it ran in has to be left behind: a
 // failure that kept PACK_COPY had the next manager's checks asking about a copy that was not theirs
 Deno.test('nu / pack / a manager that fails leaves its copy behind', async () => {
