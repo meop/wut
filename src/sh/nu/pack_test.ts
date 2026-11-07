@@ -1130,6 +1130,31 @@ esac`
   assertEquals(out.includes('cargo cache --autoclean'), true)
 })
 
+// what nothing installed requires is worked out from the installed packages alone, so the listing reads no repo: one
+// that fails to load, as it does for a user once the cache is cleaned, changes nothing about the answer
+Deno.test('nu / pack / zypper tidy removes what nothing needs, with no repo read', async () => {
+  const zypper = `case "$*" in
+  *--disable-repositories*--unneeded*) printf 'S  | Repository | Name   | Version | Arch\\n---+------------+--------+---------+-------\\ni  | @System    | libjq1 | 1.8.1   | x86_64\\n' ;;
+  *--unneeded*|*--orphaned*) printf 'i  | @System    | glibc  | 2.40    | x86_64\\n' ;;
+  *) exit 0 ;;
+esac`
+  const out = await withStubs(
+    { zypper },
+    [`$env.PACK_OP = 'tidy'`, `$env.NOOP = '1'`, `$env.PACK_MANAGER = 'zypper'`, 'packZypper'].join('\n'),
+    ['zypper'],
+    ['zypper'],
+  )
+  if (out == null) {
+    return
+  }
+  const lines = out.split('\n')
+  const remove = lines.findIndex((l) => l.includes('zypper remove --clean-deps libjq1 }'))
+  const clean = lines.findIndex((l) => l.includes('zypper clean --all'))
+  assertEquals(remove >= 0, true, out)
+  assertEquals(clean > remove, true, out)
+  assertEquals(out.includes('glibc'), false)
+})
+
 // go has no listing or uninstall of its own: a tool is a binary in its bin dir that names the package it was built
 // from, and a tool answers to its package path or its binary's name. an install always builds, so sync installs only
 // what a newer release or a newer toolchain has left behind, and outdated lists the same tools
