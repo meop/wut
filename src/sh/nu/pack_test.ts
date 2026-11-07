@@ -768,7 +768,7 @@ Deno.test('nu / pack / an elevated manager still knows its own listing command',
     ['dnf', 'dnf', 'list --installed'],
     ['emerge', 'qlist', '--installed'],
     ['xbps', 'xbps-query', '--list-pkgs'],
-    ['zypper', 'zypper', 'packages --installed-only'],
+    ['zypper', 'zypper', '--quiet --disable-repositories packages --installed-only'],
   ]
   for (const [manager, bin, args] of cases) {
     const listing = `printf 'python 3.13.7\\n'`
