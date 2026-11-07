@@ -128,8 +128,10 @@ Per command:
 ## The nu clients run
 
 Every client runs wut's own nu, `~/.wut/vendor/nu`, at exactly the version in `src/vers.ts`, and fetches that release
-when it has another. `src/vers.ts` is also the oldest of each shell wut's scripts are written for, so a new nu is a
-change there. A client checks the archive against the release's `SHA256SUMS` before it unpacks it.
+when it has another. `src/vers.ts` is also the oldest of each shell wut's scripts are written for. nu moves there to a
+new minor release whose features wut's scripts will then be changed to use, at its `.0`; a patch is pinned only when
+there is an important reason for it, such as a fix wut needs. A client checks the archive against the release's
+`SHA256SUMS` before it unpacks it.
 
 ## Multi-Shell Support
 

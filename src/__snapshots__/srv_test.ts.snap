@@ -176,7 +176,7 @@ do {
 
 \$env.NU_VERS_MINOR = 116
 
-\$env.NU_VERS_PATCH = 1
+\$env.NU_VERS_PATCH = 0
 
 \$env.SYS_CPU_ARCH = match (uname | get machine | str lowercase) {
   arm64 => 'aarch64',
@@ -607,7 +607,7 @@ function sudo {
 
 \$NU_VERS_MINOR = 116
 
-\$NU_VERS_PATCH = 1
+\$NU_VERS_PATCH = 0
 
 if (\$IsWindows) {
   \$_raw_arch = "\${env:PROCESSOR_ARCHITECTURE}".ToLower()
@@ -1013,7 +1013,7 @@ NU_VERS_MAJOR=0
 
 NU_VERS_MINOR=116
 
-NU_VERS_PATCH=1
+NU_VERS_PATCH=0
 
 _raw_arch="\${(L)\$(uname -m)}"
 case "\$_raw_arch" in
