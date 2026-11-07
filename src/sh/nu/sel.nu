@@ -54,7 +54,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in $env {
+    opPrint ''
     return (1..$max | each { |i| $i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no

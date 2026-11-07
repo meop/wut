@@ -13,9 +13,9 @@ complete shell scripts that the shell executes locally. Supports nushell, PowerS
 ## The live checkout
 
 On stone, `wut.service` runs `deno run --watch src/srv.ts` in `/vol/code/meop/wut`, on port 9000, with the config in
-`../wut-config/cfg`. Every host's `wut` talks to it, so any edit, staged change or branch switch in that checkout reaches
-every host at once. Make changes in a worktree. To try one from a host before it is merged, run a second server from
-the worktree:
+`../wut-config/cfg`. Every host's `wut` talks to it, so any edit, staged change or branch switch in that checkout
+reaches every host at once. Make changes in a worktree. To try one from a host before it is merged, run a second server
+from the worktree:
 
 1. Write a `settings.toml` in the worktree. It is gitignored. Copy the live one, but change the `port` (9010) and set
    `cfg.dir` to the config to serve: `../wut-config/cfg`, or a wut-config worktree's `cfg`.
@@ -146,6 +146,25 @@ when it has another. `src/vers.ts` is also the oldest of each shell wut's script
 new minor release whose features wut's scripts will then be changed to use, at its `.0`; a patch is pinned only when
 there is an important reason for it, such as a fix wut needs. A client checks the archive against the release's
 `SHA256SUMS` before it unpacks it.
+
+## Line spacing
+
+A blank line means the run has moved to the next step of its flow. Nothing else gets one.
+
+- Exactly one blank line before every prompt: never none, never two.
+- A prompt, the answer typed to it, and the output that answer lets through are one step: the output starts on the line
+  right below the answer.
+- Lines of one kind in a row (downloads, bins found, refresh lines, a script's output) run tight: no blank between them,
+  none after them.
+- A step never ends itself with a blank line; the step after it asks for one.
+- `-y` answers a prompt without showing it; the prompt's blank line still comes, where the prompt would have been.
+
+The rule is the same, word for word, in golie, ghpm, goup, shire, wut and wut-config.
+
+Here: the steps are the probes, the listing, the gate table, its question, and the work the question lets through; each
+group's block in a listing is one too. A step prints its blank (`opPrint ''`) only once something has printed before it
+(`PACK_PRINTED`), and only when it prints something itself. `wutSelectRead` prints the question's blank, under `-y` too;
+shire's `opAsk` prints its own.
 
 ## Multi-Shell Support
 

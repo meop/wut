@@ -130,6 +130,8 @@ def opAsk [question: string] {
     opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -546,6 +548,8 @@ function opAsk {
     opPrintWarn "\${question}: no terminal to answer from, so no; YES answers yes"
     return \$false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   \$yn = Read-Host "\${question} [[y]/n]"
   return (\$yn -eq '') -or (\$yn.ToLower() -eq 'y') -or (\$yn.ToLower() -eq 'yes')
 }
@@ -965,6 +969,8 @@ function opAsk {
     opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
     return 1
   fi
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   local yn=''
   read "yn?\${1} [[y]/n]: "
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]

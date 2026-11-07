@@ -473,6 +473,30 @@ esac`
   assertEquals(installs(single), ['onlycargo'])
 })
 
+// a plan whose rows are all '?' has no summary above its table, so the table's blank is the only one: never two
+Deno.test("nu / pack / a plan of '?' rows alone has one blank before its table", async () => {
+  const out = await withStubs(
+    { ghpm: LISTINGS.ghpm },
+    [
+      `$env.PACK_OP = 'add'`,
+      `$env.YES = '1'`,
+      `$env.NOOP = '1'`,
+      `$env.PACK_PRINTED = '1'`,
+      `print 'probed'`,
+      `$env.PACK_PLAN = '[]'`,
+      `$env.PACK_ADD_NAMES = ['nowhere']`,
+      'packPlanRun',
+    ].join('\n'),
+    ['ghpm'],
+    ['ghpm'],
+  )
+  if (out == null) {
+    return
+  }
+  assertEquals(out.includes('1) ?'), true)
+  assertEquals(out.includes('\n\n\n'), false, out)
+})
+
 // remove and sync both offer every manager holding a name: a name two managers both hold is not settled by whichever
 // sorts first, the table is where one is picked. picking uv takes hf out of uv alone
 Deno.test('nu / pack / remove and sync offer every manager holding a name, and the pick decides', async () => {

@@ -1105,7 +1105,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in $env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in $env and ($planManagers | is-not-empty) {
     opPrint ''
   }
   for m in $planManagers {

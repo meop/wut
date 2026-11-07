@@ -2511,6 +2511,8 @@ def opAsk [question: string] {
     opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -2938,6 +2940,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -3252,7 +3256,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -4383,7 +4389,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -6376,6 +6383,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -6692,7 +6701,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -7823,7 +7834,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -9962,6 +9974,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -10278,7 +10292,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -11409,7 +11425,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -13548,6 +13565,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -13864,7 +13883,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -14995,7 +15016,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -17164,6 +17186,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -17480,7 +17504,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -18611,7 +18637,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -20780,6 +20807,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -21096,7 +21125,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -22227,7 +22258,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -24363,6 +24395,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -24677,7 +24711,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -25808,7 +25844,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -27767,6 +27804,8 @@ function opAsk {
     opPrintWarn \\"\${1}: no terminal to answer from, so no; YES answers yes\\"
     return 1
   fi
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   local yn=''
   read \\"yn?\${1} [[y]/n]: \\"
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
@@ -28035,6 +28074,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -28349,7 +28390,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -29480,7 +29523,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -31597,6 +31641,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -31911,7 +31957,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -33042,7 +33090,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -35159,6 +35208,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -35473,7 +35524,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -36604,7 +36657,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -38721,6 +38775,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -39035,7 +39091,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -40166,7 +40224,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -42143,6 +42202,8 @@ function opAsk {
     opPrintWarn \\"\${1}: no terminal to answer from, so no; YES answers yes\\"
     return 1
   fi
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   local yn=''
   read \\"yn?\${1} [[y]/n]: \\"
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
@@ -42283,6 +42344,8 @@ function opAsk {
     opPrintWarn \\"\${1}: no terminal to answer from, so no; YES answers yes\\"
     return 1
   fi
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   local yn=''
   read \\"yn?\${1} [[y]/n]: \\"
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
@@ -42560,6 +42623,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -42874,7 +42939,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -44005,7 +44072,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -45982,6 +46050,8 @@ function opAsk {
     opPrintWarn \\"\${1}: no terminal to answer from, so no; YES answers yes\\"
     return 1
   fi
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   local yn=''
   read \\"yn?\${1} [[y]/n]: \\"
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
@@ -46266,6 +46336,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -46580,7 +46652,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -47711,7 +47785,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -49690,6 +49765,8 @@ function opAsk {
     opPrintWarn \\"\${question}: no terminal to answer from, so no; YES answers yes\\"
     return \$false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   \$yn = Read-Host \\"\${question} [[y]/n]\\"
   return (\$yn -eq '') -or (\$yn.ToLower() -eq 'y') -or (\$yn.ToLower() -eq 'yes')
 }
@@ -49846,6 +49923,8 @@ function opAsk {
     opPrintWarn \\"\${question}: no terminal to answer from, so no; YES answers yes\\"
     return \$false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   \$yn = Read-Host \\"\${question} [[y]/n]\\"
   return (\$yn -eq '') -or (\$yn.ToLower() -eq 'y') -or (\$yn.ToLower() -eq 'yes')
 }
@@ -50137,6 +50216,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -50451,7 +50532,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -51582,7 +51665,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -53559,6 +53643,8 @@ function opAsk {
     opPrintWarn \\"\${1}: no terminal to answer from, so no; YES answers yes\\"
     return 1
   fi
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   local yn=''
   read \\"yn?\${1} [[y]/n]: \\"
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
@@ -53836,6 +53922,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -54148,7 +54236,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -55279,7 +55369,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -57374,6 +57465,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -57686,7 +57779,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -58817,7 +58912,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -60912,6 +61008,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -61226,7 +61324,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -62357,7 +62457,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -64469,6 +64570,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -64783,7 +64886,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -65914,7 +66019,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -68009,6 +68115,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -68325,7 +68433,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -69456,7 +69566,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -71595,6 +71706,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -71911,7 +72024,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -73042,7 +73157,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -75145,6 +75261,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -75459,7 +75577,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -76590,7 +76710,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -78683,6 +78804,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -78997,7 +79120,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -80128,7 +80253,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -82120,6 +82246,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -82436,7 +82564,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -83567,7 +83697,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -85559,6 +85690,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -85875,7 +86008,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -87006,7 +87141,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -89002,6 +89138,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -89318,7 +89456,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -90449,7 +90589,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -92443,6 +92584,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -92759,7 +92902,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -93890,7 +94035,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -95883,6 +96029,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -96199,7 +96347,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -97330,7 +97480,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -99323,6 +99474,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -99639,7 +99792,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -100770,7 +100925,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -102909,6 +103065,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -103225,7 +103383,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -104356,7 +104516,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -106495,6 +106656,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -106811,7 +106974,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -107942,7 +108107,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -109935,6 +110101,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -110249,7 +110417,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -111380,7 +111550,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -113373,6 +113544,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -113689,7 +113862,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -114820,7 +114995,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -116813,6 +116989,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -117129,7 +117307,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -118260,7 +118440,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -120399,6 +120580,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -120715,7 +120898,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -121846,7 +122031,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -123985,6 +124171,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -124301,7 +124489,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -125432,7 +125622,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {
@@ -127601,6 +127792,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -127917,7 +128110,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -129048,7 +129243,8 @@ def --env packPlanRun [] {
     return
   }
 
-  if 'PACK_PRINTED' in \$env {
+  # the summary is a step of its own only when it has rows; with none, the table's blank below is the one
+  if 'PACK_PRINTED' in \$env and (\$planManagers | is-not-empty) {
     opPrint ''
   }
   for m in \$planManagers {

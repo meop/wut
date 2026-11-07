@@ -111,6 +111,8 @@ def opAsk [question: string] {
     opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -529,6 +531,8 @@ def opAsk [question: string] {
     opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -945,6 +949,8 @@ def opAsk [question: string] {
     opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -1363,6 +1369,8 @@ def opAsk [question: string] {
     opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -1779,6 +1787,8 @@ def opAsk [question: string] {
     opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -2197,6 +2207,8 @@ def opAsk [question: string] {
     opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -2613,6 +2625,8 @@ def opAsk [question: string] {
     opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -3063,6 +3077,8 @@ def opAsk [question: string] {
     opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -3601,6 +3617,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -3915,7 +3933,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -4533,6 +4553,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -4849,7 +4871,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -5467,6 +5491,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -5783,7 +5809,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -8026,6 +8054,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -8342,7 +8372,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -10454,6 +10486,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -10840,6 +10874,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -11365,6 +11401,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -11681,7 +11719,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -13922,6 +13962,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -14238,7 +14280,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -16479,6 +16523,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -16795,7 +16841,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -19036,6 +19084,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -19356,7 +19406,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -21599,6 +21651,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -21915,7 +21969,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -24158,6 +24214,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -24474,7 +24532,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -25837,6 +25897,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -26153,7 +26215,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -28396,6 +28460,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -28712,7 +28778,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -30850,6 +30918,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -31166,7 +31236,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -33409,6 +33481,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -33725,7 +33799,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -35861,6 +35937,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -36177,7 +36255,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -37538,6 +37618,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -37852,7 +37934,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -39990,6 +40074,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -40306,7 +40392,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -42549,6 +42637,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -42865,7 +42955,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -45003,6 +45095,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -45317,7 +45411,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no
@@ -45931,6 +46027,8 @@ def opAsk [question: string] {
     opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
+  # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
+  opPrint ''
   let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
@@ -46247,7 +46345,9 @@ def wutSelectParse [choice: string, max: int] {
 }
 
 def wutSelectRead [max: int] {
+  # -y answers the question, it does not skip the step: what was picked runs after a blank, as it does under the question
   if YES in \$env {
+    opPrint ''
     return (1..\$max | each { |i| \$i })
   }
   # with no terminal to choose from, as under cron or a pipe, nothing is picked, the way a question there is no

@@ -42,13 +42,14 @@ Deno.test('nu / sel / an answer picks rows by number, by range, or all', async (
   cases.forEach(([choice, max, expected], i) => assertEquals(got[i], expected, `'${choice}' of ${max}`))
 })
 
-// -y answers the picking too; with no terminal to answer from, nothing is picked rather than everything
+// -y answers the picking too, and what it picked starts after a blank, as it does under the question; with no
+// terminal to answer from, nothing is picked rather than everything
 Deno.test('nu / sel / -y picks every row, and no terminal picks none', async () => {
-  const yes = await withSel(`$env.YES = '1'\nprint (wutSelectRead 3 | to json --raw)`)
+  const yes = await withSel(`$env.YES = '1'\nprint '1) ghpm'\nprint (wutSelectRead 3 | to json --raw)`)
   if (yes == null) {
     return
   }
-  assertEquals(yes, '[1,2,3]')
+  assertEquals(yes, '1) ghpm\n\n[1,2,3]')
 
   const script = await Deno.makeTempFile({ suffix: '.nu' })
   try {
