@@ -37,7 +37,7 @@ def --env packPacman [] {
     }
     tidy => {
       # https://gitlab.archlinux.org/pacman/pacman/-/issues/297
-      packOp [sudo find /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete]
+      packOp [(packElevate 'find') /var/cache/pacman/pkg/ -mindepth 1 -type d -empty -delete]
       packOp [$cmd --sync --clean --clean]
       let orphans = (do { run-external $mgr '--query' '--deps' '--unrequired' '--quiet' }
         | complete

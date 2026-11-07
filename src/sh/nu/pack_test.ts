@@ -135,13 +135,14 @@ Deno.test('nu / pack / the pacman family is offered once, widest first', async (
 // what nothing requires is read from the local database alone, and handed whole to a recursive remove. pacman
 // exits 1 both when nothing is unrequired and when it cannot read the database, and neither may remove anything
 Deno.test('nu / pack / pacman tidy removes exactly what nothing requires', async () => {
-  const run = (unrequired: string) =>
+  const run = (unrequired: string, sudo = false) =>
     withStubs(
       {
         pacman: `case "$*" in
   "--query --deps --unrequired --quiet") ${unrequired} ;;
   *) exit 0 ;;
 esac`,
+        ...(sudo ? { sudo: 'exec "$@"' } : {}),
       },
       [`$env.PACK_OP = 'tidy'`, `$env.NOOP = '1'`, `$env.PACK_MANAGER = 'pacman'`, 'packPacman'].join('\n'),
       ['pacman'],
@@ -156,6 +157,11 @@ esac`,
     true,
     some,
   )
+  // the cache's empty folders are root's, so the find is elevated exactly as pacman is: by sudo where there is one
+  assertEquals(some.includes('try { find /var/cache/pacman/pkg/'), true, some)
+  const elevated = (await run('exit 1', true))!
+  assertEquals(elevated.includes('try { sudo find /var/cache/pacman/pkg/'), true, elevated)
+  assertEquals(elevated.includes('try { sudo pacman --sync --clean --clean'), true, elevated)
   for (const nothing of ['exit 1', `echo 'error: could not lock database' >&2; exit 1`]) {
     const out = (await run(nothing))!
     assertEquals(out.includes('--remove'), false, `${nothing}: ${out}`)
