@@ -132,6 +132,37 @@ Deno.test('nu / pack / the pacman family is offered once, widest first', async (
   }
 })
 
+// what nothing requires is read from the local database alone, and handed whole to a recursive remove. pacman
+// exits 1 both when nothing is unrequired and when it cannot read the database, and neither may remove anything
+Deno.test('nu / pack / pacman tidy removes exactly what nothing requires', async () => {
+  const run = (unrequired: string) =>
+    withStubs(
+      {
+        pacman: `case "$*" in
+  "--query --deps --unrequired --quiet") ${unrequired} ;;
+  *) exit 0 ;;
+esac`,
+      },
+      [`$env.PACK_OP = 'tidy'`, `$env.NOOP = '1'`, `$env.PACK_MANAGER = 'pacman'`, 'packPacman'].join('\n'),
+      ['pacman'],
+      ['pacman'],
+    )
+  const some = await run(`printf 'libfoo\\nlibbar\\n'`)
+  if (some == null) {
+    return
+  }
+  assertEquals(
+    some.split('\n').some((l) => l.endsWith('pacman --remove --nosave --recursive libfoo libbar }')),
+    true,
+    some,
+  )
+  for (const nothing of ['exit 1', `echo 'error: could not lock database' >&2; exit 1`]) {
+    const out = (await run(nothing))!
+    assertEquals(out.includes('--remove'), false, `${nothing}: ${out}`)
+    assertEquals(out.includes('pacman --sync --clean --clean'), true, out)
+  }
+})
+
 // which of the three a group declared only narrows what is acceptable: a pacman entry is a repo package any of
 // them can install, a yay entry is from the AUR and bare pacman cannot
 Deno.test('nu / pack / a declared manager widens to an aur helper, never narrows to pacman', async () => {
