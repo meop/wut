@@ -51,6 +51,15 @@ def --env packRustupUpdate [] {
   }
 }
 
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+def packCargoTool [bin: string] {
+  if (which $bin | is-not-empty) {
+    return true
+  }
+  opPrintWarn $"cargo: ($bin) is not installed, `wut script exec cargo setup` installs it"
+  false
+}
+
 def --env packCargo [] {
   let cmd = 'cargo'
   if (packSkip $cmd) {
@@ -60,7 +69,9 @@ def --env packCargo [] {
 
   match $env.PACK_OP {
     add => {
-      packOpAdd [$cmd binstall --locked]
+      if (packCargoTool 'cargo-binstall') {
+        packOpAdd [$cmd binstall --locked]
+      }
     }
     info => {
       packOpInfo [$cmd info]
@@ -69,7 +80,9 @@ def --env packCargo [] {
       packOpList (packListCmd $cmd)
     }
     outdated => {
-      packOpOutdated [$cmd install-update --list]
+      if (packCargoTool 'cargo-install-update') {
+        packOpOutdated [$cmd install-update --list]
+      }
     }
     remove => {
       packOpRemove [$cmd uninstall]
@@ -78,10 +91,14 @@ def --env packCargo [] {
       if ((packNameList 'PACK_SYNC_NAMES') | is-empty) {
         packRustupUpdate
       }
-      packOpSync [$cmd install-update --all] [$cmd install-update]
+      if (packCargoTool 'cargo-install-update') {
+        packOpSync [$cmd install-update --all] [$cmd install-update]
+      }
     }
     tidy => {
-      packOp [$cmd cache --autoclean]
+      if (packCargoTool 'cargo-cache') {
+        packOp [$cmd cache --autoclean]
+      }
     }
   }
 }

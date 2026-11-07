@@ -437,7 +437,7 @@ esac`
 esac`
   const run = (names: Array<string>, pick: string | null) =>
     withStubs(
-      { ghpm, cargo, rustc: RUSTC },
+      { ghpm, cargo, 'cargo-binstall': '', rustc: RUSTC },
       [
         `$env.PACK_OP = 'add'`,
         ...(pick == null ? [`$env.YES = '1'`] : []),
@@ -1097,7 +1097,8 @@ Deno.test('nu / pack / cargo updates the toolchains first only when rustup is be
       ['cargo'],
       ['cargo'],
     )
-  const proxied = await run({ cargo: LISTINGS.cargo, rustup: '' }, [])
+  const tools = { 'cargo-install-update': '' }
+  const proxied = await run({ cargo: LISTINGS.cargo, rustup: '', ...tools }, [])
   if (proxied == null) {
     return
   }
@@ -1106,8 +1107,11 @@ Deno.test('nu / pack / cargo updates the toolchains first only when rustup is be
   const crates = lines.findIndex((l) => l.includes('cargo install-update --all'))
   assertEquals(rustup > -1, true)
   assertEquals(rustup < crates, true)
-  assertEquals((await run({ cargo: LISTINGS.cargo }, []))!.includes('rustup update'), false)
-  assertEquals((await run({ cargo: LISTINGS.cargo, rustup: '' }, ['cargo-update']))!.includes('rustup update'), false)
+  assertEquals((await run({ cargo: LISTINGS.cargo, ...tools }, []))!.includes('rustup update'), false)
+  assertEquals(
+    (await run({ cargo: LISTINGS.cargo, rustup: '', ...tools }, ['cargo-update']))!.includes('rustup update'),
+    false,
+  )
 })
 
 // a rustup toolchain's name is its pin, and rustup update moves each in place, so there is nothing for a tidy to let go:
@@ -1118,7 +1122,7 @@ Deno.test('nu / pack / cargo tidy leaves every rustup toolchain', async () => {
   *) exit 0 ;;
 esac`
   const out = await withStubs(
-    { cargo: LISTINGS.cargo, rustup },
+    { cargo: LISTINGS.cargo, rustup, 'cargo-cache': '' },
     [`$env.PACK_OP = 'tidy'`, `$env.NOOP = '1'`, `$env.PACK_MANAGER = 'cargo'`, 'packCargo'].join('\n'),
     ['cargo'],
     ['cargo'],
@@ -1153,6 +1157,42 @@ esac`
   assertEquals(remove >= 0, true, out)
   assertEquals(clean > remove, true, out)
   assertEquals(out.includes('glibc'), false)
+})
+
+// a cargo put down without its tools, as gentoo's is to build its own packages, still uninstalls; each op that needs a
+// tool says which one is missing instead of failing on a subcommand cargo does not have
+Deno.test('nu / pack / cargo without its tools says so, and runs no subcommand it lacks', async () => {
+  const run = (op: string) =>
+    withStubs(
+      { cargo: LISTINGS.cargo },
+      [
+        `$env.PACK_OP = '${op}'`,
+        `$env.NOOP = '1'`,
+        `$env.YES = '1'`,
+        `$env.PACK_MANAGER = 'cargo'`,
+        `$env.PACK_ADD_NAMES = ['ripgrep']`,
+        `$env.PACK_REMOVE_NAMES = ['ripgrep']`,
+        'packCargo',
+      ].join('\n'),
+      ['cargo'],
+      ['cargo'],
+    )
+  const cases: Array<[string, string, string]> = [
+    ['add', 'cargo-binstall', 'cargo binstall'],
+    ['outdated', 'cargo-install-update', 'cargo install-update'],
+    ['sync', 'cargo-install-update', 'cargo install-update'],
+    ['tidy', 'cargo-cache', 'cargo cache'],
+  ]
+  for (const [op, tool, subcommand] of cases) {
+    const out = await run(op)
+    if (out == null) {
+      return
+    }
+    assertEquals(out.includes(`${tool} is not installed`), true, `${op}: ${out}`)
+    assertEquals(out.includes(subcommand), false, `${op}: ${out}`)
+  }
+  const removed = await run('remove')
+  assertEquals(removed!.includes('is not installed'), false, removed!)
 })
 
 // go has no listing or uninstall of its own: a tool is a binary in its bin dir that names the package it was built
