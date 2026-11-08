@@ -237,9 +237,10 @@ async function findOp(shell: Sh, context: Ctx, environment: Env) {
 
   // data, not printed lines: whether a tool's gates are met is the client's to answer
   const units = matches.map((m) => toUnit(m, false)).filter((u) => u.tool)
-  shell.with(await shell.fileLoad(['sel'], import.meta.resolve, ['..'])).with(
-    await shell.fileLoad([SCRIPT_KEY], import.meta.resolve, ['..']),
-  )
+  shell.with(await shell.fileLoad(['sel'], import.meta.resolve, ['..']))
+    .with(await shell.fileLoad(['lock'], import.meta.resolve, ['..'])).with(
+      await shell.fileLoad([SCRIPT_KEY], import.meta.resolve, ['..']),
+    )
   if (units.length) {
     shell.with(shell.varSetStr(SCRIPT_PLAN_KEY, JSON.stringify(units))).with(['scriptFindRun'])
   }
@@ -286,6 +287,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env) {
   return buildAndLog(
     shell
       .with(await shell.fileLoad(['sel'], import.meta.resolve, ['..']))
+      .with(await shell.fileLoad(['lock'], import.meta.resolve, ['..']))
       .with(await shell.fileLoad([SCRIPT_KEY], import.meta.resolve, ['..']))
       .with([
         'def --env scriptRunUnit [id: string] {',
@@ -296,7 +298,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env) {
         '}',
       ])
       .with(shell.varSetStr(SCRIPT_PLAN_KEY, JSON.stringify(units)))
-      .with(await lockRun(shell, SCRIPT_KEY, ['scriptPlanRun'])),
+      .with(lockRun(shell, `${SCRIPT_KEY} exec`, ['scriptPlanRun'])),
     environment,
   )
 }

@@ -3,6 +3,7 @@ import { assertEquals } from '@std/assert'
 import { runNu } from '../../../_test.ts'
 import { getScriptFlavorOpPreamble } from '../../../sh.ts'
 
+const LOCK_NU = new URL('../lock.nu', import.meta.url).pathname
 const FILE_NU = new URL('./file.nu', import.meta.url).pathname
 
 // the bug this covers: picking one tool's files to sync still reset every tool's permissions, so picking zellij ran
@@ -17,6 +18,7 @@ Deno.test('nu / file / sync resets the permissions of the tools picked, and only
     }
     const out = await runNu([
       await getScriptFlavorOpPreamble('nu'),
+      await Deno.readTextFile(LOCK_NU),
       await Deno.readTextFile(FILE_NU),
       `$env.GRAYSCALE = '1'`,
       `$env.PATH = ['${dir}']`,

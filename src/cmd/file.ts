@@ -93,6 +93,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
 
   _shell = _shell
     .with(await _shell.fileLoad(['sel'], import.meta.resolve, ['..']))
+    .with(await _shell.fileLoad(['lock'], import.meta.resolve, ['..']))
     .with(
       await _shell.fileLoad(
         [FILE_KEY, FILE_KEY],
@@ -195,7 +196,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       FILE_KEY,
     ]
     : [FILE_KEY]
-  _shell = _shell.with(op === 'sync' ? await lockRun(_shell, FILE_KEY, run) : run)
+  _shell = _shell.with(op === 'sync' ? lockRun(_shell, `${FILE_KEY} ${op}`, run) : run)
 
   const body = _shell.build()
 

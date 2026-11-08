@@ -1041,64 +1041,64 @@ if \$cut != null { \$cut.raw }
 `;
 
 snapshot[`nu / linux / exec (overlay, already nu) 1`] = `
-\`try {
+"try {
 try {
 \$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/setup/cargo?sysOsPlat=linux&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  \$"(\$args | flatten | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintVerbose --wrapped [...args] {
   if VERBOSE not-in \$env {
     return
   }
-  \$"(\$args | flatten | str join ' ')" | print --stderr
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
 }
 
 def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
   let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   } else {
     print ''
   }
@@ -1129,16 +1129,16 @@ def opQuietInterrupt [body: string] {
     r#'  exit 130'#
     r#'}'#
     r#'\$e.raw'#
-  ] | each { |l| \$"  (\$l)" }
-  [r#'try {'# r#'try {'# \$body r#'} catch { |e|'# ...\$stop r#'}'# r#'} catch { |e|'# ...\$stop r#'}'#] | str join "\\\\n"
+  ] | each { |l| \$\\"  (\$l)\\" }
+  [r#'try {'# r#'try {'# \$body r#'} catch { |e|'# ...\$stop r#'}'# r#'} catch { |e|'# ...\$stop r#'}'#] | str join \\"\\\\n\\"
 }
 
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ')")
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
 # a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
@@ -1148,12 +1148,12 @@ def opAsk [question: string] {
     return true
   }
   if not (is-terminal --stdin) {
-    opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
+    opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
   # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
   opPrint ''
-  let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
+  let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
 
@@ -1189,7 +1189,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -1228,13 +1228,13 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
-    opPrintVerbose \$"nu (\$nu_vers): current at (\$nu_bin)"
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
   let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
-  opPrintVerbose \$"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing"
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
@@ -1247,7 +1247,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
   let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
   }
 
@@ -1262,23 +1262,23 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { "" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
     }
     if \$waited == 0 {
-      opPrintVerbose \$"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)"
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
     }
     sleep 500ms
     \$waited = \$waited + 1
   }
   if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
     }
   }
@@ -1289,30 +1289,30 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
+  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  opPrintVerbose \$"nu (\$nu_vers): fetching (\$url)"
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
   let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
   if \$fetched.exit_code != 0 {
     opPrintErr (\$fetched.stderr | str trim)
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let sums_url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/SHA256SUMS"
-  opPrintVerbose \$"nu (\$nu_vers): checking against (\$sums_url)"
+  let sums_url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/SHA256SUMS\\"
+  opPrintVerbose \$\\"nu (\$nu_vers): checking against (\$sums_url)\\"
   let sums = (do { ^curl --fail-with-body --location --no-progress-meter --url \$sums_url } | complete)
   let want = (\$sums.stdout | lines | split column --regex '\\\\s+' sum name | where name == \$asset | get -o 0.sum | default '')
   let got = (open --raw \$archive_path | hash sha256)
   if \$sums.exit_code != 0 or (\$want | is-empty) or \$got != \$want {
-    opPrintErr \$"nu (\$nu_vers): (\$asset) does not match the release's SHA256SUMS"
+    opPrintErr \$\\"nu (\$nu_vers): (\$asset) does not match the release's SHA256SUMS\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
@@ -1326,19 +1326,19 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  opPrintVerbose \$"nu (\$nu_vers): extracting into (\$extract_target)"
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
   let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
   if \$extracted.exit_code != 0 {
     opPrintErr (\$extracted.stderr | str trim)
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
   if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
@@ -1349,7 +1349,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
-  opPrintVerbose \$"nu (\$nu_vers): installed at (\$nu_bin)"
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -1365,8 +1365,8 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
+  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
 }
@@ -1388,7 +1388,7 @@ def --env wutPathRefresh [] {
     if (which pwsh | is-empty) {
       return
     }
-    let cmd = "\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep"
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
     ^pwsh -NoLogo -Command \$cmd | complete
   } else {
     if (which zsh | is-empty) {
@@ -1478,7 +1478,141 @@ def wutSelectRead [max: int] {
     return null
   }
   opPrint ''
-  wutSelectParse (input \$"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): ") \$max
+  wutSelectParse (input \$\\"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): \\") \$max
+}
+
+
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
 }
 
 
@@ -1494,7 +1628,7 @@ def scriptHasSvc [...svcs: string] {
   \$svcs | any { |s|
     match \$nu.os-info.name {
       'windows' => ((^sc.exe query \$s | complete | get exit_code) == 0)
-      'linux' => (['/etc/systemd/system' '/usr/lib/systemd/system' '/lib/systemd/system'] | any { |d| [\$d \$"(\$s).service"] | path join | path exists })
+      'linux' => (['/etc/systemd/system' '/usr/lib/systemd/system' '/lib/systemd/system'] | any { |d| [\$d \$\\"(\$s).service\\"] | path join | path exists })
       _ => false
     }
   }
@@ -1550,7 +1684,7 @@ def scriptShortName [u: record] {
   if (\$u.tool in (\$short | flatten)) {
     \$u.tool
   } else {
-    \$"(\$u.tool) \\\\((\$short | each { |names| \$names | str join ' or ' } | str join '; ')\\\\)"
+    \$\\"(\$u.tool) \\\\((\$short | each { |names| \$names | str join ' or ' } | str join '; ')\\\\)\\"
   }
 }
 
@@ -1571,12 +1705,13 @@ def --env scriptPlanRun [] {
   }
 
   wutTable ['action' 'tool' 'shell'] (\$here | enumerate | each { |u|
-    [\$"(\$u.index + 1)\\\\) (\$u.item.action)", \$u.item.tool, \$u.item.shell]
+    [\$\\"(\$u.index + 1)\\\\) (\$u.item.action)\\", \$u.item.tool, \$u.item.shell]
   })
   let picked = (wutSelectRead (\$here | length))
   if \$picked == null {
     return
   }
+  wutLockHold
   for i in \$picked {
     scriptRunUnit (\$here | get (\$i - 1) | get id)
   }
@@ -1602,7 +1737,7 @@ def scriptFindRun [] {
   let rows = (scriptFindRows (\$units | where skipped == ''))
   for r in \$rows {
     opPrint (\$r | get 0)
-    opPrint \$"  (\$r | get 1)"
+    opPrint \$\\"  (\$r | get 1)\\"
   }
   mut shown = (\$rows | is-not-empty)
   for group in \$SCRIPT_SKIPS {
@@ -1615,8 +1750,8 @@ def scriptFindRun [] {
     }
     opPrint \$group
     for r in \$groupRows {
-      opPrint \$"  (\$r | get 0)"
-      opPrint \$"    (\$r | get 1)"
+      opPrint \$\\"  (\$r | get 0)\\"
+      opPrint \$\\"    (\$r | get 1)\\"
     }
     \$shown = true
   }
@@ -1626,69 +1761,69 @@ def scriptFindRun [] {
 def --env scriptRunUnit [id: string] {
   match \$id {
     r#'cargo/setup'# => { zsh --no-rcs -c r#'function opPrint {
-  print -r -- "\$*"
+  print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
+    print -r -- \\"\$*\\" >&2
     return
   fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
+  print -n \\"\\\\033[0;31m\\" >&2
+  print -n -r -- \\"\$*\\" >&2
+  print \\"\\\\033[0m\\" >&2
 }
 
 function opPrintSucc {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;32m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintWarn {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;33m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintInfo {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;34m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintVerbose {
   if [[ -z \$VERBOSE ]]; then
     return
   fi
-  print -r -- "\$*" >&2
+  print -r -- \\"\$*\\" >&2
 }
 
 function opPrintCmd {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
+  print -n \\"\\\\033[0;35m\\"
+  print -n -r \\"\$1\\"
+  print -n \\"\\\\033[0m\\"
   shift 1
   if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
+    print -n \\" \\\\033[0;36m\\"
+    print -n -r -- \\"\$*\\"
+    print \\"\\\\033[0m\\"
   else
     print
   fi
@@ -1696,16 +1831,16 @@ function opPrintCmd {
 
 function opMaybePrintCmd {
   if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
+    opPrintCmd \\"\$@\\"
   fi
 }
 
 function opRunCmd {
-  eval "\$*"
+  eval \\"\$*\\"
 }
 
 function opRunSilentCmd {
-  eval "\$*" &> /dev/null
+  eval \\"\$*\\" &> /dev/null
 }
 
 # a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
@@ -1715,36 +1850,36 @@ function opAsk {
     return 0
   fi
   if [[ ! -t 0 ]]; then
-    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    opPrintWarn \\"\${1}: no terminal to answer from, so no; YES answers yes\\"
     return 1
   fi
   # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
   opPrint ''
   local yn=''
-  read "yn?\${1} [[y]/n]: "
+  read \\"yn?\${1} [[y]/n]: \\"
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
+    opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
   if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
+    opRunSilentCmd \\"\$@\\"
   fi
 }
 
 function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opRunCmd \\"\$@\\"
 }
 
 function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opMaybeRunCmd \\"\$@\\"
 }
 
 function () {
@@ -1760,7 +1895,7 @@ function () {
     return
   fi
   local url='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
-  opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "\${url}" '|' bash
+  opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url \\"\${url}\\" '|' bash
   opPrintMaybeRunCmd cargo binstall cargo-cache
   opPrintMaybeRunCmd cargo binstall cargo-update
 }
@@ -1769,110 +1904,9 @@ function () {
   }
 }
 
-\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"paths":[],"desktop":"","noSsh":false}]'#
+\$env.SCRIPT_PLAN = r#'[{\\"id\\":\\"cargo/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"cargo\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":false}]'#
 
-# one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
-
-def wutLockPath [name: string] {
-  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' \$name
-}
-
-def wutLockEnvKey [name: string] {
-  \$"WUT_LOCK_(\$name | str uppercase)"
-}
-
-# a pid and when it started, so a pid handed on to another process since is not taken for the holder
-def wutLockStamp [pid: int] {
-  let found = (ps --long | where pid == \$pid)
-  if (\$found | is-empty) {
-    return ''
-  }
-  let started = (\$found | first | get -o start_time)
-  if \$started == null { \$"(\$pid)" } else { \$"(\$pid) (\$started | format date '%s')" }
-}
-
-def wutLockHolder [dir: string] {
-  try { open --raw (\$dir | path join 'pid') | str trim } catch { |e| opRethrowInterrupt \$e; '' }
-}
-
-# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
-def wutLockMake [dir: string] {
-  let parent = (\$dir | path dirname)
-  mkdir \$parent
-  let made = if \$nu.os-info.name == 'windows' {
-    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
-  } else {
-    do { ^mkdir \$dir } | complete
-  }
-  \$made.exit_code == 0
-}
-
-# true once this run holds the lock, false when the run that started this one already does
-def --env wutLockTake [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  let inherited = (\$env | get -o \$key | default '')
-  if \$inherited != '' and (wutLockHolder \$dir) == \$inherited {
-    let pid = (\$inherited | split row ' ' | first | into int)
-    if (wutLockStamp \$pid) == \$inherited {
-      return false
-    }
-  }
-
-  let own = (wutLockStamp \$nu.pid)
-  for attempt in 1..50 {
-    if (wutLockMake \$dir) {
-      \$own | save --force (\$dir | path join 'pid')
-      load-env { \$key: \$own }
-      return true
-    }
-    let held = (wutLockHolder \$dir)
-    if \$held == '' {
-      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
-      if ((date now) - \$made) < 5sec {
-        sleep 100ms
-        continue
-      }
-    } else {
-      let pid = (try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 })
-      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
-        opPrintErr \$"wut (\$name) is already running here as pid (\$pid): wait for it to end, or stop it"
-        exit 1
-      }
-    }
-    if (wutLockHolder \$dir) == \$held {
-      rm --recursive --force \$dir
-    }
-  }
-  opPrintErr \$"could not take the wut (\$name) lock: (\$dir)"
-  exit 1
-}
-
-def --env wutLockDrop [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  if (wutLockHolder \$dir) == (\$env | get -o \$key) {
-    rm --recursive --force \$dir
-  }
-  hide-env -i \$key
-}
-
-def --env wutLockRun [name: string, work: closure] {
-  if not (wutLockTake \$name) {
-    do --env \$work
-    return
-  }
-  try {
-    do --env \$work
-  } catch { |e|
-    wutLockDrop \$name
-    opRethrowInterrupt \$e
-    \$e.raw
-  }
-  wutLockDrop \$name
-}
-
-wutLockRun r#'script'# {
+wutLockScope r#'script exec'# {
   scriptPlanRun
 }
 
@@ -1887,7 +1921,7 @@ wutLockRun r#'script'# {
     exit 130
   }
   \$e.raw
-}\`
+}"
 `;
 
 snapshot[`zsh / linux / exec (overlay stays in the calling shell, cargo) 1`] = `
@@ -1981,64 +2015,64 @@ if \$cut != null { \$cut.raw }
 `;
 
 snapshot[`nu / linux / exec (action only, one plan, no hop) 1`] = `
-\`try {
+"try {
 try {
 \$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/setup?sysOsPlat=linux&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  \$"(\$args | flatten | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintVerbose --wrapped [...args] {
   if VERBOSE not-in \$env {
     return
   }
-  \$"(\$args | flatten | str join ' ')" | print --stderr
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
 }
 
 def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
   let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   } else {
     print ''
   }
@@ -2069,16 +2103,16 @@ def opQuietInterrupt [body: string] {
     r#'  exit 130'#
     r#'}'#
     r#'\$e.raw'#
-  ] | each { |l| \$"  (\$l)" }
-  [r#'try {'# r#'try {'# \$body r#'} catch { |e|'# ...\$stop r#'}'# r#'} catch { |e|'# ...\$stop r#'}'#] | str join "\\\\n"
+  ] | each { |l| \$\\"  (\$l)\\" }
+  [r#'try {'# r#'try {'# \$body r#'} catch { |e|'# ...\$stop r#'}'# r#'} catch { |e|'# ...\$stop r#'}'#] | str join \\"\\\\n\\"
 }
 
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ')")
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
 # a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
@@ -2088,12 +2122,12 @@ def opAsk [question: string] {
     return true
   }
   if not (is-terminal --stdin) {
-    opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
+    opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
   # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
   opPrint ''
-  let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
+  let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
 
@@ -2129,7 +2163,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -2168,13 +2202,13 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
-    opPrintVerbose \$"nu (\$nu_vers): current at (\$nu_bin)"
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
   let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
-  opPrintVerbose \$"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing"
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
@@ -2187,7 +2221,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
   let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
   }
 
@@ -2202,23 +2236,23 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { "" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
     }
     if \$waited == 0 {
-      opPrintVerbose \$"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)"
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
     }
     sleep 500ms
     \$waited = \$waited + 1
   }
   if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
     }
   }
@@ -2229,30 +2263,30 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
+  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  opPrintVerbose \$"nu (\$nu_vers): fetching (\$url)"
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
   let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
   if \$fetched.exit_code != 0 {
     opPrintErr (\$fetched.stderr | str trim)
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let sums_url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/SHA256SUMS"
-  opPrintVerbose \$"nu (\$nu_vers): checking against (\$sums_url)"
+  let sums_url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/SHA256SUMS\\"
+  opPrintVerbose \$\\"nu (\$nu_vers): checking against (\$sums_url)\\"
   let sums = (do { ^curl --fail-with-body --location --no-progress-meter --url \$sums_url } | complete)
   let want = (\$sums.stdout | lines | split column --regex '\\\\s+' sum name | where name == \$asset | get -o 0.sum | default '')
   let got = (open --raw \$archive_path | hash sha256)
   if \$sums.exit_code != 0 or (\$want | is-empty) or \$got != \$want {
-    opPrintErr \$"nu (\$nu_vers): (\$asset) does not match the release's SHA256SUMS"
+    opPrintErr \$\\"nu (\$nu_vers): (\$asset) does not match the release's SHA256SUMS\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
@@ -2266,19 +2300,19 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  opPrintVerbose \$"nu (\$nu_vers): extracting into (\$extract_target)"
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
   let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
   if \$extracted.exit_code != 0 {
     opPrintErr (\$extracted.stderr | str trim)
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
   if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
@@ -2289,7 +2323,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
-  opPrintVerbose \$"nu (\$nu_vers): installed at (\$nu_bin)"
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -2305,8 +2339,8 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
+  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
 }
@@ -2328,7 +2362,7 @@ def --env wutPathRefresh [] {
     if (which pwsh | is-empty) {
       return
     }
-    let cmd = "\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep"
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
     ^pwsh -NoLogo -Command \$cmd | complete
   } else {
     if (which zsh | is-empty) {
@@ -2416,7 +2450,141 @@ def wutSelectRead [max: int] {
     return null
   }
   opPrint ''
-  wutSelectParse (input \$"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): ") \$max
+  wutSelectParse (input \$\\"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): \\") \$max
+}
+
+
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
 }
 
 
@@ -2432,7 +2600,7 @@ def scriptHasSvc [...svcs: string] {
   \$svcs | any { |s|
     match \$nu.os-info.name {
       'windows' => ((^sc.exe query \$s | complete | get exit_code) == 0)
-      'linux' => (['/etc/systemd/system' '/usr/lib/systemd/system' '/lib/systemd/system'] | any { |d| [\$d \$"(\$s).service"] | path join | path exists })
+      'linux' => (['/etc/systemd/system' '/usr/lib/systemd/system' '/lib/systemd/system'] | any { |d| [\$d \$\\"(\$s).service\\"] | path join | path exists })
       _ => false
     }
   }
@@ -2488,7 +2656,7 @@ def scriptShortName [u: record] {
   if (\$u.tool in (\$short | flatten)) {
     \$u.tool
   } else {
-    \$"(\$u.tool) \\\\((\$short | each { |names| \$names | str join ' or ' } | str join '; ')\\\\)"
+    \$\\"(\$u.tool) \\\\((\$short | each { |names| \$names | str join ' or ' } | str join '; ')\\\\)\\"
   }
 }
 
@@ -2509,12 +2677,13 @@ def --env scriptPlanRun [] {
   }
 
   wutTable ['action' 'tool' 'shell'] (\$here | enumerate | each { |u|
-    [\$"(\$u.index + 1)\\\\) (\$u.item.action)", \$u.item.tool, \$u.item.shell]
+    [\$\\"(\$u.index + 1)\\\\) (\$u.item.action)\\", \$u.item.tool, \$u.item.shell]
   })
   let picked = (wutSelectRead (\$here | length))
   if \$picked == null {
     return
   }
+  wutLockHold
   for i in \$picked {
     scriptRunUnit (\$here | get (\$i - 1) | get id)
   }
@@ -2540,7 +2709,7 @@ def scriptFindRun [] {
   let rows = (scriptFindRows (\$units | where skipped == ''))
   for r in \$rows {
     opPrint (\$r | get 0)
-    opPrint \$"  (\$r | get 1)"
+    opPrint \$\\"  (\$r | get 1)\\"
   }
   mut shown = (\$rows | is-not-empty)
   for group in \$SCRIPT_SKIPS {
@@ -2553,8 +2722,8 @@ def scriptFindRun [] {
     }
     opPrint \$group
     for r in \$groupRows {
-      opPrint \$"  (\$r | get 0)"
-      opPrint \$"    (\$r | get 1)"
+      opPrint \$\\"  (\$r | get 0)\\"
+      opPrint \$\\"    (\$r | get 1)\\"
     }
     \$shown = true
   }
@@ -2564,69 +2733,69 @@ def scriptFindRun [] {
 def --env scriptRunUnit [id: string] {
   match \$id {
     r#'cargo/setup'# => { zsh --no-rcs -c r#'function opPrint {
-  print -r -- "\$*"
+  print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
+    print -r -- \\"\$*\\" >&2
     return
   fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
+  print -n \\"\\\\033[0;31m\\" >&2
+  print -n -r -- \\"\$*\\" >&2
+  print \\"\\\\033[0m\\" >&2
 }
 
 function opPrintSucc {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;32m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintWarn {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;33m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintInfo {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;34m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintVerbose {
   if [[ -z \$VERBOSE ]]; then
     return
   fi
-  print -r -- "\$*" >&2
+  print -r -- \\"\$*\\" >&2
 }
 
 function opPrintCmd {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
+  print -n \\"\\\\033[0;35m\\"
+  print -n -r \\"\$1\\"
+  print -n \\"\\\\033[0m\\"
   shift 1
   if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
+    print -n \\" \\\\033[0;36m\\"
+    print -n -r -- \\"\$*\\"
+    print \\"\\\\033[0m\\"
   else
     print
   fi
@@ -2634,16 +2803,16 @@ function opPrintCmd {
 
 function opMaybePrintCmd {
   if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
+    opPrintCmd \\"\$@\\"
   fi
 }
 
 function opRunCmd {
-  eval "\$*"
+  eval \\"\$*\\"
 }
 
 function opRunSilentCmd {
-  eval "\$*" &> /dev/null
+  eval \\"\$*\\" &> /dev/null
 }
 
 # a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
@@ -2653,36 +2822,36 @@ function opAsk {
     return 0
   fi
   if [[ ! -t 0 ]]; then
-    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    opPrintWarn \\"\${1}: no terminal to answer from, so no; YES answers yes\\"
     return 1
   fi
   # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
   opPrint ''
   local yn=''
-  read "yn?\${1} [[y]/n]: "
+  read \\"yn?\${1} [[y]/n]: \\"
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
+    opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
   if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
+    opRunSilentCmd \\"\$@\\"
   fi
 }
 
 function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opRunCmd \\"\$@\\"
 }
 
 function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opMaybeRunCmd \\"\$@\\"
 }
 
 function () {
@@ -2698,75 +2867,75 @@ function () {
     return
   fi
   local url='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
-  opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "\${url}" '|' bash
+  opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url \\"\${url}\\" '|' bash
   opPrintMaybeRunCmd cargo binstall cargo-cache
   opPrintMaybeRunCmd cargo binstall cargo-update
 }
 '# }
     r#'desktop/setup'# => { zsh --no-rcs -c r#'function opPrint {
-  print -r -- "\$*"
+  print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
+    print -r -- \\"\$*\\" >&2
     return
   fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
+  print -n \\"\\\\033[0;31m\\" >&2
+  print -n -r -- \\"\$*\\" >&2
+  print \\"\\\\033[0m\\" >&2
 }
 
 function opPrintSucc {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;32m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintWarn {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;33m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintInfo {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;34m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintVerbose {
   if [[ -z \$VERBOSE ]]; then
     return
   fi
-  print -r -- "\$*" >&2
+  print -r -- \\"\$*\\" >&2
 }
 
 function opPrintCmd {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
+  print -n \\"\\\\033[0;35m\\"
+  print -n -r \\"\$1\\"
+  print -n \\"\\\\033[0m\\"
   shift 1
   if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
+    print -n \\" \\\\033[0;36m\\"
+    print -n -r -- \\"\$*\\"
+    print \\"\\\\033[0m\\"
   else
     print
   fi
@@ -2774,16 +2943,16 @@ function opPrintCmd {
 
 function opMaybePrintCmd {
   if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
+    opPrintCmd \\"\$@\\"
   fi
 }
 
 function opRunCmd {
-  eval "\$*"
+  eval \\"\$*\\"
 }
 
 function opRunSilentCmd {
-  eval "\$*" &> /dev/null
+  eval \\"\$*\\" &> /dev/null
 }
 
 # a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
@@ -2793,36 +2962,36 @@ function opAsk {
     return 0
   fi
   if [[ ! -t 0 ]]; then
-    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    opPrintWarn \\"\${1}: no terminal to answer from, so no; YES answers yes\\"
     return 1
   fi
   # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
   opPrint ''
   local yn=''
-  read "yn?\${1} [[y]/n]: "
+  read \\"yn?\${1} [[y]/n]: \\"
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
+    opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
   if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
+    opRunSilentCmd \\"\$@\\"
   fi
 }
 
 function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opRunCmd \\"\$@\\"
 }
 
 function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opMaybeRunCmd \\"\$@\\"
 }
 
 function () {
@@ -2834,69 +3003,69 @@ function () {
 }
 '# }
     r#'distro/setup'# => { zsh --no-rcs -c r#'function opPrint {
-  print -r -- "\$*"
+  print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
+    print -r -- \\"\$*\\" >&2
     return
   fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
+  print -n \\"\\\\033[0;31m\\" >&2
+  print -n -r -- \\"\$*\\" >&2
+  print \\"\\\\033[0m\\" >&2
 }
 
 function opPrintSucc {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;32m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintWarn {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;33m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintInfo {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;34m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintVerbose {
   if [[ -z \$VERBOSE ]]; then
     return
   fi
-  print -r -- "\$*" >&2
+  print -r -- \\"\$*\\" >&2
 }
 
 function opPrintCmd {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
+  print -n \\"\\\\033[0;35m\\"
+  print -n -r \\"\$1\\"
+  print -n \\"\\\\033[0m\\"
   shift 1
   if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
+    print -n \\" \\\\033[0;36m\\"
+    print -n -r -- \\"\$*\\"
+    print \\"\\\\033[0m\\"
   else
     print
   fi
@@ -2904,16 +3073,16 @@ function opPrintCmd {
 
 function opMaybePrintCmd {
   if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
+    opPrintCmd \\"\$@\\"
   fi
 }
 
 function opRunCmd {
-  eval "\$*"
+  eval \\"\$*\\"
 }
 
 function opRunSilentCmd {
-  eval "\$*" &> /dev/null
+  eval \\"\$*\\" &> /dev/null
 }
 
 # a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
@@ -2923,36 +3092,36 @@ function opAsk {
     return 0
   fi
   if [[ ! -t 0 ]]; then
-    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    opPrintWarn \\"\${1}: no terminal to answer from, so no; YES answers yes\\"
     return 1
   fi
   # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
   opPrint ''
   local yn=''
-  read "yn?\${1} [[y]/n]: "
+  read \\"yn?\${1} [[y]/n]: \\"
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
+    opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
   if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
+    opRunSilentCmd \\"\$@\\"
   fi
 }
 
 function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opRunCmd \\"\$@\\"
 }
 
 function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opMaybeRunCmd \\"\$@\\"
 }
 
 function () {
@@ -2964,69 +3133,69 @@ function () {
 }
 '# }
     r#'docker/setup'# => { zsh --no-rcs -c r#'function opPrint {
-  print -r -- "\$*"
+  print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
+    print -r -- \\"\$*\\" >&2
     return
   fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
+  print -n \\"\\\\033[0;31m\\" >&2
+  print -n -r -- \\"\$*\\" >&2
+  print \\"\\\\033[0m\\" >&2
 }
 
 function opPrintSucc {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;32m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintWarn {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;33m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintInfo {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;34m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintVerbose {
   if [[ -z \$VERBOSE ]]; then
     return
   fi
-  print -r -- "\$*" >&2
+  print -r -- \\"\$*\\" >&2
 }
 
 function opPrintCmd {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
+  print -n \\"\\\\033[0;35m\\"
+  print -n -r \\"\$1\\"
+  print -n \\"\\\\033[0m\\"
   shift 1
   if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
+    print -n \\" \\\\033[0;36m\\"
+    print -n -r -- \\"\$*\\"
+    print \\"\\\\033[0m\\"
   else
     print
   fi
@@ -3034,16 +3203,16 @@ function opPrintCmd {
 
 function opMaybePrintCmd {
   if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
+    opPrintCmd \\"\$@\\"
   fi
 }
 
 function opRunCmd {
-  eval "\$*"
+  eval \\"\$*\\"
 }
 
 function opRunSilentCmd {
-  eval "\$*" &> /dev/null
+  eval \\"\$*\\" &> /dev/null
 }
 
 # a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
@@ -3053,36 +3222,36 @@ function opAsk {
     return 0
   fi
   if [[ ! -t 0 ]]; then
-    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    opPrintWarn \\"\${1}: no terminal to answer from, so no; YES answers yes\\"
     return 1
   fi
   # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
   opPrint ''
   local yn=''
-  read "yn?\${1} [[y]/n]: "
+  read \\"yn?\${1} [[y]/n]: \\"
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
+    opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
   if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
+    opRunSilentCmd \\"\$@\\"
   fi
 }
 
 function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opRunCmd \\"\$@\\"
 }
 
 function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opMaybeRunCmd \\"\$@\\"
 }
 
 function () {
@@ -3100,110 +3269,9 @@ function () {
   }
 }
 
-\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"],"noCmds":[],"svcs":[],"noSvcs":[],"paths":[],"desktop":"","noSsh":false},{"id":"desktop/setup","action":"setup","tool":"desktop","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"paths":[],"desktop":"none","noSsh":false},{"id":"distro/setup","action":"setup","tool":"distro","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"paths":["/etc/wsl.conf"],"desktop":"","noSsh":false},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"],"noCmds":[],"svcs":[],"noSvcs":[],"paths":[],"desktop":"","noSsh":false}]'#
+\$env.SCRIPT_PLAN = r#'[{\\"id\\":\\"cargo/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"cargo\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[\\"cargo\\"],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"desktop/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"desktop\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"none\\",\\"noSsh\\":false},{\\"id\\":\\"distro/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"distro\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[\\"/etc/wsl.conf\\"],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"docker/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"docker\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[\\"docker\\"],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":false}]'#
 
-# one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
-
-def wutLockPath [name: string] {
-  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' \$name
-}
-
-def wutLockEnvKey [name: string] {
-  \$"WUT_LOCK_(\$name | str uppercase)"
-}
-
-# a pid and when it started, so a pid handed on to another process since is not taken for the holder
-def wutLockStamp [pid: int] {
-  let found = (ps --long | where pid == \$pid)
-  if (\$found | is-empty) {
-    return ''
-  }
-  let started = (\$found | first | get -o start_time)
-  if \$started == null { \$"(\$pid)" } else { \$"(\$pid) (\$started | format date '%s')" }
-}
-
-def wutLockHolder [dir: string] {
-  try { open --raw (\$dir | path join 'pid') | str trim } catch { |e| opRethrowInterrupt \$e; '' }
-}
-
-# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
-def wutLockMake [dir: string] {
-  let parent = (\$dir | path dirname)
-  mkdir \$parent
-  let made = if \$nu.os-info.name == 'windows' {
-    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
-  } else {
-    do { ^mkdir \$dir } | complete
-  }
-  \$made.exit_code == 0
-}
-
-# true once this run holds the lock, false when the run that started this one already does
-def --env wutLockTake [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  let inherited = (\$env | get -o \$key | default '')
-  if \$inherited != '' and (wutLockHolder \$dir) == \$inherited {
-    let pid = (\$inherited | split row ' ' | first | into int)
-    if (wutLockStamp \$pid) == \$inherited {
-      return false
-    }
-  }
-
-  let own = (wutLockStamp \$nu.pid)
-  for attempt in 1..50 {
-    if (wutLockMake \$dir) {
-      \$own | save --force (\$dir | path join 'pid')
-      load-env { \$key: \$own }
-      return true
-    }
-    let held = (wutLockHolder \$dir)
-    if \$held == '' {
-      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
-      if ((date now) - \$made) < 5sec {
-        sleep 100ms
-        continue
-      }
-    } else {
-      let pid = (try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 })
-      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
-        opPrintErr \$"wut (\$name) is already running here as pid (\$pid): wait for it to end, or stop it"
-        exit 1
-      }
-    }
-    if (wutLockHolder \$dir) == \$held {
-      rm --recursive --force \$dir
-    }
-  }
-  opPrintErr \$"could not take the wut (\$name) lock: (\$dir)"
-  exit 1
-}
-
-def --env wutLockDrop [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  if (wutLockHolder \$dir) == (\$env | get -o \$key) {
-    rm --recursive --force \$dir
-  }
-  hide-env -i \$key
-}
-
-def --env wutLockRun [name: string, work: closure] {
-  if not (wutLockTake \$name) {
-    do --env \$work
-    return
-  }
-  try {
-    do --env \$work
-  } catch { |e|
-    wutLockDrop \$name
-    opRethrowInterrupt \$e
-    \$e.raw
-  }
-  wutLockDrop \$name
-}
-
-wutLockRun r#'script'# {
+wutLockScope r#'script exec'# {
   scriptPlanRun
 }
 
@@ -3218,7 +3286,7 @@ wutLockRun r#'script'# {
     exit 130
   }
   \$e.raw
-}\`
+}"
 `;
 
 snapshot[`zsh / linux / exec (redirects to nu) 1`] = `
@@ -3252,64 +3320,64 @@ if \$cut != null { \$cut.raw }
 `;
 
 snapshot[`nu / linux / find (client side listing) 1`] = `
-\`try {
+"try {
 try {
 \$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/script/find?sysOsPlat=linux&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  \$"(\$args | flatten | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintVerbose --wrapped [...args] {
   if VERBOSE not-in \$env {
     return
   }
-  \$"(\$args | flatten | str join ' ')" | print --stderr
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
 }
 
 def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
   let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   } else {
     print ''
   }
@@ -3340,16 +3408,16 @@ def opQuietInterrupt [body: string] {
     r#'  exit 130'#
     r#'}'#
     r#'\$e.raw'#
-  ] | each { |l| \$"  (\$l)" }
-  [r#'try {'# r#'try {'# \$body r#'} catch { |e|'# ...\$stop r#'}'# r#'} catch { |e|'# ...\$stop r#'}'#] | str join "\\\\n"
+  ] | each { |l| \$\\"  (\$l)\\" }
+  [r#'try {'# r#'try {'# \$body r#'} catch { |e|'# ...\$stop r#'}'# r#'} catch { |e|'# ...\$stop r#'}'#] | str join \\"\\\\n\\"
 }
 
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ')")
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
 # a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
@@ -3359,12 +3427,12 @@ def opAsk [question: string] {
     return true
   }
   if not (is-terminal --stdin) {
-    opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
+    opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
   # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
   opPrint ''
-  let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
+  let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
 
@@ -3400,7 +3468,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -3439,13 +3507,13 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
-    opPrintVerbose \$"nu (\$nu_vers): current at (\$nu_bin)"
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
   let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
-  opPrintVerbose \$"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing"
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
@@ -3458,7 +3526,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
   let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
   }
 
@@ -3473,23 +3541,23 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { "" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
     }
     if \$waited == 0 {
-      opPrintVerbose \$"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)"
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
     }
     sleep 500ms
     \$waited = \$waited + 1
   }
   if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
     }
   }
@@ -3500,30 +3568,30 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
+  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  opPrintVerbose \$"nu (\$nu_vers): fetching (\$url)"
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
   let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
   if \$fetched.exit_code != 0 {
     opPrintErr (\$fetched.stderr | str trim)
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let sums_url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/SHA256SUMS"
-  opPrintVerbose \$"nu (\$nu_vers): checking against (\$sums_url)"
+  let sums_url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/SHA256SUMS\\"
+  opPrintVerbose \$\\"nu (\$nu_vers): checking against (\$sums_url)\\"
   let sums = (do { ^curl --fail-with-body --location --no-progress-meter --url \$sums_url } | complete)
   let want = (\$sums.stdout | lines | split column --regex '\\\\s+' sum name | where name == \$asset | get -o 0.sum | default '')
   let got = (open --raw \$archive_path | hash sha256)
   if \$sums.exit_code != 0 or (\$want | is-empty) or \$got != \$want {
-    opPrintErr \$"nu (\$nu_vers): (\$asset) does not match the release's SHA256SUMS"
+    opPrintErr \$\\"nu (\$nu_vers): (\$asset) does not match the release's SHA256SUMS\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
@@ -3537,19 +3605,19 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  opPrintVerbose \$"nu (\$nu_vers): extracting into (\$extract_target)"
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
   let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
   if \$extracted.exit_code != 0 {
     opPrintErr (\$extracted.stderr | str trim)
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
   if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
@@ -3560,7 +3628,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
-  opPrintVerbose \$"nu (\$nu_vers): installed at (\$nu_bin)"
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -3576,8 +3644,8 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
+  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
 }
@@ -3599,7 +3667,7 @@ def --env wutPathRefresh [] {
     if (which pwsh | is-empty) {
       return
     }
-    let cmd = "\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep"
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
     ^pwsh -NoLogo -Command \$cmd | complete
   } else {
     if (which zsh | is-empty) {
@@ -3685,7 +3753,141 @@ def wutSelectRead [max: int] {
     return null
   }
   opPrint ''
-  wutSelectParse (input \$"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): ") \$max
+  wutSelectParse (input \$\\"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): \\") \$max
+}
+
+
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
 }
 
 
@@ -3701,7 +3903,7 @@ def scriptHasSvc [...svcs: string] {
   \$svcs | any { |s|
     match \$nu.os-info.name {
       'windows' => ((^sc.exe query \$s | complete | get exit_code) == 0)
-      'linux' => (['/etc/systemd/system' '/usr/lib/systemd/system' '/lib/systemd/system'] | any { |d| [\$d \$"(\$s).service"] | path join | path exists })
+      'linux' => (['/etc/systemd/system' '/usr/lib/systemd/system' '/lib/systemd/system'] | any { |d| [\$d \$\\"(\$s).service\\"] | path join | path exists })
       _ => false
     }
   }
@@ -3757,7 +3959,7 @@ def scriptShortName [u: record] {
   if (\$u.tool in (\$short | flatten)) {
     \$u.tool
   } else {
-    \$"(\$u.tool) \\\\((\$short | each { |names| \$names | str join ' or ' } | str join '; ')\\\\)"
+    \$\\"(\$u.tool) \\\\((\$short | each { |names| \$names | str join ' or ' } | str join '; ')\\\\)\\"
   }
 }
 
@@ -3778,12 +3980,13 @@ def --env scriptPlanRun [] {
   }
 
   wutTable ['action' 'tool' 'shell'] (\$here | enumerate | each { |u|
-    [\$"(\$u.index + 1)\\\\) (\$u.item.action)", \$u.item.tool, \$u.item.shell]
+    [\$\\"(\$u.index + 1)\\\\) (\$u.item.action)\\", \$u.item.tool, \$u.item.shell]
   })
   let picked = (wutSelectRead (\$here | length))
   if \$picked == null {
     return
   }
+  wutLockHold
   for i in \$picked {
     scriptRunUnit (\$here | get (\$i - 1) | get id)
   }
@@ -3809,7 +4012,7 @@ def scriptFindRun [] {
   let rows = (scriptFindRows (\$units | where skipped == ''))
   for r in \$rows {
     opPrint (\$r | get 0)
-    opPrint \$"  (\$r | get 1)"
+    opPrint \$\\"  (\$r | get 1)\\"
   }
   mut shown = (\$rows | is-not-empty)
   for group in \$SCRIPT_SKIPS {
@@ -3822,15 +4025,15 @@ def scriptFindRun [] {
     }
     opPrint \$group
     for r in \$groupRows {
-      opPrint \$"  (\$r | get 0)"
-      opPrint \$"    (\$r | get 1)"
+      opPrint \$\\"  (\$r | get 0)\\"
+      opPrint \$\\"    (\$r | get 1)\\"
     }
     \$shown = true
   }
 }
 
 
-\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"],"noCmds":[],"svcs":[],"noSvcs":[],"paths":[],"desktop":"","noSsh":false},{"id":"desktop/setup","action":"setup","tool":"desktop","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"paths":[],"desktop":"none","noSsh":false},{"id":"distro/setup","action":"setup","tool":"distro","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"paths":["/etc/wsl.conf"],"desktop":"","noSsh":false},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"],"noCmds":[],"svcs":[],"noSvcs":[],"paths":[],"desktop":"","noSsh":false},{"id":"docker/teardown","action":"teardown","tool":"docker","shell":"zsh","cmds":["docker"],"noCmds":[],"svcs":[],"noSvcs":[],"paths":[],"desktop":"","noSsh":false},{"id":"local/repair","action":"repair","tool":"local","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"paths":[],"desktop":"","noSsh":true}]'#
+\$env.SCRIPT_PLAN = r#'[{\\"id\\":\\"cargo/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"cargo\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[\\"cargo\\"],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"desktop/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"desktop\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"none\\",\\"noSsh\\":false},{\\"id\\":\\"distro/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"distro\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[\\"/etc/wsl.conf\\"],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"docker/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"docker\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[\\"docker\\"],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"docker/teardown\\",\\"action\\":\\"teardown\\",\\"tool\\":\\"docker\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[\\"docker\\"],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"local/repair\\",\\"action\\":\\"repair\\",\\"tool\\":\\"local\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":true}]'#
 
 scriptFindRun
 
@@ -3845,68 +4048,68 @@ scriptFindRun
     exit 130
   }
   \$e.raw
-}\`
+}"
 `;
 
 snapshot[`nu / linux / exec (action only, carries has_cmd into the plan) 1`] = `
-\`try {
+"try {
 try {
 \$env.REQ_URL_CFG = r#'http://x/cfg'#
 
 \$env.REQ_URL_SH = r#'http://x/sh/nu/script/exec/setup?sysOsPlat=linux&wutNuPinned=1'#
 
 def opPrint --wrapped [...args] {
-  \$"(\$args | flatten | str join ' ')" | print
+  \$\\"(\$args | flatten | str join ' ')\\" | print
 }
 
 def opPrintErr --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print --stderr
+    \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
     return
   }
-  \$"(ansi red)(\$args | flatten | str join ' ')(ansi reset)" | print --stderr
+  \$\\"(ansi red)(\$args | flatten | str join ' ')(ansi reset)\\" | print --stderr
 }
 
 def opPrintSucc --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi green)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi green)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintWarn --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi yellow)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintInfo --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
-  \$"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)" | print
+  \$\\"(ansi blue)(\$args | flatten | str join ' ')(ansi reset)\\" | print
 }
 
 def opPrintVerbose --wrapped [...args] {
   if VERBOSE not-in \$env {
     return
   }
-  \$"(\$args | flatten | str join ' ')" | print --stderr
+  \$\\"(\$args | flatten | str join ' ')\\" | print --stderr
 }
 
 def opPrintCmd --wrapped [...args] {
   if GRAYSCALE in \$env {
-    \$"(\$args | flatten | str join ' ')" | print
+    \$\\"(\$args | flatten | str join ' ')\\" | print
     return
   }
   let args = \$args | flatten
-  \$"(ansi magenta)(\$args | first)(ansi reset)" | print --no-newline
+  \$\\"(ansi magenta)(\$args | first)(ansi reset)\\" | print --no-newline
   if (\$args | length) > 1 {
-    \$" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)" | print
+    \$\\" (ansi cyan)(\$args | skip 1 | str join ' ')(ansi reset)\\" | print
   } else {
     print ''
   }
@@ -3937,16 +4140,16 @@ def opQuietInterrupt [body: string] {
     r#'  exit 130'#
     r#'}'#
     r#'\$e.raw'#
-  ] | each { |l| \$"  (\$l)" }
-  [r#'try {'# r#'try {'# \$body r#'} catch { |e|'# ...\$stop r#'}'# r#'} catch { |e|'# ...\$stop r#'}'#] | str join "\\\\n"
+  ] | each { |l| \$\\"  (\$l)\\" }
+  [r#'try {'# r#'try {'# \$body r#'} catch { |e|'# ...\$stop r#'}'# r#'} catch { |e|'# ...\$stop r#'}'#] | str join \\"\\\\n\\"
 }
 
 def opRunCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ')")
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ')\\")
 }
 
 def opRunSilentCmd --wrapped [...args] {
-  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$"(\$args | flatten | str join ' ') o+e> | silent")
+  ^(\$nu.current-exe) --no-config-file -c (opQuietInterrupt \$\\"(\$args | flatten | str join ' ') o+e> | silent\\")
 }
 
 # a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
@@ -3956,12 +4159,12 @@ def opAsk [question: string] {
     return true
   }
   if not (is-terminal --stdin) {
-    opPrintWarn \$"(\$question): no terminal to answer from, so no; YES answers yes"
+    opPrintWarn \$\\"(\$question): no terminal to answer from, so no; YES answers yes\\"
     return false
   }
   # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
   opPrint ''
-  let yn = (input \$"(\$question) [[y]/n]: " | str lowercase)
+  let yn = (input \$\\"(\$question) [[y]/n]: \\" | str lowercase)
   \$yn in ['' 'y' 'yes']
 }
 
@@ -3997,7 +4200,7 @@ do {
   let minor = \$env.SH_VERS_MINOR | into int
 
   if ((version | get major) < \$major) or ((version | get minor) < \$minor) {
-    opPrintErr \$"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting"
+    opPrintErr \$\\"nu must be >= '(\$major).(\$minor)' .. found '(version | get version)' .. aborting\\"
     exit 1
   }
 }
@@ -4036,13 +4239,13 @@ def wutNuLockRelease [lock_path: string] {
 
 def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string] {
   if (wutNuVersCurrent \$nu_bin \$nu_vers) {
-    opPrintVerbose \$"nu (\$nu_vers): current at (\$nu_bin)"
+    opPrintVerbose \$\\"nu (\$nu_vers): current at (\$nu_bin)\\"
     return
   }
   let found = if (\$nu_bin | path exists) { (do { ^\$nu_bin --version } | complete).stdout | str trim } else { '' }
-  opPrintVerbose \$"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing"
+  opPrintVerbose \$\\"nu (\$nu_vers): (\$nu_bin) has (if (\$found | is-empty) { 'none' } else { \$found }), syncing\\"
 
-  let triple = match \$"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)" {
+  let triple = match \$\\"(\$env.SYS_OS_PLAT)_(\$env.SYS_CPU_ARCH)\\" {
     'darwin_aarch64' => 'aarch64-apple-darwin',
     'darwin_x86_64' => 'x86_64-apple-darwin',
     'linux_aarch64' => 'aarch64-unknown-linux-gnu',
@@ -4055,7 +4258,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   let musl = (\$triple | str ends-with '-gnu') and ((glob '/lib/ld-musl-*.so.1' | is-not-empty) or not (\$gnu_loader | path exists))
   let triple = if \$musl { \$triple | str replace --regex '-gnu\$' '-musl' } else { \$triple }
   if \$triple == '' {
-    opPrintErr \$"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)"
+    opPrintErr \$\\"unsupported platform/arch for nu sync: (\$env.SYS_OS_PLAT)/(\$env.SYS_CPU_ARCH)\\"
     exit 1
   }
 
@@ -4070,23 +4273,23 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
     if (wutNuVersCurrent \$nu_bin \$nu_vers) {
       return
     }
-    let locked = (try { "" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if \$locked {
       \$acquired = true
       break
     }
     if \$waited == 0 {
-      opPrintVerbose \$"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)"
+      opPrintVerbose \$\\"nu (\$nu_vers): waiting on another sync's lock (\$lock_path)\\"
     }
     sleep 500ms
     \$waited = \$waited + 1
   }
   if not \$acquired {
-    opPrintWarn \$"reclaiming stale nu sync lock: (\$lock_path)"
+    opPrintWarn \$\\"reclaiming stale nu sync lock: (\$lock_path)\\"
     rm --force \$lock_path
-    let locked = (try { "" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
+    let locked = (try { \\"\\" | save \$lock_path; true } catch { |e| opRethrowInterrupt \$e; false })
     if not \$locked {
-      opPrintErr \$"failed to acquire nu sync lock: (\$lock_path)"
+      opPrintErr \$\\"failed to acquire nu sync lock: (\$lock_path)\\"
       exit 1
     }
   }
@@ -4097,30 +4300,30 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
 
   let ext_archive = if \$env.SYS_OS_PLAT == 'windows' { 'zip' } else { 'tar.gz' }
-  let asset = \$"nu-(\$nu_vers)-(\$triple).(\$ext_archive)"
-  let url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)"
+  let asset = \$\\"nu-(\$nu_vers)-(\$triple).(\$ext_archive)\\"
+  let url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/(\$asset)\\"
   let archive_path = (\$work_dir | path join \$asset)
-  let extract_dir = (\$work_dir | path join \$"nu-(\$nu_vers)-(\$triple)")
+  let extract_dir = (\$work_dir | path join \$\\"nu-(\$nu_vers)-(\$triple)\\")
 
   rm --force --recursive \$archive_path \$extract_dir
 
-  opPrintVerbose \$"nu (\$nu_vers): fetching (\$url)"
+  opPrintVerbose \$\\"nu (\$nu_vers): fetching (\$url)\\"
   let fetched = (do { ^curl --fail-with-body --location --no-progress-meter --output \$archive_path --url \$url } | complete)
   if \$fetched.exit_code != 0 {
     opPrintErr (\$fetched.stderr | str trim)
-    opPrintErr \$"failed to download nu (\$nu_vers): (\$url)"
+    opPrintErr \$\\"failed to download nu (\$nu_vers): (\$url)\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let sums_url = \$"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/SHA256SUMS"
-  opPrintVerbose \$"nu (\$nu_vers): checking against (\$sums_url)"
+  let sums_url = \$\\"https://github.com/nushell/nushell/releases/download/(\$nu_vers)/SHA256SUMS\\"
+  opPrintVerbose \$\\"nu (\$nu_vers): checking against (\$sums_url)\\"
   let sums = (do { ^curl --fail-with-body --location --no-progress-meter --url \$sums_url } | complete)
   let want = (\$sums.stdout | lines | split column --regex '\\\\s+' sum name | where name == \$asset | get -o 0.sum | default '')
   let got = (open --raw \$archive_path | hash sha256)
   if \$sums.exit_code != 0 or (\$want | is-empty) or \$got != \$want {
-    opPrintErr \$"nu (\$nu_vers): (\$asset) does not match the release's SHA256SUMS"
+    opPrintErr \$\\"nu (\$nu_vers): (\$asset) does not match the release's SHA256SUMS\\"
     rm --force \$archive_path
     wutNuLockRelease \$lock_path
     exit 1
@@ -4134,19 +4337,19 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   } else {
     \$work_dir
   }
-  opPrintVerbose \$"nu (\$nu_vers): extracting into (\$extract_target)"
+  opPrintVerbose \$\\"nu (\$nu_vers): extracting into (\$extract_target)\\"
   let extracted = (do { ^tar -xf \$archive_path -C \$extract_target } | complete)
   if \$extracted.exit_code != 0 {
     opPrintErr (\$extracted.stderr | str trim)
-    opPrintErr \$"failed to extract nu (\$nu_vers)"
+    opPrintErr \$\\"failed to extract nu (\$nu_vers)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
   }
 
-  let extracted_bin = (\$extract_dir | path join \$"nu(\$ext)")
+  let extracted_bin = (\$extract_dir | path join \$\\"nu(\$ext)\\")
   if not (\$extracted_bin | path exists) {
-    opPrintErr \$"nu binary not found in extracted archive: (\$extract_dir)"
+    opPrintErr \$\\"nu binary not found in extracted archive: (\$extract_dir)\\"
     rm --force --recursive \$archive_path \$extract_dir
     wutNuLockRelease \$lock_path
     exit 1
@@ -4157,7 +4360,7 @@ def wutNuInstall [wut_home: string, nu_bin: string, nu_vers: string, ext: string
   }
   mv --force \$extracted_bin \$nu_bin
   rm --force --recursive \$archive_path \$extract_dir
-  opPrintVerbose \$"nu (\$nu_vers): installed at (\$nu_bin)"
+  opPrintVerbose \$\\"nu (\$nu_vers): installed at (\$nu_bin)\\"
 
   wutNuLockRelease \$lock_path
 }
@@ -4173,8 +4376,8 @@ def --env wutNuSync [] {
   \$env.WUT_HOME = (\$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut'))
   let wut_home = \$env.WUT_HOME
   let ext = if \$env.SYS_OS_PLAT == 'windows' { '.exe' } else { '' }
-  let nu_bin = (\$wut_home | path join 'vendor' \$"nu(\$ext)")
-  let nu_vers = \$"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)"
+  let nu_bin = (\$wut_home | path join 'vendor' \$\\"nu(\$ext)\\")
+  let nu_vers = \$\\"(\$env.NU_VERS_MAJOR).(\$env.NU_VERS_MINOR).(\$env.NU_VERS_PATCH)\\"
 
   wutNuInstall \$wut_home \$nu_bin \$nu_vers \$ext
 }
@@ -4196,7 +4399,7 @@ def --env wutPathRefresh [] {
     if (which pwsh | is-empty) {
       return
     }
-    let cmd = "\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep"
+    let cmd = \\"\$sep = [IO.Path]::PathSeparator; \$reg = @('Machine', 'User') | ForEach-Object { [Environment]::GetEnvironmentVariable('Path', \$_) }; (((\$env:PATH -split \$sep) + (\$reg -split \$sep)) | Where-Object { \$_ } | Select-Object -Unique) -join \$sep\\"
     ^pwsh -NoLogo -Command \$cmd | complete
   } else {
     if (which zsh | is-empty) {
@@ -4284,7 +4487,141 @@ def wutSelectRead [max: int] {
     return null
   }
   opPrint ''
-  wutSelectParse (input \$"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): ") \$max
+  wutSelectParse (input \$\\"enter number\\\\(s\\\\) [empty=all] \\\\(0=quit | 1[,][-](\$max)\\\\): \\") \$max
+}
+
+
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
 }
 
 
@@ -4300,7 +4637,7 @@ def scriptHasSvc [...svcs: string] {
   \$svcs | any { |s|
     match \$nu.os-info.name {
       'windows' => ((^sc.exe query \$s | complete | get exit_code) == 0)
-      'linux' => (['/etc/systemd/system' '/usr/lib/systemd/system' '/lib/systemd/system'] | any { |d| [\$d \$"(\$s).service"] | path join | path exists })
+      'linux' => (['/etc/systemd/system' '/usr/lib/systemd/system' '/lib/systemd/system'] | any { |d| [\$d \$\\"(\$s).service\\"] | path join | path exists })
       _ => false
     }
   }
@@ -4356,7 +4693,7 @@ def scriptShortName [u: record] {
   if (\$u.tool in (\$short | flatten)) {
     \$u.tool
   } else {
-    \$"(\$u.tool) \\\\((\$short | each { |names| \$names | str join ' or ' } | str join '; ')\\\\)"
+    \$\\"(\$u.tool) \\\\((\$short | each { |names| \$names | str join ' or ' } | str join '; ')\\\\)\\"
   }
 }
 
@@ -4377,12 +4714,13 @@ def --env scriptPlanRun [] {
   }
 
   wutTable ['action' 'tool' 'shell'] (\$here | enumerate | each { |u|
-    [\$"(\$u.index + 1)\\\\) (\$u.item.action)", \$u.item.tool, \$u.item.shell]
+    [\$\\"(\$u.index + 1)\\\\) (\$u.item.action)\\", \$u.item.tool, \$u.item.shell]
   })
   let picked = (wutSelectRead (\$here | length))
   if \$picked == null {
     return
   }
+  wutLockHold
   for i in \$picked {
     scriptRunUnit (\$here | get (\$i - 1) | get id)
   }
@@ -4408,7 +4746,7 @@ def scriptFindRun [] {
   let rows = (scriptFindRows (\$units | where skipped == ''))
   for r in \$rows {
     opPrint (\$r | get 0)
-    opPrint \$"  (\$r | get 1)"
+    opPrint \$\\"  (\$r | get 1)\\"
   }
   mut shown = (\$rows | is-not-empty)
   for group in \$SCRIPT_SKIPS {
@@ -4421,8 +4759,8 @@ def scriptFindRun [] {
     }
     opPrint \$group
     for r in \$groupRows {
-      opPrint \$"  (\$r | get 0)"
-      opPrint \$"    (\$r | get 1)"
+      opPrint \$\\"  (\$r | get 0)\\"
+      opPrint \$\\"    (\$r | get 1)\\"
     }
     \$shown = true
   }
@@ -4432,69 +4770,69 @@ def scriptFindRun [] {
 def --env scriptRunUnit [id: string] {
   match \$id {
     r#'cargo/setup'# => { zsh --no-rcs -c r#'function opPrint {
-  print -r -- "\$*"
+  print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
+    print -r -- \\"\$*\\" >&2
     return
   fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
+  print -n \\"\\\\033[0;31m\\" >&2
+  print -n -r -- \\"\$*\\" >&2
+  print \\"\\\\033[0m\\" >&2
 }
 
 function opPrintSucc {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;32m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintWarn {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;33m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintInfo {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;34m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintVerbose {
   if [[ -z \$VERBOSE ]]; then
     return
   fi
-  print -r -- "\$*" >&2
+  print -r -- \\"\$*\\" >&2
 }
 
 function opPrintCmd {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
+  print -n \\"\\\\033[0;35m\\"
+  print -n -r \\"\$1\\"
+  print -n \\"\\\\033[0m\\"
   shift 1
   if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
+    print -n \\" \\\\033[0;36m\\"
+    print -n -r -- \\"\$*\\"
+    print \\"\\\\033[0m\\"
   else
     print
   fi
@@ -4502,16 +4840,16 @@ function opPrintCmd {
 
 function opMaybePrintCmd {
   if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
+    opPrintCmd \\"\$@\\"
   fi
 }
 
 function opRunCmd {
-  eval "\$*"
+  eval \\"\$*\\"
 }
 
 function opRunSilentCmd {
-  eval "\$*" &> /dev/null
+  eval \\"\$*\\" &> /dev/null
 }
 
 # a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
@@ -4521,36 +4859,36 @@ function opAsk {
     return 0
   fi
   if [[ ! -t 0 ]]; then
-    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    opPrintWarn \\"\${1}: no terminal to answer from, so no; YES answers yes\\"
     return 1
   fi
   # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
   opPrint ''
   local yn=''
-  read "yn?\${1} [[y]/n]: "
+  read \\"yn?\${1} [[y]/n]: \\"
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
+    opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
   if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
+    opRunSilentCmd \\"\$@\\"
   fi
 }
 
 function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opRunCmd \\"\$@\\"
 }
 
 function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opMaybeRunCmd \\"\$@\\"
 }
 
 function () {
@@ -4566,75 +4904,75 @@ function () {
     return
   fi
   local url='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
-  opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url "\${url}" '|' bash
+  opPrintMaybeRunCmd curl --fail-with-body --location --no-progress-meter --url \\"\${url}\\" '|' bash
   opPrintMaybeRunCmd cargo binstall cargo-cache
   opPrintMaybeRunCmd cargo binstall cargo-update
 }
 '# }
     r#'desktop/setup'# => { zsh --no-rcs -c r#'function opPrint {
-  print -r -- "\$*"
+  print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
+    print -r -- \\"\$*\\" >&2
     return
   fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
+  print -n \\"\\\\033[0;31m\\" >&2
+  print -n -r -- \\"\$*\\" >&2
+  print \\"\\\\033[0m\\" >&2
 }
 
 function opPrintSucc {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;32m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintWarn {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;33m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintInfo {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;34m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintVerbose {
   if [[ -z \$VERBOSE ]]; then
     return
   fi
-  print -r -- "\$*" >&2
+  print -r -- \\"\$*\\" >&2
 }
 
 function opPrintCmd {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
+  print -n \\"\\\\033[0;35m\\"
+  print -n -r \\"\$1\\"
+  print -n \\"\\\\033[0m\\"
   shift 1
   if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
+    print -n \\" \\\\033[0;36m\\"
+    print -n -r -- \\"\$*\\"
+    print \\"\\\\033[0m\\"
   else
     print
   fi
@@ -4642,16 +4980,16 @@ function opPrintCmd {
 
 function opMaybePrintCmd {
   if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
+    opPrintCmd \\"\$@\\"
   fi
 }
 
 function opRunCmd {
-  eval "\$*"
+  eval \\"\$*\\"
 }
 
 function opRunSilentCmd {
-  eval "\$*" &> /dev/null
+  eval \\"\$*\\" &> /dev/null
 }
 
 # a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
@@ -4661,36 +4999,36 @@ function opAsk {
     return 0
   fi
   if [[ ! -t 0 ]]; then
-    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    opPrintWarn \\"\${1}: no terminal to answer from, so no; YES answers yes\\"
     return 1
   fi
   # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
   opPrint ''
   local yn=''
-  read "yn?\${1} [[y]/n]: "
+  read \\"yn?\${1} [[y]/n]: \\"
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
+    opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
   if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
+    opRunSilentCmd \\"\$@\\"
   fi
 }
 
 function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opRunCmd \\"\$@\\"
 }
 
 function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opMaybeRunCmd \\"\$@\\"
 }
 
 function () {
@@ -4702,69 +5040,69 @@ function () {
 }
 '# }
     r#'distro/setup'# => { zsh --no-rcs -c r#'function opPrint {
-  print -r -- "\$*"
+  print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
+    print -r -- \\"\$*\\" >&2
     return
   fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
+  print -n \\"\\\\033[0;31m\\" >&2
+  print -n -r -- \\"\$*\\" >&2
+  print \\"\\\\033[0m\\" >&2
 }
 
 function opPrintSucc {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;32m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintWarn {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;33m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintInfo {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;34m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintVerbose {
   if [[ -z \$VERBOSE ]]; then
     return
   fi
-  print -r -- "\$*" >&2
+  print -r -- \\"\$*\\" >&2
 }
 
 function opPrintCmd {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
+  print -n \\"\\\\033[0;35m\\"
+  print -n -r \\"\$1\\"
+  print -n \\"\\\\033[0m\\"
   shift 1
   if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
+    print -n \\" \\\\033[0;36m\\"
+    print -n -r -- \\"\$*\\"
+    print \\"\\\\033[0m\\"
   else
     print
   fi
@@ -4772,16 +5110,16 @@ function opPrintCmd {
 
 function opMaybePrintCmd {
   if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
+    opPrintCmd \\"\$@\\"
   fi
 }
 
 function opRunCmd {
-  eval "\$*"
+  eval \\"\$*\\"
 }
 
 function opRunSilentCmd {
-  eval "\$*" &> /dev/null
+  eval \\"\$*\\" &> /dev/null
 }
 
 # a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
@@ -4791,36 +5129,36 @@ function opAsk {
     return 0
   fi
   if [[ ! -t 0 ]]; then
-    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    opPrintWarn \\"\${1}: no terminal to answer from, so no; YES answers yes\\"
     return 1
   fi
   # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
   opPrint ''
   local yn=''
-  read "yn?\${1} [[y]/n]: "
+  read \\"yn?\${1} [[y]/n]: \\"
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
+    opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
   if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
+    opRunSilentCmd \\"\$@\\"
   fi
 }
 
 function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opRunCmd \\"\$@\\"
 }
 
 function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opMaybeRunCmd \\"\$@\\"
 }
 
 function () {
@@ -4832,69 +5170,69 @@ function () {
 }
 '# }
     r#'docker/setup'# => { zsh --no-rcs -c r#'function opPrint {
-  print -r -- "\$*"
+  print -r -- \\"\$*\\"
 }
 
 function opPrintErr {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*" >&2
+    print -r -- \\"\$*\\" >&2
     return
   fi
-  print -n "\\\\033[0;31m" >&2
-  print -n -r -- "\$*" >&2
-  print "\\\\033[0m" >&2
+  print -n \\"\\\\033[0;31m\\" >&2
+  print -n -r -- \\"\$*\\" >&2
+  print \\"\\\\033[0m\\" >&2
 }
 
 function opPrintSucc {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;32m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;32m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintWarn {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;33m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;33m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintInfo {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;34m"
-  print -n -r -- "\$*"
-  print "\\\\033[0m"
+  print -n \\"\\\\033[0;34m\\"
+  print -n -r -- \\"\$*\\"
+  print \\"\\\\033[0m\\"
 }
 
 function opPrintVerbose {
   if [[ -z \$VERBOSE ]]; then
     return
   fi
-  print -r -- "\$*" >&2
+  print -r -- \\"\$*\\" >&2
 }
 
 function opPrintCmd {
   if [[ \$GRAYSCALE ]]; then
-    print -r -- "\$*"
+    print -r -- \\"\$*\\"
     return
   fi
-  print -n "\\\\033[0;35m"
-  print -n -r "\$1"
-  print -n "\\\\033[0m"
+  print -n \\"\\\\033[0;35m\\"
+  print -n -r \\"\$1\\"
+  print -n \\"\\\\033[0m\\"
   shift 1
   if [[ \$* ]]; then
-    print -n " \\\\033[0;36m"
-    print -n -r -- "\$*"
-    print "\\\\033[0m"
+    print -n \\" \\\\033[0;36m\\"
+    print -n -r -- \\"\$*\\"
+    print \\"\\\\033[0m\\"
   else
     print
   fi
@@ -4902,16 +5240,16 @@ function opPrintCmd {
 
 function opMaybePrintCmd {
   if [[ -z \$NOOP ]]; then
-    opPrintCmd "\$@"
+    opPrintCmd \\"\$@\\"
   fi
 }
 
 function opRunCmd {
-  eval "\$*"
+  eval \\"\$*\\"
 }
 
 function opRunSilentCmd {
-  eval "\$*" &> /dev/null
+  eval \\"\$*\\" &> /dev/null
 }
 
 # a yes/no question: empty, y or yes is yes, and YES answers yes without asking. with no terminal to answer from,
@@ -4921,36 +5259,36 @@ function opAsk {
     return 0
   fi
   if [[ ! -t 0 ]]; then
-    opPrintWarn "\${1}: no terminal to answer from, so no; YES answers yes"
+    opPrintWarn \\"\${1}: no terminal to answer from, so no; YES answers yes\\"
     return 1
   fi
   # a question starts a step of its own: one blank line before it, and what it lets through right below the answer
   opPrint ''
   local yn=''
-  read "yn?\${1} [[y]/n]: "
+  read \\"yn?\${1} [[y]/n]: \\"
   [[ -z \$yn || \${(L)yn} == y || \${(L)yn} == yes ]]
 }
 
 function opMaybeRunCmd {
   if [[ -z \$NOOP ]]; then
-    opRunCmd "\$@"
+    opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
   if [[ -z \$NOOP ]]; then
-    opRunSilentCmd "\$@"
+    opRunSilentCmd \\"\$@\\"
   fi
 }
 
 function opPrintRunCmd {
-  opPrintCmd "\$@"
-  opRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opRunCmd \\"\$@\\"
 }
 
 function opPrintMaybeRunCmd {
-  opPrintCmd "\$@"
-  opMaybeRunCmd "\$@"
+  opPrintCmd \\"\$@\\"
+  opMaybeRunCmd \\"\$@\\"
 }
 
 function () {
@@ -4968,110 +5306,9 @@ function () {
   }
 }
 
-\$env.SCRIPT_PLAN = r#'[{"id":"cargo/setup","action":"setup","tool":"cargo","shell":"zsh","cmds":["cargo"],"noCmds":[],"svcs":[],"noSvcs":[],"paths":[],"desktop":"","noSsh":false},{"id":"desktop/setup","action":"setup","tool":"desktop","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"paths":[],"desktop":"none","noSsh":false},{"id":"distro/setup","action":"setup","tool":"distro","shell":"zsh","cmds":[],"noCmds":[],"svcs":[],"noSvcs":[],"paths":["/etc/wsl.conf"],"desktop":"","noSsh":false},{"id":"docker/setup","action":"setup","tool":"docker","shell":"zsh","cmds":["docker"],"noCmds":[],"svcs":[],"noSvcs":[],"paths":[],"desktop":"","noSsh":false}]'#
+\$env.SCRIPT_PLAN = r#'[{\\"id\\":\\"cargo/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"cargo\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[\\"cargo\\"],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"desktop/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"desktop\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"none\\",\\"noSsh\\":false},{\\"id\\":\\"distro/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"distro\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[\\"/etc/wsl.conf\\"],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"docker/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"docker\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[\\"docker\\"],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":false}]'#
 
-# one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
-
-def wutLockPath [name: string] {
-  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' \$name
-}
-
-def wutLockEnvKey [name: string] {
-  \$"WUT_LOCK_(\$name | str uppercase)"
-}
-
-# a pid and when it started, so a pid handed on to another process since is not taken for the holder
-def wutLockStamp [pid: int] {
-  let found = (ps --long | where pid == \$pid)
-  if (\$found | is-empty) {
-    return ''
-  }
-  let started = (\$found | first | get -o start_time)
-  if \$started == null { \$"(\$pid)" } else { \$"(\$pid) (\$started | format date '%s')" }
-}
-
-def wutLockHolder [dir: string] {
-  try { open --raw (\$dir | path join 'pid') | str trim } catch { |e| opRethrowInterrupt \$e; '' }
-}
-
-# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
-def wutLockMake [dir: string] {
-  let parent = (\$dir | path dirname)
-  mkdir \$parent
-  let made = if \$nu.os-info.name == 'windows' {
-    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
-  } else {
-    do { ^mkdir \$dir } | complete
-  }
-  \$made.exit_code == 0
-}
-
-# true once this run holds the lock, false when the run that started this one already does
-def --env wutLockTake [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  let inherited = (\$env | get -o \$key | default '')
-  if \$inherited != '' and (wutLockHolder \$dir) == \$inherited {
-    let pid = (\$inherited | split row ' ' | first | into int)
-    if (wutLockStamp \$pid) == \$inherited {
-      return false
-    }
-  }
-
-  let own = (wutLockStamp \$nu.pid)
-  for attempt in 1..50 {
-    if (wutLockMake \$dir) {
-      \$own | save --force (\$dir | path join 'pid')
-      load-env { \$key: \$own }
-      return true
-    }
-    let held = (wutLockHolder \$dir)
-    if \$held == '' {
-      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
-      if ((date now) - \$made) < 5sec {
-        sleep 100ms
-        continue
-      }
-    } else {
-      let pid = (try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 })
-      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
-        opPrintErr \$"wut (\$name) is already running here as pid (\$pid): wait for it to end, or stop it"
-        exit 1
-      }
-    }
-    if (wutLockHolder \$dir) == \$held {
-      rm --recursive --force \$dir
-    }
-  }
-  opPrintErr \$"could not take the wut (\$name) lock: (\$dir)"
-  exit 1
-}
-
-def --env wutLockDrop [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  if (wutLockHolder \$dir) == (\$env | get -o \$key) {
-    rm --recursive --force \$dir
-  }
-  hide-env -i \$key
-}
-
-def --env wutLockRun [name: string, work: closure] {
-  if not (wutLockTake \$name) {
-    do --env \$work
-    return
-  }
-  try {
-    do --env \$work
-  } catch { |e|
-    wutLockDrop \$name
-    opRethrowInterrupt \$e
-    \$e.raw
-  }
-  wutLockDrop \$name
-}
-
-wutLockRun r#'script'# {
+wutLockScope r#'script exec'# {
   scriptPlanRun
 }
 
@@ -5086,5 +5323,5 @@ wutLockRun r#'script'# {
     exit 130
   }
   \$e.raw
-}\`
+}"
 `;

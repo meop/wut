@@ -211,6 +211,7 @@ async function loadManagerFiles(
 ) {
   let _shell = shell
     .with(await shell.fileLoad(['sel'], import.meta.resolve, ['..']))
+    .with(await shell.fileLoad(['lock'], import.meta.resolve, ['..']))
     .with(await shell.fileLoad(['match'], import.meta.resolve, ['..']))
     .with(await shell.fileLoad([PACK_KEY], import.meta.resolve, ['..']))
   const loadedOps = new Map<string, Array<string>>()
@@ -788,7 +789,7 @@ async function execOp(
   }
 
   if (op === 'tidy') {
-    return buildAndLog(result.with(await lockRun(result, PACK_KEY, ['packManagerPlanRun'])), environment)
+    return buildAndLog(result.with(lockRun(result, `${PACK_KEY} ${op}`, ['packManagerPlanRun'])), environment)
   }
 
   const names = environment.getSplit(PACK_OP_NAMES_KEY(op))
@@ -830,13 +831,13 @@ async function execOp(
       .with(result.varSetStr(PACK_PLAN_KEY, JSON.stringify(units)))
     // always stated, since the env dump has already set this key to the raw cli names
     result = result.with(result.varSetArr(PACK_OP_NAMES_KEY(op), loose))
-    result = result.with(await lockRun(result, PACK_KEY, ['packPlanRun']))
+    result = result.with(lockRun(result, `${PACK_KEY} ${op}`, ['packPlanRun']))
 
     return buildAndLog(result, environment)
   } else if (op === 'sync') {
     result = result
       .with(result.varSetStr(PACK_SELF_KEY, JSON.stringify(await findSelfUpdates(context.sys_os_plat ?? ''))))
-      .with(await lockRun(result, PACK_KEY, ['packManagerPlanRun']))
+      .with(lockRun(result, `${PACK_KEY} ${op}`, ['packManagerPlanRun']))
 
     return buildAndLog(result, environment)
   }
@@ -861,7 +862,7 @@ async function execOp(
         result.varSetArr(PACK_MANAGERS_KEY, allManagers.filter((m) => declared[m]?.length)),
       )
     }
-    result = result.with(['packManagerPlanRun'])
+    result = result.with(lockRun(result, `${PACK_KEY} ${op}`, ['packManagerPlanRun']))
 
     return buildAndLog(result, environment)
   }
@@ -871,9 +872,10 @@ async function execOp(
     // list and outdated filter what is installed, and that is answerable locally, so a term resolves before either
     // asks. info reaches the network whatever it is given, so its only question stays which managers to run
     const local = op === 'list' || op === 'outdated'
-    result = result.with(
-      local ? [`packTermPlanRun ${result.toLiteral(joinKey(...PACK_OP_NAMES_KEY(op)))}`] : ['packManagerPlanRun'],
-    )
+    const run = local
+      ? [`packTermPlanRun ${result.toLiteral(joinKey(...PACK_OP_NAMES_KEY(op)))}`]
+      : ['packManagerPlanRun']
+    result = result.with(op === 'list' ? run : lockRun(result, `${PACK_KEY} ${op}`, run))
   }
 
   return buildAndLog(result, environment)

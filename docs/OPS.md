@@ -162,50 +162,74 @@ How the shells around nu treat a ctrl-c, which the hop from the calling shell to
   (`NativeCommandProcessor.StopProcessing`), which would cut nu off mid-cleanup. The hop must stay standalone.
 - A pwsh script stopped by a ctrl-c exits 0 itself; at an interactive prompt, `$LASTEXITCODE` is nu's 130.
 
-## One run of a command at a time
+## One host lock
 
-Two runs of one command on one machine act on the same state at once: two `virt sync`s stop and re-add the same instance
-together, two `pack add`s race for the package database. So an op that changes the machine holds a lock named for its
-command for its whole run, prompt included, and a second run of that command stops at once, naming the holder —
-`wut virt is already running here as pid 4242: wait for it to end, or stop it` — and exits 1. It does not wait: the
-first run may sit at its prompt for as long as nobody answers, and waiting without a word looks like a hang.
+Anything that changes the machine can meet anything else that does: two `pack add`s race for the package database, a
+`script exec` whose script runs pacman meets a `pack sync`, a script that rewrites the lxc bridge meets a `virt sync`,
+and a pack op can run a script that runs another wut. So there is one lock for the whole machine, not one per command,
+and every run that is about to change the machine takes it first.
 
-Commands lock apart, so `wut virt sync` and `wut pack sync` run side by side. Ops that only read take no lock:
+It is held from where a run starts to change the machine until the run ends, never across the question before that:
 
-| Command  | Locks                                                                         | Takes no lock                      |
-| -------- | ----------------------------------------------------------------------------- | ---------------------------------- |
-| `pack`   | `add`, `remove`, `sync`, `tidy`                                               | `find`, `info`, `list`, `outdated` |
-| `virt`   | `add`, `on`, `off`, `rem`, `snap`, `unsnap`, `roll`, `unroll`, `sync`, `tidy` | `find`, `list`, `run`              |
-| `file`   | `sync`                                                                        | `diff`, `find`, `list`             |
-| `script` | `exec`                                                                        | `find`                             |
+- **The scope.** The server wraps an op that may change the machine in `wutLockScope` (`lockRun` in `src/sh.ts`), named
+  for what a run waiting on it is told: `wutLockScope 'pack sync' { packManagerPlanRun }`. The scope takes nothing; it
+  marks the run as one that may, and gives the lock back when the run ends, if the run took it.
+- **The hold.** A runner calls `wutLockHold` at the point its work starts, right after its question: pack where it sets
+  `PACK_AGREED`, virt where it sets `VIRT_AGREED` (`roll` and `unroll` after their own per-instance question instead),
+  file where `sync` starts writing, script after its pick. Outside a scope `wutLockHold` does nothing, so a reading op
+  that shares a runner with a changing one, `list` beside `outdated`, takes no lock.
+- **New code that changes the machine** runs in a scope and calls `wutLockHold` before its first change, after any
+  question. A hold anywhere in a run that already holds the lock does nothing, so calling it again is always safe.
 
-`virt run` acts but takes no lock: it is a foreground session that can last hours and touches nothing `add` owns
-([VIRT.md](VIRT.md#qemu-add-installs-run-does-not)), so holding the lock through it would only block every other virt op
-until the guest shuts down.
+Which ops run in a scope:
 
-`src/cmd/lock_test.ts` holds this table.
+| Command  | In a scope                                                                    | Not                    |
+| -------- | ----------------------------------------------------------------------------- | ---------------------- |
+| `pack`   | `add`, `info`, `outdated`, `remove`, `sync`, `tidy`                           | `find`, `list`         |
+| `virt`   | `add`, `on`, `off`, `rem`, `snap`, `unsnap`, `roll`, `unroll`, `sync`, `tidy` | `find`, `list`, `run`  |
+| `file`   | `sync`                                                                        | `diff`, `find`, `list` |
+| `script` | `exec`                                                                        | `find`                 |
+
+Pack's info and outdated only report, but each manager refreshes its index first, and a refresh writes the package
+database as an add does. `virt run` acts but takes no lock: it is a foreground session that can last hours and touches
+nothing `add` owns ([VIRT.md](VIRT.md#qemu-add-installs-run-does-not)), so holding the lock through it would block every
+other change until the guest shuts down. `src/cmd/lock_test.ts` holds this table.
+
+A second run waits for the lock, and says once what it waits on:
+
+```
+waiting for `wut pack sync` (pid 4242) to finish changing this host
+```
+
+It goes on when the holder lets go, and a ctrl-c stops the wait. It waits rather than refusing because a holder is doing
+work by then, not sitting at wut's question: the wait ends when the work does. What can still hold the lock across a
+prompt is a tool's own (pacman's `[Y/n]`) or a script's (`opAsk` in a setup script), asked after wut's question, while
+the work runs; the waiting run's line names who it waits for.
 
 How it holds:
 
-- **One place.** Every command's client side runs in the pinned nu, whichever shell called wut, so the lock is written
-  once, in `src/sh/nu/lock.nu`, and holds the same from zsh, pwsh and nu, on linux, macos and windows. The server wraps
-  an op's plan runner in it (`lockRun` in `src/sh.ts`): `wutLockRun 'virt' { virtPlanRun }`.
-- **Atomic take.** The lock is the directory `$WUT_HOME/lock/<command>`, made by the os's own `mkdir` (`cmd /c mkdir` on
+- **One place, every platform.** Every command's client side runs in the pinned nu, whichever shell called wut, so the
+  lock is written once, in `src/sh/nu/lock.nu`, and holds the same from zsh, pwsh and nu, on linux, macos and windows,
+  on any arch. Each command's script loads it beside `sel.nu`, whether or not the op locks.
+- **Atomic take.** The lock is the directory `$WUT_HOME/lock/host`, made by the os's own `mkdir` (`cmd /c mkdir` on
   windows), which fails when the directory is already there; nu's `mkdir` is `mkdir -p` and cannot tell. No `flock`,
-  which macos lacks. Inside, `pid` holds the holder's pid and the time it started.
+  which macos lacks. Inside, `pid` holds the holder's pid and the time it started, and `what` the scope's name.
+- **A run inside a run.** A run the holder starts — a wut a pack op chains to, a script that calls wut — is inside the
+  lock rather than waiting on its own parent. It knows by the stamp the holder hands down in `WUT_LOCK_HOST`, or, when
+  `sudo`, `su` or a service started it without that environment, by the holder's pid among its own ancestors (nu's `ps`,
+  on every platform). A scope inside a scope keeps the outer one's name, and only the outer one gives the lock back.
 - **Stale is free.** A holder whose pid is gone, or whose pid now belongs to a process that started at another time, is
   not holding anything: its directory is removed and taken, without a word. A directory with no `pid` yet is a run
   between its `mkdir` and its write, and is waited on for up to 5s before it counts as stale.
 - **Released however it ends.** A run that ends, fails or is stopped by a ctrl-c gives the lock back first: the catch
-  around the runner releases, then hands the error on through `opRethrowInterrupt`, so a ctrl-c still stops the run
+  around the scope releases, then hands the error on through `opRethrowInterrupt`, so a ctrl-c still stops the run
   (above). nu cannot catch an `exit`, and a run that recorded failures ends on `exit 1`; that leaves the directory with
   a holder that is gone, which the next run takes as stale. A kill, a crash, or a second ctrl-c landing during the
   release leave the same.
-- **A run inside a run.** The holder exports `WUT_LOCK_<COMMAND>` with its stamp, so a run it starts itself — a script
-  under `script exec` that calls `wut script exec` — finds its own ancestor holding the lock and runs inside it rather
-  than refusing.
 - **Per machine, per user.** The lock lives under `WUT_HOME`, which is per user. wut runs as the user and reaches root
-  through `sudo`, so in practice that is per machine.
+  through `sudo`, so in practice that is per machine; two users changing one machine at once are not kept apart.
+- **wut's runs only.** The lock keeps wut's own runs apart. Another program holding a manager's own lock
+  (unattended-upgrades, PackageKit) still makes that manager fail, and wut reports it as failed.
 
 Two runs that find the same stale lock at the same moment both try to take it; the `mkdir` lets one through, and each
 checks the holder again just before removing, so neither removes the other's fresh lock outside a window of

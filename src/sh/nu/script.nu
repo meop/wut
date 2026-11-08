@@ -93,6 +93,7 @@ def --env scriptPlanRun [] {
   if $picked == null {
     return
   }
+  wutLockHold
   for i in $picked {
     scriptRunUnit ($here | get ($i - 1) | get id)
   }

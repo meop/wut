@@ -5,6 +5,7 @@ import { assertEquals } from '@std/assert'
 import { runNu } from '../../_test.ts'
 import { getScriptFlavorOpPreamble } from '../../sh.ts'
 
+const LOCK_NU = new URL('./lock.nu', import.meta.url).pathname
 const VIRT_NU = new URL('./virt.nu', import.meta.url).pathname
 const SEL_NU = new URL('./sel.nu', import.meta.url).pathname
 const MATCH_NU = new URL('./match.nu', import.meta.url).pathname
@@ -18,7 +19,7 @@ async function withAdded(files: Array<string>, probe: (root: string) => string):
       await Deno.mkdir(path.slice(0, path.lastIndexOf('/')), { recursive: true })
       await Deno.writeTextFile(path, '')
     }
-    return await runNu([await Deno.readTextFile(VIRT_NU), probe(root)].join('\n'))
+    return await runNu([await Deno.readTextFile(LOCK_NU), await Deno.readTextFile(VIRT_NU), probe(root)].join('\n'))
   } finally {
     await Deno.remove(root, { recursive: true })
   }
@@ -71,6 +72,7 @@ esac
     await Deno.chmod(`${dir}/sudo`, 0o755)
     await Deno.chmod(`${dir}/docker`, 0o755)
     const out = await runNu([
+      await Deno.readTextFile(LOCK_NU),
       await Deno.readTextFile(VIRT_NU),
       `$env.PATH = ['${dir}']`,
       `print (virtPlanAdded [{manager: docker, instances: [app svc web]}] | get instances | flatten | str join ',')`,
@@ -107,6 +109,7 @@ esac`,
         /^def wutSelectRead [\s\S]*?^}$/m,
         `def wutSelectRead [max: int] { ${JSON.stringify(pick).replaceAll(',', ' ')} }`,
       ),
+      await Deno.readTextFile(LOCK_NU),
       (await Deno.readTextFile(VIRT_NU)).replace(
         /^def --env virtCallManager [\s\S]*?^}$/m,
         `def --env virtCallManager [manager: string] { print $"-> ($manager) ($env.VIRT_INSTANCES | str join ' ')" }`,

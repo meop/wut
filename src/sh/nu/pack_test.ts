@@ -5,6 +5,7 @@ import { assertEquals } from '@std/assert'
 import { runNu } from '../../_test.ts'
 import { getScriptFlavorOpPreamble } from '../../sh.ts'
 
+const LOCK_NU = new URL('./lock.nu', import.meta.url).pathname
 const PACK_NU = new URL('./pack.nu', import.meta.url).pathname
 const SEL_NU = new URL('./sel.nu', import.meta.url).pathname
 const PATH_NU = new URL('./path.nu', import.meta.url).pathname
@@ -59,6 +60,7 @@ async function withStubs(
           typeof pick === 'string' ? pick : JSON.stringify(pick).replaceAll(',', ' ')
         } }`,
       ),
+      await Deno.readTextFile(LOCK_NU),
       await Deno.readTextFile(PACK_NU),
       ...await Promise.all(
         managerFiles.map((m) => Deno.readTextFile(new URL(`./pack/${m}.nu`, import.meta.url).pathname)),

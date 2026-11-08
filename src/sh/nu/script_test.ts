@@ -3,6 +3,7 @@ import { assertEquals } from '@std/assert'
 import { runNu } from '../../_test.ts'
 import { getScriptFlavorOpPreamble } from '../../sh.ts'
 
+const LOCK_NU = new URL('./lock.nu', import.meta.url).pathname
 const SCRIPT_NU = new URL('./script.nu', import.meta.url).pathname
 const SEL_NU = new URL('./sel.nu', import.meta.url).pathname
 
@@ -11,6 +12,7 @@ async function withPlan(units: Array<Record<string, unknown>>, probe: string) {
   return await runNu([
     await getScriptFlavorOpPreamble('nu'),
     await Deno.readTextFile(SEL_NU),
+    await Deno.readTextFile(LOCK_NU),
     await Deno.readTextFile(SCRIPT_NU),
     `$env.SCRIPT_PLAN = r#'${JSON.stringify(units)}'#`,
     probe,

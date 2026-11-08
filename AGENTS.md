@@ -166,6 +166,13 @@ group's block in a listing is one too. A step prints its blank (`opPrint ''`) on
 (`PACK_PRINTED`), and only when it prints something itself. `wutSelectRead` prints the question's blank, under `-y` too;
 shire's `opAsk` prints its own.
 
+## Changing the machine
+
+One lock covers every wut run that changes the machine, whichever command it is and whichever command started it. Code
+that changes the machine runs inside a `wutLockScope` and calls `wutLockHold` right before its first change, after any
+question; a run waits for another that holds it, and a run started by the holder is already inside. See
+[docs/OPS.md](docs/OPS.md#one-host-lock).
+
 ## Multi-Shell Support
 
 The server primarily generates nushell scripts. `pwsh`/`zsh` shells are redirected to nushell equivalents for commands

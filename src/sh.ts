@@ -65,11 +65,11 @@ export function execScriptShell(shell: Sh, plat: string, shellFlavor: string, cm
   return `${bin} ${targetShell.execArgs(shell.toLiteral(targetShell.quietInterrupt(cmd)))}`
 }
 
-// a mutating op's run, held under its command's lock until it ends; see docs/OPS.md (One run of a command at a time)
-export async function lockRun(shell: Sh, name: string, lines: Array<string>): Promise<Array<string>> {
+// a run that may change the machine: the runner holds the host lock from where it starts to, and the scope gives it
+// back when the run ends. what names the run to one that waits on it, `pack sync`; see docs/OPS.md (One host lock)
+export function lockRun(shell: Sh, what: string, lines: Array<string>): Array<string> {
   return [
-    await shell.fileLoad(['lock'], import.meta.resolve, ['.']),
-    `wutLockRun ${shell.toLiteral(name)} {`,
+    `wutLockScope ${shell.toLiteral(what)} {`,
     ...lines.map((line) => `  ${line}`),
     '}',
   ]

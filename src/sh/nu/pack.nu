@@ -932,6 +932,7 @@ def --env packFindSearch [] {
   }
   let chosen = ($picked | each { |i| $here | get ($i - 1) })
   $env.PACK_AGREED = '1'
+  wutLockHold
 
   mut byManager = {}
   mut missing = []
@@ -1160,6 +1161,7 @@ def --env packPlanRun [] {
 
   # agreed once, up front: nothing below asks again
   $env.PACK_AGREED = '1'
+  wutLockHold
   # the pick is the yes: a script install, or a group's pre or post script, asks nothing further once picked
   $env.YES = '1'
   let picked = ($planned | where { |d| $chosenRows | any { |r| $r.manager == $d.manager and $r.group == $d.group } })
@@ -1322,6 +1324,7 @@ def --env packTermPlanRun [names_key: string] {
   let chosen = ($picked | each { |i| $managers | get ($i - 1) })
 
   $env.PACK_AGREED = '1'
+  wutLockHold
   for m in $chosen {
     # only the terms this manager actually matched, so its output has nothing in it that came back empty
     load-env {($names_key): ($found | get $m)}
@@ -1421,6 +1424,7 @@ def --env packManagerPlanRun [] {
   }
 
   $env.PACK_AGREED = '1'
+  wutLockHold
   for m in $chosen {
     if $m == 'script' {
       for s in $selfRest {

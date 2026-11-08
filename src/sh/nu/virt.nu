@@ -149,6 +149,10 @@ def --env virtPlanRun [] {
   let chosen = ($picked | each { |i| $rows | get ($i - 1) })
 
   $env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if $env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in ($chosen | each { |r| $r.manager } | uniq) {
     let own = ($chosen | where manager == $manager)
     load-env {
@@ -402,6 +406,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk $"roll - ($manager) ($target.name) - back to ($chosen.name)") {
     return
   }
+  wutLockHold
   if $running {
     opPrintMaybeRunCmd sudo systemctl stop $target.unit
   }
@@ -439,6 +444,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk $"unroll - ($manager) ($target.name) - back to before the last roll") {
     return
   }
+  wutLockHold
   if $running {
     opPrintMaybeRunCmd sudo systemctl stop $target.unit
   }

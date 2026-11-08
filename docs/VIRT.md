@@ -272,9 +272,9 @@ to the one `--to` names in full or by its timestamp.
 
 A btrfs snapshot shares every block with what it was taken of and costs only what changes after, so there is no chain to
 merge: deleting a snapshot frees what only it held. A live snapshot is what the disk held at that instant, as after a
-power cut, which databases recover from; a full one is clean. Every op holds the virt lock, and the swap in `roll` and
-`unroll` also holds btrbk's lock file, `/run/lock/btrbk.lock`, taken with `flock` as btrbk itself takes it, so a timed
-run never snapshots half a swap.
+power cut, which databases recover from; a full one is clean. Every op holds the host lock
+([OPS.md](OPS.md#one-host-lock)), and the swap in `roll` and `unroll` also holds btrbk's lock file,
+`/run/lock/btrbk.lock`, taken with `flock` as btrbk itself takes it, so a timed run never snapshots half a swap.
 
 ## Find
 

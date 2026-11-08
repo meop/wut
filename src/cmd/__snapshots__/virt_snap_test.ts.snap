@@ -3948,6 +3948,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
@@ -4099,6 +4233,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -4352,6 +4490,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -4389,6 +4528,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -4886,6 +5026,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
@@ -5037,6 +5311,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -5290,6 +5568,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -5327,6 +5606,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -5824,6 +6104,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 # find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
 # that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
 def wutWordPattern [term: string] {
@@ -5986,6 +6400,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -6239,6 +6657,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -6276,6 +6695,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -7824,108 +8244,7 @@ def virtLxcHook [hook: string, instance: string] {
 
 \$env.VIRT_PLAN = r#'{\\"qemu\\":[\\"test\\",\\"test2\\"]}'#
 
-# one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
-
-def wutLockPath [name: string] {
-  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' \$name
-}
-
-def wutLockEnvKey [name: string] {
-  \$\\"WUT_LOCK_(\$name | str uppercase)\\"
-}
-
-# a pid and when it started, so a pid handed on to another process since is not taken for the holder
-def wutLockStamp [pid: int] {
-  let found = (ps --long | where pid == \$pid)
-  if (\$found | is-empty) {
-    return ''
-  }
-  let started = (\$found | first | get -o start_time)
-  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
-}
-
-def wutLockHolder [dir: string] {
-  try { open --raw (\$dir | path join 'pid') | str trim } catch { |e| opRethrowInterrupt \$e; '' }
-}
-
-# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
-def wutLockMake [dir: string] {
-  let parent = (\$dir | path dirname)
-  mkdir \$parent
-  let made = if \$nu.os-info.name == 'windows' {
-    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
-  } else {
-    do { ^mkdir \$dir } | complete
-  }
-  \$made.exit_code == 0
-}
-
-# true once this run holds the lock, false when the run that started this one already does
-def --env wutLockTake [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  let inherited = (\$env | get -o \$key | default '')
-  if \$inherited != '' and (wutLockHolder \$dir) == \$inherited {
-    let pid = (\$inherited | split row ' ' | first | into int)
-    if (wutLockStamp \$pid) == \$inherited {
-      return false
-    }
-  }
-
-  let own = (wutLockStamp \$nu.pid)
-  for attempt in 1..50 {
-    if (wutLockMake \$dir) {
-      \$own | save --force (\$dir | path join 'pid')
-      load-env { \$key: \$own }
-      return true
-    }
-    let held = (wutLockHolder \$dir)
-    if \$held == '' {
-      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
-      if ((date now) - \$made) < 5sec {
-        sleep 100ms
-        continue
-      }
-    } else {
-      let pid = (try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 })
-      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
-        opPrintErr \$\\"wut (\$name) is already running here as pid (\$pid): wait for it to end, or stop it\\"
-        exit 1
-      }
-    }
-    if (wutLockHolder \$dir) == \$held {
-      rm --recursive --force \$dir
-    }
-  }
-  opPrintErr \$\\"could not take the wut (\$name) lock: (\$dir)\\"
-  exit 1
-}
-
-def --env wutLockDrop [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  if (wutLockHolder \$dir) == (\$env | get -o \$key) {
-    rm --recursive --force \$dir
-  }
-  hide-env -i \$key
-}
-
-def --env wutLockRun [name: string, work: closure] {
-  if not (wutLockTake \$name) {
-    do --env \$work
-    return
-  }
-  try {
-    do --env \$work
-  } catch { |e|
-    wutLockDrop \$name
-    opRethrowInterrupt \$e
-    \$e.raw
-  }
-  wutLockDrop \$name
-}
-
-wutLockRun r#'virt'# {
+wutLockScope r#'virt add'# {
   virtPlanRun
 }
 
@@ -8387,6 +8706,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 # find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
 # that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
 def wutWordPattern [term: string] {
@@ -8549,6 +9002,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -8802,6 +9259,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -8839,6 +9297,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -11171,108 +11630,7 @@ if not (lxcSetupHolds 'test -d /srv/code') {
 
 \$env.VIRT_PLAN = r#'{\\"lxc\\":[\\"dev\\"]}'#
 
-# one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
-
-def wutLockPath [name: string] {
-  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' \$name
-}
-
-def wutLockEnvKey [name: string] {
-  \$\\"WUT_LOCK_(\$name | str uppercase)\\"
-}
-
-# a pid and when it started, so a pid handed on to another process since is not taken for the holder
-def wutLockStamp [pid: int] {
-  let found = (ps --long | where pid == \$pid)
-  if (\$found | is-empty) {
-    return ''
-  }
-  let started = (\$found | first | get -o start_time)
-  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
-}
-
-def wutLockHolder [dir: string] {
-  try { open --raw (\$dir | path join 'pid') | str trim } catch { |e| opRethrowInterrupt \$e; '' }
-}
-
-# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
-def wutLockMake [dir: string] {
-  let parent = (\$dir | path dirname)
-  mkdir \$parent
-  let made = if \$nu.os-info.name == 'windows' {
-    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
-  } else {
-    do { ^mkdir \$dir } | complete
-  }
-  \$made.exit_code == 0
-}
-
-# true once this run holds the lock, false when the run that started this one already does
-def --env wutLockTake [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  let inherited = (\$env | get -o \$key | default '')
-  if \$inherited != '' and (wutLockHolder \$dir) == \$inherited {
-    let pid = (\$inherited | split row ' ' | first | into int)
-    if (wutLockStamp \$pid) == \$inherited {
-      return false
-    }
-  }
-
-  let own = (wutLockStamp \$nu.pid)
-  for attempt in 1..50 {
-    if (wutLockMake \$dir) {
-      \$own | save --force (\$dir | path join 'pid')
-      load-env { \$key: \$own }
-      return true
-    }
-    let held = (wutLockHolder \$dir)
-    if \$held == '' {
-      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
-      if ((date now) - \$made) < 5sec {
-        sleep 100ms
-        continue
-      }
-    } else {
-      let pid = (try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 })
-      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
-        opPrintErr \$\\"wut (\$name) is already running here as pid (\$pid): wait for it to end, or stop it\\"
-        exit 1
-      }
-    }
-    if (wutLockHolder \$dir) == \$held {
-      rm --recursive --force \$dir
-    }
-  }
-  opPrintErr \$\\"could not take the wut (\$name) lock: (\$dir)\\"
-  exit 1
-}
-
-def --env wutLockDrop [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  if (wutLockHolder \$dir) == (\$env | get -o \$key) {
-    rm --recursive --force \$dir
-  }
-  hide-env -i \$key
-}
-
-def --env wutLockRun [name: string, work: closure] {
-  if not (wutLockTake \$name) {
-    do --env \$work
-    return
-  }
-  try {
-    do --env \$work
-  } catch { |e|
-    wutLockDrop \$name
-    opRethrowInterrupt \$e
-    \$e.raw
-  }
-  wutLockDrop \$name
-}
-
-wutLockRun r#'virt'# {
+wutLockScope r#'virt add'# {
   virtPlanRun
 }
 
@@ -11734,6 +12092,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 # find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
 # that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
 def wutWordPattern [term: string] {
@@ -11896,6 +12388,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -12149,6 +12645,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -12186,6 +12683,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -13732,108 +14230,7 @@ def virtLxcHook [hook: string, instance: string] {
 
 \$env.VIRT_PLAN = r#'{\\"qemu\\":[\\"test\\",\\"test2\\"]}'#
 
-# one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
-
-def wutLockPath [name: string] {
-  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' \$name
-}
-
-def wutLockEnvKey [name: string] {
-  \$\\"WUT_LOCK_(\$name | str uppercase)\\"
-}
-
-# a pid and when it started, so a pid handed on to another process since is not taken for the holder
-def wutLockStamp [pid: int] {
-  let found = (ps --long | where pid == \$pid)
-  if (\$found | is-empty) {
-    return ''
-  }
-  let started = (\$found | first | get -o start_time)
-  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
-}
-
-def wutLockHolder [dir: string] {
-  try { open --raw (\$dir | path join 'pid') | str trim } catch { |e| opRethrowInterrupt \$e; '' }
-}
-
-# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
-def wutLockMake [dir: string] {
-  let parent = (\$dir | path dirname)
-  mkdir \$parent
-  let made = if \$nu.os-info.name == 'windows' {
-    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
-  } else {
-    do { ^mkdir \$dir } | complete
-  }
-  \$made.exit_code == 0
-}
-
-# true once this run holds the lock, false when the run that started this one already does
-def --env wutLockTake [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  let inherited = (\$env | get -o \$key | default '')
-  if \$inherited != '' and (wutLockHolder \$dir) == \$inherited {
-    let pid = (\$inherited | split row ' ' | first | into int)
-    if (wutLockStamp \$pid) == \$inherited {
-      return false
-    }
-  }
-
-  let own = (wutLockStamp \$nu.pid)
-  for attempt in 1..50 {
-    if (wutLockMake \$dir) {
-      \$own | save --force (\$dir | path join 'pid')
-      load-env { \$key: \$own }
-      return true
-    }
-    let held = (wutLockHolder \$dir)
-    if \$held == '' {
-      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
-      if ((date now) - \$made) < 5sec {
-        sleep 100ms
-        continue
-      }
-    } else {
-      let pid = (try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 })
-      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
-        opPrintErr \$\\"wut (\$name) is already running here as pid (\$pid): wait for it to end, or stop it\\"
-        exit 1
-      }
-    }
-    if (wutLockHolder \$dir) == \$held {
-      rm --recursive --force \$dir
-    }
-  }
-  opPrintErr \$\\"could not take the wut (\$name) lock: (\$dir)\\"
-  exit 1
-}
-
-def --env wutLockDrop [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  if (wutLockHolder \$dir) == (\$env | get -o \$key) {
-    rm --recursive --force \$dir
-  }
-  hide-env -i \$key
-}
-
-def --env wutLockRun [name: string, work: closure] {
-  if not (wutLockTake \$name) {
-    do --env \$work
-    return
-  }
-  try {
-    do --env \$work
-  } catch { |e|
-    wutLockDrop \$name
-    opRethrowInterrupt \$e
-    \$e.raw
-  }
-  wutLockDrop \$name
-}
-
-wutLockRun r#'virt'# {
+wutLockScope r#'virt rem'# {
   virtPlanRun
 }
 
@@ -14295,6 +14692,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 # find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
 # that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
 def wutWordPattern [term: string] {
@@ -14457,6 +14988,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -14710,6 +15245,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -14747,6 +15283,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -16293,108 +16830,7 @@ def virtLxcHook [hook: string, instance: string] {
 
 \$env.VIRT_PLAN = r#'{\\"qemu\\":[\\"test\\",\\"test2\\"]}'#
 
-# one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
-
-def wutLockPath [name: string] {
-  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' \$name
-}
-
-def wutLockEnvKey [name: string] {
-  \$\\"WUT_LOCK_(\$name | str uppercase)\\"
-}
-
-# a pid and when it started, so a pid handed on to another process since is not taken for the holder
-def wutLockStamp [pid: int] {
-  let found = (ps --long | where pid == \$pid)
-  if (\$found | is-empty) {
-    return ''
-  }
-  let started = (\$found | first | get -o start_time)
-  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
-}
-
-def wutLockHolder [dir: string] {
-  try { open --raw (\$dir | path join 'pid') | str trim } catch { |e| opRethrowInterrupt \$e; '' }
-}
-
-# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
-def wutLockMake [dir: string] {
-  let parent = (\$dir | path dirname)
-  mkdir \$parent
-  let made = if \$nu.os-info.name == 'windows' {
-    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
-  } else {
-    do { ^mkdir \$dir } | complete
-  }
-  \$made.exit_code == 0
-}
-
-# true once this run holds the lock, false when the run that started this one already does
-def --env wutLockTake [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  let inherited = (\$env | get -o \$key | default '')
-  if \$inherited != '' and (wutLockHolder \$dir) == \$inherited {
-    let pid = (\$inherited | split row ' ' | first | into int)
-    if (wutLockStamp \$pid) == \$inherited {
-      return false
-    }
-  }
-
-  let own = (wutLockStamp \$nu.pid)
-  for attempt in 1..50 {
-    if (wutLockMake \$dir) {
-      \$own | save --force (\$dir | path join 'pid')
-      load-env { \$key: \$own }
-      return true
-    }
-    let held = (wutLockHolder \$dir)
-    if \$held == '' {
-      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
-      if ((date now) - \$made) < 5sec {
-        sleep 100ms
-        continue
-      }
-    } else {
-      let pid = (try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 })
-      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
-        opPrintErr \$\\"wut (\$name) is already running here as pid (\$pid): wait for it to end, or stop it\\"
-        exit 1
-      }
-    }
-    if (wutLockHolder \$dir) == \$held {
-      rm --recursive --force \$dir
-    }
-  }
-  opPrintErr \$\\"could not take the wut (\$name) lock: (\$dir)\\"
-  exit 1
-}
-
-def --env wutLockDrop [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  if (wutLockHolder \$dir) == (\$env | get -o \$key) {
-    rm --recursive --force \$dir
-  }
-  hide-env -i \$key
-}
-
-def --env wutLockRun [name: string, work: closure] {
-  if not (wutLockTake \$name) {
-    do --env \$work
-    return
-  }
-  try {
-    do --env \$work
-  } catch { |e|
-    wutLockDrop \$name
-    opRethrowInterrupt \$e
-    \$e.raw
-  }
-  wutLockDrop \$name
-}
-
-wutLockRun r#'virt'# {
+wutLockScope r#'virt on'# {
   virtPlanRun
 }
 
@@ -16856,6 +17292,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 # find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
 # that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
 def wutWordPattern [term: string] {
@@ -17018,6 +17588,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -17271,6 +17845,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -17308,6 +17883,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -18854,108 +19430,7 @@ def virtLxcHook [hook: string, instance: string] {
 
 \$env.VIRT_PLAN = r#'{\\"qemu\\":[\\"test\\",\\"test2\\"]}'#
 
-# one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
-
-def wutLockPath [name: string] {
-  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' \$name
-}
-
-def wutLockEnvKey [name: string] {
-  \$\\"WUT_LOCK_(\$name | str uppercase)\\"
-}
-
-# a pid and when it started, so a pid handed on to another process since is not taken for the holder
-def wutLockStamp [pid: int] {
-  let found = (ps --long | where pid == \$pid)
-  if (\$found | is-empty) {
-    return ''
-  }
-  let started = (\$found | first | get -o start_time)
-  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
-}
-
-def wutLockHolder [dir: string] {
-  try { open --raw (\$dir | path join 'pid') | str trim } catch { |e| opRethrowInterrupt \$e; '' }
-}
-
-# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
-def wutLockMake [dir: string] {
-  let parent = (\$dir | path dirname)
-  mkdir \$parent
-  let made = if \$nu.os-info.name == 'windows' {
-    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
-  } else {
-    do { ^mkdir \$dir } | complete
-  }
-  \$made.exit_code == 0
-}
-
-# true once this run holds the lock, false when the run that started this one already does
-def --env wutLockTake [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  let inherited = (\$env | get -o \$key | default '')
-  if \$inherited != '' and (wutLockHolder \$dir) == \$inherited {
-    let pid = (\$inherited | split row ' ' | first | into int)
-    if (wutLockStamp \$pid) == \$inherited {
-      return false
-    }
-  }
-
-  let own = (wutLockStamp \$nu.pid)
-  for attempt in 1..50 {
-    if (wutLockMake \$dir) {
-      \$own | save --force (\$dir | path join 'pid')
-      load-env { \$key: \$own }
-      return true
-    }
-    let held = (wutLockHolder \$dir)
-    if \$held == '' {
-      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
-      if ((date now) - \$made) < 5sec {
-        sleep 100ms
-        continue
-      }
-    } else {
-      let pid = (try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 })
-      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
-        opPrintErr \$\\"wut (\$name) is already running here as pid (\$pid): wait for it to end, or stop it\\"
-        exit 1
-      }
-    }
-    if (wutLockHolder \$dir) == \$held {
-      rm --recursive --force \$dir
-    }
-  }
-  opPrintErr \$\\"could not take the wut (\$name) lock: (\$dir)\\"
-  exit 1
-}
-
-def --env wutLockDrop [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  if (wutLockHolder \$dir) == (\$env | get -o \$key) {
-    rm --recursive --force \$dir
-  }
-  hide-env -i \$key
-}
-
-def --env wutLockRun [name: string, work: closure] {
-  if not (wutLockTake \$name) {
-    do --env \$work
-    return
-  }
-  try {
-    do --env \$work
-  } catch { |e|
-    wutLockDrop \$name
-    opRethrowInterrupt \$e
-    \$e.raw
-  }
-  wutLockDrop \$name
-}
-
-wutLockRun r#'virt'# {
+wutLockScope r#'virt off'# {
   virtPlanRun
 }
 
@@ -19421,6 +19896,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 # find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
 # that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
 def wutWordPattern [term: string] {
@@ -19583,6 +20192,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -19836,6 +20449,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -19873,6 +20487,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -21421,108 +22036,7 @@ def virtLxcHook [hook: string, instance: string] {
 
 \$env.VIRT_PLAN = r#'{\\"qemu\\":[\\"test\\",\\"test2\\"]}'#
 
-# one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
-
-def wutLockPath [name: string] {
-  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' \$name
-}
-
-def wutLockEnvKey [name: string] {
-  \$\\"WUT_LOCK_(\$name | str uppercase)\\"
-}
-
-# a pid and when it started, so a pid handed on to another process since is not taken for the holder
-def wutLockStamp [pid: int] {
-  let found = (ps --long | where pid == \$pid)
-  if (\$found | is-empty) {
-    return ''
-  }
-  let started = (\$found | first | get -o start_time)
-  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
-}
-
-def wutLockHolder [dir: string] {
-  try { open --raw (\$dir | path join 'pid') | str trim } catch { |e| opRethrowInterrupt \$e; '' }
-}
-
-# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
-def wutLockMake [dir: string] {
-  let parent = (\$dir | path dirname)
-  mkdir \$parent
-  let made = if \$nu.os-info.name == 'windows' {
-    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
-  } else {
-    do { ^mkdir \$dir } | complete
-  }
-  \$made.exit_code == 0
-}
-
-# true once this run holds the lock, false when the run that started this one already does
-def --env wutLockTake [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  let inherited = (\$env | get -o \$key | default '')
-  if \$inherited != '' and (wutLockHolder \$dir) == \$inherited {
-    let pid = (\$inherited | split row ' ' | first | into int)
-    if (wutLockStamp \$pid) == \$inherited {
-      return false
-    }
-  }
-
-  let own = (wutLockStamp \$nu.pid)
-  for attempt in 1..50 {
-    if (wutLockMake \$dir) {
-      \$own | save --force (\$dir | path join 'pid')
-      load-env { \$key: \$own }
-      return true
-    }
-    let held = (wutLockHolder \$dir)
-    if \$held == '' {
-      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
-      if ((date now) - \$made) < 5sec {
-        sleep 100ms
-        continue
-      }
-    } else {
-      let pid = (try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 })
-      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
-        opPrintErr \$\\"wut (\$name) is already running here as pid (\$pid): wait for it to end, or stop it\\"
-        exit 1
-      }
-    }
-    if (wutLockHolder \$dir) == \$held {
-      rm --recursive --force \$dir
-    }
-  }
-  opPrintErr \$\\"could not take the wut (\$name) lock: (\$dir)\\"
-  exit 1
-}
-
-def --env wutLockDrop [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  if (wutLockHolder \$dir) == (\$env | get -o \$key) {
-    rm --recursive --force \$dir
-  }
-  hide-env -i \$key
-}
-
-def --env wutLockRun [name: string, work: closure] {
-  if not (wutLockTake \$name) {
-    do --env \$work
-    return
-  }
-  try {
-    do --env \$work
-  } catch { |e|
-    wutLockDrop \$name
-    opRethrowInterrupt \$e
-    \$e.raw
-  }
-  wutLockDrop \$name
-}
-
-wutLockRun r#'virt'# {
+wutLockScope r#'virt add'# {
   virtPlanRun
 }
 
@@ -21984,6 +22498,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 # find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
 # that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
 def wutWordPattern [term: string] {
@@ -22146,6 +22794,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -22399,6 +23051,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -22436,6 +23089,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -23984,108 +24638,7 @@ def virtLxcHook [hook: string, instance: string] {
 
 \$env.VIRT_PLAN = r#'{\\"docker\\":[\\"svc\\"]}'#
 
-# one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
-
-def wutLockPath [name: string] {
-  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' \$name
-}
-
-def wutLockEnvKey [name: string] {
-  \$\\"WUT_LOCK_(\$name | str uppercase)\\"
-}
-
-# a pid and when it started, so a pid handed on to another process since is not taken for the holder
-def wutLockStamp [pid: int] {
-  let found = (ps --long | where pid == \$pid)
-  if (\$found | is-empty) {
-    return ''
-  }
-  let started = (\$found | first | get -o start_time)
-  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
-}
-
-def wutLockHolder [dir: string] {
-  try { open --raw (\$dir | path join 'pid') | str trim } catch { |e| opRethrowInterrupt \$e; '' }
-}
-
-# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
-def wutLockMake [dir: string] {
-  let parent = (\$dir | path dirname)
-  mkdir \$parent
-  let made = if \$nu.os-info.name == 'windows' {
-    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
-  } else {
-    do { ^mkdir \$dir } | complete
-  }
-  \$made.exit_code == 0
-}
-
-# true once this run holds the lock, false when the run that started this one already does
-def --env wutLockTake [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  let inherited = (\$env | get -o \$key | default '')
-  if \$inherited != '' and (wutLockHolder \$dir) == \$inherited {
-    let pid = (\$inherited | split row ' ' | first | into int)
-    if (wutLockStamp \$pid) == \$inherited {
-      return false
-    }
-  }
-
-  let own = (wutLockStamp \$nu.pid)
-  for attempt in 1..50 {
-    if (wutLockMake \$dir) {
-      \$own | save --force (\$dir | path join 'pid')
-      load-env { \$key: \$own }
-      return true
-    }
-    let held = (wutLockHolder \$dir)
-    if \$held == '' {
-      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
-      if ((date now) - \$made) < 5sec {
-        sleep 100ms
-        continue
-      }
-    } else {
-      let pid = (try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 })
-      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
-        opPrintErr \$\\"wut (\$name) is already running here as pid (\$pid): wait for it to end, or stop it\\"
-        exit 1
-      }
-    }
-    if (wutLockHolder \$dir) == \$held {
-      rm --recursive --force \$dir
-    }
-  }
-  opPrintErr \$\\"could not take the wut (\$name) lock: (\$dir)\\"
-  exit 1
-}
-
-def --env wutLockDrop [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  if (wutLockHolder \$dir) == (\$env | get -o \$key) {
-    rm --recursive --force \$dir
-  }
-  hide-env -i \$key
-}
-
-def --env wutLockRun [name: string, work: closure] {
-  if not (wutLockTake \$name) {
-    do --env \$work
-    return
-  }
-  try {
-    do --env \$work
-  } catch { |e|
-    wutLockDrop \$name
-    opRethrowInterrupt \$e
-    \$e.raw
-  }
-  wutLockDrop \$name
-}
-
-wutLockRun r#'virt'# {
+wutLockScope r#'virt add'# {
   virtPlanRun
 }
 
@@ -24547,6 +25100,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 # find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
 # that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
 def wutWordPattern [term: string] {
@@ -24709,6 +25396,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -24962,6 +25653,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -24999,6 +25691,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -26230,6 +26923,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 # find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
 # that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
 def wutWordPattern [term: string] {
@@ -26392,6 +27219,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -26645,6 +27476,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -26682,6 +27514,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -28230,108 +29063,7 @@ def virtLxcHook [hook: string, instance: string] {
 
 \$env.VIRT_PLAN = r#'{\\"qemu\\":[\\"test/vga\\"]}'#
 
-# one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
-
-def wutLockPath [name: string] {
-  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' \$name
-}
-
-def wutLockEnvKey [name: string] {
-  \$\\"WUT_LOCK_(\$name | str uppercase)\\"
-}
-
-# a pid and when it started, so a pid handed on to another process since is not taken for the holder
-def wutLockStamp [pid: int] {
-  let found = (ps --long | where pid == \$pid)
-  if (\$found | is-empty) {
-    return ''
-  }
-  let started = (\$found | first | get -o start_time)
-  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
-}
-
-def wutLockHolder [dir: string] {
-  try { open --raw (\$dir | path join 'pid') | str trim } catch { |e| opRethrowInterrupt \$e; '' }
-}
-
-# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
-def wutLockMake [dir: string] {
-  let parent = (\$dir | path dirname)
-  mkdir \$parent
-  let made = if \$nu.os-info.name == 'windows' {
-    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
-  } else {
-    do { ^mkdir \$dir } | complete
-  }
-  \$made.exit_code == 0
-}
-
-# true once this run holds the lock, false when the run that started this one already does
-def --env wutLockTake [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  let inherited = (\$env | get -o \$key | default '')
-  if \$inherited != '' and (wutLockHolder \$dir) == \$inherited {
-    let pid = (\$inherited | split row ' ' | first | into int)
-    if (wutLockStamp \$pid) == \$inherited {
-      return false
-    }
-  }
-
-  let own = (wutLockStamp \$nu.pid)
-  for attempt in 1..50 {
-    if (wutLockMake \$dir) {
-      \$own | save --force (\$dir | path join 'pid')
-      load-env { \$key: \$own }
-      return true
-    }
-    let held = (wutLockHolder \$dir)
-    if \$held == '' {
-      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
-      if ((date now) - \$made) < 5sec {
-        sleep 100ms
-        continue
-      }
-    } else {
-      let pid = (try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 })
-      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
-        opPrintErr \$\\"wut (\$name) is already running here as pid (\$pid): wait for it to end, or stop it\\"
-        exit 1
-      }
-    }
-    if (wutLockHolder \$dir) == \$held {
-      rm --recursive --force \$dir
-    }
-  }
-  opPrintErr \$\\"could not take the wut (\$name) lock: (\$dir)\\"
-  exit 1
-}
-
-def --env wutLockDrop [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  if (wutLockHolder \$dir) == (\$env | get -o \$key) {
-    rm --recursive --force \$dir
-  }
-  hide-env -i \$key
-}
-
-def --env wutLockRun [name: string, work: closure] {
-  if not (wutLockTake \$name) {
-    do --env \$work
-    return
-  }
-  try {
-    do --env \$work
-  } catch { |e|
-    wutLockDrop \$name
-    opRethrowInterrupt \$e
-    \$e.raw
-  }
-  wutLockDrop \$name
-}
-
-wutLockRun r#'virt'# {
+wutLockScope r#'virt add'# {
   virtPlanRun
 }
 
@@ -28793,6 +29525,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 # find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
 # that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
 def wutWordPattern [term: string] {
@@ -28955,6 +29821,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -29208,6 +30078,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -29245,6 +30116,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -31251,6 +32123,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 # find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
 # that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
 def wutWordPattern [term: string] {
@@ -31413,6 +32419,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -31666,6 +32676,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -31703,6 +32714,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -33251,108 +34263,7 @@ def virtLxcHook [hook: string, instance: string] {
 
 \$env.VIRT_PLAN = r#'{\\"qemu\\":[\\"test\\"]}'#
 
-# one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
-
-def wutLockPath [name: string] {
-  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' \$name
-}
-
-def wutLockEnvKey [name: string] {
-  \$\\"WUT_LOCK_(\$name | str uppercase)\\"
-}
-
-# a pid and when it started, so a pid handed on to another process since is not taken for the holder
-def wutLockStamp [pid: int] {
-  let found = (ps --long | where pid == \$pid)
-  if (\$found | is-empty) {
-    return ''
-  }
-  let started = (\$found | first | get -o start_time)
-  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
-}
-
-def wutLockHolder [dir: string] {
-  try { open --raw (\$dir | path join 'pid') | str trim } catch { |e| opRethrowInterrupt \$e; '' }
-}
-
-# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
-def wutLockMake [dir: string] {
-  let parent = (\$dir | path dirname)
-  mkdir \$parent
-  let made = if \$nu.os-info.name == 'windows' {
-    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
-  } else {
-    do { ^mkdir \$dir } | complete
-  }
-  \$made.exit_code == 0
-}
-
-# true once this run holds the lock, false when the run that started this one already does
-def --env wutLockTake [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  let inherited = (\$env | get -o \$key | default '')
-  if \$inherited != '' and (wutLockHolder \$dir) == \$inherited {
-    let pid = (\$inherited | split row ' ' | first | into int)
-    if (wutLockStamp \$pid) == \$inherited {
-      return false
-    }
-  }
-
-  let own = (wutLockStamp \$nu.pid)
-  for attempt in 1..50 {
-    if (wutLockMake \$dir) {
-      \$own | save --force (\$dir | path join 'pid')
-      load-env { \$key: \$own }
-      return true
-    }
-    let held = (wutLockHolder \$dir)
-    if \$held == '' {
-      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
-      if ((date now) - \$made) < 5sec {
-        sleep 100ms
-        continue
-      }
-    } else {
-      let pid = (try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 })
-      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
-        opPrintErr \$\\"wut (\$name) is already running here as pid (\$pid): wait for it to end, or stop it\\"
-        exit 1
-      }
-    }
-    if (wutLockHolder \$dir) == \$held {
-      rm --recursive --force \$dir
-    }
-  }
-  opPrintErr \$\\"could not take the wut (\$name) lock: (\$dir)\\"
-  exit 1
-}
-
-def --env wutLockDrop [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  if (wutLockHolder \$dir) == (\$env | get -o \$key) {
-    rm --recursive --force \$dir
-  }
-  hide-env -i \$key
-}
-
-def --env wutLockRun [name: string, work: closure] {
-  if not (wutLockTake \$name) {
-    do --env \$work
-    return
-  }
-  try {
-    do --env \$work
-  } catch { |e|
-    wutLockDrop \$name
-    opRethrowInterrupt \$e
-    \$e.raw
-  }
-  wutLockDrop \$name
-}
-
-wutLockRun r#'virt'# {
+wutLockScope r#'virt add'# {
   virtPlanRun
 }
 
@@ -33814,6 +34725,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 # find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
 # that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
 def wutWordPattern [term: string] {
@@ -33976,6 +35021,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -34229,6 +35278,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -34266,6 +35316,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -36270,6 +37321,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 # find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
 # that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
 def wutWordPattern [term: string] {
@@ -36432,6 +37617,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -36685,6 +37874,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -36722,6 +37912,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -37949,6 +39140,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 # find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
 # that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
 def wutWordPattern [term: string] {
@@ -38111,6 +39436,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -38364,6 +39693,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -38401,6 +39731,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -40407,6 +41738,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 # find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
 # that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
 def wutWordPattern [term: string] {
@@ -40569,6 +42034,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -40822,6 +42291,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -40859,6 +42329,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -42407,108 +43878,7 @@ def virtLxcHook [hook: string, instance: string] {
 
 \$env.VIRT_PLAN = r#'{\\"podman\\":[\\"web/app\\",\\"web/hub\\"]}'#
 
-# one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
-
-def wutLockPath [name: string] {
-  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' \$name
-}
-
-def wutLockEnvKey [name: string] {
-  \$\\"WUT_LOCK_(\$name | str uppercase)\\"
-}
-
-# a pid and when it started, so a pid handed on to another process since is not taken for the holder
-def wutLockStamp [pid: int] {
-  let found = (ps --long | where pid == \$pid)
-  if (\$found | is-empty) {
-    return ''
-  }
-  let started = (\$found | first | get -o start_time)
-  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
-}
-
-def wutLockHolder [dir: string] {
-  try { open --raw (\$dir | path join 'pid') | str trim } catch { |e| opRethrowInterrupt \$e; '' }
-}
-
-# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
-def wutLockMake [dir: string] {
-  let parent = (\$dir | path dirname)
-  mkdir \$parent
-  let made = if \$nu.os-info.name == 'windows' {
-    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
-  } else {
-    do { ^mkdir \$dir } | complete
-  }
-  \$made.exit_code == 0
-}
-
-# true once this run holds the lock, false when the run that started this one already does
-def --env wutLockTake [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  let inherited = (\$env | get -o \$key | default '')
-  if \$inherited != '' and (wutLockHolder \$dir) == \$inherited {
-    let pid = (\$inherited | split row ' ' | first | into int)
-    if (wutLockStamp \$pid) == \$inherited {
-      return false
-    }
-  }
-
-  let own = (wutLockStamp \$nu.pid)
-  for attempt in 1..50 {
-    if (wutLockMake \$dir) {
-      \$own | save --force (\$dir | path join 'pid')
-      load-env { \$key: \$own }
-      return true
-    }
-    let held = (wutLockHolder \$dir)
-    if \$held == '' {
-      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
-      if ((date now) - \$made) < 5sec {
-        sleep 100ms
-        continue
-      }
-    } else {
-      let pid = (try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 })
-      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
-        opPrintErr \$\\"wut (\$name) is already running here as pid (\$pid): wait for it to end, or stop it\\"
-        exit 1
-      }
-    }
-    if (wutLockHolder \$dir) == \$held {
-      rm --recursive --force \$dir
-    }
-  }
-  opPrintErr \$\\"could not take the wut (\$name) lock: (\$dir)\\"
-  exit 1
-}
-
-def --env wutLockDrop [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  if (wutLockHolder \$dir) == (\$env | get -o \$key) {
-    rm --recursive --force \$dir
-  }
-  hide-env -i \$key
-}
-
-def --env wutLockRun [name: string, work: closure] {
-  if not (wutLockTake \$name) {
-    do --env \$work
-    return
-  }
-  try {
-    do --env \$work
-  } catch { |e|
-    wutLockDrop \$name
-    opRethrowInterrupt \$e
-    \$e.raw
-  }
-  wutLockDrop \$name
-}
-
-wutLockRun r#'virt'# {
+wutLockScope r#'virt add'# {
   virtPlanRun
 }
 
@@ -42970,6 +44340,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 # find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
 # that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
 def wutWordPattern [term: string] {
@@ -43132,6 +44636,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -43385,6 +44893,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -43422,6 +44931,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -45426,6 +46936,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 def virtDeepMerge [base, override] {
   mut result = \$base
   for kv in (\$override | transpose key value) {
@@ -45577,6 +47221,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -45830,6 +47478,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -45867,6 +47516,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -46360,6 +48010,140 @@ def wutSelectRead [max: int] {
 }
 
 
+# one lock for the whole machine, held by whatever is about to change it; see docs/OPS.md (One host lock)
+
+def wutLockPath [] {
+  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' 'host'
+}
+
+# a pid and when it started, so a pid handed on to another process since is not taken for the holder
+def wutLockStamp [pid: int] {
+  let found = (ps --long | where pid == \$pid)
+  if (\$found | is-empty) {
+    return ''
+  }
+  let started = (\$found | first | get -o start_time)
+  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
+}
+
+def wutLockRead [dir: string, file: string] {
+  try { open --raw (\$dir | path join \$file) | str trim } catch { |e| opRethrowInterrupt \$e; '' }
+}
+
+def wutLockHolderPid [held: string] {
+  try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 }
+}
+
+# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
+def wutLockMake [dir: string] {
+  let parent = (\$dir | path dirname)
+  mkdir \$parent
+  let made = if \$nu.os-info.name == 'windows' {
+    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
+  } else {
+    do { ^mkdir \$dir } | complete
+  }
+  \$made.exit_code == 0
+}
+
+# this process and every one it descends from
+def wutLockLineage [] {
+  let procs = (ps | select pid ppid)
+  mut line = [\$nu.pid]
+  mut at = \$nu.pid
+  for _ in 1..64 {
+    let up = (\$procs | where pid == \$at | get -o 0.ppid)
+    if \$up == null or \$up <= 0 or \$up in \$line {
+      break
+    }
+    \$line = (\$line | append \$up)
+    \$at = \$up
+  }
+  \$line
+}
+
+# the lock is this run's when this process or one it descends from holds it: the stamp it hands down through
+# WUT_LOCK_HOST, or failing that its pid in this one's lineage, since sudo, su and a service start a child without
+# that environment
+def wutLockMine [dir: string] {
+  let held = (wutLockRead \$dir 'pid')
+  let pid = (wutLockHolderPid \$held)
+  if \$pid < 0 or (wutLockStamp \$pid) != \$held {
+    return false
+  }
+  (\$env.WUT_LOCK_HOST? | default '') == \$held or \$pid in (wutLockLineage)
+}
+
+# where a run is about to change the machine: takes the host lock, waiting for whoever holds it, and says once who
+# that is. outside a wutLockScope it does nothing, so a reading op that shares a runner with a changing one takes none
+def --env wutLockHold [] {
+  let what = (\$env.WUT_LOCK_SCOPE? | default '')
+  if \$what == '' {
+    return
+  }
+  let dir = (wutLockPath)
+  if (wutLockMine \$dir) {
+    return
+  }
+  let own = (wutLockStamp \$nu.pid)
+  mut told = false
+  loop {
+    if (wutLockMake \$dir) {
+      \$what | save --force (\$dir | path join 'what')
+      \$own | save --force (\$dir | path join 'pid')
+      load-env {WUT_LOCK_HOST: \$own}
+      return
+    }
+    let held = (wutLockRead \$dir 'pid')
+    if \$held == '' {
+      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
+      if ((date now) - \$made) < 5sec {
+        sleep 100ms
+        continue
+      }
+    } else {
+      let pid = (wutLockHolderPid \$held)
+      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
+        if not \$told {
+          opPrintInfo \$\\"waiting for \`wut (wutLockRead \$dir 'what')\` \\\\(pid (\$pid)\\\\) to finish changing this host\\"
+          \$told = true
+        }
+        sleep 250ms
+        continue
+      }
+    }
+    if (wutLockRead \$dir 'pid') == \$held {
+      rm --recursive --force \$dir
+    }
+  }
+}
+
+# a run that may change the machine runs inside this: what wutLockHold takes in it is given back when it ends,
+# however it ends. what: the command a waiting run names, \`pack sync\`
+def --env wutLockScope [what: string, work: closure] {
+  let dir = (wutLockPath)
+  let had = (wutLockMine \$dir)
+  let outer = (\$env.WUT_LOCK_SCOPE? | default '')
+  \$env.WUT_LOCK_SCOPE = (if \$outer == '' { \$what } else { \$outer })
+  let release = {||
+    if not \$had and (wutLockRead \$dir 'pid') == (wutLockStamp \$nu.pid) {
+      rm --recursive --force \$dir
+    }
+  }
+  try {
+    do --env \$work
+  } catch { |e|
+    do \$release
+    opRethrowInterrupt \$e
+    \$e.raw
+  }
+  do \$release
+  if \$outer == '' {
+    hide-env -i WUT_LOCK_SCOPE
+  }
+}
+
+
 # find's rule, as src/match.ts has it: what was typed starts a word of the name, a word being what sits between anything
 # that is not a letter or a digit. a pattern as well as a check, so a filter built into a command line can carry it
 def wutWordPattern [term: string] {
@@ -46522,6 +48306,10 @@ def --env virtPlanRun [] {
   let chosen = (\$picked | each { |i| \$rows | get (\$i - 1) })
 
   \$env.VIRT_AGREED = '1'
+  # roll and unroll ask once more per instance, and hold the lock after that answer
+  if \$env.VIRT_OP? not-in ['roll' 'unroll'] {
+    wutLockHold
+  }
   for manager in (\$chosen | each { |r| \$r.manager } | uniq) {
     let own = (\$chosen | where manager == \$manager)
     load-env {
@@ -46775,6 +48563,7 @@ def --env virtRollOne [manager: string, target: record] {
   if not (opAsk \$\\"roll - (\$manager) (\$target.name) - back to (\$chosen.name)\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -46812,6 +48601,7 @@ def --env virtUnrollOne [manager: string, target: record] {
   if not (opAsk \$\\"unroll - (\$manager) (\$target.name) - back to before the last roll\\") {
     return
   }
+  wutLockHold
   if \$running {
     opPrintMaybeRunCmd sudo systemctl stop \$target.unit
   }
@@ -48360,108 +50150,7 @@ def virtLxcHook [hook: string, instance: string] {
 
 \$env.VIRT_PLAN = r#'{\\"podman\\":[\\"web/app\\",\\"web/hub\\"]}'#
 
-# one run of a command at a time on a machine; see docs/OPS.md (One run of a command at a time)
-
-def wutLockPath [name: string] {
-  \$env.WUT_HOME? | default (\$nu.home-dir | path join '.wut') | path join 'lock' \$name
-}
-
-def wutLockEnvKey [name: string] {
-  \$\\"WUT_LOCK_(\$name | str uppercase)\\"
-}
-
-# a pid and when it started, so a pid handed on to another process since is not taken for the holder
-def wutLockStamp [pid: int] {
-  let found = (ps --long | where pid == \$pid)
-  if (\$found | is-empty) {
-    return ''
-  }
-  let started = (\$found | first | get -o start_time)
-  if \$started == null { \$\\"(\$pid)\\" } else { \$\\"(\$pid) (\$started | format date '%s')\\" }
-}
-
-def wutLockHolder [dir: string] {
-  try { open --raw (\$dir | path join 'pid') | str trim } catch { |e| opRethrowInterrupt \$e; '' }
-}
-
-# the os's own mkdir, which fails when the dir is already there; nu's is mkdir -p
-def wutLockMake [dir: string] {
-  let parent = (\$dir | path dirname)
-  mkdir \$parent
-  let made = if \$nu.os-info.name == 'windows' {
-    do { cd \$parent; ^cmd /c mkdir (\$dir | path basename) } | complete
-  } else {
-    do { ^mkdir \$dir } | complete
-  }
-  \$made.exit_code == 0
-}
-
-# true once this run holds the lock, false when the run that started this one already does
-def --env wutLockTake [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  let inherited = (\$env | get -o \$key | default '')
-  if \$inherited != '' and (wutLockHolder \$dir) == \$inherited {
-    let pid = (\$inherited | split row ' ' | first | into int)
-    if (wutLockStamp \$pid) == \$inherited {
-      return false
-    }
-  }
-
-  let own = (wutLockStamp \$nu.pid)
-  for attempt in 1..50 {
-    if (wutLockMake \$dir) {
-      \$own | save --force (\$dir | path join 'pid')
-      load-env { \$key: \$own }
-      return true
-    }
-    let held = (wutLockHolder \$dir)
-    if \$held == '' {
-      let made = (try { ls --directory \$dir | first | get modified } catch { |e| opRethrowInterrupt \$e; date now })
-      if ((date now) - \$made) < 5sec {
-        sleep 100ms
-        continue
-      }
-    } else {
-      let pid = (try { \$held | split row ' ' | first | into int } catch { |e| opRethrowInterrupt \$e; -1 })
-      if \$pid >= 0 and (wutLockStamp \$pid) == \$held {
-        opPrintErr \$\\"wut (\$name) is already running here as pid (\$pid): wait for it to end, or stop it\\"
-        exit 1
-      }
-    }
-    if (wutLockHolder \$dir) == \$held {
-      rm --recursive --force \$dir
-    }
-  }
-  opPrintErr \$\\"could not take the wut (\$name) lock: (\$dir)\\"
-  exit 1
-}
-
-def --env wutLockDrop [name: string] {
-  let dir = (wutLockPath \$name)
-  let key = (wutLockEnvKey \$name)
-  if (wutLockHolder \$dir) == (\$env | get -o \$key) {
-    rm --recursive --force \$dir
-  }
-  hide-env -i \$key
-}
-
-def --env wutLockRun [name: string, work: closure] {
-  if not (wutLockTake \$name) {
-    do --env \$work
-    return
-  }
-  try {
-    do --env \$work
-  } catch { |e|
-    wutLockDrop \$name
-    opRethrowInterrupt \$e
-    \$e.raw
-  }
-  wutLockDrop \$name
-}
-
-wutLockRun r#'virt'# {
+wutLockScope r#'virt add'# {
   virtPlanRun
 }
 

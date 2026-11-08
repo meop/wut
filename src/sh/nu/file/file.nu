@@ -115,6 +115,7 @@ def file [] {
       }
     }
     sync => {
+      wutLockHold
       for dir in ($env.FILE_SYNC_CLEAR_DIRS? | default []) {
         let dirParts = $dir | split row '|'
 

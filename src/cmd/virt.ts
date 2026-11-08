@@ -237,6 +237,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     // does not, since it never calls one
     _shell = _shell
       .with(await _shell.fileLoad(['sel'], import.meta.resolve, ['..']))
+      .with(await _shell.fileLoad(['lock'], import.meta.resolve, ['..']))
       .with(await _shell.fileLoad([VIRT_KEY], import.meta.resolve, ['..']))
 
     const allResults = await getCfgDirDump(dirParts, { extension: Fmt.yaml })
@@ -299,6 +300,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   } else {
     _shell = _shell
       .with(await _shell.fileLoad(['sel'], import.meta.resolve, ['..']))
+      .with(await _shell.fileLoad(['lock'], import.meta.resolve, ['..']))
       .with(await _shell.fileLoad(['match'], import.meta.resolve, ['..']))
       .with(
         await _shell.fileLoad(
@@ -348,7 +350,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     // the plan is data: which manager takes which instances. whether that manager is on this machine, and the one
     // decision about all of it, are the client's
     // run is a foreground session that claims nothing, so it takes no lock
-    const planRun = op === 'run' ? ['virtPlanRun'] : await lockRun(_shell, VIRT_KEY, ['virtPlanRun'])
+    const planRun = op === 'run' ? ['virtPlanRun'] : lockRun(_shell, `${VIRT_KEY} ${op}`, ['virtPlanRun'])
     const applyResults = (results: Array<Array<string>>) => {
       const virtMap: Record<string, Array<string>> = {}
       for (const parts of results) {

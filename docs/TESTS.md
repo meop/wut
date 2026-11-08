@@ -136,12 +136,13 @@ that shell is not installed.
 
 ### `src/sh/nu/lock_test.ts`
 
-Tier 3 — the per-command lock ([OPS.md](OPS.md#one-run-of-a-command-at-a-time)), with each run its own nu process
-sharing one temp `WUT_HOME`: a run holds the lock and gives it back, commands lock apart, a run its holder started runs
-inside, a second run stops naming the first's pid while a ctrl-c to the first gives the lock back (skipped on windows,
-which has no SIGINT to send), a dead or reused pid and an old unstamped lock are taken over, and an error releases
-before it is raised again. `src/cmd/lock_test.ts` asserts the server side: which ops emit `wutLockRun`, and for which
-command.
+Tier 3 — the host lock ([OPS.md](OPS.md#one-host-lock)), with each run its own nu process sharing one temp `WUT_HOME`: a
+hold in a scope takes the lock, records what holds it and is given back when the scope ends; nothing is taken until a
+hold, and a hold outside a scope takes nothing; a scope inside a scope holds the one lock and only the outer gives it
+back; a run the holder starts is inside, with its environment and without it (by ancestry); a second run waits, names
+the holder and goes on once it ends; a ctrl-c to the holder gives the lock back (skipped on windows, which has no SIGINT
+to send); a dead or reused pid and an old unstamped lock are taken over; and an error releases before it is raised
+again. `src/cmd/lock_test.ts` asserts the server side: which ops run in a `wutLockScope`, and the name each gives.
 
 ## Following the redirect: `wutNuPinned=1`
 
