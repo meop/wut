@@ -1,9 +1,8 @@
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if $res.exit_code != 0 {
@@ -18,7 +17,7 @@ def --env packPnpmHeld [] {
   if ($held | is-not-empty) and not (($env.PACK_SHELL_PATH? | default $env.PATH) | any { |p| ($p | path expand) == ($bin | path expand) }) {
     return (packHeld "pnpm's bin dir is not on PATH" [$bin])
   }
-  packHeld --toolchain ($runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {

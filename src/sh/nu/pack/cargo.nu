@@ -40,7 +40,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [$"rustc ($rustc)"])
   }
-  packHeld --toolchain rust --updater (if $rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {

@@ -4504,9 +4504,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -4516,10 +4516,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -5339,21 +5335,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -5594,9 +5583,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -5611,7 +5599,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -5924,7 +5912,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -6103,7 +6091,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -6208,7 +6196,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -6361,7 +6349,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -8738,9 +8726,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -8750,10 +8738,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -9573,21 +9557,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -9828,9 +9805,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -9845,7 +9821,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -10158,7 +10134,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -10337,7 +10313,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -10442,7 +10418,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -10595,7 +10571,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -13017,9 +12993,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -13029,10 +13005,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -13852,21 +13824,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -14107,9 +14072,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -14124,7 +14088,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -14437,7 +14401,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -14616,7 +14580,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -14721,7 +14685,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -14874,7 +14838,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -17296,9 +17260,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -17308,10 +17272,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -18131,21 +18091,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -18386,9 +18339,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -18403,7 +18355,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -18716,7 +18668,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -18895,7 +18847,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -19000,7 +18952,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -19153,7 +19105,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -21605,9 +21557,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -21617,10 +21569,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -22440,21 +22388,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -22695,9 +22636,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -22712,7 +22652,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -23025,7 +22965,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -23204,7 +23144,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -23309,7 +23249,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -23462,7 +23402,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -25914,9 +25854,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -25926,10 +25866,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -26749,21 +26685,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -27004,9 +26933,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -27021,7 +26949,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -27334,7 +27262,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -27513,7 +27441,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -27618,7 +27546,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -27771,7 +27699,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -30311,9 +30239,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -30323,10 +30251,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -31146,21 +31070,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -31401,9 +31318,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -31418,7 +31334,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -31731,7 +31647,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -31910,7 +31826,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -32015,7 +31931,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -32168,7 +32084,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -34678,9 +34594,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -34690,10 +34606,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -35513,21 +35425,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -35768,9 +35673,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -35785,7 +35689,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -36098,7 +36002,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -36277,7 +36181,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -36382,7 +36286,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -36535,7 +36439,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -39360,9 +39264,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -39372,10 +39276,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -40195,21 +40095,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -40450,9 +40343,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -40467,7 +40359,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -40780,7 +40672,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -40959,7 +40851,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -41064,7 +40956,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -41217,7 +41109,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -43661,9 +43553,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -43673,10 +43565,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -44496,21 +44384,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -44751,9 +44632,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -44768,7 +44648,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -45081,7 +44961,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -45260,7 +45140,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -45365,7 +45245,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -45518,7 +45398,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -48107,9 +47987,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -48119,10 +47999,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -48942,21 +48818,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -49197,9 +49066,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -49214,7 +49082,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -49527,7 +49395,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -49706,7 +49574,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -49811,7 +49679,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -49964,7 +49832,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -52535,9 +52403,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -52547,10 +52415,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -53370,21 +53234,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -53625,9 +53482,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -53642,7 +53498,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -53955,7 +53811,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -54134,7 +53990,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -54239,7 +54095,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -54392,7 +54248,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -57165,9 +57021,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -57177,10 +57033,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -58000,21 +57852,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -58255,9 +58100,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -58272,7 +58116,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -58585,7 +58429,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -58764,7 +58608,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -58869,7 +58713,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -59022,7 +58866,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -61801,9 +61645,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -61813,10 +61657,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -62636,21 +62476,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -62891,9 +62724,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -62908,7 +62740,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -63221,7 +63053,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -63400,7 +63232,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -63505,7 +63337,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -63658,7 +63490,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -66433,9 +66265,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -66445,10 +66277,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -67268,21 +67096,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -67523,9 +67344,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -67540,7 +67360,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -67853,7 +67673,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -68032,7 +67852,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -68137,7 +67957,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -68290,7 +68110,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -70712,9 +70532,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -70724,10 +70544,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -71547,21 +71363,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -71802,9 +71611,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -71819,7 +71627,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -72132,7 +71940,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -72311,7 +72119,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -72416,7 +72224,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -72569,7 +72377,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -74953,9 +74761,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -74965,10 +74773,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -75788,21 +75592,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -76043,9 +75840,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -76060,7 +75856,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -76373,7 +76169,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -76552,7 +76348,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -76657,7 +76453,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -76810,7 +76606,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -79194,9 +78990,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -79206,10 +79002,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -80029,21 +79821,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -80284,9 +80069,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -80301,7 +80085,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -80614,7 +80398,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -80793,7 +80577,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -80898,7 +80682,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -81051,7 +80835,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -83429,9 +83213,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -83441,10 +83225,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -84264,21 +84044,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -84519,9 +84292,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -84536,7 +84308,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -84849,7 +84621,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -85028,7 +84800,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -85133,7 +84905,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -85286,7 +85058,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -87664,9 +87436,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -87676,10 +87448,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -88499,21 +88267,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -88754,9 +88515,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -88771,7 +88531,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -89084,7 +88844,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -89263,7 +89023,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -89368,7 +89128,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -89521,7 +89281,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -91903,9 +91663,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -91915,10 +91675,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -92738,21 +92494,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -92993,9 +92742,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -93010,7 +92758,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -93323,7 +93071,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -93502,7 +93250,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -93607,7 +93355,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -93760,7 +93508,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -96140,9 +95888,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -96152,10 +95900,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -96975,21 +96719,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -97230,9 +96967,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -97247,7 +96983,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -97560,7 +97296,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -97739,7 +97475,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -97844,7 +97580,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -97997,7 +97733,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -100374,9 +100110,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -100386,10 +100122,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -101209,21 +100941,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -101464,9 +101189,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -101481,7 +101205,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -101794,7 +101518,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -101973,7 +101697,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -102078,7 +101802,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -102231,7 +101955,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -104608,9 +104332,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -104620,10 +104344,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -105443,21 +105163,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -105698,9 +105411,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -105715,7 +105427,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -106028,7 +105740,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -106207,7 +105919,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -106312,7 +106024,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -106465,7 +106177,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -108887,9 +108599,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -108899,10 +108611,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -109722,21 +109430,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -109977,9 +109678,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -109994,7 +109694,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -110307,7 +110007,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -110486,7 +110186,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -110591,7 +110291,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -110744,7 +110444,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -113166,9 +112866,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -113178,10 +112878,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -114001,21 +113697,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -114256,9 +113945,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -114273,7 +113961,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -114586,7 +114274,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -114765,7 +114453,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -114870,7 +114558,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -115023,7 +114711,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -117398,9 +117086,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -117410,10 +117098,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -118233,21 +117917,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -118488,9 +118165,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -118505,7 +118181,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -118818,7 +118494,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -118997,7 +118673,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -119102,7 +118778,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -119255,7 +118931,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -121632,9 +121308,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -121644,10 +121320,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -122467,21 +122139,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -122722,9 +122387,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -122739,7 +122403,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -123052,7 +122716,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -123231,7 +122895,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -123336,7 +123000,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -123489,7 +123153,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -125866,9 +125530,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -125878,10 +125542,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -126701,21 +126361,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -126956,9 +126609,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -126973,7 +126625,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -127286,7 +126938,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -127465,7 +127117,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -127570,7 +127222,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -127723,7 +127375,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -130145,9 +129797,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -130157,10 +129809,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -130980,21 +130628,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -131235,9 +130876,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -131252,7 +130892,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -131565,7 +131205,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -131744,7 +131384,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -131849,7 +131489,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -132002,7 +131642,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -134424,9 +134064,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -134436,10 +134076,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -135259,21 +134895,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -135514,9 +135143,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -135531,7 +135159,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -135844,7 +135472,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -136023,7 +135651,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -136128,7 +135756,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -136281,7 +135909,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {
@@ -138733,9 +138361,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: \$toolchain, updater: \$updater, split: \$split, detail: \$detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: \$split, detail: \$detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -138745,10 +138373,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  \$env.PACK_HELD? | default {} | get -o \$manager | get -o \$field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -139568,21 +139192,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = (\$env.HOME? | default \$nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] (\$here | enumerate | each { |m|
+    wutTable ['manager' 'path'] (\$here | enumerate | each { |m|
       if \$m.item in ['script' 'file'] {
-        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '', '', '']
+        [\$\\"(\$m.index + 1)\\\\) (\$m.item)\\", '']
       } else {
         let at = (packCopyAt \$m.item)
-        let path = if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at }
-        [
-          \$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\",
-          \$path,
-          (packManagerHeldField \$m.item 'toolchain'),
-          (packManagerHeldField \$m.item 'updater'),
-        ]
+        [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", (if (\$at | str starts-with \$home) { \$at | str replace \$home '~' } else { \$at })]
       }
     })
     let picked = (wutSelectRead (\$here | length))
@@ -139823,9 +139440,8 @@ def --env packGhpm [] {
 const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 
 # pnpm runs no package itself: a package's command runs on the node beside it in pnpm's bin dir, and only on one PATH
-# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. its
-# runtimes are asked where pnpm keeps them, since PATH may well find another node first and that is fine: pnpm's
-# packages never look there
+# finds when pnpm holds none. so a pnpm with packages and no node of its own runs them on another install's. a node
+# PATH finds first is fine: pnpm's packages never look there
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if \$res.exit_code != 0 {
@@ -139840,7 +139456,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  packHeld --toolchain (\$runtimes | str join ', ')
+  packHeld
 }
 
 def --env packPnpm [] {
@@ -140153,7 +139769,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -140332,7 +139948,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns \$root) { 'dotnetup' } else { '' })
+  packHeld
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -140437,7 +140053,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld 'go does not run' [\$\\"go (\$go)\\"])
   }
-  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
+  packHeld
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -140590,7 +140206,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  packHeld --toolchain rust --updater (if \$rustup != null { 'rustup' } else { '' })
+  packHeld
 }
 
 def --env packRustupUpdate [] {

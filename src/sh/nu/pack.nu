@@ -700,9 +700,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
-def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
-  { toolchain: $toolchain, updater: $updater, split: $split, detail: $detail }
+# why a manager is split, with what to look at, or nothing where it is one install
+def packHeld [split: string = '', detail: list<string> = []] {
+  { split: $split, detail: $detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -712,10 +712,6 @@ def packUnder [path: string, dir: string] {
 
 def packManagerSplit [manager: string] {
   $env.PACK_HELD? | default {} | get -o $manager | get -o split | default '' | is-not-empty
-}
-
-def packManagerHeldField [manager: string, field: string] {
-  $env.PACK_HELD? | default {} | get -o $manager | get -o $field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -1535,21 +1531,14 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
-    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is
     let home = ($env.HOME? | default $nu.home-dir)
-    wutTable ['manager' 'path' 'toolchain' 'updater'] ($here | enumerate | each { |m|
+    wutTable ['manager' 'path'] ($here | enumerate | each { |m|
       if $m.item in ['script' 'file'] {
-        [$"($m.index + 1)\) ($m.item)", '', '', '']
+        [$"($m.index + 1)\) ($m.item)", '']
       } else {
         let at = (packCopyAt $m.item)
-        let path = if ($at | str starts-with $home) { $at | str replace $home '~' } else { $at }
-        [
-          $"($m.index + 1)\) (packCopyBase $m.item)",
-          $path,
-          (packManagerHeldField $m.item 'toolchain'),
-          (packManagerHeldField $m.item 'updater'),
-        ]
+        [$"($m.index + 1)\) (packCopyBase $m.item)", (if ($at | str starts-with $home) { $at | str replace $home '~' } else { $at })]
       }
     })
     let picked = (wutSelectRead ($here | length))
