@@ -961,3 +961,17 @@ Deno.test('nu / arch / renew and pull offer only the managers that can', async (
   assertEquals(pull.includes("r#'apt'#"), true)
   assertEquals(pull.includes("r#'cargo'#"), false)
 })
+
+// a group's own file.yaml key rides on its unit for add, remove and sync, and a bare sync lists every group's
+Deno.test('nu / arch / a group carries its own files', async () => {
+  const unit = async (op: string) => planUnits(await (await runSrv(req(`/sh/nu/pack/${op}/zsh?${PIN_ARCH}`))).text())[0]
+  const add = await unit('add')
+  assertEquals(add.files.key, 'zsh')
+  assertEquals(add.files.pairs.includes('zsh|zsh/zshrc|{HOME}/.zshrc'), true)
+  assertEquals((await unit('remove')).files.key, 'zsh')
+  assertEquals((await unit('renew')).files, undefined)
+  const sync = await (await runSrv(req(`/sh/nu/pack/sync?${PIN_ARCH}`))).text()
+  const line = sync.split('\n').find((l) => l.startsWith("$env.PACK_FILES = r#'"))!
+  const files = JSON.parse(line.slice("$env.PACK_FILES = r#'".length, -"'#".length))
+  assertEquals(files.map((f: { key: string }) => f.key).toSorted(), ['nu', 'zsh'])
+})

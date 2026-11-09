@@ -8,6 +8,7 @@ import type { Sh } from '@meop/shire/sh'
 import { getCfgDirDump, getCfgFileLoad } from '../cfg.ts'
 import { sameName, wordStartsWith } from '../match.ts'
 import { lockRun, redirectCommonShell } from '../sh.ts'
+import { type FilePlan, loadFileFns, ownFilePlan } from './file.ts'
 import { resolveToolScript, type ToolScript, toolsWithScript } from './script.ts'
 
 export class PackCmd extends CmdBase implements Cmd {
@@ -83,6 +84,12 @@ const PACK_FIND_KEY = [PACK_KEY, 'find']
 const PACK_INFO_MAP_KEY = [PACK_KEY, 'info', 'map']
 // the groups' own scripts a bare sync or tidy offers, for the client to gate
 const PACK_SCRIPTS_KEY = [PACK_KEY, 'scripts']
+// the groups' own files a bare sync offers, for the client to gate on the tool being here
+const PACK_FILES_KEY = [PACK_KEY, 'files']
+
+// the ops that carry a group's own files: written after an add's install, written again on a sync, taken out on a
+// remove
+const OWN_FILE_OPS = ['add', 'remove', 'sync']
 
 const SCRIPT_PATH = 'script'
 
@@ -190,8 +197,10 @@ async function loadManagerFiles(
     .with(await shell.fileLoad(['sel'], import.meta.resolve, ['..']))
     .with(await shell.fileLoad(['lock'], import.meta.resolve, ['..']))
     .with(await shell.fileLoad(['match'], import.meta.resolve, ['..']))
-    // a group's own scripts are gated the way `script exec` gates them
+    // a group's own scripts are gated the way `script exec` gates them, and its own files written the way `file sync`
+    // writes them
     .with(await shell.fileLoad(['script'], import.meta.resolve, ['..']))
+    .with(await loadFileFns(shell))
     .with(await shell.fileLoad([PACK_KEY], import.meta.resolve, ['..']))
   const loadedOps = new Map<string, Array<string>>()
   for (const manager of managers) {
@@ -495,6 +504,8 @@ type PlanUnit = {
   provides?: Array<string>
   pre?: Array<PlanScript>
   post?: Array<PlanScript>
+  // the group's own file.yaml key, whose name is the tool's bin
+  files?: { key: string } & FilePlan
 }
 
 // a hook runs the way `script exec <action> <tool>` runs it. its arm is keyed by tool/action alone, so the client runs
@@ -552,6 +563,10 @@ async function buildGroupUnit(
     return { unit: null, arms, scriptArms: new Map() }
   }
   const unit: PlanUnit = { group: name, name: cliName, paths }
+  const files = OWN_FILE_OPS.includes(op) ? await ownFilePlan(shell, context, tool) : null
+  if (files) {
+    unit.files = { key: tool, ...files }
+  }
   const provides = groupProvides(name.split('/'), content)
   if (provides.length) {
     unit.provides = provides
@@ -675,10 +690,27 @@ async function buildPlan(
   return { units, arms: [...arms, ...[...scriptArms.values()].flat()], claimed }
 }
 
-// a bare sync or tidy is the managers' plan, with every group's own script for the op beside them as one more row
+// every group's own files, for a bare sync to offer where the tool is here
+async function findOwnFiles(shell: Sh, context: Ctx): Promise<Array<{ group: string; key: string } & FilePlan>> {
+  const found: Array<{ group: string; key: string } & FilePlan> = []
+  for (const parts of await getGroupParts()) {
+    const name = groupName(parts)
+    const key = groupTool(name)
+    const plan = await ownFilePlan(shell, context, key)
+    if (plan) {
+      found.push({ group: name, key, ...plan })
+    }
+  }
+  return found
+}
+
+// a bare sync or tidy is the managers' plan, with every group's own script for the op beside them as one more row, and
+// for a sync every group's own files as another
 async function withOwnScripts(shell: Sh, context: Ctx, op: string): Promise<Sh> {
   const { scripts, arms } = await findOwnScripts(shell, context, op)
+  const files = op === 'sync' ? await findOwnFiles(shell, context) : []
   return shell
+    .with(shell.varSetStr(PACK_FILES_KEY, JSON.stringify(files)))
     .with([
       'def --env packRunUnit [id: string] {',
       '  match $id {',

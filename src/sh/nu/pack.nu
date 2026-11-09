@@ -1121,6 +1121,7 @@ def --env packPlanRun [] {
         $detail = ($detail | append {
           manager: (if $here { packManagerBest $path.manager } else { $path.manager }), group: $unit.group, id: $path.id,
           names: $path.names, pre: ($unit.pre? | default []), post: ($unit.post? | default []),
+          files: ($unit.files? | default null),
           after: (packProviderOf $provided $path.manager $unit.group), waits: (not $here), alts: $alts,
         })
       }
@@ -1178,6 +1179,9 @@ def --env packPlanRun [] {
       if ($d.pre | is-not-empty) {
         opPrint $"    first: ($d.pre | each { |s| $s.id } | str join ', ')"
       }
+      if $d.files != null {
+        opPrint $"    files: ($d.files.pairs | each { |p| fileField $p 2 | path basename } | uniq | str join ', ')"
+      }
       if $d.waits {
         opPrint $"    after: ($d.after)"
       }
@@ -1227,6 +1231,10 @@ def --env packPlanRun [] {
   let picked = ($planned | where { |d| $chosenRows | any { |r| $r.manager == $d.manager and $r.group == $d.group } })
   # a group's pre scripts all run before any install or removal, while what they act on is still there
   packRunScripts 'pre' ($picked | each { |d| $d.pre } | flatten | uniq-by id)
+  # a remove takes a tool's files out after its teardown, while the tool that read them is still there
+  if $env.PACK_OP == 'remove' {
+    packRunFiles ($picked | get files | compact | uniq-by key)
+  }
 
   # the loose names remove already resolved ride with the manager row that won them; the ones add left behind ride
   # with '?', and are searched only now, against every manager, since picking '?' is picking the search itself
@@ -1252,7 +1260,16 @@ def --env packPlanRun [] {
       wutPathRefresh
     }
     mut posts = []
-    for d in ($picked | where stage == $stage) {
+    mut files = []
+    # a group's own sync script follows its managers and its files, since what it puts back is what they changed
+    let inStage = ($picked | where stage == $stage)
+    let ordered = if $env.PACK_OP == 'sync' { ($inStage | where manager != 'script') ++ ($inStage | where manager == 'script') } else { $inStage }
+    mut filesDone = false
+    for d in $ordered {
+      if $env.PACK_OP == 'sync' and $d.manager == 'script' and not $filesDone {
+        packRunFiles ($files | uniq-by key)
+        $filesDone = true
+      }
       let id = (packStageId $d)
       if $id == null {
         continue
@@ -1266,6 +1283,9 @@ def --env packPlanRun [] {
       # a group whose install or removal failed has nothing to follow it
       if ($env.PACK_FAILED? | default [] | length) == $failedBefore {
         $posts = ($posts | append $d.post)
+        if $d.files != null {
+          $files = ($files | append $d.files)
+        }
       }
     }
     if $first {
@@ -1279,6 +1299,11 @@ def --env packPlanRun [] {
       }
     }
     $first = false
+    # an install's files go down before its setup, which may read them
+    if $env.PACK_OP in ['add', 'sync'] and not $filesDone and ($files | is-not-empty) {
+      wutPathRefresh
+      packRunFiles ($files | uniq-by key)
+    }
     let ran = $ranPosts
     let due = ($posts | uniq-by id | where { |p| $p.id not-in $ran })
     # the installs put their commands where the env stage says they go, which the post scripts are about to look for
@@ -1299,6 +1324,28 @@ def --env packPlanRun [] {
     }
   }
   packReport
+}
+
+# a group's own files, written or taken out the way `file sync` and `file remove` do. a write needs the tool here,
+# found after the installs put it down; a removal takes what is on disk
+def --env packRunFiles [files: list] {
+  for f in $files {
+    if $env.PACK_OP == 'remove' {
+      opPrintInfo $"($f.key) files"
+      fileRemoveTool $f.key $f.pairs $f.dirs
+      continue
+    }
+    if not (fileBinHere $f.key) {
+      opPrintWarn $"($f.key) files skipped: ($f.key) not found"
+      continue
+    }
+    opPrintInfo $"($f.key) files"
+    try {
+      fileSyncTool $f.key $f.pairs $f.dirs $f.perms
+    } catch { |e|
+      packMarkFailed $"($f.key) files" $e
+    }
+  }
 }
 
 # a group's own script is needed here when its gates are met, asked exactly as `script exec <action>` asks them. the
@@ -1463,7 +1510,9 @@ def --env packManagerPlanRun [] {
   # a manager's own update runs in its row; every other script in the script row, after the managers
   let inRows = ($scripts | where { |s| packScriptRow $s $managers | is-not-empty })
   let rest = ($scripts | where { |s| $s not-in $inRows })
-  let here = if ($rest | is-empty) { $managers } else { $managers | append 'script' }
+  # a bare sync writes again the files of every group whose tool is here, after the managers and before the scripts
+  let files = ($env.PACK_FILES? | default '[]' | from json | where { |f| fileBinHere $f.key })
+  let here = ($managers ++ (if ($files | is-empty) { [] } else { ['file'] }) ++ (if ($rest | is-empty) { [] } else { ['script'] }))
   if ($here | is-empty) {
     opPrintWarn 'no manager installed'
     return
@@ -1477,7 +1526,11 @@ def --env packManagerPlanRun [] {
     # each row names what it runs on, which is also what its sync moves: go 1.27.3 (goup), rust 1.99.1 (rustup). the
     # script row names its scripts
     wutTable ['manager' 'toolchain'] ($here | enumerate | each { |m|
-      let note = if $m.item == 'script' { $rest | get id | str join ', ' } else { packManagerNote $m.item }
+      let note = match $m.item {
+        'script' => ($rest | get id | str join ', '),
+        'file' => ($files | get key | str join ', '),
+        _ => (packManagerNote $m.item),
+      }
       [$"($m.index + 1)\) (packCopyBase $m.item)", $note]
     })
     let picked = (wutSelectRead ($here | length))
@@ -1494,6 +1547,10 @@ def --env packManagerPlanRun [] {
     $env.YES = '1'
   }
   for m in $chosen {
+    if $m == 'file' {
+      packRunFiles $files
+      continue
+    }
     if $m == 'script' {
       packRunScripts $env.PACK_OP $rest
       continue

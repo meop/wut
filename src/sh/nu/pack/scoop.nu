@@ -10,7 +10,7 @@ def --env packScoop [] {
 
   # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
   if $env.PACK_OP in ['remove', 'renew', 'sync'] {
-    let key = $"PACK_($env.PACK_OP | str upcase)_NAMES"
+    let key = $"PACK_($env.PACK_OP | str uppercase)_NAMES"
     load-env {$key: ($env | get -o $key | default [] | each { |n| packScoopApp $n })}
   }
 

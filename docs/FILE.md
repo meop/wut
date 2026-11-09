@@ -12,27 +12,45 @@ to a second binary is a second key.
 The key travels to the client as `zed|settings.json` — the name to check on the left, the `in` paths on the right — and
 is what `find` prints as a heading.
 
-## Four ops, one that writes
+## Five ops, the same as pack's
 
-A term names a tool by its key: `diff` and `sync` take it whole, `find` and `list` the start of a word of it, or of a
-source path ([COMMANDS.md](COMMANDS.md)). `find`, `diff` and `sync` all filter by `fileBinHere`. `find` prints what it
-matched and stops — it has nothing left to do once you answer. `list` takes an explicit filter and prints one line per
-pair out of what the server already sent, so there is no set to summarise. `sync` is the one that writes:
+The ops mean what pack's do, for a tool's files rather than its package. A term names a tool by its key: `sync` and
+`remove` take it whole, `find`, `list` and `outdated` the start of a word of it, or of a source path
+([COMMANDS.md](COMMANDS.md)).
 
-- `filePlanShow` lists each tool here with the directories it clears (`clear:`) and the files it writes, then a numbered
-  row per tool, and the tools picked are the only ones written
-- a `maps` entry whose `in` is a directory expands to every file inside it, and the destination is cleared first —
-  `rm --force --permanent --recursive` — so a removed source file does not survive in place
-- `permission` blocks are applied after the copy, as chmod on unix and ACL commands on windows (`getPlatAclPermCmds`)
+| op         | answers                                             | reads        | asks first |
+| ---------- | --------------------------------------------------- | ------------ | ---------- |
+| `find`     | what the config has for the tools here              | the config   | no         |
+| `list`     | what is in place on this machine                    | the disk     | no         |
+| `outdated` | what a sync would write or take out, with its diffs | config, disk | yes        |
+| `sync`     | writes only that                                    | config, disk | yes        |
+| `remove`   | takes out what sync wrote                           | the disk     | yes        |
 
-Because clearing is recursive and permanent, the summary names each directory a tool clears on a line of its own, first:
-they are the part of a sync that destroys something.
+`find`, `list`, `outdated` and `sync` act on the tools here (`fileBinHere`). `remove` acts on the tools whose files are
+on disk, whether or not the tool still is: pack removes a tool's files before the tool, and `wut f rem <key>` takes back
+what is left after one went some other way.
 
-`diff` fetches each source to a temp file and runs `diff` (or `fc`), reporting a destination that does not exist rather
-than treating it as an empty diff.
+## Sync writes only what changed
 
-That fetch is why `diff` asks too, through the same `filePlanShow`: one GET per pair is the same cost `sync` pays, and
-what separates the two is that `sync` also writes the result. `diff` reads like `list` — no writes, a filter, a printout
-— but the work it does before printing is a network round trip per pair, and cost is what decides which side of the
-prompt work belongs on ([OPS.md](OPS.md#cost-decides-which-side-of-the-gate-work-sits-on)). Both ops key their plan off
-their own op name, so picking tools for a diff does not carry into a later sync.
+`sync` fetches each source and compares it with its destination by their bytes, and writes only a file that is new or
+changed. A `maps` entry whose `in` is a directory expands to every file inside it, and a file in its destination that
+the source no longer has is taken out, so the folder ends the same as the source without being cleared and written
+again. `permission` blocks are applied after a tool's writes, as chmod on unix and ACL commands on windows
+(`getPlatAclPermCmds`), and only for a tool that had one: a sync with nothing to change writes nothing at all, which is
+what keeps repeated syncs off an SSD. What it left alone it counts, `zsh: 12 unchanged`.
+
+`outdated` is the same comparison, said instead of done: each file that is `new` or `changed`, the diff of a changed one
+(`diff`, or `fc`), and each `stale` file a sync would take out. Its fetches cost what sync's do, a GET per file, so it
+asks which tools first, through the same `filePlanShow`
+([OPS.md](OPS.md#cost-decides-which-side-of-the-gate-work-sits-on)). Each op keys its plan off its own name, so tools
+picked for an outdated do not carry into a later sync.
+
+`remove` takes out a folder map's destination whole, since sync made it the source's, and each file a tool was written
+elsewhere, and leaves every other tool's alone.
+
+## A pack's own files
+
+A `file.yaml` key named for a pack group is that pack's own, the way a script directory is: pack writes it after the
+install and before `setup`, writes it again on a sync before the `sync` script, and removes it after `teardown`, through
+the same functions, so a pack writes a tool's files exactly as `wut f s <key>` would
+([PACK.md](PACK.md#a-groups-own-files)).

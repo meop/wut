@@ -8,6 +8,7 @@ import { getScriptFlavorOpPreamble } from '../../sh.ts'
 const LOCK_NU = new URL('./lock.nu', import.meta.url).pathname
 const PACK_NU = new URL('./pack.nu', import.meta.url).pathname
 const SCRIPT_NU = new URL('./script.nu', import.meta.url).pathname
+const FILE_NU = new URL('./file/file.nu', import.meta.url).pathname
 const SEL_NU = new URL('./sel.nu', import.meta.url).pathname
 const PATH_NU = new URL('./path.nu', import.meta.url).pathname
 const MATCH_NU = new URL('./match.nu', import.meta.url).pathname
@@ -63,6 +64,11 @@ async function withStubs(
       ),
       await Deno.readTextFile(LOCK_NU),
       await Deno.readTextFile(SCRIPT_NU),
+      // a probe that stubs a file function brings its own, so the real one is left out rather than defined twice
+      (await Deno.readTextFile(FILE_NU)).replace(
+        /^def --env (fileSyncTool|fileRemoveTool) [\s\S]*?^}$/gm,
+        (def, name) => probe.includes(`def --env ${name} `) ? '' : def,
+      ),
       await Deno.readTextFile(PACK_NU),
       ...await Promise.all(
         managerFiles.map((m) => Deno.readTextFile(new URL(`./pack/${m}.nu`, import.meta.url).pathname)),
@@ -2631,4 +2637,85 @@ Deno.test('nu / pack / renew installs a held package again', async () => {
   }
   assertStringIncludes(out, 'pacman --sync zsh')
   assertEquals(out.includes('--needed'), false, out)
+})
+
+// a group's own files, as the server states them on its unit
+const ownFiles = (key: string) => ({ key, pairs: [`${key}|${key}/config|{HOME}/.${key}/config`], dirs: [], perms: [] })
+const fileStubs = [
+  `def --env fileSyncTool [tool: string, pairs: list, dirs: list, perms: list] { print $"ran files ($tool)" }`,
+  `def --env fileRemoveTool [tool: string, pairs: list, dirs: list] { print $"ran unfiles ($tool)" }`,
+  `def --env packRunUnit [id: string] { print $"ran ($id)" }`,
+]
+const ranLines = (out: string) => out.split('\n').filter((l) => l.startsWith('ran ')).map((l) => l.slice(4))
+
+// add writes a group's files after its install and before its setup, which may read them; remove takes them out after
+// its teardown and before the removal; a sync writes them after the managers and before its own sync script
+Deno.test('nu / pack / a group writes its own files between its install and its setup', async () => {
+  const plan = (op: string, extra: Record<string, unknown>) => [{
+    group: 'shell/zellij',
+    name: 'zellij',
+    paths: [{ id: 'shell/zellij|pacman', manager: 'pacman', names: ['zellij'] }],
+    files: ownFiles('zellij'),
+    ...extra,
+  }]
+  const run = (op: string, units: unknown) =>
+    withStubs(
+      { pacman: 'exit 0', zellij: '' },
+      [
+        ...fileStubs,
+        `$env.PACK_OP = '${op}'`,
+        `$env.YES = '1'`,
+        `$env.PACK_PLAN = ${JSON.stringify(JSON.stringify(units))}`,
+        `$env.PACK_${op.toUpperCase()}_NAMES = [  ]`,
+        'packPlanRun',
+      ].join('\n'),
+      ['pacman'],
+    )
+  const add = await run('add', plan('add', { post: [{ id: 'zellij/setup', cmds: [] }] }))
+  if (add == null) {
+    return
+  }
+  assertEquals(ranLines(add), ['shell/zellij|pacman', 'files zellij', 'zellij/setup'], add)
+  assertStringIncludes(add, 'files: config')
+  const remove = (await run('remove', plan('remove', { pre: [{ id: 'zellij/teardown', cmds: [] }] })))!
+  assertEquals(ranLines(remove), ['zellij/teardown', 'unfiles zellij', 'shell/zellij|pacman'], remove)
+  const sync = (await run('sync', [{
+    ...plan('sync', {})[0],
+    paths: [
+      { id: 'shell/zellij|pacman', manager: 'pacman', names: ['zellij'] },
+      {
+        id: 'shell/zellij|script',
+        manager: 'script',
+        names: ['zellij/sync'],
+        gates: { cmds: [], noCmds: [], svcs: [], noSvcs: [], paths: [], noSsh: false },
+      },
+    ],
+  }]))!
+  assertEquals(ranLines(sync), ['shell/zellij|pacman', 'files zellij', 'shell/zellij|script'], sync)
+})
+
+// a bare sync writes again the files of every group whose tool is here, as a row after the managers and before the
+// scripts, and offers none for a tool that is not here
+Deno.test('nu / pack / a bare sync has a file row for the tools here', async () => {
+  const out = await withStubs(
+    { ghpm: '', zellij: '' },
+    [
+      ...fileStubs,
+      `def --env packGhpm [] { print 'ran ghpm' }`,
+      `$env.PACK_OP = 'sync'`,
+      `$env.YES = '1'`,
+      `$env.PACK_FILES = ${JSON.stringify(JSON.stringify([ownFiles('zellij'), ownFiles('tmux')]))}`,
+      `$env.PACK_SCRIPTS = ${
+        JSON.stringify(JSON.stringify([syncScript('shell/tool/zellij', 'zellij/sync', { cmds: ['zellij'] })]))
+      }`,
+      'packManagerPlanRun',
+    ].join('\n'),
+    ['ghpm'],
+  )
+  if (out == null) {
+    return
+  }
+  assertStringIncludes(out, '2) file')
+  assertEquals(out.includes('tmux'), false, out)
+  assertEquals(ranLines(out), ['ghpm', 'files zellij', 'zellij/sync'], out)
 })

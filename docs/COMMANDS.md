@@ -3,9 +3,9 @@
 How a typed term resolves to targets. There are two questions a term can put to a name, and which one is asked depends
 only on what the op does, never on which command it belongs to:
 
-- **Acting ops take a name whole.** `add`, `rem`/`remove`, `sync`, `run`, `exec`, `diff` and `info` change or address
-  one thing, so the term has to _be_ a name it goes by — its own name, a folder above it, or an alias. Part of a name is
-  not a name: `nush` is not `nushell`, and `gl` is not `glass`. Case aside, nothing is normalised, so `lm-studio` and
+- **Acting ops take a name whole.** `add`, `remove`, `renew`, `sync`, `run`, `exec` and `info` change or address one
+  thing, so the term has to _be_ a name it goes by — its own name, a folder above it, or an alias. Part of a name is not
+  a name: `nush` is not `nushell`, and `gl` is not `glass`. Case aside, nothing is normalised, so `lm-studio` and
   `lmstudio` are two names and a config that wants both states both.
 - **Reading ops take the start of a word.** `find`, `list` and `outdated` exist to turn something half remembered into a
   name to type, so the term only has to start a word of one. A word is what sits between anything that is not a letter
@@ -46,12 +46,12 @@ from.
 
 ## What each op asks
 
-| Command  | A name, whole                                                                | The start of a word        |
-| -------- | ---------------------------------------------------------------------------- | -------------------------- |
-| `pack`   | `add`, `remove`, `sync`, `info`                                              | `find`, `list`, `outdated` |
-| `virt`   | `add`, `on`, `off`, `rem`, `snap`, `unsnap`, `roll`, `unroll`, `sync`, `run` | `find`, `list`             |
-| `script` | `exec`                                                                       | `find`                     |
-| `file`   | `diff`, `sync`                                                               | `find`, `list`             |
+| Command  | A name, whole                                                                   | The start of a word        |
+| -------- | ------------------------------------------------------------------------------- | -------------------------- |
+| `pack`   | `add`, `remove`, `renew`, `sync`, `info`                                        | `find`, `list`, `outdated` |
+| `virt`   | `add`, `on`, `off`, `remove`, `snap`, `unsnap`, `roll`, `unroll`, `sync`, `run` | `find`, `list`             |
+| `script` | `exec`                                                                          | `find`                     |
+| `file`   | `remove`, `sync`                                                                | `find`, `list`, `outdated` |
 
 `script exec` is the one op that splits on cardinality: `wut s e setup` runs every setup script gated for this machine,
 while `wut s e setup ptyxis` names a tool and runs its one script. The `has_cmd` gate is client-side, so a fanned out

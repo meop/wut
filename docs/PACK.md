@@ -365,6 +365,38 @@ Picking in the plan is the yes. Once the table is answered, `YES` is set for the
 run without asking the questions they would ask under a bare `script exec` — the pick already answered them, the same
 way it answers for every manager.
 
+## Pull and renew
+
+`pull` is a manager's refresh asked for by itself: apt's and dnf's indexes, brew's and pacman's databases, ghpm's repo
+sources and its own gh and wedge, goup's tools for a go that is goup's. It has the plain manager table, like `tidy`,
+offering only the managers with something to pull. The refreshes add, info, outdated, renew and sync run first are the
+same ones, so a pull just before one of them makes that run's refresh a no op.
+
+`renew` installs again what a manager already holds, at the version it holds: `pacman --sync` without `--needed`,
+`apt
+install --reinstall`, `brew reinstall`, `ghpm renew`. It asks remove's question, who already has this, so a name
+goes only to a manager holding it, and a manager offers it only where that manager's file has a `renew` arm: the ones
+that cannot put a package back in place (deno, bun, pnpm, go, dotnet, nix) are not a choice. It takes names, as add and
+remove do. A group's own scripts and files are not part of it: a renew puts the package back, and a sync is what writes
+files again.
+
+## A group's own files
+
+A `file.yaml` key named for a group is the group's own, as its script directory is
+([FILE.md](FILE.md#a-packs-own-files)). The summary lists them under the group (`files:`), so the one pick covers them
+too, and each op runs them where they belong:
+
+- **add** writes them after the installs of the group's stage, once the PATH refresh has found the tool, and before its
+  `then` scripts, since a setup may read what they put down (zellij's points its config at the certificates the files
+  are)
+- **remove** takes them out after the `first` scripts and before any removal, while the tool that read them is still
+  here
+- **sync** writes them again after the group's managers and before its own `sync` script. A bare sync offers every
+  group's files whose tool is here as a `file` row, after the managers and before the `script` row
+
+They are written by the same functions `file sync` and `file remove` use, so a pack writes only what changed and takes
+out exactly what `wut f rem <key>` would. A group whose install failed has no files written for it.
+
 ## One run, in stages
 
 A language is a version manager whose setup puts the language down, and its tools are often best installed through that

@@ -18,9 +18,10 @@ export class FileCmd extends CmdBase implements Cmd {
     this.description = 'dot file ops'
     this.aliases = ['f', 'fi']
     this.commands = [
-      new FileCmdDiff([...this.scopes, this.name]),
       new FileCmdFind([...this.scopes, this.name]),
       new FileCmdList([...this.scopes, this.name]),
+      new FileCmdOutdated([...this.scopes, this.name]),
+      new FileCmdRemove([...this.scopes, this.name]),
       new FileCmdSync([...this.scopes, this.name]),
     ]
   }
@@ -39,13 +40,79 @@ const FILE_KEY = 'file'
 const FILE_OP_KEY = [FILE_KEY, 'op']
 const FILE_OP_KEYS_KEY = (op: string) => [FILE_KEY, op, 'keys']
 const FILE_OP_PARTS_KEY = (op: string) => [FILE_KEY, op, 'parts']
-const FILE_OP_CLEAR_DIRS_KEY = (op: string) => [FILE_KEY, op, 'clear', 'dirs']
+const FILE_OP_DIRS_KEY = (op: string) => [FILE_KEY, op, 'dirs']
 const FILE_OP_PATH_PAIRS_KEY = (op: string) => [FILE_KEY, op, 'path', 'pairs']
 const FILE_OP_PATH_PERMS_KEY = (op: string) => [FILE_KEY, op, 'path', 'perms']
 const FILE_OP_TOOLS_KEY = (op: string) => [FILE_KEY, op, 'tools']
 
 // the nu name for a key, matching how varSet* renders it
 const shellEnvKey = (parts: Array<string>) => parts.join('_').toUpperCase()
+
+// one key's files for this platform: each source and destination pair, the directories a folder map writes into, and
+// the permission commands to run after a write, every entry prefixed with the key. pack reads the same for a group's
+// own key, so a pack writes its files exactly as `file sync <key>` would
+export type FilePlan = { pairs: Array<string>; dirs: Array<string>; perms: Array<string> }
+
+async function keyPlan(shell: Sh, context: Ctx, key: string, entry: Sync[string]): Promise<FilePlan> {
+  const sysOsPlat = context.sys_os_plat ?? ''
+  const plan: FilePlan = { pairs: [], dirs: [], perms: [] }
+  for (const map of entry?.maps ?? []) {
+    const map_in = withCtx(map.in, context)
+    const map_out = map.out
+    if (!(sysOsPlat in map_out)) {
+      continue
+    }
+    const localEntryPaths = await localCfgPaths([FILE_KEY, key, map_in])
+    if (!localEntryPaths.length) {
+      continue
+    }
+    if (await isDirPath(localEntryPaths[0])) {
+      for (const localEntryPath of localEntryPaths) {
+        const dir = joinVal(key, map_out[sysOsPlat])
+        if (!plan.dirs.includes(dir)) {
+          plan.dirs.push(dir)
+        }
+        for (const filePath of await getFilePaths(localEntryPath)) {
+          const filePathParts = toRelParts(localEntryPath, filePath, false)
+          plan.pairs.push(
+            joinVal(key, [key, map_in, ...filePathParts].join('/'), [map_out[sysOsPlat], ...filePathParts].join('/')),
+          )
+        }
+      }
+    } else {
+      plan.pairs.push(joinVal(key, [key, map_in].join('/'), map_out[sysOsPlat]))
+    }
+    if (map.permission) {
+      for (const permCmd of getPlatAclPermCmds(sysOsPlat, map_out[sysOsPlat], map.permission, context.sys_user ?? '')) {
+        plan.perms.push(joinVal(key, execNativeShell(shell, sysOsPlat, permCmd)))
+      }
+    }
+  }
+  return plan
+}
+
+async function loadSync(): Promise<Sync> {
+  const content: Sync = await getCfgFileLoad([FILE_KEY], { extension: Fmt.yaml })
+  if (content == null) {
+    throw new Error(`config file not found: ${FILE_KEY}.${Fmt.yaml}`)
+  }
+  return content
+}
+
+// a pack group's own files: the file.yaml key of the group's own name, when it has files on this platform
+export async function ownFilePlan(shell: Sh, context: Ctx, key: string): Promise<FilePlan | null> {
+  const entry = (await loadSync())[key]
+  if (!entry) {
+    return null
+  }
+  const plan = await keyPlan(shell, context, key, entry)
+  return plan.pairs.length ? plan : null
+}
+
+// the file functions pack runs a group's files with
+export async function loadFileFns(shell: Sh): Promise<string> {
+  return await shell.fileLoad([FILE_KEY, FILE_KEY], import.meta.resolve, ['..'])
+}
 
 async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   const redirect = await redirectCommonShell(shell, context)
@@ -55,14 +122,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
 
   let _shell = shell
   const filters = environment.getSplit(FILE_OP_PARTS_KEY(op))
-
-  const content: Sync = await getCfgFileLoad([FILE_KEY], {
-    extension: Fmt.yaml,
-  })
-  if (content == null) {
-    throw new Error(`config file not found: ${FILE_KEY}.${Fmt.yaml}`)
-  }
-
+  const content = await loadSync()
   const sysOsPlat = context.sys_os_plat
 
   const validKeys: Array<string> = []
@@ -70,9 +130,9 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     const key of Object.keys(content).filter((k) =>
       !filters.length ||
       filters.every((f) => {
-        // a key is the one name a tool goes by. diff and sync take it whole; find and list read, so they take the
-        // start of a word, and look further, into the paths the tool's files come from
-        return op === 'find' || op === 'list'
+        // a key is the one name a tool goes by. the acting ops take it whole; find, list and outdated read, so they
+        // take the start of a word, and look further, into the paths the tool's files come from
+        return op === 'find' || op === 'list' || op === 'outdated'
           ? wordStartsWith(k, f) || content[k]?.maps?.some((m) => wordStartsWith(m.in, f))
           : sameName(k, f)
       })
@@ -94,13 +154,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   _shell = _shell
     .with(await _shell.fileLoad(['sel'], import.meta.resolve, ['..']))
     .with(await _shell.fileLoad(['lock'], import.meta.resolve, ['..']))
-    .with(
-      await _shell.fileLoad(
-        [FILE_KEY, FILE_KEY],
-        import.meta.resolve,
-        ['..'],
-      ),
-    )
+    .with(await loadFileFns(_shell))
 
   if (op === 'find') {
     _shell = _shell.with(
@@ -113,90 +167,34 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       ),
     )
   } else {
-    const validDirs: Set<string> = new Set()
-    const validPairs: Array<string> = []
-    const validPerms: Array<string> = []
+    const plan: FilePlan = { pairs: [], dirs: [], perms: [] }
     for (const key of validKeys) {
-      const entry = content[key]
-      for (const map of entry.maps ?? []) {
-        const map_in = withCtx(map.in, context)
-        const map_out = map.out
-        const map_permission = map.permission
-        if (!(sysOsPlat && sysOsPlat in map_out)) {
-          continue
-        }
-        const localEntryPaths = await localCfgPaths([FILE_KEY, key, map_in])
-        if (!localEntryPaths.length) {
-          continue
-        }
-        if (await isDirPath(localEntryPaths[0])) {
-          for (const localEntryPath of localEntryPaths) {
-            validDirs.add(joinVal(key, map_out[sysOsPlat]))
-            for (const filePath of await getFilePaths(localEntryPath)) {
-              const filePathParts = toRelParts(localEntryPath, filePath, false)
-              validPairs.push(
-                joinVal(
-                  key,
-                  [key, map_in, ...filePathParts].join('/'),
-                  [map_out[sysOsPlat], ...filePathParts].join('/'),
-                ),
-              )
-            }
-          }
-        } else {
-          validPairs.push(joinVal(key, [key, map_in].join('/'), map_out[sysOsPlat]))
-        }
-        if (map_permission) {
-          for (
-            const permCmd of getPlatAclPermCmds(
-              sysOsPlat,
-              map_out[sysOsPlat],
-              map_permission,
-              context.sys_user ?? '',
-            )
-          ) {
-            validPerms.push(
-              joinVal(key, execNativeShell(_shell, sysOsPlat, permCmd)),
-            )
-          }
-        }
-      }
+      const one = await keyPlan(_shell, context, key, content[key])
+      plan.pairs.push(...one.pairs)
+      plan.dirs.push(...one.dirs)
+      plan.perms.push(...one.perms)
     }
-
-    _shell = _shell.with(
-      _shell.varSetArr(FILE_OP_PATH_PAIRS_KEY(op), validPairs),
-    )
-
-    if (op === 'sync') {
-      if (validDirs.size) {
-        _shell = _shell.with(
-          _shell.varSetArr(FILE_OP_CLEAR_DIRS_KEY(op), [...validDirs]),
-        )
-      }
-
-      if (validPerms.length) {
-        _shell = _shell.with(
-          _shell.varSetArr(FILE_OP_PATH_PERMS_KEY(op), validPerms),
-        )
-      }
-    }
+    _shell = _shell
+      .with(_shell.varSetArr(FILE_OP_PATH_PAIRS_KEY(op), plan.pairs))
+      .with(_shell.varSetArr(FILE_OP_DIRS_KEY(op), plan.dirs))
+      .with(_shell.varSetArr(FILE_OP_PATH_PERMS_KEY(op), plan.perms))
   }
 
   _shell = _shell.with(_shell.varSetStr(FILE_OP_KEY, op))
-  // sync writes and diff fetches: both do a GET per pair, so both state the plan and ask before any of it runs.
-  // find and list only read what the server already sent, so there is nothing to gate
-  const gated = op === 'sync' || op === 'diff'
+  // outdated, sync and remove ask which tools, then act on those: outdated and sync fetch every source, and sync and
+  // remove write. find and list only read what the server sent and what is on disk, so there is nothing to gate
+  const gated = op === 'outdated' || op === 'sync' || op === 'remove'
   const run = gated
     ? [
-      `if not (filePlanShow '${shellEnvKey(FILE_OP_PATH_PAIRS_KEY(op))}' '${
-        shellEnvKey(FILE_OP_CLEAR_DIRS_KEY(op))
-      }' '${shellEnvKey(FILE_OP_TOOLS_KEY(op))}') {`,
+      `if not (filePlanShow '${shellEnvKey(FILE_OP_PATH_PAIRS_KEY(op))}' '${shellEnvKey(FILE_OP_DIRS_KEY(op))}' '${
+        shellEnvKey(FILE_OP_TOOLS_KEY(op))
+      }') {`,
       '  return',
       '}',
       FILE_KEY,
     ]
     : [FILE_KEY]
-  _shell = _shell.with(op === 'sync' ? lockRun(_shell, `${FILE_KEY} ${op}`, run) : run)
+  _shell = _shell.with(op === 'sync' || op === 'remove' ? lockRun(_shell, `${FILE_KEY} ${op}`, run) : run)
 
   const body = _shell.build()
 
@@ -207,30 +205,12 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   return body
 }
 
-export class FileCmdDiff extends CmdBase implements Cmd {
-  constructor(scopes: Array<string>) {
-    super(scopes)
-    this.name = 'diff'
-    this.description = 'diff on local'
-    this.aliases = ['d', 'di']
-    this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
-  }
-
-  override async work(
-    shell: Sh,
-    context: Ctx,
-    environment: Env,
-  ): Promise<string> {
-    return await execOp(shell, context, environment, this.name)
-  }
-}
-
 export class FileCmdFind extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'find'
     this.description = 'find from remote'
-    this.aliases = ['f', 'fi']
+    this.aliases = ['f', 'fi', 'se', 'search']
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
 
@@ -261,12 +241,48 @@ export class FileCmdList extends CmdBase implements Cmd {
   }
 }
 
+export class FileCmdOutdated extends CmdBase implements Cmd {
+  constructor(scopes: Array<string>) {
+    super(scopes)
+    this.name = 'outdated'
+    this.description = 'list what sync would write on local'
+    this.aliases = ['o', 'ou', 'out', 'stale']
+    this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
+  }
+
+  override async work(
+    shell: Sh,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
+    return await execOp(shell, context, environment, this.name)
+  }
+}
+
+export class FileCmdRemove extends CmdBase implements Cmd {
+  constructor(scopes: Array<string>) {
+    super(scopes)
+    this.name = 'remove'
+    this.description = 'remove on local what sync wrote'
+    this.aliases = ['r', 'rm', 'rem', 'un', 'unin', 'uninstall']
+    this.arguments = [{ name: 'parts', description: 'path part(s) to match', required: true }]
+  }
+
+  override async work(
+    shell: Sh,
+    context: Ctx,
+    environment: Env,
+  ): Promise<string> {
+    return await execOp(shell, context, environment, this.name)
+  }
+}
+
 export class FileCmdSync extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
     this.name = 'sync'
-    this.description = 'sync from remote'
-    this.aliases = ['s', 'sy']
+    this.description = 'sync from remote: write only what changed'
+    this.aliases = ['s', 'sy', 'up', 'update']
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
 

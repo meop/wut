@@ -78,7 +78,7 @@ is left to do once you answer:
 | `pack list <term>`/`outdated <term>`                      | manager, packages        | running them for those terms |
 | `pack list`/`outdated`/`info`/`sync`/`tidy`               | nothing yet              | which managers to run        |
 | `virt add`/`on`/`off`/`remove`/`list`/`run`/`sync`/`tidy` | manager, instances       | which managers to run        |
-| `file sync`, `file diff`                                  | tool, files, directories | which tools to write or read |
+| `file sync`, `file outdated`, `file remove`               | tool, files              | which tools to write or read |
 | `script exec`                                             | action, tool, shell      | running them                 |
 | `pack find`                                               | the groups it matched    | searching for what it cannot |
 | `virt find`, `file find`, `script find`                   | everything               | — nothing left, so no prompt |
@@ -113,16 +113,16 @@ decoration.
 **Cheap work goes in front of it**, because that is what lets the table say something. If an op can answer its own
 question by reading the machine, it should have done so by the time it asks:
 
-| Op                    | The answer                      | Read from      | So it runs |
-| --------------------- | ------------------------------- | -------------- | ---------- |
-| `pack add`            | who could serve this name       | registries     | after      |
-| `pack find`           | who could serve what is left    | registries     | after      |
-| `pack outdated`       | what is behind upstream         | remote index   | after      |
-| `pack info`           | what upstream says about a name | registries     | after      |
-| `pack remove`         | who already has this name       | local listings | before     |
-| `pack list <term>`    | who has anything matching       | local listings | before     |
-| `file sync`, `diff`   | which tools are on this PATH    | `which`        | before     |
-| `virt remove`, `sync` | which instances were added      | local files    | before     |
+| Op                      | The answer                      | Read from      | So it runs |
+| ----------------------- | ------------------------------- | -------------- | ---------- |
+| `pack add`              | who could serve this name       | registries     | after      |
+| `pack find`             | who could serve what is left    | registries     | after      |
+| `pack outdated`         | what is behind upstream         | remote index   | after      |
+| `pack info`             | what upstream says about a name | registries     | after      |
+| `pack remove`           | who already has this name       | local listings | before     |
+| `pack list <term>`      | who has anything matching       | local listings | before     |
+| `file sync`, `outdated` | which tools are on this PATH    | `which`        | before     |
+| `virt remove`, `sync`   | which instances were added      | local files    | before     |
 
 Deferring a cheap answer buys nothing and hides the one thing worth reading. That is what `pack list <term>` used to do:
 it offered every manager on the box and filtered afterwards, while `pack remove` of the same name resolved it outright —
@@ -136,9 +136,9 @@ An op can sit on both sides, split by its argument. A bare `pack list` has nothi
 answer _is_ the output — so its only question is which managers to run. Given a term, the answer is a local listing and
 comes first.
 
-`file list` is the exception that proves it: it takes an explicit filter and prints one line per pair out of data the
-server already sent, so there is no set to summarise and nothing to decide. `file diff` reads like its neighbour but is
-not one — it makes the same GET per pair that `sync` does — so it states its plan and asks first.
+`file list` is the exception that proves it: it reads what is on disk for the pairs the server already sent, so there is
+no set to summarise and nothing to decide. `file outdated` reads too, but it makes the same GET per pair that `sync`
+does, so it states its plan and asks first, as `pack outdated` does.
 
 Scripts are the one place a second question is legitimate: a script's own body may ask before it acts. That is per
 action consent written into the script, not a manager choice, and it happens after the plan was agreed.
@@ -183,12 +183,12 @@ It is held from where a run starts to change the machine until the run ends, nev
 
 Which ops run in a scope:
 
-| Command  | In a scope                                                                       | Not                    |
-| -------- | -------------------------------------------------------------------------------- | ---------------------- |
-| `pack`   | `add`, `info`, `outdated`, `pull`, `remove`, `renew`, `sync`, `tidy`             | `find`, `list`         |
-| `virt`   | `add`, `on`, `off`, `remove`, `snap`, `unsnap`, `roll`, `unroll`, `sync`, `tidy` | `find`, `list`, `run`  |
-| `file`   | `sync`                                                                           | `diff`, `find`, `list` |
-| `script` | `exec`                                                                           | `find`                 |
+| Command  | In a scope                                                                       | Not                        |
+| -------- | -------------------------------------------------------------------------------- | -------------------------- |
+| `pack`   | `add`, `info`, `outdated`, `pull`, `remove`, `renew`, `sync`, `tidy`             | `find`, `list`             |
+| `virt`   | `add`, `on`, `off`, `remove`, `snap`, `unsnap`, `roll`, `unroll`, `sync`, `tidy` | `find`, `list`, `run`      |
+| `file`   | `remove`, `sync`                                                                 | `find`, `list`, `outdated` |
+| `script` | `exec`                                                                           | `find`                     |
 
 Pack's info and outdated only report, but each manager refreshes its index first, and a refresh writes the package
 database as an add does. `virt run` acts but takes no lock: it is a foreground session that can last hours and touches

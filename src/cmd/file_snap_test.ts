@@ -5,8 +5,8 @@ import { checkSyntax, req } from '../_test.ts'
 import { runSrv } from '../srv.ts'
 
 // nu × darwin
-Deno.test('nu / darwin / diff', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/file/diff?sysOsPlat=darwin'))).text()
+Deno.test('nu / darwin / outdated', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/file/outdated?sysOsPlat=darwin'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
@@ -22,8 +22,8 @@ Deno.test('nu / darwin / sync', async (t) => {
 })
 
 // nu × linux
-Deno.test('nu / linux / diff', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/file/diff?sysOsPlat=linux'))).text()
+Deno.test('nu / linux / outdated', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/file/outdated?sysOsPlat=linux'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
@@ -67,8 +67,8 @@ Deno.test('nu / linux / list', async (t) => {
 })
 
 // nu × windows
-Deno.test('nu / windows / diff', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/file/diff?sysOsPlat=windows'))).text()
+Deno.test('nu / windows / outdated', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/file/outdated?sysOsPlat=windows'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
 })
@@ -109,13 +109,13 @@ Deno.test('nu / linux / find (pinned, filtered)', async (t) => {
   assertEquals(body.includes("r#'zsh|zsh, zshenv, zshrc'#"), true)
   assertEquals(body.includes('gitconfig'), false)
 })
-// sync resolves every in path to its out path for this platform, and clears dir targets first
+// sync resolves every in path to its out path for this platform, and names the folder maps whose strays it takes out
 Deno.test('nu / linux / sync (pinned, filtered)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/file/sync/zsh?${PIN}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(body.includes("r#'zsh|zsh/zshrc|{HOME}/.zshrc'#"), true)
-  assertEquals(body.includes("FILE_SYNC_CLEAR_DIRS = [ r#'zsh|{HOME}/.zsh'# ]"), true)
+  assertEquals(body.includes("FILE_SYNC_DIRS = [ r#'zsh|{HOME}/.zsh'# ]"), true)
 })
 // windows maps the same key to different out paths
 Deno.test('nu / windows / sync (pinned, filtered)', async (t) => {
@@ -133,11 +133,11 @@ Deno.test('nu / linux / sync (pinned, permissions)', async (t) => {
   assertEquals(body.includes('FILE_SYNC_PATH_PERMS'), true)
   assertEquals(body.includes('chmod -R a-s,u=rw,g=,o='), true)
 })
-Deno.test('nu / linux / diff (pinned, filtered)', async (t) => {
-  const body = await (await runSrv(req(`/sh/nu/file/diff/zsh?${PIN}`))).text()
+Deno.test('nu / linux / outdated (pinned, filtered)', async (t) => {
+  const body = await (await runSrv(req(`/sh/nu/file/outdated/zsh?${PIN}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes("$env.FILE_OP = r#'diff'#"), true)
+  assertEquals(body.includes("$env.FILE_OP = r#'outdated'#"), true)
 })
 Deno.test('nu / linux / list (pinned, filtered)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/file/list/zsh?${PIN}`))).text()

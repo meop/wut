@@ -9,33 +9,49 @@ def replaceEnv [line] {
   return $l
 }
 
-
-
 # a tool's key is the bin to look for: a config for something not installed is skipped rather than written
 def fileBinHere [tool: string] {
   which $tool | is-not-empty
 }
 
-# the plan for the two ops that go to the network: which tools are here, each with the files it writes and the
-# directories it clears first listed in the summary, and a row per tool to pick. diff fetches every source it compares,
-# the same GET sync makes, so it is gated the same
-def filePlanShow [pairsKey: string, dirsKey: string, toolsKey: string] {
-  let pairs = ($env | get -o $pairsKey | default []) | where { |p| fileBinHere ($p | split row '|' | get 0) }
-  let clearDirs = ($env | get -o $dirsKey | default []) | where { |d| fileBinHere ($d | split row '|' | get 0) }
-  if ($pairs | is-empty) and ($clearDirs | is-empty) {
-    return true
-  }
+# one field of a plan entry, which is the key and then its parts, joined by |
+def fileField [entry: string, i: int] {
+  $entry | split row '|' | get $i
+}
 
-  let fileTools = ($pairs | each { |p| $p | split row '|' | get 0 })
-  let dirTools = ($clearDirs | each { |d| $d | split row '|' | get 0 })
-  let tools = (($fileTools ++ $dirTools) | uniq | sort)
+def fileDst [raw: string] {
+  replaceEnv $raw | path expand
+}
+
+def fileOf [entries: list, tool: string] {
+  $entries | where { |e| (fileField $e 0) == $tool }
+}
+
+# remove takes back what is on disk, whether or not the tool still is: a pack removes a tool's files before the tool
+def fileToolHere [tool: string, pairs: list] {
+  if $env.FILE_OP? == 'remove' {
+    fileOf $pairs $tool | any { |p| fileDst (fileField $p 2) | path exists }
+  } else {
+    fileBinHere $tool
+  }
+}
+
+# the plan for the ops that act: which tools are here, each with the files it would write or remove, then a row per
+# tool to pick. outdated fetches every source sync would, so it is gated the same
+def filePlanShow [pairsKey: string, dirsKey: string, toolsKey: string] {
+  let pairs = ($env | get -o $pairsKey | default [])
+  let tools = ($pairs | each { |p| fileField $p 0 } | uniq | sort | where { |t| fileToolHere $t $pairs })
+  if ($tools | is-empty) {
+    opPrintWarn (if $env.FILE_OP == 'remove' { 'nothing to remove' } else { 'no tool here has files' })
+    return false
+  }
   for t in $tools {
     opPrint $t
-    for d in ($clearDirs | where { |d| ($d | split row '|' | get 0) == $t }) {
-      opPrint $"  clear: (replaceEnv ($d | split row '|' | get 1) | path expand)"
-    }
-    for p in ($pairs | where { |p| ($p | split row '|' | get 0) == $t }) {
-      opPrint $"  (replaceEnv ($p | split row '|' | get 2) | path expand)"
+    for p in (fileOf $pairs $t) {
+      let dst = (fileDst (fileField $p 2))
+      if $env.FILE_OP != 'remove' or ($dst | path exists) {
+        opPrint $"  ($dst)"
+      }
     }
   }
   opPrint ''
@@ -48,40 +64,128 @@ def filePlanShow [pairsKey: string, dirsKey: string, toolsKey: string] {
   true
 }
 
+def fileFetch [src: string] {
+  let srcUrl = $"($env.REQ_URL_CFG)/file/($src | str trim --left --char '/')"
+  opPrintCmd http get --raw --redirect-mode follow $"r#'($srcUrl)'#"
+  http get --raw --redirect-mode follow $srcUrl
+}
+
+# what writing a source would do to its destination: nothing, a new file, or a changed one, by their bytes
+def fileState [content, dst: string] {
+  if not ($dst | path exists) {
+    'new'
+  } else if (open --raw $dst | hash sha256) == ($content | hash sha256) {
+    'same'
+  } else {
+    'changed'
+  }
+}
+
+# files in a folder map's destination that its source no longer has: a sync takes them out, so the folder is the
+# source's, without clearing and writing all of it again
+def fileStray [tool: string, pairs: list, dirs: list] {
+  let wanted = (fileOf $pairs $tool | each { |p| fileDst (fileField $p 2) })
+  fileOf $dirs $tool | each { |d| fileDst (fileField $d 1) } | where { |d| $d | path exists } | each { |d|
+    # from inside the dir, so a windows path's separators are never read as a pattern's escapes
+    do { cd $d; glob '**/*' --no-dir } | where { |f| $f not-in $wanted }
+  } | flatten
+}
+
+# what a sync of one tool would change, said and not done: each file it would write, with the diff of a changed one,
+# and each it would take out
+def fileOutdatedTool [tool: string, pairs: list, dirs: list] {
+  mut pending = 0
+  for p in (fileOf $pairs $tool) {
+    let dst = (fileDst (fileField $p 2))
+    let content = (fileFetch (fileField $p 1))
+    let state = (fileState $content $dst)
+    if $state == 'same' {
+      continue
+    }
+    $pending += 1
+    opPrint $"  ($state): ($dst)"
+    if $state == 'changed' {
+      let tmp = (mktemp --suffix '.file.outdated.tmp' --tmpdir)
+      $content | save --force --raw $tmp
+      let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
+      run-external $diffCmd $dst $tmp | complete | get stdout | str trim --right | lines | each { |l| opPrint $"    ($l)" }
+      rm --force $tmp
+    }
+  }
+  for f in (fileStray $tool $pairs $dirs) {
+    $pending += 1
+    opPrint $"  stale: ($f)"
+  }
+  if $pending == 0 {
+    opPrintInfo $"($tool): up to date"
+  }
+}
+
+# a sync of one tool writes only what differs from its source, takes out what its folder maps no longer have, and
+# sets permissions where it wrote, so a sync that changes nothing writes nothing
+def --env fileSyncTool [tool: string, pairs: list, dirs: list, perms: list] {
+  mut wrote = false
+  mut same = 0
+  for p in (fileOf $pairs $tool) {
+    let dst = (fileDst (fileField $p 2))
+    let content = (fileFetch (fileField $p 1))
+    let state = (fileState $content $dst)
+    if $state == 'same' {
+      $same += 1
+      continue
+    }
+    let parent = ($dst | path dirname)
+    if not ($parent | path exists) {
+      opPrintMaybeRunCmd mkdir $"r#'($parent)'#"
+    }
+    opPrintCmd save --force --raw $"r#'($dst)'#"
+    if 'DRYRUN' not-in $env {
+      $content | save --force --raw $dst
+    }
+    $wrote = true
+  }
+  for f in (fileStray $tool $pairs $dirs) {
+    opPrintMaybeRunCmd rm --force --permanent $"r#'($f)'#"
+    $wrote = true
+  }
+  if $wrote {
+    for perm in (fileOf $perms $tool) {
+      opPrintMaybeRunCmd ...(replaceEnv (fileField $perm 1) | split row ' ')
+    }
+  }
+  if $same > 0 {
+    opPrintInfo $"($tool): ($same) unchanged"
+  }
+}
+
+# a remove of one tool takes out every folder map's destination whole, and each file it wrote elsewhere
+def --env fileRemoveTool [tool: string, pairs: list, dirs: list] {
+  let dirPaths = (fileOf $dirs $tool | each { |d| fileDst (fileField $d 1) })
+  for d in ($dirPaths | where { |d| $d | path exists }) {
+    opPrintMaybeRunCmd rm --force --permanent --recursive $"r#'($d)'#"
+  }
+  for p in (fileOf $pairs $tool) {
+    let dst = (fileDst (fileField $p 2))
+    if ($dirPaths | any { |d| $dst | str starts-with $"($d)(char path_sep)" }) or not ($dst | path exists) {
+      continue
+    }
+    opPrintMaybeRunCmd rm --force --permanent $"r#'($dst)'#"
+  }
+}
+
 def fileToolChosen [toolsKey: string, tool: string] {
   let chosen = ($env | get -o $toolsKey | default [])
   ($chosen | is-empty) or ($tool in $chosen)
 }
 
 def file [] {
-  match $env.FILE_OP {
-    diff => {
-      for pair in $env.FILE_DIFF_PATH_PAIRS {
-        let pairParts = $pair | split row '|'
-
-        if (not (fileBinHere $pairParts.0)) or (not (fileToolChosen 'FILE_DIFF_TOOLS' $pairParts.0)) {
-          continue
-        }
-
-        let src = $pairParts.1 | str trim --left --char '/'
-        let dstFilePath = replaceEnv $pairParts.2 | path expand
-
-        let srcUrl = $"($env.REQ_URL_CFG)/file/($src)"
-
-        let tmpFilePath = opPrintRunCmd mktemp --suffix '.file.diff.tmp' --tmpdir
-        opPrintRunCmd http get --raw --redirect-mode follow $"r#'($srcUrl)'#" '|' save --force $"r#'($tmpFilePath)'#"
-
-        let diffCmd = if (which diff | is-not-empty) { 'diff' } else { 'fc' }
-
-        if ($dstFilePath | path exists) {
-          opPrintRunCmd $diffCmd $"r#'($dstFilePath)'#" $"r#'($tmpFilePath)'#" '|' complete '|' get stdout '|' str trim --right
-        } else {
-          opPrintWarn $"`($dstFilePath)` does not exist"
-        }
-
-        opPrintRunCmd rm --force $"r#'($tmpFilePath)'#"
-      }
-    }
+  let op = $env.FILE_OP
+  let key = ($op | str uppercase)
+  let pairs = ($env | get -o $"FILE_($key)_PATH_PAIRS" | default [])
+  let dirs = ($env | get -o $"FILE_($key)_DIRS" | default [])
+  let perms = ($env | get -o $"FILE_($key)_PATH_PERMS" | default [])
+  let tools = ($pairs | each { |p| fileField $p 0 } | uniq | sort | where { |t| fileToolChosen $"FILE_($key)_TOOLS" $t })
+  match $op {
     find => {
       let here = (
         ($env.FILE_FIND_KEYS? | default []) | each { |entry| $entry | split row '|' }
@@ -91,73 +195,41 @@ def file [] {
             ins: ($parts | get -o 1 | default ''),
           } }
       )
-      if ($here | is-not-empty) {
-        for e in $here {
-          opPrint $e.bin
-          if ($e.ins | is-not-empty) {
-            opPrint $"  ($e.ins)"
-          }
+      for e in $here {
+        opPrint $e.bin
+        if ($e.ins | is-not-empty) {
+          opPrint $"  ($e.ins)"
         }
       }
     }
     list => {
-      for pair in $env.FILE_LIST_PATH_PAIRS {
-        let pairParts = $pair | split row '|'
-
-        if (not (fileBinHere $pairParts.0)) {
-          continue
+      # what is in place on this machine: each file a tool here has, where it is
+      for t in ($tools | where { |t| fileBinHere $t }) {
+        let present = (fileOf $pairs $t | each { |p| fileDst (fileField $p 2) } | where { |d| $d | path exists })
+        if ($present | is-not-empty) {
+          opPrint $t
+          for d in $present {
+            opPrint $"  ($d)"
+          }
         }
-
-        let src = $pairParts.1 | str trim --left --char '/'
-        let dstFilePath = replaceEnv $pairParts.2 | path expand
-
-        opPrint $"($src) -> ($dstFilePath)"
+      }
+    }
+    outdated => {
+      for t in $tools {
+        opPrint $t
+        fileOutdatedTool $t $pairs $dirs
       }
     }
     sync => {
       wutLockHold
-      for dir in ($env.FILE_SYNC_CLEAR_DIRS? | default []) {
-        let dirParts = $dir | split row '|'
-
-        if (not (fileBinHere $dirParts.0)) or (not (fileToolChosen 'FILE_SYNC_TOOLS' $dirParts.0)) {
-          continue
-        }
-
-        let dstFilePath = replaceEnv $dirParts.1 | path expand
-        opPrintMaybeRunCmd rm --force --permanent --recursive $"r#'($dstFilePath)'#"
+      for t in $tools {
+        fileSyncTool $t $pairs $dirs $perms
       }
-
-      mut createdDirs = []
-      for pair in $env.FILE_SYNC_PATH_PAIRS {
-        let pairParts = $pair | split row '|'
-
-        if (not (fileBinHere $pairParts.0)) or (not (fileToolChosen 'FILE_SYNC_TOOLS' $pairParts.0)) {
-          continue
-        }
-
-        let src = $pairParts.1 | str trim --left --char '/'
-        let dstFilePath = replaceEnv $pairParts.2 | path expand
-
-        let srcUrl = $"($env.REQ_URL_CFG)/file/($src)"
-
-        let dstParentDirPath = $dstFilePath | path dirname
-        if ($dstParentDirPath not-in $createdDirs) {
-          $createdDirs = $createdDirs ++ [$dstParentDirPath]
-          opPrintMaybeRunCmd mkdir $"r#'($dstParentDirPath)'#"
-        }
-        opPrintMaybeRunCmd http get --raw --redirect-mode follow $"r#'($srcUrl)'#" '|' save --force $"r#'($dstFilePath)'#"
-      }
-
-      for perm in ($env.FILE_SYNC_PATH_PERMS? | default []) {
-        let permParts = $perm | split row '|'
-
-        # a tool left unpicked had nothing synced, so its permissions are not this run's to reset either
-        if (not (fileBinHere $permParts.0)) or (not (fileToolChosen 'FILE_SYNC_TOOLS' $permParts.0)) {
-          continue
-        }
-
-        let cmd = replaceEnv $permParts.1
-        opPrintMaybeRunCmd ...($cmd | split row ' ')
+    }
+    remove => {
+      wutLockHold
+      for t in $tools {
+        fileRemoveTool $t $pairs $dirs
       }
     }
   }
