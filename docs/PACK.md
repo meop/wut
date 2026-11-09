@@ -418,9 +418,9 @@ against that themselves — `uv self update` refuses a copy its installer did no
 
 A tool that is itself a manager — ghpm, uv, deno, bun, pnpm — updates itself right before that manager's sync runs, so
 it syncs as its newest self: picking the manager's row is what lets it run. goup updates itself in the go row the same
-way, before the go it moves. The rest run at the `script` row, which is offered only when there is one of them. The
-binary's name is how the two are matched. On windows the path is printed and run with backslashes, whatever the yaml
-wrote.
+way, before the go it moves, and dotnetup in the dotnet row, before the SDKs it moves. The rest run at the `script` row,
+which is offered only when there is one of them. The binary's name is how the two are matched. On windows the path is
+printed and run with backslashes, whatever the yaml wrote.
 
 Updating is best effort. A distro build usually has self update compiled out, and a user can turn it off; a copy that
 refuses answers exactly that, so it is said as a warning and is not a failure — the rest of the sync runs, and the run
@@ -468,9 +468,9 @@ leaves the toolchains alone.
 - **dotnetup** keeps .NET SDKs and runtimes side by side under its own root, and pins them the way ghpm does: its
   manifest records each install spec — `lts`, `latest`, `10`, `10.0.4xx`, `10.0.402` — apart from what is installed, and
   `dotnetup update` moves each spec to the newest release it allows and then removes whatever no spec needs, so it
-  leaves nothing for a tidy. Where the dotnet row is dotnetup's copy, a bare sync runs `dotnetup update` before
-  `dotnet tool update --global --all`. A distro's dotnet is that distro's to move. dotnet has no listing of outdated
-  tools, so it is not offered for `outdated`.
+  leaves nothing for a tidy. Where the dotnet row is dotnetup's copy, a bare sync runs `dotnetup self update`, then
+  `dotnetup update`, before `dotnet tool update --global --all`. A distro's dotnet is that distro's to move. dotnet has
+  no listing of outdated tools, so it is not offered for `outdated`.
 - **goup** is to go what rustup is to cargo — its own tool, managing toolchains rather than packages, with no row of its
   own: the go row that is goup's copy — the one in `~/.goup/bin` — runs `goup refresh` and `goup update` first on a bare
   sync, best effort like a self update, so its one go moves to the newest release its channel allows before the tools

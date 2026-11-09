@@ -1095,6 +1095,40 @@ Deno.test("nu / pack / goup updates itself in go's row, before go syncs", async 
   assertEquals(order, ['goup upgrade', 'try { goup refresh }', 'goup update'])
 })
 
+// dotnetup is dotnet's: it updates itself in the dotnet row, then moves its SDKs, all before the tools update
+Deno.test("nu / pack / dotnetup updates itself in dotnet's row, before dotnet syncs", async () => {
+  const self = [{ group: 'lang/dotnet', path: '{HOME}/.dotnetup/dotnetup', args: ['self', 'update'] }]
+  const out = await withStubs(
+    {
+      '~/.local/share/dotnetup/dotnet/dotnet': `case "$*" in --version) printf '10.0.100\\n' ;; *) exit 0 ;; esac`,
+      dotnetup: '',
+    },
+    [
+      `mkdir ($env.HOME | path join .dotnetup)`,
+      `touch ($env.HOME | path join .dotnetup dotnetup)`,
+      `$env.DOTNET_ROOT = ($env.HOME | path join .local share dotnetup dotnet)`,
+      `$env.YES = '1'`,
+      `$env.PACK_OP = 'sync'`,
+      `$env.NOOP = '1'`,
+      `$env.PACK_SELF = ${JSON.stringify(JSON.stringify(self))}`,
+      'packManagerPlanRun',
+    ].join('\n'),
+    ['dotnet'],
+    ['dotnet'],
+  )
+  if (out == null) {
+    return
+  }
+  assertEquals(out.includes('script'), false, out)
+  const order = out.split('\n').filter((l) => /dotnetup (self update|update)|dotnet tool update/.test(l))
+    .map((l) => l.split('/').pop())
+  assertEquals(
+    order,
+    ['dotnetup self update', 'try { dotnetup update }', 'try { dotnet tool update --global --all }'],
+    out,
+  )
+})
+
 Deno.test('nu / pack / no script row when every standalone install is a manager here', async () => {
   const self = [{ group: 'sys/manager/ghpm', path: '{HOME}/.ghpm/bin/ghpm', args: ['upgrade'] }]
   const out = await withStubs(

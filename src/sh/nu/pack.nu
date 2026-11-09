@@ -1380,11 +1380,11 @@ def packSelfHere [] {
   ($env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath $s.path | path exists }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's, so it
-# updates itself before the go it moves
+# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's and
+# dotnetup is dotnet's, so each updates itself before the toolchain it moves
 def packSelfManager [path: string] {
   let stem = (packExpandPath $path | path parse | get stem)
-  if $stem == 'goup' { 'go' } else { $stem }
+  {goup: 'go', dotnetup: 'dotnet'} | get -o $stem | default $stem
 }
 
 # the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
