@@ -36,8 +36,7 @@ def --env packDotnetHeld [] {
   if $res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [$"dotnet ($root)"])
   }
-  let by = if (packDotnetupOwns $root) { ' (dotnetup)' } else { '' }
-  packHeld $"sdk (packVersionOf $res.stdout)($by)"
+  packHeld (if (packDotnetupOwns $root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates

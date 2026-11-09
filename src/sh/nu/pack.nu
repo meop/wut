@@ -721,11 +721,6 @@ def packManagerNote [manager: string] {
   $env.PACK_HELD? | default {} | get -o $manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  $text | parse --regex '(?<v>\d+\.\d+(?:\.\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -1543,10 +1538,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] ($here | enumerate | each { |m|
       let note = if $m.item in ['script' 'file'] { '' } else { packManagerNote $m.item }
-      [$"($m.index + 1)\) (packCopyBase $m.item)", $note]
+      [$"($m.index + 1)\) (packCopyLabel $m.item)", $note]
     })
     let picked = (wutSelectRead ($here | length))
     if $picked == null {

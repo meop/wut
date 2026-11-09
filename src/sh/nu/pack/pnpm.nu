@@ -18,13 +18,7 @@ def --env packPnpmHeld [] {
   if ($held | is-not-empty) and not (($env.PACK_SHELL_PATH? | default $env.PATH) | any { |p| ($p | path expand) == ($bin | path expand) }) {
     return (packHeld '' "pnpm's bin dir is not on PATH" [$bin])
   }
-  let notes = ($runtimes | each { |r|
-    let own = ($bin | path join $r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich $r) == $own { $r } else { $own }
-    $"($r) (packVersionOf (packAsk [$ask --version] | get stdout))"
-  })
-  packHeld ($notes | str join ', ')
+  packHeld ($runtimes | str join ', ')
 }
 
 def --env packPnpm [] {

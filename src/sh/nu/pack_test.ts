@@ -1966,7 +1966,7 @@ const GO = `case "$*" in
   *) exit 0 ;;
 esac`
 
-Deno.test('nu / pack / the manager table names what each manager runs on', async () => {
+Deno.test('nu / pack / the manager table names what each manager runs on, without versions', async () => {
   const out = await withStubs(
     { cargo: LISTINGS.cargo, rustc: RUSTC, rustup: '', '~/.goup/bin/go': GO },
     [`$env.PACK_OP = 'sync'`, 'packManagerPlanRun'].join('\n'),
@@ -1980,8 +1980,9 @@ Deno.test('nu / pack / the manager table names what each manager runs on', async
   }
   const rows = stripVTControlCharacters(out).split('\n')
   assertEquals(rows.some((l) => /^manager\s+toolchain$/.test(l)), true)
-  assertEquals(rows.some((l) => /^1\) cargo\s+rust 1\.99\.1 \(rustup\)$/.test(l)), true)
-  assertEquals(rows.some((l) => /^2\) go\s+go 1\.27\.0 \(goup\)$/.test(l)), true)
+  // what it runs on and who manages it, never a version: comparing versions is outdated's
+  assertEquals(rows.some((l) => /^1\) cargo\s+rust \(rustup\)$/.test(l)), true, out)
+  assertEquals(rows.some((l) => /^2\) go\s+go \(goup\)$/.test(l)), true, out)
 })
 
 Deno.test('nu / pack / cargo is split from a rustc or rustup another install put on PATH', async () => {
@@ -1989,13 +1990,13 @@ Deno.test('nu / pack / cargo is split from a rustc or rustup another install put
   if (one == null) {
     return
   }
-  assertEquals(one.held.cargo, fine('rust 1.99.1'))
+  assertEquals(one.held.cargo, fine('rust'))
   // the check is shown, as every check is
   assertEquals(one.said, ['rustc --version'])
 
   // cargo runs inside its own dir, so a rustc further up PATH is not the one it builds with
   const ahead = (await held({ '~/other/rustc': RUSTC, cargo: '', rustc: RUSTC }, ['cargo']))!
-  assertEquals(ahead.held.cargo, fine('rust 1.99.1'))
+  assertEquals(ahead.held.cargo, fine('rust'))
 
   // with none beside it, it would build with another install's
   const apart = (await held({ '~/other/rustc': RUSTC, cargo: '' }, ['cargo']))!
@@ -2037,16 +2038,16 @@ Deno.test('nu / pack / of the gos here, the local one is the row, asked inside i
   if (owned == null) {
     return
   }
-  assertEquals(owned.held.go, fine('go 1.27.0 (goup)'))
+  assertEquals(owned.held.go, fine('go (goup)'))
   assertEquals(owned.said, ['go env GOVERSION'])
-  assertEquals((await held({ go: GO }, ['go']))!.held.go, fine('go 1.27.0'))
+  assertEquals((await held({ go: GO }, ['go']))!.held.go, fine('go'))
 
   // a distro's go ahead of goup's on PATH is the system's install, and not used where one in the home is: goup's is
   // the row, and answers with its own toolchain though PATH finds the other first
   const both = (await held({ go: GO.replace('go1.27.0', 'go1.26.0'), '~/.goup/bin/go': GO }, ['go'], [
     `$env.PATH = ($env.PATH | reverse)`,
   ]))!
-  assertEquals(both.held, { go: fine('go 1.27.0 (goup)') })
+  assertEquals(both.held, { go: fine('go (goup)') })
   assertEquals(both.said, ['go env GOVERSION'])
   const gofmt = (await held({ '~/sys/bin/gofmt': '', go: GO }, ['go']))!
   assertEquals(gofmt.held.go.split, "gofmt is another install's")
@@ -2066,8 +2067,9 @@ Deno.test('nu / pack / pnpm is split when its packages would run on a node it do
   if (own == null) {
     return
   }
-  assertEquals(own.held.pnpm, fine('node 26.12.0'))
-  assertEquals(own.said, ['pnpm bin --global', 'pnpm list --global --parseable', 'node --version'])
+  assertEquals(own.held.pnpm, fine('node'))
+  // its runtimes are named from what it holds: no version is asked
+  assertEquals(own.said, ['pnpm bin --global', 'pnpm list --global --parseable'])
   // nothing held, nothing to run: a pnpm with no packages is not split
   assertEquals((await held({ pnpm: PNPM([]) }, ['pnpm']))!.held.pnpm, fine(''))
 
@@ -2077,7 +2079,7 @@ Deno.test('nu / pack / pnpm is split when its packages would run on a node it do
   // its packages run on the node beside them, so another node ahead on PATH takes nothing from it
   const shadowed =
     (await held({ '~/sys/bin/node': `printf 'v20.0.0\\n'`, pnpm: PNPM(['node']), node: NODE }, ['pnpm']))!
-  assertEquals(shadowed.held.pnpm, fine('node 26.12.0'))
+  assertEquals(shadowed.held.pnpm, fine('node'))
 })
 
 Deno.test('nu / pack / pnpm puts its own node down before its first package', async () => {
@@ -2172,7 +2174,7 @@ Deno.test('nu / pack / uv is split when a tool runs on a python uv does not mana
   if (own == null) {
     return
   }
-  assertEquals(own.held.uv, fine('python 3.13, 3.14'))
+  assertEquals(own.held.uv, fine('python'))
 
   const off = (await held({ uv: UV(['3.14.8']) }, ['uv'], [...setup, ...UV_TOOL('hf', `'/usr/bin'`)]))!
   assertEquals(off.held.uv.split, 'a tool runs on a python uv does not manage')
@@ -2480,7 +2482,7 @@ Deno.test('nu / pack / dotnet is one install with its tools when DOTNET_ROOT nam
   if (system == null) {
     return
   }
-  assertEquals(system.held.dotnet, fine('sdk 10.0.402'))
+  assertEquals(system.held.dotnet, fine('sdk'))
   assertEquals(system.said, ['dotnet --version'])
 
   // a dotnet under the home that DOTNET_ROOT does not name: its tools would run on the system's
@@ -2491,13 +2493,13 @@ Deno.test('nu / pack / dotnet is one install with its tools when DOTNET_ROOT nam
     ...dotnetTools,
     `$env.DOTNET_ROOT = ($env.HOME | path join dn)`,
   ]))!
-  assertEquals(named.held.dotnet, fine('sdk 10.0.402'))
+  assertEquals(named.held.dotnet, fine('sdk'))
   const other = (await held({ dotnet: DOTNET }, ['dotnet'], [...dotnetTools, `$env.DOTNET_ROOT = '/opt/dotnet'`]))!
   assertEquals(other.held.dotnet.split, "DOTNET_ROOT is another install's")
   // its tools dir off PATH matters once it holds a tool, and not before
   assertEquals(
     (await held({ dotnet: DOTNET }, ['dotnet'], ['hide-env -i DOTNET_ROOT']))!.held.dotnet,
-    fine('sdk 10.0.402'),
+    fine('sdk'),
   )
   const offPath = (await held({ dotnet: DOTNET }, ['dotnet'], [
     'hide-env -i DOTNET_ROOT',
@@ -2512,7 +2514,7 @@ Deno.test('nu / pack / dotnet is one install with its tools when DOTNET_ROOT nam
     ...dotnetTools,
     `$env.DOTNET_ROOT = ($env.HOME | path join dn)`,
   ]))!
-  assertEquals(beside.held, { dotnet: fine('sdk 10.0.402') })
+  assertEquals(beside.held, { dotnet: fine('sdk') })
   assertEquals(beside.said, ['dotnet --version'])
 
   const listed = await withStubs({ dotnet: DOTNET }, `print (packDotnetInstalled | str join ' ')`, ['dotnet'], [

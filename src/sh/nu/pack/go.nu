@@ -58,8 +58,7 @@ def --env packGoHeld [] {
   if $res.exit_code != 0 {
     return (packHeld '' 'go does not run' [$"go ($go)"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld $"go (packVersionOf $res.stdout)($by)"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go

@@ -4525,11 +4525,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -5347,10 +5342,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -5607,13 +5603,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -5926,8 +5916,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -6106,8 +6095,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -6212,8 +6200,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -6366,8 +6353,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -8765,11 +8751,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -9587,10 +9568,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -9847,13 +9829,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -10166,8 +10142,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -10346,8 +10321,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -10452,8 +10426,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -10606,8 +10579,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -13050,11 +13022,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -13872,10 +13839,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -14132,13 +14100,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -14451,8 +14413,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -14631,8 +14592,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -14737,8 +14697,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -14891,8 +14850,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -17335,11 +17293,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -18157,10 +18110,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -18417,13 +18371,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -18736,8 +18684,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -18916,8 +18863,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -19022,8 +18968,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -19176,8 +19121,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -21650,11 +21594,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -22472,10 +22411,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -22732,13 +22672,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -23051,8 +22985,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -23231,8 +23164,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -23337,8 +23269,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -23491,8 +23422,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -25965,11 +25895,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -26787,10 +26712,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -27047,13 +26973,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -27366,8 +27286,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -27546,8 +27465,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -27652,8 +27570,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -27806,8 +27723,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -30368,11 +30284,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -31190,10 +31101,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -31450,13 +31362,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -31769,8 +31675,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -31949,8 +31854,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -32055,8 +31959,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -32209,8 +32112,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -34741,11 +34643,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -35563,10 +35460,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -35823,13 +35721,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -36142,8 +36034,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -36322,8 +36213,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -36428,8 +36318,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -36582,8 +36471,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -39429,11 +39317,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -40251,10 +40134,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -40511,13 +40395,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -40830,8 +40708,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -41010,8 +40887,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -41116,8 +40992,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -41270,8 +41145,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -43736,11 +43610,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -44558,10 +44427,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -44818,13 +44688,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -45137,8 +45001,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -45317,8 +45180,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -45423,8 +45285,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -45577,8 +45438,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -48188,11 +48048,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -49010,10 +48865,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -49270,13 +49126,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -49589,8 +49439,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -49769,8 +49618,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -49875,8 +49723,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -50029,8 +49876,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -52622,11 +52468,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -53444,10 +53285,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -53704,13 +53546,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -54023,8 +53859,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -54203,8 +54038,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -54309,8 +54143,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -54463,8 +54296,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -57258,11 +57090,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -58080,10 +57907,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -58340,13 +58168,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -58659,8 +58481,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -58839,8 +58660,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -58945,8 +58765,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -59099,8 +58918,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -61900,11 +61718,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -62722,10 +62535,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -62982,13 +62796,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -63301,8 +63109,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -63481,8 +63288,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -63587,8 +63393,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -63741,8 +63546,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -66538,11 +66342,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -67360,10 +67159,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -67620,13 +67420,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -67939,8 +67733,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -68119,8 +67912,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -68225,8 +68017,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -68379,8 +68170,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -70823,11 +70613,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -71645,10 +71430,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -71905,13 +71691,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -72224,8 +72004,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -72404,8 +72183,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -72510,8 +72288,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -72664,8 +72441,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -75070,11 +74846,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -75892,10 +75663,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -76152,13 +75924,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -76471,8 +76237,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -76651,8 +76416,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -76757,8 +76521,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -76911,8 +76674,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -79317,11 +79079,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -80139,10 +79896,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -80399,13 +80157,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -80718,8 +80470,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -80898,8 +80649,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -81004,8 +80754,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -81158,8 +80907,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -83558,11 +83306,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -84380,10 +84123,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -84640,13 +84384,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -84959,8 +84697,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -85139,8 +84876,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -85245,8 +84981,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -85399,8 +85134,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -87799,11 +87533,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -88621,10 +88350,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -88881,13 +88611,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -89200,8 +88924,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -89380,8 +89103,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -89486,8 +89208,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -89640,8 +89361,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -92044,11 +91764,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -92866,10 +92581,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -93126,13 +92842,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -93445,8 +93155,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -93625,8 +93334,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -93731,8 +93439,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -93885,8 +93592,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -96287,11 +95993,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -97109,10 +96810,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -97369,13 +97071,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -97688,8 +97384,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -97868,8 +97563,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -97974,8 +97668,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -98128,8 +97821,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -100527,11 +100219,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -101349,10 +101036,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -101609,13 +101297,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -101928,8 +101610,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -102108,8 +101789,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -102214,8 +101894,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -102368,8 +102047,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -104767,11 +104445,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -105589,10 +105262,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -105849,13 +105523,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -106168,8 +105836,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -106348,8 +106015,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -106454,8 +106120,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -106608,8 +106273,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -109052,11 +108716,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -109874,10 +109533,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -110134,13 +109794,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -110453,8 +110107,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -110633,8 +110286,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -110739,8 +110391,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -110893,8 +110544,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -113337,11 +112987,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -114159,10 +113804,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -114419,13 +114065,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -114738,8 +114378,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -114918,8 +114557,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -115024,8 +114662,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -115178,8 +114815,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -117575,11 +117211,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -118397,10 +118028,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -118657,13 +118289,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -118976,8 +118602,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -119156,8 +118781,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -119262,8 +118886,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -119416,8 +119039,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -121815,11 +121437,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -122637,10 +122254,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -122897,13 +122515,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -123216,8 +122828,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -123396,8 +123007,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -123502,8 +123112,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -123656,8 +123265,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -126055,11 +125663,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -126877,10 +126480,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -127137,13 +126741,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -127456,8 +127054,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -127636,8 +127233,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -127742,8 +127338,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -127896,8 +127491,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -130340,11 +129934,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -131162,10 +130751,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -131422,13 +131012,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -131741,8 +131325,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -131921,8 +131504,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -132027,8 +131609,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -132181,8 +131762,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -134625,11 +134205,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -135447,10 +135022,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -135707,13 +135283,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -136026,8 +135596,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -136206,8 +135775,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -136312,8 +135880,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -136466,8 +136033,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
@@ -138940,11 +138506,6 @@ def packManagerNote [manager: string] {
   \$env.PACK_HELD? | default {} | get -o \$manager | get -o note | default ''
 }
 
-# the first version a toolchain's --version prints, or empty: rustc 1.99.1 (...), v26.12.0, deno 2.5.0 (...)
-def packVersionOf [text: string] {
-  \$text | parse --regex '(?<v>\\\\d+\\\\.\\\\d+(?:\\\\.\\\\d+)?)' | get -o 0.v | default ''
-}
-
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
 # the home dir: rustc and go both answer for the toolchain a project file above the cwd asks for, and the row is
 # about the machine's
@@ -139762,10 +139323,11 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
+    # question: go (goup), rust (rustup), node, bun
     wutTable ['manager' 'toolchain'] (\$here | enumerate | each { |m|
       let note = if \$m.item in ['script' 'file'] { '' } else { packManagerNote \$m.item }
-      [\$\\"(\$m.index + 1)\\\\) (packCopyBase \$m.item)\\", \$note]
+      [\$\\"(\$m.index + 1)\\\\) (packCopyLabel \$m.item)\\", \$note]
     })
     let picked = (wutSelectRead (\$here | length))
     if \$picked == null {
@@ -140022,13 +139584,7 @@ def --env packPnpmHeld [] {
   if (\$held | is-not-empty) and not ((\$env.PACK_SHELL_PATH? | default \$env.PATH) | any { |p| (\$p | path expand) == (\$bin | path expand) }) {
     return (packHeld '' \\"pnpm's bin dir is not on PATH\\" [\$bin])
   }
-  let notes = (\$runtimes | each { |r|
-    let own = (\$bin | path join \$r)
-    # shown by name where that is the one PATH finds, as every check is
-    let ask = if (packShellWhich \$r) == \$own { \$r } else { \$own }
-    \$\\"(\$r) (packVersionOf (packAsk [\$ask --version] | get stdout))\\"
-  })
-  packHeld (\$notes | str join ', ')
+  packHeld (\$runtimes | str join ', ')
 }
 
 def --env packPnpm [] {
@@ -140341,8 +139897,7 @@ def --env packUvHeld [] {
       \$\\"uv tool install --reinstall --managed-python (\$off | get name | str join ' ')\\"
     ])
   }
-  let minors = (packUvPythons | each { |p| \$\\"(\$p.version_parts.major).(\$p.version_parts.minor)\\" } | uniq | sort)
-  packHeld (if (\$minors | is-empty) { '' } else { \$\\"python (\$minors | str join ', ')\\" })
+  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are
@@ -140521,8 +140076,7 @@ def --env packDotnetHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'dotnet has no sdk' [\$\\"dotnet (\$root)\\"])
   }
-  let by = if (packDotnetupOwns \$root) { ' (dotnetup)' } else { '' }
-  packHeld \$\\"sdk (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packDotnetupOwns \$root) { 'sdk (dotnetup)' } else { 'sdk' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates
@@ -140627,8 +140181,7 @@ def --env packGoHeld [] {
   if \$res.exit_code != 0 {
     return (packHeld '' 'go does not run' [\$\\"go (\$go)\\"])
   }
-  let by = if (packGoOwned) { ' (goup)' } else { '' }
-  packHeld \$\\"go (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
@@ -140781,8 +140334,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [\$\\"rustc (\$rustc)\\"])
   }
-  let by = if \$rustup != null { ' (rustup)' } else { '' }
-  packHeld \$\\"rust (packVersionOf \$res.stdout)(\$by)\\"
+  packHeld (if \$rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {

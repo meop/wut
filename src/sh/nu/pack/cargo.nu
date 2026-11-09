@@ -40,8 +40,7 @@ def --env packCargoHeld [] {
     }
     return (packHeld '' 'rustc does not run' [$"rustc ($rustc)"])
   }
-  let by = if $rustup != null { ' (rustup)' } else { '' }
-  packHeld $"rust (packVersionOf $res.stdout)($by)"
+  packHeld (if $rustup != null { 'rust (rustup)' } else { 'rust' })
 }
 
 def --env packRustupUpdate [] {
