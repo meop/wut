@@ -25,7 +25,9 @@ def --env packApt [] {
       }
     }
     outdated => {
-      packOpOutdated [$cmd list --upgradable]
+      # a term pipes the listing through find, and apt warns any listing not written to a terminal that its output
+      # is for people: the same rows as at a terminal, so the warning says nothing here
+      packOpOutdated [$cmd -o Apt::Cmd::Disable-Script-Warning=true list --upgradable]
     }
     remove => {
       packOpRemove [$cmd purge --autoremove]

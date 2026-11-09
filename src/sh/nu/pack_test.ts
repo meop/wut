@@ -1,6 +1,6 @@
 import { stripVTControlCharacters } from 'node:util'
 
-import { assertEquals } from '@std/assert'
+import { assertEquals, assertStringIncludes } from '@std/assert'
 
 import { runNu } from '../../_test.ts'
 import { getScriptFlavorOpPreamble } from '../../sh.ts'
@@ -897,6 +897,24 @@ esac`
   assertEquals(lines.includes('zsh-common 5.9-8 all'), true, out)
   assertEquals(out.includes('chrony 4.8-2'), false, out)
   assertEquals(out.includes('apt list'), false, out)
+})
+
+// outdated given a term pipes apt's listing through find, and apt warns a listing not written to a terminal; wut
+// turns that warning off with apt's own switch rather than hiding apt's stderr, where a real error would go too
+Deno.test('nu / pack / apt outdated with a term asks apt not to warn that it is piped', async () => {
+  const out = await withStubs(
+    { apt: `printf 'zsh/stable 5.9-9 amd64 [upgradable from: 5.9-8]\\n'` },
+    [`$env.PACK_OP = 'outdated'`, `$env.PACK_MANAGER = 'apt'`, `$env.PACK_OUTDATED_NAMES = ['zsh']`, 'packApt'].join(
+      '\n',
+    ),
+    ['apt'],
+    ['apt'],
+  )
+  if (out == null) {
+    return
+  }
+  assertStringIncludes(out, 'apt -o Apt::Cmd::Disable-Script-Warning=true list --upgradable')
+  assertStringIncludes(out, 'zsh/stable 5.9-9')
 })
 
 // a group's post scripts run only for groups that installed, after every install in the run, once however many
