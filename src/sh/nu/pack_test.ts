@@ -7,6 +7,7 @@ import { getScriptFlavorOpPreamble } from '../../sh.ts'
 
 const LOCK_NU = new URL('./lock.nu', import.meta.url).pathname
 const PACK_NU = new URL('./pack.nu', import.meta.url).pathname
+const SCRIPT_NU = new URL('./script.nu', import.meta.url).pathname
 const SEL_NU = new URL('./sel.nu', import.meta.url).pathname
 const PATH_NU = new URL('./path.nu', import.meta.url).pathname
 const MATCH_NU = new URL('./match.nu', import.meta.url).pathname
@@ -61,6 +62,7 @@ async function withStubs(
         } }`,
       ),
       await Deno.readTextFile(LOCK_NU),
+      await Deno.readTextFile(SCRIPT_NU),
       await Deno.readTextFile(PACK_NU),
       ...await Promise.all(
         managerFiles.map((m) => Deno.readTextFile(new URL(`./pack/${m}.nu`, import.meta.url).pathname)),
@@ -918,13 +920,13 @@ Deno.test('nu / pack / apt outdated with a term asks apt not to warn that it is 
 })
 
 // a group's post scripts run only for groups that installed, after every install in the run, once however many
-// groups name them — and their has_cmd is asked then, since the install is what put the command there
+// groups name them — and their gates are asked then, since the install is what put the command there
 Deno.test('nu / pack / post scripts run after the installs that succeeded, once each', async () => {
   const unit = (group: string, post: Array<[string, Array<string>]>) => ({
     group,
     name: group,
     paths: [{ id: `${group}|pacman`, manager: 'pacman', names: [group] }],
-    post: post.map(([id, cmds]) => ({ id, cmds })),
+    post: post.map(([id, cmds]) => ({ id, cmds, noCmds: [], svcs: [], noSvcs: [], paths: [], noSsh: false })),
   })
   const plan = [
     unit('rustup', [['rustup/setup', ['rustup']], ['cargo/setup', ['cargo']]]),
@@ -970,7 +972,7 @@ Deno.test('nu / pack / pre scripts run before the removals, once each', async ()
     group,
     name: group,
     paths: [{ id: `${group}|pacman`, manager: 'pacman', names: [group] }],
-    pre: pre.map(([id, cmds]) => ({ id, cmds })),
+    pre: pre.map(([id, cmds]) => ({ id, cmds, noCmds: [], svcs: [], noSvcs: [], paths: [], noSsh: false })),
   })
   const plan = [
     unit('docker', [['docker/teardown', ['docker']]]),
@@ -1052,115 +1054,114 @@ Deno.test('nu / pack / each group and each loose name is its own row', async () 
   assertEquals(uninstalls(every), ['ghpm uninstall bat fd'])
 })
 
-// a tool its own installer put down updates itself by that path, and it is best effort: one that refuses — built
-// without self update, turned off, owned by something else — says so, and the rest of the sync still runs
-Deno.test('nu / pack / standalone installs update themselves, and a refusal does not stop the run', async () => {
-  const self = [
-    { group: 'lang/yes', path: '{HOME}/.yes/bin/yes', args: ['self', 'update'] },
-    { group: 'lang/no', path: '{HOME}/.no/bin/no', args: ['upgrade'] },
-    { group: 'lang/absent', path: '{HOME}/.absent/bin/absent', args: ['upgrade'] },
+// a group's own sync script, as the server states it: gated on the file a standalone install put down, or on a command
+const syncScript = (
+  group: string,
+  id: string,
+  gates: { cmds?: Array<string>; paths?: Array<string> },
+  provides: Array<string> = [],
+) => ({
+  group,
+  provides,
+  id,
+  cmds: gates.cmds ?? [],
+  noCmds: [],
+  svcs: [],
+  noSvcs: [],
+  paths: gates.paths ?? [],
+  noSsh: false,
+})
+const runStub = `def --env packRunUnit [id: string] { print $"ran script ($id)" }`
+
+// a bare sync offers every group's own sync script whose gates are met here as the script row, after the managers,
+// and one whose gate is not met is not offered at all
+Deno.test('nu / pack / own sync scripts whose gates are met are the script row', async () => {
+  const scripts = [
+    syncScript('lang/yes', 'yes/sync', { paths: ['~/.yes/bin/yes'] }),
+    syncScript('shell/tool/here', 'here/sync', { cmds: ['here'] }),
+    syncScript('lang/absent', 'absent/sync', { paths: ['~/.absent/bin/absent'] }),
+    syncScript('shell/tool/gone', 'gone/sync', { cmds: ['gone'] }),
   ]
   const out = await withStubs(
-    {},
+    { here: '' },
     [
       `hide-env PROBE_QUIET`,
-      `mkdir ($env.HOME | path join .yes bin) ($env.HOME | path join .no bin)`,
-      `"#!/bin/sh\\necho \\"updated $*\\"\\n" | save ($env.HOME | path join .yes bin yes)`,
-      `"#!/bin/sh\\necho 'self update is disabled for this build'\\nexit 1\\n" | save ($env.HOME | path join .no bin no)`,
-      `^/bin/chmod +x ($env.HOME | path join .yes bin yes) ($env.HOME | path join .no bin no)`,
+      `mkdir ($env.HOME | path join .yes bin)`,
+      `touch ($env.HOME | path join .yes bin yes)`,
+      runStub,
       `$env.PACK_OP = 'sync'`,
-      `$env.YES = '1'`,
-      `$env.PACK_SELF = ${JSON.stringify(JSON.stringify(self))}`,
+      `$env.PACK_SCRIPTS = ${JSON.stringify(JSON.stringify(scripts))}`,
       'packManagerPlanRun',
-      `print 'run finished'`,
+      `print $"yes ($env.YES? | default '')"`,
     ].join('\n'),
     [],
+    [],
+    false,
+    [1],
   )
   if (out == null) {
     return
   }
   assertEquals(out.includes('1) script'), true)
-  assertEquals(out.includes('updated self update'), true)
-  assertEquals(out.includes('lang/no did not update itself'), true)
-  // nothing at its path, so there is nothing to ask
-  assertEquals(out.includes('absent'), false)
-  // a refusal is an answer, not a failure: the run reports nothing and goes on
-  assertEquals(out.includes('failed:'), false)
-  assertEquals(out.includes('run finished'), true)
+  assertEquals(out.includes('yes/sync, here/sync'), true)
+  const ran = out.split('\n').filter((l) => l.startsWith('ran script ')).map((l) => l.slice(11))
+  assertEquals(ran, ['yes/sync', 'here/sync'])
+  // the pick is the yes, so a picked script asks nothing more
+  assertEquals(out.includes('yes 1'), true)
 })
 
-// a manager its own installer put down updates itself right before it syncs, not after every other manager has run;
+// a group that puts down a manager updates it right before that manager syncs, not after every other manager has run;
 // a tool that is no manager waits for the script row
 Deno.test('nu / pack / a manager updates itself right before its own sync', async () => {
-  const self = [
-    { group: 'ai/code/codex', path: '{HOME}/.local/bin/codex', args: ['update'] },
-    { group: 'sys/manager/ghpm', path: '{HOME}/.ghpm/bin/ghpm', args: ['upgrade'] },
+  const scripts = [
+    syncScript('ai/agent/codex', 'codex/sync', { paths: ['~/.local/bin/codex'] }),
+    syncScript('sys/manager/ghpm', 'ghpm/sync', { paths: ['~/.ghpm/bin/ghpm'] }, ['ghpm']),
   ]
-  const out = await withStubs(
-    { brew: '', ghpm: '' },
-    [
-      `hide-env PROBE_QUIET`,
-      `mkdir ($env.HOME | path join .ghpm bin) ($env.HOME | path join .local bin)`,
-      `touch ($env.HOME | path join .ghpm bin ghpm) ($env.HOME | path join .local bin codex)`,
-      `def --env packBrew [] { print 'ran brew' }`,
-      `def --env packGhpm [] { print 'ran ghpm' }`,
-      `$env.YES = '1'`,
-      `$env.PACK_OP = 'sync'`,
-      `$env.NOOP = '1'`,
-      `$env.PACK_SELF = ${JSON.stringify(JSON.stringify(self))}`,
-      'packManagerPlanRun',
-    ].join('\n'),
-    ['brew', 'ghpm'],
-  )
-  if (out == null) {
+  const run = (pick?: Array<number>) =>
+    withStubs(
+      { brew: '', ghpm: '' },
+      [
+        `hide-env PROBE_QUIET`,
+        `mkdir ($env.HOME | path join .ghpm bin) ($env.HOME | path join .local bin)`,
+        `touch ($env.HOME | path join .ghpm bin ghpm) ($env.HOME | path join .local bin codex)`,
+        `def --env packBrew [] { print 'ran brew' }`,
+        `def --env packGhpm [] { print 'ran ghpm' }`,
+        runStub,
+        `$env.PACK_OP = 'sync'`,
+        pick ? '' : `$env.YES = '1'`,
+        `$env.PACK_SCRIPTS = ${JSON.stringify(JSON.stringify(scripts))}`,
+        'packManagerPlanRun',
+      ].join('\n'),
+      ['brew', 'ghpm'],
+      [],
+      false,
+      pick,
+    )
+  const order = (out: string) => out.split('\n').filter((l) => l.startsWith('ran '))
+  const every = (await run())!
+  if (every == null) {
     return
   }
-  const order = out.split('\n').filter((l) => /^ran |upgrade$|update$/.test(l)).map((l) => l.split('/').pop())
-  assertEquals(order, ['ran brew', 'ghpm upgrade', 'ran ghpm', 'codex update'])
+  assertEquals(order(every), ['ran brew', 'ran script ghpm/sync', 'ran ghpm', 'ran script codex/sync'])
+  // picking the manager alone still updates it first, and the script row is a row of its own
+  const alone = (await run([2]))!
+  assertEquals(alone.includes('3) script'), true)
+  assertEquals(order(alone), ['ran script ghpm/sync', 'ran ghpm'])
 })
 
-Deno.test('nu / pack / picking a manager alone still updates it first', async () => {
-  const self = [
-    { group: 'ai/code/codex', path: '{HOME}/.local/bin/codex', args: ['update'] },
-    { group: 'sys/manager/ghpm', path: '{HOME}/.ghpm/bin/ghpm', args: ['upgrade'] },
-  ]
-  const out = await withStubs(
-    { brew: '', ghpm: '' },
-    [
-      `hide-env PROBE_QUIET`,
-      `mkdir ($env.HOME | path join .ghpm bin) ($env.HOME | path join .local bin)`,
-      `touch ($env.HOME | path join .ghpm bin ghpm) ($env.HOME | path join .local bin codex)`,
-      `def --env packBrew [] { print 'ran brew' }`,
-      `def --env packGhpm [] { print 'ran ghpm' }`,
-      `$env.PACK_OP = 'sync'`,
-      `$env.NOOP = '1'`,
-      `$env.PACK_SELF = ${JSON.stringify(JSON.stringify(self))}`,
-      'packManagerPlanRun',
-    ].join('\n'),
-    ['brew', 'ghpm'],
-    [],
-    false,
-    [2],
-  )
-  if (out == null) {
-    return
-  }
-  assertEquals(out.includes('3) script'), true)
-  const order = out.split('\n').filter((l) => /^ran |upgrade$|update$/.test(l)).map((l) => l.split('/').pop())
-  assertEquals(order, ['ghpm upgrade', 'ran ghpm'])
-})
-
-// goup is go's: it updates itself in the go row, then refreshes and moves its go, all before the tools rebuild
-Deno.test("nu / pack / goup updates itself in go's row, before go syncs", async () => {
-  const self = [{ group: 'lang/go', path: '{HOME}/.goup/bin/goup', args: ['upgrade'] }]
+// goup's group provides go, so its own sync runs in the go row, before goup refreshes and moves its go and the tools
+// rebuild
+Deno.test("nu / pack / goup's own sync runs in go's row, before go syncs", async () => {
+  const scripts = [syncScript('lang/goup', 'goup/sync', { paths: ['~/.goup/bin/goup'] }, ['go'])]
   const out = await withStubs(
     { '~/.goup/bin/go': `case "$*" in "env GOVERSION") printf 'go1.27.0\\n' ;; *) exit 0 ;; esac`, goup: '' },
     [
       `touch ($env.HOME | path join .goup bin goup)`,
+      runStub,
       `$env.YES = '1'`,
       `$env.PACK_OP = 'sync'`,
       `$env.NOOP = '1'`,
-      `$env.PACK_SELF = ${JSON.stringify(JSON.stringify(self))}`,
+      `$env.PACK_SCRIPTS = ${JSON.stringify(JSON.stringify(scripts))}`,
       'packManagerPlanRun',
     ].join('\n'),
     ['go'],
@@ -1169,14 +1170,16 @@ Deno.test("nu / pack / goup updates itself in go's row, before go syncs", async 
   if (out == null) {
     return
   }
-  assertEquals(out.includes('script'), false)
-  const order = out.split('\n').filter((l) => /goup (upgrade|refresh|update)/.test(l)).map((l) => l.split('/').pop())
-  assertEquals(order, ['goup upgrade', 'try { goup refresh }', 'goup update'])
+  assertEquals(out.includes(') script'), false)
+  const order = out.split('\n').filter((l) => /ran script|goup (refresh|update)/.test(l))
+    .map((l) => l.startsWith('ran ') ? l : l.split('/').pop())
+  assertEquals(order, ['ran script goup/sync', 'try { goup refresh }', 'goup update'], out)
 })
 
-// dotnetup is dotnet's: it updates itself in the dotnet row, then moves its SDKs, all before the tools update
-Deno.test("nu / pack / dotnetup updates itself in dotnet's row, before dotnet syncs", async () => {
-  const self = [{ group: 'lang/dotnet', path: '{HOME}/.dotnetup/dotnetup', args: ['self', 'update'] }]
+// dotnetup's group provides dotnet, so its own sync runs in the dotnet row, before dotnetup moves its SDKs and the tools
+// update
+Deno.test("nu / pack / dotnetup's own sync runs in dotnet's row, before dotnet syncs", async () => {
+  const scripts = [syncScript('lang/dotnetup', 'dotnetup/sync', { paths: ['~/.dotnetup/dotnetup'] }, ['dotnet'])]
   const out = await withStubs(
     {
       '~/.local/share/dotnetup/dotnet/dotnet': `case "$*" in --version) printf '10.0.100\\n' ;; *) exit 0 ;; esac`,
@@ -1186,10 +1189,11 @@ Deno.test("nu / pack / dotnetup updates itself in dotnet's row, before dotnet sy
       `mkdir ($env.HOME | path join .dotnetup)`,
       `touch ($env.HOME | path join .dotnetup dotnetup)`,
       `$env.DOTNET_ROOT = ($env.HOME | path join .local share dotnetup dotnet)`,
+      runStub,
       `$env.YES = '1'`,
       `$env.PACK_OP = 'sync'`,
       `$env.NOOP = '1'`,
-      `$env.PACK_SELF = ${JSON.stringify(JSON.stringify(self))}`,
+      `$env.PACK_SCRIPTS = ${JSON.stringify(JSON.stringify(scripts))}`,
       'packManagerPlanRun',
     ].join('\n'),
     ['dotnet'],
@@ -1198,29 +1202,28 @@ Deno.test("nu / pack / dotnetup updates itself in dotnet's row, before dotnet sy
   if (out == null) {
     return
   }
-  assertEquals(out.includes('script'), false, out)
-  const order = out.split('\n').filter((l) => /dotnetup (self update|update)|dotnet tool update/.test(l))
-    .map((l) => l.split('/').pop())
+  assertEquals(out.includes(') script'), false, out)
+  const order = out.split('\n').filter((l) => /ran script|dotnetup update|dotnet tool update/.test(l))
+    .map((l) => l.startsWith('ran ') ? l : l.split('/').pop())
   assertEquals(
     order,
-    ['dotnetup self update', 'try { dotnetup update }', 'try { dotnet tool update --global --all }'],
+    ['ran script dotnetup/sync', 'try { dotnetup update }', 'try { dotnet tool update --global --all }'],
     out,
   )
 })
 
-Deno.test('nu / pack / no script row when every standalone install is a manager here', async () => {
-  const self = [{ group: 'sys/manager/ghpm', path: '{HOME}/.ghpm/bin/ghpm', args: ['upgrade'] }]
+// a bare tidy runs the groups' own tidy scripts in the script row, never in a manager's
+Deno.test('nu / pack / own tidy scripts run in the script row', async () => {
+  const scripts = [syncScript('editor/code', 'code/tidy', { cmds: ['code'] })]
   const out = await withStubs(
-    { ghpm: '' },
+    { ghpm: '', code: '' },
     [
       `hide-env PROBE_QUIET`,
-      `mkdir ($env.HOME | path join .ghpm bin)`,
-      `touch ($env.HOME | path join .ghpm bin ghpm)`,
       `def --env packGhpm [] { print 'ran ghpm' }`,
+      runStub,
+      `$env.PACK_OP = 'tidy'`,
       `$env.YES = '1'`,
-      `$env.PACK_OP = 'sync'`,
-      `$env.NOOP = '1'`,
-      `$env.PACK_SELF = ${JSON.stringify(JSON.stringify(self))}`,
+      `$env.PACK_SCRIPTS = ${JSON.stringify(JSON.stringify(scripts))}`,
       'packManagerPlanRun',
     ].join('\n'),
     ['ghpm'],
@@ -1228,9 +1231,42 @@ Deno.test('nu / pack / no script row when every standalone install is a manager 
   if (out == null) {
     return
   }
-  assertEquals(out.includes('script'), false)
-  const order = out.split('\n').filter((l) => /^ran |upgrade$/.test(l)).map((l) => l.split('/').pop())
-  assertEquals(order, ['ghpm upgrade', 'ran ghpm'])
+  assertEquals(out.split('\n').filter((l) => l.startsWith('ran ')), ['ran ghpm', 'ran script code/tidy'], out)
+})
+
+// a named sync holds a group through its own sync script where that script's gates are met, as a manager holds it
+// where it has the package
+Deno.test('nu / pack / a named sync holds a group through its own sync script', async () => {
+  const unit = (group: string, paths: Array<string>) => ({
+    group,
+    name: group,
+    paths: [{
+      id: `${group}|script`,
+      manager: 'script',
+      names: [`${group}/sync`],
+      gates: { cmds: [], noCmds: [], svcs: [], noSvcs: [], paths, noSsh: false },
+    }],
+  })
+  const plan = [unit('yes', ['~/.yes/bin/yes']), unit('absent', ['~/.absent/bin/absent'])]
+  const out = await withStubs(
+    {},
+    [
+      `hide-env PROBE_QUIET`,
+      `mkdir ($env.HOME | path join .yes bin)`,
+      `touch ($env.HOME | path join .yes bin yes)`,
+      `def --env packRunUnit [id: string] { print $"ran ($id)" }`,
+      `$env.PACK_OP = 'sync'`,
+      `$env.YES = '1'`,
+      `$env.PACK_PLAN = ${JSON.stringify(JSON.stringify(plan))}`,
+      `$env.PACK_SYNC_NAMES = [  ]`,
+      'packPlanRun',
+    ].join('\n'),
+    [],
+  )
+  if (out == null) {
+    return
+  }
+  assertEquals(out.split('\n').filter((l) => l.startsWith('ran ')), ['ran yes|script'])
 })
 
 // cargo on PATH is rustup's proxy when a rustup sits beside it, and the toolchains update before the crates do. a
@@ -2473,4 +2509,64 @@ Deno.test('nu / pack / dotnet is one install with its tools when DOTNET_ROOT nam
     'dotnet',
   ])
   assertEquals(listed!.split('\n').at(-1), 'dotnetsay')
+})
+
+// an add through dnf on the centos family enables epel and crb first, since that is where a group's rpm names are
+// there; dnf on fedora is left as it is
+Deno.test('nu / pack / dnf on centos enables epel and crb before it adds', async () => {
+  const run = (like: string) =>
+    withStubs(
+      { rpm: 'exit 1', dnf: `printf 'repo id   repo name\\nbaseos    BaseOS\\n'` },
+      [
+        `$env.SYS_OS_LIKE = '${like}'`,
+        `$env.NOOP = '1'`,
+        `$env.PACK_OP = 'add'`,
+        `$env.PACK_MANAGER = 'dnf'`,
+        `$env.PACK_ADD_NAMES = ['plasma']`,
+        'packDnf',
+      ].join('\n'),
+      ['dnf'],
+      ['dnf'],
+    )
+  const centos = await run('rhel centos fedora')
+  if (centos == null) {
+    return
+  }
+  const steps = centos.split('\n').filter((l) => /(^| )dnf (install|config-manager)/.test(l)).map((l) =>
+    l.replace(/^.*dnf /, 'dnf ')
+  )
+  assertEquals(steps, [
+    'dnf install epel-release',
+    'dnf install dnf-plugins-core',
+    'dnf config-manager --set-enabled crb',
+    'dnf install plasma',
+  ], centos)
+  const fedora = (await run('fedora'))!
+  assertEquals(fedora.includes('epel-release'), false, fedora)
+  assertEquals(fedora.includes('dnf install plasma'), true, fedora)
+})
+
+// a name its bucket qualifies has that bucket added first, once, and not at all when the bucket is already there
+Deno.test('nu / pack / scoop adds the bucket a name is qualified by', async () => {
+  const out = await withStubs(
+    { scoop: '', powershell: '' },
+    [
+      `$env.SCOOP = ($env.HOME | path join scoop)`,
+      `mkdir ($env.SCOOP | path join buckets extras)`,
+      `$env.NOOP = '1'`,
+      `$env.PACK_OP = 'add'`,
+      `$env.PACK_MANAGER = 'scoop'`,
+      `$env.PACK_ADD_NAMES = ['games/xemu' 'games/pcsx2' 'extras/vscode' 'git']`,
+      'packScoop',
+    ].join('\n'),
+    ['scoop'],
+    ['scoop'],
+  )
+  if (out == null) {
+    return
+  }
+  const steps = out.split('\n').filter((l) => / scoop (bucket|install)/.test(l)).map((l) =>
+    l.replace(/^.*scoop /, 'scoop ')
+  )
+  assertEquals(steps, ['scoop bucket add games', 'scoop install games/xemu games/pcsx2 extras/vscode git'], out)
 })

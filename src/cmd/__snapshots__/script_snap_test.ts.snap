@@ -1636,7 +1636,13 @@ def scriptHasSvc [...svcs: string] {
 
 # a path is how a macos app shows it is installed, or a tool that leaves a directory and no command. ~ is the home dir
 def scriptHasPath [...paths: string] {
-  \$paths | any { |p| \$p | path expand | path exists }
+  \$paths | any { |p| scriptPath \$p | path exists }
+}
+
+# a gate's path with ~ as the home dir: HOME where it is set, which windows leaves to nu
+def scriptPath [path: string] {
+  let home = (\$env.HOME? | default \$nu.home-dir)
+  if \$path == '~' or (\$path | str starts-with '~/') { \$path | str replace '~' \$home } else { \$path } | path expand
 }
 
 # the listing's groups for what is left out, in the order shown: the least to put right first, and last the one with
@@ -2608,7 +2614,13 @@ def scriptHasSvc [...svcs: string] {
 
 # a path is how a macos app shows it is installed, or a tool that leaves a directory and no command. ~ is the home dir
 def scriptHasPath [...paths: string] {
-  \$paths | any { |p| \$p | path expand | path exists }
+  \$paths | any { |p| scriptPath \$p | path exists }
+}
+
+# a gate's path with ~ as the home dir: HOME where it is set, which windows leaves to nu
+def scriptPath [path: string] {
+  let home = (\$env.HOME? | default \$nu.home-dir)
+  if \$path == '~' or (\$path | str starts-with '~/') { \$path | str replace '~' \$home } else { \$path } | path expand
 }
 
 # the listing's groups for what is left out, in the order shown: the least to put right first, and last the one with
@@ -3911,7 +3923,13 @@ def scriptHasSvc [...svcs: string] {
 
 # a path is how a macos app shows it is installed, or a tool that leaves a directory and no command. ~ is the home dir
 def scriptHasPath [...paths: string] {
-  \$paths | any { |p| \$p | path expand | path exists }
+  \$paths | any { |p| scriptPath \$p | path exists }
+}
+
+# a gate's path with ~ as the home dir: HOME where it is set, which windows leaves to nu
+def scriptPath [path: string] {
+  let home = (\$env.HOME? | default \$nu.home-dir)
+  if \$path == '~' or (\$path | str starts-with '~/') { \$path | str replace '~' \$home } else { \$path } | path expand
 }
 
 # the listing's groups for what is left out, in the order shown: the least to put right first, and last the one with
@@ -4033,7 +4051,7 @@ def scriptFindRun [] {
 }
 
 
-\$env.SCRIPT_PLAN = r#'[{\\"id\\":\\"cargo/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"cargo\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[\\"cargo\\"],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"desktop/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"desktop\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"none\\",\\"noSsh\\":false},{\\"id\\":\\"distro/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"distro\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[\\"/etc/wsl.conf\\"],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"docker/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"docker\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[\\"docker\\"],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"docker/teardown\\",\\"action\\":\\"teardown\\",\\"tool\\":\\"docker\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[\\"docker\\"],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"local/repair\\",\\"action\\":\\"repair\\",\\"tool\\":\\"local\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":true}]'#
+\$env.SCRIPT_PLAN = r#'[{\\"id\\":\\"cargo/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"cargo\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[\\"cargo\\"],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"desktop/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"desktop\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"none\\",\\"noSsh\\":false},{\\"id\\":\\"distro/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"distro\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[\\"/etc/wsl.conf\\"],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"docker/repo\\",\\"action\\":\\"repo\\",\\"tool\\":\\"docker\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"docker/setup\\",\\"action\\":\\"setup\\",\\"tool\\":\\"docker\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[\\"docker\\"],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"docker/teardown\\",\\"action\\":\\"teardown\\",\\"tool\\":\\"docker\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[\\"docker\\"],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"local/repair\\",\\"action\\":\\"repair\\",\\"tool\\":\\"local\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":true},{\\"id\\":\\"rustup/add\\",\\"action\\":\\"add\\",\\"tool\\":\\"rustup\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[],\\"noCmds\\":[\\"rustup\\"],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"scriptfile/add\\",\\"action\\":\\"add\\",\\"tool\\":\\"scriptfile\\",\\"shell\\":\\"zsh\\",\\"cmds\\":[],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[],\\"desktop\\":\\"\\",\\"noSsh\\":false},{\\"id\\":\\"standalone/sync\\",\\"action\\":\\"sync\\",\\"tool\\":\\"standalone\\",\\"shell\\":\\"nu\\",\\"cmds\\":[],\\"noCmds\\":[],\\"svcs\\":[],\\"noSvcs\\":[],\\"paths\\":[\\"~/.standalone/bin/standalone\\",\\"~/.standalone/bin/standalone.exe\\"],\\"desktop\\":\\"\\",\\"noSsh\\":false}]'#
 
 scriptFindRun
 
@@ -4645,7 +4663,13 @@ def scriptHasSvc [...svcs: string] {
 
 # a path is how a macos app shows it is installed, or a tool that leaves a directory and no command. ~ is the home dir
 def scriptHasPath [...paths: string] {
-  \$paths | any { |p| \$p | path expand | path exists }
+  \$paths | any { |p| scriptPath \$p | path exists }
+}
+
+# a gate's path with ~ as the home dir: HOME where it is set, which windows leaves to nu
+def scriptPath [path: string] {
+  let home = (\$env.HOME? | default \$nu.home-dir)
+  if \$path == '~' or (\$path | str starts-with '~/') { \$path | str replace '~' \$home } else { \$path } | path expand
 }
 
 # the listing's groups for what is left out, in the order shown: the least to put right first, and last the one with

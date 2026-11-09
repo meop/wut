@@ -7,8 +7,8 @@ declared twice are in [RULES.md](RULES.md#scriptyaml-gate-enforcement).
 ## One shell owns each script, and nu spawns it
 
 `script` redirects `pwsh`/`zsh` callers to nu exactly like `pack`, `file` and `virt`. nu then owns the plan, the gate
-and the listing, and spawns each script in the shell it is written for — the same `execScriptShell` a `pack` group's
-`script` tier already used to run a zsh entry from nu.
+and the listing, and spawns each script in the shell it is written for — the same `execScriptShell` a `pack` group's own
+scripts run through.
 
 Every script is owned by exactly one shell, so an overlay never runs twice: ownership is `SHELL_PRIORITY` order, most
 native first (zsh > pwsh > nu), narrowed by the platform gates the server already applied. It no longer depends on which
@@ -107,3 +107,10 @@ not a manager choice, and they come after the plan was agreed.
 
 `opPrint*RunCmd` evals its arguments, so a value passed to one has its quoting stripped unless it is passed as
 `${(qq)var}`. See [NUSHELL.md](NUSHELL.md) for the nu side of the same problem.
+
+## A pack group's own scripts
+
+A script directory named for a pack group is that group's own, and `pack` runs its actions around the group's ops:
+`repo` before an add and `setup` after it, `teardown` before a remove, and `add`, `remove`, `sync` and `tidy` as paths
+of those ops ([RULES.md](RULES.md#a-pack-groups-own-scripts)). They stay scripts like any other: `wut s e setup goup`
+runs goup's setup on its own, and a directory no group is named for is reached only through `script`.

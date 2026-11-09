@@ -1,7 +1,7 @@
 import type { Ctx } from '@meop/shire/ctx'
 import { assertEquals, assertThrows } from '@std/assert'
 
-import { evaluateGate, getSupportedManagers, groupOrdered, isDropIn, mergeDropIn, selectScriptEntry } from './pack.ts'
+import { evaluateGate, getSupportedManagers, groupOrdered, isDropIn, mergeDropIn } from './pack.ts'
 
 // --- helpers ---
 
@@ -103,58 +103,6 @@ Deno.test('evaluateGate - multiple conditions one fails', () => {
       mkCtx({ sys_os_plat: 'linux', sys_os: 'ubuntu' }),
     ),
     false,
-  )
-})
-
-// --- selectScriptEntry ---
-
-Deno.test('selectScriptEntry - picks the nu entry when its gate matches', () => {
-  const scriptConfig = { nu: { file: 'cfg/script/ghpm/install.nu', gate: { sys_os_plat: ['linux'] } } }
-  assertEquals(
-    selectScriptEntry(scriptConfig, mkCtx({ sys_os_plat: 'linux' })),
-    { shellFlavor: 'nu', entry: scriptConfig.nu },
-  )
-})
-
-Deno.test('selectScriptEntry - picks a native shell entry when its gate matches', () => {
-  const scriptConfig = { zsh: { file: 'cfg/script/docker/install.zsh', gate: { sys_os_plat: ['linux'] } } }
-  assertEquals(
-    selectScriptEntry(scriptConfig, mkCtx({ sys_os_plat: 'linux' })),
-    { shellFlavor: 'zsh', entry: scriptConfig.zsh },
-  )
-})
-
-Deno.test('selectScriptEntry - skips an entry whose gate fails, uses the next one that matches', () => {
-  const scriptConfig = {
-    nu: { file: 'cfg/script/foo/install.nu', gate: { sys_os_plat: ['windows'] } },
-    zsh: { file: 'cfg/script/foo/install.zsh', gate: { sys_os_plat: ['linux'] } },
-  }
-  assertEquals(
-    selectScriptEntry(scriptConfig, mkCtx({ sys_os_plat: 'linux' })),
-    { shellFlavor: 'zsh', entry: scriptConfig.zsh },
-  )
-})
-
-Deno.test('selectScriptEntry - entry with no gate always matches', () => {
-  const scriptConfig = { pwsh: { file: 'cfg/script/choco/install.ps1' } }
-  assertEquals(
-    selectScriptEntry(scriptConfig, mkCtx({ sys_os_plat: 'windows' })),
-    { shellFlavor: 'pwsh', entry: scriptConfig.pwsh },
-  )
-})
-
-Deno.test('selectScriptEntry - no entry gate matches returns null', () => {
-  const scriptConfig = { pwsh: { file: 'cfg/script/choco/install.ps1', gate: { sys_os_plat: ['windows'] } } }
-  assertEquals(
-    selectScriptEntry(scriptConfig, mkCtx({ sys_os_plat: 'linux' })),
-    null,
-  )
-})
-
-Deno.test('selectScriptEntry - undefined scriptConfig returns null', () => {
-  assertEquals(
-    selectScriptEntry(undefined, mkCtx({ sys_os_plat: 'linux' })),
-    null,
   )
 })
 

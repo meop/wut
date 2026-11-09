@@ -18,7 +18,13 @@ def scriptHasSvc [...svcs: string] {
 
 # a path is how a macos app shows it is installed, or a tool that leaves a directory and no command. ~ is the home dir
 def scriptHasPath [...paths: string] {
-  $paths | any { |p| $p | path expand | path exists }
+  $paths | any { |p| scriptPath $p | path exists }
+}
+
+# a gate's path with ~ as the home dir: HOME where it is set, which windows leaves to nu
+def scriptPath [path: string] {
+  let home = ($env.HOME? | default $nu.home-dir)
+  if $path == '~' or ($path | str starts-with '~/') { $path | str replace '~' $home } else { $path } | path expand
 }
 
 # the listing's groups for what is left out, in the order shown: the least to put right first, and last the one with

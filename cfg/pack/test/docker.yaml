@@ -1,0 +1,13 @@
+---
+operation:
+  add:
+    manager:
+      brew:
+        names:
+          - docker
+      pacman:
+        names:
+          - docker
+      winget:
+        names:
+          - docker

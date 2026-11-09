@@ -4,13 +4,6 @@ aliases:
 operation:
   add:
     manager:
-      script:
-        zsh:
-          commands:
-            - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs '|' sh
-          gate:
-            sys_os_plat:
-              - linux
       brew:
         names:
           - rustup

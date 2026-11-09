@@ -8,8 +8,8 @@ A group exists to state something the client cannot work out for itself:
 
 - **a naming difference between platforms** — `nu` on ghpm and cargo, `nushell` on pacman
 - **companions that ship separately** — `nodejs` plus `npm` on pacman, one package on brew
-- **something to run instead of a package install** — the `script` tier
 - **membership** — a group whose contents are other groups
+- **its own scripts** — none named in it: the ones in the script directory of its name
 - **a place in a folder** — an optional companion of the group above it, or a tool of the same kind as its neighbours,
   found and combined through that folder: `desktop/tool/remote/remmina/freerdp`
 
@@ -21,8 +21,8 @@ something different on each machine, and nothing says so. Where one platform shi
 package, the group is the two together and every other entry lists both: brew's `node` carries npm, so pacman's entry is
 `nodejs` and `npm`. Where none does, a companion worth picking or leaving on its own — a plugin, a client beside a
 server, a tool that goes with another — is a group of its own in the folder of the one it goes with, a row of its own:
-`editor/nvim/pynvim`, `lang/go/golangci-lint`. A group also installs through one manager per machine, so two things one
-platform takes from different managers, one from winget and another from scoop, are two groups, even where another
+`editor/nvim/pynvim`, `lang/goup/golangci-lint`. A group also installs through one manager per machine, so two things
+one platform takes from different managers, one from winget and another from scoop, are two groups, even where another
 platform could keep them together. A group that is a whole setup by design, the same setup on every platform it names,
 is one thing too: `desktop/gnome`.
 
@@ -168,18 +168,18 @@ pacman
   shell/zsh
     zsh, zsh-completions
 ghpm
-  lang/go
+  lang/goup
     goup
     then: goup/setup
-  lang/go/golangci-lint
+  lang/goup/golangci-lint
     golangci-lint
   bat, fd
 
 manager   group                 package
 -------   -----                 -------
 1) pacman shell/zsh
-2) ghpm   lang/go
-3) ghpm   lang/go/golangci-lint
+2) ghpm   lang/goup
+3) ghpm   lang/goup/golangci-lint
 4) ghpm                         bat
 5) ghpm                         fd
 6) ?                            lazygit
@@ -192,12 +192,12 @@ summary is where what a row carries is listed — a group's packages and its `fi
 never repeats it as a list, so a row stays one line however big the group ([OPS.md](OPS.md#filter-summarise-ask-once)).
 
 A row is a group rather than a manager because a folder brings its groups along: `wut p a go` is the toolchain in
-`lang/go.yaml` and golangci-lint in `lang/go/golangci-lint.yaml`, both served by ghpm, and a row per manager could only
-take both or neither. A group's own packages are never split further — it states they go together, and a package wanted
-on its own is a group of its own. Each loose name is its own row, since nothing ties it to another, and so is each `?`
-name, add's names still to be searched for: picking one is picking that search. When add's search finds a name under
-several managers, the second pick is the same shape, a row per manager and name, and each name goes to the first row
-picked for it.
+`lang/goup.yaml` and golangci-lint in `lang/goup/golangci-lint.yaml`, both served by ghpm, and a row per manager could
+only take both or neither. A group's own packages are never split further — it states they go together, and a package
+wanted on its own is a group of its own. Each loose name is its own row, since nothing ties it to another, and so is
+each `?` name, add's names still to be searched for: picking one is picking that search. When add's search finds a name
+under several managers, the second pick is the same shape, a row per manager and name, and each name goes to the first
+row picked for it.
 
 Selecting rather than confirming is how a run is narrowed. A yes/no gate could only accept or reject the whole plan, so
 narrowing it would mean cancelling, re-typing the command, and re-reading the same table. The list already had to be
@@ -343,25 +343,30 @@ no manager had: ripgrep-x
 Two managers answer fuzzily and need reading rather than an exit code: `ghpm search` always exits 0, so the name column
 decides, and npm and jsr are checked by name (`registry.npmjs.org/<name>`) rather than through their search endpoints.
 
-## A group's pre and post scripts run around its stage
+## A group's own scripts
 
-A group's `pre` and `post` scripts ([RULES.md](RULES.md#pack-pre-and-post)) show in the plan under the group they belong
-to (`first:` and `then:`), so the one decision covers them too — picking a manager is picking its groups' scripts with
-it.
+A group's own scripts ([RULES.md](RULES.md#a-pack-groups-own-scripts)) show in the plan under the group they belong to
+(`first:` and `then:`), so the one decision covers them too — picking a group is picking its scripts with it.
 
-Every `pre` script runs before any install or removal, while what it acts on is still there, and every `post` script
+Every `first` script runs before any install or removal, while what it acts on is still there, and every `then` script
 after the installs of its stage ([One run, in stages](#one-run-in-stages)), so one can lean on a tool another group in
-the same stage just installed, and a group in a later stage can lean on what the post script put down. Each runs once
-however many groups name it, and a group whose install or removal failed has no `post` run for it. A failed `pre` is
-reported but does not hold its group back — the operation is still what was asked.
+the same stage just installed, and a group in a later stage can lean on what a setup put down. A group whose install or
+removal failed has no `then` run for it. A failed `first` is reported but does not hold its group back — the operation
+is still what was asked.
 
-`has_cmd` is asked only when a script is about to run, since an install is what put the command there — and after the
-installs the run refreshes its PATH ([OPS.md](OPS.md#the-path-wut-checks-is-the-one-a-new-shell-would-have)), so a
-command that landed in `~/.cargo/bin` on a first rustup, or in brew's keg-only `opt` dirs, is found in the same run.
+A script's client gates (`has_cmd`, `no_cmd`, `has_path`, …) are asked only when it is about to run, since an install is
+what put the command there — and after the installs the run refreshes its PATH
+([OPS.md](OPS.md#the-path-wut-checks-is-the-one-a-new-shell-would-have)), so a command that landed in `~/.cargo/bin` on
+a first rustup, or in brew's keg-only `opt` dirs, is found in the same run.
 
-Picking in the plan is the yes. Once the table is answered, `YES` is set for the rest of the run, so a `script` install
-path and a group's scripts run without asking the questions they would ask under a bare `script exec` — the pick already
-answered them, the same way it answers for every manager.
+A group's own `add`, `remove` or `sync` script is a path rather than a hook: a row like a manager's, under `script`. An
+`add` script sits where `GROUP_ORDER` puts the script tier, so it runs where no user manager the group names is here. A
+`sync` script holds the group where its gates are met, the way a manager holds it where it has the package, and comes
+after every manager in the group, since what it puts back is what their update undid.
+
+Picking in the plan is the yes. Once the table is answered, `YES` is set for the rest of the run, so a group's scripts
+run without asking the questions they would ask under a bare `script exec` — the pick already answered them, the same
+way it answers for every manager.
 
 ## One run, in stages
 
@@ -370,69 +375,58 @@ manager — node-gyp through pnpm, ruff through uv — which on a fresh machine 
 it. The plan is resolved before anything installs, so without more it would find no pnpm, and `wut p a node` would end
 with pnpm and node but no node-gyp.
 
-A group **provides** a manager when it goes by that manager's name, its own or an alias: `lang/node` is also `pnpm`,
-`lang/python` `uv`, `lang/rust` `cargo`, `sys/manager/ghpm` `ghpm`. The server states it on the unit (`provides`), and
-when a group's managers are not here, one another picked group provides counts as here for the plan. The group is
-planned under that manager, and the summary says what it waits for:
+A group **provides** a manager when it goes by that manager's name, its own or an alias: `lang/pnpm` is pnpm, `lang/uv`
+uv, `lang/rustup` also `cargo`, `lang/goup` also `go`, `sys/manager/ghpm` ghpm. The server states it on the unit
+(`provides`), and when a group's managers are not here, one another picked group provides counts as here for the plan.
+The group is planned under that manager, and the summary says what it waits for:
 
 ```
 ghpm
-  lang/node
+  lang/pnpm
     pnpm
     then: pnpm/setup
 pnpm
-  lang/node/node-gyp
+  lang/pnpm/node-gyp
     node-gyp
-    after: lang/node
+    after: lang/pnpm
 
 manager group
-1) ghpm lang/node
-2) pnpm lang/node/node-gyp
+1) ghpm lang/pnpm
+2) pnpm lang/pnpm/node-gyp
 ```
 
 The table is unchanged — one row per group, one prompt — since this is only a matter of order. The run goes a stage at a
-time: the groups that wait for nothing, their `post` scripts, a PATH refresh, then the groups that waited for them, and
+time: the groups that wait for nothing, their `then` scripts, a PATH refresh, then the groups that waited for them, and
 so on. A group that serves through a manager another group in the plan provides runs after it whether or not that
 manager is already here, since the provider's setup can matter to it either way. Remove walks the stages backwards, so
 node-gyp goes while pnpm is still there to take it out; sync walks them forwards, the manager before what it serves.
 
-Providing is a forecast, not a promise: the path that wins `lang/node` might be the system nodejs, which puts down no
-pnpm, or the install might fail. So a group that waited is checked again when its stage comes. If its manager is there,
-it runs; if not, the next manager its yaml lists that is here now runs instead, and the run says so
-(`node-gyp: pnpm is
-not here, using ghpm`); with none left it is skipped, and says that. Nothing is added to a run that
-was not asked for — `wut p a node-gyp` alone on a machine without pnpm does not install pnpm to serve it.
+Providing is a forecast, not a promise: the install that wins `lang/pnpm` might fail. So a group that waited is checked
+again when its stage comes. If its manager is there, it runs; if not, the next manager its yaml lists that is here now
+runs instead, and the run says so (`node-gyp: pnpm is
+not here, using ghpm`); with none left it is skipped, and says
+that. Nothing is added to a run that was not asked for — `wut p a node-gyp` alone on a machine without pnpm does not
+install pnpm to serve it.
 
 There is no row per method. How a group is installed is the fixed order, decided once, not a question each run; add's
 second pick for loose names is the one place a method is chosen, since no yaml speaks for those.
 
 ## Tools that update themselves
 
-Wut owns updates for configured tools. Their setup/file configuration disables supported automatic self-updaters and
-update notices, including for portable and ghpm installs. These are managed preferences, not defaults that preserve a
-tool's prior opt-in. See [Managed tool updates](RULES.md#managed-tool-updates). The path handling below selects the copy
-an explicit sync updates; it does not decide whether that copy may update itself in the background.
+A tool installed by its own installer — the group's own `add` script — is held by no manager, so no manager's sync would
+reach it. Its group's own `sync` script updates it, running the binary at the path that installer put it at, never
+whatever the name resolves to on PATH: the name can resolve to another manager's copy, and `deno upgrade` run against
+ghpm's deno overwrites a file ghpm owns. The script is gated with `has_path` on that file, so the check is a file
+existing at a known path — no command runs to answer it, and it reads the same on every platform. A bare sync offers
+every group's own `sync` script whose gates are met here; a named sync treats it as one more place the name can be held.
 
-A tool installed by its own installer — the group's `script` path — is held by no manager, so no manager's sync would
-reach it. Each such group states where that installer puts the tool
-([RULES.md](RULES.md#pack-sync-of-a-standalone-install)), and a bare sync hands every one of those paths to the client,
-which offers a `script` row for the ones whose file is there. A named sync treats the path as one more place the name
-can be held. Either way the check is a file existing at a known path — no command runs to answer it, and it reads the
-same on every platform.
+A group that provides a manager — ghpm, uv, deno, bun, pnpm, and goup's go and dotnetup's dotnet — has its `sync` script
+run right before that manager's sync, in that manager's row, so it syncs as its newest self: picking the manager's row
+is what lets it run. The copy it runs before is the one whose dir holds the file the script is gated on. The rest run at
+the `script` row, after every manager, which is offered only when there is one of them, and lists them.
 
-The update runs the binary at that path, never whatever the name resolves to on PATH: the name can resolve to another
-manager's copy, and `deno upgrade` run against ghpm's deno overwrites a file ghpm owns. The tools do not all guard
-against that themselves — `uv self update` refuses a copy its installer did not put down, `deno upgrade` does not.
-
-A tool that is itself a manager — ghpm, uv, deno, bun, pnpm — updates itself right before that manager's sync runs, so
-it syncs as its newest self: picking the manager's row is what lets it run. goup updates itself in the go row the same
-way, before the go it moves, and dotnetup in the dotnet row, before the SDKs it moves. The rest run at the `script` row,
-which is offered only when there is one of them. The binary's name is how the two are matched. On windows the path is
-printed and run with backslashes, whatever the yaml wrote.
-
-Updating is best effort. A distro build may have self update compiled out, or a tool's update setting may also prevent
-an explicit update. A refusal is reported as a warning rather than a failure: the rest of the sync runs, and the run
-does not exit non-zero for it. Sync does not temporarily enable an updater to get past that refusal.
+Updating is best effort. A distro build usually has self update compiled out, and a user can turn it off; a copy that
+refuses answers exactly that, so a `sync` script says it as a warning and does not fail — the rest of the sync runs.
 
 ## Toolchain managers
 

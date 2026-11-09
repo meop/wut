@@ -1,10 +1,2 @@
 ---
-operation:
-  add:
-    manager:
-      script:
-        zsh:
-          file: cfg/script/scriptfile/install.zsh
-          gate:
-            sys_os_plat:
-              - linux
+descr: a group its own add script installs, with no manager

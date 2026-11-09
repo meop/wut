@@ -34,6 +34,10 @@ distro:
       sys_os_plat:
         - linux
 docker:
+  repo:
+    zsh:
+      sys_os_plat:
+        - linux
   setup:
     pwsh:
       has_cmd:
@@ -58,3 +62,25 @@ local:
       no_ssh: true
       sys_os_plat:
         - linux
+rustup:
+  add:
+    zsh:
+      no_cmd:
+        - rustup
+      sys_os_plat:
+        - linux
+scriptfile:
+  add:
+    zsh:
+      sys_os_plat:
+        - linux
+standalone:
+  sync:
+    nu:
+      has_path:
+        - ~/.standalone/bin/standalone
+        - ~/.standalone/bin/standalone.exe
+      sys_os_plat:
+        - darwin
+        - linux
+        - windows

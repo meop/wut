@@ -80,8 +80,8 @@ ssh:
 ## pack group structure
 
 A group file has three top level keys: `descr`, a sentence about it that `find` searches, `aliases`, other names it
-answers to, and `operation`, holding `add` and `remove`. `descr` and `aliases` are optional. A group states what a
-manager installs, never which kind of manager it is:
+answers to, and `operation`, holding `add`. `descr` and `aliases` are optional. A group states what a manager installs,
+never which kind of manager it is:
 
 ```yaml
 ---
@@ -97,16 +97,10 @@ operation:
       pacman:
         names:
           - nushell
-      script:
-        zsh:
-          file: cfg/script/ollama/install.zsh
-          gate:
-            sys_os_plat:
-              - linux
 ```
 
-A manager entry may carry a `gate`, read exactly like a script entry's, for a manager that only applies on some
-platforms. `find` honours it too, so a group whose every entry is gated out is not offered there either.
+A manager entry may carry a `gate`, read exactly like a script's in `script.yaml`, for a manager that only applies on
+some platforms. `find` honours it too, so a group whose every entry is gated out is not offered there either.
 
 ## a name may carry its own flags
 
@@ -180,63 +174,37 @@ Alphabetical is not one of them. Sorting the list reads as an order without bein
 of the three is here, in that order — see [PACK.md](PACK.md#the-pacman-family-is-one-manager). Declare the narrowest one
 that can serve the group: `pacman` for a repo package, `yay` for an AUR one.
 
-## pack pre and post
+## a pack group's own scripts
 
-`pre` and `post` run around an operation, and they mean the same thing wherever they appear — before and after — at two
-levels. `add` and `remove` each take their own, so every slot exists: before and after an install, before and after a
-removal.
+A group's scripts are never named in its yaml. They are the scripts in the `cfg/script` directory of the group's own
+name, the last level of its path: `lang/goup.yaml` owns `cfg/script/goup/`, `editor/code.yaml` owns `cfg/script/code/`.
+An alias is a name to type and reaches no script, so a group and its scripts are named alike: the group is named for
+what it installs, and its script directory takes the same name.
 
-**Around one manager's call**, beside its names, keyed by shell: commands in the platform's native shell (`pwsh` on
-windows, `zsh` elsewhere), so a hook states the shell it is written in rather than a gate:
+Each op runs the actions it owns, when `script.yaml` gates them in:
 
-```yaml
----
-operation:
-  add:
-    manager:
-      brew:
-        zsh:
-          pre:
-            - brew tap anomalyco/tap
-        names:
-          - anomalyco/tap/opencode
-  remove:
-    manager:
-      brew:
-        zsh:
-          post:
-            - brew untap anomalyco/tap
-```
+| op       | before     | its own path, beside the managers             | after   |
+| -------- | ---------- | --------------------------------------------- | ------- |
+| `add`    | `repo`     | `add`: the tool's own installer               | `setup` |
+| `remove` | `teardown` | `remove`: its uninstaller                     |         |
+| `sync`   |            | `sync`: after the managers, whenever gated in |         |
+| `tidy`   |            | `tidy`: after the managers, whenever gated in |         |
 
-`remove` does not repeat `add`'s shape: under a manager it holds only the shell keys, since the package names a removal
-passes to the manager come from that manager's `add` entry. A group never states its names twice, so the two halves
-cannot drift apart, and a manager with nothing to run around its removal is simply absent from `remove`.
+The `add` and `remove` scripts are an install path like a manager, placed by `GROUP_ORDER` between the user managers and
+the system's: the script runs where no user manager the group names is here. A `sync` script is what keeps the tool
+current: updating a standalone install, gated with `has_path` on the file its installer puts down, or putting back what
+an update undid, gated with `has_cmd` on the tool. A named sync offers it as one more path, after every manager's; a
+bare sync and a bare tidy offer every group's own `sync` or `tidy` script as the `script` row
+([PACK.md](PACK.md#a-groups-own-scripts)).
 
-**Around the group**, beside `manager`: scripts, named by their path under `cfg/script` as `tool/action`:
+Each runs exactly as `wut s e <action> <tool>` would — the same shell owns it, the same `sys_*` gates apply on the
+server, and its client gates are asked on the client. The script is written once and stays runnable on its own; the
+group's name is what says when it is due. One gated off the platform is dropped from the plan while the group still
+installs.
 
-```yaml
----
-operation:
-  add:
-    manager:
-      pacman:
-        names:
-          - docker
-    post:
-      - docker/setup
-  remove:
-    pre:
-      - docker/teardown
-```
-
-Each one runs exactly as `wut s e setup docker` would — the same shell owns it, the same `sys_*` gates apply on the
-server, and its `has_cmd` is asked on the client. The script is written once and stays runnable on its own; the group
-only says when it is due. One gated off the platform is dropped from the plan while the group still installs.
-
-The two levels hold different things because they answer to different things. A manager's hook belongs to that manager's
-call — a tap only means anything to brew — so it is a command, in brew's shell. A group's script follows the group
-whichever manager won it: enabling docker's service is the same work whether pacman or a script installed docker, so it
-is a script, and runs wherever that script runs.
+A manager's own prerequisites are the manager's: a brew tap is part of the name brew is given (`anomalyco/tap/opencode`,
+which brew taps itself), a scoop bucket the same (`games/xemu`, whose bucket scoop.nu adds first), and on the centos
+family dnf enables epel and crb before an add, since that is where a group's rpm names are there.
 
 ## Managed tool updates
 
@@ -245,39 +213,13 @@ notifications where it supports doing so. Apply the same settings to portable, g
 the update preference does not need installation-source detection or an unset-only default. Use a setup script to merge
 managed keys into settings the tool also writes, or file sync for a file the repo owns entirely.
 
-Explicit `wut pack sync` still updates tools through their owning managers or their configured standalone paths. Keep
-that path distinction: a self-update command must not overwrite a binary ghpm or a system manager owns. Disabling
-background updates and notices does not mean removing the explicit sync operation. If a tool's setting also prevents an
-explicit update, report that refusal rather than temporarily enabling its updater.
+Explicit `wut pack sync` still updates tools through their owning managers or their own `sync` scripts. Keep that path
+distinction: a self-update command must not overwrite a binary ghpm or a system manager owns. Disabling background
+updates and notices does not mean removing the explicit sync operation. If a tool's setting also prevents an explicit
+update, report that refusal rather than temporarily enabling its updater.
 
 This rule concerns the managed tool replacing itself or advertising its own updates. Toolchains, dependencies, plugins,
 models, games and container images it manages are separate configuration decisions.
-
-## pack sync of a standalone install
-
-A tool whose own installer is the group's `script` path usually updates itself too, from wherever that installer put it.
-`sync.script` states that place per platform, and what to hand the binary there:
-
-```yaml
----
-operation:
-  add:
-    manager:
-      script:
-        nu:
-          file: cfg/script/deno/install.nu
-  sync:
-    script:
-      path:
-        darwin: '{HOME}/.deno/bin/deno'
-        linux: '{HOME}/.deno/bin/deno'
-        windows: '{HOME}/.deno/bin/deno.exe'
-      args:
-        - upgrade
-```
-
-The path is the whole test of whether that install is here, so it names the file the installer writes, with `{HOME}` and
-other env names spelled the way `file.yaml` spells them. A platform with no path has no standalone install to look for.
 
 ## pack group aliases
 
@@ -321,8 +263,8 @@ any word of the name, an alias, a declared package, or `descr`.
 
 An alias stands in for the group's own name, so it reaches the folder of the same name too: an alias of `x.yaml` brings
 everything under `x/` along, as `x` itself does. A folder beside a file of its name is how groups combine:
-`lang/go.yaml` is the toolchain and `lang/go/golangci-lint.yaml` the linter, so `wut p a go` installs both, each its own
-row to pick or leave.
+`lang/goup.yaml` is the toolchain and `lang/goup/golangci-lint.yaml` the linter, so `wut p a go`, an alias of goup,
+installs both, each its own row to pick or leave.
 
 ## pack group descr
 

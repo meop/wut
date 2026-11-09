@@ -521,64 +521,39 @@ Deno.test('nu / ubuntu / add (pinned, rustup)', async (t) => {
   // brew's entry is gated to darwin
   assertEquals(body.includes("$env.PACK_MANAGER = r#'brew'#"), false)
 })
-// a script "file" entry is spawned as its own process at runtime, so it never inherits this response's
-// own op* definitions — it needs its shell's op preamble loaded into it directly (see getScriptFlavorOpPreamble)
-Deno.test('nu / linux / add (pinned, script file entry carries its own op preamble)', async (t) => {
+// a group's own add script is spawned as its own process at runtime, so it never inherits this response's own op*
+// definitions — it needs its shell's op preamble loaded into it directly (see getScriptFlavorOpPreamble)
+Deno.test("nu / linux / add (pinned, a group's own add script carries its own op preamble)", async (t) => {
   const body = await (await runSrv(req('/sh/nu/pack/add/scriptfile?sysOsPlat=linux&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   assertEquals(body.includes('function opPrintWarn'), true)
   assertEquals(body.includes('function opPrintMaybeRunCmd'), true)
   assertEquals(body.includes("opPrintWarn 'fixture script for buildFileRunLines regression coverage'"), true)
+  const [unit] = planUnits(body)
+  assertEquals(unit.paths.map((p: { manager: string; names: Array<string> }) => [p.manager, p.names]), [
+    ['script', ['scriptfile/add']],
+  ])
 })
 // the file reads --noop itself, so a dry-run spawns it to print its steps rather than skipping it whole
-Deno.test('nu / linux / add (pinned, a script file runs under noop and prints its own steps)', async () => {
+Deno.test("nu / linux / add (pinned, a group's own add script runs under noop and prints its own steps)", async () => {
   const body = await (await runSrv(req('/sh/nu/pack/add/scriptfile?sysOsPlat=linux&wutNuPinned=1'))).text()
   const arm = planArm(body, 'test/scriptfile|script')
   assertEquals(arm.includes('fixture script for buildFileRunLines regression coverage'), true)
   assertEquals(arm.includes("if 'NOOP' not-in $env"), false)
+})
+// a group's own add script is gated by script.yaml alone: off its platform the group has no script path
+Deno.test('nu / darwin / add (pinned, an own add script gated off the platform is no path)', async () => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/scriptfile?sysOsPlat=darwin&wutNuPinned=1'))).text()
+  assertEquals(planUnits(body), [])
 })
 // the manager functions are defined long before the plan, so ordering only reads inside the arm
 function planArm(body: string, id: string) {
   const start = body.indexOf(`r#'${id}'# => {`)
   return start < 0 ? '' : body.slice(start).split('\n    }')[0]
 }
-// a manager's pre and post wrap its own call: add taps before installing, remove untaps after uninstalling
-Deno.test('nu / linux / add (pinned, manager pre hook runs before the manager call)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/hooks?sysOsPlat=linux&wutNuPinned=1'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-  const arm = planArm(body, 'test/hooks|brew')
-  const hook = arm.indexOf('brew tap meop/tap')
-  const call = arm.indexOf('\npackBrew')
-  assertEquals(hook > -1, true)
-  assertEquals(call > -1, true)
-  assertEquals(hook < call, true)
-})
-Deno.test('nu / linux / remove (pinned, manager post hook runs after the manager call)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/remove/hooks?sysOsPlat=linux&wutNuPinned=1'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-  const arm = planArm(body, 'test/hooks|brew')
-  const call = arm.indexOf('\npackBrew')
-  const hook = arm.indexOf('brew untap meop/tap')
-  assertEquals(hook > -1, true)
-  assertEquals(call > -1, true)
-  assertEquals(call < hook, true)
-  // remove states no names of its own: the ones add declared are the ones it hands the manager
-  assertEquals(arm.includes("$env.PACK_REMOVE_NAMES = [ r#'hooks'# ]"), true)
-})
-// a manager with nothing to undo is simply absent from remove
-Deno.test('nu / linux / remove (pinned, a manager with no post hook)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/remove/hooks?sysOsPlat=linux&wutNuPinned=1'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-  const arm = planArm(body, 'test/hooks|pacman')
-  assertEquals(arm.includes('packPacman'), true)
-  assertEquals(arm.includes('untap'), false)
-})
-// a group's pre and post name scripts by their path under cfg/script, resolved the way `script exec` would: owned by
-// one shell, gated by platform, and emitted as arms the client runs around the installs
+// a group's own scripts are the ones named for it under cfg/script, resolved the way `script exec` would: owned by one
+// shell, gated by platform, and emitted as arms the client runs around the installs
 function planUnits(body: string) {
   const line = body.split('\n').find((l) => l.startsWith("$env.PACK_PLAN = r#'"))
   return line ? JSON.parse(line.slice("$env.PACK_PLAN = r#'".length, -"'#".length)) : []
@@ -612,75 +587,106 @@ Deno.test('nu / add (pinned, drop-ins merge level by level into their group)', a
   const typed = await (await runSrv(req('/sh/nu/pack/add/dropin.linux?sysOsPlat=linux&wutNuPinned=1'))).text()
   assertEquals(planUnits(typed), [])
 })
-Deno.test('nu / linux / add (pinned, a group names the scripts that follow its install)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/around?sysOsPlat=linux&wutNuPinned=1'))).text()
+Deno.test('nu / linux / add (pinned, a group runs its own repo before its install and its setup after)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/test/docker?sysOsPlat=linux&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   const [unit] = planUnits(body)
-  assertEquals(unit.post, [
-    { id: 'cargo/setup', cmds: ['cargo'] },
-    { id: 'docker/setup', cmds: ['docker'] },
-  ])
-  assertEquals(unit.pre, undefined)
+  assertEquals(unit.pre, [{ id: 'docker/repo', cmds: [], noCmds: [], svcs: [], noSvcs: [], paths: [], noSsh: false }])
+  assertEquals(unit.post, [{
+    id: 'docker/setup',
+    cmds: ['docker'],
+    noCmds: [],
+    svcs: [],
+    noSvcs: [],
+    paths: [],
+    noSsh: false,
+  }])
   // zsh owns both on linux, the same shell `script exec` would pick
-  assertEquals(planArm(body, 'cargo/setup').includes('\n      zsh '), true)
+  assertEquals(planArm(body, 'docker/repo').includes('\n      zsh '), true)
   assertEquals(planArm(body, 'docker/setup').includes('\n      zsh '), true)
 })
 Deno.test('nu / darwin / add (pinned, a script gated off the platform is dropped)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/around?sysOsPlat=darwin&wutNuPinned=1'))).text()
+  const body = await (await runSrv(req('/sh/nu/pack/add/test/docker?sysOsPlat=darwin&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   const [unit] = planUnits(body)
-  assertEquals(unit.post.map((s: { id: string }) => s.id), ['cargo/setup'])
+  assertEquals(unit.pre, undefined)
+  assertEquals(unit.post, undefined)
   assertEquals(planArm(body, 'docker/setup'), '')
 })
 Deno.test('nu / windows / add (pinned, a script is owned by the shell script exec would pick)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/add/around?sysOsPlat=windows&wutNuPinned=1'))).text()
+  const body = await (await runSrv(req('/sh/nu/pack/add/test/docker?sysOsPlat=windows&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(planArm(body, 'cargo/setup').includes('\n      pwsh '), true)
+  assertEquals(planArm(body, 'docker/setup').includes('\n      pwsh '), true)
 })
-// each op reads only its own pre and post: remove names the scripts that precede its removal, never add's
-Deno.test('nu / linux / remove (pinned, a group names the scripts that precede its removal)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/remove/around?sysOsPlat=linux&wutNuPinned=1'))).text()
+// each op runs only its own hooks: remove runs the teardown that precedes its removal, never add's
+Deno.test('nu / linux / remove (pinned, a group runs its own teardown before its removal)', async (t) => {
+  const body = await (await runSrv(req('/sh/nu/pack/remove/test/docker?sysOsPlat=linux&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   const [unit] = planUnits(body)
-  assertEquals(unit.pre, [{ id: 'docker/teardown', cmds: ['docker'] }])
+  assertEquals(unit.pre, [{
+    id: 'docker/teardown',
+    cmds: ['docker'],
+    noCmds: [],
+    svcs: [],
+    noSvcs: [],
+    paths: [],
+    noSsh: false,
+  }])
   assertEquals(unit.post, undefined)
-  assertEquals(planArm(body, 'cargo/setup'), '')
+  assertEquals(planArm(body, 'docker/setup'), '')
   assertEquals(planArm(body, 'docker/teardown').includes('systemctl disable --now docker'), true)
 })
-// a bare sync hands the client every standalone install this platform's groups state, for it to look for; a named
-// sync offers the group's own path as one more place the name can be held
-Deno.test('nu / linux / sync (pinned, standalone installs the client looks for)', async (t) => {
+// an alias is a name to type and nothing more: lang/rustup goes by cargo, and cargo's setup is not rustup's
+Deno.test('nu / linux / add (pinned, an alias reaches no script)', async () => {
+  const body = await (await runSrv(req('/sh/nu/pack/add/cargo?sysOsPlat=linux&sysOs=ubuntu&wutNuPinned=1'))).text()
+  const [unit] = planUnits(body)
+  assertEquals(unit.group, 'lang/rustup')
+  assertEquals(unit.post, undefined)
+  assertEquals(planArm(body, 'cargo/setup'), '')
+})
+// a bare sync hands the client every group's own sync script this platform's gates allow, for the client to gate; a
+// named sync offers the group's own sync script as one more path, after every manager's
+Deno.test("nu / linux / sync (pinned, the groups' own sync scripts the client gates)", async (t) => {
   const body = await (await runSrv(req('/sh/nu/pack/sync?sysOsPlat=linux&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  const line = body.split('\n').find((l) => l.startsWith("$env.PACK_SELF = r#'"))!
-  const self = JSON.parse(line.slice("$env.PACK_SELF = r#'".length, -"'#".length))
-  assertEquals(self, [
-    { group: 'test/standalone', path: '{HOME}/.standalone/bin/standalone', args: ['self', 'update'] },
+  const line = body.split('\n').find((l) => l.startsWith("$env.PACK_SCRIPTS = r#'"))!
+  const scripts = JSON.parse(line.slice("$env.PACK_SCRIPTS = r#'".length, -"'#".length))
+  assertEquals(scripts, [
+    {
+      group: 'test/standalone',
+      provides: [],
+      id: 'standalone/sync',
+      cmds: [],
+      noCmds: [],
+      svcs: [],
+      noSvcs: [],
+      paths: ['~/.standalone/bin/standalone', '~/.standalone/bin/standalone.exe'],
+      noSsh: false,
+    },
   ])
+  // the arm spawns the script with its preamble, whose own blocks end the way an arm does, so the body is what is read
+  assertEquals(body.includes("r#'standalone/sync'# => {"), true)
+  assertEquals(body.includes('opPrintMaybeRunCmd $bin self update'), true)
 })
-Deno.test('nu / windows / sync (pinned, a standalone path is stated per platform)', async (t) => {
-  const body = await (await runSrv(req('/sh/nu/pack/sync?sysOsPlat=windows&wutNuPinned=1'))).text()
-  await assertSnapshot(t, body)
-  await checkSyntax('nu', body)
-  assertEquals(body.includes('{HOME}/.standalone/bin/standalone.exe'), true)
-})
-Deno.test('nu / linux / sync (pinned, a named standalone install updates itself)', async (t) => {
+Deno.test("nu / linux / sync (pinned, a named group's own sync script follows its managers)", async (t) => {
   const body = await (await runSrv(req('/sh/nu/pack/sync/standalone?sysOsPlat=linux&wutNuPinned=1'))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
   const [unit] = planUnits(body)
   assertEquals(unit.paths.map((p: { manager: string }) => p.manager), ['pacman', 'script'])
-  assertEquals(
-    planArm(body, 'test/standalone|script').includes(
-      "packSelfUpdate r#'test/standalone'# r#'{HOME}/.standalone/bin/standalone'# [r#'self'# r#'update'#]",
-    ),
-    true,
-  )
+  assertEquals(body.includes("r#'test/standalone|script'# => {"), true)
+  assertEquals(body.includes('opPrintMaybeRunCmd $bin self update'), true)
+})
+// a bare tidy runs no group's sync, only their tidy scripts, and the fixtures have none
+Deno.test('nu / linux / tidy (pinned, only tidy scripts)', async () => {
+  const body = await (await runSrv(req('/sh/nu/pack/tidy?sysOsPlat=linux&wutNuPinned=1'))).text()
+  await checkSyntax('nu', body)
+  assertEquals(body.includes("$env.PACK_SCRIPTS = r#'[]'#"), true)
 })
 // name-less ops hand every supported manager its own turn
 Deno.test('nu / arch / sync (pinned)', async (t) => {
@@ -885,12 +891,12 @@ Deno.test('nu / arch / find (pinned, candidates travel to the client)', async (t
   )
 })
 
-// a script of inline commands is a candidate like a script file, so a group installed only that way still shows
-Deno.test('nu / arch / find (pinned, inline script commands are a candidate)', async (t) => {
+// a group's own add script is a candidate like a manager, so a group installed only that way still shows
+Deno.test('nu / arch / find (pinned, an own add script is a candidate)', async (t) => {
   const body = await (await runSrv(req(`/sh/nu/pack/find/rustup?${PIN_ARCH}`))).text()
   await assertSnapshot(t, body)
   await checkSyntax('nu', body)
-  assertEquals(body.includes('"lang/rustup":[{"manager":"script","pkg":"curl '), true)
+  assertEquals(body.includes('"lang/rustup":[{"manager":"script","pkg":"rustup/add"}'), true)
   assertEquals(body.includes('"remaining":[]'), true)
 })
 

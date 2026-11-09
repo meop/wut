@@ -173,14 +173,25 @@ async function buildScriptRun(
   return execScriptShell(shell, plat, match.shell, scriptContent)
 }
 
+export type ToolScript = { shell: string; run: string } & ClientGates & Pick<SessionGates, 'noSsh'>
+
+// the tools script.yaml has a script for an action, before any gate: a cheap question asked once, so a walk over every
+// pack group resolves only the ones that can have one
+export async function toolsWithScript(action: string): Promise<Set<string>> {
+  const content = await getCfgFileLoad([SCRIPT_KEY], { extension: Fmt.yaml }) as CtxFilter | null
+  return new Set(
+    Object.entries(content ?? {}).filter(([, actions]) => action in (actions as CtxFilter)).map(([tool]) => tool),
+  )
+}
+
 // one tool's script for an action, resolved exactly as `script exec <action> <tool>` resolves it: owned by one
-// shell, gated here by its sys_ keys and its desktop, its has_cmd left for the client to ask when it runs
+// shell, gated here by its sys_ keys and its desktop, its client gates left for the client to ask when it runs
 export async function resolveToolScript(
   shell: Sh,
   context: Ctx,
   action: string,
   tool: string,
-): Promise<{ shell: string; cmds: Array<string>; run: string } | null> {
+): Promise<ToolScript | null> {
   const content = await getCfgFileLoad([SCRIPT_KEY], { extension: Fmt.yaml })
   const filters = toDirFilters(action, [tool])
   const [match] = await resolveMatches(context, content, filters, 'exact')
@@ -188,7 +199,11 @@ export async function resolveToolScript(
     return null
   }
   const run = await buildScriptRun(shell, context.sys_os_plat ?? '', match, [])
-  return run == null ? null : { shell: match.shell, cmds: match.cmds, run }
+  if (run == null) {
+    return null
+  }
+  const { cmds, noCmds, svcs, noSvcs, paths, noSsh } = match
+  return { shell: match.shell, run, cmds, noCmds, svcs, noSvcs, paths, noSsh }
 }
 
 function buildAndLog(shell: Sh, environment: Env) {

@@ -416,8 +416,6 @@ def --env packInstalledCheck [manager: string, raw: string] {
     return false
   }
   match $manager {
-    # a standalone install is held when the file its installer puts down is there
-    script => (packExpandPath $name | path exists),
     ghpm => (packListedHas [ghpm list --long-names] $name { |l| $l | str trim }),
     cargo => (packListedHas (packListCmd 'cargo') $name { |l| packListedHead $l }),
     uv => (packListedHas (packListCmd 'uv') $name { |l| packListedHead $l }),
@@ -1002,6 +1000,14 @@ def --env packPickPaths [unit: record, provided: record = {}] {
   let here = ($unit.paths | where { |p| packManagerHere $p.manager })
   mut held = []
   for p in $here {
+    # a group's own script holds it where the script's gates are met: a sync that updates a standalone install is
+    # gated on the file that install put down, one that puts back what an update undid on the tool being here
+    if $p.manager == 'script' {
+      if (packScriptNeeded $p.gates) {
+        $held = ($held | append $p)
+      }
+      continue
+    }
     let m = (packManagerBest $p.manager)
     mut has = false
     for n in $p.names {
@@ -1274,13 +1280,34 @@ def --env packPlanRun [] {
   packReport
 }
 
+# a group's own script is needed here when its gates are met, asked exactly as `script exec <action>` asks them. the
+# server already dropped one whose desktop is wrong
+def packScriptNeeded [s: record] {
+  scriptNeeded (packScriptGates $s)
+}
+
+# a script's gates with every one it leaves out empty
+def packScriptGates [s: record] {
+  {cmds: [], noCmds: [], svcs: [], noSvcs: [], paths: [], noSsh: false} | merge $s | upsert desktop ''
+}
+
+# why a group's own script is not needed here, said as the script listing says it
+def packScriptSkipped [s: record] {
+  let short = (scriptShort (packScriptGates $s))
+  if ($short | is-not-empty) {
+    $"($short | each { |names| $names | str join ' or ' } | str join '; ') not found"
+  } else {
+    scriptSkip (packScriptGates $s)
+  }
+}
+
 # post scripts run after the installs or removals of their stage, so one can lean on a tool another group just
-# installed, and pre scripts before any of them. either one's has_cmd is asked only when it is about to run, against
+# installed, and pre scripts before any of them. either one's gates are asked only when it is about to run, against
 # the PATH refreshed after the installs: the install is what put the command there
 def --env packRunScripts [stage: string, scripts: list] {
   for s in $scripts {
-    if ($s.cmds | is-not-empty) and not ($s.cmds | any { |c| which $c | is-not-empty }) {
-      opPrintWarn $"($s.id) skipped: ($s.cmds | str join ' or ') not found"
+    if not (packScriptNeeded $s) {
+      opPrintWarn $"($s.id) skipped: (packScriptSkipped $s)"
       continue
     }
     opPrintInfo $s.id
@@ -1370,29 +1397,11 @@ def --env packTermPlanRun [names_key: string] {
   packReport
 }
 
-# sync, tidy, outdated and info know nothing until a manager runs, so there is no detail to show first:
-# the only question is which managers this run touches
-# a standalone install's path as a group states it: {HOME} and any other env name, with windows' missing HOME
-# answered the way nu answers it
-def packExpandPath [path: string] {
-  mut out = ($path | str replace --all '{HOME}' ($env.HOME? | default $nu.home-dir))
-  if ($out | str contains '{') {
-    for e in ($env | items { |k, v| [$k, $v] } | where { |e| ($e.1 | describe) == 'string' }) {
-      $out = ($out | str replace --all $"{($e.0)}" $e.1)
-    }
-  }
-  # the yaml writes one path for every platform's eyes; windows prints and runs its own separator
-  if $nu.os-info.name == 'windows' {
-    $out = ($out | str replace --all '/' '\')
-  }
-  $out
-}
-
 # a tool that updates itself is asked to by the path its own installer put it at — never by whatever its name
 # resolves to, which can be another manager's copy. it is best effort: a self update that is built out, turned off
 # or refused is how a copy something else owns answers, so it is said and the run goes on
 def --env packSelfUpdate [what: string, path: string, args: list<string>] {
-  let bin = (packExpandPath $path)
+  let bin = $path
   if not ($bin | path exists) {
     return
   }
@@ -1407,34 +1416,33 @@ def --env packSelfUpdate [what: string, path: string, args: list<string>] {
   }
 }
 
-# the standalone installs a bare sync can find here: a group states where its own installer puts the tool, and a
-# file at that path is the whole check
-def packSelfHere [] {
-  ($env.PACK_SELF? | default '[]' | from json) | where { |s| packExpandPath $s.path | path exists }
+# the groups' own scripts a bare sync or tidy can run here: every one whose gates are met
+def packScriptsHere [] {
+  $env.PACK_SCRIPTS? | default '[]' | from json | where { |s| packScriptNeeded $s }
 }
 
-# the manager a standalone install is, when it is one: the binary is named for what it runs as. goup is go's and
-# dotnetup is dotnet's, so each updates itself before the toolchain it moves
-def packSelfManager [path: string] {
-  let stem = (packExpandPath $path | path parse | get stem)
-  {goup: 'go', dotnetup: 'dotnet'} | get -o $stem | default $stem
+# the row a group's own sync runs in, when the group puts down a manager this machine has: that manager updating itself,
+# so it runs in the manager's row, right before the manager's own sync. the copy whose dir holds the file the script is
+# gated on, else the manager's first copy. null for any other script, which runs in the script row
+def packScriptRow [s: record, rows: list<string>] {
+  if ($env.PACK_OP? | default '') != 'sync' {
+    return null
+  }
+  let copies = ($rows | where { |id| (packCopyBase $id) in ($s.provides? | default []) })
+  let dir = ($s.paths | each { |p| scriptPath $p } | where { |p| $p | path exists } | get -o 0 | default '' | path dirname)
+  $copies | where { |id| ($dir | is-not-empty) and ((packCopyAt $id | path expand) == $dir) } | get -o 0 | default ($copies | get -o 0)
 }
 
-# the row a standalone install's self update runs in: the copy of that manager at its path, else its first copy
-def packSelfRow [s: record, rows: list<string>] {
-  let copies = ($rows | where { |id| (packCopyBase $id) == (packSelfManager $s.path) })
-  let dir = (packExpandPath $s.path | path dirname)
-  $copies | where { |id| (packCopyAt $id | path expand) == ($dir | path expand) } | get -o 0 | default ($copies | get -o 0)
-}
-
+# sync, tidy, outdated and info know nothing until a manager runs, so there is no detail to show first:
+# the only question is which managers this run touches
 def --env packManagerPlanRun [] {
   packManagerCheck
   let managers = (packManagersHere)
-  let selfHere = if ($env.PACK_OP? | default '') == 'sync' { packSelfHere } else { [] }
-  # a manager's self update runs in its own row; the rest in the script row
-  let selfManaged = ($selfHere | where { |s| packSelfRow $s $managers | is-not-empty })
-  let selfRest = ($selfHere | where { |s| $s not-in $selfManaged })
-  let here = if ($selfRest | is-empty) { $managers } else { $managers | append 'script' }
+  let scripts = (packScriptsHere)
+  # a manager's own update runs in its row; every other script in the script row, after the managers
+  let inRows = ($scripts | where { |s| packScriptRow $s $managers | is-not-empty })
+  let rest = ($scripts | where { |s| $s not-in $inRows })
+  let here = if ($rest | is-empty) { $managers } else { $managers | append 'script' }
   if ($here | is-empty) {
     opPrintWarn 'no manager installed'
     return
@@ -1445,9 +1453,11 @@ def --env packManagerPlanRun [] {
   }
   mut chosen = $here
   if 'PACK_AGREED' not-in $env {
-    # each row names what it runs on, which is also what its sync moves: go 1.27.3 (goup), rust 1.99.1 (rustup)
+    # each row names what it runs on, which is also what its sync moves: go 1.27.3 (goup), rust 1.99.1 (rustup). the
+    # script row names its scripts
     wutTable ['manager' 'toolchain'] ($here | enumerate | each { |m|
-      [$"($m.index + 1)\) (packCopyBase $m.item)", (packManagerNote $m.item)]
+      let note = if $m.item == 'script' { $rest | get id | str join ', ' } else { packManagerNote $m.item }
+      [$"($m.index + 1)\) (packCopyBase $m.item)", $note]
     })
     let picked = (wutSelectRead ($here | length))
     if $picked == null {
@@ -1458,16 +1468,16 @@ def --env packManagerPlanRun [] {
 
   $env.PACK_AGREED = '1'
   wutLockHold
+  # the pick is the yes: a script picked here asks nothing further
+  if ($scripts | is-not-empty) {
+    $env.YES = '1'
+  }
   for m in $chosen {
     if $m == 'script' {
-      for s in $selfRest {
-        packSelfUpdate $s.group $s.path $s.args
-      }
+      packRunScripts $env.PACK_OP $rest
       continue
     }
-    for s in ($selfManaged | where { |s| (packSelfRow $s $managers) == $m }) {
-      packSelfUpdate $s.group $s.path $s.args
-    }
+    packRunScripts $env.PACK_OP ($inRows | where { |s| (packScriptRow $s $managers) == $m })
     # stated, so an op that keeps per-manager detail — info's declared names — knows who is asking
     load-env {PACK_MANAGER: $m}
     try {
