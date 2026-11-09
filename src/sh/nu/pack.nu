@@ -1523,14 +1523,29 @@ def --env packManagerPlanRun [] {
   }
   mut chosen = $here
   if 'PACK_AGREED' not-in $env {
-    # each row names what it runs on, which is also what its sync moves: go 1.27.3 (goup), rust 1.99.1 (rustup). the
-    # script row names its scripts
-    wutTable ['manager' 'toolchain'] ($here | enumerate | each { |m|
-      let note = match $m.item {
-        'script' => ($rest | get id | str join ', '),
-        'file' => ($files | get key | str join ', '),
-        _ => (packManagerNote $m.item),
+    # what a row carries besides its manager's own run is listed above the table, never in a cell: a manager that
+    # updates itself first, the tools whose files are written, the tools whose scripts run. every script here is the
+    # op's own, so a tool's name says which
+    let summary = ($here | each { |m|
+      let lines = match $m {
+        'script' => [($rest | get id | each { |id| $id | split row '/' | first } | sort | str join ', ')],
+        'file' => [($files | get key | sort | str join ', ')],
+        _ => (if ($inRows | any { |s| (packScriptRow $s $managers) == $m }) { ['updates itself first'] } else { [] }),
       }
+      if ($lines | is-empty) { null } else { {row: (packCopyBase $m), lines: $lines} }
+    } | compact)
+    if ($summary | is-not-empty) {
+      for e in $summary {
+        opPrint $e.row
+        for l in $e.lines {
+          opPrint $"  ($l)"
+        }
+      }
+      opPrint ''
+    }
+    # each manager row names the toolchain it runs on now, which is what its sync moves: go 1.27.3 (goup)
+    wutTable ['manager' 'toolchain'] ($here | enumerate | each { |m|
+      let note = if $m.item in ['script' 'file'] { '' } else { packManagerNote $m.item }
       [$"($m.index + 1)\) (packCopyBase $m.item)", $note]
     })
     let picked = (wutSelectRead ($here | length))

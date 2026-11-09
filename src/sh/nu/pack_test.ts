@@ -1109,7 +1109,10 @@ Deno.test('nu / pack / own sync scripts whose gates are met are the script row',
     return
   }
   assertEquals(out.includes('1) script'), true)
-  assertEquals(out.includes('yes/sync, here/sync'), true)
+  // the scripts are listed above the table by tool, sorted, and the table holds no list
+  assertStringIncludes(out, 'script\n  here, yes\n')
+  assertEquals(out.indexOf('script\n  here, yes') < out.indexOf('1) script'), true, out)
+  assertEquals(out.slice(0, out.indexOf('1) script')).includes('yes/sync'), false, out)
   const ran = out.split('\n').filter((l) => l.startsWith('ran script ')).map((l) => l.slice(11))
   assertEquals(ran, ['yes/sync', 'here/sync'])
   // the pick is the yes, so a picked script asks nothing more
@@ -1152,6 +1155,7 @@ Deno.test('nu / pack / a manager updates itself right before its own sync', asyn
   // picking the manager alone still updates it first, and the script row is a row of its own
   const alone = (await run([2]))!
   assertEquals(alone.includes('3) script'), true)
+  assertStringIncludes(alone, 'ghpm\n  updates itself first\n')
   assertEquals(order(alone), ['ran script ghpm/sync', 'ran ghpm'])
 })
 
@@ -2716,6 +2720,8 @@ Deno.test('nu / pack / a bare sync has a file row for the tools here', async () 
     return
   }
   assertStringIncludes(out, '2) file')
+  assertStringIncludes(out, 'file\n  zellij\n')
+  assertEquals(/2\) file +\S/.test(out), false, out)
   assertEquals(out.includes('tmux'), false, out)
   assertEquals(ranLines(out), ['ghpm', 'files zellij', 'zellij/sync'], out)
 })
