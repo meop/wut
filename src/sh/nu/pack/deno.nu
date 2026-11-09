@@ -4,7 +4,7 @@ def --env packDenoHeld [] {
   let deno = (which deno | get -o 0.path)
   let shellDeno = (packShellWhich deno)
   if $shellDeno != $deno and (packDenoInstalled | is-not-empty) {
-    return (packHeld '' 'its installs run on another deno' [$"deno ($deno)" $"PATH's deno ($shellDeno)"])
+    return (packHeld 'its installs run on another deno' [$"deno ($deno)" $"PATH's deno ($shellDeno)"])
   }
   packHeld
 }

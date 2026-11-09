@@ -565,11 +565,7 @@ def --env packManagerCheck [] {
   mut held = {}
   for id in $ids {
     let base = (packCopyBase $id)
-    mut h = (packInCopy $id { packManagerHeld $base })
-    # a manager here more than once says which copy each row is, where its toolchain does not already
-    if ($ids | where { |i| (packCopyBase $i) == $base } | length) > 1 and not ($h.note | str ends-with ')') {
-      $h.note = ([$h.note $"\((packCopyAt $id))"] | where { is-not-empty } | str join ' ')
-    }
+    let h = (packInCopy $id { packManagerHeld $base })
     if ($h.split | is-not-empty) {
       opPrintWarn $"(packCopyLabel $id) skipped: ($h.split)"
       for d in $h.detail {
@@ -704,8 +700,9 @@ def --env packManagerHeld [manager: string] {
   }
 }
 
-def packHeld [note: string = '', split: string = '', detail: list<string> = []] {
-  { note: $note, split: $split, detail: $detail }
+# what a manager runs on and what keeps that up to date, or why it is split, with what to look at
+def packHeld [split: string = '', detail: list<string> = [], --toolchain: string = '', --updater: string = ''] {
+  { toolchain: $toolchain, updater: $updater, split: $split, detail: $detail }
 }
 
 # whether a path is inside a dir, by where each really is
@@ -717,8 +714,8 @@ def packManagerSplit [manager: string] {
   $env.PACK_HELD? | default {} | get -o $manager | get -o split | default '' | is-not-empty
 }
 
-def packManagerNote [manager: string] {
-  $env.PACK_HELD? | default {} | get -o $manager | get -o note | default ''
+def packManagerHeldField [manager: string, field: string] {
+  $env.PACK_HELD? | default {} | get -o $manager | get -o $field | default ''
 }
 
 # a check of what a manager runs on, shown as every check is, its answer kept rather than printed. --home asks from
@@ -1538,11 +1535,22 @@ def --env packManagerPlanRun [] {
       }
       opPrint ''
     }
-    # each manager row names the toolchain it runs on and who manages that, never its version, which is outdated's
-    # question: go (goup), rust (rustup), node, bun
-    wutTable ['manager' 'toolchain'] ($here | enumerate | each { |m|
-      let note = if $m.item in ['script' 'file'] { '' } else { packManagerNote $m.item }
-      [$"($m.index + 1)\) (packCopyLabel $m.item)", $note]
+    # a row per install: each copy of a manager is a row of its own, told apart by where it is. the toolchain it runs
+    # on and what keeps that up to date are columns of their own, and never a version, which is outdated's question
+    let home = ($env.HOME? | default $nu.home-dir)
+    wutTable ['manager' 'path' 'toolchain' 'updater'] ($here | enumerate | each { |m|
+      if $m.item in ['script' 'file'] {
+        [$"($m.index + 1)\) ($m.item)", '', '', '']
+      } else {
+        let at = (packCopyAt $m.item)
+        let path = if ($at | str starts-with $home) { $at | str replace $home '~' } else { $at }
+        [
+          $"($m.index + 1)\) (packCopyBase $m.item)",
+          $path,
+          (packManagerHeldField $m.item 'toolchain'),
+          (packManagerHeldField $m.item 'updater'),
+        ]
+      }
     })
     let picked = (wutSelectRead ($here | length))
     if $picked == null {

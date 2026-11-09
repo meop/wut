@@ -7,18 +7,18 @@ const PACK_PNPM_RUNTIMES = ['bun' 'deno' 'node']
 def --env packPnpmHeld [] {
   let res = (packAsk [pnpm bin --global])
   if $res.exit_code != 0 {
-    return (packHeld '' 'pnpm names no global bin dir')
+    return (packHeld 'pnpm names no global bin dir')
   }
   let bin = ($res.stdout | str trim)
   let held = (packPnpmInstalled)
   let runtimes = ($held | where { |n| $n in $PACK_PNPM_RUNTIMES })
   if 'node' not-in $runtimes and ($held | any { |n| $n not-in $PACK_PNPM_RUNTIMES }) {
-    return (packHeld '' 'pnpm holds no node for its packages' ['pnpm runtime set node latest --global'])
+    return (packHeld 'pnpm holds no node for its packages' ['pnpm runtime set node latest --global'])
   }
   if ($held | is-not-empty) and not (($env.PACK_SHELL_PATH? | default $env.PATH) | any { |p| ($p | path expand) == ($bin | path expand) }) {
-    return (packHeld '' "pnpm's bin dir is not on PATH" [$bin])
+    return (packHeld "pnpm's bin dir is not on PATH" [$bin])
   }
-  packHeld ($runtimes | str join ', ')
+  packHeld --toolchain ($runtimes | str join ', ')
 }
 
 def --env packPnpm [] {

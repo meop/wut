@@ -121,7 +121,7 @@ def --env packBunHeld [] {
   }
   let names = ($onNode | str join ' ')
   let what = if ($onNode | length) == 1 { 'a package runs' } else { 'packages run' }
-  packHeld '' $"($what) on node, not bun" [$names $"bun remove --global ($names)" $"pnpm add --global ($names)"]
+  packHeld $"($what) on node, not bun" [$names $"bun remove --global ($names)" $"pnpm add --global ($names)"]
 }
 
 # the rest start `#!/usr/bin/env bun`, so they run on the bun PATH finds first: a copy further down PATH is updating
@@ -131,7 +131,7 @@ def --env packBunShadowed [bin: string] {
   let shellBun = (packShellWhich bun)
   let held = (ls -l $bin | where type == symlink | is-not-empty)
   if $held and $shellBun != $bun {
-    return (packHeld '' 'its packages run on another bun' [$"bun ($bun)" $"PATH's bun ($shellBun)"])
+    return (packHeld 'its packages run on another bun' [$"bun ($bun)" $"PATH's bun ($shellBun)"])
   }
   packHeld
 }

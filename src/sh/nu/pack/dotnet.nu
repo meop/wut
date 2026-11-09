@@ -19,24 +19,24 @@ def --env packDotnetHeld [] {
   let root = (packDotnetRoot)
   let set = ($env.DOTNET_ROOT? | default null)
   if $set != null and ($set | path expand) != $root {
-    return (packHeld '' "DOTNET_ROOT is another install's" [$"dotnet ($root)" $"DOTNET_ROOT ($set)"])
+    return (packHeld "DOTNET_ROOT is another install's" [$"dotnet ($root)" $"DOTNET_ROOT ($set)"])
   }
   if $set == null and (packUnder $root ($env.HOME? | default $nu.home-dir)) {
     # the value, not `dotnetup env set shell`: that writes a shell profile, and the env is the dotfiles' to set
-    return (packHeld '' "DOTNET_ROOT is not set, so its tools run on the system's dotnet" [$"DOTNET_ROOT=($root)"])
+    return (packHeld "DOTNET_ROOT is not set, so its tools run on the system's dotnet" [$"DOTNET_ROOT=($root)"])
   }
   # only once there are tools: a dotnet used for builds alone has nothing there to reach
   let tools = (packDotnetToolsDir)
   let held = ($tools | path join .store | path exists)
   if $held and not (($env.PACK_SHELL_PATH? | default $env.PATH) | any { |p| ($p | path expand) == ($tools | path expand) }) {
-    return (packHeld '' "dotnet's tools dir is not on PATH" [$tools])
+    return (packHeld "dotnet's tools dir is not on PATH" [$tools])
   }
   # asked from the home dir: a global.json above the cwd picks the sdk otherwise
   let res = (packAsk [dotnet --version] --home)
   if $res.exit_code != 0 {
-    return (packHeld '' 'dotnet has no sdk' [$"dotnet ($root)"])
+    return (packHeld 'dotnet has no sdk' [$"dotnet ($root)"])
   }
-  packHeld (if (packDotnetupOwns $root) { 'sdk (dotnetup)' } else { 'sdk' })
+  packHeld --toolchain 'dotnet sdk' --updater (if (packDotnetupOwns $root) { 'dotnetup' } else { '' })
 }
 
 # what it holds, by package id: the json form, since the table pads and truncates

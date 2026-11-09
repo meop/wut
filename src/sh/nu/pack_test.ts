@@ -1959,7 +1959,7 @@ const held = async (
   // what was said before the answer: the checks it ran, then each split and the lines under it
   return { said: lines.slice(0, -1), held: JSON.parse(lines.at(-1)!) }
 }
-const fine = (note: string) => ({ note, split: '', detail: [] })
+const fine = (toolchain: string, updater = '') => ({ toolchain, updater, split: '', detail: [] })
 
 const GO = `case "$*" in
   "env GOVERSION") printf 'go1.27.0\\n' ;;
@@ -1979,10 +1979,11 @@ Deno.test('nu / pack / the manager table names what each manager runs on, withou
     return
   }
   const rows = stripVTControlCharacters(out).split('\n')
-  assertEquals(rows.some((l) => /^manager\s+toolchain$/.test(l)), true)
-  // what it runs on and who manages it, never a version: comparing versions is outdated's
-  assertEquals(rows.some((l) => /^1\) cargo\s+rust \(rustup\)$/.test(l)), true, out)
-  assertEquals(rows.some((l) => /^2\) go\s+go \(goup\)$/.test(l)), true, out)
+  assertEquals(rows.some((l) => /^manager\s+path\s+toolchain\s+updater$/.test(l)), true, out)
+  // where it is, what it runs on and what keeps that up to date, each a column, and never a version: comparing versions
+  // is outdated's
+  assertEquals(rows.some((l) => /^1\) cargo\s+\S+\s+rust\s+rustup$/.test(l)), true, out)
+  assertEquals(rows.some((l) => /^2\) go\s+~\/\.goup\/bin\s+go\s+goup$/.test(l)), true, out)
 })
 
 Deno.test('nu / pack / cargo is split from a rustc or rustup another install put on PATH', async () => {
@@ -2038,7 +2039,7 @@ Deno.test('nu / pack / of the gos here, the local one is the row, asked inside i
   if (owned == null) {
     return
   }
-  assertEquals(owned.held.go, fine('go (goup)'))
+  assertEquals(owned.held.go, fine('go', 'goup'))
   assertEquals(owned.said, ['go env GOVERSION'])
   assertEquals((await held({ go: GO }, ['go']))!.held.go, fine('go'))
 
@@ -2047,7 +2048,7 @@ Deno.test('nu / pack / of the gos here, the local one is the row, asked inside i
   const both = (await held({ go: GO.replace('go1.27.0', 'go1.26.0'), '~/.goup/bin/go': GO }, ['go'], [
     `$env.PATH = ($env.PATH | reverse)`,
   ]))!
-  assertEquals(both.held, { go: fine('go (goup)') })
+  assertEquals(both.held, { go: fine('go', 'goup') })
   assertEquals(both.said, ['go env GOVERSION'])
   const gofmt = (await held({ '~/sys/bin/gofmt': '', go: GO }, ['go']))!
   assertEquals(gofmt.held.go.split, "gofmt is another install's")
@@ -2319,7 +2320,7 @@ Deno.test('nu / pack / the copy kept runs inside itself, though PATH finds anoth
     { go: '', '~/.goup/bin/go': '' },
     [
       `$env.PATH = ($env.PATH | reverse)`,
-      `def --env packGoHeld [] { packHeld $"go \\((which go | get 0.path | path dirname | path basename))" }`,
+      `def --env packGoHeld [] { packHeld --toolchain go }`,
       `def --env packGo [] { print $"ran (which go | get 0.path)" }`,
       `hide-env PROBE_QUIET`,
       `$env.PACK_OP = 'sync'`,
@@ -2482,7 +2483,7 @@ Deno.test('nu / pack / dotnet is one install with its tools when DOTNET_ROOT nam
   if (system == null) {
     return
   }
-  assertEquals(system.held.dotnet, fine('sdk'))
+  assertEquals(system.held.dotnet, fine('dotnet sdk'))
   assertEquals(system.said, ['dotnet --version'])
 
   // a dotnet under the home that DOTNET_ROOT does not name: its tools would run on the system's
@@ -2493,13 +2494,13 @@ Deno.test('nu / pack / dotnet is one install with its tools when DOTNET_ROOT nam
     ...dotnetTools,
     `$env.DOTNET_ROOT = ($env.HOME | path join dn)`,
   ]))!
-  assertEquals(named.held.dotnet, fine('sdk'))
+  assertEquals(named.held.dotnet, fine('dotnet sdk'))
   const other = (await held({ dotnet: DOTNET }, ['dotnet'], [...dotnetTools, `$env.DOTNET_ROOT = '/opt/dotnet'`]))!
   assertEquals(other.held.dotnet.split, "DOTNET_ROOT is another install's")
   // its tools dir off PATH matters once it holds a tool, and not before
   assertEquals(
     (await held({ dotnet: DOTNET }, ['dotnet'], ['hide-env -i DOTNET_ROOT']))!.held.dotnet,
-    fine('sdk'),
+    fine('dotnet sdk'),
   )
   const offPath = (await held({ dotnet: DOTNET }, ['dotnet'], [
     'hide-env -i DOTNET_ROOT',
@@ -2514,7 +2515,7 @@ Deno.test('nu / pack / dotnet is one install with its tools when DOTNET_ROOT nam
     ...dotnetTools,
     `$env.DOTNET_ROOT = ($env.HOME | path join dn)`,
   ]))!
-  assertEquals(beside.held, { dotnet: fine('sdk') })
+  assertEquals(beside.held, { dotnet: fine('dotnet sdk') })
   assertEquals(beside.said, ['dotnet --version'])
 
   const listed = await withStubs({ dotnet: DOTNET }, `print (packDotnetInstalled | str join ' ')`, ['dotnet'], [

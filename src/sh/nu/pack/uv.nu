@@ -55,12 +55,12 @@ def --env packUvHeld [] {
   let off = (packUvToolHomes | where { |t| not (packUnder $t.home $pythons) })
   if ($off | is-not-empty) {
     let what = if ($off | length) == 1 { 'a tool runs' } else { 'tools run' }
-    return (packHeld '' $"($what) on a python uv does not manage" [
+    return (packHeld $"($what) on a python uv does not manage" [
       ...($off | each { |t| $"($t.name) ($t.home)" })
       $"uv tool install --reinstall --managed-python ($off | get name | str join ' ')"
     ])
   }
-  packHeld (if (packUvPythons | is-empty) { '' } else { 'python' })
+  packHeld --toolchain (if (packUvPythons | is-empty) { '' } else { 'python' })
 }
 
 # a python uv holds is let go once nothing links to it, the way ghpm lets go of a release no pin is on. its links are

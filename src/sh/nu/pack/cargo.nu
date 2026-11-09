@@ -19,28 +19,28 @@ def --env packCargoHeld [] {
   let cargo = (which cargo | get -o 0.path)
   let rustc = (which rustc | get -o 0.path)
   if $rustc == null {
-    return (packHeld '' 'no rustc on PATH' [$"cargo ($cargo)"])
+    return (packHeld 'no rustc on PATH' [$"cargo ($cargo)"])
   }
   if ($rustc | path expand | path dirname) != ($cargo | path expand | path dirname) {
-    return (packHeld '' "rustc is another install's" [$"cargo ($cargo)" $"rustc ($rustc)"])
+    return (packHeld "rustc is another install's" [$"cargo ($cargo)" $"rustc ($rustc)"])
   }
   let rustup = (packRustupPath)
   let rustupFound = (which rustup | get -o 0.path)
   if $rustup != null and $rustupFound != null and ($rustupFound | path expand) != ($rustup | path expand) {
-    return (packHeld '' "rustup is another install's" [$"cargo ($cargo)" $"rustup ($rustupFound)"])
+    return (packHeld "rustup is another install's" [$"cargo ($cargo)" $"rustup ($rustupFound)"])
   }
   # the rustc PATH finds is the one beside cargo, so it is asked by name, as it is shown
   let res = (packAsk [rustc --version] --home)
   if $res.exit_code == null {
-    return (packHeld '' 'rustc does not start' [$"rustc ($rustc)" $res.stderr])
+    return (packHeld 'rustc does not start' [$"rustc ($rustc)" $res.stderr])
   }
   if $res.exit_code != 0 {
     if $rustup != null {
-      return (packHeld '' 'rustup has no default toolchain' ['rustup default stable'])
+      return (packHeld 'rustup has no default toolchain' ['rustup default stable'])
     }
-    return (packHeld '' 'rustc does not run' [$"rustc ($rustc)"])
+    return (packHeld 'rustc does not run' [$"rustc ($rustc)"])
   }
-  packHeld (if $rustup != null { 'rust (rustup)' } else { 'rust' })
+  packHeld --toolchain rust --updater (if $rustup != null { 'rustup' } else { '' })
 }
 
 def --env packRustupUpdate [] {

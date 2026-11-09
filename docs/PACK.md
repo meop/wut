@@ -534,7 +534,7 @@ builds with its own toolchain; the ops that only read, and a remove, ask one cop
 sharing `~/.cargo` list each package once and remove it once.
 
 The plain name is the first copy used, which is what a group's plan and a bare command mean; another is
-`go@/opt/go/bin`, and with more than one copy each row past the first names its dir: `go (/opt/go/bin)`. Every copy runs
+`go@/opt/go/bin`. Each copy is a row of its own, and the table's path column says which install it is. Every copy runs
 with its own dir first on PATH, the plain one too, so everything it reaches for by name — rustc, gofmt, a cargo
 subcommand, a node — is its own install's, whatever PATH finds first. A copy the OS will not start (rustup's symlinked
 proxies over ssh on Windows) is warned about and holds nothing, rather than ending the run.
@@ -566,12 +566,12 @@ A copy used that PATH does not find first is not split for that alone. go, cargo
 absolute path — a native binary, a venv's own python, the node beside pnpm's commands — so their packages run on the
 right install wherever the copy sits. bun and deno bind through PATH, so for them it is the deciding question.
 
-What the check reads is also what the manager table shows beside each row: the toolchain the manager runs on, and what
-manages that toolchain where it is not the manager itself — `rust (rustup)`, `go (goup)`, `sdk (dotnetup)`, `node,
-bun`
-for pnpm's runtimes, `python` for uv's. Never a version: the table is a choice of what to run, and a version compared
+The manager table is a row per install, with a column each for what tells installs apart and what they run on, in that
+order: `manager`, `path` (where that copy is), `toolchain` (what it runs on: `rust`, `go`, `dotnet sdk`, `node, bun` for
+pnpm's runtimes, `python` for uv's) and `updater` (what keeps that toolchain current, where that is not the manager
+itself: `rustup`, `goup`, `dotnetup`). Never a version: the table is a choice of what to run, and a version compared
 with what is newer is `outdated`'s question. deno and bun are their own runtimes, updated by whatever installed them, so
-their rows name nothing.
+their rows name no toolchain.
 
 npm is not a manager wut knows: pnpm holds node and npm itself, and a global package belongs to pnpm. The npm pnpm holds
 keeps its global prefix inside pnpm's own node runtime package, so an install there would land in pnpm's tree and be

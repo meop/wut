@@ -52,13 +52,13 @@ def --env packGoHeld [] {
   let go = (which go | get -o 0.path)
   let gofmt = (which gofmt | get -o 0.path)
   if $gofmt != null and ($gofmt | path dirname) != ($go | path dirname) {
-    return (packHeld '' "gofmt is another install's" [$"go ($go)" $"gofmt ($gofmt)"])
+    return (packHeld "gofmt is another install's" [$"go ($go)" $"gofmt ($gofmt)"])
   }
   let res = (packAsk [go env GOVERSION] --home)
   if $res.exit_code != 0 {
-    return (packHeld '' 'go does not run' [$"go ($go)"])
+    return (packHeld 'go does not run' [$"go ($go)"])
   }
-  packHeld (if (packGoOwned) { 'go (goup)' } else { 'go' })
+  packHeld --toolchain go --updater (if (packGoOwned) { 'goup' } else { '' })
 }
 
 # goup manages go's toolchain the way rustup manages rust's, and is its own tool rather than a package. where the go
