@@ -216,11 +216,11 @@ terminal as if the tool had been run by hand.
 The server emits the plan as data (`PACK_PLAN`) and the bodies behind ids in a generated `packRunUnit`, so code stays
 code and the plan stays data. The client picks each group's winner and resolves loose names with an exact per-manager
 check — `packExists` when adding, `packInstalled` when removing. Refreshes run before add's checks so the answers are
-current; remove refreshes nothing, since a remote index has no bearing on what is already here. ghpm's refresh also
-moves its own gh and wedge to their latest, so it runs before a sync too, after ghpm has updated itself. `find`'s
-remaining names resolve the way add's do, every manager asked (`packClaimsAll`), just after its own gate rather than
-add's, and each is listed under every manager that has it. They answer to a `?` row so they can be taken or left like
-any manager.
+current, once a run for each manager, so the install that follows does not refresh again; remove refreshes nothing,
+since a remote index has no bearing on what is already here. ghpm's refresh also moves its own gh and wedge to their
+latest, so it runs before a sync too, after ghpm has updated itself. `find`'s remaining names resolve the way add's do,
+every manager asked (`packClaimsAll`), just after its own gate rather than add's, and each is listed under every manager
+that has it. They answer to a `?` row so they can be taken or left like any manager.
 
 `tidy`, `info` and a bare `sync` have no per-package decision to make — the only question is which managers this run
 touches — so they share a plainer plan, `packManagerPlanRun`, whose rows are just the managers present. A `sync` given

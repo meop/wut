@@ -512,6 +512,32 @@ esac`
   assertEquals(installs(single), ['onlycargo'])
 })
 
+// add's search refreshes every manager before it asks them, and the manager it picked then runs its own add, which
+// refreshes too: an index is refreshed once a run, not once for each
+Deno.test('nu / pack / add refreshes each manager once, before its search and its install', async () => {
+  const out = await withStubs(
+    { pacman: `case "$*" in "--sync --info sl") exit 0 ;; "--sync --info "*) exit 1 ;; *) exit 0 ;; esac` },
+    [
+      `$env.PACK_OP = 'add'`,
+      `$env.YES = '1'`,
+      `$env.NOOP = '1'`,
+      `$env.PACK_PLAN = '[]'`,
+      `$env.PACK_ADD_NAMES = ['sl']`,
+      'packPlanRun',
+    ].join('\n'),
+    ['pacman'],
+    ['pacman'],
+  )
+  if (out == null) {
+    return
+  }
+  const lines = out.split('\n')
+  const at = (text: string) => lines.findIndex((l) => l.includes(text))
+  assertEquals(lines.filter((l) => l.includes('pacman --sync --refresh')).length, 1, out)
+  assertEquals(at('pacman --sync --refresh') < at('--sync --info sl'), true, out)
+  assertEquals(at('--sync --info sl') < at('pacman --sync --needed sl'), true, out)
+})
+
 // a plan whose rows are all '?' has no summary above its table, so the table's blank is the only one: never two
 Deno.test("nu / pack / a plan of '?' rows alone has one blank before its table", async () => {
   const out = await withStubs(

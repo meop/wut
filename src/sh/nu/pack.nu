@@ -462,7 +462,16 @@ def --env packClaims [manager: string, name: string] {
   }
 }
 
+# once a run, per copy: add's search refreshes every manager before it asks them, and the manager's own op, run
+# after, would refresh it again. the search refreshes the copy PATH finds first, the one a copy's row names plainly
 def --env packRefresh [manager: string] {
+  let copy = ($env.PACK_COPY? | default '')
+  let key = if ($copy | is-not-empty) and (packCopyBase $copy) == $manager { $copy } else { $manager }
+  let done = ($env.PACK_REFRESHED? | default [])
+  if $key in $done {
+    return
+  }
+  $env.PACK_REFRESHED = ($done | append $key)
   match $manager {
     ghpm => { packOp [ghpm refresh] },
     goup => { packOp [goup refresh] },
