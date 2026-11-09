@@ -1319,7 +1319,6 @@ def --env packPlanRun [] {
 def --env packRunFiles [files: list] {
   for f in $files {
     if $env.PACK_OP == 'remove' {
-      opPrintInfo $"($f.key) files"
       fileRemoveTool $f.key $f.pairs $f.dirs
       continue
     }
@@ -1327,7 +1326,6 @@ def --env packRunFiles [files: list] {
       opPrintWarn $"($f.key) files skipped: ($f.key) not found"
       continue
     }
-    opPrintInfo $"($f.key) files"
     try {
       fileSyncTool $f.key $f.pairs $f.dirs $f.perms
     } catch { |e|
