@@ -32,6 +32,10 @@ def --env packPacman [] {
     remove => {
       packOpRemove [$cmd --remove --nosave --recursive]
     }
+    renew => {
+      # --sync without --needed installs a package again though it is current
+      packOpRenew [$cmd --sync]
+    }
     sync => {
       packOpSync [$cmd --sync --sysupgrade] [$cmd --sync --needed]
     }

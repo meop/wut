@@ -148,7 +148,7 @@ Deno.test('nu / pack / pacman tidy removes exactly what nothing requires', async
 esac`,
         ...(sudo ? { sudo: 'exec "$@"' } : {}),
       },
-      [`$env.PACK_OP = 'tidy'`, `$env.NOOP = '1'`, `$env.PACK_MANAGER = 'pacman'`, 'packPacman'].join('\n'),
+      [`$env.PACK_OP = 'tidy'`, `$env.DRYRUN = '1'`, `$env.PACK_MANAGER = 'pacman'`, 'packPacman'].join('\n'),
       ['pacman'],
       ['pacman'],
     )
@@ -407,7 +407,7 @@ Deno.test('nu / pack / names carrying different flags are issued as separate inv
   const out = await withStubs(
     { brew: LISTINGS.brew },
     [
-      `$env.NOOP = '1'`,
+      `$env.DRYRUN = '1'`,
       `$env.PACK_REMOVE_NAMES = ['--cask vivaldi', 'jq', '--cask slack', '--formula node', 'zstd']`,
       `packOpRemove [brew uninstall]`,
     ].join('\n'),
@@ -434,7 +434,7 @@ Deno.test('nu / pack / a named sync only runs the managers that hold the name', 
       [
         `$env.PACK_OP = 'sync'`,
         `$env.YES = '1'`,
-        `$env.NOOP = '1'`,
+        `$env.DRYRUN = '1'`,
         `$env.PACK_PLAN = '[]'`,
         `$env.PACK_SYNC_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
         'packPlanRun',
@@ -452,7 +452,7 @@ Deno.test('nu / pack / a named sync only runs the managers that hold the name', 
   assertEquals(held.includes('uv)'), false)
   assertEquals(held.includes('ghpm sync nu'), true)
   // its refresh brings its own gh and wedge up to date before it syncs with them
-  assertEquals(held.indexOf('ghpm refresh') > -1 && held.indexOf('ghpm refresh') < held.indexOf('ghpm sync nu'), true)
+  assertEquals(held.indexOf('ghpm pull') > -1 && held.indexOf('ghpm pull') < held.indexOf('ghpm sync nu'), true)
   assertEquals(held.includes('uv tool upgrade'), false)
 
   const absent = await run(['vlc'])
@@ -482,7 +482,7 @@ esac`
       [
         `$env.PACK_OP = 'add'`,
         ...(pick == null ? [`$env.YES = '1'`] : []),
-        `$env.NOOP = '1'`,
+        `$env.DRYRUN = '1'`,
         `$env.PACK_PLAN = '[]'`,
         `$env.PACK_ADD_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
         'packPlanRun',
@@ -522,7 +522,7 @@ Deno.test('nu / pack / add refreshes each manager once, before its search and it
     [
       `$env.PACK_OP = 'add'`,
       `$env.YES = '1'`,
-      `$env.NOOP = '1'`,
+      `$env.DRYRUN = '1'`,
       `$env.PACK_PLAN = '[]'`,
       `$env.PACK_ADD_NAMES = ['sl']`,
       'packPlanRun',
@@ -547,7 +547,7 @@ Deno.test("nu / pack / a plan of '?' rows alone has one blank before its table",
     [
       `$env.PACK_OP = 'add'`,
       `$env.YES = '1'`,
-      `$env.NOOP = '1'`,
+      `$env.DRYRUN = '1'`,
       `$env.PACK_PRINTED = '1'`,
       `print 'probed'`,
       `$env.PACK_PLAN = '[]'`,
@@ -573,7 +573,7 @@ Deno.test('nu / pack / remove and sync offer every manager holding a name, and t
       { ghpm, uv: LISTINGS.uv },
       [
         `$env.PACK_OP = '${op}'`,
-        `$env.NOOP = '1'`,
+        `$env.DRYRUN = '1'`,
         `$env.PACK_PLAN = '[]'`,
         `$env.PACK_${op.toUpperCase()}_NAMES = ['hf']`,
         'packPlanRun',
@@ -613,7 +613,7 @@ Deno.test('nu / pack / syncing a group no manager holds says so rather than pick
     [
       `$env.PACK_OP = 'sync'`,
       `$env.YES = '1'`,
-      `$env.NOOP = '1'`,
+      `$env.DRYRUN = '1'`,
       `$env.PACK_PLAN = ${JSON.stringify(`[${unit}]`)}`,
       `$env.PACK_SYNC_NAMES = [  ]`,
       'packPlanRun',
@@ -637,7 +637,7 @@ Deno.test('nu / pack / sync never installs a name the manager does not hold', as
       { ghpm: LISTINGS.ghpm, uv: LISTINGS.uv, pacman: LISTINGS.pacman },
       [
         `$env.PACK_OP = 'sync'`,
-        `$env.NOOP = '1'`,
+        `$env.DRYRUN = '1'`,
         `$env.PACK_MANAGER = '${manager}'`,
         `$env.PACK_SYNC_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
         `pack${manager[0].toUpperCase()}${manager.slice(1)}`,
@@ -806,7 +806,7 @@ Deno.test('nu / pack / deno asks about a package, not about the project you are 
   const out = await withStubs(
     { deno: '' },
     [
-      `$env.NOOP = '1'`,
+      `$env.DRYRUN = '1'`,
       `$env.PACK_OP = 'info'`,
       `$env.PACK_MANAGER = 'deno'`,
       `$env.PACK_INFO_NAMES = ['chalk']`,
@@ -1020,7 +1020,7 @@ Deno.test('nu / pack / each group and each loose name is its own row', async () 
         `def --env packRunUnit [id: string] { print $"ran ($id)" }`,
         ...(pick == null ? [`$env.YES = '1'`] : []),
         `$env.PACK_OP = 'remove'`,
-        `$env.NOOP = '1'`,
+        `$env.DRYRUN = '1'`,
         `$env.PACK_PLAN = ${JSON.stringify(JSON.stringify(plan))}`,
         `$env.PACK_REMOVE_NAMES = ['bat' 'fd']`,
         'packPlanRun',
@@ -1160,7 +1160,7 @@ Deno.test("nu / pack / goup's own sync runs in go's row, before go syncs", async
       runStub,
       `$env.YES = '1'`,
       `$env.PACK_OP = 'sync'`,
-      `$env.NOOP = '1'`,
+      `$env.DRYRUN = '1'`,
       `$env.PACK_SCRIPTS = ${JSON.stringify(JSON.stringify(scripts))}`,
       'packManagerPlanRun',
     ].join('\n'),
@@ -1192,7 +1192,7 @@ Deno.test("nu / pack / dotnetup's own sync runs in dotnet's row, before dotnet s
       runStub,
       `$env.YES = '1'`,
       `$env.PACK_OP = 'sync'`,
-      `$env.NOOP = '1'`,
+      `$env.DRYRUN = '1'`,
       `$env.PACK_SCRIPTS = ${JSON.stringify(JSON.stringify(scripts))}`,
       'packManagerPlanRun',
     ].join('\n'),
@@ -1277,7 +1277,7 @@ Deno.test('nu / pack / cargo updates the toolchains first only when rustup is be
       stubs,
       [
         `$env.PACK_OP = 'sync'`,
-        `$env.NOOP = '1'`,
+        `$env.DRYRUN = '1'`,
         `$env.PACK_MANAGER = 'cargo'`,
         `$env.PACK_SYNC_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
         'packCargo',
@@ -1311,7 +1311,7 @@ Deno.test('nu / pack / cargo tidy leaves every rustup toolchain', async () => {
 esac`
   const out = await withStubs(
     { cargo: LISTINGS.cargo, rustup, 'cargo-cache': '' },
-    [`$env.PACK_OP = 'tidy'`, `$env.NOOP = '1'`, `$env.PACK_MANAGER = 'cargo'`, 'packCargo'].join('\n'),
+    [`$env.PACK_OP = 'tidy'`, `$env.DRYRUN = '1'`, `$env.PACK_MANAGER = 'cargo'`, 'packCargo'].join('\n'),
     ['cargo'],
     ['cargo'],
   )
@@ -1332,7 +1332,7 @@ Deno.test('nu / pack / zypper tidy removes what nothing needs, with no repo read
 esac`
   const out = await withStubs(
     { zypper },
-    [`$env.PACK_OP = 'tidy'`, `$env.NOOP = '1'`, `$env.PACK_MANAGER = 'zypper'`, 'packZypper'].join('\n'),
+    [`$env.PACK_OP = 'tidy'`, `$env.DRYRUN = '1'`, `$env.PACK_MANAGER = 'zypper'`, 'packZypper'].join('\n'),
     ['zypper'],
     ['zypper'],
   )
@@ -1355,7 +1355,7 @@ Deno.test('nu / pack / cargo without its tools says so, and runs no subcommand i
       { cargo: LISTINGS.cargo },
       [
         `$env.PACK_OP = '${op}'`,
-        `$env.NOOP = '1'`,
+        `$env.DRYRUN = '1'`,
         `$env.YES = '1'`,
         `$env.PACK_MANAGER = 'cargo'`,
         `$env.PACK_ADD_NAMES = ['ripgrep']`,
@@ -1405,7 +1405,7 @@ esac`
         `mkdir ($env.HOME | path join go bin)`,
         `touch ($env.HOME | path join go bin gopls) ($env.HOME | path join go bin golangci-lint)`,
         `$env.PACK_OP = '${op}'`,
-        `$env.NOOP = '1'`,
+        `$env.DRYRUN = '1'`,
         `$env.PACK_MANAGER = 'go'`,
         `$env.PACK_${op.toUpperCase()}_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
         'packGo',
@@ -1468,7 +1468,7 @@ esac`
         `mkdir ($env.HOME | path join go bin)`,
         `touch ($env.HOME | path join go bin gopls)`,
         `$env.PACK_OP = 'sync'`,
-        `$env.NOOP = '1'`,
+        `$env.DRYRUN = '1'`,
         `$env.PACK_MANAGER = 'go'`,
         `$env.PACK_SYNC_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
         'packGo',
@@ -1501,7 +1501,7 @@ Deno.test('nu / pack / go tidy has goup tidy its toolchains, only where goup is'
   const run = (stubs: Record<string, string>) =>
     withStubs(
       stubs,
-      [`$env.PACK_OP = 'tidy'`, `$env.NOOP = '1'`, `$env.PACK_MANAGER = 'go'`, 'packGo'].join('\n'),
+      [`$env.PACK_OP = 'tidy'`, `$env.DRYRUN = '1'`, `$env.PACK_MANAGER = 'go'`, 'packGo'].join('\n'),
       ['go'],
       ['go'],
     )
@@ -1646,7 +1646,7 @@ Deno.test('nu / pack / nix sync upgrades a profile only when it holds something'
     const listing = JSON.stringify({ elements, version: 3 })
     return withStubs(
       { nix: `case "$*" in\n  "profile list --json") printf '%s' '${listing}' ;;\n  *) exit 0 ;;\nesac` },
-      [`$env.PACK_OP = 'sync'`, `$env.NOOP = '1'`, `$env.PACK_MANAGER = 'nix'`, 'packNix'].join('\n'),
+      [`$env.PACK_OP = 'sync'`, `$env.DRYRUN = '1'`, `$env.PACK_MANAGER = 'nix'`, 'packNix'].join('\n'),
       ['nix'],
       ['nix'],
     )
@@ -1714,7 +1714,7 @@ esac`
       { pnpm },
       [
         `$env.PACK_OP = 'sync'`,
-        `$env.NOOP = '1'`,
+        `$env.DRYRUN = '1'`,
         `$env.PACK_MANAGER = 'pnpm'`,
         `$env.PACK_SYNC_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
         'packPnpm',
@@ -1742,7 +1742,7 @@ Deno.test('nu / pack / uv upgrades its pythons before its tools on a bare sync',
       { uv: LISTINGS.uv },
       [
         `$env.PACK_OP = 'sync'`,
-        `$env.NOOP = '1'`,
+        `$env.DRYRUN = '1'`,
         `$env.PACK_MANAGER = 'uv'`,
         `$env.PACK_SYNC_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
         'packUv',
@@ -2076,7 +2076,7 @@ Deno.test('nu / pack / pnpm puts its own node down before its first package', as
       { pnpm: PNPM(listed) },
       [
         `$env.PACK_OP = 'add'`,
-        `$env.NOOP = '1'`,
+        `$env.DRYRUN = '1'`,
         `$env.PACK_MANAGER = 'pnpm'`,
         `$env.PACK_ADD_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
         'packPnpm',
@@ -2175,7 +2175,7 @@ const uvRun = (stub: string, op: string, names: Array<string>, setup: Array<stri
     [
       ...setup,
       `$env.PACK_OP = '${op}'`,
-      `$env.NOOP = '1'`,
+      `$env.DRYRUN = '1'`,
       `$env.PACK_MANAGER = 'uv'`,
       `$env.PACK_${op.toUpperCase()}_NAMES = ${JSON.stringify(names).replaceAll('"', "'")}`,
       'packUv',
@@ -2519,7 +2519,7 @@ Deno.test('nu / pack / dnf on centos enables epel and crb before it adds', async
       { rpm: 'exit 1', dnf: `printf 'repo id   repo name\\nbaseos    BaseOS\\n'` },
       [
         `$env.SYS_OS_LIKE = '${like}'`,
-        `$env.NOOP = '1'`,
+        `$env.DRYRUN = '1'`,
         `$env.PACK_OP = 'add'`,
         `$env.PACK_MANAGER = 'dnf'`,
         `$env.PACK_ADD_NAMES = ['plasma']`,
@@ -2553,7 +2553,7 @@ Deno.test('nu / pack / scoop adds the bucket a name is qualified by', async () =
     [
       `$env.SCOOP = ($env.HOME | path join scoop)`,
       `mkdir ($env.SCOOP | path join buckets extras)`,
-      `$env.NOOP = '1'`,
+      `$env.DRYRUN = '1'`,
       `$env.PACK_OP = 'add'`,
       `$env.PACK_MANAGER = 'scoop'`,
       `$env.PACK_ADD_NAMES = ['games/xemu' 'games/pcsx2' 'extras/vscode' 'git']`,
@@ -2576,7 +2576,7 @@ Deno.test('nu / pack / scoop removes an app by its own name, without its bucket'
   const out = await withStubs(
     { scoop: '', powershell: '' },
     [
-      `$env.NOOP = '1'`,
+      `$env.DRYRUN = '1'`,
       `$env.PACK_OP = 'remove'`,
       `$env.PACK_MANAGER = 'scoop'`,
       `$env.PACK_REMOVE_NAMES = ['games/xemu' 'git']`,
@@ -2589,4 +2589,46 @@ Deno.test('nu / pack / scoop removes an app by its own name, without its bucket'
     return
   }
   assertStringIncludes(out, 'scoop uninstall --purge xemu git')
+})
+
+// pull is each picked manager's refresh asked for by itself, and only that: no install, upgrade or listing follows
+Deno.test('nu / pack / pull refreshes each manager and does nothing more', async () => {
+  const out = await withStubs(
+    { ghpm: '', pacman: '' },
+    [
+      `$env.PACK_OP = 'pull'`,
+      `$env.YES = '1'`,
+      `$env.DRYRUN = '1'`,
+      'packManagerPlanRun',
+    ].join('\n'),
+    ['ghpm', 'pacman'],
+    ['ghpm', 'pacman'],
+  )
+  if (out == null) {
+    return
+  }
+  assertStringIncludes(out, 'ghpm pull')
+  assertStringIncludes(out, 'pacman --sync --refresh')
+  assertEquals(out.includes('--sysupgrade'), false, out)
+})
+
+// renew installs again what a manager already holds, though it is current: pacman's --sync without --needed
+Deno.test('nu / pack / renew installs a held package again', async () => {
+  const out = await withStubs(
+    { pacman: 'exit 0' },
+    [
+      `$env.PACK_OP = 'renew'`,
+      `$env.DRYRUN = '1'`,
+      `$env.PACK_MANAGER = 'pacman'`,
+      `$env.PACK_RENEW_NAMES = ['zsh']`,
+      'packPacman',
+    ].join('\n'),
+    ['pacman'],
+    ['pacman'],
+  )
+  if (out == null) {
+    return
+  }
+  assertStringIncludes(out, 'pacman --sync zsh')
+  assertEquals(out.includes('--needed'), false, out)
 })

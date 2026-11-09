@@ -24,6 +24,10 @@ def --env packApk [] {
     remove => {
       packOpRemove [$cmd del]
     }
+    renew => {
+      # fix reinstalls what it names
+      packOpRenew [$cmd fix]
+    }
     sync => {
       packOpSync [$cmd upgrade] [$cmd add]
     }

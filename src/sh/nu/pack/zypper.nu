@@ -25,6 +25,9 @@ def --env packZypper [] {
       # same reason as list, above: search --installed-only isn't reliable
       packOpRemove [$cmd uninstall]
     }
+    renew => {
+      packOpRenew [$cmd install --force]
+    }
     sync => {
       packOpSync [$cmd update] [$cmd install]
     }

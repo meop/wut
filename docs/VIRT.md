@@ -15,14 +15,14 @@ path, prompt twice, and do nothing.
 ## Instance layout
 
 An instance is named by its path under the host: `cfg/virt/<sys_host>/<manager>/<instance>.yaml`. The manager is part of
-that path everywhere — `find`, `add`, `list`, `rem` all filter on it — and `sys_host` is why one config repo serves
+that path everywhere — `find`, `add`, `list`, `remove` all filter on it — and `sys_host` is why one config repo serves
 every machine without a gate.
 
 `podman` takes one more level. `<pod>.yaml` is the pod itself — `metadata.name`, the `io.podman.kube.network` and mac
 annotations, `spec.hostname`, and nothing else — while `<pod>/<instance>.yaml` files each contribute containers and
 volumes that are merged onto it (`podman.nu`, layers 2 and 3). A pod yaml carrying containers of its own would still
 work, but it hides the pod's identity in with one instance's payload, so keep it a shell. This is also why a pod alone
-is not actionable: `add` and `rem` skip a podman path with no instance part.
+is not actionable: `add` and `remove` skip a podman path with no instance part.
 
 `qemu` takes a deeper level with the opposite meaning. `<instance>/<variant>.yaml` is another _way to configure_ an
 instance, not another instance — `glass/vga.yaml` and `glass/vfio.yaml` are the emulated-gpu and passthrough spellings
@@ -32,9 +32,9 @@ whatever a variant may set, the base must leave out. `-display` belongs in the v
 `run` and `add` both reach a variant, but only when a term names it — `wut v run glass vfio`, `wut v add glass vfio` —
 and every acting op takes its terms whole and in any order, where `find` and `list` take the start of a word
 ([COMMANDS.md](COMMANDS.md)). `wut v add glass` is glass itself and never fans out over its variants, and `add` resolves
-the variant back to the base for the service name, so the unit stays `qemu-glass.service` either way. `rem`, `sync` and
-`tidy` act on that installed unit and so stop at the instance, and `find` lists the instance once however many variants
-it has.
+the variant back to the base for the service name, so the unit stays `qemu-glass.service` either way. `remove`, `sync`
+and `tidy` act on that installed unit and so stop at the instance, and `find` lists the instance once however many
+variants it has.
 
 `list` with a term reads before it asks, as pack's does ([PACK.md](PACK.md)). `virtListed` is each manager's names
 narrowed by the terms, every one starting a word of the name. The summary shows those names under each manager that has
@@ -140,8 +140,8 @@ re-checks every 5s for threads that stray and interrupts the guest asks for late
 under `machine.slice` — podman's by default, docker's by `cgroup-parent` in `daemon.json`, lxc's as `lxc@<name>` units
 with a `Slice=machine.slice` drop-in — so the unit holds them all with one runtime
 `systemctl set-property machine.slice` as it starts: the reserved cpus at a tenth of the default weight. The last qemu
-instance to stop lets go, so an instance that is off holds nothing. `rem` it to free its cores for good. lxc's units are
-what start them at boot, so `lxc.start.auto` is left out: `lxc.service` would start them first, outside the slice.
+instance to stop lets go, so an instance that is off holds nothing. `remove` it to free its cores for good. lxc's units
+are what start them at boot, so `lxc.start.auto` is left out: `lxc.service` would start them first, outside the slice.
 
 An instance that cannot be set up anyway (a missing NIC) is left as it was and listed under `failed:` at the end, with
 exit 1.
@@ -149,12 +149,12 @@ exit 1.
 All of it is written at add time, so a restart or reboot recalculates nothing. Like any config change, a new
 `limits.yaml` reaches an instance on its next sync: after changing it, `wut v sync qemu`.
 
-## Rem and sync act on what was added
+## Remove and sync act on what was added
 
-`rem` undoes an add, and `sync` stops an instance and adds it again from the config as it is now, so both only have work
-where an add already happened. The host's config names every instance the host could run, and the server cannot know
-which of them were added, so `virtPlanRun` narrows a rem or sync plan with `virtPlanAdded` before the table, the way
-`pack remove` and a named `pack sync` ask who already holds a package
+`remove` undoes an add, and `sync` stops an instance and adds it again from the config as it is now, so both only have
+work where an add already happened. The host's config names every instance the host could run, and the server cannot
+know which of them were added, so `virtPlanRun` narrows a remove or sync plan with `virtPlanAdded` before the table, the
+way `pack remove` and a named `pack sync` ask who already holds a package
 ([PACK.md](PACK.md#add-and-remove-ask-different-questions)). `virtInstanceHere` states it once, per manager:
 
 | Manager  | Added means                                          |
@@ -214,13 +214,13 @@ An instance may have nu scripts beside its yaml, each optional:
 | `<instance>.build.nu` | on every add and sync, before the root is made |
 | `<instance>.setup.nu` | on every add and sync, once the instance runs  |
 
-Both run on the host, with the op preamble, so `--noop` and `-y` reach them, and after `lxc.<hook>.nu` beside `lxc.yaml`
-when there is one: defs every instance's hook of that name can call, so what is not one instance's own is written once.
-Each works out for itself whether there is anything to do: a build keeps an image that is current, and a setup reaches
-inside through `lxc-attach` and changes only what is not as it should be, so a sync, or an add after a rem, finds little
-or nothing to do. A setup that needs a restart does it itself, through `systemctl restart lxc@<instance>` so the
-instance stays in its unit. `lxc-attach` chowns its stdio to the user it runs as, so a hook hands it pipes, never the
-terminal or a file of the host's.
+Both run on the host, with the op preamble, so `--dry-run` and `-y` reach them, and after `lxc.<hook>.nu` beside
+`lxc.yaml` when there is one: defs every instance's hook of that name can call, so what is not one instance's own is
+written once. Each works out for itself whether there is anything to do: a build keeps an image that is current, and a
+setup reaches inside through `lxc-attach` and changes only what is not as it should be, so a sync, or an add after a
+remove, finds little or nothing to do. A setup that needs a restart does it itself, through
+`systemctl restart lxc@<instance>` so the instance stays in its unit. `lxc-attach` chowns its stdio to the user it runs
+as, so a hook hands it pipes, never the terminal or a file of the host's.
 
 They read `VIRT_INSTANCE`, `VIRT_LXC_ROOTFS` (the root on the host) and `lxc.yaml`'s environment, upper-cased
 (`VIRT_LXC_IMAGE_DIR_PATH`), and they run as the host's user, so a setup takes its user from `$USER` and `id`. Before a
@@ -234,8 +234,8 @@ The server embeds only the hooks of the instances an add or sync plans, since ea
 
 `{virt_qemu_dir_path}/<instance>` holds an instance's disks. `add` makes it when it is missing, and on btrfs as a
 subvolume with copy on write off (`chattr +C`), the usual setting for disk images there; a snapshot of it still works,
-and is consistent only with the vm off. A folder that exists is left as it is, so `rem` and a later `add` find the disks
-where they were, as every manager's `rem` leaves an instance's storage behind.
+and is consistent only with the vm off. A folder that exists is left as it is, so `remove` and a later `add` find the
+disks where they were, as every manager's `remove` leaves an instance's storage behind.
 
 ## Docker: the daemon keys wut owns
 

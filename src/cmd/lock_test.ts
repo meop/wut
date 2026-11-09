@@ -13,6 +13,8 @@ const PIN_HOST = `${PIN}&sysHost=host`
 const CASES: Array<[string, string | null]> = [
   [`/sh/nu/pack/add/firefox?${PIN_ARCH}`, 'pack add'],
   [`/sh/nu/pack/rem/firefox?${PIN_ARCH}`, 'pack remove'],
+  [`/sh/nu/pack/renew/firefox?${PIN_ARCH}`, 'pack renew'],
+  [`/sh/nu/pack/pull?${PIN_ARCH}`, 'pack pull'],
   [`/sh/nu/pack/sync?${PIN_ARCH}`, 'pack sync'],
   [`/sh/nu/pack/sync/nu?${PIN_ARCH}`, 'pack sync'],
   [`/sh/nu/pack/tidy?${PIN_ARCH}`, 'pack tidy'],
@@ -24,7 +26,7 @@ const CASES: Array<[string, string | null]> = [
   [`/sh/nu/pack/outdated?${PIN_ARCH}`, 'pack outdated'],
   [`/sh/nu/pack/outdated/nu?${PIN_ARCH}`, 'pack outdated'],
   [`/sh/nu/virt/add/qemu?${PIN_HOST}`, 'virt add'],
-  [`/sh/nu/virt/rem/qemu?${PIN_HOST}`, 'virt rem'],
+  [`/sh/nu/virt/remove/qemu?${PIN_HOST}`, 'virt remove'],
   [`/sh/nu/virt/sync/qemu?${PIN_HOST}`, 'virt sync'],
   [`/sh/nu/virt/tidy?${PIN_HOST}`, 'virt tidy'],
   [`/sh/nu/virt/on/qemu?${PIN_HOST}`, 'virt on'],

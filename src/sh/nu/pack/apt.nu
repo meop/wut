@@ -32,6 +32,9 @@ def --env packApt [] {
     remove => {
       packOpRemove [$cmd purge --autoremove]
     }
+    renew => {
+      packOpRenew [$cmd install --reinstall]
+    }
     sync => {
       packOpSync [$cmd full-upgrade] [$cmd install]
     }

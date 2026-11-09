@@ -24,6 +24,9 @@ def --env packXbps [] {
     remove => {
       packOpRemove [$"($cmd)-remove" --recursive]
     }
+    renew => {
+      packOpRenew [$"($cmd)-install" --force]
+    }
     sync => {
       packOpSync [$"($cmd)-install" --update] [$"($cmd)-install" --update]
     }

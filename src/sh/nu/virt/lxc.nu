@@ -188,7 +188,7 @@ def --env virtLxc [] {
     if $hasSetup and not $running {
       opPrintInfo $"`($instance)` is off, so its setup waits until it runs"
     } else if $hasSetup {
-      if NOOP not-in $env {
+      if DRYRUN not-in $env {
         lxcWaitUp $instance $net
       }
       lxcHook setup $instance $hookEnv | ignore
@@ -237,7 +237,7 @@ def --env virtLxc [] {
         opPrintRunCmd sudo $"($cmd)-ls" --fancy --fancy-format '"NAME,IPV4,IPV6,STATE"' -- $instance
       }
     }
-    rem => {
+    remove => {
       let instances = if ($env.VIRT_INSTANCES | is-not-empty) {
         $env.VIRT_INSTANCES
       } else {

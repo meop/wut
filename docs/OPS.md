@@ -70,18 +70,18 @@ The plan travels as data and the bodies behind it as generated code — `PACK_PL
 Every op shows what it knows first. Whether it then asks is not about whether it writes — it is about whether anything
 is left to do once you answer:
 
-| Op                                                     | Shows                    | Then asks about              |
-| ------------------------------------------------------ | ------------------------ | ---------------------------- |
-| `pack add`                                             | manager, group, packages | installing them, and `?`     |
-| `pack remove`                                          | manager, group, packages | removing them                |
-| `pack sync <names>`                                    | manager, group, packages | updating them                |
-| `pack list <term>`/`outdated <term>`                   | manager, packages        | running them for those terms |
-| `pack list`/`outdated`/`info`/`sync`/`tidy`            | nothing yet              | which managers to run        |
-| `virt add`/`on`/`off`/`rem`/`list`/`run`/`sync`/`tidy` | manager, instances       | which managers to run        |
-| `file sync`, `file diff`                               | tool, files, directories | which tools to write or read |
-| `script exec`                                          | action, tool, shell      | running them                 |
-| `pack find`                                            | the groups it matched    | searching for what it cannot |
-| `virt find`, `file find`, `script find`                | everything               | — nothing left, so no prompt |
+| Op                                                        | Shows                    | Then asks about              |
+| --------------------------------------------------------- | ------------------------ | ---------------------------- |
+| `pack add`                                                | manager, group, packages | installing them, and `?`     |
+| `pack remove`                                             | manager, group, packages | removing them                |
+| `pack sync <names>`                                       | manager, group, packages | updating them                |
+| `pack list <term>`/`outdated <term>`                      | manager, packages        | running them for those terms |
+| `pack list`/`outdated`/`info`/`sync`/`tidy`               | nothing yet              | which managers to run        |
+| `virt add`/`on`/`off`/`remove`/`list`/`run`/`sync`/`tidy` | manager, instances       | which managers to run        |
+| `file sync`, `file diff`                                  | tool, files, directories | which tools to write or read |
+| `script exec`                                             | action, tool, shell      | running them                 |
+| `pack find`                                               | the groups it matched    | searching for what it cannot |
+| `virt find`, `file find`, `script find`                   | everything               | — nothing left, so no prompt |
 
 A `find` already knows what it is going to say, so answering would gate nothing: it prints and stops. `pack find` is the
 one that can have work left — a typed name no group claimed is only resolvable by asking managers — so the server emits
@@ -113,16 +113,16 @@ decoration.
 **Cheap work goes in front of it**, because that is what lets the table say something. If an op can answer its own
 question by reading the machine, it should have done so by the time it asks:
 
-| Op                  | The answer                      | Read from      | So it runs |
-| ------------------- | ------------------------------- | -------------- | ---------- |
-| `pack add`          | who could serve this name       | registries     | after      |
-| `pack find`         | who could serve what is left    | registries     | after      |
-| `pack outdated`     | what is behind upstream         | remote index   | after      |
-| `pack info`         | what upstream says about a name | registries     | after      |
-| `pack remove`       | who already has this name       | local listings | before     |
-| `pack list <term>`  | who has anything matching       | local listings | before     |
-| `file sync`, `diff` | which tools are on this PATH    | `which`        | before     |
-| `virt rem`, `sync`  | which instances were added      | local files    | before     |
+| Op                    | The answer                      | Read from      | So it runs |
+| --------------------- | ------------------------------- | -------------- | ---------- |
+| `pack add`            | who could serve this name       | registries     | after      |
+| `pack find`           | who could serve what is left    | registries     | after      |
+| `pack outdated`       | what is behind upstream         | remote index   | after      |
+| `pack info`           | what upstream says about a name | registries     | after      |
+| `pack remove`         | who already has this name       | local listings | before     |
+| `pack list <term>`    | who has anything matching       | local listings | before     |
+| `file sync`, `diff`   | which tools are on this PATH    | `which`        | before     |
+| `virt remove`, `sync` | which instances were added      | local files    | before     |
 
 Deferring a cheap answer buys nothing and hides the one thing worth reading. That is what `pack list <term>` used to do:
 it offered every manager on the box and filtered afterwards, while `pack remove` of the same name resolved it outright —
@@ -183,12 +183,12 @@ It is held from where a run starts to change the machine until the run ends, nev
 
 Which ops run in a scope:
 
-| Command  | In a scope                                                                    | Not                    |
-| -------- | ----------------------------------------------------------------------------- | ---------------------- |
-| `pack`   | `add`, `info`, `outdated`, `remove`, `sync`, `tidy`                           | `find`, `list`         |
-| `virt`   | `add`, `on`, `off`, `rem`, `snap`, `unsnap`, `roll`, `unroll`, `sync`, `tidy` | `find`, `list`, `run`  |
-| `file`   | `sync`                                                                        | `diff`, `find`, `list` |
-| `script` | `exec`                                                                        | `find`                 |
+| Command  | In a scope                                                                       | Not                    |
+| -------- | -------------------------------------------------------------------------------- | ---------------------- |
+| `pack`   | `add`, `info`, `outdated`, `pull`, `remove`, `renew`, `sync`, `tidy`             | `find`, `list`         |
+| `virt`   | `add`, `on`, `off`, `remove`, `snap`, `unsnap`, `roll`, `unroll`, `sync`, `tidy` | `find`, `list`, `run`  |
+| `file`   | `sync`                                                                           | `diff`, `find`, `list` |
+| `script` | `exec`                                                                           | `find`                 |
 
 Pack's info and outdated only report, but each manager refreshes its index first, and a refresh writes the package
 database as an add does. `virt run` acts but takes no lock: it is a foreground session that can last hours and touches
@@ -242,7 +242,7 @@ Different absences, different messages:
 - a filter that matched nothing → `no instance matched: ...` / `no file matched: ...` / `no script matched: ...`, per
   [COMMANDS.md](COMMANDS.md#nothing-matched). `find` is exempt: an empty search result is an answer.
 - everything matched but nothing is installed → `manager not installed: ...`, from the client's filter.
-- a `virt rem` or `sync` whose manager is here but whose instances were never added → `instance not added: ...`
-  ([VIRT.md](VIRT.md#rem-and-sync-act-on-what-was-added)).
+- a `virt remove` or `sync` whose manager is here but whose instances were never added → `instance not added: ...`
+  ([VIRT.md](VIRT.md#remove-and-sync-act-on-what-was-added)).
 
 None is an error. Each is said out loud rather than emitting a body that quietly does nothing.

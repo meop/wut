@@ -86,7 +86,7 @@ def virtDocker [] {
         opPrintRunCmd sudo $cmd container ls --all --filter $"label=com.docker.compose.project=($instance)" --format '"table {{.Names}}\\t{{.Image}}\\t{{.Ports}}\\t{{.State}}\\t{{.Status}}"' --no-trunc
       }
     }
-    rem => {
+    remove => {
       let instances = if ($env.VIRT_INSTANCES | is-not-empty) {
         $env.VIRT_INSTANCES
       } else {

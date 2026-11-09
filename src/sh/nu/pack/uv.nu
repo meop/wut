@@ -181,6 +181,9 @@ def --env packUv [] {
     remove => {
       packOpRemove [$cmd tool uninstall]
     }
+    renew => {
+      packOpRenew [$cmd tool install --reinstall --managed-python] --each
+    }
     sync => {
       # uv manages pythons as well as tools, and each link in its bin dir is a pin a bare sync moves along: see
       # packUvMoveLinks. a machine with no python of uv's is not given one. the tools then move to the minor the bare

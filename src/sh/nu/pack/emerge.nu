@@ -31,6 +31,10 @@ def --env packEmerge [] {
       # depclean with a name unmerges it and drops it from world, and refuses while anything still depends on it
       packOpRemove [$cmd --depclean]
     }
+    renew => {
+      # --oneshot: rebuilt in place, and world is left as it is
+      packOpRenew [$cmd --oneshot]
+    }
     sync => {
       packOpSync [$cmd --update --deep --newuse '@world'] [$cmd --update]
     }

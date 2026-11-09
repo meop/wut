@@ -166,7 +166,7 @@ Deno.test('getScriptFlavorOpPreamble - follows the flavor, not the platform', as
 })
 
 // a pwsh script spawned from nu receives the switches as env vars, and its op helpers and its own checks read them
-// there: when they read plain variables instead, --noop ran the commands for real and --yes still asked
+// there: when they read plain variables instead, --dry-run ran the commands for real and --yes still asked
 Deno.test('pwsh / script preamble / the switches cross into a spawned pwsh script', async () => {
   const marker = await Deno.makeTempFile()
   await Deno.remove(marker)
@@ -184,7 +184,7 @@ Deno.test('pwsh / script preamble / the switches cross into a spawned pwsh scrip
     try {
       result = await new Deno.Command('pwsh', {
         args: ['-NoProfile', '-File', script],
-        env: { NOOP: '1', YES: '1', GRAYSCALE: '1' },
+        env: { DRYRUN: '1', YES: '1', GRAYSCALE: '1' },
         stdout: 'piped',
       }).output()
     } catch (e) {

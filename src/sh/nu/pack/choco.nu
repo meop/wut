@@ -21,6 +21,9 @@ def --env packChoco [] {
     remove => {
       packOpRemove [$cmd uninstall]
     }
+    renew => {
+      packOpRenew [$cmd install --force]
+    }
     sync => {
       packOpSync [$cmd upgrade all] [$cmd upgrade]
     }

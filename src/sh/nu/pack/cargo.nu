@@ -89,6 +89,11 @@ def --env packCargo [] {
     remove => {
       packOpRemove [$cmd uninstall]
     }
+    renew => {
+      if (packCargoTool 'cargo-binstall') {
+        packOpRenew [$cmd binstall --locked --force]
+      }
+    }
     sync => {
       if ((packNameList 'PACK_SYNC_NAMES') | is-empty) {
         packRustupUpdate

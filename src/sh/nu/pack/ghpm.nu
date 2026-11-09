@@ -23,6 +23,9 @@ def --env packGhpm [] {
     remove => {
       packOpRemove [$cmd uninstall]
     }
+    renew => {
+      packOpRenew [$cmd renew]
+    }
     sync => {
       packOpSync [$cmd sync] [$cmd sync]
     }

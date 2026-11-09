@@ -33,7 +33,7 @@ const PATHS = [
     .map((p) => `pack/${p}`),
   ...['diff/zsh', 'find', 'list/zsh', 'sync/zsh', 'sync/ssh'].map((p) => `file/${p}`),
   ...['find', 'exec/setup', 'exec/setup/cargo'].map((p) => `script/${p}`),
-  ...['add', 'find', 'list', 'rem', 'run/test', 'sync', 'tidy'].map((p) => `virt/${p}`),
+  ...['add', 'find', 'list', 'remove', 'run/test', 'sync', 'tidy'].map((p) => `virt/${p}`),
 ]
 
 function callsIn(text: string): Array<string> {

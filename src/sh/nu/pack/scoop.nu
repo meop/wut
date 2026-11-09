@@ -9,7 +9,7 @@ def --env packScoop [] {
   packRefreshForOp $bin
 
   # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
-  if $env.PACK_OP in ['remove', 'sync'] {
+  if $env.PACK_OP in ['remove', 'renew', 'sync'] {
     let key = $"PACK_($env.PACK_OP | str upcase)_NAMES"
     load-env {$key: ($env | get -o $key | default [] | each { |n| packScoopApp $n })}
   }
@@ -30,6 +30,10 @@ def --env packScoop [] {
     }
     remove => {
       packOpRemove ($cmd ++ [uninstall --purge])
+    }
+    renew => {
+      # --force updates an app though it is current, which installs it again
+      packOpRenew ($cmd ++ [update --force])
     }
     sync => {
       packOpSync ($cmd ++ [update --all]) ($cmd ++ [update])

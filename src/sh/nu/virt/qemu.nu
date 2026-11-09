@@ -693,7 +693,7 @@ def --env virtQemu [] {
         try { opPrintRunCmd pgrep --ignore-ancestors --full --list-full $"\"(virtQemuMatch $instance)\"" } catch { |e| opRethrowInterrupt $e }
       }
     }
-    rem => {
+    remove => {
       let instances = if ($env.VIRT_INSTANCES | is-not-empty) {
         $env.VIRT_INSTANCES
       } else {

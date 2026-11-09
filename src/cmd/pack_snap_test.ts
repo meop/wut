@@ -945,3 +945,19 @@ Deno.test('nu / arch / add (pinned, a group named for a manager provides it)', a
   assertEquals(plan.includes('"provides":["cargo"]'), true)
   assertEquals((await planOf('add/nu')).includes('"provides"'), false)
 })
+
+// renew reaches only the managers that can install a package again in place; pull only the ones with something to pull
+Deno.test('nu / arch / renew and pull offer only the managers that can', async () => {
+  const managers = async (path: string) => {
+    const body = await (await runSrv(req(`/sh/nu/pack/${path}?${PIN_ARCH}`))).text()
+    await checkSyntax('nu', body)
+    const line = body.split('\n').find((l) => l.startsWith('$env.PACK_MANAGERS = '))!
+    return line
+  }
+  const renew = await managers('renew/zsh')
+  assertEquals(renew.includes("r#'pacman'#"), true)
+  assertEquals(renew.includes("r#'deno'#"), false)
+  const pull = await managers('pull')
+  assertEquals(pull.includes("r#'apt'#"), true)
+  assertEquals(pull.includes("r#'cargo'#"), false)
+})

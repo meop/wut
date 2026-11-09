@@ -245,7 +245,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -298,13 +298,13 @@ def opAsk [question: string] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -630,7 +630,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -683,13 +683,13 @@ def opAsk [question: string] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -1105,7 +1105,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -1158,13 +1158,13 @@ def opAsk [question: string] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -1836,7 +1836,7 @@ function opPrintCmd {
 }
 
 function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opPrintCmd \\"\$@\\"
   fi
 }
@@ -1867,13 +1867,13 @@ function opAsk {
 }
 
 function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunSilentCmd \\"\$@\\"
   fi
 }
@@ -2085,7 +2085,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -2138,13 +2138,13 @@ def opAsk [question: string] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -2814,7 +2814,7 @@ function opPrintCmd {
 }
 
 function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opPrintCmd \\"\$@\\"
   fi
 }
@@ -2845,13 +2845,13 @@ function opAsk {
 }
 
 function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunSilentCmd \\"\$@\\"
   fi
 }
@@ -2954,7 +2954,7 @@ function opPrintCmd {
 }
 
 function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opPrintCmd \\"\$@\\"
   fi
 }
@@ -2985,13 +2985,13 @@ function opAsk {
 }
 
 function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunSilentCmd \\"\$@\\"
   fi
 }
@@ -3084,7 +3084,7 @@ function opPrintCmd {
 }
 
 function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opPrintCmd \\"\$@\\"
   fi
 }
@@ -3115,13 +3115,13 @@ function opAsk {
 }
 
 function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunSilentCmd \\"\$@\\"
   fi
 }
@@ -3214,7 +3214,7 @@ function opPrintCmd {
 }
 
 function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opPrintCmd \\"\$@\\"
   fi
 }
@@ -3245,13 +3245,13 @@ function opAsk {
 }
 
 function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunSilentCmd \\"\$@\\"
   fi
 }
@@ -3396,7 +3396,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -3449,13 +3449,13 @@ def opAsk [question: string] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -4134,7 +4134,7 @@ def opPrintCmd --wrapped [...args] {
 }
 
 def opMaybePrintCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opPrintCmd ...\$args
   }
 }
@@ -4187,13 +4187,13 @@ def opAsk [question: string] {
 }
 
 def opMaybeRunCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opRunCmd ...\$args
   }
 }
 
 def opMaybeRunSilentCmd --wrapped [...args] {
-  if NOOP not-in \$env {
+  if DRYRUN not-in \$env {
     opRunSilentCmd ...\$args
   }
 }
@@ -4863,7 +4863,7 @@ function opPrintCmd {
 }
 
 function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opPrintCmd \\"\$@\\"
   fi
 }
@@ -4894,13 +4894,13 @@ function opAsk {
 }
 
 function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunSilentCmd \\"\$@\\"
   fi
 }
@@ -5003,7 +5003,7 @@ function opPrintCmd {
 }
 
 function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opPrintCmd \\"\$@\\"
   fi
 }
@@ -5034,13 +5034,13 @@ function opAsk {
 }
 
 function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunSilentCmd \\"\$@\\"
   fi
 }
@@ -5133,7 +5133,7 @@ function opPrintCmd {
 }
 
 function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opPrintCmd \\"\$@\\"
   fi
 }
@@ -5164,13 +5164,13 @@ function opAsk {
 }
 
 function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunSilentCmd \\"\$@\\"
   fi
 }
@@ -5263,7 +5263,7 @@ function opPrintCmd {
 }
 
 function opMaybePrintCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opPrintCmd \\"\$@\\"
   fi
 }
@@ -5294,13 +5294,13 @@ function opAsk {
 }
 
 function opMaybeRunCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunCmd \\"\$@\\"
   fi
 }
 
 function opMaybeRunSilentCmd {
-  if [[ -z \$NOOP ]]; then
+  if [[ -z \$DRYRUN ]]; then
     opRunSilentCmd \\"\$@\\"
   fi
 }

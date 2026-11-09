@@ -25,6 +25,9 @@ def --env packDnf [] {
     remove => {
       packOpRemove [$cmd remove]
     }
+    renew => {
+      packOpRenew [$cmd reinstall]
+    }
     sync => {
       packOpSync [$cmd distro-sync] [$cmd upgrade]
     }

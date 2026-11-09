@@ -94,7 +94,7 @@ const ASKING = [
   'script/exec/setup',
   'virt/list',
   'virt/add/qemu',
-  'virt/rem/qemu',
+  'virt/remove/qemu',
   'virt/run/test',
   'virt/sync',
   'virt/tidy',

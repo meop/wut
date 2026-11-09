@@ -35,7 +35,7 @@ def --env packBunRun [cmds: list<string>, --read]: nothing -> string {
   $env.PACK_PRINTED = '1'
   opPrintCmd ...$cmds
   # quoted: a bare word inside parens is an external command call, see docs/NUSHELL.md
-  if (not $read) and ('NOOP' in $env) {
+  if (not $read) and ('DRYRUN' in $env) {
     return ''
   }
   let prev = $env.PWD

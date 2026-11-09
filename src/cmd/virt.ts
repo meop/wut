@@ -247,7 +247,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       if (!supportedManagers.includes(r[0])) {
         continue
       }
-      // the manager is part of the path everywhere else (add, rem, list), so it filters here too
+      // the manager is part of the path everywhere else (add, remove, list), so it filters here too
       // against the whole path, so a variant's name finds its instance
       if (filters.length > 0 && !partsMatch(r, filters, 'words')) {
         continue
@@ -379,7 +379,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       const managersToOp = managerFilters.length > 0
         ? supportedManagers.filter((m) => managerFilters.some((f) => wordStartsWith(m, f)))
         : supportedManagers
-      // same plan-then-ask-once path as add/rem/sync/tidy, so listing across managers asks once too
+      // same plan-then-ask-once path as add/remove/sync/tidy, so listing across managers asks once too
       const virtMap: Record<string, Array<string>> = Object.fromEntries(
         managersToOp.map((m) => [m, instanceFilters]),
       )
@@ -527,9 +527,9 @@ export class VirtCmdOn extends CmdBase implements Cmd {
 export class VirtCmdRem extends CmdBase implements Cmd {
   constructor(scopes: Array<string>) {
     super(scopes)
-    this.name = 'rem'
+    this.name = 'remove'
     this.description = 'remove on local'
-    this.aliases = ['r', 'rm', 'rem', 'remove', 'un', 'unin', 'uninstall']
+    this.aliases = ['r', 'rm', 'rem', 'un', 'unin', 'uninstall']
     this.arguments = [
       { name: 'parts', description: 'path part(s) to match', required: true },
     ]

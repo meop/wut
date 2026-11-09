@@ -23,6 +23,9 @@ def --env packBrew [] {
     remove => {
       packOpRemove [$cmd uninstall]
     }
+    renew => {
+      packOpRenew [$cmd reinstall]
+    }
     sync => {
       packOpSync [$cmd upgrade --greedy] [$cmd upgrade --greedy]
     }

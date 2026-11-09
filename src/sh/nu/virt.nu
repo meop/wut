@@ -49,7 +49,7 @@ def virtInstanceHere [manager: string, instance: string, root: string = '/'] {
 # says a manager has and what its dump then shows cannot drift
 def virtListed [manager: string, terms: list<string> = []] {
   let names = match $manager {
-    # --all, as virtInstanceHere has it: a stopped project is still added, and rem and sync still act on it
+    # --all, as virtInstanceHere has it: a stopped project is still added, and remove and sync still act on it
     docker => (^sudo docker compose ls --all --format json | complete | get stdout | if ($in | is-not-empty) { from json | get Name } else { [] }),
     # bare lxc-ls wraps names across lines at terminal width, not just spaces within one. split on whitespace alone:
     # split words also breaks at a hyphen, which made web-proxy two instances, web and proxy
@@ -68,7 +68,7 @@ def virtListedFiles [dir: string, pattern: string, name: closure] {
   ls $dir | get name | each { |f| $f | path basename } | where { |b| $b =~ $pattern } | each { |b| do $name $b }
 }
 
-# rem undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
+# remove undoes an add and sync replays one, so their plans hold only what was added here, as pack's remove and sync hold
 # only what is installed: the rest of what the host's config names is add's
 def virtPlanAdded [entries: list, root: string = '/'] {
   $entries
@@ -122,7 +122,7 @@ def --env virtPlanRun [] {
     return
   }
 
-  let here = if $env.VIRT_OP? in ['off' 'on' 'rem' 'sync' 'snap' 'unsnap' 'roll' 'unroll'] { virtPlanAdded $managed } else { $managed }
+  let here = if $env.VIRT_OP? in ['off' 'on' 'remove' 'sync' 'snap' 'unsnap' 'roll' 'unroll'] { virtPlanAdded $managed } else { $managed }
   if ($here | is-empty) {
     opPrintWarn $"instance not added: ($managed | each { |e| $e.instances } | flatten | str join ', ')"
     return

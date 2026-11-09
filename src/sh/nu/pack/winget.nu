@@ -23,6 +23,9 @@ def --env packWinget [] {
     remove => {
       packOpRemove [$cmd uninstall] --each
     }
+    renew => {
+      packOpRenew [$cmd install --force] --each
+    }
     sync => {
       packOpSync [$cmd upgrade --all] [$cmd upgrade] --each
     }

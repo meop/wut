@@ -327,7 +327,7 @@ def virtPodman [] {
         opPrintRunCmd sudo $cmd container list --filter $"pod=($pod)" --format '"table {{.PodName}}\t{{.Names}}\t{{.Image}}\t{{.Ports}}\t{{.State}}\t{{.Status}}"'
       }
     }
-    rem => {
+    remove => {
       let managedNetworks = $env.VIRT_PODMAN_NETWORKS | from json
       let kubeDirPath = '/etc/containers/systemd'
 

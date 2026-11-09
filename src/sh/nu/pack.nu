@@ -448,7 +448,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
 # remove and a named sync both act on what is already here, so both answer with a local listing; add and find
 # ask who could serve a name and pay a round trip for it
 def packOpAsksInstalled [] {
-  ($env.PACK_OP? | default '') in ['remove', 'sync']
+  ($env.PACK_OP? | default '') in ['remove', 'renew', 'sync']
 }
 
 # add asks who could serve a name, remove and sync ask who already has it; the walk over managers is the same either way
@@ -471,7 +471,7 @@ def --env packRefresh [manager: string] {
   }
   $env.PACK_REFRESHED = ($done | append $key)
   match $manager {
-    ghpm => { packOp [ghpm refresh] },
+    ghpm => { packOp [ghpm pull] },
     goup => { packOp [goup refresh] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
@@ -809,6 +809,27 @@ def --env packCopiesApart [ids: list<string>] {
   $kept
 }
 
+# pull is a manager's refresh asked for by itself: its index, or for ghpm its repo sources and own tools. a go row is
+# goup's to refresh, where the go is goup's
+def --env packPull [id: string] {
+  let saved = (packCopyEnter $id)
+  let base = (packCopyBase $id)
+  try {
+    if $base == 'go' {
+      if (which goup | is-not-empty) and (packGoOwned) {
+        packRefresh 'goup'
+      }
+    } else {
+      packRefresh $base
+    }
+  } catch { |e|
+    opRethrowInterrupt $e
+    packCopyLeave $saved
+    $e.raw
+  }
+  packCopyLeave $saved
+}
+
 def --env packRefreshAll [] {
   for m in (packManagersHere | each { |id| packCopyBase $id } | uniq) { packRefresh $m }
 }
@@ -1108,7 +1129,7 @@ def --env packPlanRun [] {
   let planned = (packStaged $detail)
 
   let fellThrough = ($units | each { |u| $u.name } | uniq | where { |n| $n not-in $served })
-  let loose = ((packNameList 'PACK_ADD_NAMES') ++ (packNameList 'PACK_REMOVE_NAMES') ++ (packNameList 'PACK_SYNC_NAMES') ++ $fellThrough | uniq)
+  let loose = ((packNameList 'PACK_ADD_NAMES') ++ (packNameList 'PACK_REMOVE_NAMES') ++ (packNameList 'PACK_RENEW_NAMES') ++ (packNameList 'PACK_SYNC_NAMES') ++ $fellThrough | uniq)
 
   # remove and sync ask their managers a local question — what is installed — so the answer is affordable before the
   # gate and belongs in the table, named. add asks the registries, a round trip per manager per name, so those names
@@ -1407,7 +1428,7 @@ def --env packSelfUpdate [what: string, path: string, args: list<string>] {
   }
   $env.PACK_PRINTED = '1'
   opPrintCmd $bin ...$args
-  if 'NOOP' in $env {
+  if 'DRYRUN' in $env {
     return
   }
   let updated = (try { run-external $bin ...$args; true } catch { |e| opRethrowInterrupt $e; false })
@@ -1481,7 +1502,7 @@ def --env packManagerPlanRun [] {
     # stated, so an op that keeps per-manager detail — info's declared names — knows who is asking
     load-env {PACK_MANAGER: $m}
     try {
-      packCallManager $m
+      if $env.PACK_OP == 'pull' { packPull $m } else { packCallManager $m }
     } catch { |e|
       packMarkFailed $m $e
     }
@@ -1504,7 +1525,7 @@ def packSkip [declared: string, probe?: string] {
 
 # which ops want a manager's index refreshed first. ghpm states its own, narrower rule
 def --env packRefreshForOp [manager: string] {
-  if $env.PACK_OP in ['add', 'info', 'outdated', 'sync'] {
+  if $env.PACK_OP in ['add', 'info', 'outdated', 'renew', 'sync'] {
     packRefresh $manager
   }
 }
@@ -1513,6 +1534,7 @@ def packNothingToDo [] {
   match $env.PACK_OP {
     add => ((packNameList 'PACK_ADD_NAMES') | is-empty),
     remove => ((packNameList 'PACK_REMOVE_NAMES') | is-empty),
+    renew => ((packNameList 'PACK_RENEW_NAMES') | is-empty),
     _ => false,
   }
 }
@@ -1605,6 +1627,11 @@ def --env packOpOutdated [cmds: list<string>] {
 
 def --env packOpRemove [cmds: list<string>, --each] {
   packMutate PACK_REMOVE_NAMES $cmds $each
+}
+
+# renew puts back what a manager already holds: the plan only hands it names that manager has
+def --env packOpRenew [cmds: list<string>, --each] {
+  packMutate PACK_RENEW_NAMES $cmds $each
 }
 
 # sync updates what is already here; it never installs. several of these commands cannot tell the difference —
