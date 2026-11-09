@@ -408,6 +408,11 @@ second pick for loose names is the one place a method is chosen, since no yaml s
 
 ## Tools that update themselves
 
+Wut owns updates for configured tools. Their setup/file configuration disables supported automatic self-updaters and
+update notices, including for portable and ghpm installs. These are managed preferences, not defaults that preserve a
+tool's prior opt-in. See [Managed tool updates](RULES.md#managed-tool-updates). The path handling below selects the copy
+an explicit sync updates; it does not decide whether that copy may update itself in the background.
+
 A tool installed by its own installer — the group's `script` path — is held by no manager, so no manager's sync would
 reach it. Each such group states where that installer puts the tool
 ([RULES.md](RULES.md#pack-sync-of-a-standalone-install)), and a bare sync hands every one of those paths to the client,
@@ -425,9 +430,9 @@ way, before the go it moves, and dotnetup in the dotnet row, before the SDKs it 
 which is offered only when there is one of them. The binary's name is how the two are matched. On windows the path is
 printed and run with backslashes, whatever the yaml wrote.
 
-Updating is best effort. A distro build usually has self update compiled out, and a user can turn it off; a copy that
-refuses answers exactly that, so it is said as a warning and is not a failure — the rest of the sync runs, and the run
-does not exit non-zero for it.
+Updating is best effort. A distro build may have self update compiled out, or a tool's update setting may also prevent
+an explicit update. A refusal is reported as a warning rather than a failure: the rest of the sync runs, and the run
+does not exit non-zero for it. Sync does not temporarily enable an updater to get past that refusal.
 
 ## Toolchain managers
 

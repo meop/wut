@@ -238,6 +238,21 @@ call — a tap only means anything to brew — so it is a command, in brew's she
 whichever manager won it: enabling docker's service is the same work whether pacman or a script installed docker, so it
 is a script, and runs wherever that script runs.
 
+## Managed tool updates
+
+Wut manages updates for the tools its configuration covers. Disable each tool's automatic self-updater and update
+notifications where it supports doing so. Apply the same settings to portable, ghpm and system-package installations;
+the update preference does not need installation-source detection or an unset-only default. Use a setup script to merge
+managed keys into settings the tool also writes, or file sync for a file the repo owns entirely.
+
+Explicit `wut pack sync` still updates tools through their owning managers or their configured standalone paths. Keep
+that path distinction: a self-update command must not overwrite a binary ghpm or a system manager owns. Disabling
+background updates and notices does not mean removing the explicit sync operation. If a tool's setting also prevents an
+explicit update, report that refusal rather than temporarily enabling its updater.
+
+This rule concerns the managed tool replacing itself or advertising its own updates. Toolchains, dependencies, plugins,
+models, games and container images it manages are separate configuration decisions.
+
 ## pack sync of a standalone install
 
 A tool whose own installer is the group's `script` path usually updates itself too, from wherever that installer put it.
