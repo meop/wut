@@ -251,8 +251,10 @@ export function mergeDropIn(base: unknown, dropIn: unknown, where: string): unkn
 
 // with a machine to load for, each drop-in whose levels it matches is merged in, broadest first
 async function loadGroupConfig(parts: Array<string>, context?: Ctx) {
-  const content = await getCfgFileLoad([PACK_KEY, ...parts], { extension: Fmt.yaml })
-  if (content == null || !context) {
+  // every group comes from the listing, so an empty file is a group with nothing to state but its name: one its own
+  // scripts install
+  const content = (await getCfgFileLoad([PACK_KEY, ...parts], { extension: Fmt.yaml })) ?? {}
+  if (!context) {
     return content
   }
   let merged: unknown = content
@@ -396,9 +398,6 @@ async function findGroups(
   for (const r of results) {
     const name = groupName(r)
     const content = await loadGroupConfig(r, context ?? undefined)
-    if (content == null) {
-      continue
-    }
     const candidates = await groupCandidates(shell, name, content, allManagers, context)
     if (candidates == null) {
       continue
@@ -490,9 +489,6 @@ async function buildGroupUnit(
   cliName: string,
 ): Promise<{ unit: PlanUnit | null; arms: Array<string>; scriptArms: Map<string, Array<string>> }> {
   const content = await loadGroupConfig(name.split('/'), context)
-  if (content == null) {
-    return { unit: null, arms: [], scriptArms: new Map() }
-  }
 
   const tool = groupTool(name)
   const managerConfig = (groupOp(content, 'add')?.manager ?? {}) as Record<string, ManagerEntry>

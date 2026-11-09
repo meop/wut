@@ -439,7 +439,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query $name]),
     zypper => (packOk [rpm --query $name]),
     choco => (packListedHas [choco list --exact --limit-output $name] $name { |l| $l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix $name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix ($name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id $name]),
     _ => false,
   }

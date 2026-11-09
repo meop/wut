@@ -8,7 +8,6 @@ A group exists to state something the client cannot work out for itself:
 
 - **a naming difference between platforms** — `nu` on ghpm and cargo, `nushell` on pacman
 - **companions that ship separately** — `nodejs` plus `npm` on pacman, one package on brew
-- **membership** — a group whose contents are other groups
 - **its own scripts** — none named in it: the ones in the script directory of its name
 - **a place in a folder** — an optional companion of the group above it, or a tool of the same kind as its neighbours,
   found and combined through that folder: `desktop/tool/remote/remmina/freerdp`
@@ -74,9 +73,7 @@ would ask, and searches only the ones picked. Nothing to search for means no tab
    everything else in it. A shorter or a second spelling a group should answer to is an alias, stated in its yaml. A
    name matching no group is a **loose name**, handed to the managers as typed. `remove` resolves exactly as `add` does
    and takes every group that matches, each a row to pick from.
-2. A group's `group` tier lists other groups (or loose names). The walk is iterative over a stack with a visited set of
-   resolved group names, so a cycle stops and a diamond resolves once.
-3. Preference is one fixed order, not the yaml's: the user managers, then a group's `script`, then the system's
+2. Preference is one fixed order, not the yaml's: the user managers, then a group's own `add` script, then the system's
    ([RULES.md](RULES.md)). A group's flat `manager` map says which of them can serve it, in any order.
 
 ## Planning, client side

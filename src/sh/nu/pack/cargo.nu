@@ -51,12 +51,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which $bin | is-not-empty) {
     return true
   }
-  opPrintWarn $"cargo: ($bin) is not installed, `wut script exec cargo setup` installs it"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o $bin | default $bin)
+  opPrintWarn $"cargo: ($bin) is not installed, `wut pack add ($pack)` installs it"
   false
 }
 

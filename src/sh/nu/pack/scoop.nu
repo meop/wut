@@ -8,6 +8,12 @@ def --env packScoop [] {
 
   packRefreshForOp $bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if $env.PACK_OP in ['remove', 'sync'] {
+    let key = $"PACK_($env.PACK_OP | str upcase)_NAMES"
+    load-env {$key: ($env | get -o $key | default [] | each { |n| packScoopApp $n })}
+  }
+
   match $env.PACK_OP {
     add => {
       packScoopBuckets $cmd
@@ -46,4 +52,10 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict ($cmd ++ [bucket add $bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts $raw)
+  [...$parts.flags ($parts.name | split row '/' | last)] | str join ' '
 }

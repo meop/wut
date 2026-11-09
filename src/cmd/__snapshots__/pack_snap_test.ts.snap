@@ -4005,7 +4005,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -6034,12 +6034,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -6606,6 +6608,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -6644,6 +6652,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -7846,7 +7860,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -9875,12 +9889,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -10447,6 +10463,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -10485,6 +10507,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -11732,7 +11760,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -13761,12 +13789,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -14333,6 +14363,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -14371,6 +14407,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -15618,7 +15660,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -17647,12 +17689,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -18219,6 +18263,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -18257,6 +18307,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -19534,7 +19590,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -21563,12 +21619,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -22135,6 +22193,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -22173,6 +22237,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -23450,7 +23520,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -25479,12 +25549,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -26051,6 +26123,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -26089,6 +26167,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -27454,7 +27538,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -29483,12 +29567,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -30055,6 +30141,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -30093,6 +30185,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -31428,7 +31526,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -33457,12 +33555,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -34029,6 +34129,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -34067,6 +34173,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -35717,7 +35829,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -37746,12 +37858,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -38318,6 +38432,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -38356,6 +38476,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -39625,7 +39751,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -41654,12 +41780,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -42226,6 +42354,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -42264,6 +42398,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -43678,7 +43818,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -45707,12 +45847,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -46279,6 +46421,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -46317,6 +46465,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -47713,7 +47867,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -49742,12 +49896,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -50314,6 +50470,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -50352,6 +50514,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -51948,7 +52116,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -53977,12 +54145,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -54549,6 +54719,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -54587,6 +54763,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -56191,7 +56373,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -58220,12 +58402,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -58792,6 +58976,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -58830,6 +59020,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -60428,7 +60624,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -62457,12 +62653,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -63029,6 +63227,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -63067,6 +63271,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -64314,7 +64524,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -66343,12 +66553,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -66915,6 +67127,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -66953,6 +67171,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -68162,7 +68386,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -70191,12 +70415,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -70763,6 +70989,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -70801,6 +71033,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -72008,7 +72246,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -74037,12 +74275,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -74609,6 +74849,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -74647,6 +74893,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -75850,7 +76102,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -77879,12 +78131,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -78451,6 +78705,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -78489,6 +78749,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -79692,7 +79958,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -81721,12 +81987,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -82293,6 +82561,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -82331,6 +82605,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -83538,7 +83818,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -85567,12 +85847,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -86139,6 +86421,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -86177,6 +86465,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -87382,7 +87676,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -89411,12 +89705,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -89983,6 +90279,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -90021,6 +90323,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -91223,7 +91531,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -93252,12 +93560,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -93824,6 +94134,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -93862,6 +94178,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -95064,7 +95386,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -97093,12 +97415,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -97665,6 +97989,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -97703,6 +98033,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -98950,7 +99286,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -100979,12 +101315,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -101551,6 +101889,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -101589,6 +101933,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -102836,7 +103186,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -104865,12 +105215,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -105437,6 +105789,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -105475,6 +105833,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -106675,7 +107039,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -108704,12 +109068,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -109276,6 +109642,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -109314,6 +109686,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -110516,7 +110894,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -112545,12 +112923,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -113117,6 +113497,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -113155,6 +113541,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -114357,7 +114749,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -116386,12 +116778,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -116958,6 +117352,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -116996,6 +117396,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -118243,7 +118649,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -120272,12 +120678,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -120844,6 +121252,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -120882,6 +121296,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -122129,7 +122549,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -124158,12 +124578,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -124730,6 +125152,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -124768,6 +125196,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 
@@ -126045,7 +126479,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     xbps => (packOk [xbps-query \$name]),
     zypper => (packOk [rpm --query \$name]),
     choco => (packListedHas [choco list --exact --limit-output \$name] \$name { |l| \$l | split row '|' | first }),
-    scoop => (packOk ((packScoopCmd) ++ [prefix \$name])),
+    scoop => (packOk ((packScoopCmd) ++ [prefix (\$name | split row '/' | last)])),
     winget => (packOk [winget list --exact --id \$name]),
     _ => false,
   }
@@ -128074,12 +128508,14 @@ def --env packRustupUpdate [] {
   }
 }
 
-# cargo's tools are subcommands of their own, a cargo-<name> on PATH, that cargo/setup installs
+# cargo's tools are subcommands of their own, a cargo-<name> on PATH, each a pack named for its crate: cargo-update's
+# command is cargo-install-update
 def packCargoTool [bin: string] {
   if (which \$bin | is-not-empty) {
     return true
   }
-  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut script exec cargo setup\` installs it\\"
+  let pack = ({'cargo-install-update': 'cargo-update'} | get -o \$bin | default \$bin)
+  opPrintWarn \$\\"cargo: (\$bin) is not installed, \`wut pack add (\$pack)\` installs it\\"
   false
 }
 
@@ -128646,6 +129082,12 @@ def --env packScoop [] {
 
   packRefreshForOp \$bin
 
+  # a bucket qualifies a name for install alone: the other ops know an installed app by its own name
+  if \$env.PACK_OP in ['remove', 'sync'] {
+    let key = \$\\"PACK_(\$env.PACK_OP | str upcase)_NAMES\\"
+    load-env {\$key: (\$env | get -o \$key | default [] | each { |n| packScoopApp \$n })}
+  }
+
   match \$env.PACK_OP {
     add => {
       packScoopBuckets \$cmd
@@ -128684,6 +129126,12 @@ def --env packScoopBuckets [cmd: list<string>] {
       packOpStrict (\$cmd ++ [bucket add \$bucket])
     }
   }
+}
+
+# the app a name is, without the bucket that qualifies it: games/xemu is xemu
+def packScoopApp [raw: string] {
+  let parts = (packNameParts \$raw)
+  [...\$parts.flags (\$parts.name | split row '/' | last)] | str join ' '
 }
 
 

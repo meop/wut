@@ -2570,3 +2570,23 @@ Deno.test('nu / pack / scoop adds the bucket a name is qualified by', async () =
   )
   assertEquals(steps, ['scoop bucket add games', 'scoop install games/xemu games/pcsx2 extras/vscode git'], out)
 })
+
+// scoop takes a bucket's name for install alone: a removal names the app as scoop knows it once installed
+Deno.test('nu / pack / scoop removes an app by its own name, without its bucket', async () => {
+  const out = await withStubs(
+    { scoop: '', powershell: '' },
+    [
+      `$env.NOOP = '1'`,
+      `$env.PACK_OP = 'remove'`,
+      `$env.PACK_MANAGER = 'scoop'`,
+      `$env.PACK_REMOVE_NAMES = ['games/xemu' 'git']`,
+      'packScoop',
+    ].join('\n'),
+    ['scoop'],
+    ['scoop'],
+  )
+  if (out == null) {
+    return
+  }
+  assertStringIncludes(out, 'scoop uninstall --purge xemu git')
+})
