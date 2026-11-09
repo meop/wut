@@ -1366,7 +1366,6 @@ def --env packRunScripts [stage: string, scripts: list] {
       opPrintWarn $"($s.id) skipped: (packScriptSkipped $s)"
       continue
     }
-    opPrintInfo $s.id
     try {
       packRunUnit $s.id
     } catch { |e|
