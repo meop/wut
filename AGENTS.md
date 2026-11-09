@@ -104,9 +104,9 @@ Two distinct loading functions:
 ## Command Matching
 
 A typed term is put to a name one of two ways, and which depends on the op, never the command: an **acting** op (`add`,
-`rem`, `sync`, `run`, `exec`, `diff`, `info`) takes a name **whole** — its own, a folder above it, or an alias — and a
-**reading** op (`find`, `list`, `outdated`) takes the **start of a word** of one, and reads further (a pack group's
-packages and `descr`). Never a substring, never ranked, and `rem` resolves exactly as `add` does. `src/match.ts` and
+`remove`, `renew`, `sync`, `run`, `exec`, `info`) takes a name **whole** — its own, a folder above it, or an alias — and
+a **reading** op (`find`, `list`, `outdated`) takes the **start of a word** of one, and reads further (a pack group's
+packages and `descr`). Never a substring, never ranked, and `remove` resolves exactly as `add` does. `src/match.ts` and
 `src/sh/nu/match.nu` hold the two primitives; a new filter uses them rather than its own comparison. See
 [docs/COMMANDS.md](docs/COMMANDS.md) for the per-op table.
 

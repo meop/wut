@@ -82,14 +82,14 @@ function wut {
 
 ## commands
 
-| Command  | Aliases | Description                                           | Ops                                                                                                  |
-| -------- | ------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `pack`   | `p`     | Package manager operations                            | `add`, `find`, `info`, `list`, `outdated`, `remove`, `sync`, `tidy`                                  |
-| `file`   | `f`     | Dotfile sync from server to local paths               | `diff`, `find`, `list`, `sync`                                                                       |
-| `script` | `s`     | Run shell scripts stored in config                    | `exec`, `find`                                                                                       |
-| `virt`   | `v`     | Container / VM management (docker, podman, lxc, qemu) | `add`, `find`, `list`, `off`, `on`, `rem`, `roll`, `run`, `snap`, `sync`, `tidy`, `unroll`, `unsnap` |
+| Command  | Aliases | Description                                           | Ops                                                                                                     |
+| -------- | ------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `pack`   | `p`     | Package manager operations                            | `add`, `find`, `info`, `list`, `outdated`, `pull`, `remove`, `renew`, `sync`, `tidy`                    |
+| `file`   | `f`     | Dotfile sync from server to local paths               | `find`, `list`, `outdated`, `remove`, `sync`                                                            |
+| `script` | `s`     | Run shell scripts stored in config                    | `exec`, `find`                                                                                          |
+| `virt`   | `v`     | Container / VM management (docker, podman, lxc, qemu) | `add`, `find`, `list`, `off`, `on`, `remove`, `roll`, `run`, `snap`, `sync`, `tidy`, `unroll`, `unsnap` |
 
-Names are matched the same way in every command. An op that acts (`add`, `remove`, `sync`, `run`, `exec`, `diff`,
+Names are matched the same way in every command. An op that acts (`add`, `remove`, `renew`, `sync`, `run`, `exec`,
 `info`) takes a name whole — a group, a folder above it, an instance, or an alias — so `wut p a nush` is not `nushell`.
 An op that reads (`find`, `list`, `outdated`) takes the start of a word, so `wut p f tight` finds the group holding
 `glavsoft.tightvnc`, and never the middle of one. Look with `find`, then act with the name it shows. See
