@@ -803,7 +803,6 @@ Deno.test('nu / pack / an elevated manager still knows its own listing command',
   // manager, the binary its listing runs, and the arguments packListCmd states for it
   const cases: Array<[string, string, string]> = [
     ['apk', 'apk', 'list --installed'],
-    ['apt', 'apt', 'list --installed'],
     ['dnf', 'dnf', 'list --installed'],
     ['emerge', 'qlist', '--installed'],
     ['xbps', 'xbps-query', '--list-pkgs'],
@@ -836,6 +835,42 @@ Deno.test('nu / pack / an elevated manager still knows its own listing command',
     assertEquals(out.includes(`sudo ${bin}`), false, `${manager}: ${out}`)
     assertEquals(out.includes('python 3.13.7'), true, `${manager}: ${out}`)
   }
+})
+
+// apt's answers come from dpkg: the listing, and whether a name is held. a package removed with its config kept is
+// still in dpkg's database, so neither the listing nor the check takes it for installed, and adding asks apt itself
+Deno.test('nu / pack / apt reads what it holds from dpkg, and a package with only its config left is not held', async () => {
+  const dpkgQuery = `case "$*" in
+  *'Status-Status}\\t'*) printf 'installed\\tzsh 5.9-8 amd64\\nconfig-files\\tchrony 4.8-2 amd64\\ninstalled\\tzsh-common 5.9-8 all\\n' ;;
+  *' zsh') printf 'installed' ;;
+  *' chrony') printf 'config-files' ;;
+  *) exit 1 ;;
+esac`
+  const apt = `case "$*" in "show chrony") exit 0 ;; *) exit 100 ;; esac`
+  const out = await withStubs(
+    { 'dpkg-query': dpkgQuery, apt },
+    [
+      `$env.PROBE_QUIET = '1'`,
+      `print (packInstalledCheck 'apt' 'zsh') (packInstalledCheck 'apt' 'chrony') (packInstalledCheck 'apt' 'nosuch')`,
+      `print (packExists 'apt' 'chrony') (packExists 'apt' 'nosuch')`,
+      `hide-env PROBE_QUIET`,
+      `$env.PACK_OP = 'list'`,
+      `$env.PACK_MANAGER = 'apt'`,
+      `$env.PACK_LIST_NAMES = ['zsh']`,
+      'packApt',
+    ].join('\n'),
+    ['apt'],
+    ['apt'],
+  )
+  if (out == null) {
+    return
+  }
+  const lines = out.split('\n')
+  assertEquals(lines.slice(0, 5), ['true', 'false', 'false', 'true', 'false'], out)
+  assertEquals(lines.includes('zsh 5.9-8 amd64'), true, out)
+  assertEquals(lines.includes('zsh-common 5.9-8 all'), true, out)
+  assertEquals(out.includes('chrony 4.8-2'), false, out)
+  assertEquals(out.includes('apt list'), false, out)
 })
 
 // a group's post scripts run only for groups that installed, after every install in the run, once however many

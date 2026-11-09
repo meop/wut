@@ -152,7 +152,7 @@ def --env packExists [manager: string, raw: string] {
     go => (packExistsGo $name),
     brew => (packOk ([brew info] ++ $flags ++ [$name])),
     apk => (packOk [apk search -e $name]),
-    apt => (packOk [apt-cache show $name]),
+    apt => (packOk [apt show $name]),
     dnf => (packOk [dnf info $name]),
     # a bare name in two categories (tree) answers nothing, so packs name emerge's packages whole: dev-vcs/git
     emerge => (packOk [portageq best_visible / $name]),
@@ -237,6 +237,29 @@ def --env packDenoInstalled [] {
   ls -a $dirPath | where type == dir | get name | path basename | str substring 1..
 }
 
+# what apt holds is read from dpkg's database: apt's own listing is for people, and says so to a script, where
+# dpkg-query's showformat is for scripts. a package removed with its config kept is still in that database, as
+# config-files, so only what is installed counts. one line per package, as `apt list` has them: name version arch
+def --env packAptInstalled [] {
+  let cmds = [dpkg-query --show --showformat '${db:Status-Status}\t${Package} ${Version} ${Architecture}\n']
+  $env.PACK_PRINTED = '1'
+  opPrintCmd ...$cmds
+  packCompleteListing $cmds
+    | get stdout
+    | lines
+    | each { |l| $l | split row (char tab) }
+    | where { |f| ($f | length) == 2 and ($f | first) == 'installed' }
+    | each { |f| $f | last }
+}
+
+# one package, asked of dpkg by its status, since `dpkg-query --show` also finds one removed with its config kept
+def --env packAptHas [name: string] {
+  let cmds = [dpkg-query --show --showformat '${db:Status-Status}' $name]
+  $env.PACK_PRINTED = '1'
+  opPrintCmd ...$cmds
+  (packComplete $cmds | get stdout) == 'installed'
+}
+
 # pnpm states what it holds twice otherwise: a drawn tree for `list`, and `--parseable` — one full path per line,
 # `.../node_modules/<name>`, which is unambiguous where the tree's `name@version` tokens are not, and is the only
 # form that spells a scoped name whole. the tree stays the dump; every check reads this
@@ -319,7 +342,6 @@ def packListCmd [manager: string] {
     bun => [bun list --global],
     brew => [brew list],
     apk => [apk list --installed],
-    apt => [apt list --installed],
     dnf => [dnf list --installed],
     emerge => [qlist --installed],
     yay => [yay --query],
@@ -352,6 +374,9 @@ def --env packListedRaw [manager: string] {
   }
   if $manager == 'go' {
     return (packGoTools | get path)
+  }
+  if $manager == 'apt' {
+    return (packAptInstalled)
   }
   let cmds = (packListCmd $manager)
   if $cmds == null {
@@ -406,8 +431,7 @@ def --env packInstalledCheck [manager: string, raw: string] {
     # flags narrow that listing the same way they narrow the install: `--cask vivaldi` asks `brew list --cask`
     brew => (packListedHas ((packListCmd 'brew') ++ $flags) $name { |l| $l | str trim }),
     apk => (packOk [apk info -e $name]),
-    # apt's own listing renames the package (zsh/stable,now), so the query that answers exactly is dpkg's
-    apt => (packOk [dpkg-query --show $name]),
+    apt => (packAptHas $name),
     dnf => (packOk [rpm --query $name]),
     emerge => (packOk [portageq has_version / $name]),
     nix => (packNixHas $name),

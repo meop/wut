@@ -146,7 +146,10 @@ every check reads that and the tree stays the dump.
 
 Each manager answers the installed question the exact way it can: a query that succeeds or fails by exit code where one
 exists (`pacman --query`, `brew list --versions`, `dpkg-query`, `rpm --query`), and its own listing parsed to entry
-names where none does (`uv tool list`, `cargo install --list`, `ghpm list --long-names`). Parsing matters more than it
+names where none does (`uv tool list`, `cargo install --list`, `ghpm list --long-names`). apt's answers come from dpkg,
+its listing too: a package removed with its config kept is still in dpkg's database, where `dpkg-query --show` finds it,
+so the check asks for its status and only `installed` counts; and apt's own listing warns a script that its output is
+for people. Adding asks `apt show`, whose exit code says whether any repo has the name. Parsing matters more than it
 looks: these listings hang detail off their entries — uv restates each tool as `- name` beneath it, cargo indents the
 binaries a crate installs — and reading that detail as an entry is how a check starts agreeing with everything. deno and
 go have no listing command at all. deno keeps a shim per install in its bin dir, and go keeps the one binary it built,
