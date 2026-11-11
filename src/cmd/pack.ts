@@ -563,7 +563,7 @@ async function buildGroupUnit(
     return { unit: null, arms, scriptArms: new Map() }
   }
   const unit: PlanUnit = { group: name, name: cliName, paths }
-  const files = OWN_FILE_OPS.includes(op) ? await ownFilePlan(shell, context, tool) : null
+  const files = OWN_FILE_OPS.includes(op) ? await ownFilePlan(shell, context, tool, op !== 'remove') : null
   if (files) {
     unit.files = { key: tool, ...files }
   }

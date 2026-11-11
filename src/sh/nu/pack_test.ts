@@ -2657,7 +2657,7 @@ const ranLines = (out: string) => out.split('\n').filter((l) => l.startsWith('ra
 // add writes a group's files after its install and before its setup, which may read them; remove takes them out after
 // its teardown and before the removal; a sync writes them after the managers and before its own sync script
 Deno.test('nu / pack / a group writes its own files between its install and its setup', async () => {
-  const plan = (op: string, extra: Record<string, unknown>) => [{
+  const plan = (_op: string, extra: Record<string, unknown>) => [{
     group: 'shell/zellij',
     name: 'zellij',
     paths: [{ id: 'shell/zellij|pacman', manager: 'pacman', names: ['zellij'] }],

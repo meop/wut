@@ -4,6 +4,7 @@ import { type Env } from '@meop/shire/env'
 import { joinVal } from '@meop/shire/reg'
 import { Fmt } from '@meop/shire/serde'
 import type { Sh } from '@meop/shire/sh'
+import { normalize } from '@std/path/posix'
 
 import { getCfgFileLoad, localCfgPaths } from '../cfg.ts'
 import { getFilePaths, isDirPath } from '../fs.ts'
@@ -27,13 +28,44 @@ export class FileCmd extends CmdBase implements Cmd {
   }
 }
 
-type Sync = Record<string, {
+export type FileConfig = Record<string, {
+  shared?: boolean
+  requires?: Array<string>
   maps?: Array<{
     in: string
     out: Record<string, string>
     permission?: AclPerm
   }>
 }>
+
+type Sync = FileConfig
+
+export function fileDependencies(content: FileConfig, key: string, dependencies = true): Array<string> {
+  const found = new Set<string>()
+  const visiting = new Set<string>()
+  const visit = (name: string) => {
+    if (visiting.has(name)) {
+      throw new Error(`file dependency cycle: ${[...visiting, name].join(' -> ')}`)
+    }
+    if (found.has(name)) {
+      return
+    }
+    const entry = content[name]
+    if (!entry) {
+      throw new Error(`unknown file dependency: ${name}`)
+    }
+    visiting.add(name)
+    if (dependencies) {
+      for (const dependency of entry.requires ?? []) {
+        visit(dependency)
+      }
+    }
+    visiting.delete(name)
+    found.add(name)
+  }
+  visit(key)
+  return [...found]
+}
 
 const FILE_KEY = 'file'
 
@@ -53,7 +85,7 @@ const shellEnvKey = (parts: Array<string>) => parts.join('_').toUpperCase()
 // own key, so a pack writes its files exactly as `file sync <key>` would
 export type FilePlan = { pairs: Array<string>; dirs: Array<string>; perms: Array<string> }
 
-async function keyPlan(shell: Sh, context: Ctx, key: string, entry: Sync[string]): Promise<FilePlan> {
+async function keyPlan(shell: Sh, context: Ctx, key: string, entry: Sync[string], owner = key): Promise<FilePlan> {
   const sysOsPlat = context.sys_os_plat ?? ''
   const plan: FilePlan = { pairs: [], dirs: [], perms: [] }
   for (const map of entry?.maps ?? []) {
@@ -68,23 +100,27 @@ async function keyPlan(shell: Sh, context: Ctx, key: string, entry: Sync[string]
     }
     if (await isDirPath(localEntryPaths[0])) {
       for (const localEntryPath of localEntryPaths) {
-        const dir = joinVal(key, map_out[sysOsPlat])
+        const dir = joinVal(owner, map_out[sysOsPlat])
         if (!plan.dirs.includes(dir)) {
           plan.dirs.push(dir)
         }
         for (const filePath of await getFilePaths(localEntryPath)) {
           const filePathParts = toRelParts(localEntryPath, filePath, false)
           plan.pairs.push(
-            joinVal(key, [key, map_in, ...filePathParts].join('/'), [map_out[sysOsPlat], ...filePathParts].join('/')),
+            joinVal(
+              owner,
+              normalize([key, map_in, ...filePathParts].join('/')),
+              [map_out[sysOsPlat], ...filePathParts].join('/'),
+            ),
           )
         }
       }
     } else {
-      plan.pairs.push(joinVal(key, [key, map_in].join('/'), map_out[sysOsPlat]))
+      plan.pairs.push(joinVal(owner, normalize([key, map_in].join('/')), map_out[sysOsPlat]))
     }
     if (map.permission) {
       for (const permCmd of getPlatAclPermCmds(sysOsPlat, map_out[sysOsPlat], map.permission, context.sys_user ?? '')) {
-        plan.perms.push(joinVal(key, execNativeShell(shell, sysOsPlat, permCmd)))
+        plan.perms.push(joinVal(owner, execNativeShell(shell, sysOsPlat, permCmd)))
       }
     }
   }
@@ -100,12 +136,29 @@ async function loadSync(): Promise<Sync> {
 }
 
 // a pack group's own files: the file.yaml key of the group's own name, when it has files on this platform
-export async function ownFilePlan(shell: Sh, context: Ctx, key: string): Promise<FilePlan | null> {
-  const entry = (await loadSync())[key]
-  if (!entry) {
+export async function resolveFilePlan(
+  shell: Sh,
+  context: Ctx,
+  content: FileConfig,
+  key: string,
+  dependencies = true,
+): Promise<FilePlan> {
+  const plan: FilePlan = { pairs: [], dirs: [], perms: [] }
+  for (const name of fileDependencies(content, key, dependencies)) {
+    const one = await keyPlan(shell, context, name, content[name], key)
+    for (const field of ['pairs', 'dirs', 'perms'] as const) {
+      plan[field].push(...one[field].filter((value) => !plan[field].includes(value)))
+    }
+  }
+  return plan
+}
+
+export async function ownFilePlan(shell: Sh, context: Ctx, key: string, dependencies = true): Promise<FilePlan | null> {
+  const content = await loadSync()
+  if (!content[key]) {
     return null
   }
-  const plan = await keyPlan(shell, context, key, entry)
+  const plan = await resolveFilePlan(shell, context, content, key, dependencies)
   return plan.pairs.length ? plan : null
 }
 
@@ -128,17 +181,17 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   const validKeys: Array<string> = []
   for (
     const key of Object.keys(content).filter((k) =>
-      !filters.length ||
-      filters.every((f) => {
-        // a key is the one name a tool goes by. the acting ops take it whole; find, list and outdated read, so they
-        // take the start of a word, and look further, into the paths the tool's files come from
-        return op === 'find' || op === 'list' || op === 'outdated'
-          ? wordStartsWith(k, f) || content[k]?.maps?.some((m) => wordStartsWith(m.in, f))
-          : sameName(k, f)
-      })
+      (!content[k].shared || filters.length > 0) && (!filters.length ||
+        filters.every((f) => {
+          // a key is the one name a tool goes by. the acting ops take it whole; find, list and outdated read, so they
+          // take the start of a word, and look further, into the paths the tool's files come from
+          return op === 'find' || op === 'list' || op === 'outdated'
+            ? wordStartsWith(k, f) || content[k]?.maps?.some((m) => wordStartsWith(m.in, f))
+            : sameName(k, f)
+        }))
     )
   ) {
-    if (sysOsPlat && content[key]?.maps?.find((p) => sysOsPlat in p.out)) {
+    if (sysOsPlat && (await resolveFilePlan(shell, context, content, key, op !== 'remove')).pairs.length) {
       validKeys.push(key)
     }
   }
@@ -156,12 +209,19 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
     .with(await _shell.fileLoad(['lock'], import.meta.resolve, ['..']))
     .with(await loadFileFns(_shell))
 
+  const sharedKeys = validKeys.filter((key) => content[key].shared)
+  if (sharedKeys.length) {
+    _shell = _shell.with(_shell.varSetArr(['file', 'shared', 'keys'], sharedKeys))
+  }
+
   if (op === 'find') {
     _shell = _shell.with(
       _shell.varSetArr(
         FILE_OP_KEYS_KEY(op),
         validKeys.map((x) => {
-          const inPart = (content[x].maps ?? []).map((m) => withCtx(m.in, context)).join(', ')
+          const inPart = fileDependencies(content, x).flatMap((name) =>
+            (content[name].maps ?? []).map((m) => withCtx(m.in, context))
+          ).join(', ')
           return inPart ? `${x}|${inPart}` : x
         }).toSorted(),
       ),
@@ -169,7 +229,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
   } else {
     const plan: FilePlan = { pairs: [], dirs: [], perms: [] }
     for (const key of validKeys) {
-      const one = await keyPlan(_shell, context, key, content[key])
+      const one = await resolveFilePlan(_shell, context, content, key, op !== 'remove')
       plan.pairs.push(...one.pairs)
       plan.dirs.push(...one.dirs)
       plan.perms.push(...one.perms)

@@ -6,8 +6,9 @@ How `file` maps config into place. The `file.yaml` shape — `maps`, `permission
 ## A key is its own bin check
 
 A `file.yaml` key is the tool's name and the binary `fileBinHere` looks for: `zed` is present if `zed` is on PATH, so a
-config for something not installed is skipped rather than written. A key has no other names — one that needs to answer
-to a second binary is a second key.
+config for something not installed is skipped rather than written. A normal key has no other names — one that needs to
+answer to a second binary is a second key. `shared: true` instead declares reusable files without a tool binary; shared
+groups are reached by `requires`, or selected explicitly, rather than automatically offered as installed tools.
 
 The key travels to the client as `zed|settings.json` — the name to check on the left, the `in` paths on the right — and
 is what `find` prints as a heading.
@@ -54,3 +55,17 @@ A `file.yaml` key named for a pack group is that pack's own, the way a script di
 install and before `setup`, writes it again on a sync before the `sync` script, and removes it after `teardown`, through
 the same functions, so a pack writes a tool's files exactly as `wut f s <key>` would
 ([PACK.md](PACK.md#a-groups-own-files)).
+
+## Shared file dependencies
+
+A tool can declare `requires: [agent-skills]`, referring to another file.yaml key. Dependencies expand recursively
+before its own maps, once per prerequisite even through a diamond. Unknown keys and cycles fail on the server. Sources
+stay relative to their defining key; selecting a consumer does not change where its dependencies come from.
+
+Selection stays with the installed consumer: picking either tool includes the shared files. Picking both still fetches,
+compares, writes, cleans shared directories and applies identical permission commands only once in that run. The same
+runtime helpers cover `file sync`/`outdated` and pack's add/sync, so package installation does not require a separate
+shared-file sync. Different sources claiming the same destination are an error rather than silently skipping one.
+
+Removing a consumer removes its own maps only; it does not cascade through `requires`. Remove an unused shared group by
+its explicit key when desired. Declaring a dependency on another tool's file key does not install that tool's package.

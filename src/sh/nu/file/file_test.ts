@@ -173,3 +173,87 @@ Deno.test('nu / file / list shows the files in place', async () => {
     },
   )
 })
+
+Deno.test('nu / file / two selected consumers fetch, clean and chmod shared files once', async () => {
+  await withFiles(
+    SOURCES,
+    lived,
+    () => [
+      `$env.FILE_OP = 'sync'`,
+      `$env.FILE_SYNC_PATH_PAIRS = ['ssh|claude/skills/hosts/SKILL.md|{HOME}/c/hosts/SKILL.md' 'zellij|claude/skills/hosts/SKILL.md|{HOME}/c/hosts/SKILL.md']`,
+      `$env.FILE_SYNC_DIRS = ['ssh|{HOME}/c/hosts' 'zellij|{HOME}/c/hosts']`,
+      `$env.FILE_SYNC_PATH_PERMS = ['ssh|print shared-permission' 'zellij|print shared-permission']`,
+    ],
+    async (out, home) => {
+      assertEquals(out.split('/file/claude/skills/hosts/SKILL.md').length - 1, 1, out)
+      assertEquals(out.split('\n').filter((line) => line === 'shared-permission').length, 1, out)
+      assertEquals(out.split('gone.md').length - 1, 1, out)
+      assertEquals(await Deno.readTextFile(`${home}/c/hosts/SKILL.md`), 'hosts\n')
+      assertEquals(await gone(`${home}/c/hosts/gone.md`), true)
+    },
+  )
+})
+
+Deno.test('nu / file / shared files sync when only the second consumer is picked', async () => {
+  await withFiles(
+    SOURCES,
+    lived,
+    () => [
+      `$env.FILE_OP = 'sync'`,
+      `$env.FILE_SYNC_TOOLS = ['zellij']`,
+      `$env.FILE_SYNC_PATH_PAIRS = ['ssh|claude/skills/hosts/SKILL.md|{HOME}/c/hosts/SKILL.md' 'zellij|claude/skills/hosts/SKILL.md|{HOME}/c/hosts/SKILL.md']`,
+    ],
+    async (out, home) => {
+      assertEquals(out.split('/file/claude/skills/hosts/SKILL.md').length - 1, 1, out)
+      assertEquals(await Deno.readTextFile(`${home}/c/hosts/SKILL.md`), 'hosts\n')
+    },
+  )
+})
+
+Deno.test('nu / file / explicitly selected shared groups need no binary', async () => {
+  await withFiles(
+    SOURCES,
+    async () => {},
+    () => [
+      `$env.FILE_OP = 'sync'`,
+      `$env.FILE_SHARED_KEYS = ['shared']`,
+      `$env.FILE_SYNC_PATH_PAIRS = ['shared|ssh/config|{HOME}/shared/config']`,
+    ],
+    async (_out, home) => {
+      assertEquals(await Deno.readTextFile(`${home}/shared/config`), 'Host *\n')
+    },
+  )
+})
+
+Deno.test('nu / file / pack-style calls share completed operations without FILE_OP', async () => {
+  await withFiles(
+    SOURCES,
+    async () => {},
+    () => [
+      `let pairs = ['ssh|ssh/config|{HOME}/shared/config' 'zellij|ssh/config|{HOME}/shared/config']`,
+      `fileSyncTool 'ssh' $pairs [] []`,
+      `fileSyncTool 'zellij' $pairs [] []`,
+      `$env.FILE_OP = 'find'`,
+    ],
+    async (out, home) => {
+      assertEquals(out.split('/file/ssh/config').length - 1, 1, out)
+      assertEquals(await Deno.readTextFile(`${home}/shared/config`), 'Host *\n')
+    },
+  )
+})
+
+Deno.test('nu / file / outdated checks shared files only once', async () => {
+  await withFiles(
+    SOURCES,
+    async () => {},
+    () => [
+      `$env.FILE_OP = 'outdated'`,
+      `$env.FILE_OUTDATED_PATH_PAIRS = ['ssh|ssh/config|{HOME}/shared/config' 'zellij|ssh/config|{HOME}/shared/config']`,
+    ],
+    async (out, home) => {
+      assertEquals(out.split('/file/ssh/config').length - 1, 1, out)
+      assertEquals(out.split('new:').length - 1, 1, out)
+      assertEquals(await gone(`${home}/shared/config`), true)
+    },
+  )
+})

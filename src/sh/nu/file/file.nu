@@ -11,7 +11,7 @@ def replaceEnv [line] {
 
 # a tool's key is the bin to look for: a config for something not installed is skipped rather than written
 def fileBinHere [tool: string] {
-  which $tool | is-not-empty
+  ($tool in ($env.FILE_SHARED_KEYS? | default [])) or (which $tool | is-not-empty)
 }
 
 # one field of a plan entry, which is the key and then its parts, joined by |
@@ -70,6 +70,25 @@ def fileFetch [src: string] {
   http get --raw --redirect-mode follow $srcUrl
 }
 
+def fileDone [kind: string, value: string] {
+  $"($kind)|($value)" in ($env.FILE_DONE? | default [])
+}
+
+def --env fileRemember [kind: string, value: string] {
+  $env.FILE_DONE = (($env.FILE_DONE? | default []) | append $"($kind)|($value)")
+}
+
+def --env fileClaim [src: string, dst: string] {
+  let claims = ($env.FILE_CLAIMS? | default [])
+  let old = ($claims | where { |c| (fileField $c 0) == $dst })
+  if ($old | is-not-empty) and (fileField ($old | first) 1) != $src {
+    error make {msg: $"conflicting file sources for ($dst)"}
+  }
+  if ($old | is-empty) {
+    $env.FILE_CLAIMS = ($claims | append $"($dst)|($src)")
+  }
+}
+
 # what writing a source would do to its destination: nothing, a new file, or a changed one, by their bytes
 def fileState [content, dst: string] {
   if not ($dst | path exists) {
@@ -93,12 +112,18 @@ def fileStray [tool: string, pairs: list, dirs: list] {
 
 # what a sync of one tool would change, said and not done: each file it would write, with the diff of a changed one,
 # and each it would take out
-def fileOutdatedTool [tool: string, pairs: list, dirs: list] {
+def --env fileOutdatedTool [tool: string, pairs: list, dirs: list] {
   mut pending = 0
   for p in (fileOf $pairs $tool) {
     let dst = (fileDst (fileField $p 2))
-    let content = (fileFetch (fileField $p 1))
+    let src = (fileField $p 1)
+    fileClaim $src $dst
+    if (fileDone 'outdated' $dst) {
+      continue
+    }
+    let content = (fileFetch $src)
     let state = (fileState $content $dst)
+    fileRemember 'outdated' $dst
     if $state == 'same' {
       continue
     }
@@ -112,9 +137,13 @@ def fileOutdatedTool [tool: string, pairs: list, dirs: list] {
       rm --force $tmp
     }
   }
-  for f in (fileStray $tool $pairs $dirs) {
+  let dueDirs = (fileOf $dirs $tool | where { |d| not (fileDone 'outdated-dir' (fileDst (fileField $d 1))) })
+  for f in (fileStray $tool $pairs $dueDirs) {
     $pending += 1
     opPrint $"  stale: ($f)"
+  }
+  for d in $dueDirs {
+    fileRemember 'outdated-dir' (fileDst (fileField $d 1))
   }
   if $pending == 0 {
     opPrintInfo $"($tool): up to date"
@@ -128,10 +157,16 @@ def --env fileSyncTool [tool: string, pairs: list, dirs: list, perms: list] {
   mut same = 0
   for p in (fileOf $pairs $tool) {
     let dst = (fileDst (fileField $p 2))
-    let content = (fileFetch (fileField $p 1))
+    let src = (fileField $p 1)
+    fileClaim $src $dst
+    if (fileDone 'sync' $dst) {
+      continue
+    }
+    let content = (fileFetch $src)
     let state = (fileState $content $dst)
     if $state == 'same' {
       $same += 1
+      fileRemember 'sync' $dst
       continue
     }
     let parent = ($dst | path dirname)
@@ -142,15 +177,24 @@ def --env fileSyncTool [tool: string, pairs: list, dirs: list, perms: list] {
     if 'DRYRUN' not-in $env {
       $content | save --force --raw $dst
     }
+    fileRemember 'sync' $dst
     $wrote = true
   }
-  for f in (fileStray $tool $pairs $dirs) {
+  let dueDirs = (fileOf $dirs $tool | where { |d| not (fileDone 'sync-dir' (fileDst (fileField $d 1))) })
+  for f in (fileStray $tool $pairs $dueDirs) {
     opPrintMaybeRunCmd rm --force --permanent $"r#'($f)'#"
     $wrote = true
   }
+  for d in $dueDirs {
+    fileRemember 'sync-dir' (fileDst (fileField $d 1))
+  }
   if $wrote {
     for perm in (fileOf $perms $tool) {
-      opPrintMaybeRunCmd ...(replaceEnv (fileField $perm 1) | split row ' ')
+      let cmd = (replaceEnv (fileField $perm 1))
+      if not (fileDone 'sync-perm' $cmd) {
+        opPrintMaybeRunCmd ...($cmd | split row ' ')
+        fileRemember 'sync-perm' $cmd
+      }
     }
   }
   if $same > 0 {
@@ -178,7 +222,7 @@ def fileToolChosen [toolsKey: string, tool: string] {
   ($chosen | is-empty) or ($tool in $chosen)
 }
 
-def file [] {
+def --env file [] {
   let op = $env.FILE_OP
   let key = ($op | str uppercase)
   let pairs = ($env | get -o $"FILE_($key)_PATH_PAIRS" | default [])

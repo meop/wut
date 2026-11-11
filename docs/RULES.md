@@ -7,8 +7,14 @@
 **Entry Fields:**
 
 - `maps` - Array of file/directory mappings from config to local filesystem
+- `requires` - Other file keys whose mappings are needed first; recursive, with cycles/missing keys rejected
+- `shared` - `true` for a reusable file group without a binary gate; reached through dependencies, or selected
+  explicitly
 
-The key is the entry's only name, and the binary looked for on the client before anything is written.
+A normal key is the entry's only name and binary gate. Shared groups are omitted from unfiltered tool selection; an
+explicitly selected shared group needs no binary. A selected installed tool carries its dependency files with it,
+including when installed/synced through pack. Removal takes only the selected tool's own maps, leaving dependencies for
+other consumers. Shared groups can be removed explicitly.
 
 **Map Properties:**
 
@@ -31,6 +37,18 @@ The key is the entry's only name, and the binary looked for on the client before
 **Examples:**
 
 ```yaml
+# Reusable files, independently required by two installed tools
+agent-skills:
+  shared: true
+  maps:
+    - in: hosts
+      out:
+        linux: '{HOME}/.agents/skills/hosts'
+codex:
+  requires: [agent-skills]
+zcode:
+  requires: [agent-skills]
+
 # Simple file mapping
 docker:
   maps:
