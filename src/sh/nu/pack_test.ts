@@ -1159,7 +1159,7 @@ Deno.test('nu / pack / a manager updates itself right before its own sync', asyn
   assertEquals(order(alone), ['ran script ghpm/sync', 'ran ghpm'])
 })
 
-// goup's group provides go, so its own sync runs in the go row, before goup refreshes and moves its go and the tools
+// goup's group provides go, so its own sync runs in the go row, before goup pulls and moves its go and the tools
 // rebuild
 Deno.test("nu / pack / goup's own sync runs in go's row, before go syncs", async () => {
   const scripts = [syncScript('lang/goup', 'goup/sync', { paths: ['~/.goup/bin/goup'] }, ['go'])]
@@ -1181,9 +1181,9 @@ Deno.test("nu / pack / goup's own sync runs in go's row, before go syncs", async
     return
   }
   assertEquals(out.includes(') script'), false)
-  const order = out.split('\n').filter((l) => /ran script|goup (refresh|update)/.test(l))
+  const order = out.split('\n').filter((l) => /ran script|goup (pull|sync)/.test(l))
     .map((l) => l.startsWith('ran ') ? l : l.split('/').pop())
-  assertEquals(order, ['ran script goup/sync', 'try { goup refresh }', 'goup update'], out)
+  assertEquals(order, ['ran script goup/sync', 'try { goup pull }', 'goup sync'], out)
 })
 
 // dotnetup's group provides dotnet, so its own sync runs in the dotnet row, before dotnetup moves its SDKs and the tools
@@ -1491,19 +1491,19 @@ esac`
     return
   }
   const lines = managed.split('\n')
-  const refresh = lines.findIndex((l) => l.includes('goup refresh'))
-  const goup = lines.findIndex((l) => l.endsWith('goup update'))
+  const pull = lines.findIndex((l) => l.includes('goup pull'))
+  const goup = lines.findIndex((l) => l.endsWith('goup sync'))
   const tools = lines.findIndex((l) => l.includes('go install golang.org/x/tools/gopls@latest'))
   // the wedge it stamps the new go's shims with is the latest
-  assertEquals(refresh > -1, true)
-  assertEquals(refresh < goup, true)
+  assertEquals(pull > -1, true)
+  assertEquals(pull < goup, true)
   assertEquals(goup > -1, true)
   assertEquals(tools > -1, true)
   assertEquals(goup < tools, true)
-  assertEquals((await run({ go }, []))!.includes('goup update'), false)
+  assertEquals((await run({ go }, []))!.includes('goup sync'), false)
   // a goup on PATH is not behind a go it did not put down
-  assertEquals((await run({ go, goup: '' }, []))!.includes('goup update'), false)
-  assertEquals((await run({ '~/.goup/bin/go': go, goup: '' }, ['gopls']))!.includes('goup update'), false)
+  assertEquals((await run({ go, goup: '' }, []))!.includes('goup sync'), false)
+  assertEquals((await run({ '~/.goup/bin/go': go, goup: '' }, ['gopls']))!.includes('goup sync'), false)
 })
 
 // goup keeps its downloaded archives until its own tidy runs, so a go tidy asks it first, only where goup is

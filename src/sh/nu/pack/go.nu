@@ -68,7 +68,7 @@ def --env packGoupUpdate [] {
   let goup = (which goup | get -o 0.path)
   if $goup != null and (packGoOwned) {
     packRefresh 'goup'
-    packSelfUpdate 'goup' $goup [update]
+    packSelfUpdate 'goup' $goup [sync]
   }
 }
 

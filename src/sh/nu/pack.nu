@@ -472,7 +472,7 @@ def --env packRefresh [manager: string] {
   $env.PACK_REFRESHED = ($done | append $key)
   match $manager {
     ghpm => { packOp [ghpm pull] },
-    goup => { packOp [goup refresh] },
+    goup => { packOp [goup pull] },
     apk => { packOp [(packElevate 'apk') update] },
     apt => { packOp [(packElevate 'apt') update] },
     brew => { packOp [brew update] },

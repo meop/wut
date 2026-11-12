@@ -503,7 +503,7 @@ leaves the toolchains alone.
   `dotnetup update`, before `dotnet tool update --global --all`. A distro's dotnet is that distro's to move. dotnet has
   no listing of outdated tools, so it is not offered for `outdated`.
 - **goup** is to go what rustup is to cargo — its own tool, managing toolchains rather than packages, with no row of its
-  own: the go row that is goup's copy — the one in `~/.goup/bin` — runs `goup refresh` and `goup update` first on a bare
+  own: the go row that is goup's copy — the one in `~/.goup/bin` — runs `goup pull` and `goup sync` first on a bare
   sync, best effort like a self update, so its one go moves to the newest release its channel allows before the tools
   rebuild. A distro's go beside goup's is the system's install, and is left to the distro; one alone is the go row, with
   no goup behind it, and the distro moves it. goup keeps every archive it downloaded until its own tidy, as ghpm does,
