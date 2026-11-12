@@ -214,7 +214,7 @@ The server emits the plan as data (`PACK_PLAN`) and the bodies behind ids in a g
 code and the plan stays data. The client picks each group's winner and resolves loose names with an exact per-manager
 check — `packExists` when adding, `packInstalled` when removing. Refreshes run before add's checks so the answers are
 current, once a run for each manager, so the install that follows does not refresh again; remove refreshes nothing,
-since a remote index has no bearing on what is already here. ghpm's pull also moves its own gh and wedge to their
+since a remote index has no bearing on what is already here. ghpm's pull also moves its own wedge to its
 latest, so it runs before a sync too, after ghpm has updated itself. `find`'s remaining names resolve the way add's do,
 every manager asked (`packClaimsAll`), just after its own gate rather than add's, and each is listed under every manager
 that has it. They answer to a `?` row so they can be taken or left like any manager.
@@ -368,7 +368,7 @@ way it answers for every manager.
 ## Pull and renew
 
 `pull` is a manager's refresh asked for by itself: apt's and dnf's indexes, brew's and pacman's databases, ghpm's repo
-sources and its own gh and wedge, goup's tools for a go that is goup's. It has the plain manager table, like `tidy`,
+sources and its own wedge, goup's tools for a go that is goup's. It has the plain manager table, like `tidy`,
 offering only the managers with something to pull. The refreshes add, info, outdated, renew and sync run first are the
 same ones, so a pull just before one of them makes that run's refresh a no op.
 

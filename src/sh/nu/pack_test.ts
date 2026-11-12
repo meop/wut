@@ -457,7 +457,7 @@ Deno.test('nu / pack / a named sync only runs the managers that hold the name', 
   assertEquals(held.includes('1) ghpm'), true)
   assertEquals(held.includes('uv)'), false)
   assertEquals(held.includes('ghpm sync nu'), true)
-  // its refresh brings its own gh and wedge up to date before it syncs with them
+  // its refresh brings its own wedge up to date before it syncs with it
   assertEquals(held.indexOf('ghpm pull') > -1 && held.indexOf('ghpm pull') < held.indexOf('ghpm sync nu'), true)
   assertEquals(held.includes('uv tool upgrade'), false)
 
