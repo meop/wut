@@ -1163,18 +1163,8 @@ def --env packPlanRun [] {
     opPrint $m
     for d in ($planned | where manager == $m) {
       opPrint $"  ($d.group)"
-      opPrint $"    ($d.names | str join ', ')"
-      if ($d.pre | is-not-empty) {
-        opPrint $"    first: ($d.pre | each { |s| $s.id } | str join ', ')"
-      }
-      if $d.files != null {
-        opPrint $"    files: ($d.files.pairs | each { |p| fileField $p 2 | path basename } | uniq | str join ', ')"
-      }
-      if $d.waits {
-        opPrint $"    after: ($d.after)"
-      }
-      if ($d.post | is-not-empty) {
-        opPrint $"    then: ($d.post | each { |s| $s.id } | str join ', ')"
+      for step in (packPlanSteps $d) {
+        opPrint $"    ($step)"
       }
     }
     let own = ($looseFor | get -o $m | default [])
@@ -1312,6 +1302,33 @@ def --env packPlanRun [] {
     }
   }
   packReport
+}
+
+# a planned group's steps, in the order the run takes them
+def packPlanSteps [d: record] {
+  let verb = match $env.PACK_OP { add => 'install', remove => 'remove', renew => 'reinstall', _ => $env.PACK_OP }
+  # a group its own script installs names that script, which runs like any other
+  let names = if $d.manager == 'script' { $"run (packScriptsShown $d.names $d.group)" } else { $"($verb) ($d.names | str join ', ')" }
+  let files = if $d.files != null and $env.PACK_OP in ['add', 'sync', 'remove'] {
+    let shown = ($d.files.pairs | each { |p| fileField $p 2 | path basename } | uniq | str join ', ')
+    [(if $env.PACK_OP == 'remove' { $"remove ($shown)" } else { $"write ($shown)" })]
+  } else { [] }
+  let scripts = { |list| if ($list | is-empty) { [] } else { [$"run (packScriptsShown ($list | get id) $d.group)"] } }
+  let wait = if $d.waits { [$"after ($d.after)"] } else { [] }
+  if $env.PACK_OP == 'remove' {
+    (do $scripts $d.pre) ++ $files ++ [$names] ++ (do $scripts $d.post)
+  } else {
+    $wait ++ (do $scripts $d.pre) ++ [$names] ++ $files ++ (do $scripts $d.post)
+  }
+}
+
+# a script of the group's own tool shows by its action alone; another tool's keeps its tool/action
+def packScriptsShown [ids: list<string>, group: string] {
+  let own = ($group | split row '/' | last)
+  $ids | each { |id|
+    let parts = ($id | split row '/')
+    if ($parts | length) == 2 and ($parts | first) == $own { $parts | last } else { $id }
+  } | str join ', '
 }
 
 # a group's own files, written or taken out the way `file sync` and `file remove` do. a write needs the tool here,
