@@ -1164,7 +1164,7 @@ def --env packPlanRun [] {
     for d in ($planned | where manager == $m) {
       opPrint $"  ($d.group)"
       for step in (packPlanSteps $d) {
-        opPrint $"    ($step)"
+        opPrint $"    - ($step)"
       }
     }
     let own = ($looseFor | get -o $m | default [])

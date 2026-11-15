@@ -965,12 +965,12 @@ Deno.test('nu / pack / post scripts run after the installs that succeeded, once 
   // every install first, then each post script once, in the order the groups named them
   assertEquals(ran, ['rustup|pacman', 'docker|pacman', 'rustup/setup', 'cargo/setup'])
   // the group that failed to install has nothing run after it, though the plan listed it
-  assertEquals(out.includes('run podman/setup'), true)
+  assertEquals(out.includes('- run podman/setup'), true)
   assertEquals(ran.includes('podman/setup'), false)
   // docker is nowhere, even after the refresh, so its post script says so rather than running
   assertEquals(out.includes('docker/setup skipped: docker not found'), true)
   // a script of the group's own tool shows by its action; another tool's keeps its tool
-  assertEquals(out.includes('run setup, cargo/setup'), true)
+  assertEquals(out.includes('- run setup, cargo/setup'), true)
 })
 
 // the mirror: pre scripts run before any removal, while the commands they undo are still there
@@ -1006,7 +1006,7 @@ Deno.test('nu / pack / pre scripts run before the removals, once each', async ()
   assertEquals(ran, ['docker/teardown', 'docker|pacman', 'podman|pacman'])
   // podman is already gone from this PATH, so there is nothing for its teardown to act on
   assertEquals(out.includes('podman/teardown skipped: podman not found'), true)
-  assertEquals(out.includes('run teardown, docker/teardown'), true)
+  assertEquals(out.includes('- run teardown, docker/teardown'), true)
 })
 
 // a folder brings its groups along — `go` is lang/go and everything under lang/go/ — so each group is a row of its
@@ -1904,7 +1904,7 @@ Deno.test('nu / pack / a group waits for the group that puts its manager down', 
     return
   }
   // the summary says what it waits for; the row is still one group under the manager it will run through
-  assertEquals(out.includes('pnpm\n  lang/node/node-gyp\n    after lang/node\n    install node-gyp\n'), true)
+  assertEquals(out.includes('pnpm\n  lang/node/node-gyp\n    - after lang/node\n    - install node-gyp\n'), true)
   assertEquals(out.includes('2) pnpm lang/node/node-gyp'), true)
   // pnpm, then its setup, then what pnpm serves
   assertEquals(ranOf(out), ['lang/node|ghpm', 'pnpm/setup', 'lang/node/node-gyp|pnpm'])
@@ -2683,11 +2683,11 @@ Deno.test('nu / pack / a group writes its own files between its install and its 
     return
   }
   assertEquals(ranLines(add), ['shell/zellij|pacman', 'files zellij', 'zellij/setup'], add)
-  assertStringIncludes(add, '  shell/zellij\n    install zellij\n    write config\n    run setup\n')
+  assertStringIncludes(add, '  shell/zellij\n    - install zellij\n    - write config\n    - run setup\n')
   const remove = (await run('remove', plan('remove', { pre: [{ id: 'zellij/teardown', cmds: [] }] })))!
   assertEquals(ranLines(remove), ['zellij/teardown', 'unfiles zellij', 'shell/zellij|pacman'], remove)
   // the listing is the steps in the order the run takes them
-  assertStringIncludes(remove, '  shell/zellij\n    run teardown\n    remove config\n    remove zellij\n')
+  assertStringIncludes(remove, '  shell/zellij\n    - run teardown\n    - remove config\n    - remove zellij\n')
   const sync = (await run('sync', [{
     ...plan('sync', {})[0],
     paths: [
@@ -2701,7 +2701,7 @@ Deno.test('nu / pack / a group writes its own files between its install and its 
     ],
   }]))!
   assertEquals(ranLines(sync), ['shell/zellij|pacman', 'files zellij', 'shell/zellij|script'], sync)
-  assertStringIncludes(sync, 'script\n  shell/zellij\n    run sync\n')
+  assertStringIncludes(sync, 'script\n  shell/zellij\n    - run sync\n')
 })
 
 // a bare sync writes again the files of every group whose tool is here, as a row after the managers and before the
