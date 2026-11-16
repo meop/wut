@@ -34,6 +34,7 @@ export type FileConfig = Record<string, {
   shared?: boolean
   requires?: Array<string>
   maps?: Array<{
+    gate?: Record<string, Array<string>>
     in: string
     out: Record<string, string>
     permission?: AclPerm
@@ -102,6 +103,9 @@ async function keyPlan(shell: Sh, context: Ctx, key: string, entry: Sync[string]
     return plan
   }
   for (const map of entry?.maps ?? []) {
+    if (!evaluateGate(map.gate, context)) {
+      continue
+    }
     const map_in = withCtx(map.in, context)
     const map_out = map.out
     if (!(sysOsPlat in map_out)) {
@@ -199,7 +203,8 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
           // a key is the one name a tool goes by. the acting ops take it whole; find, list and outdated read, so they
           // take the start of a word, and look further, into the paths the tool's files come from
           return op === 'find' || op === 'list' || op === 'outdated'
-            ? wordStartsWith(k, f) || content[k]?.maps?.some((m) => wordStartsWith(m.in, f))
+            ? wordStartsWith(k, f) ||
+              content[k]?.maps?.some((m) => evaluateGate(m.gate, context) && wordStartsWith(m.in, f))
             : sameName(k, f)
         }))
     )
@@ -233,7 +238,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
         FILE_OP_KEYS_KEY(op),
         validKeys.map((x) => {
           const inPart = fileDependencies(content, x, true, context).flatMap((name) =>
-            (content[name].maps ?? []).map((m) => withCtx(m.in, context))
+            (content[name].maps ?? []).filter((m) => evaluateGate(m.gate, context)).map((m) => withCtx(m.in, context))
           ).join(', ')
           return inPart ? `${x}|${inPart}` : x
         }).toSorted(),

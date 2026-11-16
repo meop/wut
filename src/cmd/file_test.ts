@@ -58,3 +58,35 @@ Deno.test('a gated dependency also excludes its prerequisites', async () => {
   assertEquals(fileDependencies(gated, 'left', true, context), [])
   assertEquals(fileDependencies(gated, 'consumer', true, context), ['shared', 'right', 'consumer'])
 })
+
+Deno.test('map host gates exclude private files, directory cleanup and permissions while retaining generic files', async () => {
+  const gated = structuredClone(content)
+  gated.shared.maps = [
+    { in: '../git/gitconfig', out: { linux: '{HOME}/generic' } },
+    {
+      gate: { sys_host: ['stone', 'metal'] },
+      in: '../git',
+      out: { linux: '{HOME}/private' },
+      permission: { user: { read: true, write: true } },
+    },
+  ]
+  const context = { req_orig: 'http://x', req_path: '/', req_srch: '', sys_os_plat: 'linux' }
+  for (const key of ['shared', 'consumer']) {
+    for (const sys_host of [undefined, 'work', 'stone-work']) {
+      assertEquals(await resolveFilePlan(new NuSh(), { ...context, sys_host }, gated, key), {
+        pairs: [`${key}|git/gitconfig|{HOME}/generic`],
+        dirs: [],
+        perms: [],
+      })
+    }
+    for (const sys_host of ['stone', 'metal']) {
+      const plan = await resolveFilePlan(new NuSh(), { ...context, sys_host }, gated, key)
+      assertEquals(plan.pairs, [
+        `${key}|git/gitconfig|{HOME}/generic`,
+        `${key}|git/gitconfig|{HOME}/private/gitconfig`,
+      ])
+      assertEquals(plan.dirs, [`${key}|{HOME}/private`])
+      assertEquals(plan.perms.length > 0, true)
+    }
+  }
+})
