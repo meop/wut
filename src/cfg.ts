@@ -3,6 +3,7 @@ import { Fmt, parse } from '@meop/shire/serde'
 import { join } from '@std/path'
 
 import { getFileBinaryContent, getFileContent, getFilePaths, isDirPath, isPath } from './fs.ts'
+import { resolveHostGroupGates } from './host-groups.ts'
 import { type Match, partsMatch } from './match.ts'
 import { toRelParts } from './path.ts'
 import { SETTINGS } from './stng.ts'
@@ -120,8 +121,9 @@ export async function getCfgFileLoad(
   if (contentRaw == null) {
     return null
   }
-  return parse(
-    contentRaw,
-    options?.extension as Fmt ?? Fmt.yaml,
-  )
+  const content = parse(contentRaw, options?.extension as Fmt ?? Fmt.yaml)
+  return await resolveHostGroupGates(content, async () => {
+    const raw = await getCfgFileContent(['host'], { extension: Fmt.yaml })
+    return raw == null ? null : parse(raw, Fmt.yaml)
+  })
 }

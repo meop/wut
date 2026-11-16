@@ -1,5 +1,20 @@
 # Rules
 
+## Host groups
+
+Define named host lists once in `host.yaml`:
+
+```yaml
+dev: [stone, glass, metal, acrylic, felt, ceramic]
+```
+
+Use `sys_host_group: [dev]` wherever a gate accepts `sys_host`: file groups, individual maps, scripts, or pack manager
+gates. The server resolves group names from the current config on each request and checks the client's reported
+hostname. Multiple groups combine their host lists; an additional `sys_host` gate narrows the result. Unknown groups and
+malformed definitions are configuration errors. An empty group matches no host.
+
+Groups select configuration for trusted clients; they do not authenticate machines.
+
 ## file.yaml Structure
 
 `file.yaml` defines mapping entries organized by tool/application name. Each entry supports:
