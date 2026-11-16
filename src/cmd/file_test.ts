@@ -29,3 +29,32 @@ Deno.test('dependency files belong to selected consumer and keep canonical sourc
     perms: [],
   })
 })
+
+Deno.test('file host gates apply to direct, dependency and pack plans', async () => {
+  const gated: FileConfig = {
+    ...structuredClone(content),
+    consumer: { ...content.consumer, gate: { sys_host: ['stone', 'metal'] } },
+  }
+  const context = { req_orig: 'http://x', req_path: '/', req_srch: '', sys_os_plat: 'linux' }
+  const empty = { pairs: [], dirs: [], perms: [] }
+  for (const sys_host of [undefined, 'work', 'stone-work']) {
+    assertEquals(await resolveFilePlan(new NuSh(), { ...context, sys_host }, gated, 'consumer'), empty)
+    assertEquals(await resolveFilePlan(new NuSh(), { ...context, sys_host }, gated, 'consumer', false), empty)
+  }
+  for (const sys_host of ['stone', 'metal']) {
+    assertEquals((await resolveFilePlan(new NuSh(), { ...context, sys_host }, gated, 'consumer')).pairs, [
+      'consumer|git/gitconfig|{HOME}/shared',
+    ])
+  }
+  gated.shared.gate = { sys_host: ['glass'] }
+  assertEquals(await resolveFilePlan(new NuSh(), { ...context, sys_host: 'stone' }, gated, 'consumer'), empty)
+  assertEquals(await resolveFilePlan(new NuSh(), { ...context, sys_host: 'stone' }, gated, 'shared'), empty)
+})
+
+Deno.test('a gated dependency also excludes its prerequisites', async () => {
+  const gated: FileConfig = { ...content, left: { requires: ['shared'], gate: { sys_host: ['stone'] } } }
+  const context = { req_orig: 'http://x', req_path: '/', req_srch: '', sys_os_plat: 'linux', sys_host: 'work' }
+  assertEquals(await resolveFilePlan(new NuSh(), context, gated, 'left'), { pairs: [], dirs: [], perms: [] })
+  assertEquals(fileDependencies(gated, 'left', true, context), [])
+  assertEquals(fileDependencies(gated, 'consumer', true, context), ['shared', 'right', 'consumer'])
+})

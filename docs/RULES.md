@@ -7,6 +7,8 @@
 **Entry Fields:**
 
 - `maps` - Array of file/directory mappings from config to local filesystem
+- `gate` - Server context gates, as for pack managers (for example `sys_host: [stone, metal]`); a gated-out group
+  contributes no files, including through dependencies or pack operations
 - `requires` - Other file keys whose mappings are needed first; recursive, with cycles/missing keys rejected
 - `shared` - `true` for a reusable file group without a binary gate; reached through dependencies, or selected
   explicitly

@@ -8,6 +8,7 @@ import { normalize } from '@std/path/posix'
 
 import { getCfgFileLoad, localCfgPaths } from '../cfg.ts'
 import { getFilePaths, isDirPath } from '../fs.ts'
+import { evaluateGate } from '../gate.ts'
 import { sameName, wordStartsWith } from '../match.ts'
 import { type AclPerm, getPlatAclPermCmds, toRelParts } from '../path.ts'
 import { execNativeShell, lockRun, redirectCommonShell } from '../sh.ts'
@@ -29,6 +30,7 @@ export class FileCmd extends CmdBase implements Cmd {
 }
 
 export type FileConfig = Record<string, {
+  gate?: Record<string, Array<string>>
   shared?: boolean
   requires?: Array<string>
   maps?: Array<{
@@ -40,7 +42,12 @@ export type FileConfig = Record<string, {
 
 type Sync = FileConfig
 
-export function fileDependencies(content: FileConfig, key: string, dependencies = true): Array<string> {
+export function fileDependencies(
+  content: FileConfig,
+  key: string,
+  dependencies = true,
+  context?: Ctx,
+): Array<string> {
   const found = new Set<string>()
   const visiting = new Set<string>()
   const visit = (name: string) => {
@@ -53,6 +60,9 @@ export function fileDependencies(content: FileConfig, key: string, dependencies 
     const entry = content[name]
     if (!entry) {
       throw new Error(`unknown file dependency: ${name}`)
+    }
+    if (context && !evaluateGate(entry.gate, context)) {
+      return
     }
     visiting.add(name)
     if (dependencies) {
@@ -88,6 +98,9 @@ export type FilePlan = { pairs: Array<string>; dirs: Array<string>; perms: Array
 async function keyPlan(shell: Sh, context: Ctx, key: string, entry: Sync[string], owner = key): Promise<FilePlan> {
   const sysOsPlat = context.sys_os_plat ?? ''
   const plan: FilePlan = { pairs: [], dirs: [], perms: [] }
+  if (!evaluateGate(entry?.gate, context)) {
+    return plan
+  }
   for (const map of entry?.maps ?? []) {
     const map_in = withCtx(map.in, context)
     const map_out = map.out
@@ -144,7 +157,7 @@ export async function resolveFilePlan(
   dependencies = true,
 ): Promise<FilePlan> {
   const plan: FilePlan = { pairs: [], dirs: [], perms: [] }
-  for (const name of fileDependencies(content, key, dependencies)) {
+  for (const name of fileDependencies(content, key, dependencies, context)) {
     const one = await keyPlan(shell, context, name, content[name], key)
     for (const field of ['pairs', 'dirs', 'perms'] as const) {
       plan[field].push(...one[field].filter((value) => !plan[field].includes(value)))
@@ -219,7 +232,7 @@ async function execOp(shell: Sh, context: Ctx, environment: Env, op: string) {
       _shell.varSetArr(
         FILE_OP_KEYS_KEY(op),
         validKeys.map((x) => {
-          const inPart = fileDependencies(content, x).flatMap((name) =>
+          const inPart = fileDependencies(content, x, true, context).flatMap((name) =>
             (content[name].maps ?? []).map((m) => withCtx(m.in, context))
           ).join(', ')
           return inPart ? `${x}|${inPart}` : x

@@ -6,6 +6,7 @@ import { Fmt } from '@meop/shire/serde'
 import type { Sh } from '@meop/shire/sh'
 
 import { getCfgDirDump, getCfgFileLoad } from '../cfg.ts'
+import { evaluateGate } from '../gate.ts'
 import { sameName, wordStartsWith } from '../match.ts'
 import { lockRun, redirectCommonShell } from '../sh.ts'
 import { type FilePlan, loadFileFns, ownFilePlan } from './file.ts'
@@ -125,26 +126,6 @@ export function groupOrdered(managers: Array<string>): Array<string> {
 
 export function getSupportedManagers(): Array<string> {
   return [...MANAGERS]
-}
-
-export function evaluateGate(
-  gate: Record<string, Array<string>> | null | undefined,
-  context: Ctx,
-): boolean {
-  if (!gate) {
-    return true
-  }
-  for (const [key, values] of Object.entries(gate)) {
-    const ctxVal = context[key as keyof Ctx] as string | undefined
-    if (!ctxVal) {
-      return false
-    }
-    const matches = key === 'sys_os_like' ? values.some((v) => ctxVal.includes(v)) : values.includes(ctxVal)
-    if (!matches) {
-      return false
-    }
-  }
-  return true
 }
 
 const managerAliasMap: Record<string, string> = {
@@ -1008,3 +989,5 @@ export class PackCmdTidy extends CmdBase implements Cmd {
     return await execOp(shell, context, environment, this.name)
   }
 }
+
+export { evaluateGate } from '../gate.ts'
