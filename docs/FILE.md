@@ -69,3 +69,25 @@ shared-file sync. Different sources claiming the same destination are an error r
 
 Removing a consumer removes its own maps only; it does not cascade through `requires`. Remove an unused shared group by
 its explicit key when desired. Declaring a dependency on another tool's file key does not install that tool's package.
+
+## Generated private sources
+
+An optional `generate.yaml` in the configuration directory declares sources created on demand by the server:
+
+```yaml
+example:
+  outputs:
+    - file/example/secret/password
+  command: [zsh, generate/example.zsh]
+```
+
+Before resolving a raw file or directory, wut checks generators declaring that source. If every output exists, no
+command runs. Otherwise the command runs in the configuration directory with `WUT_CFG_DIR` set to that directory.
+Requests for the same generator share one in-flight invocation; failures can be retried. All declared outputs must exist
+afterward. Each output must be under `file/<tool>/secret/`. Commands come from trusted configuration; their output is
+suppressed so secrets do not enter server responses or error logs.
+
+A generator must preserve existing outputs when another output is missing, create private files with restrictive
+permissions, and publish complete files atomically. Keep the secret directories gitignored. Reading configuration,
+including an outdated check, can create a missing server source; client writes still occur only during sync. Normal file
+sync compares content and deploys edits without regenerating existing source files.

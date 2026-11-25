@@ -3,6 +3,7 @@ import { Fmt, parse } from '@meop/shire/serde'
 import { join } from '@std/path'
 
 import { getFileBinaryContent, getFileContent, getFilePaths, isDirPath, isPath } from './fs.ts'
+import { ensureGeneratedSources } from './generate.ts'
 import { resolveHostGroupGates } from './host-groups.ts'
 import { type Match, partsMatch } from './match.ts'
 import { toRelParts } from './path.ts'
@@ -21,6 +22,9 @@ function cfgPath(parts: Array<string>, extension?: string) {
 }
 
 export async function localCfgPaths(parts: Array<string>, extension?: string) {
+  if (!extension) {
+    await ensureGeneratedSources(cfgBasePath, parts)
+  }
   const maybeCfgPath = cfgPath(parts, extension)
   if (await isPath(maybeCfgPath)) {
     return [maybeCfgPath]
