@@ -908,7 +908,7 @@ export class PackCmdPull extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'pull'
     this.description = 'pull indexes from remote'
-    this.aliases = ['p', 'refresh', 'rf']
+    this.aliases = ['p', 'pu', 'refresh', 'ref']
   }
   override async work(
     shell: Sh,
@@ -924,7 +924,7 @@ export class PackCmdRemove extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'remove'
     this.description = 'remove on local'
-    this.aliases = ['r', 'rm', 'rem', 'un', 'unin', 'uninstall']
+    this.aliases = ['r', 'rm', 'rem', 'un', 'uninstall']
     this.arguments = [
       { name: 'names', description: 'name(s) to match', required: true },
     ]
@@ -943,7 +943,7 @@ export class PackCmdRenew extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'renew'
     this.description = 'renew on local: a fresh copy of what is here'
-    this.aliases = ['rn']
+    this.aliases = ['ren']
     this.arguments = [
       { name: 'names', description: 'name(s) to match', required: true },
     ]
@@ -962,7 +962,7 @@ export class PackCmdSync extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'sync'
     this.description = 'sync from remote'
-    this.aliases = ['s', 'sy', 'up', 'update']
+    this.aliases = ['s', 'sy', 'up', 'upd', 'update']
     this.arguments = [{ name: 'names', description: 'name(s) to match' }]
   }
   override async work(

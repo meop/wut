@@ -18,7 +18,7 @@ export class FileCmd extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'file'
     this.description = 'dot file ops'
-    this.aliases = ['f', 'fi']
+    this.aliases = ['f', 'fi', 'fil']
     this.commands = [
       new FileCmdFind([...this.scopes, this.name]),
       new FileCmdList([...this.scopes, this.name]),
@@ -342,7 +342,7 @@ export class FileCmdRemove extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'remove'
     this.description = 'remove on local what sync wrote'
-    this.aliases = ['r', 'rm', 'rem', 'un', 'unin', 'uninstall']
+    this.aliases = ['r', 'rm', 'rem', 'un', 'uninstall']
     this.arguments = [{ name: 'parts', description: 'path part(s) to match', required: true }]
   }
 
@@ -360,7 +360,7 @@ export class FileCmdSync extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'sync'
     this.description = 'sync from remote: write only what changed'
-    this.aliases = ['s', 'sy', 'up', 'update']
+    this.aliases = ['s', 'sy', 'up', 'upd', 'update']
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
 

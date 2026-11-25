@@ -529,7 +529,7 @@ export class VirtCmdRem extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'remove'
     this.description = 'remove on local'
-    this.aliases = ['r', 'rm', 'rem', 'un', 'unin', 'uninstall']
+    this.aliases = ['r', 'rm', 'rem', 'un', 'uninstall']
     this.arguments = [
       { name: 'parts', description: 'path part(s) to match', required: true },
     ]
@@ -567,7 +567,7 @@ export class VirtCmdSync extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'sync'
     this.description = 'sync from remote'
-    this.aliases = ['s', 'sy', 'up', 'update']
+    this.aliases = ['s', 'sy', 'up', 'upd', 'update']
     this.arguments = [{ name: 'parts', description: 'path part(s) to match' }]
   }
   override async work(

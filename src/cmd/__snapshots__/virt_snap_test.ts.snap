@@ -760,7 +760,7 @@ if \$env.SYS_OS_PLAT == 'windows' {
 
 
 opPrintInfo r#'id: wut virt remove | remove on local
-aliases: 'r, rm, rem, un, unin, uninstall'
+aliases: 'r, rm, rem, un, uninstall'
 arguments:
   - <parts> | path part(s) to match'#
 
@@ -1598,7 +1598,7 @@ if \$env.SYS_OS_PLAT == 'windows' {
 
 
 opPrintInfo r#'id: wut virt remove | remove on local
-aliases: 'r, rm, rem, un, unin, uninstall'
+aliases: 'r, rm, rem, un, uninstall'
 arguments:
   - <parts> | path part(s) to match'#
 
@@ -2436,7 +2436,7 @@ if \$env.SYS_OS_PLAT == 'windows' {
 
 
 opPrintInfo r#'id: wut virt remove | remove on local
-aliases: 'r, rm, rem, un, unin, uninstall'
+aliases: 'r, rm, rem, un, uninstall'
 arguments:
   - <parts> | path part(s) to match'#
 
@@ -3308,7 +3308,7 @@ if \$env.SYS_OS_PLAT == 'windows' {
 
 
 opPrintInfo r#'id: wut virt remove | remove on local
-aliases: 'r, rm, rem, un, unin, uninstall'
+aliases: 'r, rm, rem, un, uninstall'
 arguments:
   - <parts> | path part(s) to match'#
 

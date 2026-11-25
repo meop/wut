@@ -323,7 +323,7 @@ export class ScriptCmdExec extends CmdBase implements Cmd {
     super(scopes)
     this.name = 'exec'
     this.description = 'exec on local'
-    this.aliases = ['e', 'execute', 'ru', 'run']
+    this.aliases = ['e', 'ex', 'execute', 'ru', 'run']
     this.arguments = [
       { name: 'action', description: 'action to match', required: true },
       { name: 'parts', description: 'tool path part(s) to match' },
